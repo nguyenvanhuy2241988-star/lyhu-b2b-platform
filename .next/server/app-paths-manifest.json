@@ -1,9 +1,18 @@
 {
+  "/_not-found": "app/_not-found.js",
   "/page": "app/page.js",
   "/(dashboard)/admin/customers/page": "app/(dashboard)/admin/customers/page.js",
-  "/(dashboard)/customer/page": "app/(dashboard)/customer/page.js",
   "/(dashboard)/admin/page": "app/(dashboard)/admin/page.js",
   "/(dashboard)/admin/products/page": "app/(dashboard)/admin/products/page.js",
+  "/(dashboard)/ctv/my-leads/page": "app/(dashboard)/ctv/my-leads/page.js",
+  "/(dashboard)/ctv/new-lead/page": "app/(dashboard)/ctv/new-lead/page.js",
+  "/(dashboard)/admin/users/page": "app/(dashboard)/admin/users/page.js",
+  "/(dashboard)/ctv/page": "app/(dashboard)/ctv/page.js",
   "/(dashboard)/customer/cart/page": "app/(dashboard)/customer/cart/page.js",
-  "/(dashboard)/customer/orders/page": "app/(dashboard)/customer/orders/page.js"
+  "/(dashboard)/customer/catalogue/page": "app/(dashboard)/customer/catalogue/page.js",
+  "/(dashboard)/customer/orders/page": "app/(dashboard)/customer/orders/page.js",
+  "/(dashboard)/customer/page": "app/(dashboard)/customer/page.js",
+  "/(dashboard)/sales/create-order/page": "app/(dashboard)/sales/create-order/page.js",
+  "/(dashboard)/sales/my-customers/page": "app/(dashboard)/sales/my-customers/page.js",
+  "/(dashboard)/sales/page": "app/(dashboard)/sales/page.js"
 }

@@ -7,8 +7,8 @@ import { ROLES } from "@/lib/constants";
 
 interface DashboardShellProps {
     children: React.ReactNode;
-    role: keyof typeof ROLES;
-    title?: string;
+    role: string;
+    title: string;
 }
 
 export default function DashboardShell({ children, role, title }: DashboardShellProps) {
