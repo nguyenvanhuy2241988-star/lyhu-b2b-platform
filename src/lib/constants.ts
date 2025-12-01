@@ -27,7 +27,7 @@ export const NAV_ITEMS = {
     ],
     [ROLES.CTV]: [
         { label: "Dashboard", href: "/ctv", icon: LayoutDashboard },
-        { label: "New Lead", href: "/ctv/leads/new", icon: UserPlus },
-        { label: "My Leads", href: "/ctv/leads", icon: List },
+        { label: "New Lead", href: "/ctv/new-lead", icon: UserPlus },
+        { label: "My Leads", href: "/ctv/my-leads", icon: List },
     ],
 };

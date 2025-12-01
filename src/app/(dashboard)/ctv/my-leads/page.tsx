@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { mockLeads } from "@/mocks/data";
-import type { Lead } from "@/mocks/data";
+import { useState, useMemo, useEffect } from "react";
 import { Phone, MapPin, Filter } from "lucide-react";
+import { CtvLead, loadLeads, updateLeadStatus, LeadStatus } from "@/lib/ctvLeads";
 
 const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -11,16 +10,16 @@ const formatDate = (dateString: string) => {
 };
 
 const STATUS_CONFIG = {
-    new: { label: "Mới", color: "bg-blue-100 text-blue-700" },
-    contacted: { label: "Đã liên hệ", color: "bg-yellow-100 text-yellow-700" },
-    converted: { label: "Đã chuyển đổi", color: "bg-green-100 text-green-700" },
+    NEW: { label: "Mới", color: "bg-blue-100 text-blue-700" },
+    CONTACTED: { label: "Đã liên hệ", color: "bg-yellow-100 text-yellow-700" },
+    CONVERTED: { label: "Đã chuyển đổi", color: "bg-green-100 text-green-700" },
 };
 
 const STATUS_OPTIONS = [
     { value: "all", label: "Tất cả" },
-    { value: "new", label: "Mới" },
-    { value: "contacted", label: "Đã liên hệ" },
-    { value: "converted", label: "Đã chuyển đổi" },
+    { value: "NEW", label: "Mới" },
+    { value: "CONTACTED", label: "Đã liên hệ" },
+    { value: "CONVERTED", label: "Đã chuyển đổi" },
 ];
 
 const AREAS = [
@@ -35,7 +34,12 @@ const AREAS = [
 export default function MyLeadsPage() {
     const [selectedStatus, setSelectedStatus] = useState("all");
     const [selectedArea, setSelectedArea] = useState("Tất cả");
-    const [leads] = useState<Lead[]>(mockLeads || []);
+    const [leads, setLeads] = useState<CtvLead[]>([]);
+
+    useEffect(() => {
+        const data = loadLeads();
+        setLeads(data);
+    }, []);
 
     const filteredLeads = useMemo(() => {
         if (!leads || !Array.isArray(leads)) {
@@ -52,9 +56,9 @@ export default function MyLeadsPage() {
     // Stats for each status
     const stats = {
         total: leads?.length || 0,
-        new: leads?.filter((l) => l?.status === "new")?.length || 0,
-        contacted: leads?.filter((l) => l?.status === "contacted")?.length || 0,
-        converted: leads?.filter((l) => l?.status === "converted")?.length || 0,
+        new: leads?.filter((l) => l?.status === "NEW")?.length || 0,
+        contacted: leads?.filter((l) => l?.status === "CONTACTED")?.length || 0,
+        converted: leads?.filter((l) => l?.status === "CONVERTED")?.length || 0,
     };
 
     return (
@@ -102,8 +106,8 @@ export default function MyLeadsPage() {
                                     key={option.value}
                                     onClick={() => setSelectedStatus(option.value)}
                                     className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${selectedStatus === option.value
-                                            ? "bg-primary-500 text-white"
-                                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                        ? "bg-primary-500 text-white"
+                                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                                         }`}
                                 >
                                     {option.label}
@@ -158,15 +162,15 @@ export default function MyLeadsPage() {
                                     <tr key={lead.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="font-medium text-slate-900">{lead.storeName}</div>
-                                            {lead.notes && (
+                                            {lead.note && (
                                                 <div className="text-xs text-slate-500 mt-1 line-clamp-1">
-                                                    {lead.notes}
+                                                    {lead.note}
                                                 </div>
                                             )}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="space-y-1">
-                                                <div className="text-slate-900">{lead.contactPerson}</div>
+                                                <div className="text-slate-900">{lead.contactName}</div>
                                                 <div className="flex items-center gap-1 text-slate-600">
                                                     <Phone className="w-3.5 h-3.5" />
                                                     <span className="text-xs">{lead.phone}</span>
@@ -181,22 +185,32 @@ export default function MyLeadsPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span
-                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${lead.type === "NPP"
-                                                        ? "bg-purple-100 text-purple-700"
-                                                        : lead.type === "Đại lý"
-                                                            ? "bg-blue-100 text-blue-700"
-                                                            : lead.type === "Mini mart"
-                                                                ? "bg-green-100 text-green-700"
-                                                                : "bg-orange-100 text-orange-700"
+                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${lead.customerType === "NPP"
+                                                    ? "bg-purple-100 text-purple-700"
+                                                    : lead.customerType === "Đại lý"
+                                                        ? "bg-blue-100 text-blue-700"
+                                                        : lead.customerType === "Mini mart"
+                                                            ? "bg-green-100 text-green-700"
+                                                            : "bg-orange-100 text-orange-700"
                                                     }`}
                                             >
-                                                {lead.type}
+                                                {lead.customerType}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusConfig?.color || "bg-gray-100 text-gray-700"}`}>
-                                                {statusConfig?.label || "N/A"}
-                                            </span>
+                                            <select
+                                                value={lead.status}
+                                                onChange={(e) => {
+                                                    const status = e.target.value as LeadStatus;
+                                                    const updated = updateLeadStatus(lead.id, status);
+                                                    setLeads(updated);
+                                                }}
+                                                className="px-2.5 py-0.5 rounded-full text-xs font-medium border-0 focus:ring-2 focus:ring-primary-500 bg-blue-100 text-blue-700"
+                                            >
+                                                <option value="NEW">Mới</option>
+                                                <option value="CONTACTED">Đã liên hệ</option>
+                                                <option value="CONVERTED">Đã chuyển đổi</option>
+                                            </select>
                                         </td>
                                         <td className="px-6 py-4 text-slate-600">{formatDate(lead.createdAt)}</td>
                                     </tr>

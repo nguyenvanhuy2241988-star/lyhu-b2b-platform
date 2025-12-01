@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { UserPlus, Save, X } from "lucide-react";
+import { addLead } from "@/lib/ctvLeads";
 
 const CUSTOMER_TYPES = ["Tạp hóa", "Mini mart", "Đại lý", "NPP"];
 const AREAS = [
@@ -14,6 +16,7 @@ const AREAS = [
 ];
 
 export default function NewLeadPage() {
+    const router = useRouter();
     const [formData, setFormData] = useState({
         storeName: "",
         contactPerson: "",
@@ -63,20 +66,18 @@ export default function NewLeadPage() {
             return;
         }
 
-        const newLead = {
-            id: Date.now().toString(),
-            ...formData,
-            status: "new",
-            createdAt: new Date().toISOString(),
-            ctvId: "4", // Mock CTV ID
-            ctvName: "Phạm Thị Dung", // Mock CTV name
-        };
+        // Add lead to localStorage
+        addLead({
+            storeName: formData.storeName,
+            contactName: formData.contactPerson,
+            phone: formData.phone,
+            area: formData.area,
+            customerType: formData.type,
+            note: formData.notes,
+        });
 
-        console.log("Creating new lead:", newLead);
-        alert("✅ Tạo lead thành công!\n\nChi tiết đã được ghi vào console.");
-
-        // Reset form
-        handleReset();
+        // Redirect to my-leads page
+        router.push("/ctv/my-leads");
     };
 
     const handleReset = () => {

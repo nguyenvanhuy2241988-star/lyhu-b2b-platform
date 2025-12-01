@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import { ROLES } from "@/lib/constants";
+import { getCurrentUser, logout } from "@/lib/auth";
 
 interface DashboardShellProps {
     children: React.ReactNode;
@@ -13,6 +15,18 @@ interface DashboardShellProps {
 
 export default function DashboardShell({ children, role, title }: DashboardShellProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+        const user = getCurrentUser();
+        if (!user) {
+            router.replace("/login");
+            return;
+        }
+        if (user.role !== role) {
+            router.replace("/login");
+        }
+    }, [router, role]);
 
     return (
         <div className="flex min-h-screen bg-slate-50">

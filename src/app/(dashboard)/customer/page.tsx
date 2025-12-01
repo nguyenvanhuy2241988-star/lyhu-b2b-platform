@@ -1,169 +1,159 @@
 "use client";
 
-import { useState } from "react";
-import { mockProducts } from "@/mocks/data";
+import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { ShoppingCart, Plus, Star, TrendingUp, Package } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { authenticateUser } from "@/lib/auth";
+import { ROLES } from "@/lib/constants";
 
-const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-        style: "currency",
-        currency: "VND",
-    }).format(price);
+// Map role -> route
+const ROLE_TO_ROUTE: Record<string, string> = {
+    [ROLES.ADMIN]: "/admin",
+    [ROLES.SALES]: "/sales",
+    [ROLES.CTV]: "/ctv",
+    [ROLES.CUSTOMER]: "/customer",
 };
 
-export default function CustomerDashboard() {
-    const featuredProducts = mockProducts.slice(0, 6);
+export default function LoginPage() {
+    const router = useRouter();
+
+    const [email, setEmail] = useState("admin@lyhu.vn");
+    const [password, setPassword] = useState("admin123");
+    const [error, setError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = (e: FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        setIsSubmitting(true);
+
+        const user = authenticateUser(email, password);
+
+        if (!user) {
+            setIsSubmitting(false);
+            setError("Email hoặc mật khẩu không đúng. Vui lòng thử lại.");
+            return;
+        }
+
+        const targetRoute = ROLE_TO_ROUTE[user.role];
+
+        if (!targetRoute) {
+            setIsSubmitting(false);
+            setError("Không tìm được trang phù hợp cho tài khoản này.");
+            return;
+        }
+
+        // Redirect đúng dashboard theo role
+        router.push(targetRoute);
+    };
 
     return (
-        <div className="space-y-6 sm:space-y-8">
-            {/* Hero Banner with Glassmorphism */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-500 via-teal-500 to-cyan-600 p-8 sm:p-12">
-                <div className="relative z-10 bg-white/10 backdrop-blur-md rounded-2xl border border-white/30 p-6 sm:p-8">
-                    <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3">
-                        Chào mừng quay trở lại!
-                    </h2>
-                    <p className="text-white/90 text-base sm:text-lg mb-6">
-                        Khám phá sản phẩm mới và ưu đãi đặc biệt dành cho bạn
-                    </p>
-                    <Link
-                        href="/customer/catalogue"
-                        className="inline-block bg-white text-primary-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-50 transition-colors shadow-lg"
-                    >
-                        Xem Catalogue
-                    </Link>
-                </div>
-                {/* Decorative elements */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full -ml-24 -mb-24"></div>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-blue-100 rounded-lg">
-                            <Package className="w-6 h-6 text-blue-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-slate-600">Đơn đang xử lý</p>
-                            <h3 className="text-2xl font-bold text-slate-900">2</h3>
-                        </div>
+        <div className="min-h-screen bg-slate-50 flex flex-col">
+            {/* Top bar thương hiệu */}
+            <header className="flex items-center justify-between px-4 py-3 sm:px-8 border-b border-slate-200 bg-white">
+                <div className="flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white text-sm font-semibold">
+                        LY
+                    </div>
+                    <div className="flex flex-col">
+                        <span className="text-sm font-semibold text-slate-900">
+                            LYHU B2B Platform
+                        </span>
+                        <span className="text-xs text-slate-500">
+                            Ứng dụng đặt hàng & quản lý kênh GT/MT
+                        </span>
                     </div>
                 </div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-green-100 rounded-lg">
-                            <TrendingUp className="w-6 h-6 text-green-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-slate-600">Chi tiêu tháng này</p>
-                            <h3 className="text-2xl font-bold text-slate-900">{formatPrice(485000)}</h3>
-                        </div>
-                    </div>
-                </div>
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-3">
-                        <div className="p-3 bg-purple-100 rounded-lg">
-                            <Star className="w-6 h-6 text-purple-600" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-slate-600">Điểm tích lũy</p>
-                            <h3 className="text-2xl font-bold text-slate-900">850</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            {/* Featured Products */}
-            <div>
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-2xl font-bold text-slate-900">Sản phẩm nổi bật</h3>
-                    <Link
-                        href="/customer/catalogue"
-                        className="text-primary-600 hover:text-primary-700 font-medium text-sm"
-                    >
-                        Xem tất cả →
-                    </Link>
-                </div>
+                <button
+                    type="button"
+                    onClick={() => router.push("/")}
+                    className="text-xs sm:text-sm text-slate-500 hover:text-slate-700"
+                >
+                    ← Về trang chọn vai trò
+                </button>
+            </header>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                    {featuredProducts.map((product) => {
-                        const brandColors = {
-                            UHI: { bg: "bg-orange-500", text: "text-orange-700", light: "bg-orange-50" },
-                            BOYO: { bg: "bg-purple-500", text: "text-purple-700", light: "bg-purple-50" },
-                            CVT: { bg: "bg-blue-500", text: "text-blue-700", light: "bg-blue-50" },
-                            LYHU: { bg: "bg-primary-500", text: "text-primary-700", light: "bg-primary-50" },
-                        };
-                        const brandColor = brandColors[product.brand as keyof typeof brandColors] || brandColors.LYHU;
+            {/* Nội dung chính */}
+            <main className="flex-1 flex items-center justify-center px-4 py-10 sm:px-6">
+                <div className="w-full max-w-md">
+                    <div className="bg-white shadow-sm rounded-2xl border border-slate-200 p-6 sm:p-8">
+                        <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-1">
+                            Đăng nhập nội bộ
+                        </h1>
+                        <p className="text-sm text-slate-500 mb-6">
+                            Dùng tài khoản mock để vào đúng dashboard (Admin, Sales, CTV, Khách hàng).
+                        </p>
 
-                        return (
-                            <div
-                                key={product.id}
-                                className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-lg transition-all group"
-                            >
-                                {/* Product Image */}
-                                <div className={`relative aspect-square ${brandColor.light} flex items-center justify-center group-hover:scale-105 transition-transform`}>
-                                    <ShoppingCart className="w-16 h-16 text-slate-300" />
-                                    {product.retailPrice && (
-                                        <span className={`absolute top-2 right-2 ${brandColor.bg} text-white text-xs font-bold px-2 py-1 rounded-lg`}>
-                                            -{Math.round(((product.retailPrice - product.wholesalePrice) / product.retailPrice) * 100)}%
-                                        </span>
-                                    )}
-                                </div>
-
-                                {/* Product Info */}
-                                <div className="p-4">
-                                    <span className={`inline-block ${brandColor.bg} text-white text-xs font-semibold px-2 py-1 rounded mb-2`}>
-                                        {product.brand}
-                                    </span>
-                                    <h4 className="font-semibold text-slate-900 mb-2 line-clamp-2 min-h-[3rem]">
-                                        {product.name}
-                                    </h4>
-                                    <div className="flex items-baseline gap-2 mb-4">
-                                        <span className="text-lg font-bold text-slate-900">{formatPrice(product.wholesalePrice)}</span>
-                                        {product.retailPrice && (
-                                            <span className="text-sm text-slate-400 line-through">{formatPrice(product.retailPrice)}</span>
-                                        )}
-                                    </div>
-                                    <button className="w-full bg-primary-500 hover:bg-primary-600 text-white py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors">
-                                        <Plus className="w-4 h-4" />
-                                        Thêm vào giỏ
-                                    </button>
-                                </div>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="space-y-1">
+                                <label
+                                    htmlFor="email"
+                                    className="block text-sm font-medium text-slate-700"
+                                >
+                                    Email
+                                </label>
+                                <input
+                                    id="email"
+                                    type="email"
+                                    autoComplete="email"
+                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="admin@lyhu.vn"
+                                    required
+                                />
                             </div>
-                        );
-                    })}
-                </div>
-            </div>
 
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Link
-                    href="/customer/cart"
-                    className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-primary-200 transition-all group flex items-center gap-4"
-                >
-                    <div className="p-3 bg-primary-50 rounded-lg group-hover:bg-primary-100 transition-colors">
-                        <ShoppingCart className="w-6 h-6 text-primary-600" />
+                            <div className="space-y-1">
+                                <label
+                                    htmlFor="password"
+                                    className="block text-sm font-medium text-slate-700"
+                                >
+                                    Mật khẩu
+                                </label>
+                                <input
+                                    id="password"
+                                    type="password"
+                                    autoComplete="current-password"
+                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    required
+                                />
+                            </div>
+
+                            {error && (
+                                <p className="text-sm text-red-500 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                                    {error}
+                                </p>
+                            )}
+
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="w-full rounded-lg bg-emerald-500 text-white text-sm font-medium py-2.5 mt-2 hover:bg-emerald-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                            >
+                                {isSubmitting ? "Đang xử lý..." : "Đăng nhập"}
+                            </button>
+                        </form>
+
+                        {/* Box tài khoản mẫu */}
+                        <div className="mt-6 rounded-xl bg-slate-50 border border-dashed border-slate-200 p-4 text-xs text-slate-600 leading-relaxed">
+                            <div className="font-semibold text-slate-800 mb-1">
+                                Tài khoản mẫu:
+                            </div>
+                            <ul className="space-y-1">
+                                <li>admin@lyhu.vn / admin123 → Admin</li>
+                                <li>sales@lyhu.vn / sales123 → Sales</li>
+                                <li>ctv@lyhu.vn / ctv123 → CTV</li>
+                                <li>customer@lyhu.vn / customer123 → Customer</li>
+                            </ul>
+                        </div>
                     </div>
-                    <div>
-                        <h4 className="font-semibold text-slate-900 mb-1">Giỏ hàng của bạn</h4>
-                        <p className="text-sm text-slate-600">3 sản phẩm đang chờ</p>
-                    </div>
-                </Link>
-                <Link
-                    href="/customer/orders"
-                    className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-primary-200 transition-all group flex items-center gap-4"
-                >
-                    <div className="p-3 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
-                        <Package className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div>
-                        <h4 className="font-semibold text-slate-900 mb-1">Lịch sử đơn hàng</h4>
-                        <p className="text-sm text-slate-600">Xem tất cả đơn hàng</p>
-                    </div>
-                </Link>
-            </div>
+                </div>
+            </main>
         </div>
     );
 }

@@ -1,4 +1,8 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Users, DollarSign, ShoppingBag, TrendingUp } from "lucide-react";
+import { SalesLead, loadSalesLeads, getSalesStats } from "@/lib/salesLeads";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -7,90 +11,60 @@ const formatPrice = (price: number) => {
     }).format(price);
 };
 
-const stats = [
-    {
-        label: "Khách phụ trách",
-        value: "24",
-        change: "+3 tháng này",
-        icon: Users,
-        color: "text-blue-600",
-        bg: "bg-blue-50",
-    },
-    {
-        label: "Doanh số tháng này",
-        value: formatPrice(125500000),
-        change: "+15% so tháng trước",
-        icon: DollarSign,
-        color: "text-primary-600",
-        bg: "bg-primary-50",
-    },
-    {
-        label: "Đơn mới tuần này",
-        value: "18",
-        change: "+6 so tuần trước",
-        icon: ShoppingBag,
-        color: "text-green-600",
-        bg: "bg-green-50",
-    },
-    {
-        label: "Tăng trưởng",
-        value: "12.5%",
-        change: "+2.3% so tháng trước",
-        icon: TrendingUp,
-        color: "text-purple-600",
-        bg: "bg-purple-50",
-    },
-];
-
-const topCustomers = [
-    {
-        id: "1",
-        storeName: "NPP Phương Nam",
-        type: "NPP",
-        area: "Bình Dương",
-        totalRevenue: 45000000,
-        orders: 12,
-    },
-    {
-        id: "2",
-        storeName: "Đại lý Minh Khang",
-        type: "Đại lý",
-        area: "Quận 5, TP.HCM",
-        totalRevenue: 32000000,
-        orders: 8,
-    },
-    {
-        id: "3",
-        storeName: "Mini Mart Sài Gòn",
-        type: "Mini mart",
-        area: "Quận 3, TP.HCM",
-        totalRevenue: 28500000,
-        orders: 15,
-    },
-    {
-        id: "4",
-        storeName: "NPP Vạn Lộc",
-        type: "NPP",
-        area: "Long An",
-        totalRevenue: 25000000,
-        orders: 10,
-    },
-    {
-        id: "5",
-        storeName: "Đại lý Thành Đạt",
-        type: "Đại lý",
-        area: "Đồng Nai",
-        totalRevenue: 18500000,
-        orders: 6,
-    },
-];
+const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("vi-VN");
+};
 
 export default function SalesDashboard() {
+    const [leads, setLeads] = useState<SalesLead[]>([]);
+
+    useEffect(() => {
+        const data = loadSalesLeads();
+        setLeads(data);
+    }, []);
+
+    const stats = getSalesStats(leads);
+
+    const statsCards = [
+        {
+            label: "Tổng Leads",
+            value: stats.total.toString(),
+            change: "Khách hàng tiềm năng",
+            icon: Users,
+            color: "text-blue-600",
+            bg: "bg-blue-50",
+        },
+        {
+            label: "Doanh thu dự kiến",
+            value: formatPrice(stats.estimatedRevenue),
+            change: "Tổng tiềm năng",
+            icon: DollarSign,
+            color: "text-primary-600",
+            bg: "bg-primary-50",
+        },
+        {
+            label: "Đang chốt",
+            value: stats.inProgress.toString(),
+            change: "Đang theo dõi",
+            icon: ShoppingBag,
+            color: "text-green-600",
+            bg: "bg-green-50",
+        },
+        {
+            label: "Đã ký",
+            value: stats.won.toString(),
+            change: "Thành công",
+            icon: TrendingUp,
+            color: "text-purple-600",
+            bg: "bg-purple-50",
+        },
+    ];
     return (
         <div className="space-y-6">
             {/* KPI Cards - CORE APP Style */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                {stats.map((stat, index) => {
+                {statsCards.map((stat, index) => {
                     const Icon = stat.icon;
                     return (
                         <div
@@ -128,12 +102,12 @@ export default function SalesDashboard() {
                     </div>
                 </div>
 
-                {/* Top Customers */}
+                {/* Recent Leads */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Top khách hàng</h3>
+                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Leads gần đây</h3>
                     <div className="space-y-4">
-                        {topCustomers.map((customer, index) => (
-                            <div key={customer.id} className="pb-4 border-b border-slate-100 last:border-0 last:pb-0">
+                        {leads.slice(0, 5).map((lead, index) => (
+                            <div key={lead.id} className="pb-4 border-b border-slate-100 last:border-0 last:pb-0">
                                 <div className="flex items-start justify-between gap-2 mb-2">
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
@@ -141,18 +115,18 @@ export default function SalesDashboard() {
                                                 {index + 1}
                                             </span>
                                             <h4 className="font-medium text-slate-900 text-sm truncate">
-                                                {customer.storeName}
+                                                {lead.storeName}
                                             </h4>
                                         </div>
                                         <p className="text-xs text-slate-500 mt-1 ml-8">
-                                            {customer.type} • {customer.area}
+                                            {lead.type} • {lead.area}
                                         </p>
                                     </div>
                                 </div>
                                 <div className="ml-8 flex items-center justify-between text-xs">
-                                    <span className="text-slate-600">{customer.orders} đơn</span>
+                                    <span className="text-slate-600">{formatDate(lead.createdAt)}</span>
                                     <span className="font-semibold text-primary-600">
-                                        {formatPrice(customer.totalRevenue)}
+                                        {formatPrice(lead.estimatedRevenue)}
                                     </span>
                                 </div>
                             </div>
@@ -164,27 +138,27 @@ export default function SalesDashboard() {
             {/* Quick Actions */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <a
-                    href="/sales/my-customers"
+                    href="/sales/my-leads"
                     className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-primary-200 transition-all group flex items-center gap-4"
                 >
                     <div className="p-3 bg-blue-50 rounded-lg group-hover:bg-blue-100 transition-colors">
                         <Users className="w-6 h-6 text-blue-600" />
                     </div>
                     <div>
-                        <h4 className="font-semibold text-slate-900 mb-1">Khách hàng của tôi</h4>
-                        <p className="text-sm text-slate-600">Xem tất cả khách phụ trách</p>
+                        <h4 className="font-semibold text-slate-900 mb-1">Leads của tôi</h4>
+                        <p className="text-sm text-slate-600">Xem tất cả leads phụ trách</p>
                     </div>
                 </a>
                 <a
-                    href="/sales/create-order"
+                    href="/sales/new-lead"
                     className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-primary-200 transition-all group flex items-center gap-4"
                 >
                     <div className="p-3 bg-primary-50 rounded-lg group-hover:bg-primary-100 transition-colors">
                         <ShoppingBag className="w-6 h-6 text-primary-600" />
                     </div>
                     <div>
-                        <h4 className="font-semibold text-slate-900 mb-1">Tạo đơn hàng</h4>
-                        <p className="text-sm text-slate-600">Tạo đơn hộ khách hàng</p>
+                        <h4 className="font-semibold text-slate-900 mb-1">Tạo Lead mới</h4>
+                        <p className="text-sm text-slate-600">Thêm khách hàng tiềm năng</p>
                     </div>
                 </a>
             </div>

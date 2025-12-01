@@ -1,3 +1,5 @@
+
+
 import Link from "next/link";
 import { ShieldCheck, Users, TrendingUp, UserPlus } from "lucide-react";
 
@@ -5,7 +7,7 @@ const roles = [
     {
         title: "Admin",
         description: "Quản trị hệ thống và người dùng",
-        href: "/admin",
+        href: "/login",
         icon: ShieldCheck,
         color: "text-blue-600",
         bg: "bg-blue-50",
@@ -13,7 +15,7 @@ const roles = [
     {
         title: "Customer",
         description: "Đặt hàng và quản lý đơn hàng",
-        href: "/customer",
+        href: "/login",
         icon: Users,
         color: "text-primary-600",
         bg: "bg-primary-50",
@@ -21,7 +23,7 @@ const roles = [
     {
         title: "Sales",
         description: "Quản lý khách hàng và đơn hàng",
-        href: "/sales",
+        href: "/login",
         icon: TrendingUp,
         color: "text-green-600",
         bg: "bg-green-50",
@@ -29,7 +31,7 @@ const roles = [
     {
         title: "CTV",
         description: "Quản lý lead và khách tiềm năng",
-        href: "/ctv",
+        href: "/login",
         icon: UserPlus,
         color: "text-purple-600",
         bg: "bg-purple-50",

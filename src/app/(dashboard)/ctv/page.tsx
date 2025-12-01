@@ -1,40 +1,8 @@
-import { Users, CheckCircle, UserPlus, TrendingUp } from "lucide-react";
-import { mockLeads } from "@/mocks/data";
+"use client";
 
-const stats = [
-    {
-        label: "Tổng Leads",
-        value: mockLeads?.length.toString() || "0",
-        change: "+4 tháng này",
-        icon: Users,
-        color: "text-blue-600",
-        bg: "bg-blue-50",
-    },
-    {
-        label: "Đã chuyển đổi",
-        value: mockLeads?.filter((l) => l?.status === "converted")?.length.toString() || "0",
-        change: "Thành khách hàng",
-        icon: CheckCircle,
-        color: "text-green-600",
-        bg: "bg-green-50",
-    },
-    {
-        label: "Đang liên hệ",
-        value: mockLeads?.filter((l) => l?.status === "contacted")?.length.toString() || "0",
-        change: "Cần follow-up",
-        icon: UserPlus,
-        color: "text-primary-600",
-        bg: "bg-primary-50",
-    },
-    {
-        label: "Lead mới",
-        value: mockLeads?.filter((l) => l?.status === "new")?.length.toString() || "0",
-        change: "Chưa liên hệ",
-        icon: TrendingUp,
-        color: "text-purple-600",
-        bg: "bg-purple-50",
-    },
-];
+import { useEffect, useState } from "react";
+import { Users, CheckCircle, UserPlus, TrendingUp } from "lucide-react";
+import { CtvLead, loadLeads, getLeadStats } from "@/lib/ctvLeads";
 
 const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -42,22 +10,60 @@ const formatDate = (dateString: string) => {
 };
 
 const STATUS_CONFIG = {
-    new: { label: "Mới", color: "bg-blue-100 text-blue-700" },
-    contacted: { label: "Đã liên hệ", color: "bg-yellow-100 text-yellow-700" },
-    converted: { label: "Đã chuyển đổi", color: "bg-green-100 text-green-700" },
+    NEW: { label: "Mới", color: "bg-blue-100 text-blue-700" },
+    CONTACTED: { label: "Đã liên hệ", color: "bg-yellow-100 text-yellow-700" },
+    CONVERTED: { label: "Đã chuyển đổi", color: "bg-green-100 text-green-700" },
 };
 
 export default function CTVDashboard() {
-    // Get 5 most recent leads
-    const recentLeads = [...(mockLeads || [])]
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, 5);
+    const [leads, setLeads] = useState<CtvLead[]>([]);
 
+    useEffect(() => {
+        const data = loadLeads();
+        setLeads(data);
+    }, []);
+
+    const stats = getLeadStats(leads);
+
+    const statsCards = [
+        {
+            label: "Tổng Leads",
+            value: stats.total.toString(),
+            change: "+4 tháng này",
+            icon: Users,
+            color: "text-blue-600",
+            bg: "bg-blue-50",
+        },
+        {
+            label: "Đã chuyển đổi",
+            value: stats.convertedCount.toString(),
+            change: "Thành khách hàng",
+            icon: CheckCircle,
+            color: "text-green-600",
+            bg: "bg-green-50",
+        },
+        {
+            label: "Đang liên hệ",
+            value: stats.contactedCount.toString(),
+            change: "Cần follow-up",
+            icon: UserPlus,
+            color: "text-primary-600",
+            bg: "bg-primary-50",
+        },
+        {
+            label: "Lead mới",
+            value: stats.newCount.toString(),
+            change: "Chưa liên hệ",
+            icon: TrendingUp,
+            color: "text-purple-600",
+            bg: "bg-purple-50",
+        },
+    ];
     return (
         <div className="space-y-6">
             {/* KPI Cards - CORE APP Style */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                {stats.map((stat, index) => {
+                {statsCards.map((stat, index) => {
                     const Icon = stat.icon;
                     return (
                         <div
@@ -100,24 +106,24 @@ export default function CTVDashboard() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200">
-                            {recentLeads.map((lead) => {
+                            {leads.slice(0, 5).map((lead) => {
                                 const statusConfig = STATUS_CONFIG[lead.status as keyof typeof STATUS_CONFIG];
                                 return (
                                     <tr key={lead.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4 font-medium text-slate-900">{lead.storeName}</td>
-                                        <td className="px-6 py-4 text-slate-600">{lead.contactPerson}</td>
+                                        <td className="px-6 py-4 text-slate-600">{lead.contactName}</td>
                                         <td className="px-6 py-4 text-slate-600">{lead.phone}</td>
                                         <td className="px-6 py-4 text-slate-600">{lead.area}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${lead.type === "NPP"
-                                                    ? "bg-purple-100 text-purple-700"
-                                                    : lead.type === "Đại lý"
-                                                        ? "bg-blue-100 text-blue-700"
-                                                        : lead.type === "Mini mart"
-                                                            ? "bg-green-100 text-green-700"
-                                                            : "bg-orange-100 text-orange-700"
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${lead.customerType === "NPP"
+                                                ? "bg-purple-100 text-purple-700"
+                                                : lead.customerType === "Đại lý"
+                                                    ? "bg-blue-100 text-blue-700"
+                                                    : lead.customerType === "Mini mart"
+                                                        ? "bg-green-100 text-green-700"
+                                                        : "bg-orange-100 text-orange-700"
                                                 }`}>
-                                                {lead.type}
+                                                {lead.customerType}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4">
@@ -133,7 +139,7 @@ export default function CTVDashboard() {
                     </table>
                 </div>
 
-                {recentLeads.length === 0 && (
+                {leads.length === 0 && (
                     <div className="p-8 text-center text-slate-500">
                         Chưa có lead nào
                     </div>
