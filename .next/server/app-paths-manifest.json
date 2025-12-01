@@ -1,8 +1,7 @@
 {
+  "/login/page": "app/login/page.js",
   "/(dashboard)/admin/page": "app/(dashboard)/admin/page.js",
-  "/(dashboard)/sales/my-leads/page": "app/(dashboard)/sales/my-leads/page.js",
   "/(dashboard)/ctv/page": "app/(dashboard)/ctv/page.js",
-  "/(dashboard)/ctv/new-lead/page": "app/(dashboard)/ctv/new-lead/page.js",
   "/(dashboard)/ctv/my-leads/page": "app/(dashboard)/ctv/my-leads/page.js",
-  "/login/page": "app/login/page.js"
+  "/(dashboard)/ctv/new-lead/page": "app/(dashboard)/ctv/new-lead/page.js"
 }

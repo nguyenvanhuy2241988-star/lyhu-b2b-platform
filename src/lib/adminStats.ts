@@ -28,9 +28,6 @@ export function getAdminLeads(): AdminLead[] {
     const ctvLeads = loadCTVLeads();
     const salesLeads = loadSalesLeads();
 
-    console.log('[AdminStats] CTV Leads loaded:', ctvLeads.length, ctvLeads);
-    console.log('[AdminStats] Sales Leads loaded:', salesLeads.length, salesLeads);
-
     // Map CTV leads to AdminLead format
     const ctvAdminLeads: AdminLead[] = ctvLeads.map((lead: CtvLead) => ({
         id: `ctv-${lead.id}`,
@@ -60,8 +57,6 @@ export function getAdminLeads(): AdminLead[] {
     // Combine and sort by createdAt descending
     const allLeads = [...ctvAdminLeads, ...salesAdminLeads];
     allLeads.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    console.log('[AdminStats] Total admin leads:', allLeads.length, allLeads);
 
     return allLeads;
 }
