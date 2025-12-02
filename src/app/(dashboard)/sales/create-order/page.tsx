@@ -104,7 +104,7 @@ export default function CreateOrderPage() {
             type: selectedCustomer.type,
             status: "WON",
             estimatedRevenue: total,
-            note: `Đơn hàng mới: ${orderItems.length} sản phẩm`,
+            notes: `Đơn hàng mới: ${orderItems.length} sản phẩm`,
         });
 
         alert("✅ Tạo đơn hàng thành công!\n\nDashboard đã được cập nhật.");
