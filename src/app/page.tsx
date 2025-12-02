@@ -56,7 +56,7 @@ export default function Home() {
                         const Icon = role.icon;
                         return (
                             <Link
-                                key={role.href}
+                                key={role.title}
                                 href={role.href}
                                 className="group bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-primary-200 transition-all duration-200"
                             >
