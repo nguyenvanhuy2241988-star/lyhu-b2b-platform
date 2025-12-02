@@ -4,6 +4,7 @@ import { useState } from "react";
 import { mockCustomers, mockProducts } from "@/mocks/data";
 import type { Customer, Product } from "@/mocks/data";
 import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, User } from "lucide-react";
+import { addSalesLead } from "@/lib/salesLeads";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -74,6 +75,9 @@ export default function CreateOrderPage() {
     };
 
     const handleCreateOrder = () => {
+        if (!selectedCustomer) return;
+
+        const total = calculateTotal();
         const orderData = {
             customer: selectedCustomer,
             items: orderItems.map((item) => ({
@@ -84,13 +88,26 @@ export default function CreateOrderPage() {
                 price: item.product.wholesalePrice,
                 total: item.product.wholesalePrice * item.quantity,
             })),
-            total: calculateTotal(),
+            total: total,
             createdAt: new Date().toISOString(),
             createdBy: "Sales Rep", // Mock user
         };
 
         console.log("Creating order:", orderData);
-        alert("✅ Tạo đơn hàng thành công!\n\nChi tiết đã được ghi vào console.");
+
+        // Save as a WON lead to update dashboard stats
+        addSalesLead({
+            storeName: selectedCustomer.storeName,
+            contactName: selectedCustomer.storeName, // Using store name as contact for now
+            phone: selectedCustomer.phone,
+            area: selectedCustomer.area,
+            type: selectedCustomer.type,
+            status: "WON",
+            estimatedRevenue: total,
+            note: `Đơn hàng mới: ${orderItems.length} sản phẩm`,
+        });
+
+        alert("✅ Tạo đơn hàng thành công!\n\nDashboard đã được cập nhật.");
 
         // Reset form
         setSelectedCustomer(null);
@@ -120,8 +137,8 @@ export default function CreateOrderPage() {
                     <div className="flex items-center gap-3">
                         <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= 1
-                                    ? "bg-primary-500 text-white"
-                                    : "bg-slate-100 text-slate-400"
+                                ? "bg-primary-500 text-white"
+                                : "bg-slate-100 text-slate-400"
                                 }`}
                         >
                             {currentStep > 1 ? <CheckCircle className="w-5 h-5" /> : "1"}
@@ -137,8 +154,8 @@ export default function CreateOrderPage() {
                     <div className="flex items-center gap-3">
                         <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= 2
-                                    ? "bg-primary-500 text-white"
-                                    : "bg-slate-100 text-slate-400"
+                                ? "bg-primary-500 text-white"
+                                : "bg-slate-100 text-slate-400"
                                 }`}
                         >
                             {currentStep > 2 ? <CheckCircle className="w-5 h-5" /> : "2"}
@@ -154,8 +171,8 @@ export default function CreateOrderPage() {
                     <div className="flex items-center gap-3">
                         <div
                             className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${currentStep >= 3 && orderItems.length > 0
-                                    ? "bg-primary-500 text-white"
-                                    : "bg-slate-100 text-slate-400"
+                                ? "bg-primary-500 text-white"
+                                : "bg-slate-100 text-slate-400"
                                 }`}
                         >
                             3
@@ -253,8 +270,8 @@ export default function CreateOrderPage() {
                                         <button
                                             onClick={() => handleAddProduct(product)}
                                             className={`w-full py-2 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors ${inOrder
-                                                    ? "bg-primary-600 text-white hover:bg-primary-700"
-                                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                                ? "bg-primary-600 text-white hover:bg-primary-700"
+                                                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                                                 }`}
                                         >
                                             <Plus className="w-4 h-4" />
