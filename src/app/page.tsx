@@ -1,5 +1,3 @@
-
-
 import Link from "next/link";
 import { ShieldCheck, Users, TrendingUp, UserPlus } from "lucide-react";
 
