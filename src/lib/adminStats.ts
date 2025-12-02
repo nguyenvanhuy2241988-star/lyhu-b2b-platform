@@ -1,7 +1,9 @@
 import { loadLeads as loadCTVLeads, CtvLead } from "./ctvLeads";
 import { loadSalesLeads, SalesLead } from "./salesLeads";
+import { getAllOrders } from "./customerStore";
+import type { CustomerOrder } from "@/mocks/data";
 
-export type AdminLeadSource = "CTV" | "Sales";
+export type AdminLeadSource = "CTV" | "Sales" | "Customer Order";
 
 export interface AdminLead {
     id: string;
@@ -19,7 +21,9 @@ export interface AdminLeadStats {
     totalLeads: number;
     totalCTVLeads: number;
     totalSalesLeads: number;
+    totalOrders: number;
     totalEstimatedRevenue: number;
+    totalOrderRevenue: number;
     convertedLeads: number;
     latestLeads: AdminLead[];
 }
@@ -27,6 +31,7 @@ export interface AdminLeadStats {
 export function getAdminLeads(): AdminLead[] {
     const ctvLeads = loadCTVLeads();
     const salesLeads = loadSalesLeads();
+    const customerOrders = getAllOrders();
 
     // Map CTV leads to AdminLead format
     const ctvAdminLeads: AdminLead[] = ctvLeads.map((lead: CtvLead) => ({
@@ -54,8 +59,19 @@ export function getAdminLeads(): AdminLead[] {
         createdAt: lead.createdAt,
     }));
 
+    // Map Customer Orders to AdminLead format
+    const orderAdminLeads: AdminLead[] = customerOrders.map((order: CustomerOrder) => ({
+        id: `order-${order.id}`,
+        source: "Customer Order" as AdminLeadSource,
+        name: order.customerName,
+        contactName: order.customerName,
+        status: order.status,
+        estimatedRevenue: order.totalAmount,
+        createdAt: order.createdAt,
+    }));
+
     // Combine and sort by createdAt descending
-    const allLeads = [...ctvAdminLeads, ...salesAdminLeads];
+    const allLeads = [...ctvAdminLeads, ...salesAdminLeads, ...orderAdminLeads];
     allLeads.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return allLeads;
@@ -63,13 +79,19 @@ export function getAdminLeads(): AdminLead[] {
 
 export function getAdminLeadStats(): AdminLeadStats {
     const allLeads = getAdminLeads();
+    const customerOrders = getAllOrders();
 
-    const totalLeads = allLeads.length;
+    const totalLeads = allLeads.filter((l) => l.source !== "Customer Order").length;
     const totalCTVLeads = allLeads.filter((l) => l.source === "CTV").length;
     const totalSalesLeads = allLeads.filter((l) => l.source === "Sales").length;
+    const totalOrders = customerOrders.length;
 
-    const totalEstimatedRevenue = allLeads.reduce(
-        (sum, lead) => sum + (lead.estimatedRevenue || 0),
+    const totalEstimatedRevenue = allLeads
+        .filter((l) => l.source === "Sales")
+        .reduce((sum, lead) => sum + (lead.estimatedRevenue || 0), 0);
+
+    const totalOrderRevenue = customerOrders.reduce(
+        (sum, order) => sum + (order.totalAmount || 0),
         0
     );
 
@@ -78,14 +100,16 @@ export function getAdminLeadStats(): AdminLeadStats {
         (l) => l.source === "Sales" && l.status === "WON"
     ).length;
 
-    // Get latest 10 leads
+    // Get latest 10 leads/orders
     const latestLeads = allLeads.slice(0, 10);
 
     return {
         totalLeads,
         totalCTVLeads,
         totalSalesLeads,
+        totalOrders,
         totalEstimatedRevenue,
+        totalOrderRevenue,
         convertedLeads,
         latestLeads,
     };

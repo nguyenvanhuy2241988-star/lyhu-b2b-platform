@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { mockProducts } from "@/mocks/data";
+import { addToCart, getCart } from "@/lib/customerStore";
 import { ShoppingCart, Plus, Filter } from "lucide-react";
 
 const formatPrice = (price: number) => {
@@ -15,7 +16,19 @@ const BRANDS = ["Tất cả", "UHI", "BOYO", "CVT", "LYHU"];
 
 export default function CataloguePage() {
     const [selectedBrand, setSelectedBrand] = useState("Tất cả");
-    const [cart, setCart] = useState<Record<string, number>>({});
+    const [cartItems, setCartItems] = useState(getCart());
+
+    // Sync cart with local storage on mount and updates
+    useEffect(() => {
+        setCartItems(getCart());
+    }, []);
+
+    const cartLookup = useMemo(() => {
+        return cartItems.reduce((acc, item) => {
+            acc[item.product.id] = item.quantity;
+            return acc;
+        }, {} as Record<string, number>);
+    }, [cartItems]);
 
     const filteredProducts = useMemo(() => {
         if (selectedBrand === "Tất cả") {
@@ -24,16 +37,14 @@ export default function CataloguePage() {
         return mockProducts.filter((p) => p.brand === selectedBrand);
     }, [selectedBrand]);
 
-    const handleAddToCart = (productId: string) => {
-        setCart((prev) => ({
-            ...prev,
-            [productId]: (prev[productId] || 0) + 1,
-        }));
-        // In real app, this would update global cart state or call API
-        console.log("Added to cart:", productId);
+    const handleAddToCart = (product: any) => {
+        const updatedCart = addToCart(product, 1);
+        setCartItems(updatedCart);
+        // Optional: Show toast
+        // alert(`Đã thêm ${product.name} vào giỏ hàng!`);
     };
 
-    const totalCartItems = Object.values(cart).reduce((sum, qty) => sum + qty, 0);
+    const totalCartItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
     const brandColors = {
         UHI: { bg: "bg-orange-500", text: "text-orange-700", light: "bg-orange-50", border: "border-orange-200" },
@@ -72,8 +83,8 @@ export default function CataloguePage() {
                             key={brand}
                             onClick={() => setSelectedBrand(brand)}
                             className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${selectedBrand === brand
-                                    ? "bg-primary-500 text-white"
-                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                ? "bg-primary-500 text-white"
+                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                                 }`}
                         >
                             {brand}
@@ -86,7 +97,7 @@ export default function CataloguePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                 {filteredProducts.map((product) => {
                     const brandColor = brandColors[product.brand as keyof typeof brandColors] || brandColors.LYHU;
-                    const inCart = cart[product.id] || 0;
+                    const inCart = cartLookup[product.id] || 0;
 
                     return (
                         <div
@@ -127,7 +138,7 @@ export default function CataloguePage() {
                                     )}
                                 </div>
                                 <button
-                                    onClick={() => handleAddToCart(product.id)}
+                                    onClick={() => handleAddToCart(product)}
                                     className={`w-full ${brandColor.bg} hover:opacity-90 text-white py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-all`}
                                 >
                                     <Plus className="w-4 h-4" />

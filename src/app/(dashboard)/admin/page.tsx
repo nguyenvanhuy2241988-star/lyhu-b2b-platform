@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, ShoppingBag, DollarSign, TrendingUp } from "lucide-react";
+import { Users, ShoppingBag, DollarSign, TrendingUp, Package, CreditCard } from "lucide-react";
 import { getAdminLeadStats, AdminLeadStats } from "@/lib/adminStats";
 
 const formatPrice = (price: number) => {
@@ -23,6 +23,10 @@ const STATUS_LABELS: Record<string, string> = {
     IN_PROGRESS: "Đang chốt",
     WON: "Đã ký",
     LOST: "Mất",
+    pending: "Chờ xác nhận",
+    processing: "Đang xử lý",
+    delivered: "Đã giao",
+    cancelled: "Đã hủy",
 };
 
 export default function AdminDashboard() {
@@ -66,12 +70,28 @@ export default function AdminDashboard() {
             color: "text-primary-600",
             bg: "bg-primary-50",
         },
+        {
+            label: "Đơn hàng khách",
+            value: stats?.totalOrders?.toString() || "0",
+            change: "Đặt trực tiếp",
+            icon: Package,
+            color: "text-orange-600",
+            bg: "bg-orange-50",
+        },
+        {
+            label: "Doanh thu đơn",
+            value: formatPrice(stats?.totalOrderRevenue || 0),
+            change: "Từ đơn hàng",
+            icon: CreditCard,
+            color: "text-teal-600",
+            bg: "bg-teal-50",
+        },
     ];
 
     return (
         <div className="space-y-6">
             {/* KPI Cards - CORE APP Style */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-6">
                 {statsCards.map((stat, index) => {
                     const Icon = stat.icon;
                     return (
@@ -132,11 +152,18 @@ export default function AdminDashboard() {
                                 <p className="text-xs text-slate-500 mt-1">{stats?.totalSalesLeads || 0} leads</p>
                             </div>
                         </div>
-                        <div className="flex items-start gap-3">
+                        <div className="flex items-start gap-3 pb-3 border-b border-slate-100">
                             <div className="w-2 h-2 bg-primary-500 rounded-full mt-2"></div>
                             <div className="flex-1">
                                 <p className="text-sm font-medium text-slate-900">Đã chuyển đổi</p>
                                 <p className="text-xs text-slate-500 mt-1">{stats?.convertedLeads || 0} leads</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-3">
+                            <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
+                            <div className="flex-1">
+                                <p className="text-sm font-medium text-slate-900">Đơn hàng khách</p>
+                                <p className="text-xs text-slate-500 mt-1">{stats?.totalOrders || 0} đơn</p>
                             </div>
                         </div>
                     </div>
@@ -146,18 +173,18 @@ export default function AdminDashboard() {
             {/* Recent Leads Table */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="p-6 border-b border-slate-200">
-                    <h3 className="text-lg font-semibold text-slate-900">Leads gần đây</h3>
+                    <h3 className="text-lg font-semibold text-slate-900">Hoạt động gần đây</h3>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm min-w-[900px]">
                         <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                             <tr>
-                                <th className="px-6 py-3 font-medium">Tên cửa hàng</th>
+                                <th className="px-6 py-3 font-medium">Tên / Cửa hàng</th>
                                 <th className="px-6 py-3 font-medium">Người liên hệ</th>
                                 <th className="px-6 py-3 font-medium">Khu vực</th>
                                 <th className="px-6 py-3 font-medium">Nguồn</th>
                                 <th className="px-6 py-3 font-medium">Trạng thái</th>
-                                <th className="px-6 py-3 font-medium">Doanh thu dự kiến</th>
+                                <th className="px-6 py-3 font-medium">Giá trị</th>
                                 <th className="px-6 py-3 font-medium">Ngày tạo</th>
                             </tr>
                         </thead>
@@ -171,8 +198,10 @@ export default function AdminDashboard() {
                                         <td className="px-6 py-4">
                                             <span
                                                 className={`px-3 py-1 rounded-full text-xs font-medium ${lead.source === "CTV"
-                                                        ? "bg-green-100 text-green-700"
-                                                        : "bg-purple-100 text-purple-700"
+                                                    ? "bg-green-100 text-green-700"
+                                                    : lead.source === "Sales"
+                                                        ? "bg-purple-100 text-purple-700"
+                                                        : "bg-orange-100 text-orange-700"
                                                     }`}
                                             >
                                                 {lead.source}

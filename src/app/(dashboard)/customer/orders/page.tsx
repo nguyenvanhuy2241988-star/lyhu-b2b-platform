@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { mockOrders } from "@/mocks/data";
+import { useState, useMemo, useEffect } from "react";
+import { getOrders } from "@/lib/customerStore";
 import type { CustomerOrder } from "@/mocks/data";
 import { Package, Clock, CheckCircle, XCircle, Filter } from "lucide-react";
 
@@ -54,8 +54,11 @@ const FILTER_OPTIONS = [
 
 export default function OrdersPage() {
     const [selectedStatus, setSelectedStatus] = useState("all");
-    // ✅ FIX: Ensure default empty array to prevent undefined errors
-    const [orders] = useState<CustomerOrder[]>(mockOrders || []);
+    const [orders, setOrders] = useState<CustomerOrder[]>([]);
+
+    useEffect(() => {
+        setOrders(getOrders());
+    }, []);
 
     const filteredOrders = useMemo(() => {
         // ✅ Safe array check
@@ -118,8 +121,8 @@ export default function OrdersPage() {
                             key={option.value}
                             onClick={() => setSelectedStatus(option.value)}
                             className={`px-4 py-2 rounded-lg font-medium text-sm transition-colors ${selectedStatus === option.value
-                                    ? "bg-primary-500 text-white"
-                                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                ? "bg-primary-500 text-white"
+                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                                 }`}
                         >
                             {option.label}

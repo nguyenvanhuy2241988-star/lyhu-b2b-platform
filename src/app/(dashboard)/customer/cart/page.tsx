@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { mockCart, mockProducts } from "@/mocks/data";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { getCart, updateCartQuantity, removeFromCart, createOrder } from "@/lib/customerStore";
+import { getCurrentUser } from "@/lib/auth";
 import type { CartItem } from "@/mocks/data";
 import { Trash2, Plus, Minus, ShoppingCart, ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -14,23 +16,27 @@ const formatPrice = (price: number) => {
 };
 
 export default function CartPage() {
-    // ✅ FIX: Ensure default empty array to prevent undefined errors
-    const [cartItems, setCartItems] = useState<CartItem[]>(mockCart || []);
+    const router = useRouter();
+    const [cartItems, setCartItems] = useState<CartItem[]>([]);
+
+    useEffect(() => {
+        setCartItems(getCart());
+    }, []);
 
     const handleUpdateQuantity = (itemId: string, delta: number) => {
-        setCartItems((prev) =>
-            prev.map((item) => {
-                if (item.id === itemId) {
-                    const newQuantity = Math.max(1, item.quantity + delta);
-                    return { ...item, quantity: newQuantity };
-                }
-                return item;
-            })
-        );
+        const item = cartItems.find((i) => i.product.id === itemId);
+        if (item) {
+            const newQuantity = item.quantity + delta;
+            if (newQuantity > 0) {
+                const updated = updateCartQuantity(itemId, newQuantity);
+                setCartItems(updated);
+            }
+        }
     };
 
     const handleRemoveItem = (itemId: string) => {
-        setCartItems((prev) => prev.filter((item) => item.id !== itemId));
+        const updated = removeFromCart(itemId);
+        setCartItems(updated);
     };
 
     // ✅ FIX: Add safety check with optional chaining and default value
@@ -44,8 +50,20 @@ export default function CartPage() {
     const total = subtotal; // In real app, might add shipping, tax, etc.
 
     const handleCheckout = () => {
-        console.log("Proceeding to checkout with items:", cartItems);
-        alert("Đặt hàng thành công! (Mock - chưa kết nối backend)");
+        const user = getCurrentUser();
+        if (!user) {
+            alert("Vui lòng đăng nhập để đặt hàng!");
+            router.push("/login");
+            return;
+        }
+
+        const order = createOrder({ id: user.id, name: user.name });
+        if (order) {
+            alert("Đặt hàng thành công!");
+            router.push("/customer/orders");
+        } else {
+            alert("Giỏ hàng trống hoặc có lỗi xảy ra.");
+        }
     };
 
     // ✅ Empty state check
@@ -128,7 +146,7 @@ export default function CartPage() {
                                                 </p>
                                             </div>
                                             <button
-                                                onClick={() => handleRemoveItem(item.id)}
+                                                onClick={() => handleRemoveItem(item.product.id)}
                                                 className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
                                                 title="Xóa"
                                             >
@@ -140,7 +158,7 @@ export default function CartPage() {
                                         <div className="flex items-center justify-between mt-4">
                                             <div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
                                                 <button
-                                                    onClick={() => handleUpdateQuantity(item.id, -1)}
+                                                    onClick={() => handleUpdateQuantity(item.product.id, -1)}
                                                     disabled={item.quantity <= 1}
                                                     className="p-2 hover:bg-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                 >
@@ -148,7 +166,7 @@ export default function CartPage() {
                                                 </button>
                                                 <span className="w-12 text-center font-semibold">{item.quantity}</span>
                                                 <button
-                                                    onClick={() => handleUpdateQuantity(item.id, 1)}
+                                                    onClick={() => handleUpdateQuantity(item.product.id, 1)}
                                                     className="p-2 hover:bg-white rounded-lg transition-colors"
                                                 >
                                                     <Plus className="w-4 h-4" />
