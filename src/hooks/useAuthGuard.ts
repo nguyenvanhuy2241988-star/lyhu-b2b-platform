@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getCurrentUser, UserRole, getDashboardPath } from "@/lib/auth";
+import { getCurrentUser, UserRole } from "@/lib/auth";
+import { ROLES } from "@/lib/constants";
+
+const ROLE_PATHS = {
+    [ROLES.ADMIN]: "/admin",
+    [ROLES.SALES]: "/sales",
+    [ROLES.CTV]: "/ctv",
+    [ROLES.CUSTOMER]: "/customer",
+};
 
 export function useAuthGuard(expectedRole: UserRole) {
     const router = useRouter();
@@ -17,7 +25,8 @@ export function useAuthGuard(expectedRole: UserRole) {
         }
 
         if (user.role !== expectedRole) {
-            const correctPath = getDashboardPath(user.role);
+            // Redirect to their correct dashboard
+            const correctPath = ROLE_PATHS[user.role] || "/login";
             router.push(correctPath);
             return;
         }
