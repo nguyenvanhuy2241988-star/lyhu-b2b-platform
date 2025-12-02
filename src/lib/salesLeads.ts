@@ -10,6 +10,8 @@ export interface SalesLead {
     status: SalesLeadStatus;
     estimatedRevenue: number;
     note?: string;
+    email?: string;
+    address?: string;
     createdAt: string;
 }
 

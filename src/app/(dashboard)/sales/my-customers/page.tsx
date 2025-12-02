@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { loadSalesLeads } from "@/lib/salesLeads";
+import type { SalesLead } from "@/lib/salesLeads";
 import { Phone, Mail, MapPin, DollarSign } from "lucide-react";
 
 const formatPrice = (price: number) => {
@@ -27,7 +28,9 @@ const customerOrderData: Record<string, { lastOrderTotal: number; lastOrderDate:
 };
 
 export default function MyCustomersPage() {
-    const [customers, setCustomers] = useState<any[]>([]);
+    const [customers, setCustomers] = useState<SalesLead[]>([]);
+    const [selectedType, setSelectedType] = useState<string>("Tất cả");
+    const [selectedArea, setSelectedArea] = useState<string>("Tất cả");
 
     useEffect(() => {
         // Load customers from leads (since we treat leads as customers in this mock app)
