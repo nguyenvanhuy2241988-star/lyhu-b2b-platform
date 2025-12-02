@@ -15,17 +15,7 @@ const formatPrice = (price: number) => {
 const CUSTOMER_TYPES = ["Tất cả", "Tạp hóa", "Mini mart", "Đại lý", "NPP"] as const;
 const AREAS = ["Tất cả", "Quận 1, TP.HCM", "Quận 3, TP.HCM", "Quận 5, TP.HCM", "Bình Dương", "Đồng Nai", "Long An"];
 
-// Mock last order data for each customer
-const customerOrderData: Record<string, { lastOrderTotal: number; lastOrderDate: string }> = {
-    "1": { lastOrderTotal: 2500000, lastOrderDate: "2024-11-25" },
-    "2": { lastOrderTotal: 3200000, lastOrderDate: "2024-11-28" },
-    "3": { lastOrderTotal: 4500000, lastOrderDate: "2024-11-20" },
-    "4": { lastOrderTotal: 8500000, lastOrderDate: "2024-11-29" },
-    "5": { lastOrderTotal: 1800000, lastOrderDate: "2024-11-22" },
-    "6": { lastOrderTotal: 2100000, lastOrderDate: "2024-11-26" },
-    "7": { lastOrderTotal: 3800000, lastOrderDate: "2024-11-27" },
-    "8": { lastOrderTotal: 7200000, lastOrderDate: "2024-11-24" },
-};
+
 
 export default function MyCustomersPage() {
     const [customers, setCustomers] = useState<SalesLead[]>([]);
@@ -134,9 +124,9 @@ export default function MyCustomersPage() {
                         </thead>
                         <tbody className="divide-y divide-slate-200">
                             {filteredCustomers.map((customer) => {
-                                const orderData = customerOrderData[customer.id] || {
-                                    lastOrderTotal: 0,
-                                    lastOrderDate: ""
+                                const orderData = {
+                                    lastOrderTotal: customer.estimatedRevenue || 0,
+                                    lastOrderDate: customer.createdAt || ""
                                 };
 
                                 return (
