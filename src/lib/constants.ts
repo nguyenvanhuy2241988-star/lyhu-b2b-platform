@@ -5,7 +5,7 @@ export const ROLES = {
     CUSTOMER: "customer",
     SALES: "sales",
     CTV: "ctv",
-};
+} as const;
 
 export const NAV_ITEMS = {
     [ROLES.ADMIN]: [
