@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { mockCustomers } from "@/mocks/data";
+import { useState, useMemo, useEffect } from "react";
+import { loadSalesLeads } from "@/lib/salesLeads";
 import { Phone, Mail, MapPin, DollarSign } from "lucide-react";
 
 const formatPrice = (price: number) => {
@@ -27,20 +27,27 @@ const customerOrderData: Record<string, { lastOrderTotal: number; lastOrderDate:
 };
 
 export default function MyCustomersPage() {
-    const [selectedType, setSelectedType] = useState<string>("Tất cả");
-    const [selectedArea, setSelectedArea] = useState<string>("Tất cả");
+    const [customers, setCustomers] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Load customers from leads (since we treat leads as customers in this mock app)
+        const leads = loadSalesLeads();
+        // Map leads to customer format if needed, or just use leads that are WON/CONTACTED
+        // For simplicity, we'll show all leads as "My Customers"
+        setCustomers(leads);
+    }, []);
 
     const filteredCustomers = useMemo(() => {
-        if (!mockCustomers || !Array.isArray(mockCustomers)) {
+        if (!customers || !Array.isArray(customers)) {
             return [];
         }
 
-        return mockCustomers.filter((customer) => {
+        return customers.filter((customer) => {
             const typeMatch = selectedType === "Tất cả" || customer.type === selectedType;
             const areaMatch = selectedArea === "Tất cả" || customer.area === selectedArea;
             return typeMatch && areaMatch;
         });
-    }, [selectedType, selectedArea]);
+    }, [selectedType, selectedArea, customers]);
 
     return (
         <div className="space-y-6">
@@ -57,7 +64,7 @@ export default function MyCustomersPage() {
                 {/* Stats */}
                 <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-4 gap-4">
                     {CUSTOMER_TYPES.slice(1).map((type) => {
-                        const count = mockCustomers?.filter((c) => c.type === type)?.length || 0;
+                        const count = customers?.filter((c) => c.type === type)?.length || 0;
                         return (
                             <div key={type} className="bg-white p-4 rounded-lg border border-slate-200">
                                 <p className="text-xs text-slate-600">{type}</p>
@@ -143,12 +150,12 @@ export default function MyCustomersPage() {
                                         <td className="px-6 py-4">
                                             <span
                                                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${customer.type === "NPP"
-                                                        ? "bg-purple-100 text-purple-700"
-                                                        : customer.type === "Đại lý"
-                                                            ? "bg-blue-100 text-blue-700"
-                                                            : customer.type === "Mini mart"
-                                                                ? "bg-green-100 text-green-700"
-                                                                : "bg-orange-100 text-orange-700"
+                                                    ? "bg-purple-100 text-purple-700"
+                                                    : customer.type === "Đại lý"
+                                                        ? "bg-blue-100 text-blue-700"
+                                                        : customer.type === "Mini mart"
+                                                            ? "bg-green-100 text-green-700"
+                                                            : "bg-orange-100 text-orange-700"
                                                     }`}
                                             >
                                                 {customer.type}
