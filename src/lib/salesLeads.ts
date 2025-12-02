@@ -9,7 +9,8 @@ export interface SalesLead {
     type: string;
     status: SalesLeadStatus;
     estimatedRevenue: number;
-    note?: string;
+    notes?: string;
+    expectedVolume?: number;
     email?: string;
     address?: string;
     createdAt: string;
@@ -20,6 +21,7 @@ export interface SalesStats {
     inProgress: number;
     won: number;
     estimatedRevenue: number;
+    totalExpectedVolume: number;
 }
 
 const STORAGE_KEY = "lyhu_sales_leads_v1";
@@ -35,7 +37,8 @@ function getDefaultSalesLeads(): SalesLead[] {
             type: "Mini mart",
             status: "IN_PROGRESS",
             estimatedRevenue: 15000000,
-            note: "Đang đàm phán hợp đồng dài hạn",
+            notes: "Đang đàm phán hợp đồng dài hạn",
+            expectedVolume: 100,
             createdAt: "2024-11-28T00:00:00.000Z",
         },
         {
@@ -47,7 +50,8 @@ function getDefaultSalesLeads(): SalesLead[] {
             type: "NPP",
             status: "WON",
             estimatedRevenue: 50000000,
-            note: "Đã ký hợp đồng 6 tháng",
+            notes: "Đã ký hợp đồng 6 tháng",
+            expectedVolume: 500,
             createdAt: "2024-11-25T00:00:00.000Z",
         },
         {
@@ -59,7 +63,8 @@ function getDefaultSalesLeads(): SalesLead[] {
             type: "Tạp hóa",
             status: "NEW",
             estimatedRevenue: 8000000,
-            note: "Mới tiếp cận, chưa liên hệ",
+            notes: "Mới tiếp cận, chưa liên hệ",
+            expectedVolume: 30,
             createdAt: "2024-11-29T00:00:00.000Z",
         },
         {
@@ -71,7 +76,8 @@ function getDefaultSalesLeads(): SalesLead[] {
             type: "Đại lý",
             status: "CONTACTED",
             estimatedRevenue: 25000000,
-            note: "Đã gọi điện, hẹn gặp tuần sau",
+            notes: "Đã gọi điện, hẹn gặp tuần sau",
+            expectedVolume: 150,
             createdAt: "2024-11-27T00:00:00.000Z",
         },
         {
@@ -83,7 +89,8 @@ function getDefaultSalesLeads(): SalesLead[] {
             type: "Siêu thị",
             status: "LOST",
             estimatedRevenue: 30000000,
-            note: "Đã chọn nhà cung cấp khác",
+            notes: "Đã chọn nhà cung cấp khác",
+            expectedVolume: 200,
             createdAt: "2024-11-20T00:00:00.000Z",
         },
     ];
@@ -136,6 +143,7 @@ export function getSalesStats(leads: SalesLead[]): SalesStats {
     ).length;
     const won = leads.filter((l) => l.status === "WON").length;
     const estimatedRevenue = leads.reduce((sum, lead) => sum + lead.estimatedRevenue, 0);
+    const totalExpectedVolume = leads.reduce((sum, lead) => sum + (lead.expectedVolume || 0), 0);
 
-    return { total, inProgress, won, estimatedRevenue };
+    return { total, inProgress, won, estimatedRevenue, totalExpectedVolume };
 }

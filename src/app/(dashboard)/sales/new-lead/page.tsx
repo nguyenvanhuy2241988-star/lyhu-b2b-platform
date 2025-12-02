@@ -25,7 +25,8 @@ export default function NewSalesLeadPage() {
         area: "",
         type: "Tạp hóa" as typeof CUSTOMER_TYPES[number],
         estimatedRevenue: "",
-        note: "",
+        notes: "",
+        expectedVolume: "",
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -59,6 +60,9 @@ export default function NewSalesLeadPage() {
         if (!formData.estimatedRevenue || parseFloat(formData.estimatedRevenue) <= 0) {
             newErrors.estimatedRevenue = "Vui lòng nhập doanh thu dự kiến hợp lệ";
         }
+        if (formData.expectedVolume && Number(formData.expectedVolume) < 0) {
+            newErrors.expectedVolume = "Sản lượng không được âm";
+        }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -80,7 +84,8 @@ export default function NewSalesLeadPage() {
             area: formData.area,
             type: formData.type,
             estimatedRevenue: parseFloat(formData.estimatedRevenue),
-            note: formData.note,
+            notes: formData.notes,
+            expectedVolume: formData.expectedVolume ? Number(formData.expectedVolume) : undefined,
             status: "NEW",
         });
 
@@ -95,7 +100,8 @@ export default function NewSalesLeadPage() {
             area: "",
             type: "Tạp hóa",
             estimatedRevenue: "",
-            note: "",
+            notes: "",
+            expectedVolume: "",
         });
         setErrors({});
     };
@@ -251,15 +257,36 @@ export default function NewSalesLeadPage() {
                             )}
                         </div>
 
+                        {/* Expected Volume */}
+                        <div>
+                            <label htmlFor="expectedVolume" className="block text-sm font-medium text-slate-700 mb-2">
+                                Sản lượng dự kiến
+                            </label>
+                            <input
+                                type="number"
+                                id="expectedVolume"
+                                name="expectedVolume"
+                                value={formData.expectedVolume}
+                                onChange={handleChange}
+                                min="0"
+                                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${errors.expectedVolume ? "border-red-500" : "border-slate-200"
+                                    }`}
+                                placeholder="VD: 50 (thùng/tháng)"
+                            />
+                            {errors.expectedVolume && (
+                                <p className="mt-1 text-xs text-red-600">{errors.expectedVolume}</p>
+                            )}
+                        </div>
+
                         {/* Notes */}
                         <div className="sm:col-span-2">
-                            <label htmlFor="note" className="block text-sm font-medium text-slate-700 mb-2">
-                                Ghi chú
+                            <label htmlFor="notes" className="block text-sm font-medium text-slate-700 mb-2">
+                                Ghi chú Lead
                             </label>
                             <textarea
-                                id="note"
-                                name="note"
-                                value={formData.note}
+                                id="notes"
+                                name="notes"
+                                value={formData.notes}
                                 onChange={handleChange}
                                 rows={4}
                                 className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"

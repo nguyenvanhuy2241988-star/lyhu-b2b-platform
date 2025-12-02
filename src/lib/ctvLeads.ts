@@ -7,7 +7,8 @@ export interface CtvLead {
     phone: string;
     area: string;
     customerType: string;
-    note?: string;
+    notes?: string;
+    expectedVolume?: number;
     status: LeadStatus;
     createdAt: string;
 }
@@ -25,7 +26,8 @@ function getDefaultLeads(): CtvLead[] {
             area: "Hà Đông, Hà Nội",
             customerType: "Tạp hóa",
             status: "NEW",
-            note: "Quan tâm sản phẩm nước giải khát",
+            notes: "Quan tâm sản phẩm nước giải khát",
+            expectedVolume: 20,
             createdAt: "2024-11-29T00:00:00.000Z",
         },
         {
@@ -36,7 +38,8 @@ function getDefaultLeads(): CtvLead[] {
             area: "Thanh Xuân, Hà Nội",
             customerType: "Mini mart",
             status: "CONTACTED",
-            note: "Đã gọi điện, hẹn gặp tuần sau",
+            notes: "Đã gọi điện, hẹn gặp tuần sau",
+            expectedVolume: 50,
             createdAt: "2024-11-27T00:00:00.000Z",
         },
         {
@@ -47,7 +50,8 @@ function getDefaultLeads(): CtvLead[] {
             area: "Cầu Giấy, Hà Nội",
             customerType: "Đại lý",
             status: "CONVERTED",
-            note: "Đã ký hợp đồng, chuyển sang Sales",
+            notes: "Đã ký hợp đồng, chuyển sang Sales",
+            expectedVolume: 100,
             createdAt: "2024-11-25T00:00:00.000Z",
         },
         {
@@ -58,7 +62,8 @@ function getDefaultLeads(): CtvLead[] {
             area: "Đống Đa, Hà Nội",
             customerType: "Tạp hóa",
             status: "NEW",
-            note: "Gặp trực tiếp tại cửa hàng",
+            notes: "Gặp trực tiếp tại cửa hàng",
+            expectedVolume: 15,
             createdAt: "2024-11-28T00:00:00.000Z",
         },
         {
@@ -69,7 +74,8 @@ function getDefaultLeads(): CtvLead[] {
             area: "Long Biên, Hà Nội",
             customerType: "NPP",
             status: "CONTACTED",
-            note: "Đang đàm phán điều khoản",
+            notes: "Đang đàm phán điều khoản",
+            expectedVolume: 200,
             createdAt: "2024-11-26T00:00:00.000Z",
         },
     ];
@@ -99,7 +105,8 @@ export interface NewLeadInput {
     phone: string;
     area: string;
     customerType: string;
-    note?: string;
+    notes?: string;
+    expectedVolume?: number;
 }
 
 export function addLead(input: NewLeadInput): CtvLead {
@@ -129,5 +136,6 @@ export function getLeadStats(leads: CtvLead[]) {
     const newCount = leads.filter((l) => l.status === "NEW").length;
     const contactedCount = leads.filter((l) => l.status === "CONTACTED").length;
     const convertedCount = leads.filter((l) => l.status === "CONVERTED").length;
-    return { total, newCount, contactedCount, convertedCount };
+    const totalExpectedVolume = leads.reduce((sum, lead) => sum + (lead.expectedVolume || 0), 0);
+    return { total, newCount, contactedCount, convertedCount, totalExpectedVolume };
 }

@@ -24,6 +24,7 @@ export default function NewLeadPage() {
         area: "",
         type: "Tạp hóa" as "Tạp hóa" | "Mini mart" | "Đại lý" | "NPP",
         notes: "",
+        expectedVolume: "",
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -54,6 +55,9 @@ export default function NewLeadPage() {
         if (!formData.area) {
             newErrors.area = "Vui lòng chọn khu vực";
         }
+        if (formData.expectedVolume && Number(formData.expectedVolume) < 0) {
+            newErrors.expectedVolume = "Sản lượng không được âm";
+        }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -73,7 +77,8 @@ export default function NewLeadPage() {
             phone: formData.phone,
             area: formData.area,
             customerType: formData.type,
-            note: formData.notes,
+            notes: formData.notes,
+            expectedVolume: formData.expectedVolume ? Number(formData.expectedVolume) : undefined,
         });
 
         // Redirect to my-leads page
@@ -88,6 +93,7 @@ export default function NewLeadPage() {
             area: "",
             type: "Tạp hóa",
             notes: "",
+            expectedVolume: "",
         });
         setErrors({});
     };
@@ -221,10 +227,31 @@ export default function NewLeadPage() {
                             </select>
                         </div>
 
+                        {/* Expected Volume */}
+                        <div>
+                            <label htmlFor="expectedVolume" className="block text-sm font-medium text-slate-700 mb-2">
+                                Sản lượng dự kiến
+                            </label>
+                            <input
+                                type="number"
+                                id="expectedVolume"
+                                name="expectedVolume"
+                                value={formData.expectedVolume}
+                                onChange={handleChange}
+                                min="0"
+                                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${errors.expectedVolume ? "border-red-500" : "border-slate-200"
+                                    }`}
+                                placeholder="VD: 20 (thùng/tháng)"
+                            />
+                            {errors.expectedVolume && (
+                                <p className="mt-1 text-xs text-red-600">{errors.expectedVolume}</p>
+                            )}
+                        </div>
+
                         {/* Notes */}
                         <div className="sm:col-span-2">
                             <label htmlFor="notes" className="block text-sm font-medium text-slate-700 mb-2">
-                                Ghi chú
+                                Ghi chú Lead
                             </label>
                             <textarea
                                 id="notes"

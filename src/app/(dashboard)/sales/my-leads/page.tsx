@@ -67,12 +67,14 @@ export default function MyLeadsPage() {
     }, [leads, selectedStatus, selectedArea]);
 
     // Stats for each status
+    // Stats for each status
     const stats = {
         total: leads?.length || 0,
         new: leads?.filter((l) => l?.status === "NEW")?.length || 0,
         inProgress: leads?.filter((l) => l?.status === "CONTACTED" || l?.status === "IN_PROGRESS")?.length || 0,
         won: leads?.filter((l) => l?.status === "WON")?.length || 0,
         lost: leads?.filter((l) => l?.status === "LOST")?.length || 0,
+        totalVolume: leads?.reduce((sum, l) => sum + (l.expectedVolume || 0), 0) || 0,
     };
 
     return (
@@ -82,6 +84,9 @@ export default function MyLeadsPage() {
                 <h1 className="text-2xl font-bold text-slate-900">Danh sách Leads</h1>
                 <p className="text-sm text-slate-600 mt-1">
                     Quản lý tất cả leads của bạn
+                </p>
+                <p className="text-sm text-slate-500 mt-2 font-medium">
+                    Tổng sản lượng dự kiến: {stats.totalVolume} thùng/tháng
                 </p>
             </div>
 
@@ -170,6 +175,7 @@ export default function MyLeadsPage() {
                                 <th className="px-6 py-3 font-medium">Khu vực</th>
                                 <th className="px-6 py-3 font-medium">Loại</th>
                                 <th className="px-6 py-3 font-medium">Doanh thu dự kiến</th>
+                                <th className="px-6 py-3 font-medium">KL dự kiến</th>
                                 <th className="px-6 py-3 font-medium">Trạng thái</th>
                                 <th className="px-6 py-3 font-medium">Ngày tạo</th>
                             </tr>
@@ -181,9 +187,9 @@ export default function MyLeadsPage() {
                                     <tr key={lead.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="font-medium text-slate-900">{lead.storeName}</div>
-                                            {lead.note && (
-                                                <div className="text-xs text-slate-500 mt-1 line-clamp-1">
-                                                    {lead.note}
+                                            {lead.notes && (
+                                                <div className="text-xs text-slate-500 mt-1 line-clamp-1" title={lead.notes}>
+                                                    {lead.notes}
                                                 </div>
                                             )}
                                         </td>
@@ -223,6 +229,9 @@ export default function MyLeadsPage() {
                                                 <DollarSign className="w-4 h-4 text-primary-600" />
                                                 <span className="text-sm">{formatPrice(lead.estimatedRevenue)}</span>
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-slate-600">
+                                            {lead.expectedVolume ? `${lead.expectedVolume} thùng` : "-"}
                                         </td>
                                         <td className="px-6 py-4">
                                             <select
