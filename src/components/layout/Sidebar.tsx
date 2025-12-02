@@ -5,9 +5,10 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/lib/constants";
 import { LucideIcon } from "lucide-react";
+import { UserRole } from "@/lib/auth";
 
 interface SidebarProps {
-    role: keyof typeof NAV_ITEMS;
+    role: UserRole;
     isOpen: boolean;
     onClose?: () => void;
 }

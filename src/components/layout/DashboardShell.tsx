@@ -6,10 +6,11 @@ import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import { ROLES, NAV_ITEMS } from "@/lib/constants";
 import { getCurrentUser, logout } from "@/lib/auth";
+import { UserRole } from "@/lib/auth";
 
 interface DashboardShellProps {
     children: React.ReactNode;
-    role: keyof typeof NAV_ITEMS;
+    role: UserRole;
     title: string;
 }
 
