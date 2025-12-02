@@ -4,12 +4,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
-import { ROLES } from "@/lib/constants";
+import { ROLES, NAV_ITEMS } from "@/lib/constants";
 import { getCurrentUser, logout } from "@/lib/auth";
 
 interface DashboardShellProps {
     children: React.ReactNode;
-    role: string;
+    role: keyof typeof NAV_ITEMS;
     title: string;
 }
 
