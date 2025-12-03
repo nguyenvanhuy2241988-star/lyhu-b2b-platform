@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { getOrders } from "@/lib/customerStore";
-import type { CustomerOrder } from "@/mocks/data";
+import { loadOrders, getOrdersByCustomer, type Order } from "@/lib/ordersStore";
+import { getCurrentUser } from "@/lib/auth";
 import { Package, Clock, CheckCircle, XCircle, Filter } from "lucide-react";
 
 const formatPrice = (price: number) => {
@@ -12,71 +12,40 @@ const formatPrice = (price: number) => {
     }).format(price);
 };
 
-const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("vi-VN");
-};
-
-const STATUS_CONFIG = {
-    pending: {
-        label: "Chờ xác nhận",
-        icon: Clock,
-        color: "bg-yellow-100 text-yellow-700",
-        iconColor: "text-yellow-600",
-    },
-    processing: {
-        label: "Đang xử lý",
-        icon: Package,
-        color: "bg-blue-100 text-blue-700",
-        iconColor: "text-blue-600",
-    },
-    delivered: {
-        label: "Đã giao",
-        icon: CheckCircle,
-        color: "bg-green-100 text-green-700",
-        iconColor: "text-green-600",
-    },
-    cancelled: {
-        label: "Đã hủy",
-        icon: XCircle,
-        color: "bg-red-100 text-red-700",
-        iconColor: "text-red-600",
-    },
-};
-
-const FILTER_OPTIONS = [
-    { value: "all", label: "Tất cả" },
-    { value: "pending", label: "Chờ xác nhận" },
-    { value: "processing", label: "Đang xử lý" },
-    { value: "delivered", label: "Đã giao" },
-    { value: "cancelled", label: "Đã hủy" },
+{ value: "PENDING", label: "Chờ xác nhận" },
+{ value: "PROCESSING", label: "Đang xử lý" },
+{ value: "DELIVERED", label: "Đã giao" },
+{ value: "CANCELLED", label: "Đã hủy" },
 ];
 
 export default function OrdersPage() {
-    const [selectedStatus, setSelectedStatus] = useState("all");
-    const [orders, setOrders] = useState<CustomerOrder[]>([]);
+    const [selectedStatus, setSelectedStatus] = useState("ALL");
+    const [orders, setOrders] = useState<Order[]>([]);
 
     useEffect(() => {
-        setOrders(getOrders());
+        const user = getCurrentUser();
+        if (user) {
+            // Use helper function
+            const customerOrders = getOrdersByCustomer(user.id);
+            setOrders(customerOrders);
+        }
     }, []);
 
     const filteredOrders = useMemo(() => {
-        // ✅ Safe array check
         if (!orders || !Array.isArray(orders)) {
             return [];
         }
-        if (selectedStatus === "all") {
+        if (selectedStatus === "ALL") {
             return orders;
         }
-        return orders.filter((order) => order?.status === selectedStatus);
+        return orders.filter((order) => order.status === selectedStatus);
     }, [orders, selectedStatus]);
 
-    // ✅ FIX: Safe stats calculation with optional chaining
     const stats = {
-        total: orders?.length || 0,
-        pending: orders?.filter((o) => o?.status === "pending")?.length || 0,
-        processing: orders?.filter((o) => o?.status === "processing")?.length || 0,
-        delivered: orders?.filter((o) => o?.status === "delivered")?.length || 0,
+        total: orders.length,
+        pending: orders.filter((o) => o.status === "PENDING").length,
+        processing: orders.filter((o) => o.status === "PROCESSING").length,
+        delivered: orders.filter((o) => o.status === "DELIVERED").length,
     };
 
     return (
@@ -134,11 +103,10 @@ export default function OrdersPage() {
             {/* Orders List - Mobile Friendly */}
             <div className="space-y-4">
                 {filteredOrders.map((order) => {
-                    // ✅ Safe access to order properties
-                    const status = order?.status || "pending";
-                    const statusConfig = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
+                    const status = order.status;
+                    const statusConfig = STATUS_CONFIG[status];
                     const StatusIcon = statusConfig?.icon || Package;
-                    const items = order?.items || [];
+                    const items = order.items || [];
 
                     return (
                         <div
@@ -148,14 +116,14 @@ export default function OrdersPage() {
                             {/* Order Header */}
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-4 border-b border-slate-200">
                                 <div>
-                                    <h3 className="font-semibold text-slate-900 mb-1">{order.orderNumber || "N/A"}</h3>
+                                    <h3 className="font-semibold text-slate-900 mb-1">{order.id}</h3>
                                     <p className="text-sm text-slate-600">
-                                        Ngày đặt: {formatDate(order.createdAt || new Date().toISOString())}
+                                        Ngày đặt: {formatDate(order.createdAt)}
                                     </p>
                                 </div>
                                 <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${statusConfig?.color || "bg-gray-100 text-gray-700"}`}>
                                     <StatusIcon className="w-4 h-4" />
-                                    {statusConfig?.label || "N/A"}
+                                    {statusConfig?.label || status}
                                 </span>
                             </div>
 
@@ -164,10 +132,10 @@ export default function OrdersPage() {
                                 {items.map((item, index) => (
                                     <div key={index} className="flex justify-between text-sm">
                                         <span className="text-slate-600">
-                                            {item?.productName || "Sản phẩm"} <span className="text-slate-400">× {item?.quantity || 0}</span>
+                                            {item.name} <span className="text-slate-400">× {item.quantity}</span>
                                         </span>
                                         <span className="font-medium text-slate-900">
-                                            {formatPrice((item?.price || 0) * (item?.quantity || 0))}
+                                            {formatPrice(item.subtotal)}
                                         </span>
                                     </div>
                                 ))}
@@ -176,15 +144,11 @@ export default function OrdersPage() {
                             {/* Order Footer */}
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-slate-200">
                                 <div>
-                                    {order.deliveryDate && (
-                                        <p className="text-sm text-slate-600">
-                                            Ngày giao: {formatDate(order.deliveryDate)}
-                                        </p>
-                                    )}
+                                    {/* Delivery date can be added to Order type later if needed */}
                                 </div>
                                 <div className="flex items-center justify-between sm:justify-end gap-4">
                                     <p className="text-sm text-slate-600">Tổng tiền:</p>
-                                    <p className="text-xl font-bold text-primary-600">{formatPrice(order.totalAmount || 0)}</p>
+                                    <p className="text-xl font-bold text-primary-600">{formatPrice(order.totalAmount)}</p>
                                 </div>
                             </div>
                         </div>
@@ -223,23 +187,23 @@ export default function OrdersPage() {
                         </thead>
                         <tbody className="divide-y divide-slate-200">
                             {filteredOrders.map((order) => {
-                                const status = order?.status || "pending";
-                                const statusConfig = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
+                                const normalizedStatus = (order.status || "pending").toLowerCase() as keyof typeof STATUS_CONFIG;
+                                const statusConfig = STATUS_CONFIG[normalizedStatus] || STATUS_CONFIG.pending;
                                 const StatusIcon = statusConfig?.icon || Package;
 
                                 return (
                                     <tr key={order.id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-6 py-4 font-medium text-slate-900">{order.orderNumber || "N/A"}</td>
-                                        <td className="px-6 py-4 text-slate-600">{formatDate(order.createdAt || new Date().toISOString())}</td>
-                                        <td className="px-6 py-4 text-slate-600">{order.items?.length || 0} sản phẩm</td>
+                                        <td className="px-6 py-4 font-medium text-slate-900">{order.id}</td>
+                                        <td className="px-6 py-4 text-slate-600">{formatDate(order.createdAt)}</td>
+                                        <td className="px-6 py-4 text-slate-600">{order.items.length} sản phẩm</td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${statusConfig?.color || "bg-gray-100 text-gray-700"}`}>
                                                 <StatusIcon className="w-3.5 h-3.5" />
-                                                {statusConfig?.label || "N/A"}
+                                                {statusConfig?.label || status}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right font-semibold text-slate-900">
-                                            {formatPrice(order.totalAmount || 0)}
+                                            {formatPrice(order.totalAmount)}
                                         </td>
                                     </tr>
                                 );

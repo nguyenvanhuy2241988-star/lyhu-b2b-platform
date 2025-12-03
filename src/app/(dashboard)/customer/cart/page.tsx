@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getCart, updateCartQuantity, removeFromCart, createOrder } from "@/lib/customerStore";
+import { getCart, updateCartQuantity, removeFromCart, clearCart } from "@/lib/customerStore";
+import { addOrder } from "@/lib/ordersStore";
 import { getCurrentUser } from "@/lib/auth";
 import type { CartItem } from "@/mocks/data";
 import { Trash2, Plus, Minus, ShoppingCart, ArrowRight } from "lucide-react";
@@ -57,13 +58,31 @@ export default function CartPage() {
             return;
         }
 
-        const order = createOrder({ id: user.id, name: user.name });
-        if (order) {
-            alert("Đặt hàng thành công!");
-            router.push("/customer/orders");
-        } else {
-            alert("Giỏ hàng trống hoặc có lỗi xảy ra.");
+        if (cartItems.length === 0) {
+            alert("Giỏ hàng trống!");
+            return;
         }
+
+        // Create order using shared store
+        addOrder({
+            customerId: user.id,
+            customerName: user.name,
+            source: "CUSTOMER",
+            items: cartItems.map(item => ({
+                sku: item.product.sku || "N/A",
+                name: item.product.name,
+                brand: item.product.brand,
+                quantity: item.quantity,
+                unit: item.product.unit || "Cái",
+                unitPrice: item.product.wholesalePrice,
+                subtotal: item.product.wholesalePrice * item.quantity
+            })),
+            totalAmount: total
+        });
+
+        clearCart();
+        alert("Đặt hàng thành công!");
+        router.push("/customer/orders");
     };
 
     // ✅ Empty state check

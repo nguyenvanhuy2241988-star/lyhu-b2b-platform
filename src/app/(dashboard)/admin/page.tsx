@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Users, ShoppingBag, DollarSign, TrendingUp, Package, CreditCard } from "lucide-react";
 import { getAdminLeadStats, AdminLeadStats } from "@/lib/adminStats";
+import { getOrdersSummary } from "@/lib/ordersStore";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -31,10 +32,24 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState<AdminLeadStats | null>(null);
+    const [orderStats, setOrderStats] = useState<{
+        totalOrders: number;
+        totalRevenue: number;
+    } | null>(null);
 
     useEffect(() => {
         const data = getAdminLeadStats();
         setStats(data);
+
+        const ordersData = getOrdersSummary();
+        setOrderStats(ordersData);
+
+        // Listen for updates
+        const handleUpdates = () => {
+            setOrderStats(getOrdersSummary());
+        };
+        window.addEventListener("orders-updated", handleUpdates);
+        return () => window.removeEventListener("orders-updated", handleUpdates);
     }, []);
 
     const statsCards = [
@@ -72,7 +87,7 @@ export default function AdminDashboard() {
         },
         {
             label: "Đơn hàng khách",
-            value: stats?.totalOrders?.toString() || "0",
+            value: orderStats?.totalOrders?.toString() || "0",
             change: "Đặt trực tiếp",
             icon: Package,
             color: "text-orange-600",
@@ -80,7 +95,7 @@ export default function AdminDashboard() {
         },
         {
             label: "Doanh thu đơn",
-            value: formatPrice(stats?.totalOrderRevenue || 0),
+            value: formatPrice(orderStats?.totalRevenue || 0),
             change: "Từ đơn hàng",
             icon: CreditCard,
             color: "text-teal-600",
@@ -163,7 +178,7 @@ export default function AdminDashboard() {
                             <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
                             <div className="flex-1">
                                 <p className="text-sm font-medium text-slate-900">Đơn hàng khách</p>
-                                <p className="text-xs text-slate-500 mt-1">{stats?.totalOrders || 0} đơn</p>
+                                <p className="text-xs text-slate-500 mt-1">{orderStats?.totalOrders || 0} đơn</p>
                             </div>
                         </div>
                     </div>

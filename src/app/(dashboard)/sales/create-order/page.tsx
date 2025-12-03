@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { mockCustomers, mockProducts } from "@/mocks/data";
 import type { Customer, Product } from "@/mocks/data";
 import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, User } from "lucide-react";
 import { addSalesLead } from "@/lib/salesLeads";
+import { addOrder } from "@/lib/ordersStore";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -74,45 +76,51 @@ export default function CreateOrderPage() {
         }, 0);
     };
 
+    const router = useRouter();
+
     const handleCreateOrder = () => {
         if (!selectedCustomer) return;
 
         const total = calculateTotal();
-        const orderData = {
-            customer: selectedCustomer,
+
+        // 1. Create Order in Shared Store
+        const newOrder = addOrder({
+            customerId: selectedCustomer.id,
+            customerName: selectedCustomer.storeName,
+            source: "SALES",
             items: orderItems.map((item) => ({
-                productId: item.product.id,
-                productName: item.product.name,
-                sku: item.product.sku,
+                sku: item.product.sku || "N/A",
+                name: item.product.name,
+                brand: item.product.brand,
                 quantity: item.quantity,
-                price: item.product.wholesalePrice,
-                total: item.product.wholesalePrice * item.quantity,
+                unit: item.product.unit || "Cái",
+                unitPrice: item.product.wholesalePrice,
+                subtotal: item.product.wholesalePrice * item.quantity,
             })),
-            total: total,
-            createdAt: new Date().toISOString(),
-            createdBy: "Sales Rep", // Mock user
-        };
+            totalAmount: total,
+        });
 
-        console.log("Creating order:", orderData);
+        console.log("Created order:", newOrder);
 
-        // Save as a WON lead to update dashboard stats
+        // 2. Save as a WON lead to update dashboard stats (keep existing logic)
         addSalesLead({
             storeName: selectedCustomer.storeName,
-            contactName: selectedCustomer.storeName, // Using store name as contact for now
+            contactName: selectedCustomer.storeName,
             phone: selectedCustomer.phone,
             area: selectedCustomer.area,
             type: selectedCustomer.type,
             status: "WON",
             estimatedRevenue: total,
-            notes: `Đơn hàng mới: ${orderItems.length} sản phẩm`,
+            notes: `Đơn hàng mới: ${newOrder.id} - ${orderItems.length} sản phẩm`,
         });
 
-        alert("✅ Tạo đơn hàng thành công!\n\nDashboard đã được cập nhật.");
+        alert("✅ Tạo đơn hàng thành công!");
 
-        // Reset form
+        // 3. Reset and Redirect
         setSelectedCustomer(null);
         setOrderItems([]);
         setCurrentStep(1);
+        router.push("/sales/orders");
     };
 
     const handleReset = () => {

@@ -1,9 +1,6 @@
 {
-  "/not-found": "app/not-found.js",
   "/page": "app/page.js",
-  "/(dashboard)/ctv/page": "app/(dashboard)/ctv/page.js",
-  "/(dashboard)/ctv/new-lead/page": "app/(dashboard)/ctv/new-lead/page.js",
-  "/(dashboard)/ctv/my-leads/page": "app/(dashboard)/ctv/my-leads/page.js",
-  "/(dashboard)/admin/page": "app/(dashboard)/admin/page.js",
-  "/(dashboard)/admin/products/page": "app/(dashboard)/admin/products/page.js"
+  "/login/page": "app/login/page.js",
+  "/(dashboard)/admin/orders/page": "app/(dashboard)/admin/orders/page.js",
+  "/(dashboard)/admin/page": "app/(dashboard)/admin/page.js"
 }

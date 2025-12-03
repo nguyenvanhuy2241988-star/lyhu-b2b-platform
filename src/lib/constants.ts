@@ -10,6 +10,7 @@ export const ROLES = {
 export const NAV_ITEMS = {
     [ROLES.ADMIN]: [
         { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+        { label: "Orders", href: "/admin/orders", icon: FileText },
         { label: "Users", href: "/admin/users", icon: Users },
         { label: "Customers", href: "/admin/customers", icon: UserCheck },
         { label: "Products", href: "/admin/products", icon: ShoppingBag },
@@ -22,6 +23,7 @@ export const NAV_ITEMS = {
     ],
     [ROLES.SALES]: [
         { label: "Dashboard", href: "/sales", icon: LayoutDashboard },
+        { label: "Orders", href: "/sales/orders", icon: FileText },
         { label: "My Customers", href: "/sales/my-customers", icon: Users },
         { label: "Create Order", href: "/sales/create-order", icon: ShoppingCart },
     ],
