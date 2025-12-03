@@ -12,10 +12,40 @@ const formatPrice = (price: number) => {
     }).format(price);
 };
 
-{ value: "PENDING", label: "Chờ xác nhận" },
-{ value: "PROCESSING", label: "Đang xử lý" },
-{ value: "DELIVERED", label: "Đã giao" },
-{ value: "CANCELLED", label: "Đã hủy" },
+const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("vi-VN");
+};
+
+const STATUS_CONFIG = {
+    pending: {
+        label: "Chờ xác nhận",
+        icon: Clock,
+        color: "bg-yellow-100 text-yellow-700",
+    },
+    processing: {
+        label: "Đang xử lý",
+        icon: Package,
+        color: "bg-blue-100 text-blue-700",
+    },
+    delivered: {
+        label: "Đã giao",
+        icon: CheckCircle,
+        color: "bg-green-100 text-green-700",
+    },
+    cancelled: {
+        label: "Đã hủy",
+        icon: XCircle,
+        color: "bg-red-100 text-red-700",
+    },
+};
+
+const ORDER_STATUS_OPTIONS = [
+    { value: "ALL", label: "Tất cả" },
+    { value: "pending", label: "Chờ xác nhận" },
+    { value: "processing", label: "Đang xử lý" },
+    { value: "delivered", label: "Đã giao" },
+    { value: "cancelled", label: "Đã hủy" },
 ];
 
 export default function OrdersPage() {
@@ -43,9 +73,9 @@ export default function OrdersPage() {
 
     const stats = {
         total: orders.length,
-        pending: orders.filter((o) => o.status === "PENDING").length,
-        processing: orders.filter((o) => o.status === "PROCESSING").length,
-        delivered: orders.filter((o) => o.status === "DELIVERED").length,
+        pending: orders.filter((o) => o.status === "pending").length,
+        processing: orders.filter((o) => o.status === "processing").length,
+        delivered: orders.filter((o) => o.status === "delivered").length,
     };
 
     return (
@@ -85,7 +115,7 @@ export default function OrdersPage() {
                     <h3 className="font-semibold text-slate-900">Lọc theo trạng thái</h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    {FILTER_OPTIONS.map((option) => (
+                    {ORDER_STATUS_OPTIONS.map((option) => (
                         <button
                             key={option.value}
                             onClick={() => setSelectedStatus(option.value)}
