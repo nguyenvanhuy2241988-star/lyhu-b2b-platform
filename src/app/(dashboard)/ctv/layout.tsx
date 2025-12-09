@@ -12,7 +12,7 @@ export default function CTVLayout({
     useAuthGuard(ROLES.CTV as any);
 
     return (
-        <DashboardShell role={ROLES.CTV} title="CTV Dashboard">
+        <DashboardShell role={ROLES.CTV} title="Tổng quan CTV">
             {children}
         </DashboardShell>
     );

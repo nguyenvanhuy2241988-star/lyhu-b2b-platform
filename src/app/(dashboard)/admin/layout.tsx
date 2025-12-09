@@ -12,7 +12,7 @@ export default function AdminLayout({
     useAuthGuard(ROLES.ADMIN as any);
 
     return (
-        <DashboardShell role={ROLES.ADMIN} title="Admin Dashboard">
+        <DashboardShell role={ROLES.ADMIN} title="Tổng quan Admin">
             {children}
         </DashboardShell>
     );

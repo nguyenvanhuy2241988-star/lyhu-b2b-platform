@@ -7,7 +7,7 @@ export default function CustomerDashboard() {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold text-slate-900">Customer Dashboard</h1>
+                <h1 className="text-2xl font-bold text-slate-900">Tổng quan Khách hàng</h1>
                 <p className="text-slate-500">Chào mừng bạn quay trở lại!</p>
             </div>
 
@@ -17,7 +17,7 @@ export default function CustomerDashboard() {
                         <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                             <ShoppingBag className="w-6 h-6 text-blue-600" />
                         </div>
-                        <h3 className="font-semibold text-slate-900">Catalogue</h3>
+                        <h3 className="font-semibold text-slate-900">Danh mục sản phẩm</h3>
                         <p className="text-sm text-slate-500 mt-1">Xem danh sách sản phẩm</p>
                     </div>
                 </Link>

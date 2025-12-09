@@ -12,7 +12,7 @@ export default function CustomerLayout({
     useAuthGuard(ROLES.CUSTOMER as any);
 
     return (
-        <DashboardShell role={ROLES.CUSTOMER} title="Customer Dashboard">
+        <DashboardShell role={ROLES.CUSTOMER} title="Tổng quan Khách hàng">
             {children}
         </DashboardShell>
     );

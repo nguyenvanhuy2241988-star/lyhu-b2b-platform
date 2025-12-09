@@ -7,27 +7,6 @@ export interface User {
     createdAt: string;
 }
 
-export interface Customer {
-    id: string;
-    storeName: string;
-    type: "Tạp hóa" | "Mini mart" | "Đại lý" | "NPP";
-    area: string;
-    phone: string;
-    email?: string;
-    address?: string;
-}
-
-export interface Product {
-    id: string;
-    sku: string;
-    name: string;
-    brand: string;
-    unit: string;
-    wholesalePrice: number;
-    retailPrice?: number;
-    stock?: number;
-}
-
 export interface CartItem {
     id: string;
     product: Product;
@@ -39,12 +18,12 @@ export interface CustomerOrder {
     orderNumber: string;
     customerId: string;
     customerName: string;
-    items: Array<{
+    items: {
         productId: string;
         productName: string;
         quantity: number;
         price: number;
-    }>;
+    }[];
     totalAmount: number;
     status: "pending" | "processing" | "delivered" | "cancelled";
     createdAt: string;
@@ -65,155 +44,129 @@ export interface Lead {
     ctvName: string;
 }
 
-export const mockUsers: User[] = [
-    {
-        id: "1",
-        name: "Nguyễn Văn An",
-        email: "an.nguyen@lyhu.com",
-        role: "admin",
-        status: "active",
-        createdAt: "2024-01-15",
-    },
-    {
-        id: "2",
-        name: "Trần Thị Bình",
-        email: "binh.tran@lyhu.com",
-        role: "sales",
-        status: "active",
-        createdAt: "2024-02-20",
-    },
-    {
-        id: "3",
-        name: "Lê Văn Cường",
-        email: "cuong.le@gmail.com",
-        role: "customer",
-        status: "active",
-        createdAt: "2024-03-10",
-    },
-    {
-        id: "4",
-        name: "Phạm Thị Dung",
-        email: "dung.pham@lyhu.com",
-        role: "ctv",
-        status: "active",
-        createdAt: "2024-04-05",
-    },
-    {
-        id: "5",
-        name: "Hoàng Văn Em",
-        email: "em.hoang@gmail.com",
-        role: "customer",
-        status: "inactive",
-        createdAt: "2024-05-12",
-    },
-];
+export interface Customer {
+    id: string;
+    storeName: string;
+    type: "Tạp hóa" | "Mini mart" | "Đại lý" | "NPP";
+    area: string;
+    phone: string;
+    email?: string;
+    address?: string;
+}
 
-export const mockCustomers: Customer[] = [
-    {
-        id: "1",
-        storeName: "Tạp hóa Hùng Vương",
-        type: "Tạp hóa",
-        area: "Quận 1, TP.HCM",
-        phone: "0901234567",
-        email: "hungvuong@gmail.com",
-        address: "123 Lê Lợi, Quận 1",
-    },
-    {
-        id: "2",
-        storeName: "Mini Mart Sài Gòn",
-        type: "Mini mart",
-        area: "Quận 3, TP.HCM",
-        phone: "0902345678",
-        email: "minimart.sg@gmail.com",
-        address: "456 Võ Văn Tần, Quận 3",
-    },
-    {
-        id: "3",
-        storeName: "Đại lý Minh Khang",
-        type: "Đại lý",
-        area: "Quận 5, TP.HCM",
-        phone: "0903456789",
-        email: "minhkhang@gmail.com",
-        address: "789 An Dương Vương, Quận 5",
-    },
-    {
-        id: "4",
-        storeName: "NPP Phương Nam",
-        type: "NPP",
-        area: "Bình Dương",
-        phone: "0904567890",
-        email: "phuongnam.npp@gmail.com",
-        address: "321 Đại Lộ Bình Dương, Bình Dương",
-    },
-    {
-        id: "5",
-        storeName: "Tạp hóa Bách Hoá Xanh",
-        type: "Tạp hóa",
-        area: "Quận 7, TP.HCM",
-        phone: "0905678901",
-        email: "bhx@gmail.com",
-        address: "654 Nguyễn Hữu Thọ, Quận 7",
-    },
-    {
-        id: "6",
-        storeName: "Mini Mart GS25",
-        type: "Mini mart",
-        area: "Quận 2, TP.HCM",
-        phone: "0906789012",
-        email: "gs25@gmail.com",
-        address: "987 Trần Não, Quận 2",
-    },
-    {
-        id: "7",
-        storeName: "Đại lý Thành Đạt",
-        type: "Đại lý",
-        area: "Đồng Nai",
-        phone: "0907890123",
-        email: "thanhdat@gmail.com",
-        address: "147 Quốc lộ 1A, Đồng Nai",
-    },
-    {
-        id: "8",
-        storeName: "NPP Vạn Lộc",
-        type: "NPP",
-        area: "Long An",
-        phone: "0908901234",
-        email: "vanloc.npp@gmail.com",
-        address: "258 Hùng Vương, Long An",
-    },
-];
+export interface Product {
+    id: string;
+    sku: string;
+    name: string;
+    brand: string;
+    unit: string;
+    wholesalePrice: number; // Deprecated, kept for backward compatibility
+    retailPrice?: number;   // Deprecated
+    stock?: number;
+
+    // New fields for Flexible Pricing
+    packSize?: number; // units per case (reference)
+    basePricePerUnit: number; // Internal base price per unit
+
+    // Customer Price Tiers (LYHU Ship)
+    customerPriceTiers: {
+        minQty: number;
+        maxQty?: number;
+        pricePerUnit: number;
+    }[];
+
+    // CTV Self Ship Price Tiers
+    ctvSelfShipPriceTiers: {
+        minQty: number;
+        maxQty?: number;
+        pricePerUnit: number;
+    }[];
+
+    ctvCommissionRate: number;
+
+    // Deprecated fields mapped for backward compatibility
+    basePrice: number;
+    customerPrice: number;
+    ctvSelfShipPrice: number;
+}
 
 export const mockProducts: Product[] = [
     {
-        id: "1",
+        id: "uhi-cola",
         sku: "UHI-001",
-        name: "Nước tăng lực UHI Energy 330ml",
+        name: "UHI Que chua vị Cola",
         brand: "UHI",
-        unit: "Lon",
-        wholesalePrice: 8500,
-        retailPrice: 10000,
-        stock: 500,
+        unit: "goi",
+        packSize: 24,
+        wholesalePrice: 16000, // Legacy
+        basePrice: 16000,      // Legacy
+        customerPrice: 20000,  // Legacy (Tier 1)
+        ctvSelfShipPrice: 14000, // Legacy (Tier 1)
+
+        basePricePerUnit: 16000,
+        customerPriceTiers: [
+            { minQty: 1, maxQty: 11, pricePerUnit: 20000 },
+            { minQty: 12, maxQty: 47, pricePerUnit: 18000 },
+            { minQty: 48, pricePerUnit: 16000 },
+        ],
+        ctvSelfShipPriceTiers: [
+            { minQty: 1, maxQty: 23, pricePerUnit: 14000 },
+            { minQty: 24, maxQty: 71, pricePerUnit: 13000 },
+            { minQty: 72, pricePerUnit: 12000 },
+        ],
+        ctvCommissionRate: 0.1,
     },
     {
-        id: "2",
+        id: "boyo-popcorn-set",
         sku: "BOYO-001",
-        name: "Sữa chua uống BOYO Dâu 180ml",
+        name: "BOYO Set nổ bỏng ngô 3in1",
         brand: "BOYO",
-        unit: "Chai",
-        wholesalePrice: 6000,
-        retailPrice: 7500,
-        stock: 800,
+        unit: "set",
+        packSize: 12,
+        wholesalePrice: 50000,
+        basePrice: 50000,
+        customerPrice: 60000,
+        ctvSelfShipPrice: 45000,
+
+        basePricePerUnit: 50000,
+        customerPriceTiers: [
+            { minQty: 1, maxQty: 5, pricePerUnit: 60000 },
+            { minQty: 6, maxQty: 23, pricePerUnit: 55000 },
+            { minQty: 24, pricePerUnit: 50000 },
+        ],
+        ctvSelfShipPriceTiers: [
+            { minQty: 1, maxQty: 11, pricePerUnit: 45000 },
+            { minQty: 12, maxQty: 35, pricePerUnit: 43000 },
+            { minQty: 36, pricePerUnit: 41000 },
+        ],
+        ctvCommissionRate: 0.08,
     },
     {
-        id: "3",
+        id: "cvt-salted-egg",
         sku: "CVT-001",
-        name: "Nước khoáng CVT 500ml",
+        name: "CVT Khoai môn trứng muối",
         brand: "CVT",
-        unit: "Chai",
-        wholesalePrice: 3000,
-        retailPrice: 4000,
-        stock: 1200,
+        unit: "goi",
+        packSize: 24,
+        wholesalePrice: 34000,
+        basePrice: 34000,
+        customerPrice: 40000,
+        ctvSelfShipPrice: 30000,
+
+        basePricePerUnit: 34000,
+        customerPriceTiers: [
+            { minQty: 1, maxQty: 9, pricePerUnit: 40000 },
+            { minQty: 10, maxQty: 47, pricePerUnit: 37000 },
+            { minQty: 48, pricePerUnit: 34000 },
+        ],
+        ctvSelfShipPriceTiers: [
+            { minQty: 1, maxQty: 23, pricePerUnit: 30000 },
+            { minQty: 24, maxQty: 71, pricePerUnit: 29000 },
+            { minQty: 72, pricePerUnit: 28000 },
+        ],
+        ctvCommissionRate: 0.09,
     },
+    // Keeping other products with default structure for now, mapping to tiers
     {
         id: "4",
         sku: "LYHU-001",
@@ -221,8 +174,14 @@ export const mockProducts: Product[] = [
         brand: "LYHU",
         unit: "Chai",
         wholesalePrice: 7000,
-        retailPrice: 9000,
-        stock: 600,
+        basePrice: 6500,
+        customerPrice: 9000,
+        ctvSelfShipPrice: 6800,
+        ctvCommissionRate: 0.12,
+
+        basePricePerUnit: 6500,
+        customerPriceTiers: [{ minQty: 1, pricePerUnit: 9000 }],
+        ctvSelfShipPriceTiers: [{ minQty: 1, pricePerUnit: 6800 }],
     },
     {
         id: "5",
@@ -231,8 +190,14 @@ export const mockProducts: Product[] = [
         brand: "UHI",
         unit: "Lon",
         wholesalePrice: 12000,
-        retailPrice: 15000,
-        stock: 300,
+        basePrice: 11000,
+        customerPrice: 15000,
+        ctvSelfShipPrice: 11500,
+        ctvCommissionRate: 0.08,
+
+        basePricePerUnit: 11000,
+        customerPriceTiers: [{ minQty: 1, pricePerUnit: 15000 }],
+        ctvSelfShipPriceTiers: [{ minQty: 1, pricePerUnit: 11500 }],
     },
     {
         id: "6",
@@ -241,8 +206,14 @@ export const mockProducts: Product[] = [
         brand: "BOYO",
         unit: "Chai",
         wholesalePrice: 6500,
-        retailPrice: 8000,
-        stock: 750,
+        basePrice: 6000,
+        customerPrice: 8000,
+        ctvSelfShipPrice: 6300,
+        ctvCommissionRate: 0.10,
+
+        basePricePerUnit: 6000,
+        customerPriceTiers: [{ minQty: 1, pricePerUnit: 8000 }],
+        ctvSelfShipPriceTiers: [{ minQty: 1, pricePerUnit: 6300 }],
     },
     {
         id: "7",
@@ -251,8 +222,14 @@ export const mockProducts: Product[] = [
         brand: "CVT",
         unit: "Chai",
         wholesalePrice: 7500,
-        retailPrice: 9000,
-        stock: 400,
+        basePrice: 7000,
+        customerPrice: 9000,
+        ctvSelfShipPrice: 7200,
+        ctvCommissionRate: 0.15,
+
+        basePricePerUnit: 7000,
+        customerPriceTiers: [{ minQty: 1, pricePerUnit: 9000 }],
+        ctvSelfShipPriceTiers: [{ minQty: 1, pricePerUnit: 7200 }],
     },
     {
         id: "8",
@@ -261,8 +238,14 @@ export const mockProducts: Product[] = [
         brand: "LYHU",
         unit: "Chai",
         wholesalePrice: 8000,
-        retailPrice: 10000,
-        stock: 550,
+        basePrice: 7500,
+        customerPrice: 10000,
+        ctvSelfShipPrice: 7800,
+        ctvCommissionRate: 0.12,
+
+        basePricePerUnit: 7500,
+        customerPriceTiers: [{ minQty: 1, pricePerUnit: 10000 }],
+        ctvSelfShipPriceTiers: [{ minQty: 1, pricePerUnit: 7800 }],
     },
 ];
 
@@ -405,5 +388,106 @@ export const mockLeads: Lead[] = [
         createdAt: "2024-11-26",
         ctvId: "4",
         ctvName: "Phạm Thị Dung",
+    },
+];
+
+// Mock Customers data
+export const mockCustomers: Customer[] = [
+    {
+        id: "1",
+        storeName: "Tạp hóa Hương Mai",
+        type: "Tạp hóa",
+        area: "Hà Đông, Hà Nội",
+        phone: "0912345678",
+        email: "huongmai@gmail.com",
+        address: "123 Nguyễn Trãi, Hà Đông",
+    },
+    {
+        id: "2",
+        storeName: "Mini Mart Phương Anh",
+        type: "Mini mart",
+        area: "Thanh Xuân, Hà Nội",
+        phone: "0923456789",
+        email: "phuonganh@gmail.com",
+        address: "456 Nguyễn Xiển, Thanh Xuân",
+    },
+    {
+        id: "3",
+        storeName: "Đại lý Hoàng Long",
+        type: "Đại lý",
+        area: "Cầu Giấy, Hà Nội",
+        phone: "0934567890",
+        email: "hoanglong@gmail.com",
+        address: "789 Trần Thái Tông, Cầu Giấy",
+    },
+    {
+        id: "4",
+        storeName: "NPP Miền Bắc",
+        type: "NPP",
+        area: "Long Biên, Hà Nội",
+        phone: "0945678901",
+        email: "nppmienbac@gmail.com",
+        address: "321 Ngọc Lâm, Long Biên",
+    },
+    {
+        id: "5",
+        storeName: "Tạp hóa Ngọc Lan",
+        type: "Tạp hóa",
+        area: "Ba Đình, Hà Nội",
+        phone: "0956789012",
+        address: "654 Kim Mã, Ba Đình",
+    },
+    {
+        id: "6",
+        storeName: "Mini Mart Sao Việt",
+        type: "Mini mart",
+        area: "Đống Đa, Hà Nội",
+        phone: "0967890123",
+        email: "saoviet@gmail.com",
+        address: "987 Tây Sơn, Đống Đa",
+    },
+];
+
+// Mock Users data for admin management
+export const mockUsers: User[] = [
+    {
+        id: "1",
+        name: "Admin LYHU",
+        email: "admin@lyhu.vn",
+        role: "admin",
+        status: "active",
+        createdAt: "2024-01-01",
+    },
+    {
+        id: "2",
+        name: "Sales LYHU",
+        email: "sales@lyhu.vn",
+        role: "sales",
+        status: "active",
+        createdAt: "2024-01-15",
+    },
+    {
+        id: "3",
+        name: "Lê Văn Cường",
+        email: "cuong.le@lyhu.vn",
+        role: "customer",
+        status: "active",
+        createdAt: "2024-02-01",
+    },
+    {
+        id: "4",
+        name: "Phạm Thị Dung",
+        email: "dung.pham@lyhu.vn",
+        role: "ctv",
+        status: "active",
+        createdAt: "2024-02-15",
+    },
+    {
+        id: "5",
+        name: "Nguyễn Văn An",
+        email: "an.nguyen@lyhu.vn",
+        role: "sales",
+        status: "inactive",
+        createdAt: "2024-03-01",
     },
 ];

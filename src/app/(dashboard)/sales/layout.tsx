@@ -12,7 +12,7 @@ export default function SalesLayout({
     useAuthGuard(ROLES.SALES as any);
 
     return (
-        <DashboardShell role={ROLES.SALES} title="Sales Dashboard">
+        <DashboardShell role={ROLES.SALES} title="Tổng quan Sales">
             {children}
         </DashboardShell>
     );
