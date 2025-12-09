@@ -55,12 +55,7 @@ export function setCurrentUser(user: AuthUser | null) {
     }
     window.localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            role: user.role,
-        }),
+        JSON.stringify(user),
     );
 }
 

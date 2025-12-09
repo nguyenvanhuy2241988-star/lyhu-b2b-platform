@@ -8,9 +8,14 @@ import {
     filterOrdersByStatus,
     ORDER_STATUS_LABELS,
     type Order,
-    type OrderStatus
+    type OrderStatus,
+    FRAUD_STATUS_LABELS
 } from "@/lib/ordersStore";
-import { Package, Clock, CheckCircle, XCircle, Search } from "lucide-react";
+import { scanOrdersForFraud } from "@/lib/fraudScan";
+import {
+    Package, Clock, CheckCircle, XCircle, Search,
+    AlertTriangle, ShieldAlert, ArrowUpDown, Filter
+} from "lucide-react";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -66,6 +71,13 @@ export default function AdminOrdersPage() {
     };
 
     useEffect(() => {
+        // Auto-scan for fraud on load
+        try {
+            scanOrdersForFraud();
+        } catch (e) {
+            console.error("Fraud scan failed:", e);
+        }
+
         loadData();
 
         // Listen for updates from other tabs/windows
@@ -200,7 +212,15 @@ export default function AdminOrdersPage() {
                                             key={order.id}
                                             className={`hover:bg-slate-50 transition-colors ${isCompleted ? "opacity-75" : ""}`}
                                         >
-                                            <td className="px-6 py-4 font-medium text-slate-900">{order.id}</td>
+                                            <td className="px-6 py-4 font-medium text-slate-900">
+                                                {order.id}
+                                                {order.flagged && (
+                                                    <span className="block mt-1 text-xs text-red-600 font-semibold flex items-center gap-1">
+                                                        <ShieldAlert className="w-3 h-3" />
+                                                        Gian lận
+                                                    </span>
+                                                )}
+                                            </td>
                                             <td className="px-6 py-4">
                                                 <p className="font-medium text-slate-900">{order.customerName}</p>
                                                 <p className="text-xs text-slate-500">{order.items.length} sản phẩm</p>
@@ -208,7 +228,9 @@ export default function AdminOrdersPage() {
                                             <td className="px-6 py-4">
                                                 <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${order.source === "CUSTOMER"
                                                     ? "bg-purple-100 text-purple-700"
-                                                    : "bg-blue-100 text-blue-700"
+                                                    : order.source === "CTV"
+                                                        ? "bg-emerald-100 text-emerald-700"
+                                                        : "bg-blue-100 text-blue-700"
                                                     }`}>
                                                     {order.source}
                                                 </span>

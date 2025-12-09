@@ -1,4 +1,4 @@
-import { Product, mockProducts } from "@/mocks/data";
+import { Product, mockProducts, mockOrders } from "@/mocks/data";
 import { getCustomerUnitPrice, getCtvSelfShipUnitPrice } from "./pricing";
 
 export type OrderSource = "CUSTOMER" | "SALES" | "CTV";
@@ -74,7 +74,26 @@ export const loadOrders = (): Order[] => {
     if (typeof window === "undefined") return [];
     try {
         const stored = localStorage.getItem(STORAGE_KEY);
-        return stored ? JSON.parse(stored) : [];
+        if (!stored) {
+            // Initialize with mock data, mapping items to full structure
+            return mockOrders.map(mo => ({
+                ...mo,
+                items: mo.items.map(i => {
+                    const product = mockProducts.find(p => p.id === i.productId);
+                    return {
+                        sku: product?.sku || "UNKNOWN",
+                        name: i.productName,
+                        brand: product?.brand || "LYHU",
+                        unitPrice: i.price,
+                        quantity: i.quantity,
+                        unit: product?.unit || "SP",
+                        subtotal: i.price * i.quantity,
+                        productId: i.productId
+                    };
+                })
+            })) as Order[];
+        }
+        return JSON.parse(stored);
     } catch (error) {
         console.error("Failed to load orders:", error);
         return [];

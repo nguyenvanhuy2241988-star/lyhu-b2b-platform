@@ -5,12 +5,26 @@ export interface User {
     role: "admin" | "customer" | "sales" | "ctv";
     status: "active" | "inactive";
     createdAt: string;
+    // Extended properties for CTV
+    phone?: string;
+    address?: string;
+    province?: string;
+    region?: string;
+    referralCode?: string;
+    ctvType?: "Indie" | "Community Leader" | "KOL";
+    ctvMode?: "Self-Ship" | "No-Capital";
+    onboardingStep?: number; // 0-3
+    // Linked Account info
+    referredByCode?: string;
+    referredByCtvId?: string;
+    activatedAt?: string | null;
 }
 
 export interface CartItem {
     id: string;
     product: Product;
     quantity: number;
+    // ... possibly other fields, kept minimal for mock
 }
 
 export interface CustomerOrder {
@@ -28,6 +42,22 @@ export interface CustomerOrder {
     status: "pending" | "processing" | "delivered" | "cancelled";
     createdAt: string;
     deliveryDate?: string;
+    fulfillmentMode?: "LYHU_SHIP" | "SELF_SHIP";
+    ctvId?: string;
+    ctvName?: string;
+    ctvCommission?: number;
+    ctvReferralCode?: string;
+    ctvReferredByCode?: string;
+    fraudStatus?: "NONE" | "FLAGGED" | "CONFIRMED";
+    flagged?: boolean;
+    flaggedReasons?: string[];
+    reviewedByAdminAt?: string;
+    reviewedByAdminNote?: string;
+
+    // Fraud check extras
+    source?: "CUSTOMER" | "SALES" | "CTV";
+    receiverPhone?: string;
+    receiverAddress?: string;
 }
 
 export interface Lead {
@@ -60,13 +90,13 @@ export interface Product {
     name: string;
     brand: string;
     unit: string;
-    wholesalePrice: number; // Deprecated, kept for backward compatibility
+    wholesalePrice: number; // Deprecated
     retailPrice?: number;   // Deprecated
     stock?: number;
 
     // New fields for Flexible Pricing
-    packSize?: number; // units per case (reference)
-    basePricePerUnit: number; // Internal base price per unit
+    packSize?: number;
+    basePricePerUnit: number;
 
     // Customer Price Tiers (LYHU Ship)
     customerPriceTiers: {
@@ -98,11 +128,10 @@ export const mockProducts: Product[] = [
         brand: "UHI",
         unit: "goi",
         packSize: 24,
-        wholesalePrice: 16000, // Legacy
-        basePrice: 16000,      // Legacy
-        customerPrice: 20000,  // Legacy (Tier 1)
-        ctvSelfShipPrice: 14000, // Legacy (Tier 1)
-
+        wholesalePrice: 16000,
+        basePrice: 16000,
+        customerPrice: 20000,
+        ctvSelfShipPrice: 14000,
         basePricePerUnit: 16000,
         customerPriceTiers: [
             { minQty: 1, maxQty: 11, pricePerUnit: 20000 },
@@ -127,7 +156,6 @@ export const mockProducts: Product[] = [
         basePrice: 50000,
         customerPrice: 60000,
         ctvSelfShipPrice: 45000,
-
         basePricePerUnit: 50000,
         customerPriceTiers: [
             { minQty: 1, maxQty: 5, pricePerUnit: 60000 },
@@ -152,7 +180,6 @@ export const mockProducts: Product[] = [
         basePrice: 34000,
         customerPrice: 40000,
         ctvSelfShipPrice: 30000,
-
         basePricePerUnit: 34000,
         customerPriceTiers: [
             { minQty: 1, maxQty: 9, pricePerUnit: 40000 },
@@ -166,7 +193,6 @@ export const mockProducts: Product[] = [
         ],
         ctvCommissionRate: 0.09,
     },
-    // Keeping other products with default structure for now, mapping to tiers
     {
         id: "4",
         sku: "LYHU-001",
@@ -178,7 +204,6 @@ export const mockProducts: Product[] = [
         customerPrice: 9000,
         ctvSelfShipPrice: 6800,
         ctvCommissionRate: 0.12,
-
         basePricePerUnit: 6500,
         customerPriceTiers: [{ minQty: 1, pricePerUnit: 9000 }],
         ctvSelfShipPriceTiers: [{ minQty: 1, pricePerUnit: 6800 }],
@@ -194,7 +219,6 @@ export const mockProducts: Product[] = [
         customerPrice: 15000,
         ctvSelfShipPrice: 11500,
         ctvCommissionRate: 0.08,
-
         basePricePerUnit: 11000,
         customerPriceTiers: [{ minQty: 1, pricePerUnit: 15000 }],
         ctvSelfShipPriceTiers: [{ minQty: 1, pricePerUnit: 11500 }],
@@ -210,7 +234,6 @@ export const mockProducts: Product[] = [
         customerPrice: 8000,
         ctvSelfShipPrice: 6300,
         ctvCommissionRate: 0.10,
-
         basePricePerUnit: 6000,
         customerPriceTiers: [{ minQty: 1, pricePerUnit: 8000 }],
         ctvSelfShipPriceTiers: [{ minQty: 1, pricePerUnit: 6300 }],
@@ -226,7 +249,6 @@ export const mockProducts: Product[] = [
         customerPrice: 9000,
         ctvSelfShipPrice: 7200,
         ctvCommissionRate: 0.15,
-
         basePricePerUnit: 7000,
         customerPriceTiers: [{ minQty: 1, pricePerUnit: 9000 }],
         ctvSelfShipPriceTiers: [{ minQty: 1, pricePerUnit: 7200 }],
@@ -242,7 +264,6 @@ export const mockProducts: Product[] = [
         customerPrice: 10000,
         ctvSelfShipPrice: 7800,
         ctvCommissionRate: 0.12,
-
         basePricePerUnit: 7500,
         customerPriceTiers: [{ minQty: 1, pricePerUnit: 10000 }],
         ctvSelfShipPriceTiers: [{ minQty: 1, pricePerUnit: 7800 }],
@@ -280,6 +301,7 @@ export const mockOrders: CustomerOrder[] = [
         totalAmount: 230000,
         status: "pending",
         createdAt: "2024-11-25",
+        source: "CUSTOMER",
     },
     {
         id: "2",
@@ -294,6 +316,7 @@ export const mockOrders: CustomerOrder[] = [
         status: "processing",
         createdAt: "2024-11-20",
         deliveryDate: "2024-11-22",
+        source: "CUSTOMER",
     },
     {
         id: "3",
@@ -307,6 +330,7 @@ export const mockOrders: CustomerOrder[] = [
         status: "delivered",
         createdAt: "2024-11-15",
         deliveryDate: "2024-11-18",
+        source: "CUSTOMER",
     },
     {
         id: "4",
@@ -320,6 +344,45 @@ export const mockOrders: CustomerOrder[] = [
         totalAmount: 123000,
         status: "cancelled",
         createdAt: "2024-11-10",
+        source: "CUSTOMER",
+    },
+    {
+        id: "5",
+        orderNumber: "ORD-2024-005",
+        customerId: "3", // Same customer for demo
+        customerName: "Lê Văn Cường",
+        items: [
+            { productId: "5", productName: "Nước tăng lực UHI Plus 500ml", quantity: 20, price: 12000 },
+        ],
+        totalAmount: 240000,
+        status: "delivered",
+        createdAt: "2024-11-25",
+        fulfillmentMode: "LYHU_SHIP",
+        ctvId: "101", // Junior 1
+        ctvName: "CTV Junior 1",
+        ctvCommission: 24000,
+        // Referral linkage
+        ctvReferralCode: "JUNIOR1",
+        ctvReferredByCode: "DUNGPHAM88",
+        source: "CTV",
+    },
+    {
+        id: "FRAUD-TEST-1",
+        orderNumber: "ORD-2024-999",
+        customerId: "3",
+        customerName: "Gian Lận",
+        items: [
+            { productId: "5", productName: "Nước tăng lực UHI Plus 500ml", quantity: 50, price: 12000 },
+        ],
+        totalAmount: 600000,
+        status: "pending",
+        createdAt: "2024-12-09",
+        source: "CTV",
+        ctvId: "4", // DUNGPHAM88
+        ctvCommission: 48000,
+        fulfillmentMode: "LYHU_SHIP",
+        receiverPhone: "0961234567", // Matches DUNGPHAM88's phone (set below in mockUsers)
+        receiverAddress: "123 Đường Cầu Giấy, Hà Nội",
     },
 ];
 
@@ -391,7 +454,6 @@ export const mockLeads: Lead[] = [
     },
 ];
 
-// Mock Customers data
 export const mockCustomers: Customer[] = [
     {
         id: "1",
@@ -448,7 +510,6 @@ export const mockCustomers: Customer[] = [
     },
 ];
 
-// Mock Users data for admin management
 export const mockUsers: User[] = [
     {
         id: "1",
@@ -481,6 +542,30 @@ export const mockUsers: User[] = [
         role: "ctv",
         status: "active",
         createdAt: "2024-02-15",
+        // Completed Profile
+        phone: "0961234567",
+        address: "123 Đường Cầu Giấy",
+        province: "Hà Nội",
+        region: "Miền Bắc",
+        referralCode: "DUNGPHAM88",
+        ctvType: "Community Leader",
+        ctvMode: "Self-Ship",
+        onboardingStep: 3,
+    },
+    {
+        id: "99",
+        name: "CTV Mới Bắt Đầu",
+        email: "ctv.new@lyhu.vn",
+        role: "ctv",
+        status: "active",
+        createdAt: "2024-12-01",
+        // Incomplete Profile
+        phone: "",
+        address: "",
+        province: "",
+        region: "",
+        referralCode: "CTVNEW001",
+        onboardingStep: 0,
     },
     {
         id: "5",
@@ -489,5 +574,45 @@ export const mockUsers: User[] = [
         role: "sales",
         status: "inactive",
         createdAt: "2024-03-01",
+    },
+    {
+        id: "101",
+        name: "CTV Junior 1 (Đã kích hoạt)",
+        email: "junior1@lyhu.vn",
+        role: "ctv",
+        status: "active",
+        createdAt: "2024-11-20",
+        phone: "0971112222",
+        address: "Thanh Xuân, HN",
+        province: "Hà Nội",
+        region: "Miền Bắc",
+        referralCode: "JUNIOR1",
+        ctvType: "Indie",
+        ctvMode: "No-Capital",
+        onboardingStep: 3,
+        // Linked to DUNGPHAM88
+        referredByCode: "DUNGPHAM88",
+        referredByCtvId: "4",
+        activatedAt: "2024-11-25T10:00:00Z", // Activated
+    },
+    {
+        id: "102",
+        name: "CTV Junior 2 (Mới)",
+        email: "junior2@lyhu.vn",
+        role: "ctv",
+        status: "active",
+        createdAt: "2024-12-05",
+        phone: "0973334444",
+        address: "Hà Đông, HN",
+        province: "Hà Nội",
+        region: "Miền Bắc",
+        referralCode: "JUNIOR2",
+        ctvType: "Indie",
+        ctvMode: "No-Capital",
+        onboardingStep: 3,
+        // Linked to DUNGPHAM88
+        referredByCode: "DUNGPHAM88",
+        referredByCtvId: "4",
+        activatedAt: null, // Not activated yet
     },
 ];

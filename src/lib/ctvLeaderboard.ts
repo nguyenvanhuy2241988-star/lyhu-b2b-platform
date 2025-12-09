@@ -18,6 +18,7 @@ export interface MonthlyLeaderboard {
     month: number;
     overall: LeaderboardRow[];
     byRegion: Record<string, LeaderboardRow[]>;
+    byProvince: Record<string, LeaderboardRow[]>;
 }
 
 export function getMonthlyCtvLeaderboard(params: {
@@ -75,7 +76,11 @@ export function getMonthlyCtvLeaderboard(params: {
     });
 
     // Sort by sales descending
-    rows.sort((a, b) => b.sales - a.sales);
+    // Sort by sales descending, then orders descending
+    rows.sort((a, b) => {
+        if (b.sales !== a.sales) return b.sales - a.sales;
+        return b.orders - a.orders;
+    });
 
     // Assign ranks
     rows.forEach((row, index) => {
@@ -83,18 +88,36 @@ export function getMonthlyCtvLeaderboard(params: {
     });
 
     // Group by region
+    // Group by region & Re-rank
     const byRegion: Record<string, LeaderboardRow[]> = {};
     rows.forEach(row => {
-        if (!byRegion[row.region]) {
-            byRegion[row.region] = [];
-        }
+        if (!byRegion[row.region]) byRegion[row.region] = [];
         byRegion[row.region].push({ ...row });
     });
 
-    // Re-rank within each region
     Object.values(byRegion).forEach(regionRows => {
-        regionRows.sort((a, b) => b.sales - a.sales);
+        regionRows.sort((a, b) => {
+            if (b.sales !== a.sales) return b.sales - a.sales;
+            return b.orders - a.orders;
+        });
         regionRows.forEach((row, index) => {
+            row.rank = index + 1;
+        });
+    });
+
+    // Group by province & Re-rank
+    const byProvince: Record<string, LeaderboardRow[]> = {};
+    rows.forEach(row => {
+        if (!byProvince[row.province]) byProvince[row.province] = [];
+        byProvince[row.province].push({ ...row });
+    });
+
+    Object.values(byProvince).forEach(provinceRows => {
+        provinceRows.sort((a, b) => {
+            if (b.sales !== a.sales) return b.sales - a.sales;
+            return b.orders - a.orders;
+        });
+        provinceRows.forEach((row, index) => {
             row.rank = index + 1;
         });
     });
@@ -104,26 +127,46 @@ export function getMonthlyCtvLeaderboard(params: {
         month,
         overall: rows,
         byRegion,
+        byProvince,
     };
 }
 
 export function getCtvRankInLeaderboard(
     leaderboard: MonthlyLeaderboard,
     ctvId: string
-): { overallRank: number | null; regionRank: number | null; region: string | null; stats: LeaderboardRow | null } {
+): {
+    overallRank: number | null;
+    regionRank: number | null;
+    provinceRank: number | null;
+    region: string | null;
+    province: string | null;
+    stats: LeaderboardRow | null
+} {
     const overallRow = leaderboard.overall.find(r => r.ctvId === ctvId);
 
     if (!overallRow) {
-        return { overallRank: null, regionRank: null, region: null, stats: null };
+        return {
+            overallRank: null,
+            regionRank: null,
+            provinceRank: null,
+            region: null,
+            province: null,
+            stats: null
+        };
     }
 
     const regionRows = leaderboard.byRegion[overallRow.region] || [];
     const regionRow = regionRows.find(r => r.ctvId === ctvId);
 
+    const provinceRows = leaderboard.byProvince[overallRow.province] || [];
+    const provinceRow = provinceRows.find(r => r.ctvId === ctvId);
+
     return {
         overallRank: overallRow.rank,
         regionRank: regionRow?.rank || null,
+        provinceRank: provinceRow?.rank || null,
         region: overallRow.region,
+        province: overallRow.province,
         stats: overallRow,
     };
 }

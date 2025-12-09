@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getCtvLevel, LEVEL_COLORS, type CtvLevel } from "@/lib/ctvLevels";
 import { getCtvMonthlyMissionsSummary, formatMissionProgress, getMissionProgressPercent } from "@/lib/ctvMissions";
 import { loadUsers } from "@/lib/usersStore";
+import { StarterQuest } from "@/components/ctv/StarterQuest";
 
 const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -132,6 +133,9 @@ export default function CTVDashboard() {
 
     return (
         <div className="space-y-6">
+            {/* Starter Quest (C2) */}
+            <StarterQuest user={currentUser} orders={orders} leads={leads} />
+
             {/* Level Card + Missions */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Level Card */}

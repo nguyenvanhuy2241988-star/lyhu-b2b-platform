@@ -37,7 +37,7 @@ export default function CTVLeaderboardPage() {
     const [currentUser, setCurrentUser] = useState<any>(null);
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-    const [viewMode, setViewMode] = useState<"overall" | "region">("overall");
+    const [viewMode, setViewMode] = useState<"overall" | "region" | "province">("overall");
 
     useEffect(() => {
         const user = getCurrentUser();
@@ -59,8 +59,11 @@ export default function CTVLeaderboardPage() {
         if (viewMode === "overall") {
             return leaderboard.overall.slice(0, 10);
         }
-        if (myRank?.region) {
+        if (viewMode === "region" && myRank?.region) {
             return (leaderboard.byRegion[myRank.region] || []).slice(0, 10);
+        }
+        if (viewMode === "province" && myRank?.province) {
+            return (leaderboard.byProvince[myRank.province] || []).slice(0, 10);
         }
         return [];
     }, [leaderboard, viewMode, myRank]);
@@ -116,6 +119,12 @@ export default function CTVLeaderboardPage() {
                                     #{myRank.regionRank} {REGION_LABELS[myRank.region]}
                                 </p>
                             )}
+                            {myRank.province && myRank.provinceRank && (
+                                <p className="mt-1 text-primary-100">
+                                    <MapPin className="w-4 h-4 inline mr-1" />
+                                    #{myRank.provinceRank} {myRank.province}
+                                </p>
+                            )}
                         </div>
                         <div className="grid grid-cols-3 gap-4 sm:gap-8 text-center">
                             <div>
@@ -153,13 +162,28 @@ export default function CTVLeaderboardPage() {
                         {REGION_LABELS[myRank.region]}
                     </button>
                 )}
+                {myRank?.province && (
+                    <button
+                        onClick={() => setViewMode("province")}
+                        className={`px-4 py-2 rounded-lg font-medium transition-colors ${viewMode === "province" ? "bg-primary-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
+                    >
+                        <MapPin className="w-4 h-4 inline mr-2" />
+                        {myRank.province}
+                    </button>
+                )}
             </div>
 
             {/* Leaderboard Table */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="p-6 border-b border-slate-200">
                     <h3 className="text-lg font-semibold text-slate-900">
-                        Top 10 {viewMode === "overall" ? "Toàn quốc" : REGION_LABELS[myRank?.region || "Other"]}
+                        <h3 className="text-lg font-semibold text-slate-900">
+                            Top 10 {viewMode === "overall"
+                                ? "Toàn quốc"
+                                : viewMode === "region"
+                                    ? REGION_LABELS[myRank?.region || "Other"]
+                                    : myRank?.province || "Tỉnh/Thành"}
+                        </h3>
                     </h3>
                 </div>
                 <div className="overflow-x-auto">

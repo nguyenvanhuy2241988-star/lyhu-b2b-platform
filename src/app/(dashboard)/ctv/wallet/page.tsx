@@ -5,7 +5,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { getWalletByCtv, recomputeWalletsFromSourceData, CtvWallet } from "@/lib/walletStore";
 import { getCurrentCycle } from "@/lib/payoutCycles";
 import { getDraftForCycle, getPayoutsByCtv, type PayoutRequest } from "@/lib/payoutStore";
-import { Wallet, TrendingUp, CreditCard, Clock, Calendar, ArrowRight } from "lucide-react";
+import { Wallet, TrendingUp, CreditCard, Clock, Calendar, ArrowRight, History, X } from "lucide-react";
+import { format } from "date-fns";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -18,6 +19,8 @@ export default function CTVWalletPage() {
     const [wallet, setWallet] = useState<CtvWallet | null>(null);
     const [currentUser, setCurrentUser] = useState<any>(null);
     const [currentDraft, setCurrentDraft] = useState<PayoutRequest | null>(null);
+    const [showRequestModal, setShowRequestModal] = useState(false);
+    const [payoutHistory, setPayoutHistory] = useState<PayoutRequest[]>([]);
 
     const cycle = useMemo(() => getCurrentCycle(), []);
 
@@ -33,6 +36,9 @@ export default function CTVWalletPage() {
 
             const draft = getDraftForCycle(user.id, cycle.cycleKey);
             setCurrentDraft(draft || null);
+
+            const history = getPayoutsByCtv(user.id).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            setPayoutHistory(history);
         }
     }, [cycle.cycleKey]);
 
@@ -130,9 +136,11 @@ export default function CTVWalletPage() {
 
             {/* Quick Actions */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <a
-                    href="/ctv/payouts"
-                    className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-primary-200 transition-all group flex items-center justify-between"
+                <button
+                    onClick={() => setShowRequestModal(true)}
+                    disabled={!wallet || wallet.balance < 50000} // Minimum withdrawal
+                    className={`bg-white p-6 rounded-xl shadow-sm border border-slate-200 transition-all group flex items-center justify-between text-left w-full
+                        ${(!wallet || wallet.balance < 50000) ? "opacity-60 cursor-not-allowed" : "hover:shadow-md hover:border-primary-200"}`}
                 >
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-green-50 rounded-lg group-hover:bg-green-100 transition-colors">
@@ -140,11 +148,15 @@ export default function CTVWalletPage() {
                         </div>
                         <div>
                             <h4 className="font-semibold text-slate-900 mb-1">Yêu cầu rút tiền</h4>
-                            <p className="text-sm text-slate-600">Xem & xác nhận thanh toán</p>
+                            <p className="text-sm text-slate-600">
+                                {wallet && wallet.balance >= 50000
+                                    ? "Số dư khả dụng"
+                                    : "Tối thiểu 50.000đ"}
+                            </p>
                         </div>
                     </div>
                     <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-primary-600 transition-colors" />
-                </a>
+                </button>
                 <a
                     href="/ctv/earnings"
                     className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-primary-200 transition-all group flex items-center justify-between"
@@ -161,6 +173,109 @@ export default function CTVWalletPage() {
                     <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-primary-600 transition-colors" />
                 </a>
             </div>
+            {/* Transaction History */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="p-6 border-b border-slate-200 flex items-center gap-2">
+                    <History className="w-5 h-5 text-slate-500" />
+                    <h3 className="text-lg font-semibold text-slate-900">Lịch sử giao dịch</h3>
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                        <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                            <tr>
+                                <th className="px-6 py-3 font-medium">Mã giao dịch</th>
+                                <th className="px-6 py-3 font-medium">Ngày tạo</th>
+                                <th className="px-6 py-3 font-medium">Số tiền</th>
+                                <th className="px-6 py-3 font-medium">Trạng thái</th>
+                                <th className="px-6 py-3 font-medium text-right">Ghi chú</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200">
+                            {payoutHistory.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                                        Chưa có giao dịch nào
+                                    </td>
+                                </tr>
+                            ) : (
+                                payoutHistory.map((payout) => (
+                                    <tr key={payout.id} className="hover:bg-slate-50">
+                                        <td className="px-6 py-4 font-mono text-slate-600">
+                                            {payout.id.slice(0, 8)}...
+                                        </td>
+                                        <td className="px-6 py-4 text-slate-900">
+                                            {format(new Date(payout.createdAt), "dd/MM/yyyy HH:mm")}
+                                        </td>
+                                        <td className="px-6 py-4 font-bold text-slate-900">
+                                            {formatPrice(payout.requestedAmount)}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                ${payout.status === "PAID" ? "bg-green-100 text-green-700" :
+                                                    payout.status === "REQUESTED" ? "bg-blue-100 text-blue-700" :
+                                                        payout.status === "DRAFT" ? "bg-yellow-100 text-yellow-700" :
+                                                            "bg-red-100 text-red-700"}`}>
+                                                {payout.status === "PAID" ? "Đã thanh toán" :
+                                                    payout.status === "REQUESTED" ? "Đã yêu cầu" :
+                                                        payout.status === "DRAFT" ? "Bản nháp" : "Từ chối"}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right text-slate-500">
+                                            {payout.adminNote || "-"}
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {/* Request Payout Modal */}
+            {showRequestModal && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-bold text-slate-900">Yêu cầu rút tiền</h3>
+                            <button
+                                onClick={() => setShowRequestModal(false)}
+                                className="text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="bg-green-50 rounded-lg p-4 mb-6 text-center border border-green-200">
+                            <p className="text-sm text-green-700 mb-1">Số dư khả dụng</p>
+                            <p className="text-3xl font-bold text-green-700">{formatPrice(wallet?.balance || 0)}</p>
+                        </div>
+
+                        <div className="space-y-4">
+                            <p className="text-sm text-slate-600 text-center">
+                                Yêu cầu rút tiền sẽ được gửi đến Admin phê duyệt.
+                                Thời gian xử lý từ 1-3 ngày làm việc.
+                            </p>
+
+                            <button
+                                onClick={() => {
+                                    alert("Tính năng đang phát triển: Gửi yêu cầu thành công!");
+                                    setShowRequestModal(false);
+                                }}
+                                className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-bold rounded-lg transition-colors"
+                            >
+                                Xác nhận rút tất cả
+                            </button>
+
+                            <button
+                                onClick={() => setShowRequestModal(false)}
+                                className="w-full py-3 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
+                            >
+                                Hủy bỏ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

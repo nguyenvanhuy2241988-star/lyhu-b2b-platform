@@ -1,6 +1,7 @@
 "use client";
 
-import { Menu, Bell, User } from "lucide-react";
+import { Menu, User } from "lucide-react";
+import { NotificationCenter } from "../common/NotificationCenter";
 import { useRouter } from "next/navigation";
 import { getCurrentUser, logout } from "@/lib/auth";
 import { useEffect, useState } from "react";
@@ -40,10 +41,7 @@ export default function Topbar({ onMenuClick, title = "Dashboard" }: TopbarProps
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
-                <button className="p-2 hover:bg-slate-100 rounded-lg relative transition-colors">
-                    <Bell className="w-5 h-5 text-slate-600" />
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary-500 rounded-full border border-white"></span>
-                </button>
+                <NotificationCenter />
                 <div className="flex items-center gap-2 pl-2 sm:pl-4 border-l border-slate-200">
                     <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
                         <User className="w-4 h-4 text-slate-600" />

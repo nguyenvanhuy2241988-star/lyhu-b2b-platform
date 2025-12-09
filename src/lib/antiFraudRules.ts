@@ -51,6 +51,7 @@ export function checkOrderForFraud(
         receiverPhone?: string;
         receiverAddress?: string;
         createdAt: string;
+        ctvPhone?: string;
     },
     recentOrders: Array<{
         ctvId: string;
@@ -90,6 +91,13 @@ export function checkOrderForFraud(
 
         if (normalizedCtvAddress === normalizedReceiverAddress) {
             reasons.push("Địa chỉ nhận hàng trùng với địa chỉ CTV");
+        }
+    }
+
+    // Check for Self-Referral (CTV phone matches Receiver phone)
+    if (order.receiverPhone && order.ctvPhone) {
+        if (order.receiverPhone === order.ctvPhone) {
+            reasons.push("SĐT người nhận trùng với SĐT CTV (Tự đặt hàng)");
         }
     }
 
