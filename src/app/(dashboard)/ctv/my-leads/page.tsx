@@ -230,8 +230,16 @@ export default function MyLeadsPage() {
                 </div>
 
                 {filteredLeads.length === 0 && (
-                    <div className="p-8 text-center text-slate-500">
-                        Không tìm thấy lead nào
+                    <div className="py-12 flex flex-col items-center justify-center text-center bg-white border-t border-slate-100">
+                        <div className="bg-slate-50 p-4 rounded-full mb-3">
+                            <Filter className="w-8 h-8 text-slate-300" />
+                        </div>
+                        <h3 className="text-slate-900 font-medium mb-1">Không tìm thấy lead nào</h3>
+                        <p className="text-slate-500 text-sm max-w-xs mx-auto">
+                            {leads.length === 0
+                                ? "Bạn chưa thêm lead tiềm năng nào. Hãy bắt đầu tìm kiếm khách hàng mới!"
+                                : "Thử thay đổi bộ lọc để tìm kết quả phù hợp."}
+                        </p>
                     </div>
                 )}
 

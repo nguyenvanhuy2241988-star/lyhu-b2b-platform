@@ -182,8 +182,16 @@ export default function CTVReferralsPage() {
                         <tbody className="divide-y divide-slate-200">
                             {!summary || summary.children.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
-                                        Chưa có CTV con nào. Chia sẻ mã giới thiệu để bắt đầu!
+                                    <td colSpan={6}>
+                                        <div className="py-12 flex flex-col items-center justify-center text-center">
+                                            <div className="bg-slate-50 p-4 rounded-full mb-3">
+                                                <Users className="w-8 h-8 text-slate-300" />
+                                            </div>
+                                            <h3 className="text-slate-900 font-medium mb-1">Chưa có CTV con</h3>
+                                            <p className="text-slate-500 text-sm max-w-xs mx-auto">
+                                                Chia sẻ mã giới thiệu của bạn để xây dựng đội ngũ và nhận hoa hồng thụ động!
+                                            </p>
+                                        </div>
                                     </td>
                                 </tr>
                             ) : (

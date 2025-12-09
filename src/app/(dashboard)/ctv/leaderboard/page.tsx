@@ -200,8 +200,16 @@ export default function CTVLeaderboardPage() {
                         <tbody className="divide-y divide-slate-200">
                             {displayRows.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
-                                        Chưa có dữ liệu cho tháng này
+                                    <td colSpan={5}>
+                                        <div className="py-12 flex flex-col items-center justify-center text-center">
+                                            <div className="bg-slate-50 p-4 rounded-full mb-3">
+                                                <Trophy className="w-8 h-8 text-slate-300" />
+                                            </div>
+                                            <h3 className="text-slate-900 font-medium mb-1">Chưa có bảng xếp hạng</h3>
+                                            <p className="text-slate-500 text-sm max-w-xs mx-auto">
+                                                Dữ liệu xếp hạng sẽ được cập nhật khi có đơn hàng trong tháng này.
+                                            </p>
+                                        </div>
                                     </td>
                                 </tr>
                             ) : (
