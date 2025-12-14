@@ -17,40 +17,48 @@ interface CreateTaskModalProps {
     initialData?: Partial<TelesalesTask>;
 }
 
+interface TaskFormData {
+    title: string;
+    customerName: string;
+    phone: string;
+    priority: TaskPriority;
+    dueDate: string;
+    status: TaskStatus;
+    description: string;
+}
+
 export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "today", initialData = {} }: CreateTaskModalProps) => {
-    const [title, setTitle] = useState("");
-    const [customerName, setCustomerName] = useState("");
-    const [phone, setPhone] = useState("");
-    const [priority, setPriority] = useState<TaskPriority>("normal");
-    const [dueDate, setDueDate] = useState(new Date().toISOString().split('T')[0]);
-    const [status, setStatus] = useState<TaskStatus>(initialStatus);
-    const [description, setDescription] = useState("");
+    const [formData, setFormData] = useState<TaskFormData>({
+        title: "",
+        customerName: "",
+        phone: "",
+        priority: "normal",
+        dueDate: new Date().toISOString().split('T')[0],
+        status: initialStatus,
+        description: ""
+    });
 
     // Reset form when opening
     useEffect(() => {
         if (isOpen) {
-            setTitle(initialData.title || "");
-            setCustomerName(initialData.customerName || "");
-            setPhone(initialData.phone || "");
-            setPriority(initialData.priority || "normal");
-            setDueDate(initialData.dueDate || new Date().toISOString().split('T')[0]);
-            setStatus(initialStatus);
-            setDescription(initialData.description || "");
+            setFormData({
+                title: initialData.title || "",
+                customerName: initialData.customerName || "",
+                phone: initialData.phone || "",
+                priority: initialData.priority || "normal",
+                dueDate: initialData.dueDate || new Date().toISOString().split('T')[0],
+                status: initialStatus,
+                description: initialData.description || ""
+            });
         }
-    }, [isOpen, initialStatus, initialData]);
+    }, [isOpen, initialStatus, initialData.title, initialData.customerName, initialData.phone, initialData.priority, initialData.dueDate, initialData.description]);
 
     if (!isOpen) return null;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSave({
-            title,
-            customerName,
-            phone,
-            priority,
-            dueDate,
-            status,
-            description,
+            ...formData,
             type: initialData.type || "other",
             relatedLeadId: initialData.relatedLeadId,
             relatedOrderId: initialData.relatedOrderId
@@ -76,8 +84,8 @@ export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "toda
                             required
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                             placeholder="Ví dụ: Gọi lại anh Hùng"
-                            value={title}
-                            onChange={e => setTitle(e.target.value)}
+                            value={formData.title}
+                            onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
                         />
                     </div>
 
@@ -88,8 +96,8 @@ export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "toda
                                 type="text"
                                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 placeholder="Nguyễn Văn A"
-                                value={customerName}
-                                onChange={e => setCustomerName(e.target.value)}
+                                value={formData.customerName}
+                                onChange={e => setFormData(prev => ({ ...prev, customerName: e.target.value }))}
                             />
                         </div>
                         <div>
@@ -98,8 +106,8 @@ export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "toda
                                 type="text"
                                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 placeholder="09xxx"
-                                value={phone}
-                                onChange={e => setPhone(e.target.value)}
+                                value={formData.phone}
+                                onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                             />
                         </div>
                     </div>
@@ -109,8 +117,8 @@ export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "toda
                             <label className="block text-sm font-medium text-slate-700 mb-1">Độ ưu tiên</label>
                             <select
                                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                value={priority}
-                                onChange={e => setPriority(e.target.value as TaskPriority)}
+                                value={formData.priority}
+                                onChange={e => setFormData(prev => ({ ...prev, priority: e.target.value as TaskPriority }))}
                             >
                                 <option value="low">Thấp</option>
                                 <option value="normal">Bình thường</option>
@@ -122,8 +130,8 @@ export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "toda
                             <label className="block text-sm font-medium text-slate-700 mb-1">Trạng thái</label>
                             <select
                                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                value={status}
-                                onChange={e => setStatus(e.target.value as TaskStatus)}
+                                value={formData.status}
+                                onChange={e => setFormData(prev => ({ ...prev, status: e.target.value as TaskStatus }))}
                             >
                                 {Object.entries(TASK_STATUS_LABELS).map(([key, label]) => (
                                     <option key={key} value={key}>{label}</option>
@@ -137,8 +145,8 @@ export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "toda
                         <input
                             type="date"
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            value={dueDate}
-                            onChange={e => setDueDate(e.target.value)}
+                            value={formData.dueDate}
+                            onChange={e => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
                         />
                     </div>
 
@@ -147,8 +155,8 @@ export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "toda
                         <textarea
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[80px]"
                             placeholder="Ghi chú thêm..."
-                            value={description}
-                            onChange={e => setDescription(e.target.value)}
+                            value={formData.description}
+                            onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
                         />
                     </div>
 
