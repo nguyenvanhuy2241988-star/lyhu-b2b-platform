@@ -21,9 +21,9 @@ export const mockUsers: AuthUser[] = [
     },
     {
         id: "2",
-        email: "sales@lyhu.vn",
-        name: "Sales LYHU",
-        role: ROLES.SALES,
+        email: "telesales@lyhu.vn",
+        name: "Telesales LYHU",
+        role: ROLES.TELESALES,
     },
     {
         id: "3",
