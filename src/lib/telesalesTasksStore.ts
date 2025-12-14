@@ -1,6 +1,6 @@
 import { getCurrentUser } from "./auth";
 
-export type TaskStatus = 'inbox' | 'today' | 'tomorrow' | 'this_week' | 'later' | 'done' | 'cancelled';
+export type TaskStatus = string;
 export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent';
 export type TaskType = 'call_new_lead' | 'follow_up_lead' | 'confirm_order' | 'care_old_customer' | 'other';
 
@@ -8,7 +8,7 @@ export interface TelesalesTask {
     id: string;
     title: string;
     description?: string;
-    status: TaskStatus;
+    status: TaskStatus; // Corresponds to TelesalesColumn.id
     type: TaskType;
     priority: TaskPriority;
     telesalesUserId: string;
@@ -25,7 +25,23 @@ export interface TelesalesTask {
     tags?: string[];
 }
 
-export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+export interface TelesalesColumn {
+    id: string;
+    label: string;
+    order: number;
+    isDefault?: boolean;
+}
+
+export const DEFAULT_COLUMNS: TelesalesColumn[] = [
+    { id: "inbox", label: "Hộp thư đến", order: 0, isDefault: true },
+    { id: "today", label: "Hôm nay", order: 1, isDefault: true },
+    { id: "tomorrow", label: "Ngày mai", order: 2 },
+    { id: "this_week", label: "Tuần này", order: 3 },
+    { id: "later", label: "Để sau", order: 4 },
+    { id: "done", label: "Hoàn tất", order: 5, isDefault: true },
+];
+
+export const TASK_STATUS_LABELS: Record<string, string> = {
     inbox: "Hộp thư đến",
     today: "Hôm nay",
     tomorrow: "Ngày mai",
@@ -92,6 +108,7 @@ const MOCK_TELESALES_TASKS: TelesalesTask[] = [
         telesalesUserId: "2",
         customerName: "Căng tin ĐH Quốc Gia",
         phone: "0998887774",
+        relatedLeadId: "TS-LEAD-X",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
     },
@@ -110,12 +127,15 @@ const MOCK_TELESALES_TASKS: TelesalesTask[] = [
     }
 ];
 
-const STORAGE_KEY = "lyhu_telesales_tasks";
+const STORAGE_KEY_TASKS = "lyhu_telesales_tasks";
+const STORAGE_KEY_COLUMNS = "lyhu_telesales_columns_v1";
+
+// --- TASKS ---
 
 export const loadTasks = (): TelesalesTask[] => {
     if (typeof window === "undefined") return [];
     try {
-        const stored = localStorage.getItem(STORAGE_KEY);
+        const stored = localStorage.getItem(STORAGE_KEY_TASKS);
         if (!stored) {
             return MOCK_TELESALES_TASKS;
         }
@@ -129,7 +149,7 @@ export const loadTasks = (): TelesalesTask[] => {
 export const saveTasks = (tasks: TelesalesTask[]) => {
     if (typeof window === "undefined") return;
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+        localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(tasks));
         window.dispatchEvent(new Event("telesales-tasks-updated"));
     } catch (error) {
         console.error("Failed to save tasks:", error);
@@ -177,4 +197,71 @@ export const getMyTasks = (): TelesalesTask[] => {
     if (!currentUser) return [];
 
     return tasks.filter(t => t.telesalesUserId === currentUser.id);
+};
+
+// --- COLUMNS ---
+
+export const loadColumns = (): TelesalesColumn[] => {
+    if (typeof window === "undefined") return DEFAULT_COLUMNS;
+    try {
+        const stored = localStorage.getItem(STORAGE_KEY_COLUMNS);
+        if (!stored) {
+            return DEFAULT_COLUMNS;
+        }
+        return JSON.parse(stored);
+    } catch (error) {
+        console.error("Failed to load columns:", error);
+        return DEFAULT_COLUMNS;
+    }
+};
+
+export const saveColumns = (columns: TelesalesColumn[]) => {
+    if (typeof window === "undefined") return;
+    try {
+        localStorage.setItem(STORAGE_KEY_COLUMNS, JSON.stringify(columns));
+        window.dispatchEvent(new Event("telesales-columns-updated"));
+    } catch (error) {
+        console.error("Failed to save columns:", error);
+    }
+};
+
+export const addColumn = () => {
+    const columns = loadColumns();
+    const newId = `col-${Date.now()}`;
+    const newColumn: TelesalesColumn = {
+        id: newId,
+        label: "Cột mới",
+        order: columns.length,
+        isDefault: false
+    };
+    saveColumns([...columns, newColumn]);
+};
+
+export const updateColumn = (id: string, updates: Partial<TelesalesColumn>) => {
+    const columns = loadColumns();
+    const newColumns = columns.map(c => c.id === id ? { ...c, ...updates } : c);
+    saveColumns(newColumns);
+};
+
+export const reorderColumns = (newColumns: TelesalesColumn[]) => {
+    // Re-assign order based on array index to be safe
+    const ordered = newColumns.map((c, idx) => ({ ...c, order: idx }));
+    saveColumns(ordered);
+};
+
+export const deleteColumn = (id: string) => {
+    const columns = loadColumns();
+    const columnToDelete = columns.find(c => c.id === id);
+    if (!columnToDelete || columnToDelete.isDefault) return; // Can't delete default if enforced, logic might vary
+
+    // Move tasks in this column to Inbox
+    const tasks = loadTasks();
+    const tasksToMove = tasks.filter(t => t.status === id);
+    if (tasksToMove.length > 0) {
+        const updatedTasks = tasks.map(t => t.status === id ? { ...t, status: 'inbox' } : t);
+        saveTasks(updatedTasks);
+    }
+
+    const newColumns = columns.filter(c => c.id !== id);
+    saveColumns(newColumns);
 };

@@ -6,7 +6,8 @@ import {
     TaskStatus,
     TaskPriority,
     TASK_STATUS_LABELS,
-    TelesalesTask
+    TelesalesTask,
+    TelesalesColumn
 } from "@/lib/telesalesTasksStore";
 
 interface CreateTaskModalProps {
@@ -15,6 +16,7 @@ interface CreateTaskModalProps {
     onSave: (task: any) => void;
     initialStatus?: TaskStatus;
     initialData?: Partial<TelesalesTask>;
+    columns?: TelesalesColumn[]; // Support dynamic columns
 }
 
 interface TaskFormData {
@@ -27,7 +29,7 @@ interface TaskFormData {
     description: string;
 }
 
-export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "today", initialData = {} }: CreateTaskModalProps) => {
+export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "today", initialData = {}, columns = [] }: CreateTaskModalProps) => {
     const [formData, setFormData] = useState<TaskFormData>({
         title: "",
         customerName: "",
@@ -65,6 +67,10 @@ export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "toda
         });
         onClose();
     };
+
+    // Use passed columns if available (dynamic), otherwise fallback to static labels (legacy/safety)
+    // Actually, we should preferably just use columns to support dynamic naming.
+    // If columns is empty (shouldn't happy in normal flow if passed from page), we might fallback or just show empty.
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -133,9 +139,16 @@ export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "toda
                                 value={formData.status}
                                 onChange={e => setFormData(prev => ({ ...prev, status: e.target.value as TaskStatus }))}
                             >
-                                {Object.entries(TASK_STATUS_LABELS).map(([key, label]) => (
-                                    <option key={key} value={key}>{label}</option>
-                                ))}
+                                {columns.length > 0 ? (
+                                    columns.map(col => (
+                                        <option key={col.id} value={col.id}>{col.label}</option>
+                                    ))
+                                ) : (
+                                    // Fallback for cases where columns might not be loaded yet or passed (e.g. from Leads Queue)
+                                    Object.entries(TASK_STATUS_LABELS).map(([key, label]) => (
+                                        <option key={key} value={key}>{label}</option>
+                                    ))
+                                )}
                             </select>
                         </div>
                     </div>
