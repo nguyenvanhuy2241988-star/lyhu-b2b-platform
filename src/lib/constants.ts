@@ -5,6 +5,7 @@ export const ROLES = {
     CUSTOMER: "customer",
     SALES: "sales",
     CTV: "ctv",
+    TELESALES: "telesales",
 } as const;
 
 export const NAV_ITEMS = {
@@ -42,6 +43,13 @@ export const NAV_ITEMS = {
         { label: "Giới thiệu", href: "/ctv/referrals", icon: Gift },
         { label: "Tạo Lead mới", href: "/ctv/new-lead", icon: UserPlus },
         { label: "Lead của tôi", href: "/ctv/my-leads", icon: List },
+    ],
+    [ROLES.TELESALES]: [
+        { label: "Tổng quan Telesales", href: "/telesales", icon: LayoutDashboard },
+        { label: "Lead cần gọi", href: "/telesales/leads-queue", icon: Users },
+        { label: "Đơn hàng của tôi", href: "/telesales/orders", icon: FileText },
+        { label: "Khách hàng của tôi", href: "/telesales/customers", icon: UserCheck },
+        { label: "Thu nhập & KPI", href: "/telesales/earnings", icon: TrendingUp },
     ],
 };
 

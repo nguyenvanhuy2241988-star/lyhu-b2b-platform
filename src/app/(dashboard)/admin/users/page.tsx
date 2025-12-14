@@ -9,6 +9,7 @@ const ROLE_LABELS = {
     customer: "Khách hàng",
     sales: "Sales",
     ctv: "CTV",
+    telesales: "Telesales",
 };
 
 const STATUS_LABELS = {
@@ -101,8 +102,8 @@ export default function UsersPage() {
                                     <td className="px-6 py-4">
                                         <span
                                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.status === "active"
-                                                    ? "bg-green-100 text-green-700"
-                                                    : "bg-slate-100 text-slate-600"
+                                                ? "bg-green-100 text-green-700"
+                                                : "bg-slate-100 text-slate-600"
                                                 }`}
                                         >
                                             {STATUS_LABELS[user.status]}

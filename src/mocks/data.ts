@@ -2,7 +2,7 @@ export interface User {
     id: string;
     name: string;
     email: string;
-    role: "admin" | "customer" | "sales" | "ctv";
+    role: "admin" | "customer" | "sales" | "ctv" | "telesales";
     status: "active" | "inactive";
     createdAt: string;
     // Extended properties for CTV
@@ -55,7 +55,7 @@ export interface CustomerOrder {
     reviewedByAdminNote?: string;
 
     // Fraud check extras
-    source?: "CUSTOMER" | "SALES" | "CTV";
+    source?: "CUSTOMER" | "SALES" | "CTV" | "TELESALES";
     receiverPhone?: string;
     receiverAddress?: string;
 }
@@ -72,6 +72,9 @@ export interface Lead {
     createdAt: string;
     ctvId: string;
     ctvName: string;
+    // Telesales fields
+    channel?: "TELESALES" | "FIELD";
+    assignedToRole?: "TELESALES" | "SALE";
 }
 
 export interface Customer {
@@ -384,6 +387,46 @@ export const mockOrders: CustomerOrder[] = [
         receiverPhone: "0961234567", // Matches DUNGPHAM88's phone (set below in mockUsers)
         receiverAddress: "123 Đường Cầu Giấy, Hà Nội",
     },
+    // Telesales Orders
+    {
+        id: "TS-ORD-1",
+        orderNumber: "ORD-TS-001",
+        customerId: "TS-CUST-1",
+        customerName: "Tạp hóa Minh Tâm",
+        items: [
+            { productId: "4", productName: "Trà xanh LYHU Premium 450ml", quantity: 50, price: 6500 },
+        ],
+        totalAmount: 325000,
+        status: "confirmed",
+        createdAt: new Date().toISOString().split('T')[0], // Today
+        source: "TELESALES",
+    },
+    {
+        id: "TS-ORD-2",
+        orderNumber: "ORD-TS-002",
+        customerId: "TS-CUST-2",
+        customerName: "Siêu thị Bình Minh",
+        items: [
+            { productId: "5", productName: "Nước tăng lực UHI Plus 500ml", quantity: 100, price: 11000 },
+        ],
+        totalAmount: 1100000,
+        status: "pending",
+        createdAt: new Date(Date.now() - 86400000).toISOString().split('T')[0], // Yesterday
+        source: "TELESALES",
+    },
+    {
+        id: "TS-ORD-3",
+        orderNumber: "ORD-TS-003",
+        customerId: "TS-CUST-3",
+        customerName: "Đại lý Hùng Cường",
+        items: [
+            { productId: "1", productName: "UHI Que chua vị Cola", quantity: 240, price: 14000 },
+        ],
+        totalAmount: 3360000,
+        status: "delivered",
+        createdAt: "2024-12-10",
+        source: "TELESALES",
+    },
 ];
 
 export const mockLeads: Lead[] = [
@@ -451,6 +494,82 @@ export const mockLeads: Lead[] = [
         createdAt: "2024-11-26",
         ctvId: "4",
         ctvName: "Phạm Thị Dung",
+    },
+    // Telesales Leads
+    {
+        id: "TS-LEAD-1",
+        storeName: "Tạp hóa Cô Lan",
+        contactPerson: "Cô Lan",
+        phone: "0998887771",
+        area: "Thanh Xuân, Hà Nội",
+        type: "Tạp hóa",
+        status: "new",
+        notes: "Khách quan tâm SP mới, cần gọi lại chiều nay",
+        createdAt: new Date().toISOString(),
+        ctvId: "",
+        ctvName: "",
+        channel: "TELESALES",
+        assignedToRole: "TELESALES",
+    },
+    {
+        id: "TS-LEAD-2",
+        storeName: "Mart 24h",
+        contactPerson: "Anh Hùng",
+        phone: "0998887772",
+        area: "Hoàng Mai, Hà Nội",
+        type: "Mini mart",
+        status: "contacted",
+        notes: "Đã giới thiệu, cần gửi báo giá",
+        createdAt: new Date(Date.now() - 86400000).toISOString(),
+        ctvId: "",
+        ctvName: "",
+        channel: "TELESALES",
+        assignedToRole: "TELESALES",
+    },
+    {
+        id: "TS-LEAD-3",
+        storeName: "Đại lý Bia Nước Ngọt Tuấn Tú",
+        contactPerson: "Anh Tuấn",
+        phone: "0998887773",
+        area: "Cầu Giấy, Hà Nội",
+        type: "Đại lý",
+        status: "new",
+        notes: "Lead từ Marketing đổ về",
+        createdAt: new Date().toISOString(),
+        ctvId: "",
+        ctvName: "",
+        channel: "TELESALES",
+        assignedToRole: "TELESALES",
+    },
+    {
+        id: "TS-LEAD-4",
+        storeName: "Căng tin ĐH Quốc Gia",
+        contactPerson: "Chị Mai",
+        phone: "0998887774",
+        area: "Cầu Giấy, Hà Nội",
+        type: "Tạp hóa",
+        status: "converted",
+        notes: "Đã lên đơn 5 thùng nước",
+        createdAt: "2024-12-10",
+        ctvId: "",
+        ctvName: "",
+        channel: "TELESALES",
+        assignedToRole: "TELESALES",
+    },
+    {
+        id: "TS-LEAD-5",
+        storeName: "Tạp hóa Bác Ba",
+        contactPerson: "Bác Ba",
+        phone: "0998887775",
+        area: "Hà Đông, Hà Nội",
+        type: "Tạp hóa",
+        status: "new",
+        notes: "Số máy bận, gọi lại sau",
+        createdAt: new Date().toISOString(),
+        ctvId: "",
+        ctvName: "",
+        channel: "TELESALES",
+        assignedToRole: "TELESALES",
     },
 ];
 
@@ -614,5 +733,14 @@ export const mockUsers: User[] = [
         referredByCode: "DUNGPHAM88",
         referredByCtvId: "4",
         activatedAt: null, // Not activated yet
+    },
+    // Telesales User
+    {
+        id: "teslesale-user-1",
+        name: "Nhân viên Telesales 1",
+        email: "telesales1@lyhu.vn",
+        role: "telesales",
+        status: "active",
+        createdAt: "2024-12-01",
     },
 ];
