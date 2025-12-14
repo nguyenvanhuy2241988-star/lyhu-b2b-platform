@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShieldCheck, Users, TrendingUp, UserPlus } from "lucide-react";
+import { ShieldCheck, Users, TrendingUp, UserPlus, Headset } from "lucide-react";
 
 const roles = [
     {
@@ -34,6 +34,14 @@ const roles = [
         color: "text-purple-600",
         bg: "bg-purple-50",
     },
+    {
+        title: "Telesales",
+        description: "Quản lý lead & đơn hàng telesales",
+        href: "/login",
+        icon: Headset,
+        color: "text-orange-600",
+        bg: "bg-orange-50",
+    },
 ];
 
 export default function Home() {
@@ -51,7 +59,7 @@ export default function Home() {
                 </div>
 
                 {/* Role Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
                     {roles.map((role) => {
                         const Icon = role.icon;
                         return (

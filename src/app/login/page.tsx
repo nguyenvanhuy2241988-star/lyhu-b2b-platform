@@ -41,6 +41,9 @@ export default function LoginPage() {
             case ROLES.CUSTOMER:
                 router.push("/customer");
                 break;
+            case ROLES.TELESALES:
+                router.push("/telesales");
+                break;
             default:
                 router.push("/");
         }
@@ -139,6 +142,7 @@ export default function LoginPage() {
                                 <li>sales@lyhu.vn / sales123 → Sales</li>
                                 <li>ctv@lyhu.vn / ctv123 → CTV</li>
                                 <li>customer@lyhu.vn / customer123 → Customer</li>
+                                <li>telesales@lyhu.vn / telesales123 → Telesales</li>
                             </ul>
                         </div>
                     </div>
