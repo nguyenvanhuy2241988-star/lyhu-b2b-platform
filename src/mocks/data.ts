@@ -397,7 +397,7 @@ export const mockOrders: CustomerOrder[] = [
             { productId: "4", productName: "Trà xanh LYHU Premium 450ml", quantity: 50, price: 6500 },
         ],
         totalAmount: 325000,
-        status: "confirmed",
+        status: "processing",
         createdAt: new Date().toISOString().split('T')[0], // Today
         source: "TELESALES",
     },
