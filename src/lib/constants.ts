@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, ShoppingBag, ShoppingCart, FileText, UserCheck, UserPlus, List, Wallet, Gift, TrendingUp, CreditCard, Trophy, User } from "lucide-react";
+import { LayoutDashboard, Users, ShoppingBag, ShoppingCart, FileText, UserCheck, UserPlus, List, Wallet, Gift, TrendingUp, CreditCard, Trophy, User, ClipboardList } from "lucide-react";
 
 export const ROLES = {
     ADMIN: "admin",
@@ -46,6 +46,7 @@ export const NAV_ITEMS = {
     ],
     [ROLES.TELESALES]: [
         { label: "Tổng quan Telesales", href: "/telesales", icon: LayoutDashboard },
+        { label: "Việc cần làm", href: "/telesales/tasks", icon: ClipboardList },
         { label: "Lead cần gọi", href: "/telesales/leads-queue", icon: Users },
         { label: "Đơn hàng của tôi", href: "/telesales/orders", icon: FileText },
         { label: "Khách hàng của tôi", href: "/telesales/customers", icon: UserCheck },

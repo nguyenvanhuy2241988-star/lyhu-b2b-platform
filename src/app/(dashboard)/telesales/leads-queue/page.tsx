@@ -1,8 +1,11 @@
 "use client";
 
+// --- Imports ---
 import { useState } from "react";
-import { Phone, CheckCircle, XCircle, Clock, Filter, Search } from "lucide-react";
+import { Phone, CheckCircle, XCircle, Clock, Filter, Search, ClipboardList } from "lucide-react";
 import { mockLeads } from "@/mocks/data";
+import { CreateTaskModal } from "@/components/telesales/CreateTaskModal";
+import { addTask, TelesalesTask } from "@/lib/telesalesTasksStore";
 
 const formatDate = (dateString: string) => {
     try {
@@ -16,6 +19,10 @@ const formatDate = (dateString: string) => {
 export default function LeadsQueuePage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
+
+    // Modal state
+    const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
+    const [selectedLeadForTask, setSelectedLeadForTask] = useState<any>(null);
 
     // Filter leads for Telesales context
     const allLeads = mockLeads.filter(
@@ -33,6 +40,17 @@ export default function LeadsQueuePage() {
 
         return matchesSearch && matchesStatus;
     });
+
+    const handleOpenCreateTask = (lead: any) => {
+        setSelectedLeadForTask(lead);
+        setIsCreateTaskModalOpen(true);
+    };
+
+    const handleSaveTask = (taskData: any) => {
+        addTask(taskData);
+        // Optional: show toast
+        console.log("Created task for lead:", selectedLeadForTask?.id);
+    };
 
     return (
         <div className="space-y-6">
@@ -100,9 +118,9 @@ export default function LeadsQueuePage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${lead.status === 'new' ? 'bg-blue-100 text-blue-800' :
-                                                lead.status === 'contacted' ? 'bg-yellow-100 text-yellow-800' :
-                                                    lead.status === 'converted' ? 'bg-green-100 text-green-800' :
-                                                        'bg-red-100 text-red-800'
+                                            lead.status === 'contacted' ? 'bg-yellow-100 text-yellow-800' :
+                                                lead.status === 'converted' ? 'bg-green-100 text-green-800' :
+                                                    'bg-red-100 text-red-800'
                                             }`}>
                                             {lead.status === 'new' ? 'Mới' :
                                                 lead.status === 'contacted' ? 'Đã liên hệ' :
@@ -116,6 +134,13 @@ export default function LeadsQueuePage() {
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
+                                            <button
+                                                onClick={() => handleOpenCreateTask(lead)}
+                                                className="flex items-center justify-center w-8 h-8 rounded-full bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors"
+                                                title="Tạo việc cần làm"
+                                            >
+                                                <ClipboardList className="w-4 h-4" />
+                                            </button>
                                             <button className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-50 text-primary-600 hover:bg-primary-100 transition-colors" title="Gọi điện">
                                                 <Phone className="w-4 h-4" />
                                             </button>
@@ -150,6 +175,20 @@ export default function LeadsQueuePage() {
                     </table>
                 </div>
             </div>
+
+            <CreateTaskModal
+                isOpen={isCreateTaskModalOpen}
+                onClose={() => setIsCreateTaskModalOpen(false)}
+                onSave={handleSaveTask}
+                initialStatus="today"
+                initialData={selectedLeadForTask ? {
+                    title: `Gọi lại ${selectedLeadForTask.storeName}`,
+                    customerName: selectedLeadForTask.storeName,
+                    phone: selectedLeadForTask.phone,
+                    type: "follow_up_lead",
+                    relatedLeadId: selectedLeadForTask.id
+                } : {}}
+            />
         </div>
     );
 }
