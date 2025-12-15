@@ -19,7 +19,9 @@ import {
     Eye,
     EyeOff,
     Filter,
-    RotateCcw
+    RotateCcw,
+    Bell,
+    AlertTriangle
 } from "lucide-react";
 import {
     TelesalesTask,
@@ -37,9 +39,12 @@ import {
     updateColumn,
     reorderColumns,
     updateTasksOrder,
-    resetColumns
+    resetColumns,
+    addLog,
+    CallLog
 } from "@/lib/telesalesTasksStore";
 import { CreateTaskModal } from "@/components/telesales/CreateTaskModal";
+import { LogCallModal } from "@/components/telesales/LogCallModal";
 
 // --- Components ---
 
@@ -63,9 +68,11 @@ interface TaskCardProps {
     onDragStart: (e: React.DragEvent, id: string, colId: string) => void;
     onDragOver: (e: React.DragEvent, id: string) => void;
     dropIndicator: { taskId: string; position: 'top' | 'bottom' } | null;
+    onLogCall: (task: TelesalesTask) => void;
+    isOverdue?: boolean;
 }
 
-const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator }: TaskCardProps) => {
+const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, onLogCall, isOverdue }: TaskCardProps) => {
     return (
         <>
             {/* Ghost Placeholder Top */}
@@ -84,8 +91,13 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator }: 
                     e.stopPropagation();
                     onDragOver(e, task.id);
                 }}
-                className={`relative bg-white p-3 rounded-lg shadow-sm border border-slate-200 cursor-move transition-all mb-3 group/card 
-                    ${isDragging ? 'opacity-50 scale-95 ring-2 ring-primary-200 rotate-1' : 'hover:shadow-md hover:border-primary-200 active:cursor-grabbing'}
+                className={`relative bg-white p-3 rounded-lg shadow-sm border cursor-move transition-all mb-3 group/card 
+                    ${isDragging ? 'opacity-50 scale-95 ring-2 ring-primary-200 rotate-1 border-primary-200' :
+                        isOverdue
+                            ? 'border-red-300 ring-1 ring-red-100 hover:shadow-md hover:border-red-400'
+                            : 'border-slate-200 hover:shadow-md hover:border-primary-200'
+                    }
+                    ${isDragging ? '' : 'active:cursor-grabbing'}
                 `}
             >
                 <div className="flex justify-between items-start mb-2 pointer-events-none">
@@ -94,32 +106,43 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator }: 
                 </div>
 
                 {(task.customerName || task.phone) && (
-                    <div className="flex items-center gap-2 text-xs text-slate-500 mb-2 pointer-events-auto relative z-10">
-                        <User className="w-3 h-3" />
-                        {task.leadId ? (
-                            <Link
-                                href={`/telesales/leads-queue/${task.leadId}`}
-                                className="truncate max-w-[150px] hover:text-primary-600 hover:underline font-medium"
-                                onClick={(e) => e.stopPropagation()}
+                    <div className="flex items-center justify-between text-xs text-slate-500 mb-2 pointer-events-auto relative z-10">
+                        <div className="flex items-center gap-2 overflow-hidden">
+                            <User className="w-3 h-3 flex-shrink-0" />
+                            {task.leadId ? (
+                                <Link
+                                    href={`/telesales/leads-queue/${task.leadId}`}
+                                    className="truncate hover:text-primary-600 hover:underline font-medium"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    {task.customerName || "Khách lẻ"}
+                                </Link>
+                            ) : (
+                                <span className="truncate">{task.customerName || "Khách lẻ"}</span>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                            {task.phone && (
+                                <span className="text-slate-400 mr-1">{task.phone}</span>
+                            )}
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onLogCall(task);
+                                }}
+                                className="p-1.5 bg-green-50 text-green-600 rounded-full hover:bg-green-100 transition-colors"
+                                title="Ghi log cuộc gọi"
                             >
-                                {task.customerName || "Khách lẻ"}
-                            </Link>
-                        ) : (
-                            <span className="truncate max-w-[150px]">{task.customerName || "Khách lẻ"}</span>
-                        )}
-                        {task.phone && (
-                            <>
-                                <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                <Phone className="w-3 h-3" />
-                                <span>{task.phone}</span>
-                            </>
-                        )}
+                                <Phone className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
                     </div>
                 )}
 
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs text-slate-400 pointer-events-none">
-                    <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
+                    <div className={`flex items-center gap-1 ${isOverdue ? 'text-red-600 font-medium' : ''}`}>
+                        {isOverdue ? <AlertTriangle className="w-3 h-3" /> : <Calendar className="w-3 h-3" />}
                         <span>{task.dueDate ? new Date(task.dueDate).toLocaleDateString('vi-VN') : 'Không thời hạn'}</span>
                     </div>
                     {task.type === 'confirm_order' && <span className="bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded">Đơn hàng</span>}
@@ -167,6 +190,10 @@ export default function TelesalesTasksPage() {
     const [createModalInitialStatus, setCreateModalInitialStatus] = useState<TaskStatus>("today");
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+    // Log Modal State
+    const [isLogModalOpen, setIsLogModalOpen] = useState(false);
+    const [taskToLog, setTaskToLog] = useState<TelesalesTask | null>(null);
+
     // Inline editing states
     const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
     const [editingTitle, setEditingTitle] = useState("");
@@ -195,6 +222,18 @@ export default function TelesalesTasksPage() {
             window.removeEventListener("telesales-columns-updated", handleColumnUpdate);
         };
     }, []);
+
+    const handleLogCall = (task: TelesalesTask) => {
+        setTaskToLog(task);
+        setIsLogModalOpen(true);
+    };
+
+    const handleSaveLog = (logData: any) => {
+        if (taskToLog) {
+            addLog(taskToLog.id, logData);
+            // Optionally move task to "done" or update visible status - for now just log
+        }
+    };
 
     // Focus input when editing starts
     useEffect(() => {
@@ -394,6 +433,10 @@ export default function TelesalesTasksPage() {
 
     const visibleColumns = columns.filter(c => c.isVisible !== false);
 
+    // Calc overdue
+    const msToday = new Date().setHours(0, 0, 0, 0);
+    const overdueCount = tasks.filter(t => t.dueDate && new Date(t.dueDate).getTime() < msToday && t.status !== 'done').length;
+
     return (
         <div className="p-4 sm:p-6 space-y-6 h-full flex flex-col relative" onClick={() => setIsSettingsOpen(false)}>
             {/* Header */}
@@ -409,6 +452,16 @@ export default function TelesalesTasksPage() {
                     >
                         <Plus className="w-4 h-4" />
                         <span>Việc mới</span>
+                    </button>
+
+                    {/* Notification Bell */}
+                    <button className="relative p-2 bg-white border rounded-lg hover:bg-slate-50 text-slate-600">
+                        <Bell className="w-4 h-4" />
+                        {overdueCount > 0 && (
+                            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm animate-pulse">
+                                {overdueCount}
+                            </span>
+                        )}
                     </button>
 
                     {/* Settings Menu */}
@@ -605,16 +658,21 @@ export default function TelesalesTasksPage() {
 
                                     {/* Tasks Container */}
                                     <div className="p-2 flex-1 overflow-y-auto space-y-1 relative min-h-[100px]">
-                                        {columnTasks.map(task => (
-                                            <TaskCard
-                                                key={task.id}
-                                                task={task}
-                                                isDragging={draggedTaskId === task.id}
-                                                onDragStart={handleTaskDragStart}
-                                                onDragOver={handleTaskDragOver}
-                                                dropIndicator={dropIndicator}
-                                            />
-                                        ))}
+                                        {columnTasks.map(task => {
+                                            const isOverdue = task.dueDate ? new Date(task.dueDate).getTime() < msToday && task.status !== 'done' : false;
+                                            return (
+                                                <TaskCard
+                                                    key={task.id}
+                                                    task={task}
+                                                    isDragging={draggedTaskId === task.id}
+                                                    onDragStart={handleTaskDragStart}
+                                                    onDragOver={handleTaskDragOver}
+                                                    dropIndicator={dropIndicator}
+                                                    onLogCall={handleLogCall}
+                                                    isOverdue={isOverdue}
+                                                />
+                                            )
+                                        })}
 
                                         {/* Append Placeholder - shown when dragging column over empty space or bottom */}
                                         {showAppendPlaceholder && (
@@ -694,6 +752,14 @@ export default function TelesalesTasksPage() {
                 onSave={handleAddTask}
                 initialStatus={createModalInitialStatus}
                 columns={columns} // Pass dynamic columns
+            />
+
+            <LogCallModal
+                isOpen={isLogModalOpen}
+                onClose={() => setIsLogModalOpen(false)}
+                onSave={handleSaveLog}
+                taskTitle={taskToLog?.title || ""}
+                customerName={taskToLog?.customerName || ""}
             />
         </div>
     );

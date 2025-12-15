@@ -158,6 +158,95 @@ export default function TelesalesDashboard() {
                 })}
             </div>
 
+            {/* Performance Section */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div className="flex flex-col md:flex-row gap-8">
+                    {/* Stats */}
+                    <div className="flex-1 space-y-6">
+                        <div>
+                            <h3 className="text-lg font-semibold text-slate-900 mb-1">Hiệu suất tuần này</h3>
+                            <p className="text-sm text-slate-500">Thống kê cuộc gọi và kết quả làm việc</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                <p className="text-xs text-slate-500 uppercase font-medium mb-1">Tổng cuộc gọi</p>
+                                <div className="flex items-end gap-2">
+                                    <span className="text-2xl font-bold text-slate-900">
+                                        {tasks.flatMap(t => t.logs || []).filter(l => {
+                                            const d = new Date(l.timestamp);
+                                            const now = new Date();
+                                            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+                                            startOfWeek.setHours(0, 0, 0, 0);
+                                            return d.getTime() >= startOfWeek.getTime();
+                                        }).length}
+                                    </span>
+                                    <span className="text-xs text-green-600 font-medium mb-1">cuộc gọi</span>
+                                </div>
+                            </div>
+                            <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                <p className="text-xs text-slate-500 uppercase font-medium mb-1">Thời lượng TB</p>
+                                <div className="flex items-end gap-2">
+                                    <span className="text-2xl font-bold text-slate-900">
+                                        {(() => {
+                                            const now = new Date();
+                                            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+                                            startOfWeek.setHours(0, 0, 0, 0);
+                                            const logs = tasks.flatMap(t => t.logs || []).filter(l => new Date(l.timestamp).getTime() >= startOfWeek.getTime());
+                                            const total = logs.reduce((sum, l) => sum + (l.durationSeconds || 0), 0);
+                                            return logs.length ? Math.round(total / logs.length) : 0;
+                                        })()}
+                                    </span>
+                                    <span className="text-xs text-slate-500 mb-1">giây/cuộc</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* CSS Bar Chart */}
+                    <div className="flex-1 flex flex-col justify-end h-[200px]">
+                        <div className="flex items-end justify-between h-full gap-2 pt-6">
+                            {(() => {
+                                const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+                                const counts = [0, 0, 0, 0, 0, 0, 0];
+                                const now = new Date();
+                                const startOfWeek = new Date(now);
+                                startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+                                startOfWeek.setHours(0, 0, 0, 0);
+
+                                const endOfWeek = new Date(startOfWeek);
+                                endOfWeek.setDate(startOfWeek.getDate() + 7);
+
+                                tasks.flatMap(t => t.logs || []).forEach(l => {
+                                    const d = new Date(l.timestamp);
+                                    if (d >= startOfWeek && d < endOfWeek) {
+                                        counts[d.getDay()]++;
+                                    }
+                                });
+
+                                const max = Math.max(...counts, 5); // Min height scale 5
+
+                                return counts.map((count, i) => (
+                                    <div key={i} className="flex flex-col items-center gap-2 flex-1 group cursor-pointer">
+                                        <div className="relative w-full bg-slate-100 rounded-t-md overflow-hidden flex items-end h-[150px]">
+                                            <div
+                                                className="w-full bg-primary-500 hover:bg-primary-600 transition-all rounded-t-md relative group-hover:opacity-90"
+                                                style={{ height: `${(count / max) * 100}%` }}
+                                            >
+                                                <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded pointer-events-none transition-opacity">
+                                                    {count}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span className="text-xs font-medium text-slate-500">{days[i]}</span>
+                                    </div>
+                                ));
+                            })()}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Priority Leads Table - Keeps displaying Mock Leads for now as requested context implies Tasks module enhancements, not full Leads replacement */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">

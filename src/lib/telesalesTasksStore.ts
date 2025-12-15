@@ -28,6 +28,16 @@ export interface TelesalesTask {
     orderAmount?: number;
     completedAt?: string;
     tags?: string[];
+    logs?: CallLog[];
+}
+
+export interface CallLog {
+    id: string;
+    taskId: string;
+    timestamp: string;
+    durationSeconds: number;
+    result: 'connected' | 'no_answer' | 'busy' | 'wrong_number' | 'other';
+    note?: string;
 }
 
 export interface TelesalesColumn {
@@ -79,7 +89,8 @@ const MOCK_TELESALES_TASKS: TelesalesTask[] = [
         dueDate: new Date().toISOString().split('T')[0],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        orderAmount: 5000000
+        orderAmount: 5000000,
+        logs: []
     },
     {
         id: "TASK-002",
@@ -94,6 +105,7 @@ const MOCK_TELESALES_TASKS: TelesalesTask[] = [
         dueDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        logs: []
     },
     {
         id: "TASK-003",
@@ -192,7 +204,8 @@ export const addTask = (taskInput: Omit<TelesalesTask, "id" | "createdAt" | "upd
         createdAt: now,
         updatedAt: now,
         telesalesUserId: taskInput.telesalesUserId || currentUser?.id || "unknown",
-        completedAt: taskInput.status === 'done' ? now : undefined
+        completedAt: taskInput.status === 'done' ? now : undefined,
+        logs: []
     };
 
     const updatedTasks = [newTask, ...tasks];
@@ -210,6 +223,31 @@ export const updateTask = (taskId: string, updates: Partial<TelesalesTask>) => {
                 ...updates,
                 updatedAt: new Date().toISOString(),
                 completedAt: isCompleting ? new Date().toISOString() : (updates.status && updates.status !== 'done' ? undefined : t.completedAt)
+            };
+        }
+        return t;
+    });
+    saveTasks(updatedTasks);
+};
+
+export const addLog = (taskId: string, logInput: Omit<CallLog, "id" | "taskId" | "timestamp">) => {
+    const tasks = loadTasks();
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const newLog: CallLog = {
+        id: `LOG-${Date.now()}`,
+        taskId,
+        timestamp: new Date().toISOString(),
+        ...logInput
+    };
+
+    const updatedTasks = tasks.map(t => {
+        if (t.id === taskId) {
+            return {
+                ...t,
+                logs: t.logs ? [newLog, ...t.logs] : [newLog],
+                updatedAt: new Date().toISOString()
             };
         }
         return t;
