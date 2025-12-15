@@ -181,3 +181,46 @@ export const getWeeklyRanges = () => {
         lastWeek: { from: lastWeekStart, to: lastWeekEnd }
     };
 };
+
+// --- Daily Targets & Remaining ---
+
+export interface TelesalesKpiTarget {
+    userId: string;
+    callsPerDay: number;
+    ordersPerDay: number;
+    revenuePerDay: number;
+}
+
+export interface KpiRemaining {
+    calls: number;
+    orders: number;
+    revenue: number;
+    isCompleted: boolean;
+}
+
+// Mock function to get target (can be replaced with real store later)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const getTodayTargetForCurrentUser = (userId: string = "current"): TelesalesKpiTarget => {
+    // For now, return default hardcoded target
+    return {
+        userId,
+        callsPerDay: KPI_TARGETS.calls,
+        ordersPerDay: KPI_TARGETS.orders,
+        revenuePerDay: KPI_TARGETS.revenue
+    };
+};
+
+export const calculateKpiRemaining = (metrics: KpiMetrics, target: TelesalesKpiTarget): KpiRemaining => {
+    const remainingCalls = Math.max(0, target.callsPerDay - metrics.totalCalls);
+    const remainingOrders = Math.max(0, target.ordersPerDay - metrics.totalOrders);
+    const remainingRevenue = Math.max(0, target.revenuePerDay - metrics.totalRevenue);
+
+    const isCompleted = remainingCalls === 0 && remainingOrders === 0 && remainingRevenue === 0;
+
+    return {
+        calls: remainingCalls,
+        orders: remainingOrders,
+        revenue: remainingRevenue,
+        isCompleted
+    };
+};
