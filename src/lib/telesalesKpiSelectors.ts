@@ -1,9 +1,9 @@
-import { TelesalesTask, CallLog } from "./telesalesTasksStore";
+import { TelesalesTask } from "./telesalesTasksStore";
 
 export const COMMISSION_RATE = 0.025; // 2.5%
 
-export interface KpiSummary {
-    totalCalls: number;
+export interface KpiMetrics {
+    totalCalls: number; // Proxy: Tasks with completedAt in range
     totalOrders: number; // Won deals
     totalRevenue: number;
     totalCommission: number;
@@ -11,8 +11,8 @@ export interface KpiSummary {
 }
 
 export interface KpiHistoryRow {
-    dateLabel: string; // "2024-12-15" or "Tuần 50"
-    timestamp: number; // For sorting
+    dateLabel: string; // YYYY-MM-DD
+    timestamp: number;
     calls: number;
     orders: number;
     revenue: number;
@@ -26,13 +26,8 @@ const startOfDay = (d: Date) => {
     return newDate;
 };
 
-const getWeekNumber = (d: Date) => {
-    const onejan = new Date(d.getFullYear(), 0, 1);
-    const millis = d.getTime() - onejan.getTime();
-    return Math.ceil(((millis / 86400000) + onejan.getDay() + 1) / 7);
-};
-
-export const filterTasksByDate = (
+// Filter tasks that "completed" within the range
+export const filterTasksByCompletionDate = (
     tasks: TelesalesTask[],
     from: Date,
     to: Date
@@ -42,9 +37,8 @@ export const filterTasksByDate = (
     toTime.setHours(23, 59, 59, 999);
 
     return tasks.filter(t => {
-        // For Orders/Revenue: check completedAt (if done) OR updatedAt
-        // Ideally we use completedAt for "Won" tasks.
-        if (t.status === 'done' && t.completedAt) {
+        // We use completedAt as the primary timestamp for KPI
+        if (t.completedAt) {
             const completedTime = new Date(t.completedAt).getTime();
             return completedTime >= fromTime && completedTime <= toTime.getTime();
         }
@@ -52,36 +46,30 @@ export const filterTasksByDate = (
     });
 };
 
-export const filterLogsByDate = (
+export const calculateKpiMetrics = (
     tasks: TelesalesTask[],
     from: Date,
     to: Date
-): CallLog[] => {
-    const fromTime = startOfDay(from).getTime();
-    const toTime = new Date(to);
-    toTime.setHours(23, 59, 59, 999);
+): KpiMetrics => {
+    const completedTasksInRange = filterTasksByCompletionDate(tasks, from, to);
 
-    return tasks.flatMap(t => t.logs || []).filter(log => {
-        const logTime = new Date(log.timestamp).getTime();
-        return logTime >= fromTime && logTime <= toTime.getTime();
-    });
-};
+    // 1. Calls (Proxy): Total tasks processed (completedAt in range)
+    const totalCalls = completedTasksInRange.length;
 
-export const calculateKpiSummary = (
-    tasks: TelesalesTask[],
-    from: Date,
-    to: Date
-): KpiSummary => {
-    // 1. Calls: Based on Logs timestamp
-    const logsInRange = filterLogsByDate(tasks, from, to);
-    const totalCalls = logsInRange.length;
+    // 2. Won Deals: completedAt in range AND orderAmount > 0 (and status done)
+    const wonTasks = completedTasksInRange.filter(t =>
+        (t.status === 'done' || t.status === 'Hoàn tất') && (t.orderAmount || 0) > 0
+    );
 
-    // 2. Orders/Revenue: Based on Task completion time
-    const wonTasksInRange = filterTasksByDate(tasks, from, to).filter(t => t.status === 'done' && (t.orderAmount || 0) > 0);
+    const totalOrders = wonTasks.length;
 
-    const totalOrders = wonTasksInRange.length;
-    const totalRevenue = wonTasksInRange.reduce((sum, t) => sum + (t.orderAmount || 0), 0);
+    // 3. Revenue
+    const totalRevenue = wonTasks.reduce((sum, t) => sum + (t.orderAmount || 0), 0);
+
+    // 4. Commission
     const totalCommission = totalRevenue * COMMISSION_RATE;
+
+    // 5. Conversion Rate
     const conversionRate = totalCalls > 0 ? (totalOrders / totalCalls) * 100 : 0;
 
     return {
@@ -95,78 +83,37 @@ export const calculateKpiSummary = (
 
 export const calculateKpiHistory = (
     tasks: TelesalesTask[],
-    viewMode: 'day' | 'week',
-    daysCount: number = 30 // Look back N days
+    from: Date,
+    to: Date
 ): KpiHistoryRow[] => {
-    const now = new Date();
-    const rows: Record<string, KpiHistoryRow> = {};
+    // Generate all days in range (descending order)
+    const rows: KpiHistoryRow[] = [];
+    const currentDate = new Date(to);
+    const startDate = startOfDay(from);
 
-    // Determine range
-    // We want to show history even if 0, but simplicity: just aggregate existing data?
-    // User requested: "Sort descending by latest date".
-    // Let's iterate back from today.
+    while (currentDate >= startDate) {
+        const startOfDayTime = startOfDay(currentDate);
+        const endOfDayTime = new Date(startOfDayTime);
+        endOfDayTime.setHours(23, 59, 59, 999);
 
-    for (let i = 0; i < daysCount; i++) {
-        const d = new Date();
-        d.setDate(now.getDate() - i);
-        const dayKey = d.toLocaleDateString('en-CA'); // YYYY-MM-DD
-        const weekKey = `${d.getFullYear()}-W${getWeekNumber(d)}`;
+        const dailymetrics = calculateKpiMetrics(tasks, startOfDayTime, endOfDayTime);
 
-        const key = viewMode === 'day' ? dayKey : weekKey;
-        const label = viewMode === 'day' ? d.toLocaleDateString('vi-VN') : `Tuần ${getWeekNumber(d)}`;
-
-        if (!rows[key]) {
-            rows[key] = {
-                dateLabel: label,
-                timestamp: viewMode === 'day' ? startOfDay(d).getTime() : startOfDay(d).getTime(), // Approximation for week sort
-                calls: 0,
-                orders: 0,
-                revenue: 0,
-                commission: 0
-            };
+        // Only add if there is data? or always? 
+        // User: "nếu ngày nào không có data thì bỏ qua".
+        if (dailymetrics.totalCalls > 0 || dailymetrics.totalRevenue > 0) {
+            rows.push({
+                dateLabel: currentDate.toLocaleDateString('vi-VN'), // Display format
+                timestamp: startOfDayTime.getTime(),
+                calls: dailymetrics.totalCalls,
+                orders: dailymetrics.totalOrders,
+                revenue: dailymetrics.totalRevenue,
+                commission: dailymetrics.totalCommission
+            });
         }
+
+        currentDate.setDate(currentDate.getDate() - 1);
     }
 
-    // Aggregate Logs (Calls)
-    tasks.forEach(t => {
-        (t.logs || []).forEach(log => {
-            const d = new Date(log.timestamp);
-            // Check if within range (roughly)
-            const diff = (now.getTime() - d.getTime()) / (1000 * 3600 * 24);
-            if (diff > daysCount) return;
-
-            const dayKey = d.toLocaleDateString('en-CA');
-            const weekKey = `${d.getFullYear()}-W${getWeekNumber(d)}`;
-            const key = viewMode === 'day' ? dayKey : weekKey;
-
-            if (rows[key]) {
-                rows[key].calls += 1;
-            }
-        });
-    });
-
-    // Aggregate Orders (Revenue)
-    tasks.forEach(t => {
-        if (t.status === 'done' && t.completedAt && (t.orderAmount || 0) > 0) {
-            const d = new Date(t.completedAt);
-            const diff = (now.getTime() - d.getTime()) / (1000 * 3600 * 24);
-            if (diff > daysCount) return;
-
-            const dayKey = d.toLocaleDateString('en-CA');
-            const weekKey = `${d.getFullYear()}-W${getWeekNumber(d)}`;
-            const key = viewMode === 'day' ? dayKey : weekKey;
-
-            if (rows[key]) {
-                rows[key].orders += 1;
-                rows[key].revenue += (t.orderAmount || 0);
-            }
-        }
-    });
-
-    // Calculate commission
-    Object.values(rows).forEach(r => {
-        r.commission = r.revenue * COMMISSION_RATE;
-    });
-
-    return Object.values(rows).sort((a, b) => b.timestamp - a.timestamp);
+    // Already sorted desc by loop structure
+    return rows;
 };
