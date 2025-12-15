@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+
+import Link from "next/link";
 import {
     LayoutDashboard,
     List,
@@ -15,12 +17,14 @@ import {
     Edit2,
     Settings,
     Eye,
-    EyeOff
+    EyeOff,
+    Filter
 } from "lucide-react";
 import {
     TelesalesTask,
     TaskStatus,
     TaskPriority,
+    TaskType,
     TASK_PRIORITY_LABELS,
     getMyTasks,
     updateTask,
@@ -88,9 +92,19 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator }: 
                 </div>
 
                 {(task.customerName || task.phone) && (
-                    <div className="flex items-center gap-2 text-xs text-slate-500 mb-2 pointer-events-none">
+                    <div className="flex items-center gap-2 text-xs text-slate-500 mb-2 pointer-events-auto relative z-10">
                         <User className="w-3 h-3" />
-                        <span className="truncate max-w-[150px]">{task.customerName || "Khách lẻ"}</span>
+                        {task.leadId ? (
+                            <Link
+                                href={`/telesales/leads-queue/${task.leadId}`}
+                                className="truncate max-w-[150px] hover:text-primary-600 hover:underline font-medium"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                {task.customerName || "Khách lẻ"}
+                            </Link>
+                        ) : (
+                            <span className="truncate max-w-[150px]">{task.customerName || "Khách lẻ"}</span>
+                        )}
                         {task.phone && (
                             <>
                                 <span className="w-1 h-1 rounded-full bg-slate-300"></span>
@@ -119,13 +133,32 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator }: 
     );
 };
 
+// --- Use Debounce Hook ---
+function useDebounce<T>(value: T, delay: number): T {
+    const [debouncedValue, setDebouncedValue] = useState(value);
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedValue(value);
+        }, delay);
+        return () => {
+            clearTimeout(handler);
+        };
+    }, [value, delay]);
+    return debouncedValue;
+}
+
 // --- Main Page ---
 
 export default function TelesalesTasksPage() {
     const [tasks, setTasks] = useState<TelesalesTask[]>([]);
     const [columns, setColumns] = useState<TelesalesColumn[]>([]);
     const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
+
+    // Filters
     const [searchQuery, setSearchQuery] = useState("");
+    const debouncedSearchQuery = useDebounce(searchQuery, 300);
+    const [filterPriority, setFilterPriority] = useState<TaskPriority | "all">("all");
+    const [filterType, setFilterType] = useState<TaskType | "all">("all");
 
     // Modal states
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -140,7 +173,6 @@ export default function TelesalesTasksPage() {
     // DnD States
     const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
     const [dropIndicator, setDropIndicator] = useState<{ taskId: string; position: 'top' | 'bottom' } | null>(null);
-    // Track which column is being hovered to show "Append" placeholder if empty or at bottom
     const [dragOverColId, setDragOverColId] = useState<string | null>(null);
 
     // Initial Load & Listeners
@@ -174,13 +206,13 @@ export default function TelesalesTasksPage() {
     };
 
     // --- Drag & Drop Logic ---
+    // (Kept as is, omitted for brevity if no changes needed, but since I am overwriting file I must include it)
 
     const handleTaskDragStart = (e: React.DragEvent, id: string, colId: string) => {
         setDraggedTaskId(id);
         e.dataTransfer.setData("telesales/task", id);
         e.dataTransfer.setData("telesales/sourceColumn", colId);
         e.dataTransfer.effectAllowed = "move";
-        // Customize drag image if desired, for now browser default is okay
     };
 
     const handleColumnDragStart = (e: React.DragEvent, colId: string) => {
@@ -200,23 +232,15 @@ export default function TelesalesTasksPage() {
 
     const handleDragOverColumn = (e: React.DragEvent, colId: string) => {
         e.preventDefault();
-        e.stopPropagation(); // Ensure we capture drag over even if child didn't handle it
+        e.stopPropagation();
         e.dataTransfer.dropEffect = "move";
         setDragOverColId(colId);
-
-        // If hovering over column but NOT over a specific task (target is not a task card or child)
-        // We can infer this because TaskCard stops propagation. 
-        // So if we are here, we are on the column background.
-
-        // Ensure that if we are dragging over the column background, we clear any previous task indicator
-        // But verify we aren't "flickering" if the mouse is right between elements.
-        // Actually, if TaskCard handles dragOver with stopPropagation, this handler only fires
-        // when we are NOT on a task. So it's safe to clear dropIndicator here.
-        setDropIndicator(null);
+        if (e.currentTarget === e.target) {
+            setDropIndicator(null);
+        }
     };
 
     const handleTaskDragOver = (e: React.DragEvent, targetTaskId: string) => {
-        // Only calculate if dragging a task
         if (!draggedTaskId) return;
         if (draggedTaskId === targetTaskId) return;
 
@@ -225,7 +249,7 @@ export default function TelesalesTasksPage() {
         const y = e.clientY - rect.top;
         const position = y < rect.height / 2 ? 'top' : 'bottom';
         setDropIndicator({ taskId: targetTaskId, position });
-        setDragOverColId(null); // Explicitly say we are over a task, not just column background
+        setDragOverColId(null);
     };
 
     const handleDrop = (e: React.DragEvent, targetColId: string) => {
@@ -235,7 +259,6 @@ export default function TelesalesTasksPage() {
         const draggedTaskIdData = e.dataTransfer.getData("telesales/task");
         const draggedColId = e.dataTransfer.getData("telesales/column");
 
-        // Cleanup
         setDraggedTaskId(null);
         setDropIndicator(null);
         setDragOverColId(null);
@@ -249,13 +272,11 @@ export default function TelesalesTasksPage() {
                 const draggedTask = currentTasks[draggedTaskIndex];
                 const updatedTask = { ...draggedTask, status: targetColId };
 
-                // Remove from old position
                 currentTasks.splice(draggedTaskIndex, 1);
 
                 const targetColumnTasks = currentTasks.filter(t => t.status === targetColId).sort((a, b) => (a.order || 0) - (b.order || 0));
 
                 if (dropIndicator) {
-                    // Dropped relative to another task
                     const targetTaskIndex = targetColumnTasks.findIndex(t => t.id === dropIndicator.taskId);
                     if (targetTaskIndex > -1) {
                         if (dropIndicator.position === 'top') {
@@ -267,11 +288,9 @@ export default function TelesalesTasksPage() {
                         targetColumnTasks.push(updatedTask);
                     }
                 } else {
-                    // Dropped in column empty space -> Append
                     targetColumnTasks.push(updatedTask);
                 }
 
-                // Recalculate orders
                 targetColumnTasks.forEach((t, idx) => t.order = idx);
 
                 const otherTasks = currentTasks.filter(t => t.status !== targetColId);
@@ -345,11 +364,21 @@ export default function TelesalesTasksPage() {
 
     // --- Render Helpers ---
 
-    const filteredTasks = tasks.filter(t =>
-        t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.phone?.includes(searchQuery)
-    );
+    const filteredTasks = tasks.filter(t => {
+        // 1. Search Query (Debounced)
+        const matchSearch =
+            t.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+            t.customerName?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+            t.phone?.includes(debouncedSearchQuery);
+
+        // 2. Priority Filter
+        const matchPriority = filterPriority === "all" || t.priority === filterPriority;
+
+        // 3. Type Filter
+        const matchType = filterType === "all" || t.type === filterType;
+
+        return matchSearch && matchPriority && matchType;
+    });
 
     const openCreateModal = (status: TaskStatus = "today") => {
         setCreateModalInitialStatus(status);
@@ -435,18 +464,52 @@ export default function TelesalesTasksPage() {
                 </div>
             </div>
 
-            {/* Toolbar */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-2">
-                <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                        type="text"
-                        placeholder="Tìm theo tên việc, khách hàng, SĐT..."
-                        className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
-                    />
+            {/* Toolbar: Filters & Search */}
+            <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between z-10 sticky top-[60px]">
+                <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto flex-1">
+                    <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="Tìm theo tên việc, khách hàng, SĐT..."
+                            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </div>
+                </div>
+
+                <div className="flex gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+                    <div className="flex items-center gap-2 min-w-[150px]">
+                        <Filter className="w-4 h-4 text-slate-400" />
+                        <select
+                            className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            value={filterPriority}
+                            onChange={(e) => setFilterPriority(e.target.value as TaskPriority | "all")}
+                        >
+                            <option value="all">Tất cả ưu tiên</option>
+                            <option value="low">Thấp</option>
+                            <option value="normal">Bình thường</option>
+                            <option value="high">Cao</option>
+                            <option value="urgent">Khẩn cấp</option>
+                        </select>
+                    </div>
+
+                    <div className="flex items-center gap-2 min-w-[180px]">
+                        <select
+                            className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value as TaskType | "all")}
+                        >
+                            <option value="all">Tất cả loại việc</option>
+                            <option value="call_new_lead">Gọi Lead mới</option>
+                            <option value="follow_up_lead">Chăm sóc lại</option>
+                            <option value="confirm_order">Xác nhận đơn</option>
+                            <option value="care_old_customer">CSKH cũ</option>
+                            <option value="other">Việc khác</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -457,9 +520,6 @@ export default function TelesalesTasksPage() {
                         {visibleColumns.length > 0 && visibleColumns.map(col => {
                             const columnTasks = filteredTasks.filter(t => t.status === col.id).sort((a, b) => (a.order || 0) - (b.order || 0));
 
-                            // Check if this column is being hovered and has no specific task indicator
-                            // If so, show the "Append" placeholder at the bottom
-                            // Only show if dragging a task
                             const showAppendPlaceholder = draggedTaskId && dragOverColId === col.id && !dropIndicator;
 
                             return (
@@ -470,7 +530,7 @@ export default function TelesalesTasksPage() {
                                     onDragEnd={handleColumnDragEnd}
                                     onDragOver={(e) => handleDragOverColumn(e, col.id)}
                                     onDrop={(e) => handleDrop(e, col.id)}
-                                    className={`flex-1 min-w-[280px] bg-slate-50/50 rounded-xl flex flex-col max-h-[calc(100vh-250px)] group/col border-2 transition-colors 
+                                    className={`flex-1 min-w-[280px] bg-slate-50/50 rounded-xl flex flex-col max-h-[calc(100vh-280px)] group/col border-2 transition-colors 
                                         ${dragOverColId === col.id ? 'border-primary-300 bg-primary-50/20' : 'border-transparent hover:border-slate-200'}
                                     `}
                                 >

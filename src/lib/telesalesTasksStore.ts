@@ -8,12 +8,13 @@ export interface TelesalesTask {
     id: string;
     title: string;
     description?: string;
+    priority: TaskPriority;
     status: TaskStatus; // Corresponds to TelesalesColumn.id
     order: number; // For sort order in column
     type: TaskType;
-    priority: TaskPriority;
     telesalesUserId: string;
     relatedLeadId?: string;
+    leadId?: string; // Explicit link to Lead ID
     relatedCustomerId?: string;
     relatedOrderId?: string;
     phone?: string;
@@ -23,6 +24,7 @@ export interface TelesalesTask {
     updatedAt: string;
     lastResult?: string;
     nextActionDate?: string;
+    campaign?: string;
     tags?: string[];
 }
 

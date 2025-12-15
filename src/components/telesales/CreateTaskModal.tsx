@@ -15,7 +15,7 @@ interface CreateTaskModalProps {
     onClose: () => void;
     onSave: (task: any) => void;
     initialStatus?: TaskStatus;
-    initialData?: Partial<TelesalesTask>;
+    initialData?: Partial<TelesalesTask>; // New: Pre-fill data
     columns?: TelesalesColumn[]; // Support dynamic columns
 }
 
@@ -49,11 +49,11 @@ export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "toda
                 phone: initialData.phone || "",
                 priority: initialData.priority || "normal",
                 dueDate: initialData.dueDate || new Date().toISOString().split('T')[0],
-                status: initialStatus,
+                status: initialStatus, // initialStatus takes precedence for status if needed, or check initialData.status
                 description: initialData.description || ""
             });
         }
-    }, [isOpen, initialStatus, initialData.title, initialData.customerName, initialData.phone, initialData.priority, initialData.dueDate, initialData.description]);
+    }, [isOpen, initialStatus, initialData]);
 
     if (!isOpen) return null;
 
@@ -63,14 +63,11 @@ export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "toda
             ...formData,
             type: initialData.type || "other",
             relatedLeadId: initialData.relatedLeadId,
-            relatedOrderId: initialData.relatedOrderId
+            relatedOrderId: initialData.relatedOrderId,
+            leadId: initialData.leadId
         });
         onClose();
     };
-
-    // Use passed columns if available (dynamic), otherwise fallback to static labels (legacy/safety)
-    // Actually, we should preferably just use columns to support dynamic naming.
-    // If columns is empty (shouldn't happy in normal flow if passed from page), we might fallback or just show empty.
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -144,7 +141,6 @@ export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "toda
                                         <option key={col.id} value={col.id}>{col.label}</option>
                                     ))
                                 ) : (
-                                    // Fallback for cases where columns might not be loaded yet or passed (e.g. from Leads Queue)
                                     Object.entries(TASK_STATUS_LABELS).map(([key, label]) => (
                                         <option key={key} value={key}>{label}</option>
                                     ))
