@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Users, Phone, ShoppingBag, TrendingUp, ArrowRight } from "lucide-react";
 import { mockLeads, mockOrders } from "@/mocks/data";
 import Link from "next/link";
+import { getMyTasks, TelesalesTask } from "@/lib/telesalesTasksStore";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -22,15 +23,47 @@ const formatDate = (dateString: string) => {
 };
 
 export default function TelesalesDashboard() {
-    // Filter data for Telesales context
+    // State for tasks
+    const [tasks, setTasks] = useState<TelesalesTask[]>([]);
+
+    // Legacy mock data for tables (until we have real Leads/Orders modules fully linked)
+    // We will still display them but KPIs will now come from Tasks where possible.
     const leads = mockLeads.filter(
         (l) => l.channel === "TELESALES" || l.assignedToRole === "TELESALES"
     );
     const orders = mockOrders.filter((o) => o.source === "TELESALES");
 
-    // Calculate KPIs
-    const callsToday = leads.filter((l) => {
-        const date = new Date(l.createdAt);
+    // Load Tasks Logic
+    useEffect(() => {
+        // Initial load
+        setTasks(getMyTasks());
+
+        // Listen for updates
+        const handleUpdate = () => setTasks(getMyTasks());
+        window.addEventListener("telesales-tasks-updated", handleUpdate);
+        return () => window.removeEventListener("telesales-tasks-updated", handleUpdate);
+    }, []);
+
+    // --- KPI CALCULATIONS ---
+
+    // 1. Leads to Call (Lead phải gọi)
+    // Logic: Tasks that are NOT done/cancelled AND (type is new_lead or follow_up OR just generally open tasks)
+    // Let's filter for open tasks generally or specifically call/follow_up tasks that are open.
+    // "Lead phải gọi" implies tasks related to calling.
+    const leadsToCallCount = tasks.filter(t =>
+        (t.type === 'call_new_lead' || t.type === 'follow_up_lead' || t.type === 'care_old_customer') &&
+        (t.status !== 'done' && t.status !== 'cancelled')
+    ).length;
+
+    // 2. Closed Today (Đã chốt hôm nay)
+    // Logic: Tasks matched as 'done' today.
+    const closedTodayCount = tasks.filter(t => {
+        if (t.status !== 'done') return false;
+        // Use completedAt if available, else fallback to updatedAt
+        const dateStr = t.completedAt || t.updatedAt;
+        if (!dateStr) return false;
+
+        const date = new Date(dateStr);
         const today = new Date();
         return (
             date.getDate() === today.getDate() &&
@@ -39,59 +72,57 @@ export default function TelesalesDashboard() {
         );
     }).length;
 
-    // Mock "Sold Today" - using orders created today
-    const soldToday = orders.filter((o) => {
-        const date = new Date(o.createdAt);
-        const today = new Date();
-        return (
-            date.getDate() === today.getDate() &&
-            date.getMonth() === today.getMonth() &&
-            date.getFullYear() === today.getFullYear() &&
-            (o.status === "processing" || o.status === "delivered" || o.status === "pending")
-        );
-    }).length;
+    // 3. Monthly Revenue (Doanh số tháng)
+    // Logic: Sum of orderAmount for 'done' tasks in current month.
+    const monthlyRevenue = tasks
+        .filter(t => {
+            if (t.status !== 'done') return false;
+            const dateStr = t.completedAt || t.updatedAt;
+            if (!dateStr) return false;
 
-    // Revenue this month
-    const revenueThisMonth = orders
-        .filter((o) => {
-            const date = new Date(o.createdAt);
+            const date = new Date(dateStr);
             const today = new Date();
             return (
                 date.getMonth() === today.getMonth() &&
-                date.getFullYear() === today.getFullYear() &&
-                o.status !== "cancelled"
+                date.getFullYear() === today.getFullYear()
             );
         })
-        .reduce((sum, o) => sum + o.totalAmount, 0);
+        .reduce((sum, t) => sum + (t.orderAmount || 0), 0);
+
+    // 4. Total Customers (Mock or count unique customers in tasks?)
+    // Let's keep distinct customer names count from tasks as a heuristic? Or just legacy logic.
+    // Let's use unique customer names from tasks for fun, or fallback to fixed.
+    const uniqueCustomers = new Set(tasks.map(t => t.customerName).filter(Boolean)).size;
+
 
     const statsCards = [
         {
             label: "Lead phải gọi",
-            value: leads.filter(l => l.status === "new").length.toString(),
-            change: "Cần xử lý ngay",
+            value: leadsToCallCount.toString(),
+            change: "Việc cần xử lý",
             icon: Phone,
             color: "text-blue-600",
             bg: "bg-blue-50",
         },
         {
             label: "Đã chốt hôm nay",
-            value: soldToday.toString(),
-            change: "Đơn hàng mới",
+            value: closedTodayCount.toString() + " việc", // Or orders? Let's say "việc" (tasks)
+            change: "Hoàn thành",
             icon: ShoppingBag,
             color: "text-green-600",
             bg: "bg-green-50",
         },
         {
             label: "Doanh số tháng",
-            value: formatPrice(revenueThisMonth),
-            change: "Kênh Telesales",
+            value: formatPrice(monthlyRevenue),
+            change: "Từ nhiệm vụ hoàn thành",
             icon: TrendingUp,
             color: "text-purple-600",
             bg: "bg-purple-50",
         },
         {
-            label: "Tổng khách hàng",
-            value: "12", // Mock fixed number or calculate from customers
+            label: "Khách hàng",
+            value: uniqueCustomers.toString(),
             change: "Đang chăm sóc",
             icon: Users,
             color: "text-orange-600",
@@ -128,7 +159,7 @@ export default function TelesalesDashboard() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Priority Leads Table */}
+                {/* Priority Leads Table - Keeps displaying Mock Leads for now as requested context implies Tasks module enhancements, not full Leads replacement */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
                     <div className="p-6 border-b border-slate-200 flex justify-between items-center">
                         <h3 className="text-lg font-semibold text-slate-900">Lead ưu tiên hôm nay</h3>
@@ -175,7 +206,7 @@ export default function TelesalesDashboard() {
                     </div>
                 </div>
 
-                {/* Recent Orders Table */}
+                {/* Recent Orders Table - Keeps displaying Mock Orders */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
                     <div className="p-6 border-b border-slate-200 flex justify-between items-center">
                         <h3 className="text-lg font-semibold text-slate-900">Đơn mới nhất</h3>

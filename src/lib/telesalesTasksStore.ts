@@ -25,6 +25,8 @@ export interface TelesalesTask {
     lastResult?: string;
     nextActionDate?: string;
     campaign?: string;
+    orderAmount?: number;
+    completedAt?: string;
     tags?: string[];
 }
 
@@ -77,6 +79,7 @@ const MOCK_TELESALES_TASKS: TelesalesTask[] = [
         dueDate: new Date().toISOString().split('T')[0],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        orderAmount: 5000000
     },
     {
         id: "TASK-002",
@@ -119,6 +122,7 @@ const MOCK_TELESALES_TASKS: TelesalesTask[] = [
         relatedLeadId: "TS-LEAD-X",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        completedAt: new Date().toISOString(),
     },
     {
         id: "TASK-005",
@@ -184,6 +188,7 @@ export const addTask = (taskInput: Omit<TelesalesTask, "id" | "createdAt" | "upd
         createdAt: now,
         updatedAt: now,
         telesalesUserId: taskInput.telesalesUserId || currentUser?.id || "unknown",
+        completedAt: taskInput.status === 'done' ? now : undefined
     };
 
     const updatedTasks = [newTask, ...tasks];
@@ -193,9 +198,18 @@ export const addTask = (taskInput: Omit<TelesalesTask, "id" | "createdAt" | "upd
 
 export const updateTask = (taskId: string, updates: Partial<TelesalesTask>) => {
     const tasks = loadTasks();
-    const updatedTasks = tasks.map(t =>
-        t.id === taskId ? { ...t, ...updates, updatedAt: new Date().toISOString() } : t
-    );
+    const updatedTasks = tasks.map(t => {
+        if (t.id === taskId) {
+            const isCompleting = updates.status === 'done' && t.status !== 'done';
+            return {
+                ...t,
+                ...updates,
+                updatedAt: new Date().toISOString(),
+                completedAt: isCompleting ? new Date().toISOString() : (updates.status && updates.status !== 'done' ? undefined : t.completedAt)
+            };
+        }
+        return t;
+    });
     saveTasks(updatedTasks);
 };
 
