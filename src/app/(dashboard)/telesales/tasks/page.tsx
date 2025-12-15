@@ -64,7 +64,7 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator }: 
         <>
             {/* Ghost Placeholder Top */}
             {dropIndicator?.taskId === task.id && dropIndicator.position === 'top' && (
-                <div className="mb-3 h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse" />
+                <div className="mb-3 h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse pointer-events-none" />
             )}
 
             <div
@@ -113,7 +113,7 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator }: 
 
             {/* Ghost Placeholder Bottom */}
             {dropIndicator?.taskId === task.id && dropIndicator.position === 'bottom' && (
-                <div className="mb-3 h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse" />
+                <div className="mb-3 h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse pointer-events-none" />
             )}
         </>
     );
@@ -200,19 +200,19 @@ export default function TelesalesTasksPage() {
 
     const handleDragOverColumn = (e: React.DragEvent, colId: string) => {
         e.preventDefault();
+        e.stopPropagation(); // Ensure we capture drag over even if child didn't handle it
         e.dataTransfer.dropEffect = "move";
         setDragOverColId(colId);
 
-        // If hovering over column but NOT over a specific task, clear task indicator
-        // This is tricky because task dragOver bubbles. 
-        // We rely on stopPropagation in TaskCard to prevent this if hovering a task.
-        // So if this fires, we are likely in empty space or padding.
+        // If hovering over column but NOT over a specific task (target is not a task card or child)
+        // We can infer this because TaskCard stops propagation. 
+        // So if we are here, we are on the column background.
 
-        // However, if we simply clear it, we might flicker. 
-        // Let's only clear if we are strictly on the column container (e.target check).
-        if (e.currentTarget === e.target) {
-            setDropIndicator(null);
-        }
+        // Ensure that if we are dragging over the column background, we clear any previous task indicator
+        // But verify we aren't "flickering" if the mouse is right between elements.
+        // Actually, if TaskCard handles dragOver with stopPropagation, this handler only fires
+        // when we are NOT on a task. So it's safe to clear dropIndicator here.
+        setDropIndicator(null);
     };
 
     const handleTaskDragOver = (e: React.DragEvent, targetTaskId: string) => {
@@ -366,7 +366,7 @@ export default function TelesalesTasksPage() {
     return (
         <div className="p-4 sm:p-6 space-y-6 h-full flex flex-col relative" onClick={() => setIsSettingsOpen(false)}>
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-50 relative">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-[60] relative">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Việc cần làm Telesales</h1>
                     <p className="text-sm text-slate-500">Quản lý các đầu việc và cuộc gọi hằng ngày</p>
@@ -381,7 +381,7 @@ export default function TelesalesTasksPage() {
                     </button>
 
                     {/* Settings Menu */}
-                    <div className="relative">
+                    <div className="relative z-[9999]">
                         <button
                             onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(!isSettingsOpen); }}
                             className={`bg-white border p-2 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors ${isSettingsOpen ? 'ring-2 ring-primary-100 border-primary-500' : ''}`}
@@ -459,6 +459,7 @@ export default function TelesalesTasksPage() {
 
                             // Check if this column is being hovered and has no specific task indicator
                             // If so, show the "Append" placeholder at the bottom
+                            // Only show if dragging a task
                             const showAppendPlaceholder = draggedTaskId && dragOverColId === col.id && !dropIndicator;
 
                             return (
@@ -474,7 +475,7 @@ export default function TelesalesTasksPage() {
                                     `}
                                 >
                                     {/* Column Header */}
-                                    <div className="p-3 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-slate-50/95 backdrop-blur-sm rounded-t-xl z-10 cursor-grab active:cursor-grabbing">
+                                    <div className="p-3 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-slate-50/95 backdrop-blur-sm rounded-t-xl z-20 cursor-grab active:cursor-grabbing">
                                         <div className="flex items-center gap-2 flex-1 min-w-0">
                                             {editingColumnId === col.id ? (
                                                 <div className="flex items-center gap-1 w-full" onMouseDown={e => e.stopPropagation()}>
@@ -545,7 +546,7 @@ export default function TelesalesTasksPage() {
 
                                         {/* Append Placeholder - shown when dragging column over empty space or bottom */}
                                         {showAppendPlaceholder && (
-                                            <div className="h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse mt-1" />
+                                            <div className="h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse mt-1 pointer-events-none" />
                                         )}
 
                                         {columnTasks.length === 0 && !showAppendPlaceholder && (
