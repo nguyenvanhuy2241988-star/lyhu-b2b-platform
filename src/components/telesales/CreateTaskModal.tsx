@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { X, Trash2 } from "lucide-react";
 import {
     TaskStatus,
     TaskPriority,
@@ -14,6 +14,7 @@ interface CreateTaskModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSave: (task: any) => void;
+    onDelete?: (taskId: string) => void; // New: Delete handler
     initialStatus?: TaskStatus;
     initialData?: Partial<TelesalesTask>; // New: Pre-fill data
     columns?: TelesalesColumn[]; // Support dynamic columns
@@ -29,7 +30,17 @@ interface TaskFormData {
     description: string;
 }
 
-export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "today", initialData = {}, columns = [] }: CreateTaskModalProps) => {
+export const CreateTaskModal = ({
+    isOpen,
+    onClose,
+    onSave,
+    onDelete,
+    initialStatus = "today",
+    initialData = {},
+    columns = []
+}: CreateTaskModalProps) => {
+    const isEditMode = !!initialData.id;
+
     const [formData, setFormData] = useState<TaskFormData>({
         title: "",
         customerName: "",
@@ -49,7 +60,7 @@ export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "toda
                 phone: initialData.phone || "",
                 priority: initialData.priority || "normal",
                 dueDate: initialData.dueDate || new Date().toISOString().split('T')[0],
-                status: initialStatus, // initialStatus takes precedence for status if needed, or check initialData.status
+                status: initialStatus, // initialStatus takes precedence for status if provided via open args, otherwise derived in Page
                 description: initialData.description || ""
             });
         }
@@ -61,6 +72,7 @@ export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "toda
         e.preventDefault();
         onSave({
             ...formData,
+            id: initialData.id, // Pass ID if editing
             type: initialData.type || "other",
             relatedLeadId: initialData.relatedLeadId,
             relatedOrderId: initialData.relatedOrderId,
@@ -69,11 +81,22 @@ export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "toda
         onClose();
     };
 
+    const handleDelete = () => {
+        if (isEditMode && onDelete && initialData.id) {
+            if (window.confirm("Bạn có chắc muốn xóa việc này không? Hành động này không thể hoàn tác.")) {
+                onDelete(initialData.id);
+                onClose();
+            }
+        }
+    };
+
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4">
             <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-in fade-in zoom-in duration-200">
                 <div className="flex items-center justify-between p-4 border-b border-slate-100">
-                    <h3 className="font-semibold text-lg text-slate-900">Thêm việc cần làm</h3>
+                    <h3 className="font-semibold text-lg text-slate-900">
+                        {isEditMode ? "Chỉnh sửa việc cần làm" : "Thêm việc cần làm"}
+                    </h3>
                     <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-full text-slate-500">
                         <X className="w-5 h-5" />
                     </button>
@@ -169,20 +192,38 @@ export const CreateTaskModal = ({ isOpen, onClose, onSave, initialStatus = "toda
                         />
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-2">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
-                        >
-                            Hủy
-                        </button>
-                        <button
-                            type="submit"
-                            className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg"
-                        >
-                            Lưu công việc
-                        </button>
+                    <div className="flex justify-between items-center pt-2">
+                        {/* Delete Button (Left aligned) */}
+                        <div>
+                            {isEditMode && onDelete && (
+                                <button
+                                    type="button"
+                                    onClick={handleDelete}
+                                    className="px-3 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg flex items-center gap-2 transition-colors"
+                                    title="Xóa công việc này"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    <span className="hidden sm:inline">Xóa</span>
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Action Buttons (Right aligned) */}
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                type="submit"
+                                className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg"
+                            >
+                                {isEditMode ? "Lưu thay đổi" : "Lưu công việc"}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

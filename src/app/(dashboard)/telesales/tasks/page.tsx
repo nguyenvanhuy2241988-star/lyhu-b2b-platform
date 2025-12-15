@@ -32,6 +32,7 @@ import {
     getMyTasks,
     updateTask,
     addTask,
+    deleteTask,
     loadColumns,
     TelesalesColumn,
     addColumn,
@@ -69,11 +70,12 @@ interface TaskCardProps {
     onDragOver: (e: React.DragEvent, id: string) => void;
     dropIndicator: { taskId: string; position: 'top' | 'bottom' } | null;
     onLogCall: (task: TelesalesTask) => void;
+    onEdit: (task: TelesalesTask) => void; // New prop
     isOverdue?: boolean;
     isHighlighted?: boolean;
 }
 
-const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, onLogCall, isOverdue, isHighlighted }: TaskCardProps) => {
+const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, onLogCall, onEdit, isOverdue, isHighlighted }: TaskCardProps) => {
     return (
         <>
             {/* Ghost Placeholder Top */}
@@ -84,6 +86,7 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
             <div
                 id={`task-${task.id}`}
                 draggable
+                onClick={() => onEdit(task)} // Trigger Edit
                 onDragStart={(e) => {
                     e.stopPropagation();
                     onDragStart(e, task.id, task.status);
@@ -192,6 +195,7 @@ export default function TelesalesTasksPage() {
     // Modal states
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [createModalInitialStatus, setCreateModalInitialStatus] = useState<TaskStatus>("today");
+    const [editingTask, setEditingTask] = useState<TelesalesTask | null>(null); // New state for editing
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     // Log Modal State
@@ -256,7 +260,6 @@ export default function TelesalesTasksPage() {
     const handleSaveLog = (logData: any) => {
         if (taskToLog) {
             addLog(taskToLog.id, logData);
-            // Optionally move task to "done" or update visible status - for now just log
         }
     };
 
@@ -267,9 +270,36 @@ export default function TelesalesTasksPage() {
         }
     }, [editingColumnId]);
 
-    const handleAddTask = (taskData: any) => {
-        addTask(taskData);
+    // Handle Open Create/Edit
+    const openCreateModal = (status: TaskStatus = "today") => {
+        setCreateModalInitialStatus(status);
+        setEditingTask(null); // Clear editing task
+        setIsCreateModalOpen(true);
     };
+
+    const handleEditTask = (task: TelesalesTask) => {
+        setEditingTask(task);
+        setCreateModalInitialStatus(task.status);
+        setIsCreateModalOpen(true);
+    };
+
+    // Handle Save (Create or Update)
+    const handleSaveTask = (taskData: any) => {
+        if (taskData.id) {
+            // Edit mode
+            updateTask(taskData.id, taskData);
+        } else {
+            // Create mode
+            addTask(taskData);
+        }
+    };
+
+    // Handle Delete
+    const handleDeleteTask = (taskId: string) => {
+        deleteTask(taskId);
+        setIsCreateModalOpen(false); // Modal should be closed by component, but safety check
+    };
+
 
     // --- Drag & Drop Logic ---
     // (Kept as is, omitted for brevity if no changes needed, but since I am overwriting file I must include it)
@@ -445,11 +475,6 @@ export default function TelesalesTasksPage() {
 
         return matchSearch && matchPriority && matchType;
     });
-
-    const openCreateModal = (status: TaskStatus = "today") => {
-        setCreateModalInitialStatus(status);
-        setIsCreateModalOpen(true);
-    };
 
     const getColumnLabel = (status: string) => {
         const col = columns.find(c => c.id === status);
@@ -762,6 +787,7 @@ export default function TelesalesTasksPage() {
                                                     onDragOver={handleTaskDragOver}
                                                     dropIndicator={dropIndicator}
                                                     onLogCall={handleLogCall}
+                                                    onEdit={handleEditTask}
                                                     isOverdue={isOverdue}
                                                     isHighlighted={highlightedTaskId === task.id}
                                                 />
@@ -824,7 +850,7 @@ export default function TelesalesTasksPage() {
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 text-right">
-                                        <button className="text-primary-600 hover:text-primary-700 font-medium text-xs">Sửa</button>
+                                        <button className="text-primary-600 hover:text-primary-700 font-medium text-xs" onClick={() => handleEditTask(task)}>Sửa</button>
                                     </td>
                                 </tr>
                             ))}
@@ -843,8 +869,10 @@ export default function TelesalesTasksPage() {
             <CreateTaskModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}
-                onSave={handleAddTask}
+                onSave={handleSaveTask}
+                onDelete={handleDeleteTask}
                 initialStatus={createModalInitialStatus}
+                initialData={editingTask || {}}
                 columns={columns} // Pass dynamic columns
             />
 
