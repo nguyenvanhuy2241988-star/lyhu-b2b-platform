@@ -1,14 +1,16 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { DollarSign, TrendingUp, Calendar, ArrowUpRight, ArrowDownRight, ChevronDown, Clock } from "lucide-react";
+import { DollarSign, TrendingUp, Calendar, ArrowUpRight, ArrowDownRight, ChevronDown, Clock, Download } from "lucide-react";
 import { TelesalesTask, getMyTasks } from "@/lib/telesalesTasksStore";
 import {
     calculateKpiMetrics,
     calculateKpiHistory,
     COMMISSION_RATE,
     getWeeklyRanges,
-    calculateKpiProgress
+    calculateKpiProgress,
+    getTodayTargetForCurrentUser,
+    calculateKpiRemaining
 } from "@/lib/telesalesKpiSelectors";
 
 const formatPrice = (price: number) => {
@@ -85,7 +87,11 @@ export default function TelesalesEarningsPage() {
 
     // Metrics
     const currentMetrics = useMemo(() => calculateKpiMetrics(tasks, currentRange.from, currentRange.to), [tasks, currentRange]);
+
+    // Today & Target Metrics
     const todayMetrics = useMemo(() => calculateKpiMetrics(tasks, todayRange.from, todayRange.to), [tasks, todayRange]);
+    const todayTarget = useMemo(() => getTodayTargetForCurrentUser(), []);
+    const todayRemaining = useMemo(() => calculateKpiRemaining(todayMetrics, todayTarget), [todayMetrics, todayTarget]);
     const { status: todayKpiStatus, percentage: todayKpiPercent } = useMemo(() => calculateKpiProgress(todayMetrics), [todayMetrics]);
 
     // Comparison for Filtered Data
@@ -126,25 +132,73 @@ export default function TelesalesEarningsPage() {
         return `${p > 0 ? '+' : ''}${p.toFixed(1)}%`;
     };
 
+    // CSV Export Logic
+    const handleExportCsv = () => {
+        if (!history || history.length === 0) {
+            alert("Không có dữ liệu để xuất.");
+            return;
+        }
+
+        const headers = ["Ngày", "Cuộc gọi", "Đơn thành công", "Doanh số", "Hoa hồng", "Tỷ lệ chốt"];
+        const rows = history.map(row => {
+            // Re-calculate conversion for row if not present
+            const conv = row.calls > 0 ? ((row.orders / row.calls) * 100).toFixed(1) : "0.0";
+            return [
+                row.dateLabel,
+                row.calls,
+                row.orders,
+                row.revenue,
+                row.commission,
+                `${conv}%`
+            ];
+        });
+
+        const csvContent = [
+            headers.join(","),
+            ...rows.map(r => r.join(","))
+        ].join("\n");
+
+        // Add UTF-8 BOM
+        const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `telesales_kpi_${dateRange}_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h1 className="text-2xl font-bold text-slate-900">Thu nhập & KPI</h1>
 
-                {/* Filters */}
-                <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
-                    <div className="relative group">
-                        <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">
-                            <Calendar className="w-4 h-4 text-slate-500" />
-                            {getDateRangeText()}
-                            <ChevronDown className="w-3 h-3 text-slate-400" />
-                        </button>
-                        <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 hidden group-hover:block">
-                            <button onClick={() => setDateRange('today')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'today' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>Hôm nay</button>
-                            <button onClick={() => setDateRange('last_7_days')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'last_7_days' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>7 ngày gần đây</button>
-                            <button onClick={() => setDateRange('this_month')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'this_month' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>Tháng này</button>
+                <div className="flex items-center gap-3">
+                    {/* Filters */}
+                    <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                        <div className="relative group">
+                            <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">
+                                <Calendar className="w-4 h-4 text-slate-500" />
+                                {getDateRangeText()}
+                                <ChevronDown className="w-3 h-3 text-slate-400" />
+                            </button>
+                            <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 hidden group-hover:block">
+                                <button onClick={() => setDateRange('today')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'today' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>Hôm nay</button>
+                                <button onClick={() => setDateRange('last_7_days')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'last_7_days' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>7 ngày gần đây</button>
+                                <button onClick={() => setDateRange('this_month')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'this_month' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>Tháng này</button>
+                            </div>
                         </div>
                     </div>
+
+                    {/* Export Button */}
+                    <button
+                        onClick={handleExportCsv}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50"
+                    >
+                        <Download className="w-4 h-4 text-slate-500" />
+                        Xuất báo cáo
+                    </button>
                 </div>
             </div>
 
@@ -196,6 +250,28 @@ export default function TelesalesEarningsPage() {
                                 <span className="font-bold">{formatPrice(todayMetrics.totalRevenue)}</span>
                             </div>
                         </div>
+
+                        {/* Target & Remaining Section */}
+                        {todayRemaining.isCompleted ? (
+                            <div className="mt-3 pt-2 border-t border-white/10 text-center">
+                                <span className="text-green-300 font-bold text-sm">🎉 Đã hoàn thành chỉ tiêu!</span>
+                            </div>
+                        ) : (
+                            <div className="mt-3 pt-2 border-t border-white/10 text-xs text-indigo-200">
+                                <div className="flex justify-between mb-0.5">
+                                    <span>Chỉ tiêu:</span>
+                                    <span>{todayTarget.callsPerDay} gọi · {todayTarget.ordersPerDay} đơn · {formatPrice(todayTarget.revenuePerDay)}</span>
+                                </div>
+                                <div className="flex justify-between text-orange-200 font-medium">
+                                    <span>Còn thiếu:</span>
+                                    <span>
+                                        {todayRemaining.calls > 0 && `${todayRemaining.calls} gọi `}
+                                        {todayRemaining.orders > 0 && `· ${todayRemaining.orders} đơn `}
+                                        {todayRemaining.revenue > 0 && `· ${formatPrice(todayRemaining.revenue)}`}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
