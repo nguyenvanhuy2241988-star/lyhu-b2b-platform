@@ -141,7 +141,11 @@ const MOCK_TELESALES_TASKS: TelesalesTask[] = [
 ];
 
 const STORAGE_KEY_TASKS = "lyhu_telesales_tasks";
-const STORAGE_KEY_COLUMNS = "lyhu_telesales_columns_v1";
+
+const getColumnsStorageKey = () => {
+    const user = getCurrentUser();
+    return `lyhu_telesales_columns_v1_${user?.id || 'guest'}`;
+};
 
 // --- TASKS ---
 
@@ -236,7 +240,8 @@ export const getMyTasks = (): TelesalesTask[] => {
 export const loadColumns = (): TelesalesColumn[] => {
     if (typeof window === "undefined") return DEFAULT_COLUMNS;
     try {
-        const stored = localStorage.getItem(STORAGE_KEY_COLUMNS);
+        const key = getColumnsStorageKey();
+        const stored = localStorage.getItem(key);
         if (!stored) {
             return DEFAULT_COLUMNS;
         }
@@ -250,10 +255,22 @@ export const loadColumns = (): TelesalesColumn[] => {
 export const saveColumns = (columns: TelesalesColumn[]) => {
     if (typeof window === "undefined") return;
     try {
-        localStorage.setItem(STORAGE_KEY_COLUMNS, JSON.stringify(columns));
+        const key = getColumnsStorageKey();
+        localStorage.setItem(key, JSON.stringify(columns));
         window.dispatchEvent(new Event("telesales-columns-updated"));
     } catch (error) {
         console.error("Failed to save columns:", error);
+    }
+};
+
+export const resetColumns = () => {
+    if (typeof window === "undefined") return;
+    try {
+        const key = getColumnsStorageKey();
+        localStorage.removeItem(key);
+        window.dispatchEvent(new Event("telesales-columns-updated"));
+    } catch (error) {
+        console.error("Failed to reset columns:", error);
     }
 };
 

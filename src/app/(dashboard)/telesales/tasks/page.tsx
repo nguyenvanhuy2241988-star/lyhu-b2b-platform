@@ -18,7 +18,8 @@ import {
     Settings,
     Eye,
     EyeOff,
-    Filter
+    Filter,
+    RotateCcw
 } from "lucide-react";
 import {
     TelesalesTask,
@@ -35,7 +36,8 @@ import {
     deleteColumn,
     updateColumn,
     reorderColumns,
-    updateTasksOrder
+    updateTasksOrder,
+    resetColumns
 } from "@/lib/telesalesTasksStore";
 import { CreateTaskModal } from "@/components/telesales/CreateTaskModal";
 
@@ -441,6 +443,16 @@ export default function TelesalesTasksPage() {
                                         className="w-full flex items-center justify-center gap-2 text-sm text-primary-600 hover:bg-primary-50 py-2 rounded font-medium"
                                     >
                                         <Plus className="w-4 h-4" /> Thêm cột mới
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            resetColumns();
+                                            setColumns(loadColumns()); // Reload immediately
+                                            setIsSettingsOpen(false);
+                                        }}
+                                        className="w-full flex items-center justify-center gap-2 text-sm text-slate-500 hover:bg-slate-50 py-2 rounded font-medium hover:text-red-600 mt-1"
+                                    >
+                                        <RotateCcw className="w-4 h-4" /> Khôi phục mặc định
                                     </button>
                                 </div>
                             </div>
