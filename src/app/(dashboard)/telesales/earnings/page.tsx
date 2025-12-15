@@ -3,7 +3,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { DollarSign, TrendingUp, Calendar, ArrowUpRight, ArrowDownRight, ChevronDown, Clock } from "lucide-react";
 import { TelesalesTask, getMyTasks } from "@/lib/telesalesTasksStore";
-import { calculateKpiMetrics, calculateKpiHistory, COMMISSION_RATE } from "@/lib/telesalesKpiSelectors";
+import {
+    calculateKpiMetrics,
+    calculateKpiHistory,
+    COMMISSION_RATE,
+    getWeeklyRanges,
+    calculateKpiProgress
+} from "@/lib/telesalesKpiSelectors";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -44,28 +50,25 @@ export default function TelesalesEarningsPage() {
 
         switch (dateRange) {
             case 'today':
-                // Already set to start of today derived from `start`
                 end.setHours(23, 59, 59, 999);
                 label = "Hôm nay";
                 break;
 
             case 'last_7_days':
-                start.setDate(now.getDate() - 6); // 7 days inclusive: [Today-6, Today]
+                start.setDate(now.getDate() - 6);
                 end.setHours(23, 59, 59, 999);
                 label = "7 ngày gần đây";
                 break;
 
             case 'this_month':
-                start.setDate(1); // 1st of month
+                start.setDate(1);
                 end.setMonth(end.getMonth() + 1);
-                end.setDate(0); // End of month
+                end.setDate(0);
                 end.setHours(23, 59, 59, 999);
                 label = `Tháng ${now.getMonth() + 1}`;
                 break;
         }
 
-        // Previous Period (Simple comparison: Previous Month for 'this_month', or generic previous period)
-        // For simplicity, mimicking 'this_month' comparison logic for now, or just Previous Month
         const prevStart = new Date(start);
         prevStart.setMonth(prevStart.getMonth() - 1);
         const prevEnd = new Date(start);
@@ -75,39 +78,31 @@ export default function TelesalesEarningsPage() {
         return {
             currentRange: { from: start, to: end },
             todayRange: { from: todayStart, to: todayEnd },
-            prevRange: { from: prevStart, to: prevEnd }, // Mostly reused for "Growth" calculation logic if applicable
+            prevRange: { from: prevStart, to: prevEnd },
             rangeLabel: label
         };
     }, [dateRange]);
 
-    // Calculate Metrics
+    // Metrics
     const currentMetrics = useMemo(() => calculateKpiMetrics(tasks, currentRange.from, currentRange.to), [tasks, currentRange]);
     const todayMetrics = useMemo(() => calculateKpiMetrics(tasks, todayRange.from, todayRange.to), [tasks, todayRange]);
+    const { status: todayKpiStatus, percentage: todayKpiPercent } = useMemo(() => calculateKpiProgress(todayMetrics), [todayMetrics]);
 
-    // Comparison for This Month (only relevant if 'this_month' selected or generally useful?)
-    // User asked for filters. The cards relying on filters are the 3 big ones.
-    // The "Today" card is independent.
-
-    // We can keep 'prevMetrics' to compare "This Month" vs "Last Month" if 'this_month' is selected. 
-    // If 'today' or 'last_7_days' is selected, growth vs "last month" might be waiting for user feedback, 
-    // but code currently compares vs "prevRange" defined in useMemo. 
-    // For 'this_month', prevRange is Last Month. 
-    // For 'today', prevRange is... Last Month? (logic above sets it to last month from start date).
-
-    // Let's refine prevRange for 'today':
-    // If 'today' -> comparison vs 'yesterday'? Or 'average'? 
-    // Current code: prevStart = today - 1 month. This is "Same day last month". Strange.
-    // For simplicity, I will hide the growth indicator if filter is NOT 'this_month', or keep it simple.
-    // User requested "3 thẻ lớn tính toán lại theo dữ liệu đã lọc". Growth is strictly required? 
-    // Existing code had comparison. I'll keep it but only show relevant label or just keep it as is.
-
+    // Comparison for Filtered Data
     const prevMetrics = useMemo(() => calculateKpiMetrics(tasks, prevRange.from, prevRange.to), [tasks, prevRange]);
-
     const revenueGrowth = prevMetrics.totalRevenue > 0
         ? ((currentMetrics.totalRevenue - prevMetrics.totalRevenue) / prevMetrics.totalRevenue) * 100
         : (currentMetrics.totalRevenue > 0 ? 100 : 0);
 
-    // Calculate History (Table) - Sorted descending
+    // Weekly Comparison Metrics
+    const weeklyMetrics = useMemo(() => {
+        const ranges = getWeeklyRanges();
+        const thisWeek = calculateKpiMetrics(tasks, ranges.thisWeek.from, ranges.thisWeek.to);
+        const lastWeek = calculateKpiMetrics(tasks, ranges.lastWeek.from, ranges.lastWeek.to);
+        return { thisWeek, lastWeek };
+    }, [tasks]);
+
+    // History Table
     const history = useMemo(() => calculateKpiHistory(tasks, currentRange.from, currentRange.to), [tasks, currentRange]);
 
     const getDateRangeText = () => {
@@ -117,6 +112,18 @@ export default function TelesalesEarningsPage() {
             case 'this_month': return "Tháng này";
             default: return "";
         }
+    };
+
+    const getTrendIcon = (current: number, prev: number) => {
+        if (current > prev) return <ArrowUpRight className="w-4 h-4 text-green-500" />;
+        if (current < prev) return <ArrowDownRight className="w-4 h-4 text-red-500" />;
+        return <span className="text-slate-400 w-4 block text-center">-</span>;
+    };
+
+    const getTrendPercent = (current: number, prev: number) => {
+        if (prev === 0) return current > 0 ? "+100%" : "0%";
+        const p = ((current - prev) / prev) * 100;
+        return `${p > 0 ? '+' : ''}${p.toFixed(1)}%`;
     };
 
     return (
@@ -132,7 +139,6 @@ export default function TelesalesEarningsPage() {
                             {getDateRangeText()}
                             <ChevronDown className="w-3 h-3 text-slate-400" />
                         </button>
-                        {/* Dropdown */}
                         <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 hidden group-hover:block">
                             <button onClick={() => setDateRange('today')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'today' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>Hôm nay</button>
                             <button onClick={() => setDateRange('last_7_days')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'last_7_days' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>7 ngày gần đây</button>
@@ -145,36 +151,55 @@ export default function TelesalesEarningsPage() {
             {/* KPI Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
 
-                {/* 1. Today KPI Card (New) */}
-                <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-6 rounded-xl shadow-lg text-white">
-                    <div className="flex items-center justify-between mb-4">
+                {/* 1. Today KPI Card */}
+                <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-6 rounded-xl shadow-lg text-white relative overflow-hidden">
+                    {/* Background Pattern */}
+                    <div className="absolute top-0 right-0 p-4 opacity-10">
+                        <Clock className="w-16 h-16" />
+                    </div>
+
+                    <div className="flex items-center justify-between mb-4 relative z-10">
                         <div className="p-3 bg-white/20 rounded-lg backdrop-blur-sm">
                             <Clock className="w-6 h-6 text-white" />
                         </div>
-                        <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded backdrop-blur-sm">
-                            Hôm nay
+                        <span className={`text-xs font-bold px-2 py-1 rounded backdrop-blur-sm border ${todayKpiStatus === 'good' ? 'bg-green-500/20 border-green-400 text-green-100' : 'bg-orange-500/20 border-orange-400 text-orange-100'}`}>
+                            {todayKpiStatus === 'good' ? 'Đã đạt' : 'Cần cố gắng'}
                         </span>
                     </div>
-                    <div>
-                        <p className="text-indigo-100 font-medium mb-1">KPI Hôm nay</p>
-                        <div className="space-y-1">
+
+                    <div className="relative z-10">
+                        <div className="mb-3">
+                            <p className="text-indigo-100 font-medium mb-1 flex justify-between">
+                                <span>KPI Hôm nay</span>
+                                <span className="text-white font-bold">{todayKpiPercent}%</span>
+                            </p>
+                            {/* Progress Bar */}
+                            <div className="h-2 bg-black/20 rounded-full overflow-hidden">
+                                <div
+                                    className={`h-full rounded-full transition-all duration-500 ${todayKpiStatus === 'good' ? 'bg-green-400' : (todayKpiStatus === 'warning' ? 'bg-yellow-400' : 'bg-red-400')}`}
+                                    style={{ width: `${Math.min(todayKpiPercent, 100)}%` }}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1 pt-2 border-t border-white/10">
                             <div className="flex justify-between text-sm">
-                                <span>Cuộc gọi:</span>
+                                <span className="opacity-80">Cuộc gọi:</span>
                                 <span className="font-bold">{todayMetrics.totalCalls}</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span>Đơn hàng:</span>
+                                <span className="opacity-80">Đơn hàng:</span>
                                 <span className="font-bold">{todayMetrics.totalOrders}</span>
                             </div>
-                            <div className="flex justify-between text-sm pt-2 border-t border-white/10 mt-2">
-                                <span>Doanh số:</span>
+                            <div className="flex justify-between text-sm">
+                                <span className="opacity-80">Doanh số:</span>
                                 <span className="font-bold">{formatPrice(todayMetrics.totalRevenue)}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* 2. Revenue Card (Filtered) */}
+                {/* 2. Revenue Card */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-blue-50 rounded-lg">
@@ -193,7 +218,7 @@ export default function TelesalesEarningsPage() {
                     </div>
                 </div>
 
-                {/* 3. Commission Card (Filtered) */}
+                {/* 3. Commission Card */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-green-50 rounded-lg">
@@ -201,11 +226,10 @@ export default function TelesalesEarningsPage() {
                         </div>
                     </div>
                     <div>
-                        <p className="text-slate-600 font-medium mb-1">Hoa hồng ({COMMISSION_RATE * 100}%)</p>
+                        <p className="text-slate-600 font-medium mb-1">Hoa hồng ước tính</p>
                         <h3 className="text-2xl font-bold text-slate-900">{formatPrice(currentMetrics.totalCommission)}</h3>
                     </div>
                     <div className="mt-4 pt-4 border-t border-slate-100 flex items-center text-sm">
-                        {/* Show growth only if This Month is selected for clarity, or just generic */}
                         {dateRange === 'this_month' && (
                             <div className={`flex items-center font-medium ${revenueGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                 {revenueGrowth >= 0 ? <ArrowUpRight className="w-4 h-4 mr-1" /> : <ArrowDownRight className="w-4 h-4 mr-1" />}
@@ -218,7 +242,7 @@ export default function TelesalesEarningsPage() {
                     </div>
                 </div>
 
-                {/* 4. Conversion Card (Filtered) */}
+                {/* 4. Conversion Card */}
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 bg-purple-50 rounded-lg">
@@ -231,6 +255,88 @@ export default function TelesalesEarningsPage() {
                     </div>
                     <div className="mt-4 pt-4 border-t border-slate-100 flex items-center text-sm text-slate-500">
                         {currentMetrics.totalOrders} đơn / {currentMetrics.totalCalls} cuộc gọi
+                    </div>
+                </div>
+            </div>
+
+            {/* Weekly Comparison Block */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">So sánh Tuần này vs Tuần trước</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+                    {/* This Week */}
+                    <div className="space-y-4">
+                        <h4 className="font-medium text-slate-700 border-b pb-2">Tuần này</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-xs text-slate-500 uppercase">Cuộc gọi</p>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-lg font-semibold">{weeklyMetrics.thisWeek.totalCalls}</span>
+                                    <span className="text-xs text-slate-500 flex items-center">
+                                        {getTrendIcon(weeklyMetrics.thisWeek.totalCalls, weeklyMetrics.lastWeek.totalCalls)}
+                                        <span className={weeklyMetrics.thisWeek.totalCalls >= weeklyMetrics.lastWeek.totalCalls ? "text-green-600" : "text-red-600"}>
+                                            {getTrendPercent(weeklyMetrics.thisWeek.totalCalls, weeklyMetrics.lastWeek.totalCalls)}
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-xs text-slate-500 uppercase">Doanh số</p>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-lg font-semibold">{formatPrice(weeklyMetrics.thisWeek.totalRevenue)}</span>
+                                </div>
+                                <span className="text-xs flex items-center gap-1 mt-1">
+                                    {getTrendIcon(weeklyMetrics.thisWeek.totalRevenue, weeklyMetrics.lastWeek.totalRevenue)}
+                                    <span className={weeklyMetrics.thisWeek.totalRevenue >= weeklyMetrics.lastWeek.totalRevenue ? "text-green-600" : "text-red-600"}>
+                                        {getTrendPercent(weeklyMetrics.thisWeek.totalRevenue, weeklyMetrics.lastWeek.totalRevenue)}
+                                    </span>
+                                </span>
+                            </div>
+                            <div>
+                                <p className="text-xs text-slate-500 uppercase">Đơn hàng</p>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-lg font-semibold">{weeklyMetrics.thisWeek.totalOrders}</span>
+                                    <span className="text-xs text-slate-500 flex items-center">
+                                        {getTrendIcon(weeklyMetrics.thisWeek.totalOrders, weeklyMetrics.lastWeek.totalOrders)}
+                                        <span className={weeklyMetrics.thisWeek.totalOrders >= weeklyMetrics.lastWeek.totalOrders ? "text-green-600" : "text-red-600"}>
+                                            {getTrendPercent(weeklyMetrics.thisWeek.totalOrders, weeklyMetrics.lastWeek.totalOrders)}
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-xs text-slate-500 uppercase">Tỷ lệ chốt</p>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-lg font-semibold">{weeklyMetrics.thisWeek.conversionRate.toFixed(1)}%</span>
+                                    <span className="text-xs text-slate-500 flex items-center">
+                                        {getTrendIcon(weeklyMetrics.thisWeek.conversionRate, weeklyMetrics.lastWeek.conversionRate)}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Last Week */}
+                    <div className="space-y-4 opacity-75">
+                        <h4 className="font-medium text-slate-700 border-b pb-2">Tuần trước</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-xs text-slate-500 uppercase">Cuộc gọi</p>
+                                <p className="text-lg font-semibold text-slate-600">{weeklyMetrics.lastWeek.totalCalls}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-slate-500 uppercase">Doanh số</p>
+                                <p className="text-lg font-semibold text-slate-600">{formatPrice(weeklyMetrics.lastWeek.totalRevenue)}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-slate-500 uppercase">Đơn hàng</p>
+                                <p className="text-lg font-semibold text-slate-600">{weeklyMetrics.lastWeek.totalOrders}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-slate-500 uppercase">Tỷ lệ chốt</p>
+                                <p className="text-lg font-semibold text-slate-600">{weeklyMetrics.lastWeek.conversionRate.toFixed(1)}%</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

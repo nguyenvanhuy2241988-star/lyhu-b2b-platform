@@ -6,16 +6,45 @@ import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/lib/constants";
 import { LucideIcon } from "lucide-react";
 import { UserRole } from "@/lib/auth";
+import { useEffect, useState } from "react";
+import { getMyTasks } from "@/lib/telesalesTasksStore";
+import { calculateKpiMetrics, calculateKpiProgress } from "@/lib/telesalesKpiSelectors";
 
 interface SidebarProps {
     role: UserRole;
     isOpen: boolean;
     onClose?: () => void;
+    // We could pass kpiStatus from layout, but fetching here is simpler for now
 }
 
 export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
     const items = NAV_ITEMS[role] || [];
+    const [showKpiBadge, setShowKpiBadge] = useState(false);
+
+    useEffect(() => {
+        // Only check for Telesales role or if the link exists
+        if (role === 'telesales' || role === 'admin') { // Check role
+            const checkKpi = () => {
+                const tasks = getMyTasks();
+                const now = new Date();
+                const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+                const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+
+                const metrics = calculateKpiMetrics(tasks, startOfDay, endOfDay);
+                const { status } = calculateKpiProgress(metrics);
+
+                // Show badge if warning or bad
+                setShowKpiBadge(status === 'warning' || status === 'bad');
+            };
+
+            checkKpi();
+
+            // Listen for updates
+            window.addEventListener("telesales-tasks-updated", checkKpi);
+            return () => window.removeEventListener("telesales-tasks-updated", checkKpi);
+        }
+    }, [role]);
 
     return (
         <>
@@ -43,6 +72,7 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
                     {items.map((item) => {
                         const Icon = item.icon as LucideIcon;
                         const isActive = pathname === item.href;
+                        const isKpiLink = item.href === '/telesales/earnings';
 
                         return (
                             <Link
@@ -50,7 +80,7 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
                                 href={item.href}
                                 onClick={onClose}
                                 className={cn(
-                                    "flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors text-sm",
+                                    "flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors text-sm relative",
                                     isActive
                                         ? "bg-primary-50 text-primary-600 font-medium"
                                         : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
@@ -58,6 +88,9 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
                             >
                                 <Icon className="w-5 h-5" />
                                 <span>{item.label}</span>
+                                {isKpiLink && showKpiBadge && (
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
+                                )}
                             </Link>
                         );
                     })}

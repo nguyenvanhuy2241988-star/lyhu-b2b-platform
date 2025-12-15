@@ -117,3 +117,67 @@ export const calculateKpiHistory = (
     // Already sorted desc by loop structure
     return rows;
 };
+
+// --- KPI Targets & Status ---
+
+export const KPI_TARGETS = {
+    calls: 40,
+    orders: 3,
+    revenue: 3000000
+};
+
+export type KpiStatus = 'good' | 'warning' | 'bad';
+
+export interface KpiProgress {
+    status: KpiStatus;
+    percentage: number;
+}
+
+export const calculateKpiProgress = (metrics: KpiMetrics): KpiProgress => {
+    // Calculate simple average progress or weighted?
+    // User suggested average of 3 indicators or reasonable method.
+    // Let's cap individual progress to 100% to avoid skewed average? Or allow >100%?
+    // "Warning: 50% - <100%". "Bad: <50%".
+
+    const callProgress = Math.min(metrics.totalCalls / KPI_TARGETS.calls, 1.2); // Cap slightly > 1
+    const orderProgress = Math.min(metrics.totalOrders / KPI_TARGETS.orders, 1.2);
+    const revenueProgress = Math.min(metrics.totalRevenue / KPI_TARGETS.revenue, 1.2);
+
+    // Weighted average? Or simple? 
+    // Let's take simple average of percentages.
+    const avgProgress = (callProgress + orderProgress + revenueProgress) / 3;
+    const percentage = Math.round(avgProgress * 100);
+
+    let status: KpiStatus = 'bad';
+    if (percentage >= 100) status = 'good';
+    else if (percentage >= 50) status = 'warning';
+
+    return { status, percentage };
+};
+
+export const getWeeklyRanges = () => {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 (Sun) - 6 (Sat). We want Mon-Sun.
+    const diffToMon = (dayOfWeek + 6) % 7; // Distance to Monday
+
+    // This Week: Mon to Today
+    const thisWeekStart = new Date(now);
+    thisWeekStart.setDate(now.getDate() - diffToMon);
+    thisWeekStart.setHours(0, 0, 0, 0);
+
+    const thisWeekEnd = new Date(); // Up to now
+    thisWeekEnd.setHours(23, 59, 59, 999);
+
+    // Last Week: Mon to Sun
+    const lastWeekStart = new Date(thisWeekStart);
+    lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+
+    const lastWeekEnd = new Date(thisWeekStart); // Mon of this week
+    lastWeekEnd.setDate(lastWeekEnd.getDate() - 1); // Sunday of last week
+    lastWeekEnd.setHours(23, 59, 59, 999);
+
+    return {
+        thisWeek: { from: thisWeekStart, to: thisWeekEnd },
+        lastWeek: { from: lastWeekStart, to: lastWeekEnd }
+    };
+};
