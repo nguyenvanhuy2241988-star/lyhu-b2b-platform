@@ -9,6 +9,7 @@ export interface TelesalesTask {
     title: string;
     description?: string;
     status: TaskStatus; // Corresponds to TelesalesColumn.id
+    order: number; // For sort order in column
     type: TaskType;
     priority: TaskPriority;
     telesalesUserId: string;
@@ -30,15 +31,16 @@ export interface TelesalesColumn {
     label: string;
     order: number;
     isDefault?: boolean;
+    isVisible?: boolean;
 }
 
 export const DEFAULT_COLUMNS: TelesalesColumn[] = [
-    { id: "inbox", label: "Hộp thư đến", order: 0, isDefault: true },
-    { id: "today", label: "Hôm nay", order: 1, isDefault: true },
-    { id: "tomorrow", label: "Ngày mai", order: 2 },
-    { id: "this_week", label: "Tuần này", order: 3 },
-    { id: "later", label: "Để sau", order: 4 },
-    { id: "done", label: "Hoàn tất", order: 5, isDefault: true },
+    { id: "inbox", label: "Hộp thư đến", order: 0, isDefault: true, isVisible: true },
+    { id: "today", label: "Hôm nay", order: 1, isDefault: true, isVisible: true },
+    { id: "tomorrow", label: "Ngày mai", order: 2, isVisible: true },
+    { id: "this_week", label: "Tuần này", order: 3, isVisible: true },
+    { id: "later", label: "Để sau", order: 4, isVisible: true },
+    { id: "done", label: "Hoàn tất", order: 5, isDefault: true, isVisible: true },
 ];
 
 export const TASK_STATUS_LABELS: Record<string, string> = {
@@ -63,6 +65,7 @@ const MOCK_TELESALES_TASKS: TelesalesTask[] = [
         id: "TASK-001",
         title: "Gọi xác nhận đơn hàng ORD-TS-001",
         status: "today",
+        order: 0,
         type: "confirm_order",
         priority: "high",
         telesalesUserId: "2", // Matching mock telesales user ID
@@ -77,6 +80,7 @@ const MOCK_TELESALES_TASKS: TelesalesTask[] = [
         id: "TASK-002",
         title: "Chăm sóc khách hàng cũ - Siêu thị Bình Minh",
         status: "tomorrow",
+        order: 0,
         type: "care_old_customer",
         priority: "normal",
         telesalesUserId: "2",
@@ -90,6 +94,7 @@ const MOCK_TELESALES_TASKS: TelesalesTask[] = [
         id: "TASK-003",
         title: "Tư vấn sản phẩm mới cho Đại lý Tuấn Tú",
         status: "inbox",
+        order: 0,
         type: "call_new_lead",
         priority: "normal",
         telesalesUserId: "2",
@@ -103,6 +108,7 @@ const MOCK_TELESALES_TASKS: TelesalesTask[] = [
         id: "TASK-004",
         title: "Follow up Căng tin ĐH Quốc Gia",
         status: "done",
+        order: 0,
         type: "follow_up_lead",
         priority: "low",
         telesalesUserId: "2",
@@ -116,6 +122,7 @@ const MOCK_TELESALES_TASKS: TelesalesTask[] = [
         id: "TASK-005",
         title: "Gọi lại Tạp hóa Bác Ba",
         status: "this_week",
+        order: 0,
         type: "call_new_lead",
         priority: "high",
         telesalesUserId: "2",
@@ -156,7 +163,7 @@ export const saveTasks = (tasks: TelesalesTask[]) => {
     }
 };
 
-export const addTask = (taskInput: Omit<TelesalesTask, "id" | "createdAt" | "updatedAt" | "telesalesUserId"> & { telesalesUserId?: string }): TelesalesTask => {
+export const addTask = (taskInput: Omit<TelesalesTask, "id" | "createdAt" | "updatedAt" | "telesalesUserId" | "order"> & { telesalesUserId?: string }): TelesalesTask => {
     const tasks = loadTasks();
     const currentUser = getCurrentUser();
 
@@ -164,9 +171,14 @@ export const addTask = (taskInput: Omit<TelesalesTask, "id" | "createdAt" | "upd
     const id = `TASK-${Date.now()}`;
     const now = new Date().toISOString();
 
+    // Calculate generic order (append to end of list for simplicity, or specific column)
+    const tasksInColumn = tasks.filter(t => t.status === taskInput.status);
+    const maxOrder = tasksInColumn.length > 0 ? Math.max(...tasksInColumn.map(t => t.order || 0)) : -1;
+
     const newTask: TelesalesTask = {
         ...taskInput,
         id,
+        order: maxOrder + 1,
         createdAt: now,
         updatedAt: now,
         telesalesUserId: taskInput.telesalesUserId || currentUser?.id || "unknown",
@@ -184,6 +196,10 @@ export const updateTask = (taskId: string, updates: Partial<TelesalesTask>) => {
     );
     saveTasks(updatedTasks);
 };
+
+export const updateTasksOrder = (newTasks: TelesalesTask[]) => {
+    saveTasks(newTasks);
+}
 
 export const deleteTask = (taskId: string) => {
     const tasks = loadTasks();
