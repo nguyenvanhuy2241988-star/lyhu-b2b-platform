@@ -70,9 +70,10 @@ interface TaskCardProps {
     dropIndicator: { taskId: string; position: 'top' | 'bottom' } | null;
     onLogCall: (task: TelesalesTask) => void;
     isOverdue?: boolean;
+    isHighlighted?: boolean;
 }
 
-const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, onLogCall, isOverdue }: TaskCardProps) => {
+const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, onLogCall, isOverdue, isHighlighted }: TaskCardProps) => {
     return (
         <>
             {/* Ghost Placeholder Top */}
@@ -81,6 +82,7 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
             )}
 
             <div
+                id={`task-${task.id}`}
                 draggable
                 onDragStart={(e) => {
                     e.stopPropagation();
@@ -93,9 +95,11 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
                 }}
                 className={`relative bg-white p-3 rounded-lg shadow-sm border cursor-move transition-all mb-3 group/card 
                     ${isDragging ? 'opacity-50 scale-95 ring-2 ring-primary-200 rotate-1 border-primary-200' :
-                        isOverdue
-                            ? 'border-red-300 ring-1 ring-red-100 hover:shadow-md hover:border-red-400'
-                            : 'border-slate-200 hover:shadow-md hover:border-primary-200'
+                        isHighlighted
+                            ? 'border-yellow-400 ring-2 ring-yellow-400 shadow-md scale-[1.02] z-10' // Highlight style
+                            : isOverdue
+                                ? 'border-red-300 ring-1 ring-red-100 hover:shadow-md hover:border-red-400'
+                                : 'border-slate-200 hover:shadow-md hover:border-primary-200'
                     }
                     ${isDragging ? '' : 'active:cursor-grabbing'}
                 `}
@@ -204,10 +208,31 @@ export default function TelesalesTasksPage() {
     const [dropIndicator, setDropIndicator] = useState<{ taskId: string; position: 'top' | 'bottom' } | null>(null);
     const [dragOverColId, setDragOverColId] = useState<string | null>(null);
 
+    // Notification States
+    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+    const [activeNotifTab, setActiveNotifTab] = useState<'overdue' | 'today'>('overdue');
+    const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
+
     // Initial Load & Listeners
     const refreshData = () => {
         setTasks(getMyTasks().sort((a, b) => (a.order || 0) - (b.order || 0)));
         setColumns(loadColumns().sort((a, b) => a.order - b.order));
+    };
+
+    // Helper to scroll to task
+    const handleLocateTask = (taskId: string) => {
+        setIsNotificationOpen(false);
+        setViewMode("kanban"); // Switch to kanban to see the card
+
+        // Timeout to allow potential view switch render
+        setTimeout(() => {
+            const element = document.getElementById(`task-${taskId}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setHighlightedTaskId(taskId);
+                setTimeout(() => setHighlightedTaskId(null), 2000); // Clear highlight after 2s
+            }
+        }, 100);
     };
 
     useEffect(() => {
@@ -455,17 +480,85 @@ export default function TelesalesTasksPage() {
                     </button>
 
                     {/* Notification Bell */}
-                    <button className="relative p-2 bg-white border rounded-lg hover:bg-slate-50 text-slate-600">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setIsNotificationOpen(true); }}
+                        className="relative p-2 bg-white border rounded-lg hover:bg-slate-50 text-slate-600"
+                    >
                         <Bell className="w-4 h-4" />
-                        {overdueCount > 0 && (
+                        {(overdueCount + tasks.filter(t => t.dueDate && new Date(t.dueDate).setHours(0, 0, 0, 0) === msToday && t.status !== 'done').length) > 0 && (
                             <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm animate-pulse">
-                                {overdueCount}
+                                {overdueCount + tasks.filter(t => t.dueDate && new Date(t.dueDate).setHours(0, 0, 0, 0) === msToday && t.status !== 'done').length}
                             </span>
                         )}
                     </button>
 
+                    {/* Notification Panel (Slide-in) */}
+                    {isNotificationOpen && (
+                        <>
+                            {/* Overlay */}
+                            <div
+                                className="fixed inset-0 bg-black/20 z-[9990]"
+                                onClick={() => setIsNotificationOpen(false)}
+                            />
+                            {/* Panel */}
+                            <div className="fixed top-0 right-0 h-full w-[320px] bg-white shadow-2xl z-[9999] flex flex-col animate-in slide-in-from-right duration-200">
+                                <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                                    <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                                        <Bell className="w-4 h-4" /> Thông báo
+                                    </h3>
+                                    <button onClick={() => setIsNotificationOpen(false)} className="text-slate-400 hover:text-slate-600">×</button>
+                                </div>
+                                {/* Tabs */}
+                                <div className="flex border-b border-slate-100">
+                                    <button
+                                        className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${activeNotifTab === 'overdue' ? 'border-red-500 text-red-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                                        onClick={() => setActiveNotifTab('overdue')}
+                                    >
+                                        Quá hạn <span className="ml-1 text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full">{overdueCount}</span>
+                                    </button>
+                                    <button
+                                        className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${activeNotifTab === 'today' ? 'border-blue-500 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                                        onClick={() => setActiveNotifTab('today')}
+                                    >
+                                        Hôm nay <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">{tasks.filter(t => t.dueDate && new Date(t.dueDate).setHours(0, 0, 0, 0) === msToday && t.status !== 'done').length}</span>
+                                    </button>
+                                </div>
+                                {/* List */}
+                                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">
+                                    {(() => {
+                                        const list = activeNotifTab === 'overdue'
+                                            ? tasks.filter(t => t.dueDate && new Date(t.dueDate).getTime() < msToday && t.status !== 'done')
+                                            : tasks.filter(t => t.dueDate && new Date(t.dueDate).setHours(0, 0, 0, 0) === msToday && t.status !== 'done');
+
+                                        if (list.length === 0) {
+                                            return <div className="text-center text-sm text-slate-400 py-8">Không có công việc nào.</div>
+                                        }
+
+                                        return list.map(t => (
+                                            <div
+                                                key={t.id}
+                                                onClick={() => handleLocateTask(t.id)}
+                                                className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm cursor-pointer hover:border-primary-300 hover:shadow-md transition-all active:scale-[0.98]"
+                                            >
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <h4 className="text-sm font-medium text-slate-900 line-clamp-2">{t.title}</h4>
+                                                    <PriorityBadge priority={t.priority} />
+                                                </div>
+                                                <div className="text-xs text-slate-500 mb-2">{t.customerName || "Khách lẻ"}</div>
+                                                <div className={`text-xs font-medium flex items-center gap-1 ${activeNotifTab === 'overdue' ? 'text-red-600' : 'text-blue-600'}`}>
+                                                    <Calendar className="w-3 h-3" />
+                                                    {new Date(t.dueDate!).toLocaleDateString('vi-VN')}
+                                                </div>
+                                            </div>
+                                        ));
+                                    })()}
+                                </div>
+                            </div>
+                        </>
+                    )}
+
                     {/* Settings Menu */}
-                    <div className="relative z-[9999]">
+                    <div className="relative z-[60]">
                         <button
                             onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(!isSettingsOpen); }}
                             className={`bg-white border p-2 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors ${isSettingsOpen ? 'ring-2 ring-primary-100 border-primary-500' : ''}`}
@@ -670,6 +763,7 @@ export default function TelesalesTasksPage() {
                                                     dropIndicator={dropIndicator}
                                                     onLogCall={handleLogCall}
                                                     isOverdue={isOverdue}
+                                                    isHighlighted={highlightedTaskId === task.id}
                                                 />
                                             )
                                         })}
