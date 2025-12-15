@@ -53,70 +53,69 @@ const PriorityBadge = ({ priority }: { priority: TaskPriority }) => {
 
 interface TaskCardProps {
     task: TelesalesTask;
+    isDragging: boolean;
     onDragStart: (e: React.DragEvent, id: string, colId: string) => void;
     onDragOver: (e: React.DragEvent, id: string) => void;
-    onDragLeave: () => void;
     dropIndicator: { taskId: string; position: 'top' | 'bottom' } | null;
-    onDrop: (e: React.DragEvent, targetTaskId: string) => void;
 }
 
-const TaskCard = ({ task, onDragStart, onDragOver, onDragLeave, dropIndicator, onDrop }: TaskCardProps) => {
+const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator }: TaskCardProps) => {
     return (
-        <div
-            draggable
-            onDragStart={(e) => {
-                e.stopPropagation();
-                onDragStart(e, task.id, task.status);
-            }}
-            onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onDragOver(e, task.id);
-            }}
-            onDragLeave={onDragLeave}
-            onDrop={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onDrop(e, task.id);
-            }}
-            className="relative bg-white p-3 rounded-lg shadow-sm border border-slate-200 cursor-move hover:shadow-md transition-shadow mb-3 active:cursor-grabbing group/card"
-        >
-            {/* Drop Indicators */}
+        <>
+            {/* Ghost Placeholder Top */}
             {dropIndicator?.taskId === task.id && dropIndicator.position === 'top' && (
-                <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary-500 rounded-full z-10 -mt-1.5" />
+                <div className="mb-3 h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse" />
             )}
+
+            <div
+                draggable
+                onDragStart={(e) => {
+                    e.stopPropagation();
+                    onDragStart(e, task.id, task.status);
+                }}
+                onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onDragOver(e, task.id);
+                }}
+                className={`relative bg-white p-3 rounded-lg shadow-sm border border-slate-200 cursor-move transition-all mb-3 group/card 
+                    ${isDragging ? 'opacity-50 scale-95 ring-2 ring-primary-200 rotate-1' : 'hover:shadow-md hover:border-primary-200 active:cursor-grabbing'}
+                `}
+            >
+                <div className="flex justify-between items-start mb-2 pointer-events-none">
+                    <h4 className="font-medium text-slate-900 text-sm line-clamp-2">{task.title}</h4>
+                    <PriorityBadge priority={task.priority} />
+                </div>
+
+                {(task.customerName || task.phone) && (
+                    <div className="flex items-center gap-2 text-xs text-slate-500 mb-2 pointer-events-none">
+                        <User className="w-3 h-3" />
+                        <span className="truncate max-w-[150px]">{task.customerName || "Khách lẻ"}</span>
+                        {task.phone && (
+                            <>
+                                <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                <Phone className="w-3 h-3" />
+                                <span>{task.phone}</span>
+                            </>
+                        )}
+                    </div>
+                )}
+
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs text-slate-400 pointer-events-none">
+                    <div className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        <span>{task.dueDate ? new Date(task.dueDate).toLocaleDateString('vi-VN') : 'Không thời hạn'}</span>
+                    </div>
+                    {task.type === 'confirm_order' && <span className="bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded">Đơn hàng</span>}
+                    {task.type === 'call_new_lead' && <span className="bg-green-50 text-green-600 px-1.5 py-0.5 rounded">Lead mới</span>}
+                </div>
+            </div>
+
+            {/* Ghost Placeholder Bottom */}
             {dropIndicator?.taskId === task.id && dropIndicator.position === 'bottom' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500 rounded-full z-10 -mb-1.5" />
+                <div className="mb-3 h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse" />
             )}
-
-            <div className="flex justify-between items-start mb-2 pointer-events-none">
-                <h4 className="font-medium text-slate-900 text-sm line-clamp-2">{task.title}</h4>
-                <PriorityBadge priority={task.priority} />
-            </div>
-
-            {(task.customerName || task.phone) && (
-                <div className="flex items-center gap-2 text-xs text-slate-500 mb-2 pointer-events-none">
-                    <User className="w-3 h-3" />
-                    <span className="truncate max-w-[150px]">{task.customerName || "Khách lẻ"}</span>
-                    {task.phone && (
-                        <>
-                            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                            <Phone className="w-3 h-3" />
-                            <span>{task.phone}</span>
-                        </>
-                    )}
-                </div>
-            )}
-
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs text-slate-400 pointer-events-none">
-                <div className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3" />
-                    <span>{task.dueDate ? new Date(task.dueDate).toLocaleDateString('vi-VN') : 'Không thời hạn'}</span>
-                </div>
-                {task.type === 'confirm_order' && <span className="bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded">Đơn hàng</span>}
-                {task.type === 'call_new_lead' && <span className="bg-green-50 text-green-600 px-1.5 py-0.5 rounded">Lead mới</span>}
-            </div>
-        </div>
+        </>
     );
 };
 
@@ -139,7 +138,10 @@ export default function TelesalesTasksPage() {
     const editInputRef = useRef<HTMLInputElement>(null);
 
     // DnD States
+    const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
     const [dropIndicator, setDropIndicator] = useState<{ taskId: string; position: 'top' | 'bottom' } | null>(null);
+    // Track which column is being hovered to show "Append" placeholder if empty or at bottom
+    const [dragOverColId, setDragOverColId] = useState<string | null>(null);
 
     // Initial Load & Listeners
     const refreshData = () => {
@@ -174,12 +176,11 @@ export default function TelesalesTasksPage() {
     // --- Drag & Drop Logic ---
 
     const handleTaskDragStart = (e: React.DragEvent, id: string, colId: string) => {
+        setDraggedTaskId(id);
         e.dataTransfer.setData("telesales/task", id);
         e.dataTransfer.setData("telesales/sourceColumn", colId);
         e.dataTransfer.effectAllowed = "move";
-        if (e.target instanceof HTMLElement) {
-            e.target.style.opacity = '0.5';
-        }
+        // Customize drag image if desired, for now browser default is okay
     };
 
     const handleColumnDragStart = (e: React.DragEvent, colId: string) => {
@@ -189,47 +190,60 @@ export default function TelesalesTasksPage() {
         }
         e.dataTransfer.setData("telesales/column", colId);
         e.dataTransfer.effectAllowed = "move";
-        if (e.target instanceof HTMLElement) {
-            e.target.style.opacity = '0.5';
-        }
     };
 
     const handleColumnDragEnd = (e: React.DragEvent) => {
-        if (e.target instanceof HTMLElement) {
-            e.target.style.opacity = '1';
-        }
+        setDraggedTaskId(null);
         setDropIndicator(null);
+        setDragOverColId(null);
     };
 
-    const handleDragOver = (e: React.DragEvent) => {
+    const handleDragOverColumn = (e: React.DragEvent, colId: string) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = "move";
+        setDragOverColId(colId);
+
+        // If hovering over column but NOT over a specific task, clear task indicator
+        // This is tricky because task dragOver bubbles. 
+        // We rely on stopPropagation in TaskCard to prevent this if hovering a task.
+        // So if this fires, we are likely in empty space or padding.
+
+        // However, if we simply clear it, we might flicker. 
+        // Let's only clear if we are strictly on the column container (e.target check).
+        if (e.currentTarget === e.target) {
+            setDropIndicator(null);
+        }
     };
 
     const handleTaskDragOver = (e: React.DragEvent, targetTaskId: string) => {
+        // Only calculate if dragging a task
+        if (!draggedTaskId) return;
+        if (draggedTaskId === targetTaskId) return;
+
         const target = e.currentTarget as HTMLElement;
         const rect = target.getBoundingClientRect();
         const y = e.clientY - rect.top;
         const position = y < rect.height / 2 ? 'top' : 'bottom';
         setDropIndicator({ taskId: targetTaskId, position });
+        setDragOverColId(null); // Explicitly say we are over a task, not just column background
     };
 
-    const handleTaskDragLeave = () => {
-        setDropIndicator(null);
-    };
-
-    const handleDrop = (e: React.DragEvent, targetColId: string, targetTaskId?: string) => {
+    const handleDrop = (e: React.DragEvent, targetColId: string) => {
         e.preventDefault();
         e.stopPropagation();
-        setDropIndicator(null);
 
-        const draggedTaskId = e.dataTransfer.getData("telesales/task");
+        const draggedTaskIdData = e.dataTransfer.getData("telesales/task");
         const draggedColId = e.dataTransfer.getData("telesales/column");
 
+        // Cleanup
+        setDraggedTaskId(null);
+        setDropIndicator(null);
+        setDragOverColId(null);
+
         // 1. Handle Task Drop
-        if (draggedTaskId) {
+        if (draggedTaskIdData) {
             const currentTasks = [...tasks];
-            const draggedTaskIndex = currentTasks.findIndex(t => t.id === draggedTaskId);
+            const draggedTaskIndex = currentTasks.findIndex(t => t.id === draggedTaskIdData);
 
             if (draggedTaskIndex > -1) {
                 const draggedTask = currentTasks[draggedTaskIndex];
@@ -240,21 +254,11 @@ export default function TelesalesTasksPage() {
 
                 const targetColumnTasks = currentTasks.filter(t => t.status === targetColId).sort((a, b) => (a.order || 0) - (b.order || 0));
 
-                if (targetTaskId) {
-                    const targetTaskIndex = targetColumnTasks.findIndex(t => t.id === targetTaskId);
+                if (dropIndicator) {
+                    // Dropped relative to another task
+                    const targetTaskIndex = targetColumnTasks.findIndex(t => t.id === dropIndicator.taskId);
                     if (targetTaskIndex > -1) {
-                        // Based on dropIndicator position
-                        // If we don't have indicator state here in drop (react state), we rely on same logic or simple assumption.
-                        // Actually React state `dropIndicator` might be null here if dragLeave fired? 
-                        // But usually Drop happens, then DragEnd.
-                        // Ideally we pass position param from TaskBoard but simpler is to re-calculate or assume 'top' if not strict.
-                        // However, we added logic in TaskDragOver to set indicator. 
-                        // We can't easily access that specific instance state inside this global handler unless we store `dropIndicator` in global state. 
-                        // Which we do: `dropIndicator` state is at Page level!
-
-                        const pos = dropIndicator?.position || 'top';
-
-                        if (pos === 'top') {
+                        if (dropIndicator.position === 'top') {
                             targetColumnTasks.splice(targetTaskIndex, 0, updatedTask);
                         } else {
                             targetColumnTasks.splice(targetTaskIndex + 1, 0, updatedTask);
@@ -263,7 +267,7 @@ export default function TelesalesTasksPage() {
                         targetColumnTasks.push(updatedTask);
                     }
                 } else {
-                    // Dropped on empty space
+                    // Dropped in column empty space -> Append
                     targetColumnTasks.push(updatedTask);
                 }
 
@@ -280,7 +284,7 @@ export default function TelesalesTasksPage() {
         }
 
         // 2. Handle Column Drop
-        if (draggedColId && draggedColId !== targetColId && !targetTaskId) {
+        if (draggedColId && draggedColId !== targetColId) {
             const currentCols = [...columns];
             const sourceIndex = currentCols.findIndex(c => c.id === draggedColId);
             const targetIndex = currentCols.findIndex(c => c.id === targetColId);
@@ -306,7 +310,6 @@ export default function TelesalesTasksPage() {
             alert("Không thể xóa cột mặc định này.");
             return;
         }
-        // Check if has tasks
         const hasTasks = tasks.some(t => t.status === id);
         if (hasTasks) {
             if (!window.confirm("Cột này đang có việc cần làm. Nếu xóa, các việc này sẽ chuyển về Hộp thư đến. Bạn chắc chắn chứ?")) {
@@ -361,16 +364,16 @@ export default function TelesalesTasksPage() {
     const visibleColumns = columns.filter(c => c.isVisible !== false);
 
     return (
-        <div className="p-4 sm:p-6 space-y-6 h-full flex flex-col">
+        <div className="p-4 sm:p-6 space-y-6 h-full flex flex-col relative" onClick={() => setIsSettingsOpen(false)}>
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-50 relative">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Việc cần làm Telesales</h1>
                     <p className="text-sm text-slate-500">Quản lý các đầu việc và cuộc gọi hằng ngày</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={() => openCreateModal("today")}
+                        onClick={(e) => { e.stopPropagation(); openCreateModal("today"); }}
                         className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
@@ -380,53 +383,50 @@ export default function TelesalesTasksPage() {
                     {/* Settings Menu */}
                     <div className="relative">
                         <button
-                            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                            className="bg-white border p-2 rounded-lg hover:bg-slate-50 text-slate-600"
+                            onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(!isSettingsOpen); }}
+                            className={`bg-white border p-2 rounded-lg hover:bg-slate-50 text-slate-600 transition-colors ${isSettingsOpen ? 'ring-2 ring-primary-100 border-primary-500' : ''}`}
                             title="Cài đặt cột"
                         >
                             <Settings className="w-4 h-4" />
                         </button>
 
                         {isSettingsOpen && (
-                            <>
-                                <div className="fixed inset-0 z-10" onClick={() => setIsSettingsOpen(false)} />
-                                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 p-2 z-20">
-                                    <h4 className="text-xs font-semibold text-slate-500 uppercase px-2 py-1 mb-1">Hiển thị cột</h4>
-                                    <div className="max-h-[300px] overflow-y-auto space-y-1">
-                                        {columns.map(col => (
-                                            <div key={col.id} className="flex items-center justify-between px-2 py-1.5 hover:bg-slate-50 rounded text-sm text-slate-700">
-                                                <span>{col.label}</span>
-                                                <button
-                                                    onClick={() => toggleColumnVisibility(col.id, col.isVisible !== false)}
-                                                    className="text-slate-400 hover:text-primary-600"
-                                                >
-                                                    {col.isVisible !== false ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="border-t border-slate-100 my-2 pt-2">
-                                        <button
-                                            onClick={() => { handleAddColumn(); setIsSettingsOpen(false); }}
-                                            className="w-full flex items-center justify-center gap-2 text-sm text-primary-600 hover:bg-primary-50 py-1.5 rounded"
-                                        >
-                                            <Plus className="w-3.5 h-3.5" /> Thêm cột mới
-                                        </button>
-                                    </div>
+                            <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-200 p-2 z-[9999]" onClick={(e) => e.stopPropagation()}>
+                                <h4 className="text-xs font-semibold text-slate-500 uppercase px-2 py-1 mb-1">Hiển thị cột</h4>
+                                <div className="max-h-[300px] overflow-y-auto space-y-1">
+                                    {columns.map(col => (
+                                        <div key={col.id} className="flex items-center justify-between px-2 py-1.5 hover:bg-slate-50 rounded text-sm text-slate-700">
+                                            <span>{col.label}</span>
+                                            <button
+                                                onClick={() => toggleColumnVisibility(col.id, col.isVisible !== false)}
+                                                className={`transition-colors ${col.isVisible !== false ? 'text-primary-600' : 'text-slate-300'}`}
+                                            >
+                                                {col.isVisible !== false ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
-                            </>
+                                <div className="border-t border-slate-100 my-2 pt-2">
+                                    <button
+                                        onClick={() => { handleAddColumn(); setIsSettingsOpen(false); }}
+                                        className="w-full flex items-center justify-center gap-2 text-sm text-primary-600 hover:bg-primary-50 py-2 rounded font-medium"
+                                    >
+                                        <Plus className="w-4 h-4" /> Thêm cột mới
+                                    </button>
+                                </div>
+                            </div>
                         )}
                     </div>
 
                     <div className="bg-white border p-1 rounded-lg flex">
                         <button
-                            onClick={() => setViewMode("kanban")}
+                            onClick={(e) => { e.stopPropagation(); setViewMode("kanban"); }}
                             className={`p-1.5 rounded ${viewMode === 'kanban' ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             <LayoutDashboard className="w-4 h-4" />
                         </button>
                         <button
-                            onClick={() => setViewMode("list")}
+                            onClick={(e) => { e.stopPropagation(); setViewMode("list"); }}
                             className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-slate-100 text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             <List className="w-4 h-4" />
@@ -436,7 +436,7 @@ export default function TelesalesTasksPage() {
             </div>
 
             {/* Toolbar */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4 mb-2">
                 <div className="relative flex-1 max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
@@ -445,6 +445,7 @@ export default function TelesalesTasksPage() {
                         className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
                     />
                 </div>
             </div>
@@ -455,18 +456,25 @@ export default function TelesalesTasksPage() {
                     <div className="flex gap-4 min-w-[100%] h-full items-start">
                         {visibleColumns.length > 0 && visibleColumns.map(col => {
                             const columnTasks = filteredTasks.filter(t => t.status === col.id).sort((a, b) => (a.order || 0) - (b.order || 0));
+
+                            // Check if this column is being hovered and has no specific task indicator
+                            // If so, show the "Append" placeholder at the bottom
+                            const showAppendPlaceholder = draggedTaskId && dragOverColId === col.id && !dropIndicator;
+
                             return (
                                 <div
                                     key={col.id}
                                     draggable={!editingColumnId}
                                     onDragStart={(e) => handleColumnDragStart(e, col.id)}
                                     onDragEnd={handleColumnDragEnd}
-                                    onDragOver={handleDragOver}
+                                    onDragOver={(e) => handleDragOverColumn(e, col.id)}
                                     onDrop={(e) => handleDrop(e, col.id)}
-                                    className="flex-1 min-w-[280px] bg-slate-50 rounded-xl flex flex-col max-h-[calc(100vh-250px)] group/col border border-transparent hover:border-slate-200/50 transition-colors"
+                                    className={`flex-1 min-w-[280px] bg-slate-50/50 rounded-xl flex flex-col max-h-[calc(100vh-250px)] group/col border-2 transition-colors 
+                                        ${dragOverColId === col.id ? 'border-primary-300 bg-primary-50/20' : 'border-transparent hover:border-slate-200'}
+                                    `}
                                 >
                                     {/* Column Header */}
-                                    <div className="p-3 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-slate-50 rounded-t-xl z-20 cursor-grab active:cursor-grabbing">
+                                    <div className="p-3 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-slate-50/95 backdrop-blur-sm rounded-t-xl z-10 cursor-grab active:cursor-grabbing">
                                         <div className="flex items-center gap-2 flex-1 min-w-0">
                                             {editingColumnId === col.id ? (
                                                 <div className="flex items-center gap-1 w-full" onMouseDown={e => e.stopPropagation()}>
@@ -523,29 +531,28 @@ export default function TelesalesTasksPage() {
                                     </div>
 
                                     {/* Tasks Container */}
-                                    <div className="p-2 flex-1 overflow-y-auto space-y-2">
+                                    <div className="p-2 flex-1 overflow-y-auto space-y-1 relative min-h-[100px]">
                                         {columnTasks.map(task => (
                                             <TaskCard
                                                 key={task.id}
                                                 task={task}
+                                                isDragging={draggedTaskId === task.id}
                                                 onDragStart={handleTaskDragStart}
                                                 onDragOver={handleTaskDragOver}
-                                                onDragLeave={handleTaskDragLeave}
                                                 dropIndicator={dropIndicator}
-                                                onDrop={(e, targetTaskId) => handleDrop(e, col.id, targetTaskId)}
                                             />
                                         ))}
-                                        {columnTasks.length === 0 && (
-                                            <div className="h-24 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center text-slate-400 text-xs select-none">
-                                                Kéo thả hoặc tạo mới
+
+                                        {/* Append Placeholder - shown when dragging column over empty space or bottom */}
+                                        {showAppendPlaceholder && (
+                                            <div className="h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse mt-1" />
+                                        )}
+
+                                        {columnTasks.length === 0 && !showAppendPlaceholder && (
+                                            <div className="h-full min-h-[80px] flex items-center justify-center text-slate-400 text-xs select-none italic">
+                                                Thả thẻ vào đây
                                             </div>
                                         )}
-                                        {/* Spacer for dropping at bottom */}
-                                        <div
-                                            className="h-8 -mt-2 opacity-0 hover:opacity-100 transition-opacity border-b-2 border-transparent hover:border-blue-400"
-                                            onDragOver={handleDragOver}
-                                            onDrop={(e) => handleDrop(e, col.id)}
-                                        />
                                     </div>
                                 </div>
                             );
