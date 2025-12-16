@@ -1,4 +1,4 @@
-// File: g:\LYHU\Projects\LYHU-app\src\app\layout.tsx
+// File: G:\LYHU\Projects\LYHU-app\src\app\layout.tsx
 import * as entry from '../../../src/app/layout.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

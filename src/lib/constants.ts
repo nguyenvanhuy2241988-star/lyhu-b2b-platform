@@ -19,6 +19,7 @@ export const NAV_ITEMS = {
         { label: "Giới thiệu", href: "/admin/referrals", icon: Gift },
         { label: "Rút tiền", href: "/admin/payouts", icon: CreditCard },
         { label: "Bảng xếp hạng", href: "/admin/leaderboard", icon: Trophy },
+        { label: "KPI Telesales", href: "/admin/telesales/earnings", icon: TrendingUp },
     ],
     [ROLES.CUSTOMER]: [
         { label: "Tổng quan", href: "/customer", icon: LayoutDashboard },

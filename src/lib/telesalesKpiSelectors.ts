@@ -224,3 +224,81 @@ export const calculateKpiRemaining = (metrics: KpiMetrics, target: TelesalesKpiT
         isCompleted
     };
 };
+
+// --- Admin Selectors ---
+import { loadUsers, getUserById } from "./usersStore";
+import { ROLES } from "./constants";
+import { loadTasks } from "./telesalesTasksStore";
+
+export interface AdminTeleKpiRow extends KpiMetrics {
+    userId: string;
+    userName: string;
+    targetCalls: number;
+    targetOrders: number;
+    targetRevenue: number;
+    progressCalls: number;
+    progressRevenue: number;
+    overallProgress: number; // 0-100
+}
+
+export const getKpiSummaryByUser = (from: Date, to: Date): AdminTeleKpiRow[] => {
+    // 1. Get all Telesales users
+    const users = loadUsers().filter(u => u.role === ROLES.TELESALES);
+    const allTasks = loadTasks();
+
+    return users.map(user => {
+        // 2. Filter tasks for this user
+        const userTasks = allTasks.filter(t => t.telesalesUserId === user.id);
+
+        // 3. Calc Metrics
+        const metrics = calculateKpiMetrics(userTasks, from, to);
+
+        // 4. Calc Targets (using mock target for now)
+        const target = getTodayTargetForCurrentUser(user.id); // Re-using existing mock, maybe scale if range > 1 day?
+        // Note: Target logic currently is "Per Day". For generic ranges, we might need to multiply by days?
+        // For simplicity in this version, let's treat target as "Daily Average Target" or compare vs "Daily Target" just for reference?
+        // Actually, request says "KPI progress". If range is "Month", target should be Monthly. 
+        // Current `getTodayTargetForCurrentUser` returns DAILY target.
+        // Let's approximate: 
+        // Days in range = (to - from) / 86400000. 
+        // Target = Daily * Days.
+
+        const dayCount = Math.max(1, Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)));
+        const totalTargetCalls = target.callsPerDay * dayCount;
+        const totalTargetOrders = target.ordersPerDay * dayCount;
+        const totalTargetRevenue = target.revenuePerDay * dayCount;
+
+        const pCalls = totalTargetCalls > 0 ? (metrics.totalCalls / totalTargetCalls) * 100 : 0;
+        const pRevenue = totalTargetRevenue > 0 ? (metrics.totalRevenue / totalTargetRevenue) * 100 : 0;
+
+        // Simple blend for overall
+        const overall = (pCalls + pRevenue) / 2;
+
+        return {
+            ...metrics,
+            userId: user.id,
+            userName: user.name,
+            targetCalls: totalTargetCalls,
+            targetOrders: totalTargetOrders,
+            targetRevenue: totalTargetRevenue,
+            progressCalls: pCalls,
+            progressRevenue: pRevenue,
+            overallProgress: overall
+        };
+    });
+};
+
+export const getGlobalKpiSummary = (from: Date, to: Date): KpiMetrics => {
+    const allTasks = loadTasks();
+    // Optional: Filter only tasks assigned to telesales? 
+    // Yes, generally we only care about telesales tasks.
+    // The store might contain tasks for others if expanded later, but now it's "telesalesTasksStore".
+    // Safe to use all, or filter by users in TELESALES role if needed.
+    // Let's filter by Telesales role to be safe if tasks allow other assignment.
+
+    // Actually `telesalesTasksStore` naming implies it's specific. But let's check user roles just in case.
+    const telesalesUserIds = new Set(loadUsers().filter(u => u.role === ROLES.TELESALES).map(u => u.id));
+    const validTasks = allTasks.filter(t => telesalesUserIds.has(t.telesalesUserId));
+
+    return calculateKpiMetrics(validTasks, from, to);
+};
