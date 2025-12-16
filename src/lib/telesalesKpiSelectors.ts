@@ -199,7 +199,7 @@ export interface KpiRemaining {
 }
 
 // Mock function to get target (can be replaced with real store later)
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
 export const getTodayTargetForCurrentUser = (userId: string = "current"): TelesalesKpiTarget => {
     // For now, return default hardcoded target
     return {
