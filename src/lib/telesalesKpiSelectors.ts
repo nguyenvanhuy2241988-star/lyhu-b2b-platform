@@ -229,6 +229,7 @@ export const calculateKpiRemaining = (metrics: KpiMetrics, target: TelesalesKpiT
 import { loadUsers, getUserById } from "./usersStore";
 import { ROLES } from "./constants";
 import { loadTasks } from "./telesalesTasksStore";
+import { loadOrders } from "./ordersStore";
 
 export interface AdminTeleKpiRow extends KpiMetrics {
     userId: string;
@@ -244,24 +245,57 @@ export interface AdminTeleKpiRow extends KpiMetrics {
 export const getKpiSummaryByUser = (from: Date, to: Date): AdminTeleKpiRow[] => {
     // 1. Get all Telesales users
     const users = loadUsers().filter(u => u.role === ROLES.TELESALES);
-    const allTasks = loadTasks();
+    const allTasks = loadTasks(); // Keep loading tasks for calls/talk time
+    const allOrders = loadOrders(); // Load real orders
 
     return users.map(user => {
-        // 2. Filter tasks for this user
+        // 2. Filter tasks & orders for this user
         const userTasks = allTasks.filter(t => t.telesalesUserId === user.id);
+        const userOrders = allOrders.filter(o =>
+            o.telesalesUserId === user.id &&
+            o.source === "TELESALES" &&
+            o.status !== "cancelled"
+        );
 
         // 3. Calc Metrics
-        const metrics = calculateKpiMetrics(userTasks, from, to);
+        // Base metrics from tasks (calls)
+        const taskMetrics = calculateKpiMetrics(userTasks, from, to);
+
+        // Enhance with real order data (Revenue, Orders, Commission)
+        // Filter orders by date range
+        const validOrders = userOrders.filter(o => {
+            const d = new Date(o.createdAt);
+            const start = new Date(from);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(to);
+            end.setHours(23, 59, 59, 999);
+            return d >= start && d <= end;
+        });
+
+        const totalRevenue = validOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+        const totalOrders = validOrders.length;
+        const totalCommission = totalRevenue * COMMISSION_RATE; // 2.5% of real revenue
+
+        // Recalculate conversion rate: Orders / Calls (if calls > 0)
+        // Use calls from task metrics.
+        // Note: Task metrics might have its own "totalOrders" from task disposition "Order", 
+        // but "Real Orders" from store is source of truth for Revenue.
+        // Let's use Real Orders count.
+
+        const conversionRate = taskMetrics.totalCalls > 0
+            ? Math.round((totalOrders / taskMetrics.totalCalls) * 100)
+            : 0;
+
+        const metrics: KpiMetrics = {
+            ...taskMetrics,
+            totalOrders,
+            totalRevenue,
+            totalCommission,
+            conversionRate
+        };
 
         // 4. Calc Targets (using mock target for now)
-        const target = getTodayTargetForCurrentUser(user.id); // Re-using existing mock, maybe scale if range > 1 day?
-        // Note: Target logic currently is "Per Day". For generic ranges, we might need to multiply by days?
-        // For simplicity in this version, let's treat target as "Daily Average Target" or compare vs "Daily Target" just for reference?
-        // Actually, request says "KPI progress". If range is "Month", target should be Monthly. 
-        // Current `getTodayTargetForCurrentUser` returns DAILY target.
-        // Let's approximate: 
-        // Days in range = (to - from) / 86400000. 
-        // Target = Daily * Days.
+        const target = getTodayTargetForCurrentUser(user.id);
 
         const dayCount = Math.max(1, Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)));
         const totalTargetCalls = target.callsPerDay * dayCount;
@@ -271,7 +305,6 @@ export const getKpiSummaryByUser = (from: Date, to: Date): AdminTeleKpiRow[] => 
         const pCalls = totalTargetCalls > 0 ? (metrics.totalCalls / totalTargetCalls) * 100 : 0;
         const pRevenue = totalTargetRevenue > 0 ? (metrics.totalRevenue / totalTargetRevenue) * 100 : 0;
 
-        // Simple blend for overall
         const overall = (pCalls + pRevenue) / 2;
 
         return {
@@ -289,16 +322,21 @@ export const getKpiSummaryByUser = (from: Date, to: Date): AdminTeleKpiRow[] => 
 };
 
 export const getGlobalKpiSummary = (from: Date, to: Date): KpiMetrics => {
-    const allTasks = loadTasks();
-    // Optional: Filter only tasks assigned to telesales? 
-    // Yes, generally we only care about telesales tasks.
-    // The store might contain tasks for others if expanded later, but now it's "telesalesTasksStore".
-    // Safe to use all, or filter by users in TELESALES role if needed.
-    // Let's filter by Telesales role to be safe if tasks allow other assignment.
+    // Aggregate from individual summaries to ensure consistency
+    const summaries = getKpiSummaryByUser(from, to);
 
-    // Actually `telesalesTasksStore` naming implies it's specific. But let's check user roles just in case.
-    const telesalesUserIds = new Set(loadUsers().filter(u => u.role === ROLES.TELESALES).map(u => u.id));
-    const validTasks = allTasks.filter(t => telesalesUserIds.has(t.telesalesUserId));
+    const totalCalls = summaries.reduce((acc, s) => acc + s.totalCalls, 0);
+    const totalOrders = summaries.reduce((acc, s) => acc + s.totalOrders, 0);
+    const totalRevenue = summaries.reduce((acc, s) => acc + s.totalRevenue, 0);
+    const totalCommission = summaries.reduce((acc, s) => acc + s.totalCommission, 0);
 
-    return calculateKpiMetrics(validTasks, from, to);
+    const conversionRate = totalCalls > 0 ? (totalOrders / totalCalls) * 100 : 0;
+
+    return {
+        totalCalls,
+        totalOrders,
+        totalRevenue,
+        totalCommission,
+        conversionRate
+    };
 };

@@ -1,7 +1,7 @@
 import { Product, mockProducts, mockOrders } from "@/mocks/data";
 import { getCustomerUnitPrice, getCtvSelfShipUnitPrice } from "./pricing";
 
-export type OrderSource = "CUSTOMER" | "SALES" | "CTV";
+export type OrderSource = "CUSTOMER" | "SALES" | "CTV" | "TELESALES";
 export type OrderStatus = "pending" | "processing" | "delivered" | "cancelled";
 export type FulfillmentMode = "SELF_SHIP" | "LYHU_SHIP";
 export type FraudStatus = "NONE" | "FLAGGED" | "CLEARED" | "CONFIRMED";
@@ -40,6 +40,9 @@ export interface Order {
     items: OrderItem[];
     totalAmount: number;
     createdAt: string;
+
+    // Telesales fields
+    telesalesUserId?: string;
 
     // CTV fields
     fulfillmentMode?: FulfillmentMode;
