@@ -3,8 +3,10 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { DollarSign, TrendingUp, Calendar, ArrowUpRight, ArrowDownRight, ChevronDown, Clock, Download } from "lucide-react";
 import { TelesalesTask, getMyTasks } from "@/lib/telesalesTasksStore";
+import { Order, loadOrders } from "@/lib/ordersStore";
+import { getCurrentUser } from "@/lib/auth";
 import {
-    calculateKpiMetrics,
+    calculateCombinedMetrics,
     calculateKpiHistory,
     COMMISSION_RATE,
     getWeeklyRanges,
@@ -24,14 +26,33 @@ type DateRangeOption = 'today' | 'last_7_days' | 'this_month';
 
 export default function TelesalesEarningsPage() {
     const [tasks, setTasks] = useState<TelesalesTask[]>([]);
+    const [orders, setOrders] = useState<Order[]>([]);
     const [dateRange, setDateRange] = useState<DateRangeOption>('this_month');
 
     // Load data
     useEffect(() => {
-        setTasks(getMyTasks());
-        const handleUpdate = () => setTasks(getMyTasks());
-        window.addEventListener("telesales-tasks-updated", handleUpdate);
-        return () => window.removeEventListener("telesales-tasks-updated", handleUpdate);
+        const loadData = () => {
+            setTasks(getMyTasks());
+            const user = getCurrentUser();
+            if (user) {
+                const all = loadOrders();
+                const myOrders = all.filter(o =>
+                    o.source === "TELESALES" &&
+                    o.telesalesUserId === user.id
+                );
+                setOrders(myOrders);
+            }
+        };
+
+        loadData();
+
+        window.addEventListener("telesales-tasks-updated", loadData);
+        window.addEventListener("orders-updated", loadData);
+
+        return () => {
+            window.removeEventListener("telesales-tasks-updated", loadData);
+            window.removeEventListener("orders-updated", loadData);
+        };
     }, []);
 
     // Derived State: Date Ranges
@@ -86,16 +107,16 @@ export default function TelesalesEarningsPage() {
     }, [dateRange]);
 
     // Metrics
-    const currentMetrics = useMemo(() => calculateKpiMetrics(tasks, currentRange.from, currentRange.to), [tasks, currentRange]);
+    const currentMetrics = useMemo(() => calculateCombinedMetrics(tasks, orders, currentRange.from, currentRange.to), [tasks, orders, currentRange]);
 
     // Today & Target Metrics
-    const todayMetrics = useMemo(() => calculateKpiMetrics(tasks, todayRange.from, todayRange.to), [tasks, todayRange]);
+    const todayMetrics = useMemo(() => calculateCombinedMetrics(tasks, orders, todayRange.from, todayRange.to), [tasks, orders, todayRange]);
     const todayTarget = useMemo(() => getTodayTargetForCurrentUser(), []);
     const todayRemaining = useMemo(() => calculateKpiRemaining(todayMetrics, todayTarget), [todayMetrics, todayTarget]);
     const { status: todayKpiStatus, percentage: todayKpiPercent } = useMemo(() => calculateKpiProgress(todayMetrics), [todayMetrics]);
 
     // Comparison for Filtered Data
-    const prevMetrics = useMemo(() => calculateKpiMetrics(tasks, prevRange.from, prevRange.to), [tasks, prevRange]);
+    const prevMetrics = useMemo(() => calculateCombinedMetrics(tasks, orders, prevRange.from, prevRange.to), [tasks, orders, prevRange]);
     const revenueGrowth = prevMetrics.totalRevenue > 0
         ? ((currentMetrics.totalRevenue - prevMetrics.totalRevenue) / prevMetrics.totalRevenue) * 100
         : (currentMetrics.totalRevenue > 0 ? 100 : 0);
@@ -103,13 +124,13 @@ export default function TelesalesEarningsPage() {
     // Weekly Comparison Metrics
     const weeklyMetrics = useMemo(() => {
         const ranges = getWeeklyRanges();
-        const thisWeek = calculateKpiMetrics(tasks, ranges.thisWeek.from, ranges.thisWeek.to);
-        const lastWeek = calculateKpiMetrics(tasks, ranges.lastWeek.from, ranges.lastWeek.to);
+        const thisWeek = calculateCombinedMetrics(tasks, orders, ranges.thisWeek.from, ranges.thisWeek.to);
+        const lastWeek = calculateCombinedMetrics(tasks, orders, ranges.lastWeek.from, ranges.lastWeek.to);
         return { thisWeek, lastWeek };
-    }, [tasks]);
+    }, [tasks, orders]);
 
     // History Table
-    const history = useMemo(() => calculateKpiHistory(tasks, currentRange.from, currentRange.to), [tasks, currentRange]);
+    const history = useMemo(() => calculateKpiHistory(tasks, currentRange.from, currentRange.to, orders), [tasks, orders, currentRange]);
 
     const getDateRangeText = () => {
         switch (dateRange) {

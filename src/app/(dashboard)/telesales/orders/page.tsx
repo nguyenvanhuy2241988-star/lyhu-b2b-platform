@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { Search, Filter, Eye, FileText } from "lucide-react";
-import { mockOrders } from "@/mocks/data";
+import { getCurrentUser } from "@/lib/auth";
+import { loadOrders } from "@/lib/ordersStore";
+import { useEffect } from "react";
+import type { Order } from "@/lib/ordersStore";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -23,14 +26,40 @@ const formatDate = (dateString: string) => {
 export default function TelesalesOrdersPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
+    const [orders, setOrders] = useState<Order[]>([]);
 
-    // Filter orders for Telesales
-    const allOrders = mockOrders.filter((o) => o.source === "TELESALES");
+    useEffect(() => {
+        const user = getCurrentUser();
+        if (user) {
+            const all = loadOrders();
+            // Filter: Source = TELESALES AND Creator = Current User
+            const myOrders = all.filter(o =>
+                o.source === "TELESALES" &&
+                o.telesalesUserId === user.id
+            );
+            setOrders(myOrders);
+        }
+
+        const handleUpdate = () => {
+            const user = getCurrentUser();
+            if (user) {
+                const all = loadOrders();
+                const myOrders = all.filter(o =>
+                    o.source === "TELESALES" &&
+                    o.telesalesUserId === user.id
+                );
+                setOrders(myOrders);
+            }
+        };
+
+        window.addEventListener("orders-updated", handleUpdate);
+        return () => window.removeEventListener("orders-updated", handleUpdate);
+    }, []);
 
     // Apply filters
-    const filteredOrders = allOrders.filter((order) => {
+    const filteredOrders = orders.filter((order) => {
         const matchesSearch =
-            order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
             order.customerName.toLowerCase().includes(searchTerm.toLowerCase());
 
         const matchesStatus = statusFilter === "all" || order.status === statusFilter;
@@ -89,7 +118,7 @@ export default function TelesalesOrdersPage() {
                             {filteredOrders.map((order) => (
                                 <tr key={order.id} className="hover:bg-slate-50">
                                     <td className="px-6 py-4 font-medium text-slate-900">
-                                        {order.orderNumber}
+                                        {order.id}
                                     </td>
                                     <td className="px-6 py-4 text-slate-600">
                                         {formatDate(order.createdAt)}
@@ -103,10 +132,10 @@ export default function TelesalesOrdersPage() {
                                     <td className="px-6 py-4 text-center">
                                         <span
                                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${order.status === 'processing'
-                                                    ? 'bg-yellow-100 text-yellow-800'
-                                                    : order.status === 'delivered'
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-red-100 text-red-800'
+                                                ? 'bg-yellow-100 text-yellow-800'
+                                                : order.status === 'delivered'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-red-100 text-red-800'
                                                 }`}
                                         >
                                             {order.status === 'processing'

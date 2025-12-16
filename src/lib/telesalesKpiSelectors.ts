@@ -81,40 +81,62 @@ export const calculateKpiMetrics = (
     };
 };
 
-export const calculateKpiHistory = (
-    tasks: TelesalesTask[],
-    from: Date,
-    to: Date
-): KpiHistoryRow[] => {
-    // Generate all days in range (descending order)
+// --- History Selector ---
+export interface KpiHistoryRow {
+    dateLabel: string;
+    timestamp: number;
+    calls: number;
+    orders: number;
+    revenue: number;
+    commission: number;
+}
+
+export const calculateKpiHistory = (tasks: TelesalesTask[], from: Date, to: Date, orders: Order[] = []): KpiHistoryRow[] => {
     const rows: KpiHistoryRow[] = [];
+
+    // Iterate day by day from 'to' back to 'from'
     const currentDate = new Date(to);
-    const startDate = startOfDay(from);
+    currentDate.setHours(0, 0, 0, 0);
 
-    while (currentDate >= startDate) {
-        const startOfDayTime = startOfDay(currentDate);
-        const endOfDayTime = new Date(startOfDayTime);
-        endOfDayTime.setHours(23, 59, 59, 999);
+    const endDate = new Date(from);
+    endDate.setHours(0, 0, 0, 0);
 
-        const dailymetrics = calculateKpiMetrics(tasks, startOfDayTime, endOfDayTime);
+    while (currentDate >= endDate) {
+        const startOfDay = new Date(currentDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(currentDate);
+        endOfDay.setHours(23, 59, 59, 999);
 
-        // Only add if there is data? or always? 
-        // User: "nếu ngày nào không có data thì bỏ qua".
-        if (dailymetrics.totalCalls > 0 || dailymetrics.totalRevenue > 0) {
+        // Filter tasks for this day
+        const dayTasks = tasks.filter(t => {
+            const d = new Date(t.createdAt);
+            return d >= startOfDay && d <= endOfDay;
+        });
+
+        // Filter orders for this day
+        const dayOrders = orders.filter(o => {
+            if (o.status === "cancelled") return false;
+            const d = new Date(o.createdAt);
+            return d >= startOfDay && d <= endOfDay;
+        });
+
+        const dayMetrics = calculateCombinedMetrics(dayTasks, dayOrders, startOfDay, endOfDay);
+
+        // Only add if there is data
+        if (dayMetrics.totalCalls > 0 || dayMetrics.totalRevenue > 0) {
             rows.push({
-                dateLabel: currentDate.toLocaleDateString('vi-VN'), // Display format
-                timestamp: startOfDayTime.getTime(),
-                calls: dailymetrics.totalCalls,
-                orders: dailymetrics.totalOrders,
-                revenue: dailymetrics.totalRevenue,
-                commission: dailymetrics.totalCommission
+                dateLabel: currentDate.toLocaleDateString('vi-VN'),
+                timestamp: startOfDay.getTime(),
+                calls: dayMetrics.totalCalls,
+                orders: dayMetrics.totalOrders,
+                revenue: dayMetrics.totalRevenue,
+                commission: dayMetrics.totalCommission
             });
         }
 
         currentDate.setDate(currentDate.getDate() - 1);
     }
 
-    // Already sorted desc by loop structure
     return rows;
 };
 
@@ -229,7 +251,7 @@ export const calculateKpiRemaining = (metrics: KpiMetrics, target: TelesalesKpiT
 import { loadUsers, getUserById } from "./usersStore";
 import { ROLES } from "./constants";
 import { loadTasks } from "./telesalesTasksStore";
-import { loadOrders } from "./ordersStore";
+import { loadOrders, Order } from "./ordersStore";
 
 export interface AdminTeleKpiRow extends KpiMetrics {
     userId: string;
@@ -242,6 +264,50 @@ export interface AdminTeleKpiRow extends KpiMetrics {
     overallProgress: number; // 0-100
 }
 
+// New helper to combine Tasks + Orders metrics
+export const calculateCombinedMetrics = (
+    tasks: TelesalesTask[],
+    orders: Order[], // Assuming Order type is imported or available
+    from: Date,
+    to: Date
+): KpiMetrics => {
+    // 1. Base metrics from tasks
+    const taskMetrics = calculateKpiMetrics(tasks, from, to);
+
+    // 2. Filter orders by date
+    const validOrders = orders.filter(o => {
+        // Ensure order is not cancelled and within date range
+        if (o.status === "cancelled") return false;
+
+        const d = new Date(o.createdAt);
+        const start = new Date(from);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(to);
+        end.setHours(23, 59, 59, 999);
+
+        return d >= start && d <= end;
+    });
+
+    // 3. Calc Metrics from Orders
+    const totalRevenue = validOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+    const totalOrders = validOrders.length;
+    const totalCommission = totalRevenue * COMMISSION_RATE;
+
+    // 4. Recalc Conversion Rate (Orders / Calls)
+    // Use calls from task metrics.
+    const conversionRate = taskMetrics.totalCalls > 0
+        ? Math.round((totalOrders / taskMetrics.totalCalls) * 100)
+        : 0;
+
+    return {
+        ...taskMetrics,
+        totalOrders,
+        totalRevenue,
+        totalCommission,
+        conversionRate
+    };
+};
+
 export const getKpiSummaryByUser = (from: Date, to: Date): AdminTeleKpiRow[] => {
     // 1. Get all Telesales users
     const users = loadUsers().filter(u => u.role === ROLES.TELESALES);
@@ -253,46 +319,11 @@ export const getKpiSummaryByUser = (from: Date, to: Date): AdminTeleKpiRow[] => 
         const userTasks = allTasks.filter(t => t.telesalesUserId === user.id);
         const userOrders = allOrders.filter(o =>
             o.telesalesUserId === user.id &&
-            o.source === "TELESALES" &&
-            o.status !== "cancelled"
+            o.source === "TELESALES"
         );
 
-        // 3. Calc Metrics
-        // Base metrics from tasks (calls)
-        const taskMetrics = calculateKpiMetrics(userTasks, from, to);
-
-        // Enhance with real order data (Revenue, Orders, Commission)
-        // Filter orders by date range
-        const validOrders = userOrders.filter(o => {
-            const d = new Date(o.createdAt);
-            const start = new Date(from);
-            start.setHours(0, 0, 0, 0);
-            const end = new Date(to);
-            end.setHours(23, 59, 59, 999);
-            return d >= start && d <= end;
-        });
-
-        const totalRevenue = validOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-        const totalOrders = validOrders.length;
-        const totalCommission = totalRevenue * COMMISSION_RATE; // 2.5% of real revenue
-
-        // Recalculate conversion rate: Orders / Calls (if calls > 0)
-        // Use calls from task metrics.
-        // Note: Task metrics might have its own "totalOrders" from task disposition "Order", 
-        // but "Real Orders" from store is source of truth for Revenue.
-        // Let's use Real Orders count.
-
-        const conversionRate = taskMetrics.totalCalls > 0
-            ? Math.round((totalOrders / taskMetrics.totalCalls) * 100)
-            : 0;
-
-        const metrics: KpiMetrics = {
-            ...taskMetrics,
-            totalOrders,
-            totalRevenue,
-            totalCommission,
-            conversionRate
-        };
+        // 3. Use combined helper
+        const metrics = calculateCombinedMetrics(userTasks, userOrders, from, to);
 
         // 4. Calc Targets (using mock target for now)
         const target = getTodayTargetForCurrentUser(user.id);
