@@ -1,3 +1,5 @@
+import { supabase } from "@/lib/supabaseClient";
+
 export type SalesLeadStatus = "NEW" | "CONTACTED" | "IN_PROGRESS" | "WON" | "LOST";
 
 export interface SalesLead {
@@ -14,96 +16,22 @@ export interface SalesLead {
     email?: string;
     address?: string;
     createdAt: string;
-}
-
-export interface SalesStats {
-    total: number;
-    inProgress: number;
-    won: number;
-    estimatedRevenue: number;
-    totalExpectedVolume: number;
+    assignedTo?: string;
 }
 
 const STORAGE_KEY = "lyhu_sales_leads_v1";
 
 function getDefaultSalesLeads(): SalesLead[] {
-    return [
-        {
-            id: "1",
-            storeName: "Siêu thị Mini Mart Plus",
-            contactName: "Anh Tuấn",
-            phone: "0901234567",
-            area: "Quận 1, TP.HCM",
-            type: "Mini mart",
-            status: "IN_PROGRESS",
-            estimatedRevenue: 15000000,
-            notes: "Đang đàm phán hợp đồng dài hạn",
-            expectedVolume: 100,
-            createdAt: "2024-11-28T00:00:00.000Z",
-        },
-        {
-            id: "2",
-            storeName: "NPP Hoàng Gia",
-            contactName: "Chị Lan",
-            phone: "0912345678",
-            area: "Bình Dương",
-            type: "NPP",
-            status: "WON",
-            estimatedRevenue: 50000000,
-            notes: "Đã ký hợp đồng 6 tháng",
-            expectedVolume: 500,
-            createdAt: "2024-11-25T00:00:00.000Z",
-        },
-        {
-            id: "3",
-            storeName: "Tạp hóa Phương Nam",
-            contactName: "Anh Minh",
-            phone: "0923456789",
-            area: "Quận 3, TP.HCM",
-            type: "Tạp hóa",
-            status: "NEW",
-            estimatedRevenue: 8000000,
-            notes: "Mới tiếp cận, chưa liên hệ",
-            expectedVolume: 30,
-            createdAt: "2024-11-29T00:00:00.000Z",
-        },
-        {
-            id: "4",
-            storeName: "Đại lý Minh Khang",
-            contactName: "Chị Hương",
-            phone: "0934567890",
-            area: "Đồng Nai",
-            type: "Đại lý",
-            status: "CONTACTED",
-            estimatedRevenue: 25000000,
-            notes: "Đã gọi điện, hẹn gặp tuần sau",
-            expectedVolume: 150,
-            createdAt: "2024-11-27T00:00:00.000Z",
-        },
-        {
-            id: "5",
-            storeName: "Siêu thị Sài Gòn Co.op",
-            contactName: "Anh Đức",
-            phone: "0945678901",
-            area: "Quận 7, TP.HCM",
-            type: "Siêu thị",
-            status: "LOST",
-            estimatedRevenue: 30000000,
-            notes: "Đã chọn nhà cung cấp khác",
-            expectedVolume: 200,
-            createdAt: "2024-11-20T00:00:00.000Z",
-        },
-    ];
+    return []; // Return empty or mocks
 }
 
+// --- SYNC ---
 export function loadSalesLeads(): SalesLead[] {
     if (typeof window === "undefined") return getDefaultSalesLeads();
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return getDefaultSalesLeads();
     try {
-        const parsed = JSON.parse(raw) as SalesLead[];
-        if (!Array.isArray(parsed)) return getDefaultSalesLeads();
-        return parsed;
+        return JSON.parse(raw);
     } catch {
         return getDefaultSalesLeads();
     }
@@ -114,36 +42,27 @@ export function saveSalesLeads(leads: SalesLead[]) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
 }
 
-export function addSalesLead(input: Omit<SalesLead, "id" | "createdAt">): SalesLead[] {
-    const current = loadSalesLeads();
-    const newLead: SalesLead = {
-        id: Date.now().toString(),
-        ...input,
-        status: input.status || "NEW",
-        createdAt: new Date().toISOString(),
-    };
-    const updated = [newLead, ...current];
-    saveSalesLeads(updated);
-    return updated;
-}
+// --- ASYNC ---
+export const fetchSalesLeads = async (): Promise<SalesLead[]> => {
+    const { data, error } = await supabase
+        .from('leads')
+        .select('*');
 
-export function updateSalesLeadStatus(id: string, status: SalesLeadStatus): SalesLead[] {
-    const current = loadSalesLeads();
-    const updated = current.map((lead) =>
-        lead.id === id ? { ...lead, status } : lead
-    );
-    saveSalesLeads(updated);
-    return updated;
-}
+    if (error) {
+        console.error("Error loading leads:", error);
+        return [];
+    }
 
-export function getSalesStats(leads: SalesLead[]): SalesStats {
-    const total = leads.length;
-    const inProgress = leads.filter(
-        (l) => l.status === "CONTACTED" || l.status === "IN_PROGRESS"
-    ).length;
-    const won = leads.filter((l) => l.status === "WON").length;
-    const estimatedRevenue = leads.reduce((sum, lead) => sum + lead.estimatedRevenue, 0);
-    const totalExpectedVolume = leads.reduce((sum, lead) => sum + (lead.expectedVolume || 0), 0);
-
-    return { total, inProgress, won, estimatedRevenue, totalExpectedVolume };
-}
+    return data.map((l: any) => ({
+        id: l.id,
+        storeName: l.name,
+        contactName: l.name,
+        phone: l.phone,
+        area: "Unknown",
+        type: "Unknown",
+        status: (l.status.toUpperCase() as SalesLeadStatus),
+        estimatedRevenue: 0,
+        createdAt: l.created_at,
+        assignedTo: l.assigned_to
+    }));
+};

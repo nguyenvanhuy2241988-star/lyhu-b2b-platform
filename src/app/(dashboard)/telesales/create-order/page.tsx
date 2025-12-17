@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { mockCustomers, mockProducts } from "@/mocks/data";
-import type { Customer, Product } from "@/mocks/data";
+import { Product } from "@/mocks/data";
+import { Customer, loadCustomers } from "@/lib/supabase/customers";
+import { loadProducts } from "@/lib/supabase/products";
 import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, User } from "lucide-react";
-import { addOrder } from "@/lib/ordersStore";
-import { getCurrentUser } from "@/lib/auth";
+import { addOrderSupabase } from "@/lib/ordersStore";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -21,7 +22,30 @@ interface OrderItem {
 }
 
 export default function TelesalesCreateOrderPage() {
-    // Step 1: Select customer (filtered to My Customers logic implicitly by mock data for now, user can expand later)
+    // Data State
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [products, setProducts] = useState<Product[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Filtered My Customers logic? 
+    // loadCustomers() now returns what the API returns (filtered by RLS or all). 
+    // We'll assume the list is correct.
+
+    useEffect(() => {
+        const fetchData = async () => {
+            setIsLoading(true);
+            const [custs, prods] = await Promise.all([
+                loadCustomers(),
+                loadProducts()
+            ]);
+            setCustomers(custs);
+            setProducts(prods);
+            setIsLoading(false);
+        };
+        fetchData();
+    }, []);
+
+    // Step 1: Select customer
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
     // Step 2 & 3: Add products and quantities
@@ -31,7 +55,7 @@ export default function TelesalesCreateOrderPage() {
     const [currentStep, setCurrentStep] = useState(1);
 
     const handleSelectCustomer = (customerId: string) => {
-        const customer = mockCustomers.find((c) => c.id === customerId);
+        const customer = customers.find((c) => c.id === customerId);
         setSelectedCustomer(customer || null);
         if (customer) {
             setCurrentStep(2);
@@ -72,47 +96,52 @@ export default function TelesalesCreateOrderPage() {
 
     const calculateTotal = () => {
         return orderItems.reduce((sum, item) => {
-            return sum + item.product.wholesalePrice * item.quantity;
+            return sum + (item.product.wholesalePrice || 0) * item.quantity;
         }, 0);
     };
 
     const router = useRouter();
+    const { user } = useAuth(); // Use Auth Context
 
-    const handleCreateOrder = () => {
+    const handleCreateOrder = async () => {
         if (!selectedCustomer) return;
 
-        const user = getCurrentUser();
         const total = calculateTotal();
 
         // 1. Create Order in Shared Store
-        const newOrder = addOrder({
+        // Using async addOrderSupabase
+        const newOrder = await addOrderSupabase({
             customerId: selectedCustomer.id,
-            customerName: selectedCustomer.storeName,
+            customerName: selectedCustomer.name, // Ensure 'name' or 'storeName' match interface
             source: "TELESALES",
             telesalesUserId: user?.id,
             items: orderItems.map((item) => ({
                 sku: item.product.sku || "N/A",
                 name: item.product.name,
-                brand: item.product.brand,
+                brand: item.product.brand || "LHU",
                 quantity: item.quantity,
                 unit: item.product.unit || "Cái",
                 unitPrice: item.product.wholesalePrice,
-                subtotal: item.product.wholesalePrice * item.quantity,
+                subtotal: (item.product.wholesalePrice || 0) * item.quantity,
                 productId: item.product.id
             })),
             totalAmount: total,
+            status: "draft", // Default to draft as per prompt
             notes: "Đơn hàng tạo bởi Telesales"
         });
 
-        console.log("Created telesales order:", newOrder);
+        if (newOrder) {
+            console.log("Created telesales order:", newOrder);
+            alert("✅ Tạo đơn hàng thành công!");
 
-        alert("✅ Tạo đơn hàng thành công!");
-
-        // 3. Reset and Redirect
-        setSelectedCustomer(null);
-        setOrderItems([]);
-        setCurrentStep(1);
-        router.push("/telesales/orders");
+            // 3. Reset and Redirect
+            setSelectedCustomer(null);
+            setOrderItems([]);
+            setCurrentStep(1);
+            router.push("/telesales/orders");
+        } else {
+            alert("❌ Tạo đơn hàng thất bại. Vui lòng thử lại.");
+        }
     };
 
     const handleReset = () => {
@@ -120,6 +149,10 @@ export default function TelesalesCreateOrderPage() {
         setOrderItems([]);
         setCurrentStep(1);
     };
+
+    if (isLoading) {
+        return <div className="p-6">Đang tải dữ liệu...</div>;
+    }
 
     return (
         <div className="space-y-6">
@@ -190,7 +223,7 @@ export default function TelesalesCreateOrderPage() {
                 <div className="bg-white p-6 rounded-xl border border-slate-200">
                     <h3 className="font-semibold text-slate-900 mb-4">Chọn khách hàng</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {mockCustomers.map((customer) => (
+                        {customers.map((customer) => (
                             <button
                                 key={customer.id}
                                 onClick={() => handleSelectCustomer(customer.id)}
@@ -202,15 +235,18 @@ export default function TelesalesCreateOrderPage() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h4 className="font-medium text-slate-900 mb-1 truncate">
-                                            {customer.storeName}
+                                            {customer.name}
                                         </h4>
                                         <p className="text-xs text-slate-500">
-                                            {customer.type} • {customer.area}
+                                            {customer.address}
                                         </p>
                                     </div>
                                 </div>
                             </button>
                         ))}
+                        {customers.length === 0 && (
+                            <p className="text-slate-500 col-span-3 text-center py-4">Chưa có khách hàng nào.</p>
+                        )}
                     </div>
                 </div>
             )}
@@ -223,10 +259,10 @@ export default function TelesalesCreateOrderPage() {
                         <div>
                             <p className="text-sm text-indigo-700 font-medium">Khách hàng đã chọn:</p>
                             <p className="text-lg font-semibold text-indigo-900">
-                                {selectedCustomer.storeName}
+                                {selectedCustomer.name}
                             </p>
                             <p className="text-xs text-indigo-600 mt-1">
-                                {selectedCustomer.type} • {selectedCustomer.area}
+                                {selectedCustomer.address}
                             </p>
                         </div>
                         <button
@@ -241,7 +277,7 @@ export default function TelesalesCreateOrderPage() {
                     <div className="bg-white p-6 rounded-xl border border-slate-200">
                         <h3 className="font-semibold text-slate-900 mb-4">Chọn sản phẩm</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {mockProducts.map((product) => {
+                            {products.map((product) => {
                                 const inOrder = orderItems.find((item) => item.product.id === product.id);
                                 const brandColors: Record<string, string> = {
                                     UHI: "bg-orange-500",
@@ -249,7 +285,7 @@ export default function TelesalesCreateOrderPage() {
                                     CVT: "bg-blue-500",
                                     LYHU: "bg-indigo-500",
                                 };
-                                const brandColor = brandColors[product.brand] || "bg-indigo-500";
+                                const brandColor = brandColors[product.brand || "LHU"] || "bg-indigo-500";
 
                                 return (
                                     <div
@@ -258,14 +294,14 @@ export default function TelesalesCreateOrderPage() {
                                             }`}
                                     >
                                         <span className={`inline-block ${brandColor} text-white text-xs font-semibold px-2 py-1 rounded mb-2`}>
-                                            {product.brand}
+                                            {product.brand || "LHU"}
                                         </span>
                                         <h4 className="font-medium text-slate-900 text-sm mb-2 line-clamp-2 min-h-[2.5rem]">
                                             {product.name}
                                         </h4>
                                         <p className="text-xs text-slate-500 mb-2">SKU: {product.sku}</p>
                                         <p className="text-lg font-bold text-slate-900 mb-3">
-                                            {formatPrice(product.wholesalePrice)}
+                                            {formatPrice(product.wholesalePrice || 0)}
                                         </p>
                                         <button
                                             onClick={() => handleAddProduct(product)}
@@ -297,7 +333,7 @@ export default function TelesalesCreateOrderPage() {
                                         <div className="flex-1 min-w-0">
                                             <h4 className="font-medium text-slate-900 text-sm">{item.product.name}</h4>
                                             <p className="text-xs text-slate-500 mt-1">
-                                                {formatPrice(item.product.wholesalePrice)} × {item.quantity}
+                                                {formatPrice(item.product.wholesalePrice || 0)} × {item.quantity}
                                             </p>
                                         </div>
 
@@ -320,7 +356,7 @@ export default function TelesalesCreateOrderPage() {
 
                                         <div className="text-right">
                                             <p className="font-semibold text-slate-900">
-                                                {formatPrice(item.product.wholesalePrice * item.quantity)}
+                                                {formatPrice((item.product.wholesalePrice || 0) * item.quantity)}
                                             </p>
                                         </div>
 

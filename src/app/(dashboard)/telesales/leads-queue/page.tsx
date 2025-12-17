@@ -1,56 +1,68 @@
 "use client";
 
 // --- Imports ---
-import { useState } from "react";
-import { Phone, CheckCircle, XCircle, Clock, Filter, Search, ClipboardList } from "lucide-react";
-import { mockLeads } from "@/mocks/data";
+import { useState, useEffect } from "react";
+import { Phone, CheckCircle, XCircle, Clock, Filter, Search, ClipboardList, Loader2 } from "lucide-react";
+import { fetchSalesLeads, SalesLead } from "@/lib/salesLeads"; // fetchSalesLeads
 import { CreateTaskModal } from "@/components/telesales/CreateTaskModal";
-import { addTask, TelesalesTask } from "@/lib/telesalesTasksStore";
-
-const formatDate = (dateString: string) => {
-    try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString("vi-VN");
-    } catch {
-        return dateString;
-    }
-};
+import { addTask } from "@/lib/telesalesTasksStore";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function LeadsQueuePage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
+    const [leads, setLeads] = useState<SalesLead[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const { user } = useAuth(); // Need auth context
+
+    useEffect(() => {
+        const fetchLeads = async () => {
+            if (!user) return;
+            setIsLoading(true);
+            const data = await fetchSalesLeads(); // Async Fetch
+            setLeads(data);
+            setIsLoading(false);
+        };
+        fetchLeads();
+    }, [user]);
 
     // Modal state
     const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
-    const [selectedLeadForTask, setSelectedLeadForTask] = useState<any>(null);
-
-    // Filter leads for Telesales context
-    const allLeads = mockLeads.filter(
-        (l) => l.channel === "TELESALES" || l.assignedToRole === "TELESALES"
-    );
+    const [selectedLeadForTask, setSelectedLeadForTask] = useState<SalesLead | null>(null);
 
     // Apply filters
-    const filteredLeads = allLeads.filter((lead) => {
+    const filteredLeads = leads.filter((lead) => {
         const matchesSearch =
-            lead.storeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            lead.contactPerson.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            lead.phone.includes(searchTerm);
+            (lead.storeName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (lead.contactName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (lead.phone || "").includes(searchTerm);
 
-        const matchesStatus = statusFilter === "all" || lead.status === statusFilter;
+        const matchesStatus = statusFilter === "all" ||
+            (lead.status.toLowerCase() === statusFilter.toLowerCase());
 
         return matchesSearch && matchesStatus;
     });
 
-    const handleOpenCreateTask = (lead: any) => {
+    const handleOpenCreateTask = (lead: SalesLead) => {
         setSelectedLeadForTask(lead);
         setIsCreateTaskModalOpen(true);
     };
 
-    const handleSaveTask = (taskData: any) => {
-        addTask(taskData);
-        // Optional: show toast
+    const handleSaveTask = async (taskData: any) => {
+        await addTask(taskData);
+        // Optional: show toast or feedback
         console.log("Created task for lead:", selectedLeadForTask?.id);
+        setIsCreateTaskModalOpen(false);
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -79,8 +91,8 @@ export default function LeadsQueuePage() {
                             <option value="all">Tất cả trạng thái</option>
                             <option value="new">Mới</option>
                             <option value="contacted">Đã liên hệ</option>
-                            <option value="converted">Đã chốt</option>
-                            <option value="no_answer">Không nghe máy</option>
+                            <option value="won">Thành công</option>
+                            <option value="lost">Thất bại</option>
                         </select>
                     </div>
                 </div>
@@ -104,7 +116,7 @@ export default function LeadsQueuePage() {
                                 <tr key={lead.id} className="hover:bg-slate-50">
                                     <td className="px-6 py-4">
                                         <div className="font-medium text-slate-900">{lead.storeName}</div>
-                                        <div className="text-xs text-slate-500">{lead.contactPerson}</div>
+                                        <div className="text-xs text-slate-500">{lead.contactName}</div>
                                         <div className="text-xs text-slate-400 mt-1">{lead.type}</div>
                                     </td>
                                     <td className="px-6 py-4">
@@ -117,14 +129,14 @@ export default function LeadsQueuePage() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${lead.status === 'new' ? 'bg-blue-100 text-blue-800' :
-                                            lead.status === 'contacted' ? 'bg-yellow-100 text-yellow-800' :
-                                                lead.status === 'converted' ? 'bg-green-100 text-green-800' :
-                                                    'bg-red-100 text-red-800'
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${lead.status === 'NEW' ? 'bg-blue-100 text-blue-800' :
+                                                lead.status === 'CONTACTED' ? 'bg-yellow-100 text-yellow-800' :
+                                                    lead.status === 'WON' ? 'bg-green-100 text-green-800' :
+                                                        'bg-red-100 text-red-800'
                                             }`}>
-                                            {lead.status === 'new' ? 'Mới' :
-                                                lead.status === 'contacted' ? 'Đã liên hệ' :
-                                                    lead.status === 'converted' ? 'Đã chốt' : lead.status}
+                                            {lead.status === 'NEW' ? 'Mới' :
+                                                lead.status === 'CONTACTED' ? 'Đã liên hệ' :
+                                                    lead.status === 'WON' ? 'Đã chốt' : lead.status}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4">
@@ -148,14 +160,6 @@ export default function LeadsQueuePage() {
                                                 <button className="flex items-center justify-center w-8 h-8 rounded-full bg-slate-50 text-slate-600 hover:bg-slate-100 transition-colors">
                                                     <Clock className="w-4 h-4" />
                                                 </button>
-                                                {/* Simple Hover Menu for Status Change Mock */}
-                                                <div className="absolute right-0 top-full mt-1 w-32 bg-white rounded-lg shadow-lg border border-slate-200 hidden group-hover:block z-10">
-                                                    <div className="p-1">
-                                                        <button className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 rounded">Chuyển: Mới</button>
-                                                        <button className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 rounded">Chuyển: Đã gọi</button>
-                                                        <button className="w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 rounded">Chuyển: Đã chốt</button>
-                                                    </div>
-                                                </div>
                                             </div>
                                         </div>
                                     </td>

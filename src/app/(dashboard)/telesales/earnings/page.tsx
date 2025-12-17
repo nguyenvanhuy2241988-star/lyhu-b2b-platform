@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { DollarSign, TrendingUp, Calendar, ArrowUpRight, ArrowDownRight, ChevronDown, Clock, Download } from "lucide-react";
-import { TelesalesTask, getMyTasks } from "@/lib/telesalesTasksStore";
-import { Order, loadOrders } from "@/lib/ordersStore";
-import { getCurrentUser } from "@/lib/auth";
+import { TelesalesTask, fetchTasks } from "@/lib/telesalesTasksStore";
+import { Order, fetchOrders } from "@/lib/ordersStore";
+import { useAuth } from "@/components/auth/AuthProvider";
 import {
     calculateCombinedMetrics,
     calculateKpiHistory,
@@ -28,32 +28,36 @@ export default function TelesalesEarningsPage() {
     const [tasks, setTasks] = useState<TelesalesTask[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
     const [dateRange, setDateRange] = useState<DateRangeOption>('this_month');
+    const [isLoading, setIsLoading] = useState(true);
+
+    const { user } = useAuth();
 
     // Load data
     useEffect(() => {
-        const loadData = () => {
-            setTasks(getMyTasks());
-            const user = getCurrentUser();
-            if (user) {
-                const all = loadOrders();
-                const myOrders = all.filter(o =>
-                    o.source === "TELESALES" &&
-                    o.telesalesUserId === user.id
-                );
-                setOrders(myOrders);
-            }
+        const loadData = async () => {
+            if (!user) return;
+            setIsLoading(true);
+
+            const [allTasks, allOrders] = await Promise.all([
+                fetchTasks(),
+                fetchOrders()
+            ]);
+
+            // Filter for current user
+            const myTasks = allTasks.filter(t => t.telesalesUserId === user.id);
+            const myOrders = allOrders.filter(o =>
+                o.source === "TELESALES" &&
+                o.telesalesUserId === user.id
+            );
+
+            setTasks(myTasks);
+            setOrders(myOrders);
+            setIsLoading(false);
         };
 
         loadData();
-
-        window.addEventListener("telesales-tasks-updated", loadData);
-        window.addEventListener("orders-updated", loadData);
-
-        return () => {
-            window.removeEventListener("telesales-tasks-updated", loadData);
-            window.removeEventListener("orders-updated", loadData);
-        };
-    }, []);
+        // Remove event listeners for now as they relied on window events which aren't firing from Supabase stores yet
+    }, [user]);
 
     // Derived State: Date Ranges
     const { currentRange, prevRange, rangeLabel, todayRange } = useMemo(() => {
@@ -189,6 +193,10 @@ export default function TelesalesEarningsPage() {
         link.click();
         document.body.removeChild(link);
     };
+
+    if (isLoading) {
+        return <div className="p-6">Đang tải báo cáo...</div>;
+    }
 
     return (
         <div className="space-y-6">

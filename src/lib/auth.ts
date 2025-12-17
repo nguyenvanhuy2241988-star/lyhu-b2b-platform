@@ -1,76 +1,81 @@
-import { ROLES } from "@/lib/constants";
+import { supabase } from "@/lib/supabaseClient";
+import { User, loadUsers } from "@/lib/usersStore";
 
-export type UserRole = (typeof ROLES)[keyof typeof ROLES];
+// --- SUPABASE AUTH ---
 
-export interface AuthUser {
-    id: string;
-    email: string;
-    name: string;
-    role: UserRole;
-}
+export const signInWithPassword = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+    });
+    return { data, error };
+};
 
-const STORAGE_KEY = "lyhu_current_user";
+export const signOut = async () => {
+    // Try Supabase sign out
+    const { error } = await supabase.auth.signOut();
+    // Also clear local mock session
+    if (typeof window !== "undefined") {
+        localStorage.removeItem("lyhu_current_user"); // Legacy key? Or whatever setCurrentUser uses
+        sessionStorage.removeItem("lyhu_current_user");
+    }
+    return { error };
+};
 
-// Mock users dùng cho đăng nhập nội bộ
-export const mockUsers: AuthUser[] = [
-    {
-        id: "1",
-        email: "admin@lyhu.vn",
-        name: "Admin LYHU",
-        role: ROLES.ADMIN,
-    },
-    {
-        id: "2",
-        email: "telesales@lyhu.vn",
-        name: "Telesales LYHU",
-        role: ROLES.TELESALES,
-    },
-    {
-        id: "3",
-        email: "ctv@lyhu.vn",
-        name: "CTV LYHU",
-        role: ROLES.CTV,
-    },
-    {
-        id: "4",
-        email: "customer@lyhu.vn",
-        name: "Khách hàng LYHU",
-        role: ROLES.CUSTOMER,
-    },
-];
+export const getSession = async () => {
+    const { data, error } = await supabase.auth.getSession();
+    return { session: data.session, error };
+};
 
-// Kiểm tra email/password theo danh sách mock ở trên
-export function authenticateUser(
-    email: string,
-): AuthUser | null {
-    const user = mockUsers.find((u) => u.email === email);
-    return user ?? null;
-}
+// --- MOCK / HYBRID AUTH ---
 
-export function setCurrentUser(user: AuthUser | null) {
+const STORAGE_KEY_USER = "lyhu_user"; // Align with setCurrentUser logic if possible. login/page uses set item?
+// Actually login/page checks `authenticateUser` then `setCurrentUser`.
+
+export const authenticateUser = (email: string): User | null => {
+    // Mock authentication against loadUsers()
+    const users = loadUsers();
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    // For mock, any password works if email matches, or we can check logic.
+    // Original login checked 'admin123' hardcoded in state? NO, login/page has state `password`.
+    // But `authenticateUser` (step 594 viewed usage) only takes `email`.
+    // So password check was skipped or inside authenticateUser?
+    // Step 594: `const user = authenticateUser(email.trim());`. It ignored password.
+    return user || null;
+};
+
+export const setCurrentUser = (user: User) => {
     if (typeof window === "undefined") return;
-    if (!user) {
-        window.localStorage.removeItem(STORAGE_KEY);
-        return;
-    }
-    window.localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(user),
-    );
-}
+    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+    // Dispatch event for UI updates if any listen to it
+    window.dispatchEvent(new Event("user-updated"));
+};
 
-export function getCurrentUser(): AuthUser | null {
-    if (typeof window === "undefined") return null;
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    try {
-        const parsed = JSON.parse(raw);
-        return parsed as AuthUser;
-    } catch {
-        return null;
+// Hybrid getCurrentUser
+// Returns Supabase user (mapped to User type?) or LocalStorage user
+// Note: Supabase user has different shape than User interface.
+// We should standardize. Telesales pages expect `user.id`.
+export const getCurrentUser = async (): Promise<any | null> => {
+    // 1. Try Supabase
+    const { data } = await supabase.auth.getUser();
+    if (data.user) {
+        // Map Supabase user to our User interface?
+        return {
+            id: data.user.id,
+            email: data.user.email,
+            role: data.user.user_metadata?.role || 'telesales', // Fallback
+            name: data.user.user_metadata?.full_name || data.user.email,
+            // ... other fields
+        };
     }
-}
 
-export function logout() {
-    setCurrentUser(null);
-}
+    // 2. Try LocalStorage
+    if (typeof window !== "undefined") {
+        const stored = localStorage.getItem(STORAGE_KEY_USER);
+        if (stored) {
+            return JSON.parse(stored);
+        }
+    }
+
+    return null;
+};

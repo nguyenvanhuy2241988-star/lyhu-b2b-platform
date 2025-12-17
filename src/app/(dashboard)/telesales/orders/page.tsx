@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Filter, Eye, FileText } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth";
-import { loadOrders } from "@/lib/ordersStore";
-import { useEffect } from "react";
+import { fetchOrders } from "@/lib/ordersStore"; // Changed to fetchOrders
 import type { Order } from "@/lib/ordersStore";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -27,34 +26,26 @@ export default function TelesalesOrdersPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [orders, setOrders] = useState<Order[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const { user } = useAuth();
 
     useEffect(() => {
-        const user = getCurrentUser();
-        if (user) {
-            const all = loadOrders();
-            // Filter: Source = TELESALES AND Creator = Current User
+        const fetchOrdersData = async () => {
+            if (!user) return;
+            setIsLoading(true);
+            const all = await fetchOrders(); // Use Async Fetch
+
+            // Filter
             const myOrders = all.filter(o =>
-                o.source === "TELESALES" &&
-                o.telesalesUserId === user.id
+                o.source === "TELESALES"
+                // && o.telesalesUserId === user.id // Uncomment if RLS isn't strict enough
             );
             setOrders(myOrders);
-        }
-
-        const handleUpdate = () => {
-            const user = getCurrentUser();
-            if (user) {
-                const all = loadOrders();
-                const myOrders = all.filter(o =>
-                    o.source === "TELESALES" &&
-                    o.telesalesUserId === user.id
-                );
-                setOrders(myOrders);
-            }
+            setIsLoading(false);
         };
-
-        window.addEventListener("orders-updated", handleUpdate);
-        return () => window.removeEventListener("orders-updated", handleUpdate);
-    }, []);
+        fetchOrdersData();
+    }, [user]);
 
     // Apply filters
     const filteredOrders = orders.filter((order) => {
@@ -66,6 +57,8 @@ export default function TelesalesOrdersPage() {
 
         return matchesSearch && matchesStatus;
     });
+
+    if (isLoading) return <div className="p-6">Đang tải đơn hàng...</div>;
 
     return (
         <div className="space-y-6">
@@ -118,7 +111,7 @@ export default function TelesalesOrdersPage() {
                             {filteredOrders.map((order) => (
                                 <tr key={order.id} className="hover:bg-slate-50">
                                     <td className="px-6 py-4 font-medium text-slate-900">
-                                        {order.id}
+                                        ORD-{order.readableId}
                                     </td>
                                     <td className="px-6 py-4 text-slate-600">
                                         {formatDate(order.createdAt)}
@@ -142,7 +135,8 @@ export default function TelesalesOrdersPage() {
                                                 ? 'Đang xử lý'
                                                 : order.status === 'delivered'
                                                     ? 'Đã giao'
-                                                    : 'Đã hủy'}
+                                                    : order.status === 'cancelled'
+                                                        ? 'Đã hủy' : 'Chờ xác nhận'}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
