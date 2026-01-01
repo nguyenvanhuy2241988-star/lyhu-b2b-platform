@@ -129,6 +129,12 @@ interface ChatState {
     pinMessage: (messageId: string) => Promise<void>;
     unpinMessage: (messageId: string) => Promise<void>;
     searchMessages: (query: string, conversationId?: string) => Promise<Message[]>;
+    forwardMessage: (message: Message, conversationIds: string[]) => Promise<void>;
+
+    // Group Management
+    updateConversationName: (conversationId: string, name: string) => Promise<void>;
+    addParticipants: (conversationId: string, userIds: string[]) => Promise<void>;
+    leaveConversation: (conversationId: string, userId: string) => Promise<void>;
 
     // Cleanup
     startPolling: (conversationId: string) => void;
@@ -627,6 +633,69 @@ export const useChatStore = create<ChatState>((set, get) => ({
         if (conversationId) q.eq('conversation_id', conversationId);
         const { data } = await q;
         return data || [];
+    },
+
+    forwardMessage: async (message: Message, conversationIds: string[]) => {
+        const token = await getRealtimeToken();
+        const userId = (await supabase.auth.getUser()).data.user?.id;
+        if (!userId) return;
+
+        for (const convId of conversationIds) {
+            const payload = {
+                conversation_id: convId,
+                sender_id: userId,
+                content: message.content, // Basic text forward
+                attachment_url: message.attachment_url,
+                attachment_type: message.attachment_type,
+                attachment_name: message.attachment_name
+            };
+
+            await fetch(`${SUPABASE_URL}/rest/v1/internal_messages`, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_KEY || '',
+                    'Authorization': `Bearer ${token || SUPABASE_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+        }
+    },
+
+    updateConversationName: async (conversationId: string, name: string) => {
+        const { error } = await supabase
+            .from('internal_conversations')
+            .update({ name })
+            .eq('id', conversationId);
+        if (error) throw error;
+        set(state => ({
+            conversations: state.conversations.map(c => c.id === conversationId ? { ...c, name } : c)
+        }));
+    },
+
+    addParticipants: async (conversationId: string, userIds: string[]) => {
+        const participants = userIds.map(uid => ({
+            conversation_id: conversationId,
+            user_id: uid
+        }));
+        const { error } = await supabase.from('internal_participants').insert(participants);
+        if (error) throw error;
+        // Refresh conversations to get new participants list
+        const userId = (await supabase.auth.getUser()).data.user?.id;
+        if (userId) get().fetchConversations(userId);
+    },
+
+    leaveConversation: async (conversationId: string, userId: string) => {
+        const { error } = await supabase
+            .from('internal_participants')
+            .delete()
+            .eq('conversation_id', conversationId)
+            .eq('user_id', userId);
+        if (error) throw error;
+        set(state => ({
+            conversations: state.conversations.filter(c => c.id !== conversationId),
+            activeConversationId: state.activeConversationId === conversationId ? null : state.activeConversationId
+        }));
     },
 
     sendTyping: (conversationId: string, isTyping: boolean) => {
