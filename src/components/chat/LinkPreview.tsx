@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 interface LinkPreviewProps {
     url: string;
@@ -72,14 +73,11 @@ export function LinkPreview({ url }: LinkPreviewProps) {
                 */}
                 {data.image && (
                     <div className="w-24 h-24 shrink-0 bg-slate-100 relative overflow-hidden">
-                        <img
+                        <Image
                             src={data.image}
                             alt={data.title}
-                            className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-300"
-                            onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none';
-                                // Maybe hide image container if fails?
-                            }}
+                            fill
+                            className="object-cover group-hover/card:scale-105 transition-transform duration-300"
                         />
                     </div>
                 )}

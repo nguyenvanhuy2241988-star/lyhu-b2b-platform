@@ -72,7 +72,7 @@ export default function ChatPage() {
         return () => {
             unsubscribeFromNewConversations(); // Assuming this is the intended cleanup for new conversations
         };
-    }, [user?.id, session?.access_token, fetchConversations, subscribeToNewConversations, unsubscribeFromNewConversations]);
+    }, [user, session?.access_token, fetchConversations, subscribeToNewConversations, unsubscribeFromNewConversations]);
 
     // Polling and Realtime are handled internally by selectConversation in chatStore.ts
     // No need for redundant useEffect here to avoid duplicate intervals/channels.

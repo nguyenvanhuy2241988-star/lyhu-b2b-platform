@@ -406,7 +406,7 @@ export default function TelesalesTasksPage() {
         return () => {
             window.removeEventListener("telesales-columns-updated", handleColumnUpdate);
         };
-    }, [user?.id, session?.access_token, refreshData]);
+    }, [user, session?.access_token, refreshData]);
 
     const handleLogCall = (task: TelesalesTask) => {
         setTaskToLog(task);

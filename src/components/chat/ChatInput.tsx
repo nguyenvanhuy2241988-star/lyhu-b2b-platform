@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Image, Paperclip, Smile, X, Edit2 } from "lucide-react";
+import { Send, Image as ImageIcon, Paperclip, Smile, X, Edit2 } from "lucide-react";
 import { Message } from "@/lib/chatStore";
 
 interface ChatInputProps {
@@ -201,7 +201,7 @@ export function ChatInput({
                 <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleSubmit(e as any, e.target.files[0]); }} />
                 <input type="file" accept="image/*" ref={imageInputRef} className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleSubmit(e as any, e.target.files[0]); }} />
 
-                <button type="button" onClick={() => imageInputRef.current?.click()} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" title="Gửi hình ảnh"><Image className="w-5 h-5" /></button>
+                <button type="button" onClick={() => imageInputRef.current?.click()} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" title="Gửi hình ảnh"><ImageIcon className="w-5 h-5" /></button>
                 <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" title="Gửi tập tin"><Paperclip className="w-5 h-5" /></button>
                 <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors" title="Biểu tượng cảm xúc"><Smile className="w-5 h-5" /></button>
 
