@@ -50,7 +50,7 @@ export function ChatSidebar({
         }, 500); // 500ms debounce
 
         return () => clearTimeout(timeoutId);
-    }, [searchTerm]); // Removed searchMessages from deps to avoid loop if store changes
+    }, [searchTerm, searchMessages]);
 
     const isUserOnline = (userId: string) => onlineUsers.includes(userId);
 
