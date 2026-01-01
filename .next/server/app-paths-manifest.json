@@ -1,7 +1,0 @@
-{
-  "/(dashboard)/documents/page": "app/(dashboard)/documents/page.js",
-  "/(dashboard)/admin/settings/page": "app/(dashboard)/admin/settings/page.js",
-  "/(dashboard)/admin/customers/page": "app/(dashboard)/admin/customers/page.js",
-  "/(dashboard)/warehouse/page": "app/(dashboard)/warehouse/page.js",
-  "/(dashboard)/admin/payroll/page": "app/(dashboard)/admin/payroll/page.js"
-}

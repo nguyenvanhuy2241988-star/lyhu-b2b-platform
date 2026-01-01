@@ -14,32 +14,26 @@ interface ChatInfoPanelProps {
 }
 
 export function ChatInfoPanel({ conversation, onClose, users }: ChatInfoPanelProps) {
-    // const { getChatMedia } = useChatStore(); // Commented out - getChatMedia doesn't exist in ChatState
+    const { getChatMedia } = useChatStore();
     const [activeTab, setActiveTab] = useState<'images' | 'files'>('images');
     const [mediaItems, setMediaItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Temporarily disabled - getChatMedia not implemented
-    // useEffect(() => {
-    //     const fetchMedia = async () => {
-    //         if (!conversation?.id) return;
-    //         setLoading(true);
-    //         try {
-    //             const items = await getChatMedia(conversation.id);
-    //             setMediaItems(items);
-    //         } catch (error) {
-    //             console.error(error);
-    //         } finally {
-    //             setLoading(false);
-    //         }
-    //     };
-    //     fetchMedia();
-    // }, [conversation.id, getChatMedia]);
-
     useEffect(() => {
-        // Quick fix: set loading to false since we're not fetching media yet
-        setLoading(false);
-    }, []);
+        const fetchMedia = async () => {
+            if (!conversation?.id) return;
+            setLoading(true);
+            try {
+                const items = await getChatMedia(conversation.id);
+                setMediaItems(items);
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchMedia();
+    }, [conversation?.id, getChatMedia]);
 
     const images = mediaItems.filter(m => m.attachment_type === 'image');
     const files = mediaItems.filter(m => m.attachment_type !== 'image'); // 'file' or undefined but has url
