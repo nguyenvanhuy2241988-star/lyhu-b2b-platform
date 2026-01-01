@@ -377,7 +377,7 @@ export default function TelesalesTasksPage() {
         setTasks(fetchedTasks);
         setColumns(loadColumns().sort((a, b) => a.order - b.order));
         setIsLoading(false);
-    }, [user?.id, session?.access_token, tasks.length]);
+    }, [user, session, tasks.length]);
 
     // Helper to scroll to task
     const handleLocateTask = (taskId: string) => {

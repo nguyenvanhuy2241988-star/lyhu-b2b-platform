@@ -91,7 +91,7 @@ export default function TelesalesDashboard() {
         } finally {
             if (!silent) setIsLoading(false);
         }
-    }, [user?.id, session?.access_token]);
+    }, [user, session]);
 
     useEffect(() => {
         if (!user || !session) return;
@@ -125,7 +125,7 @@ export default function TelesalesDashboard() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [user?.id, session?.access_token, loadAll]);
+    }, [user, session, loadAll]);
 
     // REAL-TIME SUBSCRIPTIONS
     useEffect(() => {

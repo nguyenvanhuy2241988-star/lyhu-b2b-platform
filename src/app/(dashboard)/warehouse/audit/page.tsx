@@ -28,10 +28,6 @@ export default function InventoryAuditPage() {
     const [auditData, setAuditData] = useState<Record<string, { newQty: number; note: string }>>({});
     const [isSaving, setIsSaving] = useState(false);
 
-    useEffect(() => {
-        loadInventory();
-    }, [session?.access_token, loadInventory]);
-
     const loadInventory = useCallback(async () => {
         try {
             setIsLoading(true);
@@ -49,6 +45,10 @@ export default function InventoryAuditPage() {
             setIsLoading(false);
         }
     }, [session?.access_token]);
+
+    useEffect(() => {
+        loadInventory();
+    }, [loadInventory]);
 
     const handleQtyChange = (itemId: string, val: string) => {
         const qty = parseInt(val) || 0;
