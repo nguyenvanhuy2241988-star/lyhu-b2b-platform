@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider"; // ADDED // ADDED: For addLogSupabase
 
@@ -370,14 +370,14 @@ export default function TelesalesTasksPage() {
     const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
 
     // Initial Load & Listeners
-    const refreshData = async () => {
+    const refreshData = useCallback(async () => {
         if (!user) return; // Wait for user
         setIsLoading(prev => tasks.length === 0 ? true : prev);
         const fetchedTasks = await fetchTasks(user.id, session?.access_token); // Pass token
         setTasks(fetchedTasks);
         setColumns(loadColumns().sort((a, b) => a.order - b.order));
         setIsLoading(false);
-    };
+    }, [user?.id, session?.access_token, tasks.length]);
 
     // Helper to scroll to task
     const handleLocateTask = (taskId: string) => {
@@ -406,7 +406,7 @@ export default function TelesalesTasksPage() {
         return () => {
             window.removeEventListener("telesales-columns-updated", handleColumnUpdate);
         };
-    }, [user, session?.access_token]);
+    }, [user?.id, session?.access_token, refreshData]);
 
     const handleLogCall = (task: TelesalesTask) => {
         setTaskToLog(task);

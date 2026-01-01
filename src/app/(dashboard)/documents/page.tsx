@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef, Suspense } from 'react';
+import React, { useEffect, useState, useRef, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from "@/components/auth/AuthProvider";
 import { supabase } from "@/lib/supabaseClient";
@@ -55,6 +55,35 @@ function DocumentsPageContent() {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const replaceFolderUrl = useCallback((id: string) => {
+        const url = new URL(window.location.href);
+        url.searchParams.set('folder', id);
+        router.replace(url.pathname + url.search);
+    }, [router]);
+
+    const loadFolders = useCallback(async (silent = false) => {
+        try {
+            const data = await listFolders();
+            setFolders(data);
+            return data;
+        } catch (error) {
+            console.error(error);
+            return [];
+        }
+    }, []);
+
+    const loadFiles = useCallback(async (folderId: string, silent = false) => {
+        if (!silent) setLoadingFiles(true);
+        try {
+            const data = await listFiles(folderId, search);
+            setFiles(data);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            if (!silent) setLoadingFiles(false);
+        }
+    }, [search]);
+
     // 1. Initial Load of Folders
     useEffect(() => {
         if (!session?.access_token) return;
@@ -79,7 +108,7 @@ function DocumentsPageContent() {
         return () => {
             supabase.removeChannel(folderChannel);
         };
-    }, [session?.access_token]);
+    }, [session?.access_token, loadFolders, replaceFolderUrl, selectedFolderId]);
 
     // 2. Load Files when folder changes
     useEffect(() => {
@@ -106,36 +135,7 @@ function DocumentsPageContent() {
         return () => {
             if (fileChannel) supabase.removeChannel(fileChannel);
         };
-    }, [selectedFolderId, session?.access_token]);
-
-    const replaceFolderUrl = (id: string) => {
-        const url = new URL(window.location.href);
-        url.searchParams.set('folder', id);
-        router.replace(url.pathname + url.search);
-    };
-
-    const loadFolders = async (silent = false) => {
-        try {
-            const data = await listFolders();
-            setFolders(data);
-            return data;
-        } catch (error) {
-            console.error(error);
-            return [];
-        }
-    };
-
-    const loadFiles = async (folderId: string, silent = false) => {
-        if (!silent) setLoadingFiles(true);
-        try {
-            const data = await listFiles(folderId, search);
-            setFiles(data);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            if (!silent) setLoadingFiles(false);
-        }
-    };
+    }, [selectedFolderId, session?.access_token, loadFiles]);
 
     // Actions
     const handleSelectFolder = (id: string) => {

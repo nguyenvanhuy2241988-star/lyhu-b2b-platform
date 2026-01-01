@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     ClipboardList,
     Search,
@@ -30,7 +30,7 @@ export default function FulfillmentPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
-    const loadOrders = async () => {
+    const loadOrders = useCallback(async () => {
         try {
             setIsLoading(true);
             const data = await fetchOrdersForFulfillment(session?.access_token);
@@ -40,7 +40,7 @@ export default function FulfillmentPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [session?.access_token]);
 
     useEffect(() => {
         loadOrders();
@@ -66,7 +66,7 @@ export default function FulfillmentPage() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [session?.access_token]);
+    }, [session?.access_token, loadOrders]);
 
     const handleOpenModal = (order: any) => {
         setSelectedOrder(order);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Plus, Pencil, Trash2, X, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -58,7 +58,7 @@ export default function UsersPage() {
 
     const { session } = useAuth();
 
-    const fetchUsers = async (silent = false) => {
+    const fetchUsers = useCallback(async (silent = false) => {
         try {
             if (!silent) setIsLoading(true);
             const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -86,7 +86,7 @@ export default function UsersPage() {
         } finally {
             if (!silent) setIsLoading(false);
         }
-    };
+    }, [session?.access_token]);
 
     useEffect(() => {
         if (!session?.access_token) return;
@@ -112,7 +112,7 @@ export default function UsersPage() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [session?.access_token]);
+    }, [session?.access_token, fetchUsers]);
 
     const handleOpenCreate = () => {
         setEditingUser(null);

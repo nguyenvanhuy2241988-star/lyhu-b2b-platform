@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import Image from "next/image";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { supabase } from "@/lib/supabaseClient";
 import { User, Mail, Shield, Calendar, Phone, MapPin, Camera, Edit2, Users, Search } from "lucide-react";
@@ -12,36 +13,35 @@ export default function ProfilePage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(true);
 
+    const fetchData = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            // Fetch current user profile
+            const { data: profileData } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+            setProfile(profileData);
+
+            // Fetch colleagues
+            const { data: colleaguesData } = await supabase
+                .from('profiles')
+                .select('id, full_name, role, email, avatar_url')
+                .neq('id', user.id)
+                .limit(20);
+            setColleagues(colleaguesData || []);
+        } catch (error) {
+            console.error("Error fetching profile data:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [user.id]);
+
     useEffect(() => {
         if (!user) return;
-
-        const fetchData = async () => {
-            setIsLoading(true);
-            try {
-                // Fetch current user profile
-                const { data: profileData } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', user.id)
-                    .single();
-                setProfile(profileData);
-
-                // Fetch colleagues
-                const { data: colleaguesData } = await supabase
-                    .from('profiles')
-                    .select('id, full_name, role, email, avatar_url')
-                    .neq('id', user.id)
-                    .limit(20);
-                setColleagues(colleaguesData || []);
-            } catch (error) {
-                console.error("Error fetching profile data:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
         fetchData();
-    }, [user]);
+    }, [user, fetchData]);
 
     const filteredColleagues = colleagues.filter(c =>
         c.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -67,7 +67,7 @@ export default function ProfilePage() {
                         <div className="w-32 h-32 rounded-3xl bg-white p-1 shadow-xl">
                             <div className="w-full h-full rounded-[1.4rem] bg-slate-100 flex items-center justify-center overflow-hidden">
                                 {profile?.avatar_url ? (
-                                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                                    <Image src={profile.avatar_url} alt="Avatar" width={128} height={128} className="w-full h-full object-cover" />
                                 ) : (
                                     <User className="w-16 h-16 text-slate-300" />
                                 )}
@@ -187,7 +187,7 @@ export default function ProfilePage() {
                                 <div key={col.id} className="group p-4 rounded-2xl border border-slate-50 hover:border-blue-100 hover:bg-blue-50/30 transition-all flex items-center gap-4">
                                     <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center overflow-hidden shadow-sm group-hover:scale-105 transition-transform">
                                         {col.avatar_url ? (
-                                            <img src={col.avatar_url} alt={col.full_name} className="w-full h-full object-cover" />
+                                            <Image src={col.avatar_url} alt={col.full_name} width={48} height={48} className="w-full h-full object-cover" />
                                         ) : (
                                             <span className="text-slate-400 font-bold uppercase text-lg">{col.full_name?.charAt(0) || col.email?.charAt(0)}</span>
                                         )}

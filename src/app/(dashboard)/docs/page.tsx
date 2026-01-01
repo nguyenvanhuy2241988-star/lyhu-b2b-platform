@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -36,11 +36,7 @@ export default function DocsListPage() {
         return () => clearTimeout(timer);
     }, [search]);
 
-    useEffect(() => {
-        loadData();
-    }, [debouncedSearch, selectedCat]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true);
         try {
             const [d, c] = await Promise.all([
@@ -54,7 +50,11 @@ export default function DocsListPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [debouncedSearch, selectedCat]);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Users, Phone, ShoppingBag, TrendingUp, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { getMyTasks, TelesalesTask } from "@/lib/telesalesTasksStore";
@@ -59,7 +59,7 @@ export default function TelesalesDashboard() {
     const safeOrders = Array.isArray(orders) ? orders : [];
 
     // Load all data
-    const loadAll = async (silent = false) => {
+    const loadAll = useCallback(async (silent = false) => {
         if (!silent) setIsLoading(true);
         try {
             const token = session?.access_token;
@@ -91,7 +91,7 @@ export default function TelesalesDashboard() {
         } finally {
             if (!silent) setIsLoading(false);
         }
-    };
+    }, [user?.id, session?.access_token]);
 
     useEffect(() => {
         if (!user || !session) return;
@@ -125,7 +125,7 @@ export default function TelesalesDashboard() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [user?.id, session?.access_token]);
+    }, [user?.id, session?.access_token, loadAll]);
 
     // REAL-TIME SUBSCRIPTIONS
     useEffect(() => {
@@ -144,7 +144,7 @@ export default function TelesalesDashboard() {
             if (fundSub) fundSub.unsubscribe();
             if (achievementSub) achievementSub.unsubscribe();
         };
-    }, [user?.id]);
+    }, [user?.id, session?.access_token]); // Fixed: Added session?.access_token
 
     // --- KPI CALCULATIONS ---
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
     fetchOrders, // CHANGED: Use async fetch
     updateOrderStatus,
@@ -78,7 +78,7 @@ export default function AdminOrdersPage() {
             .reduce((sum, o) => sum + (o.totalAmount || 0), 0)
     };
 
-    const loadData = async (silent = false) => {
+    const loadData = useCallback(async (silent = false) => {
         try {
             if (!silent) setIsLoading(true);
             // Pass token to fetch ALL orders (Admin mode) - RLS will enforce admin access
@@ -95,7 +95,7 @@ export default function AdminOrdersPage() {
         } finally {
             if (!silent) setIsLoading(false);
         }
-    };
+    }, [session?.access_token]);
 
     useEffect(() => {
         // Auto-scan for fraud on load
@@ -164,7 +164,7 @@ export default function AdminOrdersPage() {
             supabase.removeChannel(chatChannel);
             window.removeEventListener("orders-updated", handleLegacyUpdate);
         };
-    }, [session?.access_token]);
+    }, [session?.access_token, loadData, scanOrdersForFraud]);
 
 
 

@@ -42,7 +42,7 @@ export default function TelesalesEarningsPage() {
 
     const { user, session } = useAuth();
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         if (!user || !session?.access_token) return;
         setIsLoading(true);
         try {
@@ -80,7 +80,7 @@ export default function TelesalesEarningsPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [user?.id, session?.access_token]);
 
     // Initial load
     useEffect(() => {
@@ -89,7 +89,7 @@ export default function TelesalesEarningsPage() {
         } else {
             setIsLoading(false);
         }
-    }, [user, session?.access_token]);
+    }, [user, session?.access_token, loadData]);
 
     // Realtime subscriptions
     useEffect(() => {
@@ -132,7 +132,7 @@ export default function TelesalesEarningsPage() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [user, session?.access_token]);
+    }, [user?.id, session?.access_token, loadData]);
 
     // Derived State: Date Ranges
     const { currentRange, prevRange, rangeLabel, todayRange } = useMemo(() => {

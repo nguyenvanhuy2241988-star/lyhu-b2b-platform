@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
     Users,
     DollarSign,
@@ -67,7 +67,7 @@ export default function AdminPayrollPage() {
 
     const { session, user } = useAuth();
 
-    const loadStaff = async (silent = false) => {
+    const loadStaff = useCallback(async (silent = false) => {
         try {
             if (!silent) setIsLoading(true);
             const allUsers = await fetchUsers(session?.access_token);
@@ -81,9 +81,9 @@ export default function AdminPayrollPage() {
         } finally {
             if (!silent) setIsLoading(false);
         }
-    };
+    }, [session?.access_token, selectedUserId]);
 
-    const loadTransactions = async (silent = false) => {
+    const loadTransactions = useCallback(async (silent = false) => {
         if (!selectedUserId || !session?.access_token) return;
         try {
             const [txs, orders, config] = await Promise.all([
@@ -102,9 +102,9 @@ export default function AdminPayrollPage() {
         } catch (err) {
             console.error("loadData error:", err);
         }
-    };
+    }, [selectedUserId, session?.access_token]);
 
-    const loadLocks = async () => {
+    const loadLocks = useCallback(async () => {
         if (!session?.access_token) return;
         try {
             const data = await fetchPayrollLocks(new Date().getFullYear(), session.access_token);
@@ -112,7 +112,7 @@ export default function AdminPayrollPage() {
         } catch (err) {
             console.error("loadLocks error:", err);
         }
-    };
+    }, [session?.access_token]);
 
     const isMonthLocked = (month: number) => {
         return locks.some(l => l.month === month);
@@ -133,11 +133,11 @@ export default function AdminPayrollPage() {
     useEffect(() => {
         loadStaff();
         loadLocks();
-    }, []);
+    }, [loadStaff, loadLocks]);
 
     useEffect(() => {
         loadTransactions();
-    }, [selectedUserId, session?.access_token]);
+    }, [loadTransactions]);
 
     // Realtime Subscriptions
     useEffect(() => {
@@ -171,7 +171,7 @@ export default function AdminPayrollPage() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [selectedUserId, session?.access_token]);
+    }, [selectedUserId, session?.access_token, loadTransactions, loadStaff]);
 
     const filteredStaff = useMemo(() => {
         return staff.filter(s =>

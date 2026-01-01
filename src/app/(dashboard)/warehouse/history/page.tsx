@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, Search, Filter, History, Calendar, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { fetchInventoryTransactions, getDefaultWarehouseId } from "@/lib/inventoryStore";
@@ -14,16 +14,16 @@ export default function WarehouseHistoryPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [filterType, setFilterType] = useState<string>("all");
 
-    useEffect(() => {
-        loadData();
-    }, []);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setIsLoading(true);
         const data = await fetchInventoryTransactions(undefined, 100); // Fetch last 100 transactions
         setTransactions(data);
         setIsLoading(false);
-    };
+    }, []);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
     // Filter logic
     const filteredTransactions = transactions.filter(t => {
@@ -86,8 +86,8 @@ export default function WarehouseHistoryPage() {
                             key={type}
                             onClick={() => setFilterType(type)}
                             className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${filterType === type
-                                    ? 'bg-white text-indigo-600 shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700'
+                                ? 'bg-white text-indigo-600 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700'
                                 }`}
                         >
                             {type === 'all' ? 'Tất cả' : type === 'inbound' ? 'Nhập' : type === 'outbound' ? 'Xuất' : 'Giữ hàng'}

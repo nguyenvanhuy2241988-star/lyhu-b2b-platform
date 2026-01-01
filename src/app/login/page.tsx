@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabaseClient";
 import { getHomePath } from "@/lib/roles";
@@ -14,6 +15,7 @@ function LoginPageContent() {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [msg, setMsg] = useState<string | null>(null);
+    const [logoError, setLogoError] = useState(false);
 
     const handleEmailLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -75,15 +77,22 @@ function LoginPageContent() {
             <header className="w-full border-b border-slate-200 bg-white">
                 <div className="max-w-5xl mx-auto flex items-center justify-between px-4 py-5">
                     <div className="flex items-center gap-6">
-                        <img
-                            src="/logo-full.png"
-                            alt="LYHU Logo"
-                            className="h-16 w-auto object-contain"
-                            onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                e.currentTarget.parentElement?.insertAdjacentHTML('afterbegin', '<div class="h-12 w-12 rounded-full bg-primary-500 text-white grid place-items-center font-bold text-xl">LY</div>');
-                            }}
-                        />
+                        <div className="relative h-16 w-32">
+                            {!logoError ? (
+                                <Image
+                                    src="/logo-full.png"
+                                    alt="LYHU Logo"
+                                    fill
+                                    className="object-contain"
+                                    onError={() => setLogoError(true)}
+                                    priority
+                                />
+                            ) : (
+                                <div className="h-12 w-12 rounded-full bg-primary-500 text-white grid place-items-center font-bold text-xl">
+                                    LY
+                                </div>
+                            )}
+                        </div>
                         <div>
                             <div className="font-bold text-xl text-slate-800 leading-6">LYHU B2B Platform</div>
                             <div className="text-[12px] font-medium text-primary-600 uppercase tracking-wider mt-0.5">

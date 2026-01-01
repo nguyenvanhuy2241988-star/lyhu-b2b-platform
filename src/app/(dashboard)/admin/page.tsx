@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Users, ShoppingBag, DollarSign, TrendingUp, Package, CreditCard } from "lucide-react";
 import { getAdminLeadStats, AdminLeadStats } from "@/lib/adminStats";
 import { getOrdersSummary } from "@/lib/ordersStore";
@@ -46,7 +46,7 @@ export default function AdminDashboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingChart, setIsLoadingChart] = useState(true);
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setIsLoading(true);
         setIsLoadingChart(true);
         try {
@@ -71,7 +71,7 @@ export default function AdminDashboard() {
             setIsLoading(false);
             setIsLoadingChart(false);
         }
-    };
+    }, [session?.access_token]);
 
     useEffect(() => {
         loadData();
@@ -80,7 +80,7 @@ export default function AdminDashboard() {
         const handleUpdates = () => loadData();
         window.addEventListener("orders-updated", handleUpdates);
         return () => window.removeEventListener("orders-updated", handleUpdates);
-    }, [session?.access_token]);
+    }, [loadData]);
 
     const statsCards = [
         {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Plus, MapPin, Phone, Mail, MoreHorizontal, Building, UserPlus, Loader2, X, Save } from "lucide-react";
 import { fetchCustomers, createCustomer, Customer } from "@/lib/crmDealsStore";
@@ -32,19 +32,19 @@ export default function TelesalesCustomersPage() {
 
 
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         if (!user || !session?.access_token) return;
         setIsLoading(true);
         const data = await fetchCustomers(user.id, session.access_token);
         setCustomers(data);
         setIsLoading(false);
-    };
+    }, [user?.id, session?.access_token]);
 
     useEffect(() => {
         if (user && session?.access_token) {
             loadData();
         }
-    }, [user, session?.access_token]);
+    }, [user?.id, session?.access_token, loadData]);
 
     const filteredCustomers = customers.filter((customer) => {
         return (

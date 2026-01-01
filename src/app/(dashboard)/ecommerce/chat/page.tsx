@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Send, Image, MoreVertical, Phone, MessageCircle } from 'lucide-react';
+import { Search, Send, Image as ImageIcon, MoreVertical, Phone, MessageCircle } from 'lucide-react';
+import Image from 'next/image';
 
 const MOCK_CONVERSATIONS = [
     { id: 1, name: 'Nguyễn Văn A', channel: 'Shopee', lastMessage: 'Sản phẩm này còn hàng không shop?', time: '10:30', unread: 2, avatar: 'https://ui-avatars.com/api/?name=NV&background=orange&color=fff' },
@@ -44,7 +45,7 @@ export default function EcommerceChatPage() {
                             onClick={() => setActiveConv(conv)}
                             className={`p-4 flex gap-3 hover:bg-slate-50 cursor-pointer transition ${activeConv.id === conv.id ? 'bg-violet-50/50' : ''}`}
                         >
-                            <img src={conv.avatar} alt="" className="w-10 h-10 rounded-full" />
+                            <Image src={conv.avatar} alt={conv.name} width={40} height={40} className="rounded-full" />
                             <div className="flex-1 overflow-hidden">
                                 <div className="flex justify-between items-center mb-1">
                                     <h4 className="font-medium text-slate-900 truncate">{conv.name}</h4>
@@ -68,7 +69,7 @@ export default function EcommerceChatPage() {
                 {/* Chat Header */}
                 <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white">
                     <div className="flex items-center gap-3">
-                        <img src={activeConv.avatar} alt="" className="w-10 h-10 rounded-full" />
+                        <Image src={activeConv.avatar} alt={activeConv.name} width={40} height={40} className="rounded-full" />
                         <div>
                             <h3 className="font-bold text-slate-900">{activeConv.name}</h3>
                             <div className="flex items-center gap-1.5 text-xs text-slate-500">
@@ -98,7 +99,7 @@ export default function EcommerceChatPage() {
                 {/* Input */}
                 <div className="p-4 bg-white border-t border-slate-200">
                     <div className="flex gap-2 items-center bg-slate-100 px-4 py-2 rounded-full">
-                        <button className="text-slate-400 hover:text-slate-600"><Image className="w-5 h-5" /></button>
+                        <button className="text-slate-400 hover:text-slate-600"><ImageIcon className="w-5 h-5" /></button>
                         <input
                             className="flex-1 bg-transparent focus:outline-none text-sm"
                             placeholder="Nhập tin nhắn..."
@@ -115,7 +116,7 @@ export default function EcommerceChatPage() {
             {/* Customer Info (Right Sidebar - Simplified) */}
             <div className="w-72 border-l border-slate-200 bg-white p-4 hidden xl:block">
                 <div className="text-center mb-6">
-                    <img src={activeConv.avatar} alt="" className="w-20 h-20 rounded-full mx-auto mb-3" />
+                    <Image src={activeConv.avatar} alt={activeConv.name} width={80} height={80} className="rounded-full mx-auto mb-3" />
                     <h3 className="font-bold text-lg">{activeConv.name}</h3>
                     <p className="text-slate-500 text-sm">Khách hàng mới</p>
                 </div>

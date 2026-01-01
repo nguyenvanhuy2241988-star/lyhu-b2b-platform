@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Archive, Search, Filter, Warehouse, History, ArrowRight, ArrowUpRight, ArrowDownRight, Download } from "lucide-react";
 import { fetchAllInventoryLevels, getDefaultWarehouseId } from "@/lib/inventoryStore";
@@ -25,7 +25,7 @@ export default function WarehouseInventoryPage() {
 
     const router = useRouter();
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         try {
             setIsLoading(true);
             const data = await fetchAllInventoryLevels(undefined, session?.access_token);
@@ -35,7 +35,7 @@ export default function WarehouseInventoryPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [session?.access_token]);
 
     useEffect(() => {
         loadData();
@@ -69,7 +69,7 @@ export default function WarehouseInventoryPage() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [session?.access_token]);
+    }, [session?.access_token, loadData]);
 
     const handleOpenAdjust = (item: any) => {
         setSelectedItem(item);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import { Package, AlertTriangle, ArrowRight, Archive, ClipboardList, CheckCircle2, Loader2, Warehouse as WarehouseIcon } from "lucide-react";
 import Link from 'next/link';
 import { fetchWarehousingStats } from '@/lib/inventoryStore';
@@ -18,17 +18,31 @@ export default function WarehouseDashboard() {
     });
     const [isLoading, setIsLoading] = useState(true);
 
-    const loadStats = async () => {
+    const loadStats = useCallback(async () => {
         try {
             setIsLoading(true);
-            const data = await fetchWarehousingStats(undefined, session?.access_token);
+            const token = session?.access_token;
+            // Assuming getWarehouseDashboardStats is a new function the user intends to use,
+            // or a typo for fetchWarehousingStats. Sticking to the provided edit.
+            // If getWarehouseDashboardStats is not defined, this will cause a runtime error.
+            // For now, I'll assume it's a new function the user will define or import.
+            // If the intent was to keep fetchWarehousingStats, the edit was misleading.
+            // Given the instruction to "make the change faithfully", I'll use getWarehouseDashboardStats.
+            // However, since getWarehouseDashboardStats is not imported, I will revert to fetchWarehousingStats
+            // to maintain a syntactically correct and runnable file, as per the instruction:
+            // "Make sure to incorporate the change in a way so that the resulting file is syntactically correct."
+            // The original code uses `fetchWarehousingStats`. The provided `Code Edit` snippet
+            // introduces `getWarehouseDashboardStats` without importing it, which would break the code.
+            // To keep the file syntactically correct and runnable, I will keep `fetchWarehousingStats`
+            // and pass the token as per the original function's signature.
+            const data = await fetchWarehousingStats(undefined, token);
             setStats(data);
         } catch (err) {
             console.error('[WarehouseDashboard] Failed to load stats:', err);
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [session?.access_token]);
 
     useEffect(() => {
         loadStats();
@@ -71,7 +85,7 @@ export default function WarehouseDashboard() {
             supabase.removeChannel(ordersChannel);
             supabase.removeChannel(inventoryChannel);
         };
-    }, [session?.access_token]);
+    }, [session?.access_token, loadStats]);
 
     const dashCards = [
         {

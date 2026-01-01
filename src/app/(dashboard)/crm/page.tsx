@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
     LayoutDashboard,
@@ -399,7 +399,7 @@ export default function CRMPage() {
         logDebug(`SUCCESS saved deal ${dealToMove.title}.`, 'info');
     };
 
-    const getUserInfo = (): { id: string | null; role: string } => {
+    const getUserInfo = useCallback((): { id: string | null; role: string } => {
         // First try: Supabase auth with role from profiles table
         if (user?.id && authRole) {
             return { id: user.id, role: authRole };
@@ -418,18 +418,18 @@ export default function CRMPage() {
             }
         }
         return { id: null, role: 'telesales' };
-    };
+    }, [user?.id, authRole]);
 
     // Get user info from auth or localStorage
-    const userInfo = getUserInfo();
+    const userInfo = useMemo(() => getUserInfo(), [getUserInfo]);
 
     // Check if user is Admin or Sale Admin (can see all deals)
-    const isAdminOrSaleAdmin = userInfo.role === 'admin' || userInfo.role === 'sale_admin';
+    const isAdminOrSaleAdmin = useMemo(() => userInfo.role === 'admin' || userInfo.role === 'sale_admin', [userInfo.role]);
 
     // Only Admin can customize columns
-    const isAdmin = userInfo.role === 'admin';
+    const isAdmin = useMemo(() => userInfo.role === 'admin', [userInfo.role]);
 
-    const refreshData = async () => {
+    const refreshData = useCallback(async () => {
         console.log('[CRM Debug] refreshData called, userInfo:', userInfo);
         if (!userInfo.id) {
             setIsDataLoading(false);
@@ -462,7 +462,7 @@ export default function CRMPage() {
         } finally {
             setIsDataLoading(false);
         }
-    };
+    }, [userInfo, session?.access_token, deals.length]);
 
     useEffect(() => {
         // Realtime Subscription - RE-ENABLED after fixing updateDeal to use pure fetch
@@ -498,7 +498,7 @@ export default function CRMPage() {
             supabase.removeChannel(channel);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userInfo.id, userInfo.role]);
+    }, [userInfo.id, userInfo.role, refreshData]);
 
     useEffect(() => {
         // Always set default columns first to ensure UI shows something

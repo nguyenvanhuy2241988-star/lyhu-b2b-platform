@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { getCurrentUser } from "@/lib/auth";
 import { loadOrders } from "@/lib/ordersStore";
 import { loadUsers } from "@/lib/usersStore";
@@ -53,7 +53,7 @@ export default function CTVPayoutsPage() {
 
     const cycle = useMemo(() => getCurrentCycle(), []);
 
-    const refreshData = async () => {
+    const refreshData = useCallback(async () => {
         const user = await getCurrentUser();
         if (user) {
             const ctvPayouts = getPayoutsByCtv(user.id);
@@ -62,7 +62,7 @@ export default function CTVPayoutsPage() {
             const draft = getDraftForCycle(user.id, cycle.cycleKey);
             setCurrentDraft(draft || null);
         }
-    };
+    }, [cycle.cycleKey]);
 
     useEffect(() => {
         (async () => {
@@ -70,7 +70,7 @@ export default function CTVPayoutsPage() {
             setCurrentUser(user);
             await refreshData();
         })();
-    }, [cycle.cycleKey]);
+    }, [cycle.cycleKey, refreshData]);
 
     const eligibility = useMemo(() => {
         if (!currentUser) return null;

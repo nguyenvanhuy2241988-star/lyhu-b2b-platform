@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Search, Filter, Eye, FileText, MessageCircle } from "lucide-react";
 import { fetchOrders } from "@/lib/ordersStore";
 import { supabase } from "@/lib/supabaseClient"
@@ -37,37 +37,37 @@ export default function TelesalesOrdersPage() {
 
     const { user, session } = useAuth(); // ADDED session
 
+    const loadOrders = useCallback(async (mounted = true) => {
+        if (!user) return;
+        setIsLoading(true);
+
+        try {
+            // Pass token to fetchOrders
+            const all = await fetchOrders(session?.access_token);
+
+            if (!mounted) return;
+            setOrders(all || []);
+
+            // Check unread messages
+            if (all && all.length > 0) {
+                const unread = await getOrdersWithUnreadMessages(all.map(o => o.id), session?.access_token);
+                if (mounted) setUnreadOrders(unread);
+            }
+        } catch (error) {
+            console.error("[TelesalesOrders] Error:", error);
+            if (mounted) setOrders([]);
+        } finally {
+            if (mounted) setIsLoading(false);
+        }
+    }, [user?.id, session?.access_token]);
+
     useEffect(() => {
         let mounted = true;
-
-        const loadOrders = async () => {
-            if (!user) return;
-            setIsLoading(true);
-
-            try {
-                // Pass token to fetchOrders
-                const all = await fetchOrders(session?.access_token);
-
-                if (!mounted) return;
-                setOrders(all || []);
-
-                // Check unread messages
-                if (all && all.length > 0) {
-                    const unread = await getOrdersWithUnreadMessages(all.map(o => o.id), session?.access_token);
-                    if (mounted) setUnreadOrders(unread);
-                }
-            } catch (error) {
-                console.error("[TelesalesOrders] Error:", error);
-                if (mounted) setOrders([]);
-            } finally {
-                if (mounted) setIsLoading(false);
-            }
-        };
 
         if (session?.access_token) {
             // Explicitly set auth for Realtime
             supabase.realtime.setAuth(session.access_token);
-            loadOrders();
+            loadOrders(mounted);
         }
 
         // Realtime Subscription
@@ -77,7 +77,7 @@ export default function TelesalesOrdersPage() {
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'orders' },
                 () => {
-                    loadOrders();
+                    loadOrders(mounted);
                 }
             )
             .subscribe();
@@ -107,7 +107,7 @@ export default function TelesalesOrdersPage() {
             supabase.removeChannel(channel);
             supabase.removeChannel(chatChannel);
         };
-    }, [user?.id, session?.access_token]); // Added session?.access_token
+    }, [user?.id, session?.access_token, loadOrders]);
 
     // Apply filters
     const filteredOrders = orders.filter((order) => {

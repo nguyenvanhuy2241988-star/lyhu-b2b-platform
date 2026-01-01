@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     Archive,
     Search,
@@ -30,9 +30,9 @@ export default function InventoryAuditPage() {
 
     useEffect(() => {
         loadInventory();
-    }, [session?.access_token]);
+    }, [session?.access_token, loadInventory]);
 
-    const loadInventory = async () => {
+    const loadInventory = useCallback(async () => {
         try {
             setIsLoading(true);
             const data = await fetchAllInventoryLevels(undefined, session?.access_token);
@@ -48,7 +48,7 @@ export default function InventoryAuditPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [session?.access_token]);
 
     const handleQtyChange = (itemId: string, val: string) => {
         const qty = parseInt(val) || 0;

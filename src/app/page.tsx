@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
+import { useState } from "react";
 import { ShieldCheck, Users, TrendingUp, UserPlus, Headset, Briefcase, Archive, Megaphone, Globe, FlaskConical, Truck, Calculator, ClipboardCheck, Video } from "lucide-react";
 
 const roles = [
@@ -128,20 +130,26 @@ const roles = [
 ];
 
 export default function Home() {
+    const [logoError, setLogoError] = useState(false);
     return (
         <main className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
             <div className="max-w-6xl w-full">
                 {/* Header with Brand Logo */}
                 <div className="text-center mb-10 sm:mb-20 flex flex-col items-center">
-                    <img
-                        src="/logo-full.png"
-                        alt="LYHU Logo"
-                        className="h-32 sm:h-48 w-auto mb-8 object-contain px-4"
-                        onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                            e.currentTarget.parentElement?.insertAdjacentHTML('afterbegin', '<h1 class="text-6xl sm:text-7xl font-bold text-primary-600 mb-2">LYHU</h1>');
-                        }}
-                    />
+                    <div className="relative h-32 sm:h-48 w-64 sm:w-96 mb-8">
+                        {!logoError ? (
+                            <Image
+                                src="/logo-full.png"
+                                alt="LYHU Logo"
+                                fill
+                                className="object-contain px-4"
+                                onError={() => setLogoError(true)}
+                                priority
+                            />
+                        ) : (
+                            <h1 className="text-6xl sm:text-7xl font-bold text-primary-600 mb-2">LYHU</h1>
+                        )}
+                    </div>
                     <div className="h-2 w-48 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full mb-8 shadow-sm"></div>
                     <p className="text-lg sm:text-2xl text-slate-700 font-bold max-w-2xl tracking-tight">
                         KẾT NỐI CHÂN THÀNH • HỢP TÁC BỀN VỮNG
