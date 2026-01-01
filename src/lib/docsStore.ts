@@ -227,7 +227,7 @@ export async function deleteDocument(id: string): Promise<void> {
         .eq('document_id', id);
 
     if (files && files.length > 0) {
-        const paths = files.map(f => f.storage_path);
+        const paths = files.map((f: any) => f.storage_path);
         await supabase.storage.from(BUCKET_NAME).remove(paths);
     }
 
