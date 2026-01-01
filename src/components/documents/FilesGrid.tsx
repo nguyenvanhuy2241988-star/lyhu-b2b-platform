@@ -2,13 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { DocumentFile, getFileSignedUrl } from '@/lib/documentsStore';
-import {
-    FileText,
-    Image as ImageIcon,
-    FileSpreadsheet,
-    FileIcon,
-    Loader2
-} from 'lucide-react';
+import { FileText, Download, Trash2, Eye, ExternalLink, ImageIcon, Loader2, FileSpreadsheet, FileIcon } from "lucide-react";
+import Image from "next/image";
 import { cn } from '@/lib/utils';
 
 interface FilesGridProps {
@@ -61,8 +56,13 @@ function FileThumbnail({ file }: { file: DocumentFile }) {
 
     if (imageUrl) {
         return (
-            <div className="w-full h-32 rounded-lg overflow-hidden bg-slate-100 border border-slate-100">
-                <img src={imageUrl} alt={file.title || "Tài liệu"} className="w-full h-full object-cover" />
+            <div className="relative w-full h-32 rounded-lg overflow-hidden bg-slate-100 border border-slate-100">
+                <Image
+                    src={imageUrl}
+                    alt={file.title || "Tài liệu"}
+                    fill
+                    className="object-cover"
+                />
             </div>
         );
     }

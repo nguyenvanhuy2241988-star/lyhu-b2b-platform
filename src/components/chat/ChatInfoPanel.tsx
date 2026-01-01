@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { X, Image as ImageIcon, FileText, Download } from "lucide-react";
+import Image from "next/image";
 import { useChatStore } from "@/lib/chatStore";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -55,13 +56,18 @@ export function ChatInfoPanel({ conversation, onClose, users }: ChatInfoPanelPro
 
             {/* Conversation Info (Optional summary) */}
             <div className="p-6 flex flex-col items-center border-b border-slate-100 shrink-0">
-                <div className="w-20 h-20 bg-slate-200 rounded-full flex items-center justify-center mb-3">
+                <div className="w-20 h-20 mx-auto rounded-full bg-slate-200 overflow-hidden mb-3 relative">
                     {conversation.image_url ? (
-                        <img src={conversation.image_url} alt="" className="w-full h-full rounded-full object-cover" />
+                        <Image
+                            src={conversation.image_url}
+                            alt=""
+                            fill
+                            className="object-cover"
+                        />
                     ) : (
-                        <span className="text-2xl font-bold text-slate-500 uppercase">
-                            {conversation.name ? conversation.name[0] : (users.find(u => conversation.internal_participants?.find((p: any) => p.user_id === u.id))?.email[0] || "?")}
-                        </span>
+                        <div className="w-full h-full flex items-center justify-center text-slate-400 text-2xl font-semibold">
+                            {conversation.name?.[0].toUpperCase()}
+                        </div>
                     )}
                 </div>
                 <h4 className="font-bold text-lg text-center text-slate-900 line-clamp-1">
@@ -100,8 +106,22 @@ export function ChatInfoPanel({ conversation, onClose, users }: ChatInfoPanelPro
                     images.length > 0 ? (
                         <div className="grid grid-cols-3 gap-2">
                             {images.map(img => (
-                                <div key={img.id} className="aspect-square bg-slate-200 rounded cursor-pointer overflow-hidden border border-slate-200" onClick={() => window.open(img.attachment_url, '_blank')}>
-                                    <img src={img.attachment_url} alt="" className="w-full h-full object-cover hover:scale-110 transition-transform duration-300" loading="lazy" />
+                                <div key={img.id} className="relative aspect-square rounded-lg overflow-hidden bg-slate-100 group border border-slate-100">
+                                    <Image
+                                        src={img.attachment_url}
+                                        alt=""
+                                        fill
+                                        className="object-cover hover:scale-110 transition-transform duration-300"
+                                        loading="lazy"
+                                    />
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                        <button
+                                            onClick={() => window.open(img.attachment_url, '_blank')}
+                                            className="p-1.5 bg-white/90 rounded-full text-slate-700 hover:text-primary-600 shadow-sm"
+                                        >
+                                            <Download className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>

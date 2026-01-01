@@ -3,7 +3,8 @@
 import { useSwipeable } from "react-swipeable";
 import { format, isSameDay, isToday, isYesterday } from "date-fns";
 import { vi } from "date-fns/locale";
-import { Pin, Paperclip, Reply, Edit2, Trash2, Forward, Download, Smile, PinOff } from "lucide-react";
+import { User, FileText, Download, Check, CheckCheck, Paperclip, Pin, ExternalLink, Reply, Edit2, Trash2, Forward, Smile, PinOff } from "lucide-react";
+import Image from "next/image";
 import { Message } from "@/lib/chatStore";
 import { MessageReaction } from "@/components/chat/MessageReaction";
 import { LinkPreview } from "./LinkPreview";
@@ -164,12 +165,13 @@ export function MessageItem({
                             {msg.attachment_url ? (
                                 <div className="space-y-2">
                                     {msg.attachment_type === 'image' ? (
-                                        <div className="relative max-w-full h-60">
-                                            <img
+                                        <div className="relative w-full h-60 min-w-[200px]">
+                                            <Image
                                                 src={msg.attachment_url}
                                                 onClick={() => onImageClick(msg.attachment_url!)}
                                                 alt={msg.attachment_name || "Ảnh đính kèm"}
-                                                className="rounded-lg cursor-pointer hover:opacity-90 max-h-60 object-cover"
+                                                fill
+                                                className="rounded-lg cursor-pointer hover:opacity-90 object-cover"
                                             />
                                         </div>
                                     ) : (

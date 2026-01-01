@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import Image from 'next/image';
 
 interface DocDetailsPanelProps {
     file: DocumentFile | null;
@@ -86,8 +87,14 @@ export function DocDetailsPanel({ file, onClose, onUpdate }: DocDetailsPanelProp
                 {/* Preview */}
                 <div className="aspect-video bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden border border-slate-200">
                     {isImage && signedUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={signedUrl} alt={file.title} className="w-full h-full object-contain" />
+                        <div className="relative w-full h-full">
+                            <Image
+                                src={signedUrl}
+                                alt={file.title}
+                                fill
+                                className="object-contain"
+                            />
+                        </div>
                     ) : (
                         <div className="text-center p-4">
                             <FileText className="w-12 h-12 text-slate-300 mx-auto mb-2" />

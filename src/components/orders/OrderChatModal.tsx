@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { X, Send, Image as ImageIcon, Loader2 } from "lucide-react";
+import Image from "next/image";
 import {
     OrderMessage,
     fetchOrderMessages,
@@ -325,12 +326,15 @@ function ChatBubble({ message, isOwn }: { message: OrderMessage; isOwn: boolean 
 
                 {/* Image */}
                 {message.imageUrl && (
-                    <img
-                        src={message.imageUrl}
-                        alt={`Ảnh từ ${message.senderName || 'Người gửi'}`}
-                        className="rounded-lg max-w-full mb-2 cursor-pointer"
-                        onClick={() => window.open(message.imageUrl!, '_blank')}
-                    />
+                    <div className="relative w-full h-60 min-h-[150px] mb-2">
+                        <Image
+                            src={message.imageUrl}
+                            alt={`Ảnh từ ${message.senderName || 'Người gửi'}`}
+                            fill
+                            className="rounded-lg object-cover cursor-pointer"
+                            onClick={() => window.open(message.imageUrl!, '_blank')}
+                        />
+                    </div>
                 )}
 
                 {/* Content */}

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useChatStore, Conversation, Message } from '@/lib/chatStore';
 import { X, Search, Check, Send } from 'lucide-react';
+import Image from 'next/image';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
@@ -149,7 +150,14 @@ export function ForwardModal({ isOpen, onClose, message, users, currentUser }: F
                                 <div className="relative">
                                     <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden shrink-0">
                                         {avatar ? (
-                                            <img src={avatar} alt={name} className="w-full h-full object-cover" />
+                                            <div className="relative w-full h-full">
+                                                <Image
+                                                    src={avatar}
+                                                    alt={name}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            </div>
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs font-medium">
                                                 {name?.[0]?.toUpperCase()}
