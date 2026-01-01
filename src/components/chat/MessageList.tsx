@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useImperativeHandle, forwardRef } from "react";
+import { useEffect, useRef, useState, useImperativeHandle, forwardRef, useCallback } from "react";
 import { Message } from "@/lib/chatStore";
 import { Download, Smile, Reply } from "lucide-react";
 import { ForwardModal } from "./ForwardModal";
