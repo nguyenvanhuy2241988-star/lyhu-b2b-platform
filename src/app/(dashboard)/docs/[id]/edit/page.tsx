@@ -52,7 +52,7 @@ export default function EditDocPage({ params }: { params: { id: string } }) {
     useEffect(() => {
         Promise.all([
             fetchDocCategories(),
-            supabase.auth.getSession().then(({ data }) => data.session?.user?.id),
+            supabase.auth.getSession().then(({ data }: any) => data.session?.user?.id),
             fetchDocumentById(id)
         ]).then(([cats, uid, { doc, files }]) => {
             setCategories(cats);

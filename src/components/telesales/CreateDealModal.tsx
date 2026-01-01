@@ -124,7 +124,18 @@ export const CreateDealModal = ({
             setShowDealWarning(false);
             setDuplicateCustomer(null);
         }
-    }, [isOpen, initialData?.id]);
+    }, [
+        isOpen,
+        initialData.id,
+        initialData.title,
+        initialData.stage,
+        initialData.priority,
+        initialData.expected_value,
+        initialData.next_action_at,
+        initialData.note,
+        initialData.customer,
+        initialStage
+    ]);
 
     // Check for duplicate phone when typing
     useEffect(() => {

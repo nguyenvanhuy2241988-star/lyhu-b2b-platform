@@ -62,7 +62,7 @@ export const TaskEditModal = ({
         };
         loadProfiles();
         return () => { mounted = false; };
-    }, [supabase]);
+    }, []);
 
     useEffect(() => {
         if (isOpen && initialData) {
