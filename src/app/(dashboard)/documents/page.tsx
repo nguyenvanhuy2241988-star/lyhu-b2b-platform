@@ -93,15 +93,18 @@ function DocumentsPageContent() {
         }
 
         // Realtime for Files in this folder
-        const fileChannel = supabase
-            .channel(`docs_files_${selectedFolderId}`)
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'documents_files', filter: `folder_id=eq.${selectedFolderId}` }, () => loadFiles(selectedFolderId, true))
-            .subscribe((status: any) => {
-                if (status === 'SUBSCRIBED' && selectedFolderId) loadFiles(selectedFolderId, true);
-            });
+        let fileChannel: any = null;
+        if (selectedFolderId) {
+            fileChannel = supabase
+                .channel(`docs_files_${selectedFolderId}`)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'documents_files', filter: `folder_id=eq.${selectedFolderId}` }, () => loadFiles(selectedFolderId, true))
+                .subscribe((status: any) => {
+                    if (status === 'SUBSCRIBED') loadFiles(selectedFolderId, true);
+                });
+        }
 
         return () => {
-            supabase.removeChannel(fileChannel);
+            if (fileChannel) supabase.removeChannel(fileChannel);
         };
     }, [selectedFolderId, session?.access_token]);
 

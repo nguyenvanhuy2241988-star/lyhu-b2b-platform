@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X, Send, Image, Loader2 } from "lucide-react";
+import { X, Send, Image as ImageIcon, Loader2 } from "lucide-react";
 import {
     OrderMessage,
     fetchOrderMessages,
@@ -327,7 +327,7 @@ function ChatBubble({ message, isOwn }: { message: OrderMessage; isOwn: boolean 
                 {message.imageUrl && (
                     <img
                         src={message.imageUrl}
-                        alt={`Ảnh từ ${message.senderName}`}
+                        alt={`Ảnh từ ${message.senderName || 'Người gửi'}`}
                         className="rounded-lg max-w-full mb-2 cursor-pointer"
                         onClick={() => window.open(message.imageUrl!, '_blank')}
                     />
