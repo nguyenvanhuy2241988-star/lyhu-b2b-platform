@@ -2,12 +2,15 @@
 
 import { createBrowserClient } from '@supabase/ssr';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+// Use dummy values if env vars are missing to prevent crash during Next.js build prerendering.
+// These variable must be present in Vercel to work at runtime.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key";
 
-if (!supabaseUrl || !supabaseAnonKey) {
-    console.warn("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
-    // Not throwing error to allow app to load for debugging/setup
+const isConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
+if (!isConfigured && typeof window !== 'undefined') {
+    console.warn("Supabase environment variables are missing. Please configure them in your .env file or Vercel dashboard.");
 }
 
 // =====================================================
@@ -35,6 +38,8 @@ export function createClient() {
     return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }
 
+// Export a singleton instance. 
+// Note: During build/prerender, this will use placeholder values.
 export const supabase = getRealtimeClient();
 
 export default createClient;
