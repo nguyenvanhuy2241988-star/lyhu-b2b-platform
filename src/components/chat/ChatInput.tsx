@@ -59,7 +59,7 @@ export function ChatInput({
                 setInput("");
             }
         }
-    }, [editingMessage, replyingTo, pendingFile]);
+    }, [editingMessage, replyingTo, pendingFile, input]);
 
     // Cleanup typing timeout
     useEffect(() => {

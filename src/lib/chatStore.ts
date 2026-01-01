@@ -146,6 +146,8 @@ interface ChatState {
     onlineUsers: string[];
     typingUsers: Record<string, string[]>;
     sendTyping: (conversationId: string, isTyping: boolean) => void;
+    initPresence: (userId: string) => void;
+    cleanupPresence: () => void;
 
     // Selectors
     getTotalUnreadCount: () => number;

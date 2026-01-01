@@ -164,12 +164,14 @@ export function MessageItem({
                             {msg.attachment_url ? (
                                 <div className="space-y-2">
                                     {msg.attachment_type === 'image' ? (
-                                        <img
-                                            src={msg.attachment_url}
-                                            onClick={() => onImageClick(msg.attachment_url!)}
-                                            alt={msg.attachment_name || "Ảnh đính kèm"}
-                                            className="max-w-full rounded-lg cursor-pointer hover:opacity-90 max-h-60 object-cover"
-                                        />
+                                        <div className="relative max-w-full h-60">
+                                            <img
+                                                src={msg.attachment_url}
+                                                onClick={() => onImageClick(msg.attachment_url!)}
+                                                alt={msg.attachment_name || "Ảnh đính kèm"}
+                                                className="rounded-lg cursor-pointer hover:opacity-90 max-h-60 object-cover"
+                                            />
+                                        </div>
                                     ) : (
                                         <div className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-black/5 ${isMe ? 'bg-blue-700/20' : 'bg-slate-100'}`}
                                             onClick={() => window.open(msg.attachment_url, '_blank')}

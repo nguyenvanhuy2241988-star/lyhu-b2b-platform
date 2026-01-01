@@ -149,7 +149,7 @@ export function ForwardModal({ isOpen, onClose, message, users, currentUser }: F
                                 <div className="relative">
                                     <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden shrink-0">
                                         {avatar ? (
-                                            <img src={avatar} alt="" className="w-full h-full object-cover" />
+                                            <img src={avatar} alt={name} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs font-medium">
                                                 {name?.[0]?.toUpperCase()}
