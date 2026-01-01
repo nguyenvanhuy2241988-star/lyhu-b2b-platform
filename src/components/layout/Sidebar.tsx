@@ -70,15 +70,13 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
             >
                 <div className="flex h-28 items-center border-b border-slate-100 px-4 py-6 justify-center bg-white">
                     <Link href="/" className="flex items-center w-full justify-center">
-                        <img
+                        <Image
                             src="/logo-full.png"
                             alt="LYHU Logo"
+                            width={180}
+                            height={80}
                             className="h-20 w-auto object-contain max-w-[90%]"
-                            onError={(e) => {
-                                // Fallback if image fails to load
-                                e.currentTarget.style.display = 'none';
-                                e.currentTarget.parentElement?.insertAdjacentHTML('beforeend', '<span class="text-2xl font-bold text-primary-500">LYHU</span>');
-                            }}
+                            priority
                         />
                     </Link>
                 </div>

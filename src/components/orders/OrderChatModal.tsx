@@ -327,7 +327,7 @@ function ChatBubble({ message, isOwn }: { message: OrderMessage; isOwn: boolean 
                 {message.imageUrl && (
                     <img
                         src={message.imageUrl}
-                        alt="Ảnh"
+                        alt={`Ảnh từ ${message.senderName}`}
                         className="rounded-lg max-w-full mb-2 cursor-pointer"
                         onClick={() => window.open(message.imageUrl!, '_blank')}
                     />

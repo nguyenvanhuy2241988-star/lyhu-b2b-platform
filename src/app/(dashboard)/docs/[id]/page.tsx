@@ -35,7 +35,7 @@ export default function DocDetailPage({ params }: { params: { id: string } }) {
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data }) => {
+        supabase.auth.getSession().then(({ data }: any) => {
             setCurrentUserId(data.session?.user?.id ?? null);
         });
 

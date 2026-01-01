@@ -126,14 +126,14 @@ export const CreateDealModal = ({
         }
     }, [
         isOpen,
-        initialData.id,
-        initialData.title,
-        initialData.stage,
-        initialData.priority,
-        initialData.expected_value,
-        initialData.next_action_at,
-        initialData.note,
-        initialData.customer,
+        initialData?.id,
+        initialData?.title,
+        initialData?.stage,
+        initialData?.priority,
+        initialData?.expected_value,
+        initialData?.next_action_at,
+        initialData?.note,
+        initialData?.customer,
         initialStage
     ]);
 
