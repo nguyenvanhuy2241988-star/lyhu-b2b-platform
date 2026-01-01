@@ -125,7 +125,7 @@ export default function TelesalesEarningsPage() {
                     loadData();
                 }
             )
-            .subscribe((status) => {
+            .subscribe((status: any) => {
                 console.log("[Realtime] Subscription status:", status);
             });
 

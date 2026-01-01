@@ -72,7 +72,7 @@ function DocumentsPageContent() {
         const folderChannel = supabase
             .channel('docs_folders_realtime')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'documents_folders' }, () => loadFolders(true))
-            .subscribe((status) => {
+            .subscribe((status: any) => {
                 if (status === 'SUBSCRIBED') loadFolders(true);
             });
 
@@ -96,7 +96,7 @@ function DocumentsPageContent() {
         const fileChannel = supabase
             .channel(`docs_files_${selectedFolderId}`)
             .on('postgres_changes', { event: '*', schema: 'public', table: 'documents_files', filter: `folder_id=eq.${selectedFolderId}` }, () => loadFiles(selectedFolderId, true))
-            .subscribe((status) => {
+            .subscribe((status: any) => {
                 if (status === 'SUBSCRIBED' && selectedFolderId) loadFiles(selectedFolderId, true);
             });
 

@@ -50,7 +50,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
         };
         loadProfiles();
         return () => { mounted = false; };
-    }, [supabase]);
+    }, []);
 
     // Reset loop
     useEffect(() => {

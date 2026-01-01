@@ -1,5 +1,4 @@
-"use client";
-
+import Image from "next/image";
 import { X } from "lucide-react";
 import { useEffect } from "react";
 
@@ -29,12 +28,15 @@ export function Lightbox({ src, alt, onClose }: LightboxProps) {
             >
                 <X className="w-8 h-8" />
             </button>
-            <img
-                src={src}
-                alt={alt || "Full screen preview"}
-                className="max-w-[90vw] max-h-[90vh] object-contain rounded-md shadow-2xl"
-                onClick={(e) => e.stopPropagation()}
-            />
+            <div className="relative w-[90vw] h-[90vh]" onClick={(e) => e.stopPropagation()}>
+                <Image
+                    src={src}
+                    alt={alt || "Full screen preview"}
+                    fill
+                    className="object-contain"
+                    priority
+                />
+            </div>
         </div>
     );
 }

@@ -489,7 +489,7 @@ export default function CRMPage() {
                     }, 500);
                 }
             )
-            .subscribe((status) => {
+            .subscribe((status: any) => {
                 console.log('[Realtime] Status:', status);
             });
 
