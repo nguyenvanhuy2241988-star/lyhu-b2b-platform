@@ -9,11 +9,14 @@ export async function middleware(request: NextRequest) {
   // chuẩn bị response để supabase set cookie
   let response = NextResponse.next({ request });
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+  // Chuẩn bị URL an toàn để tránh crash middleware nếu thiếu env vars
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
+  const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key";
 
-  if (!supabaseUrl || !supabaseAnon) {
-    console.warn("[Middleware] Missing NEXT_PUBLIC_SUPABASE_URL or ANON_KEY");
+  const isConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
+  if (!isConfigured) {
+    console.warn("[Middleware] Missing NEXT_PUBLIC_SUPABASE_URL or ANON_KEY. Using placeholders.");
   }
 
   const supabase = createServerClient(supabaseUrl, supabaseAnon, {
@@ -33,37 +36,42 @@ export async function middleware(request: NextRequest) {
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
 
-  const { data: userRes } = await supabase.auth.getUser();
-  const user = userRes.user;
+  try {
+    const { data: userRes } = await supabase.auth.getUser();
+    const user = userRes.user;
 
-  // Chưa login mà vào khu protected => đá về /login?next=...
-  if (!user && isProtected) {
-    const next = `${pathname}${search || ""}`;
-    const loginUrl = new URL("/login", origin);
-    loginUrl.searchParams.set("next", next);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // Đã login: lấy role
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    const role = (profile?.role || "customer") as Role;
-    const home = getHomePath(role);
-
-    // Nếu vào /login hoặc "/" thì đẩy về đúng dashboard
-    if (pathname === "/login" || pathname === "/") {
-      return NextResponse.redirect(new URL(home, origin));
+    // Chưa login mà vào khu protected => đá về /login?next=...
+    if (!user && isProtected) {
+      const next = `${pathname}${search || ""}`;
+      const loginUrl = new URL("/login", origin);
+      loginUrl.searchParams.set("next", next);
+      return NextResponse.redirect(loginUrl);
     }
 
-    // Nếu cố vào sai khu role => đá về dashboard role
-    if (isProtected && !isRoleAllowedPath(role, pathname)) {
-      return NextResponse.redirect(new URL(home, origin));
+    // Đã login: lấy role
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const role = (profile?.role || "customer") as Role;
+      const home = getHomePath(role);
+
+      // Nếu vào /login hoặc "/" thì đẩy về đúng dashboard
+      if (pathname === "/login" || pathname === "/") {
+        return NextResponse.redirect(new URL(home, origin));
+      }
+
+      // Nếu cố vào sai khu role => đá về dashboard role
+      if (isProtected && !isRoleAllowedPath(role, pathname)) {
+        return NextResponse.redirect(new URL(home, origin));
+      }
     }
+  } catch (err) {
+    console.error("[Middleware] Runtime error:", err);
+    // Nếu lỗi (vd: network crash), cho qua để app xử lý ở client hoặc hiện trang lỗi thân thiện hơn là 500 của Vercel
   }
 
   return response;
