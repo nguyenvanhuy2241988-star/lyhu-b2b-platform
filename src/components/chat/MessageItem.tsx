@@ -167,7 +167,7 @@ export function MessageItem({
                                         <img
                                             src={msg.attachment_url}
                                             onClick={() => onImageClick(msg.attachment_url!)}
-                                            alt={msg.attachment_name}
+                                            alt={msg.attachment_name || "Ảnh đính kèm"}
                                             className="max-w-full rounded-lg cursor-pointer hover:opacity-90 max-h-60 object-cover"
                                         />
                                     ) : (

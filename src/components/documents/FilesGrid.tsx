@@ -62,12 +62,12 @@ function FileThumbnail({ file }: { file: DocumentFile }) {
     if (imageUrl) {
         return (
             <div className="w-full h-32 rounded-lg overflow-hidden bg-slate-100 border border-slate-100">
-                <img src={imageUrl} alt={file.title} className="w-full h-full object-cover" />
+                <img src={imageUrl} alt={file.title || "Tài liệu"} className="w-full h-full object-cover" />
             </div>
         );
     }
 
-    // Fallback if image load failed
+    // Fallback if image load failed or imageUrl is null
     return (
         <div className="w-full h-32 flex items-center justify-center bg-slate-50 rounded-lg text-slate-300">
             <ImageIcon className="w-8 h-8" />

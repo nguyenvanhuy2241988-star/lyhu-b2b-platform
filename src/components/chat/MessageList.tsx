@@ -101,7 +101,19 @@ const MessageList = forwardRef<MessageListRef, MessageListProps>(({
             }
         }
         prevMessagesLength.current = messages.length;
-    }, [messages.length, currentUser?.id, showScrollBottom]);
+    }, [
+        messages,
+        currentUser?.id,
+        showScrollBottom,
+        virtuosoRef,
+        onReply,
+        onEdit,
+        onDelete,
+        onPin,
+        onUnpin,
+        handleForward,
+        onImageClick
+    ]);
 
     const handleForward = (msg: Message) => {
         setSelectedMessageForForward(msg);

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { NAV_ITEMS } from "@/lib/constants";
@@ -70,7 +71,7 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
             >
                 <div className="flex h-28 items-center border-b border-slate-100 px-4 py-6 justify-center bg-white">
                     <Link href="/" className="flex items-center w-full justify-center">
-                        <Image
+                        <NextImage
                             src="/logo-full.png"
                             alt="LYHU Logo"
                             width={180}
