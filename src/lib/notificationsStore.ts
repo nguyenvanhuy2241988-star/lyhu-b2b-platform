@@ -78,3 +78,33 @@ export async function getUnreadCount(): Promise<number> {
     if (error) return 0;
     return count || 0;
 }
+
+/**
+ * Add a new notification
+ */
+export async function addNotification(userId: string, notification: {
+    title: string;
+    message: string;
+    type: Notification['type'];
+    link?: string;
+    metadata?: Record<string, any>;
+}): Promise<boolean> {
+    const { error } = await supabase
+        .from('notifications')
+        .insert([{
+            user_id: userId,
+            title: notification.title,
+            message: notification.message,
+            type: notification.type,
+            link: notification.link,
+            metadata: notification.metadata,
+            is_read: false
+        }]);
+
+    if (error) {
+        console.error('[Notifications] Error adding:', error);
+        return false;
+    }
+
+    return true;
+}

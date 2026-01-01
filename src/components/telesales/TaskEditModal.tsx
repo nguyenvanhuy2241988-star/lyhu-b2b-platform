@@ -9,7 +9,7 @@ import {
     TelesalesTask,
     TelesalesColumn
 } from "@/lib/telesalesTasksStore";
-import { createClient } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
 
 interface TaskEditModalProps {
     isOpen: boolean;
@@ -34,7 +34,7 @@ export const TaskEditModal = ({
     initialData,
     columns = []
 }: TaskEditModalProps) => {
-    const supabase = createClient();
+    // const supabase = createClient(); // Switched to singleton
     const [profiles, setProfiles] = useState<Profile[]>([]);
 
     // Form States
@@ -62,7 +62,7 @@ export const TaskEditModal = ({
         };
         loadProfiles();
         return () => { mounted = false; };
-    }, []);
+    }, [supabase]);
 
     useEffect(() => {
         if (isOpen && initialData) {

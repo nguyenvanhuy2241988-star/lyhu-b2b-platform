@@ -47,7 +47,7 @@ export default function DealProducts({ dealId, items, onItemsChange }: DealProdu
             };
             loadData();
         }
-    }, [isAdding]);
+    }, [isAdding, products.length]);
 
     const filteredProducts = products.filter(p =>
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
