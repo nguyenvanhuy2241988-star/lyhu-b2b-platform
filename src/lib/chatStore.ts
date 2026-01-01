@@ -80,6 +80,8 @@ export interface Message {
     reply_to_id?: string;
     is_deleted?: boolean;
     is_pinned?: boolean;
+    pinned_at?: string;
+    is_forwarded?: boolean;
     reactions?: { emoji: string; user_id: string }[];
     status?: 'sending' | 'sent' | 'error' | 'read'; // Frontend only
     sender?: any; // Expanded sender
