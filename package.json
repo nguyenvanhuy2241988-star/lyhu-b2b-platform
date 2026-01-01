@@ -3,12 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -H 127.0.0.1",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@hello-pangea/dnd": "^18.0.1",
+    "@supabase/auth-helpers-nextjs": "^0.15.0",
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.88.0",
     "clsx": "^2.1.0",
     "date-fns": "^3.6.0",
@@ -16,7 +19,13 @@
     "next": "14.1.0",
     "react": "^18",
     "react-dom": "^18",
-    "tailwind-merge": "^2.2.1"
+    "react-swipeable": "^7.0.1",
+    "react-virtuoso": "^4.6.0",
+    "recharts": "^3.6.0",
+    "sonner": "^1.4.0",
+    "tailwind-merge": "^2.2.1",
+    "uuid": "^13.0.0",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@types/node": "^20",

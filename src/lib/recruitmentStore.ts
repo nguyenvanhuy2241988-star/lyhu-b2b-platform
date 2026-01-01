@@ -1,0 +1,156 @@
+import { createClient } from './supabaseClient';
+
+// Types
+export type JobStatus = 'draft' | 'open' | 'closed';
+export type CandidateStatus = 'new' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected';
+export type InterviewStatus = 'scheduled' | 'completed' | 'cancelled';
+export type InterviewType = 'online' | 'offline' | 'phone';
+
+export interface RecruitmentJob {
+    id: string;
+    title: string;
+    department: string;
+    location: string;
+    salary_range: string;
+    description: string;
+    requirements: string;
+    status: JobStatus;
+    created_at: string;
+    created_by?: string;
+}
+
+export interface RecruitmentCandidate {
+    id: string;
+    job_id: string;
+    full_name: string;
+    email: string;
+    phone: string;
+    cv_url: string;
+    status: CandidateStatus;
+    notes: string;
+    created_at: string;
+    job?: {
+        title: string;
+    };
+}
+
+export interface RecruitmentInterview {
+    id: string;
+    candidate_id: string;
+    interviewer_id: string;
+    scheduled_at: string;
+    type: InterviewType;
+    status: InterviewStatus;
+    meeting_link: string;
+    feedback: string;
+    candidate?: {
+        full_name: string;
+    };
+    interviewer?: {
+        full_name: string;
+    };
+}
+
+const supabase = createClient();
+
+// JOBS
+export const getJobs = async () => {
+    const { data, error } = await supabase
+        .from('recruitment_jobs')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data as RecruitmentJob[];
+};
+
+export const createJob = async (job: Partial<RecruitmentJob>) => {
+    const { data, error } = await supabase
+        .from('recruitment_jobs')
+        .insert([{ ...job, status: job.status || 'draft' }])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data as RecruitmentJob;
+};
+
+export const updateJob = async (id: string, updates: Partial<RecruitmentJob>) => {
+    const { data, error } = await supabase
+        .from('recruitment_jobs')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data as RecruitmentJob;
+};
+
+export const deleteJob = async (id: string) => {
+    const { error } = await supabase
+        .from('recruitment_jobs')
+        .delete()
+        .eq('id', id);
+    if (error) throw error;
+};
+
+// CANDIDATES
+export const getCandidates = async (jobId?: string) => {
+    let query = supabase
+        .from('recruitment_candidates')
+        .select('*, job:recruitment_jobs(title)')
+        .order('created_at', { ascending: false });
+
+    if (jobId) {
+        query = query.eq('job_id', jobId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data as RecruitmentCandidate[];
+};
+
+export const createCandidate = async (candidate: Partial<RecruitmentCandidate>) => {
+    const { data, error } = await supabase
+        .from('recruitment_candidates')
+        .insert([candidate])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data as RecruitmentCandidate;
+};
+
+export const updateCandidateStatus = async (id: string, status: CandidateStatus) => {
+    const { data, error } = await supabase
+        .from('recruitment_candidates')
+        .update({ status })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data as RecruitmentCandidate;
+};
+
+// INTERVIEWS
+export const getInterviews = async () => {
+    const { data, error } = await supabase
+        .from('recruitment_interviews')
+        .select('*, candidate:recruitment_candidates(full_name), interviewer:profiles(full_name)')
+        .order('scheduled_at', { ascending: true });
+
+    if (error) throw error;
+    return data as unknown as RecruitmentInterview[]; // Casting due to join complexity
+};
+
+export const scheduleInterview = async (interview: Partial<RecruitmentInterview>) => {
+    const { data, error } = await supabase
+        .from('recruitment_interviews')
+        .insert([interview])
+        .select()
+        .single();
+    if (error) throw error;
+    return data as RecruitmentInterview;
+};

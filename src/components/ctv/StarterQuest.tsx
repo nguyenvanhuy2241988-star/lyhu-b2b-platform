@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { CheckCircle, Circle, ArrowRight, Gift, Trophy } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
+import { CheckCircle, Circle, ArrowRight, Gift, Trophy, Play, Award, Sparkles } from "lucide-react";
 import type { Order } from "@/lib/ordersStore";
 import type { CtvLead } from "@/lib/ctvLeads";
 import { useRouter } from "next/navigation";
@@ -95,7 +96,7 @@ export function StarterQuest({ user, orders, leads }: StarterQuestProps) {
                     <div className="w-full bg-indigo-950/50 rounded-full h-2">
                         <div
                             className="bg-gradient-to-r from-yellow-400 to-orange-500 h-2 rounded-full transition-all duration-500"
-                            style={{ width: `${progress}%` }}
+                            style={{ width: `${progress}% ` }}
                         />
                     </div>
                 </div>
@@ -105,12 +106,12 @@ export function StarterQuest({ user, orders, leads }: StarterQuestProps) {
                     {tasks.map((task) => (
                         <div
                             key={task.id}
-                            className={`flex items-center gap-3 p-3 rounded-lg transition-all ${task.completed
-                                    ? "bg-indigo-800/40 border border-indigo-700/50"
-                                    : "bg-white/5 border border-white/10"
-                                }`}
+                            className={`flex items - center gap - 3 p - 3 rounded - lg transition - all ${task.completed
+                                ? "bg-indigo-800/40 border border-indigo-700/50"
+                                : "bg-white/5 border border-white/10"
+                                } `}
                         >
-                            <div className={`flex-shrink-0 `}>
+                            <div className={`flex - shrink - 0 `}>
                                 {task.completed ? (
                                     <CheckCircle className="w-6 h-6 text-green-400" />
                                 ) : (
@@ -119,7 +120,7 @@ export function StarterQuest({ user, orders, leads }: StarterQuestProps) {
                             </div>
 
                             <div className="flex-1 min-w-0">
-                                <p className={`font-medium ${task.completed ? "text-indigo-200 line-through" : "text-white"}`}>
+                                <p className={`font - medium ${task.completed ? "text-indigo-200 line-through" : "text-white"} `}>
                                     {task.title}
                                 </p>
                                 <p className="text-xs text-indigo-300 truncate">

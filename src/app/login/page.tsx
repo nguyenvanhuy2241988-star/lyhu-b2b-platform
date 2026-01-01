@@ -1,153 +1,179 @@
 "use client";
 
-import React, { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { authenticateUser, setCurrentUser } from "@/lib/auth";
-import { ROLES } from "@/lib/constants";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { createClient } from "@/lib/supabaseClient";
+import { getHomePath } from "@/lib/roles";
 
-export default function LoginPage() {
+function LoginPageContent() {
     const router = useRouter();
-    const [email, setEmail] = useState("admin@lyhu.vn");
-    const [password, setPassword] = useState("admin123");
-    const [error, setError] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const searchParams = useSearchParams();
+    const supabase = createClient();
 
-    const handleSubmit = (e: FormEvent) => {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [msg, setMsg] = useState<string | null>(null);
+
+    const handleEmailLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
-        setIsSubmitting(true);
+        setLoading(true);
+        setMsg(null);
+        try {
+            const { data: { user }, error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+            if (error) {
+                setMsg(error.message);
+                return;
+            }
 
-        const user = authenticateUser(email.trim());
+            if (user) {
+                // Fetch role
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("role")
+                    .eq("id", user.id)
+                    .single();
 
-        if (!user) {
-            setIsSubmitting(false);
-            setError("Email hoặc mật khẩu không đúng. Vui lòng thử lại.");
-            return;
+                const nextParam = searchParams.get("next");
+                if (nextParam && nextParam.startsWith("/")) {
+                    router.push(nextParam);
+                } else {
+                    router.push(getHomePath(profile?.role));
+                }
+            }
+        } catch (err: any) {
+            setMsg(err?.message || "Đăng nhập thất bại");
+        } finally {
+            setLoading(false);
         }
+    };
 
-        setCurrentUser(user);
-
-        switch (user.role) {
-            case ROLES.ADMIN:
-                router.push("/admin");
-                break;
-            case ROLES.SALES:
-                router.push("/sales");
-                break;
-            case ROLES.CTV:
-                router.push("/ctv");
-                break;
-            case ROLES.CUSTOMER:
-                router.push("/customer");
-                break;
-            case ROLES.TELESALES:
-                router.push("/telesales");
-                break;
-            default:
-                router.push("/");
+    const handleGoogleLogin = async () => {
+        setLoading(true);
+        setMsg(null);
+        try {
+            const origin = window.location.origin;
+            const next = searchParams.get("next") ?? "/";
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: "google",
+                options: {
+                    redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+                },
+            });
+            if (error) setMsg(error.message);
+        } finally {
+            setLoading(false);
         }
-
-        setIsSubmitting(false);
     };
 
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col">
             {/* Header */}
             <header className="w-full border-b border-slate-200 bg-white">
-                <div className="max-w-5xl mx-auto flex items-center justify-between px-4 py-3">
-                    <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-primary-500 flex items-center justify-center text-white font-semibold text-sm">
-                            LY
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="font-semibold text-slate-900 text-sm sm:text-base">
-                                LYHU B2B Platform
-                            </span>
-                            <span className="text-xs text-slate-500 hidden sm:block">
-                                Ứng dụng đặt hàng & quản lý kênh GT/MT
-                            </span>
+                <div className="max-w-5xl mx-auto flex items-center justify-between px-4 py-5">
+                    <div className="flex items-center gap-6">
+                        <img
+                            src="/logo-full.png"
+                            alt="LYHU Logo"
+                            className="h-16 w-auto object-contain"
+                            onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.parentElement?.insertAdjacentHTML('afterbegin', '<div class="h-12 w-12 rounded-full bg-primary-500 text-white grid place-items-center font-bold text-xl">LY</div>');
+                            }}
+                        />
+                        <div>
+                            <div className="font-bold text-xl text-slate-800 leading-6">LYHU B2B Platform</div>
+                            <div className="text-[12px] font-medium text-primary-600 uppercase tracking-wider mt-0.5">
+                                KẾT NỐI CHÂN THÀNH • HỢP TÁC BỀN VỮNG
+                            </div>
                         </div>
                     </div>
 
-                    <Link
-                        href="/"
-                        className="text-xs sm:text-sm text-slate-500 hover:text-slate-700 transition-colors"
+                    <button
+                        type="button"
+                        onClick={() => router.push("/")}
+                        className="text-sm text-slate-600 hover:text-slate-900"
                     >
                         ← Về trang chọn vai trò
-                    </Link>
+                    </button>
                 </div>
             </header>
 
-            {/* Main Content */}
-            <main className="flex-1 flex items-center justify-center px-4 py-8">
-                <div className="w-full max-w-md">
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8">
-                        <h1 className="text-xl sm:text-2xl font-semibold text-slate-900 mb-2">
-                            Đăng nhập
-                        </h1>
-                        <p className="text-sm text-slate-500 mb-6">
-                            Nhập email và mật khẩu để truy cập hệ thống
-                        </p>
+            {/* Body */}
+            <main className="flex-1 flex items-center justify-center px-4">
+                <div className="w-full max-w-md rounded-2xl bg-white shadow-sm border border-slate-200 p-6">
+                    <h1 className="text-2xl font-bold mb-1">Đăng nhập</h1>
+                    <p className="text-sm text-slate-500 mb-6">
+                        Nhập email và mật khẩu để truy cập hệ thống
+                    </p>
 
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-1.5">
-                                <label className="block text-sm font-medium text-slate-700">
-                                    Email
-                                </label>
-                                <input
-                                    type="email"
-                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="admin@lyhu.vn"
-                                    required
-                                />
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="block text-sm font-medium text-slate-700">
-                                    Mật khẩu
-                                </label>
-                                <input
-                                    type="password"
-                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="••••••••"
-                                    required
-                                />
-                            </div>
-
-                            {error && (
-                                <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-                                    {error}
-                                </div>
-                            )}
-
-                            <button
-                                type="submit"
-                                disabled={isSubmitting}
-                                className="w-full rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium py-2.5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                                {isSubmitting ? "Đang xử lý..." : "Đăng nhập"}
-                            </button>
-                        </form>
-
-                        {/* Mock accounts hint */}
-                        <div className="mt-6 rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs text-slate-600">
-                            <p className="font-medium text-slate-700 mb-2">💡 Tài khoản mẫu:</p>
-                            <ul className="space-y-1">
-                                <li>admin@lyhu.vn / admin123 → Admin</li>
-                                <li>sales@lyhu.vn / sales123 → Sales</li>
-                                <li>ctv@lyhu.vn / ctv123 → CTV</li>
-                                <li>customer@lyhu.vn / customer123 → Customer</li>
-                                <li>telesales@lyhu.vn / telesales123 → Telesales</li>
-                            </ul>
+                    {msg ? (
+                        <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+                            {msg}
                         </div>
+                    ) : null}
+
+                    <form onSubmit={handleEmailLogin} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Email</label>
+                            <input
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-primary-200"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="you@company.com"
+                                autoComplete="email"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Mật khẩu</label>
+                            <input
+                                type="password"
+                                className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-primary-200"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                                autoComplete="current-password"
+                            />
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full rounded-xl bg-primary-600 text-white py-3 font-bold shadow-lg shadow-primary-100 hover:bg-primary-700 hover:shadow-primary-200 transition-all active:scale-[0.98] disabled:opacity-60"
+                        >
+                            {loading ? "ĐANG XỬ LÝ..." : "ĐĂNG NHẬP"}
+                        </button>
+                    </form>
+
+                    <div className="my-5 flex items-center gap-3">
+                        <div className="h-px bg-slate-200 flex-1" />
+                        <div className="text-xs text-slate-400">Hoặc</div>
+                        <div className="h-px bg-slate-200 flex-1" />
                     </div>
+
+                    <button
+                        type="button"
+                        onClick={handleGoogleLogin}
+                        disabled={loading}
+                        className="w-full rounded-lg border border-slate-300 py-2 font-semibold hover:bg-slate-50 disabled:opacity-60 flex items-center justify-center gap-2"
+                    >
+                        <span className="text-lg">G</span>
+                        Đăng nhập bằng Google
+                    </button>
                 </div>
             </main>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+            <LoginPageContent />
+        </Suspense>
     );
 }

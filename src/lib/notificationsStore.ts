@@ -1,77 +1,80 @@
-export type NotificationType = "info" | "success" | "warning" | "error";
+import { createClient } from "@/lib/supabaseClient";
+
+const supabase = createClient();
 
 export interface Notification {
     id: string;
-    userId: string;
+    userId: string | null;
     title: string;
     message: string;
-    type: NotificationType;
+    type: 'info' | 'success' | 'warning' | 'error' | 'order';
     isRead: boolean;
     link?: string;
+    metadata?: Record<string, any>;
     createdAt: string;
 }
 
-const STORAGE_KEY = "lyhu_notifications";
+/**
+ * Fetch notifications for current user
+ */
+export async function fetchNotifications(limit: number = 20): Promise<Notification[]> {
+    const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limit);
 
-export const loadNotifications = (): Notification[] => {
-    if (typeof window === "undefined") return [];
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        return stored ? JSON.parse(stored) : [];
-    } catch (error) {
-        console.error("Failed to load notifications:", error);
+    if (error) {
+        console.error('[Notifications] Error:', error);
         return [];
     }
-};
 
-export const saveNotifications = (notifications: Notification[]) => {
-    if (typeof window === "undefined") return;
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
-        window.dispatchEvent(new Event("notifications-updated"));
-    } catch (error) {
-        console.error("Failed to save notifications:", error);
-    }
-};
+    return (data || []).map((n: any) => ({
+        id: n.id,
+        userId: n.user_id,
+        title: n.title,
+        message: n.message,
+        type: n.type,
+        isRead: n.is_read,
+        link: n.link,
+        metadata: n.metadata,
+        createdAt: n.created_at
+    }));
+}
 
-export const getNotificationsByUser = (userId: string): Notification[] => {
-    const all = loadNotifications();
-    return all.filter(n => n.userId === userId).sort((a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-};
+/**
+ * Mark notification as read
+ */
+export async function markAsRead(notificationId: string): Promise<boolean> {
+    const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notificationId);
 
-export const getUnreadCount = (userId: string): number => {
-    return getNotificationsByUser(userId).filter(n => !n.isRead).length;
-};
+    return !error;
+}
 
-export const addNotification = (
-    userId: string,
-    data: { title: string; message: string; type?: NotificationType; link?: string }
-) => {
-    const all = loadNotifications();
-    const newNotification: Notification = {
-        id: Date.now().toString(),
-        userId,
-        title: data.title,
-        message: data.message,
-        type: data.type || "info",
-        isRead: false,
-        link: data.link,
-        createdAt: new Date().toISOString(),
-    };
-    saveNotifications([newNotification, ...all]);
-    return newNotification;
-};
+/**
+ * Mark all notifications as read
+ */
+export async function markAllAsRead(): Promise<boolean> {
+    const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('is_read', false);
 
-export const markAsRead = (notificationId: string) => {
-    const all = loadNotifications();
-    const updated = all.map(n => n.id === notificationId ? { ...n, isRead: true } : n);
-    saveNotifications(updated);
-};
+    return !error;
+}
 
-export const markAllAsRead = (userId: string) => {
-    const all = loadNotifications();
-    const updated = all.map(n => n.userId === userId ? { ...n, isRead: true } : n);
-    saveNotifications(updated);
-};
+/**
+ * Get unread count
+ */
+export async function getUnreadCount(): Promise<number> {
+    const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_read', false);
+
+    if (error) return 0;
+    return count || 0;
+}

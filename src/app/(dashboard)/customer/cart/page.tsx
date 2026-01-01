@@ -50,8 +50,8 @@ export default function CartPage() {
 
     const total = subtotal; // In real app, might add shipping, tax, etc.
 
-    const handleCheckout = () => {
-        const user = getCurrentUser();
+    const handleCheckout = async () => {
+        const user = await getCurrentUser();
         if (!user) {
             alert("Vui lòng đăng nhập để đặt hàng!");
             router.push("/login");

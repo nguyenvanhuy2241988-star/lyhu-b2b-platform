@@ -22,11 +22,15 @@ export default function CTVReferralsPage() {
 
     useEffect(() => {
         ensureCtvReferralCodes();
-        const user = getCurrentUser();
-        setCurrentUser(user);
+        (async () => {
+            const user = await getCurrentUser();
+            setCurrentUser(user);
+        })();
+    }, []);
 
-        if (user) {
-            const userData = getUserById(user.id);
+    useEffect(() => {
+        if (currentUser) {
+            const userData = getUserById(currentUser.id);
             setFullUser(userData);
 
             // Re-fetch orders/users from localStorage to ensure we have latest mock data
@@ -35,7 +39,7 @@ export default function CTVReferralsPage() {
                 setSummary(referralSummary);
             }
         }
-    }, [fullUser?.referralCode]); // Dependencies updated to re-run if referralCode changes
+    }, [currentUser, fullUser?.referralCode]); // Dependencies updated to re-run if referralCode changes
 
     const handleCopy = () => {
         if (fullUser?.referralCode) {

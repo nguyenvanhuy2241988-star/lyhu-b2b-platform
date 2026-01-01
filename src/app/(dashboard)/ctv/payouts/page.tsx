@@ -53,8 +53,8 @@ export default function CTVPayoutsPage() {
 
     const cycle = useMemo(() => getCurrentCycle(), []);
 
-    const refreshData = () => {
-        const user = getCurrentUser();
+    const refreshData = async () => {
+        const user = await getCurrentUser();
         if (user) {
             const ctvPayouts = getPayoutsByCtv(user.id);
             setPayouts(ctvPayouts);
@@ -65,9 +65,11 @@ export default function CTVPayoutsPage() {
     };
 
     useEffect(() => {
-        const user = getCurrentUser();
-        setCurrentUser(user);
-        refreshData();
+        (async () => {
+            const user = await getCurrentUser();
+            setCurrentUser(user);
+            await refreshData();
+        })();
     }, [cycle.cycleKey]);
 
     const eligibility = useMemo(() => {

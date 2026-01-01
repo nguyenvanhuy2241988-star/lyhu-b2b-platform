@@ -1,0 +1,178 @@
+import { createClient } from "./supabaseClient";
+
+const supabase = createClient();
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+const getHeaders = (token?: string) => ({
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_KEY || '',
+    'Authorization': `Bearer ${token || SUPABASE_KEY}`,
+    'Prefer': 'return=representation'
+});
+
+export type TransactionType = 'bonus' | 'penalty' | 'commission' | 'base_salary';
+export type TransactionStatus = 'estimated' | 'finalized';
+
+export interface FinancialTransaction {
+    id: string;
+    userId: string;
+    type: TransactionType;
+    category: string;
+    amount: number;
+    status: TransactionStatus;
+    referenceId?: string;
+    note?: string;
+    createdAt: string;
+    metadata?: any;
+}
+
+export interface PayrollConfig {
+    role: string;
+    label: string;
+    baseSalaryMonthly: number;
+    bonusNewSupermarket: number;
+    bonusNewAgency: number;
+    bonusNewDistributor: number;
+    commissionRate: number; // Phase 3: Dynamic commission
+}
+
+export interface PayrollLock {
+    year: number;
+    month: number;
+    lockedAt: string;
+    lockedBy?: string;
+}
+
+export const fetchPayrollConfig = async (role: string, token?: string): Promise<PayrollConfig | null> => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/payroll_configs?role=eq.${role}&limit=1`, { headers, cache: 'no-store' });
+
+        if (!res.ok) return null;
+        const data = await res.json();
+        if (!data || data.length === 0) return null;
+
+        const config = data[0];
+        return {
+            role: config.role,
+            label: config.label,
+            baseSalaryMonthly: config.base_salary_monthly,
+            bonusNewSupermarket: config.bonus_new_supermarket,
+            bonusNewAgency: config.bonus_new_agency,
+            bonusNewDistributor: config.bonus_new_distributor,
+            commissionRate: config.commission_rate || 0.03 // Phase 3
+        };
+    } catch {
+        return null;
+    }
+};
+
+export const fetchPayrollLocks = async (year: number, token?: string): Promise<PayrollLock[]> => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/payroll_locks?year=eq.${year}`, { headers, cache: 'no-store' });
+        if (!res.ok) return [];
+        const data = await res.json();
+        return data.map((l: any) => ({
+            year: l.year,
+            month: l.month,
+            lockedAt: l.locked_at,
+            lockedBy: l.locked_by
+        }));
+    } catch {
+        return [];
+    }
+};
+
+export const setPayrollLock = async (year: number, month: number, userId: string, token?: string) => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/payroll_locks`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ year, month, locked_by: userId }),
+            cache: 'no-store'
+        });
+        return res.ok;
+    } catch {
+        return false;
+    }
+};
+
+export const fetchUserTransactions = async (userId: string, token?: string): Promise<FinancialTransaction[]> => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/financial_transactions?user_id=eq.${userId}&order=created_at.desc`, { headers, cache: 'no-store' });
+
+        if (!res.ok) return [];
+        const data = await res.json();
+
+        return data.map((t: any) => ({
+            id: t.id,
+            userId: t.user_id,
+            type: t.type,
+            category: t.category,
+            amount: t.amount,
+            status: t.status,
+            referenceId: t.reference_id,
+            note: t.note,
+            createdAt: t.created_at,
+            metadata: t.metadata
+        }));
+    } catch {
+        return [];
+    }
+};
+
+export const addFinancialTransaction = async (transaction: Partial<FinancialTransaction>, token?: string) => {
+    try {
+        const headers = getHeaders(token);
+        const payload = {
+            user_id: transaction.userId,
+            type: transaction.type,
+            category: transaction.category,
+            amount: transaction.amount,
+            status: transaction.status || 'estimated',
+            reference_id: transaction.referenceId,
+            note: transaction.note,
+            metadata: transaction.metadata || {}
+        };
+
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/financial_transactions`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(payload)
+        });
+
+        return res.ok;
+    } catch {
+        return false;
+    }
+};
+
+export const updateTransactionStatus = async (referenceId: string, status: TransactionStatus, token?: string) => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/financial_transactions?reference_id=eq.${referenceId}`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify({ status })
+        });
+        return res.ok;
+    } catch {
+        return false;
+    }
+};
+export const deleteFinancialTransactions = async (referenceId: string, token?: string) => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/financial_transactions?reference_id=eq.${referenceId}`, {
+            method: 'DELETE',
+            headers
+        });
+        return res.ok;
+    } catch {
+        return false;
+    }
+};

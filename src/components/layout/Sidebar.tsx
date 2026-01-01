@@ -25,17 +25,21 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
     useEffect(() => {
         // Only check for Telesales role or if the link exists
         if (role === 'telesales' || role === 'admin') { // Check role
-            const checkKpi = () => {
-                const tasks = getMyTasks();
-                const now = new Date();
-                const startOfDay = new Date(now.setHours(0, 0, 0, 0));
-                const endOfDay = new Date(now.setHours(23, 59, 59, 999));
+            const checkKpi = async () => {
+                try {
+                    const tasks = await getMyTasks();
+                    const now = new Date();
+                    const startOfDay = new Date(now.setHours(0, 0, 0, 0));
+                    const endOfDay = new Date(now.setHours(23, 59, 59, 999));
 
-                const metrics = calculateKpiMetrics(tasks, startOfDay, endOfDay);
-                const { status } = calculateKpiProgress(metrics);
+                    const metrics = calculateKpiMetrics(tasks, startOfDay, endOfDay);
+                    const { status } = calculateKpiProgress(metrics);
 
-                // Show badge if warning or bad
-                setShowKpiBadge(status === 'warning' || status === 'bad');
+                    // Show badge if warning or bad
+                    setShowKpiBadge(status === 'warning' || status === 'bad');
+                } catch (e) {
+                    console.error("Sidebar KPI check failed", e);
+                }
             };
 
             checkKpi();
@@ -64,8 +68,19 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
                     isOpen ? "translate-x-0" : "-translate-x-full"
                 )}
             >
-                <div className="flex h-16 items-center justify-center border-b border-slate-200 px-6">
-                    <h1 className="text-2xl font-bold text-primary-500">LYHU</h1>
+                <div className="flex h-28 items-center border-b border-slate-100 px-4 py-6 justify-center bg-white">
+                    <Link href="/" className="flex items-center w-full justify-center">
+                        <img
+                            src="/logo-full.png"
+                            alt="LYHU Logo"
+                            className="h-20 w-auto object-contain max-w-[90%]"
+                            onError={(e) => {
+                                // Fallback if image fails to load
+                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.parentElement?.insertAdjacentHTML('beforeend', '<span class="text-2xl font-bold text-primary-500">LYHU</span>');
+                            }}
+                        />
+                    </Link>
                 </div>
 
                 <nav className="p-4 space-y-1">

@@ -1,4 +1,6 @@
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabaseClient";
+
+const supabase = createClient();
 
 export interface Customer {
     id: string;

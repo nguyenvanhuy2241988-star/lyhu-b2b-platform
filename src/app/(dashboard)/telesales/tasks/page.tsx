@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { createClient } from "@/lib/supabaseClient";
+import { useAuth } from "@/components/auth/AuthProvider"; // ADDED // ADDED: For addLogSupabase
 
 import Link from "next/link";
 import {
@@ -29,23 +31,94 @@ import {
     TaskPriority,
     TaskType,
     TASK_PRIORITY_LABELS,
-    getMyTasks,
-    updateTask,
-    addTask,
-    deleteTask,
+    fetchTasks,
+    updateTaskSupabase,
+    createTaskSupabase,
+    moveTaskSupabase,
+    deleteTaskSupabase,
     loadColumns,
+    saveColumns,
     TelesalesColumn,
-    addColumn,
-    deleteColumn,
-    updateColumn,
-    reorderColumns,
-    updateTasksOrder,
-    resetColumns,
-    addLog,
-    CallLog
+    DEFAULT_COLUMNS
 } from "@/lib/telesalesTasksStore";
+
+// --- Local Implementations for Column Management (Missing in Store) ---
+const addColumn = () => {
+    const cols = loadColumns();
+    const newId = `col_${Date.now()}`;
+    // Force cast string to TaskStatus if needed, or update type to string
+    // TelesalesColumn id is TaskStatus. If we allow dynamic columns, TaskStatus type needs to be looser or id type.
+    // However, in new store, TaskStatus is union.
+    // Making id `any` for local compat or avoiding custom columns.
+    // If strict, we can't add custom columns.
+    // But UI has "Add Column".
+    // I will cast to any to satisfy TS for now.
+    const newCol: TelesalesColumn = { id: newId as any, label: "Cột mới", status: 'inbox', order: cols.length, isDefault: false, isVisible: true };
+    const newCols = [...cols, newCol];
+    saveColumns(newCols);
+    return newCols;
+};
+
+const deleteColumn = (id: string) => {
+    const cols = loadColumns().filter(c => c.id !== id);
+    saveColumns(cols);
+    return cols;
+};
+
+const updateColumn = (id: string, patch: Partial<TelesalesColumn>) => {
+    const cols = loadColumns().map(c => c.id === id ? { ...c, ...patch } : c);
+    saveColumns(cols);
+    return cols;
+};
+
+const reorderColumns = (newCols: TelesalesColumn[]) => {
+    const ordered = newCols.map((c, i) => ({ ...c, order: i }));
+    saveColumns(ordered);
+    return ordered;
+};
+
+const resetColumns = () => {
+    saveColumns(DEFAULT_COLUMNS);
+    return DEFAULT_COLUMNS;
+};
+
+// FIXED: Re-enabled log functionality
+const addLogSupabase = async (taskId: string, logData: any) => {
+    const supabase = createClient();
+
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            console.error('[addLogSupabase] User not authenticated');
+            return [];
+        }
+
+        const { data, error } = await supabase
+            .from('telesales_task_logs')
+            .insert({
+                task_id: taskId,
+                user_id: user.id,
+                log: typeof logData === 'string' ? logData : JSON.stringify(logData),
+            })
+            .select();
+
+        if (error) {
+            console.error('[addLogSupabase] Error:', error);
+            throw error;
+        }
+
+        return data || [];
+    } catch (err) {
+        console.error('[addLogSupabase] Exception:', err);
+        return [];
+    }
+};
+
 import { CreateTaskModal } from "@/components/telesales/CreateTaskModal";
 import { LogCallModal } from "@/components/telesales/LogCallModal";
+import { TaskSimpleModal } from "@/components/telesales/TaskSimpleModal";
+import { CreateLeadModal } from "@/components/telesales/CreateLeadModal";
+import { FileText, Link as LinkIcon, Image as ImageIcon, CheckCircle, ChevronDown, MoreHorizontal, UserPlus, Paperclip } from "lucide-react";
 
 // --- Components ---
 
@@ -70,12 +143,25 @@ interface TaskCardProps {
     onDragOver: (e: React.DragEvent, id: string) => void;
     dropIndicator: { taskId: string; position: 'top' | 'bottom' } | null;
     onLogCall: (task: TelesalesTask) => void;
-    onEdit: (task: TelesalesTask) => void; // New prop
+    onEdit: (task: TelesalesTask) => void;
+    onRefresh: () => Promise<void>; // Option A: Direct refresh
     isOverdue?: boolean;
     isHighlighted?: boolean;
 }
 
-const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, onLogCall, onEdit, isOverdue, isHighlighted }: TaskCardProps) => {
+const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, onLogCall, onEdit, onRefresh, isOverdue, isHighlighted }: TaskCardProps) => {
+    // Toggle Complete Handler - Option A: Direct Refresh
+    const handleComplete = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+
+        const newStatus = task.status === 'done' ? 'today' : 'done'; // Toggle
+
+        await updateTaskSupabase(task.id, { status: newStatus as TaskStatus });
+
+        // Direct refresh - no event needed
+        await onRefresh();
+    };
+
     return (
         <>
             {/* Ghost Placeholder Top */}
@@ -97,63 +183,119 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
                     onDragOver(e, task.id);
                 }}
                 className={`relative bg-white p-3 rounded-lg shadow-sm border cursor-move transition-all mb-3 group/card 
-                    ${isDragging ? 'opacity-50 scale-95 ring-2 ring-primary-200 rotate-1 border-primary-200' :
+                ${isDragging ? 'opacity-50 scale-95 ring-2 ring-primary-200 rotate-1 border-primary-200' :
                         isHighlighted
-                            ? 'border-yellow-400 ring-2 ring-yellow-400 shadow-md scale-[1.02] z-10' // Highlight style
-                            : isOverdue
-                                ? 'border-red-300 ring-1 ring-red-100 hover:shadow-md hover:border-red-400'
-                                : 'border-slate-200 hover:shadow-md hover:border-primary-200'
+                            ? 'border-yellow-400 ring-2 ring-yellow-400 shadow-md scale-[1.02] z-10'
+                            : task.status === 'done'
+                                ? 'border-primary-200 bg-primary-50/20 opacity-75'
+                                : isOverdue
+                                    ? 'border-red-300 ring-1 ring-red-100 hover:shadow-md'
+                                    : 'border-slate-200 hover:shadow-md hover:border-primary-200'
                     }
-                    ${isDragging ? '' : 'active:cursor-grabbing'}
-                `}
+                ${isDragging ? '' : 'active:cursor-grabbing'}
+            `}
             >
+                {/* Type Badge - LYHU Minimal */}
+                <div className="mb-2">
+                    <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs font-medium border border-slate-200">
+                        Công việc
+                    </span>
+                </div>
+
+                {/* Header: Title + Prio */}
                 <div className="flex justify-between items-start mb-2 pointer-events-none">
-                    <h4 className="font-medium text-slate-900 text-sm line-clamp-2">{task.title}</h4>
+                    <h4 className="font-medium text-slate-900 text-sm line-clamp-2 leading-snug">{task.title}</h4>
                     <PriorityBadge priority={task.priority} />
                 </div>
 
-                {(task.customerName || task.phone) && (
-                    <div className="flex items-center justify-between text-xs text-slate-500 mb-2 pointer-events-auto relative z-10">
-                        <div className="flex items-center gap-2 overflow-hidden">
-                            <User className="w-3 h-3 flex-shrink-0" />
-                            {task.leadId ? (
-                                <Link
-                                    href={`/telesales/leads-queue/${task.leadId}`}
-                                    className="truncate hover:text-primary-600 hover:underline font-medium"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    {task.customerName || "Khách lẻ"}
-                                </Link>
-                            ) : (
-                                <span className="truncate">{task.customerName || "Khách lẻ"}</span>
-                            )}
-                        </div>
+                {/* Adaptive Content - Phase B: Show phone if exists, else note snippet */}
+                {task.phone ? (
+                    <div className="flex items-center gap-2 text-xs text-slate-600 mb-2 pointer-events-auto">
+                        <Phone className="w-3 h-3 flex-shrink-0 text-slate-400" />
+                        <span className="font-medium">{task.phone}</span>
+                        {task.customer_name && (
+                            <span className="text-slate-400">• {task.customer_name}</span>
+                        )}
+                    </div>
+                ) : task.note ? (
+                    <div className="flex items-center gap-2 text-xs text-slate-500 mb-2 italic">
+                        <FileText className="w-3 h-3 flex-shrink-0 text-slate-400" />
+                        <span className="truncate">{task.note}</span>
+                    </div>
+                ) : task.customer_name ? (
+                    <div className="flex items-center gap-2 text-xs text-slate-600 mb-2">
+                        <User className="w-3 h-3 flex-shrink-0 text-slate-400" />
+                        <span className="font-medium">{task.customer_name}</span>
+                    </div>
+                ) : null}
 
-                        <div className="flex items-center gap-1">
-                            {task.phone && (
-                                <span className="text-slate-400 mr-1">{task.phone}</span>
-                            )}
+                {/* Attachments Indicator - DISABLED */}
+                {/* {task.attachments && task.attachments.length > 0 && (
+                    <div className="flex gap-2 mb-2">
+                        {task.attachments.map((att, i) => (
+                            <div key={i} className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded flex items-center gap-1 text-slate-500 truncate max-w-[100px]">
+                                {att.type === 'link' ? <LinkIcon className="w-2.5 h-2.5" /> : <Paperclip className="w-2.5 h-2.5" />}
+                                <span className="truncate">{att.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                )} */}
+
+                {/* Footer & Quick Actions */}
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs text-slate-400 pointer-events-auto">
+                    {/* Due Date */}
+                    <div className={`flex items-center gap-1 ${isOverdue ? 'text-red-600 font-medium' : ''}`}>
+                        {task.due_date ? (
+                            <>
+                                {isOverdue ? <AlertTriangle className="w-3 h-3" /> : <Calendar className="w-3 h-3" />}
+                                <span>{new Date(task.due_date).toLocaleDateString('vi-VN')}</span>
+                            </>
+                        ) : (
+                            <span className="text-slate-400 text-[10px] bg-slate-100 px-1.5 py-0.5 rounded">Chưa đặt hạn</span>
+                        )}
+                    </div>
+
+                    {/* Quick Actions Row */}
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onEdit(task); }}
+                            className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-blue-600 transition-colors"
+                            title="Chỉnh sửa / Ghi chú"
+                        >
+                            <FileText className="w-3.5 h-3.5" />
+                        </button>
+                        {!task.due_date && (
                             <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onLogCall(task);
-                                }}
-                                className="p-1.5 bg-green-50 text-green-600 rounded-full hover:bg-green-100 transition-colors"
-                                title="Ghi log cuộc gọi"
+                                onClick={(e) => { e.stopPropagation(); onEdit(task); }}
+                                className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-blue-600 transition-colors flex items-center gap-1 bg-slate-50 border border-slate-200"
+                                title="Đặt ngày"
+                            >
+                                <Calendar className="w-3 h-3" />
+                                <span className="text-[10px]">Đặt ngày</span>
+                            </button>
+                        )}
+                        {task.phone && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onLogCall(task); }}
+                                className="p-1 hover:bg-primary-100 rounded text-slate-400 hover:text-primary-600 transition-colors"
+                                title="Gọi ngay"
                             >
                                 <Phone className="w-3.5 h-3.5" />
                             </button>
-                        </div>
-                    </div>
-                )}
+                        )}
 
-                <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs text-slate-400 pointer-events-none">
-                    <div className={`flex items-center gap-1 ${isOverdue ? 'text-red-600 font-medium' : ''}`}>
-                        {isOverdue ? <AlertTriangle className="w-3 h-3" /> : <Calendar className="w-3 h-3" />}
-                        <span>{task.dueDate ? new Date(task.dueDate).toLocaleDateString('vi-VN') : 'Không thời hạn'}</span>
+                        {/* Complete Toggle - LYHU Minimalist */}
+                        <button
+                            onClick={handleComplete}
+                            className={`p-1 rounded transition-colors ${task.status === 'done'
+                                ? 'bg-primary-500 text-white hover:bg-primary-600'
+                                : 'text-slate-400 hover:bg-slate-100 hover:text-primary-600'
+                                }`}
+                            title={task.status === 'done' ? 'Bỏ hoàn thành' : 'Đánh dấu hoàn thành'}
+                        >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                        </button>
                     </div>
-                    {task.type === 'confirm_order' && <span className="bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded">Đơn hàng</span>}
-                    {task.type === 'call_new_lead' && <span className="bg-green-50 text-green-600 px-1.5 py-0.5 rounded">Lead mới</span>}
                 </div>
             </div>
 
@@ -164,6 +306,9 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
         </>
     );
 };
+
+// Optimization #1: Memoize TaskCard to reduce re-renders
+const MemoizedTaskCard = React.memo(TaskCard);
 
 // --- Use Debounce Hook ---
 function useDebounce<T>(value: T, delay: number): T {
@@ -182,18 +327,25 @@ function useDebounce<T>(value: T, delay: number): T {
 // --- Main Page ---
 
 export default function TelesalesTasksPage() {
+    const { user, session } = useAuth(); // ADDED
     const [tasks, setTasks] = useState<TelesalesTask[]>([]);
     const [columns, setColumns] = useState<TelesalesColumn[]>([]);
     const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
+    const [isLoading, setIsLoading] = useState(false);
 
     // Filters
     const [searchQuery, setSearchQuery] = useState("");
-    const debouncedSearchQuery = useDebounce(searchQuery, 300);
+    const debouncedSearchQuery = useDebounce(searchQuery, 150); // Optimization #2: Reduced from 300ms
     const [filterPriority, setFilterPriority] = useState<TaskPriority | "all">("all");
+    const [filterDueDate, setFilterDueDate] = useState<"all" | "overdue" | "today" | "week">("all"); // Phase B
+    const [filterCustomerType, setFilterCustomerType] = useState<"all" | "customer" | "personal">("all"); // Phase B
     const [filterType, setFilterType] = useState<TaskType | "all">("all");
 
     // Modal states
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); // Legacy full modal
+    const [isSimpleModalOpen, setIsSimpleModalOpen] = useState(false); // New Simple Modal
+    const [isCreateLeadModalOpen, setIsCreateLeadModalOpen] = useState(false); // New Lead Modal
+
     const [createModalInitialStatus, setCreateModalInitialStatus] = useState<TaskStatus>("today");
     const [editingTask, setEditingTask] = useState<TelesalesTask | null>(null); // New state for editing
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -218,9 +370,13 @@ export default function TelesalesTasksPage() {
     const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
 
     // Initial Load & Listeners
-    const refreshData = () => {
-        setTasks(getMyTasks().sort((a, b) => (a.order || 0) - (b.order || 0)));
+    const refreshData = async () => {
+        if (!user) return; // Wait for user
+        setIsLoading(prev => tasks.length === 0 ? true : prev);
+        const fetchedTasks = await fetchTasks(user.id, session?.access_token); // Pass token
+        setTasks(fetchedTasks);
         setColumns(loadColumns().sort((a, b) => a.order - b.order));
+        setIsLoading(false);
     };
 
     // Helper to scroll to task
@@ -240,26 +396,29 @@ export default function TelesalesTasksPage() {
     };
 
     useEffect(() => {
-        refreshData();
-        const handleTaskUpdate = () => setTasks(getMyTasks().sort((a, b) => (a.order || 0) - (b.order || 0)));
+        if (user && session?.access_token) {
+            refreshData();
+        }
+
         const handleColumnUpdate = () => setColumns(loadColumns().sort((a, b) => a.order - b.order));
 
-        window.addEventListener("telesales-tasks-updated", handleTaskUpdate);
         window.addEventListener("telesales-columns-updated", handleColumnUpdate);
         return () => {
-            window.removeEventListener("telesales-tasks-updated", handleTaskUpdate);
             window.removeEventListener("telesales-columns-updated", handleColumnUpdate);
         };
-    }, []);
+    }, [user, session?.access_token]);
 
     const handleLogCall = (task: TelesalesTask) => {
         setTaskToLog(task);
         setIsLogModalOpen(true);
     };
 
-    const handleSaveLog = (logData: any) => {
+    const handleSaveLog = async (logData: any) => {
         if (taskToLog) {
-            addLog(taskToLog.id, logData);
+            await addLogSupabase(taskToLog.id, logData);
+            setIsLogModalOpen(false);
+            setTaskToLog(null);
+            refreshData(); // Refresh to get logs if needed
         }
     };
 
@@ -280,29 +439,42 @@ export default function TelesalesTasksPage() {
     const handleEditTask = (task: TelesalesTask) => {
         setEditingTask(task);
         setCreateModalInitialStatus(task.status);
-        setIsCreateModalOpen(true);
+        setIsCreateModalOpen(true); // Edit still uses full modal for now to show all fields
     };
 
     // Handle Save (Create or Update)
-    const handleSaveTask = (taskData: any) => {
-        if (taskData.id) {
-            // Edit mode
-            updateTask(taskData.id, taskData);
-        } else {
-            // Create mode
-            addTask(taskData);
+    // Handle Save (Create or Update)
+    const handleSaveTask = async (taskData: any) => {
+        setIsLoading(true);
+        try {
+            if (taskData.id) { // Trust the ID if present to prevent duplication
+                await updateTaskSupabase(taskData.id, taskData, session?.access_token);
+            } else {
+                // Create mode
+                await createTaskSupabase(taskData, session?.access_token);
+            }
+            await refreshData();
+            setIsCreateModalOpen(false);
+            setIsSimpleModalOpen(false);
+        } catch (error: any) {
+            console.error("Failed to save task", error);
+            alert(`Không thể lưu công việc: ${error?.message || JSON.stringify(error)}`);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     // Handle Delete
-    const handleDeleteTask = (taskId: string) => {
-        deleteTask(taskId);
-        setIsCreateModalOpen(false); // Modal should be closed by component, but safety check
+    const handleDeleteTask = async (taskId: string) => {
+        if (confirm("Bạn chắc chắn muốn xóa việc này?")) {
+            await deleteTaskSupabase(taskId);
+            setIsCreateModalOpen(false); // Modal should be closed by component, but safety check
+            refreshData();
+        }
     };
 
 
     // --- Drag & Drop Logic ---
-    // (Kept as is, omitted for brevity if no changes needed, but since I am overwriting file I must include it)
 
     const handleTaskDragStart = (e: React.DragEvent, id: string, colId: string) => {
         setDraggedTaskId(id);
@@ -348,7 +520,7 @@ export default function TelesalesTasksPage() {
         setDragOverColId(null);
     };
 
-    const handleDrop = (e: React.DragEvent, targetColId: string) => {
+    const handleDrop = async (e: React.DragEvent, targetColId: string) => {
         e.preventDefault();
         e.stopPropagation();
 
@@ -366,34 +538,56 @@ export default function TelesalesTasksPage() {
 
             if (draggedTaskIndex > -1) {
                 const draggedTask = currentTasks[draggedTaskIndex];
-                const updatedTask = { ...draggedTask, status: targetColId };
 
-                currentTasks.splice(draggedTaskIndex, 1);
+                // Determine New State based on Target Column
+                // Determine New State based on Target Column
+                let newDueDate = draggedTask.due_date;
+                let newStatus = targetColId;
 
-                const targetColumnTasks = currentTasks.filter(t => t.status === targetColId).sort((a, b) => (a.order || 0) - (b.order || 0));
+                const today = new Date(); // Local time
+                const msOneDay = 24 * 60 * 60 * 1000;
 
-                if (dropIndicator) {
-                    const targetTaskIndex = targetColumnTasks.findIndex(t => t.id === dropIndicator.taskId);
-                    if (targetTaskIndex > -1) {
-                        if (dropIndicator.position === 'top') {
-                            targetColumnTasks.splice(targetTaskIndex, 0, updatedTask);
-                        } else {
-                            targetColumnTasks.splice(targetTaskIndex + 1, 0, updatedTask);
-                        }
-                    } else {
-                        targetColumnTasks.push(updatedTask);
-                    }
-                } else {
-                    targetColumnTasks.push(updatedTask);
+                if (targetColId === 'inbox') {
+                    newDueDate = null as any;
+                    newStatus = 'inbox';
+                } else if (targetColId === 'today') {
+                    newDueDate = new Date().toISOString();
+                    newStatus = 'today';
+                } else if (targetColId === 'tomorrow') {
+                    const tmr = new Date(today.getTime() + msOneDay);
+                    newDueDate = tmr.toISOString();
+                    newStatus = 'tomorrow';
+                } else if (targetColId === 'this_week') {
+                    // Check if current date is effectively this week, if not set to +3 days default?
+                    // Existing logic was fuzzy. Let's set to +2 days as default placement
+                    const d = new Date(today.getTime() + (2 * msOneDay));
+                    newDueDate = d.toISOString();
+                    newStatus = 'this_week';
+                } else if (targetColId === 'later') {
+                    const d = new Date(today.getTime() + (7 * msOneDay));
+                    newDueDate = d.toISOString();
+                    newStatus = 'later';
                 }
 
-                targetColumnTasks.forEach((t, idx) => t.order = idx);
+                // Keep done as done status
+                if (targetColId === 'done') {
+                    newStatus = 'done';
+                    // Don't change date if moving to done, keep record
+                }
 
-                const otherTasks = currentTasks.filter(t => t.status !== targetColId);
-                const newTaskList = [...otherTasks, ...targetColumnTasks];
+                // Optimistic Update
+                const updatedTask = { ...draggedTask, status: newStatus as TaskStatus, due_date: newDueDate };
+                const newTasks = currentTasks.map(t => t.id === draggedTaskIdData ? updatedTask : t);
+                setTasks(newTasks);
 
-                setTasks(newTaskList);
-                updateTasksOrder(newTaskList);
+                await updateTaskSupabase(draggedTaskIdData, {
+                    status: newStatus as TaskStatus,
+                    due_date: newDueDate
+                });
+
+                // No refresh needed if optimistic is correct, but let's refresh for sort order consistency occasionally?
+                // For now, let's skip refresh to avoid jumpiness, or only refresh if needed.
+                // refreshData(); 
             }
             return;
         }
@@ -418,6 +612,7 @@ export default function TelesalesTasksPage() {
 
     const handleAddColumn = () => {
         addColumn();
+        setColumns(loadColumns());
     };
 
     const deleteColumnHandler = (id: string, isDefault?: boolean) => {
@@ -434,10 +629,12 @@ export default function TelesalesTasksPage() {
             if (!window.confirm("Bạn có chắc chắn muốn xóa cột này?")) return;
         }
         deleteColumn(id);
+        setColumns(loadColumns());
     };
 
     const toggleColumnVisibility = (colId: string, currentVisible: boolean) => {
         updateColumn(colId, { isVisible: !currentVisible });
+        setColumns(loadColumns());
     };
 
     const startEditing = (col: TelesalesColumn) => {
@@ -446,11 +643,13 @@ export default function TelesalesTasksPage() {
     };
 
     const saveEditing = (id: string) => {
-        if (editingTitle.trim()) {
-            updateColumn(id, { label: editingTitle.trim() });
+        const safeTitle = (editingTitle ?? "").trim();
+        if (safeTitle) {
+            updateColumn(id, { label: safeTitle });
         }
         setEditingColumnId(null);
         setEditingTitle("");
+        setColumns(loadColumns());
     };
 
     const cancelEditing = () => {
@@ -458,46 +657,70 @@ export default function TelesalesTasksPage() {
         setEditingTitle("");
     };
 
-    // --- Render Helpers ---
+    // --- Filtering Logic (Phase B: Enhanced) ---
+    const filteredTasks = tasks.filter(task => {
+        // Search filter
+        const matchesSearch = !debouncedSearchQuery ||
+            task.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
+            (task.customer_name && task.customer_name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())) ||
+            (task.phone && task.phone.includes(debouncedSearchQuery));
 
-    const filteredTasks = tasks.filter(t => {
-        // 1. Search Query (Debounced)
-        const matchSearch =
-            t.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-            t.customerName?.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-            t.phone?.includes(debouncedSearchQuery);
+        // Priority filter
+        const matchesPriority = filterPriority === "all" || task.priority === filterPriority;
 
-        // 2. Priority Filter
-        const matchPriority = filterPriority === "all" || t.priority === filterPriority;
+        // Type filter (deprecated but kept for compatibility)
+        const matchesType = filterType === "all" || task.type === filterType;
 
-        // 3. Type Filter
-        const matchType = filterType === "all" || t.type === filterType;
+        // Due date filter (Phase B)
+        let matchesDueDate = true;
+        if (filterDueDate !== "all" && task.due_date) {
+            const taskDate = new Date(task.due_date);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const weekFromNow = new Date(today);
+            weekFromNow.setDate(weekFromNow.getDate() + 7);
 
-        return matchSearch && matchPriority && matchType;
+            if (filterDueDate === "overdue") {
+                matchesDueDate = taskDate < today && task.status !== 'done';
+            } else if (filterDueDate === "today") {
+                matchesDueDate = taskDate.toDateString() === today.toDateString();
+            } else if (filterDueDate === "week") {
+                matchesDueDate = taskDate >= today && taskDate <= weekFromNow;
+            }
+        }
+
+        // Customer type filter (Phase B)
+        let matchesCustomerType = true;
+        if (filterCustomerType === "customer") {
+            matchesCustomerType = !!(task.customer_name || task.phone);
+        } else if (filterCustomerType === "personal") {
+            matchesCustomerType = !task.customer_name && !task.phone;
+        }
+
+        return matchesSearch && matchesPriority && matchesType && matchesDueDate && matchesCustomerType;
     });
 
-    const getColumnLabel = (status: string) => {
-        const col = columns.find(c => c.id === status);
-        return col ? col.label : status;
-    };
 
     const visibleColumns = columns.filter(c => c.isVisible !== false);
 
     // Calc overdue
     const msToday = new Date().setHours(0, 0, 0, 0);
-    const overdueCount = tasks.filter(t => t.dueDate && new Date(t.dueDate).getTime() < msToday && t.status !== 'done').length;
+    const overdueCount = tasks.filter(t => t.due_date && new Date(t.due_date).getTime() < msToday && t.status !== 'done').length;
 
     return (
         <div className="p-4 sm:p-6 space-y-6 h-full flex flex-col relative" onClick={() => setIsSettingsOpen(false)}>
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-[60] relative">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Việc cần làm Telesales</h1>
+                    <h1 className="text-2xl font-bold text-slate-900">Việc cần làm</h1>
                     <p className="text-sm text-slate-500">Quản lý các đầu việc và cuộc gọi hằng ngày</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    {/* Lead button removed - use CRM for lead management */}
                     <button
-                        onClick={(e) => { e.stopPropagation(); openCreateModal("today"); }}
+                        onClick={(e) => { e.stopPropagation(); setIsSimpleModalOpen(true); }}
                         className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
@@ -510,9 +733,9 @@ export default function TelesalesTasksPage() {
                         className="relative p-2 bg-white border rounded-lg hover:bg-slate-50 text-slate-600"
                     >
                         <Bell className="w-4 h-4" />
-                        {(overdueCount + tasks.filter(t => t.dueDate && new Date(t.dueDate).setHours(0, 0, 0, 0) === msToday && t.status !== 'done').length) > 0 && (
+                        {(overdueCount + tasks.filter(t => t.due_date && new Date(t.due_date).setHours(0, 0, 0, 0) === msToday && t.status !== 'done').length) > 0 && (
                             <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm animate-pulse">
-                                {overdueCount + tasks.filter(t => t.dueDate && new Date(t.dueDate).setHours(0, 0, 0, 0) === msToday && t.status !== 'done').length}
+                                {overdueCount + tasks.filter(t => t.due_date && new Date(t.due_date).setHours(0, 0, 0, 0) === msToday && t.status !== 'done').length}
                             </span>
                         )}
                     </button>
@@ -545,15 +768,15 @@ export default function TelesalesTasksPage() {
                                         className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${activeNotifTab === 'today' ? 'border-blue-500 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                                         onClick={() => setActiveNotifTab('today')}
                                     >
-                                        Hôm nay <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">{tasks.filter(t => t.dueDate && new Date(t.dueDate).setHours(0, 0, 0, 0) === msToday && t.status !== 'done').length}</span>
+                                        Hôm nay <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">{tasks.filter(t => t.due_date && new Date(t.due_date).setHours(0, 0, 0, 0) === msToday && t.status !== 'done').length}</span>
                                     </button>
                                 </div>
                                 {/* List */}
                                 <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">
                                     {(() => {
                                         const list = activeNotifTab === 'overdue'
-                                            ? tasks.filter(t => t.dueDate && new Date(t.dueDate).getTime() < msToday && t.status !== 'done')
-                                            : tasks.filter(t => t.dueDate && new Date(t.dueDate).setHours(0, 0, 0, 0) === msToday && t.status !== 'done');
+                                            ? tasks.filter(t => t.due_date && new Date(t.due_date).getTime() < msToday && t.status !== 'done')
+                                            : tasks.filter(t => t.due_date && new Date(t.due_date).setHours(0, 0, 0, 0) === msToday && t.status !== 'done');
 
                                         if (list.length === 0) {
                                             return <div className="text-center text-sm text-slate-400 py-8">Không có công việc nào.</div>
@@ -567,12 +790,12 @@ export default function TelesalesTasksPage() {
                                             >
                                                 <div className="flex justify-between items-start mb-1">
                                                     <h4 className="text-sm font-medium text-slate-900 line-clamp-2">{t.title}</h4>
-                                                    <PriorityBadge priority={t.priority} />
+                                                    <PriorityBadge priority={t.priority as any} />
                                                 </div>
-                                                <div className="text-xs text-slate-500 mb-2">{t.customerName || "Khách lẻ"}</div>
+                                                <div className="text-xs text-slate-500 mb-2">{t.customer_name || "Khách lẻ"}</div>
                                                 <div className={`text-xs font-medium flex items-center gap-1 ${activeNotifTab === 'overdue' ? 'text-red-600' : 'text-blue-600'}`}>
                                                     <Calendar className="w-3 h-3" />
-                                                    {new Date(t.dueDate!).toLocaleDateString('vi-VN')}
+                                                    {new Date(t.due_date!).toLocaleDateString('vi-VN')}
                                                 </div>
                                             </div>
                                         ));
@@ -679,20 +902,34 @@ export default function TelesalesTasksPage() {
                         </select>
                     </div>
 
-                    <div className="flex items-center gap-2 min-w-[180px]">
+                    {/* Phase B: Due Date Filter */}
+                    <div className="flex items-center gap-2 min-w-[140px]">
                         <select
                             className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            value={filterType}
-                            onChange={(e) => setFilterType(e.target.value as TaskType | "all")}
+                            value={filterDueDate}
+                            onChange={(e) => setFilterDueDate(e.target.value as any)}
                         >
-                            <option value="all">Tất cả loại việc</option>
-                            <option value="call_new_lead">Gọi Lead mới</option>
-                            <option value="follow_up_lead">Chăm sóc lại</option>
-                            <option value="confirm_order">Xác nhận đơn</option>
-                            <option value="care_old_customer">CSKH cũ</option>
-                            <option value="other">Việc khác</option>
+                            <option value="all">Tất cả hạn</option>
+                            <option value="overdue">Quá hạn</option>
+                            <option value="today">Hôm nay</option>
+                            <option value="week">Tuần này</option>
                         </select>
                     </div>
+
+                    {/* Phase B: Customer Type Filter */}
+                    <div className="flex items-center gap-2 min-w-[140px]">
+                        <select
+                            className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            value={filterCustomerType}
+                            onChange={(e) => setFilterCustomerType(e.target.value as any)}
+                        >
+                            <option value="all">Tất cả loại</option>
+                            <option value="customer">Có khách</option>
+                            <option value="personal">Cá nhân</option>
+                        </select>
+                    </div>
+
+                    {/* Type filter removed - Phase 3: Tasks only have one type */}
                 </div>
             </div>
 
@@ -701,7 +938,11 @@ export default function TelesalesTasksPage() {
                 <div className="flex-1 overflow-x-auto pb-4">
                     <div className="flex gap-4 min-w-[100%] h-full items-start">
                         {visibleColumns.length > 0 && visibleColumns.map(col => {
-                            const columnTasks = filteredTasks.filter(t => t.status === col.id).sort((a, b) => (a.order || 0) - (b.order || 0));
+                            const columnTasks = filteredTasks.filter(t => {
+                                // Strict Status Mapping - WYSIWYG
+                                // This fixes "Disappearing Tasks" and "Wrong Column" issues by respecting the database status
+                                return t.status === col.id;
+                            }).sort((a, b) => (a.order || 0) - (b.order || 0) || new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
 
                             const showAppendPlaceholder = draggedTaskId && dragOverColId === col.id && !dropIndicator;
 
@@ -712,7 +953,76 @@ export default function TelesalesTasksPage() {
                                     onDragStart={(e) => handleColumnDragStart(e, col.id)}
                                     onDragEnd={handleColumnDragEnd}
                                     onDragOver={(e) => handleDragOverColumn(e, col.id)}
-                                    onDrop={(e) => handleDrop(e, col.id)}
+                                    onDrop={async (e) => {
+                                        // Custom Handle Drop for Date Logic
+                                        e.preventDefault();
+                                        e.stopPropagation();
+
+                                        const draggedTaskIdData = e.dataTransfer.getData("telesales/task");
+                                        const draggedColId = e.dataTransfer.getData("telesales/column");
+
+                                        setDraggedTaskId(null);
+                                        setDropIndicator(null);
+                                        setDragOverColId(null);
+
+                                        if (draggedTaskIdData) {
+                                            const currentTasks = [...tasks];
+                                            const task = currentTasks.find(t => t.id === draggedTaskIdData);
+                                            if (!task) return;
+
+                                            // Determine New Date & Status based on Target Col
+                                            let newStatus = col.id;
+                                            let newDueDate: string | null = task.due_date || null;
+
+                                            const today = new Date();
+
+                                            if (col.id === 'inbox') {
+                                                newDueDate = null;
+                                                newStatus = 'inbox';
+                                            } else if (col.id === 'today') {
+                                                newDueDate = today.toISOString();
+                                                newStatus = 'today';
+                                            } else if (col.id === 'tomorrow') {
+                                                const tmr = new Date(today);
+                                                tmr.setDate(tmr.getDate() + 1);
+                                                newDueDate = tmr.toISOString();
+                                                newStatus = 'tomorrow'; // Logical status
+                                            } else if (col.id === 'this_week') {
+                                                const next = new Date(today);
+                                                next.setDate(next.getDate() + 3); // Approx
+                                                newDueDate = next.toISOString();
+                                                newStatus = 'this_week';
+                                            } else if (col.id === 'later') {
+                                                const later = new Date(today);
+                                                later.setDate(later.getDate() + 7);
+                                                newDueDate = later.toISOString();
+                                                newStatus = 'later';
+                                            } else if (col.id === 'done') {
+                                                newStatus = 'done';
+                                                // Keep existing date or set today? Keep existing.
+                                            }
+
+                                            // Optimistic Update
+                                            const updatedTask = { ...task, status: newStatus as TaskStatus, due_date: newDueDate as string };
+                                            setTasks(currentTasks.map(t => t.id === task.id ? updatedTask : t));
+
+                                            await updateTaskSupabase(task.id, { status: newStatus as TaskStatus, due_date: newDueDate as any });
+                                            refreshData();
+                                        }
+
+                                        // Column Reorder (same as before)
+                                        if (draggedColId && draggedColId !== col.id) {
+                                            const currentCols = [...columns];
+                                            const sourceIndex = currentCols.findIndex(c => c.id === draggedColId);
+                                            const targetIndex = currentCols.findIndex(c => c.id === col.id);
+                                            if (sourceIndex >= 0 && targetIndex >= 0) {
+                                                const [movedCol] = currentCols.splice(sourceIndex, 1);
+                                                currentCols.splice(targetIndex, 0, movedCol);
+                                                setColumns(currentCols);
+                                                reorderColumns(currentCols);
+                                            }
+                                        }
+                                    }}
                                     className={`flex-1 min-w-[280px] bg-slate-50/50 rounded-xl flex flex-col max-h-[calc(100vh-280px)] group/col border-2 transition-colors 
                                         ${dragOverColId === col.id ? 'border-primary-300 bg-primary-50/20' : 'border-transparent hover:border-slate-200'}
                                     `}
@@ -765,7 +1075,7 @@ export default function TelesalesTasksPage() {
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </button>
                                             <button
-                                                onClick={() => openCreateModal(col.id)}
+                                                onClick={() => openCreateModal(col.id as TaskStatus)}
                                                 className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-200 rounded ml-1"
                                                 title="Thêm việc"
                                             >
@@ -776,112 +1086,100 @@ export default function TelesalesTasksPage() {
 
                                     {/* Tasks Container */}
                                     <div className="p-2 flex-1 overflow-y-auto space-y-1 relative min-h-[100px]">
-                                        {columnTasks.map(task => {
-                                            const isOverdue = task.dueDate ? new Date(task.dueDate).getTime() < msToday && task.status !== 'done' : false;
-                                            return (
-                                                <TaskCard
-                                                    key={task.id}
-                                                    task={task}
-                                                    isDragging={draggedTaskId === task.id}
-                                                    onDragStart={handleTaskDragStart}
-                                                    onDragOver={handleTaskDragOver}
-                                                    dropIndicator={dropIndicator}
-                                                    onLogCall={handleLogCall}
-                                                    onEdit={handleEditTask}
-                                                    isOverdue={isOverdue}
-                                                    isHighlighted={highlightedTaskId === task.id}
-                                                />
-                                            )
-                                        })}
+                                        {columnTasks.length === 0 && !showAppendPlaceholder ? (
+                                            <div className="text-center py-12 text-slate-400">
+                                                <div className="text-4xl mb-2">📝</div>
+                                                <p className="text-sm font-medium text-slate-500">Chưa có việc nào</p>
+                                                <p className="text-xs mt-1">Kéo thả hoặc click + để thêm</p>
+                                            </div>
+                                        ) : (
+                                            columnTasks.map(task => {
+                                                const isOverdue = task.due_date ? new Date(task.due_date).getTime() < msToday && task.status !== 'done' : false;
+                                                return (
+                                                    <TaskCard
+                                                        key={task.id}
+                                                        task={task}
+                                                        isDragging={draggedTaskId === task.id}
+                                                        onDragStart={handleTaskDragStart}
+                                                        onDragOver={handleTaskDragOver}
+                                                        dropIndicator={dropIndicator}
+                                                        onLogCall={handleLogCall}
+                                                        onEdit={handleEditTask}
+                                                        onRefresh={refreshData}
+                                                        isOverdue={isOverdue}
+                                                        isHighlighted={highlightedTaskId === task.id}
+                                                    />
+                                                )
+                                            })
+                                        )}
 
                                         {/* Append Placeholder - shown when dragging column over empty space or bottom */}
                                         {showAppendPlaceholder && (
                                             <div className="h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse mt-1 pointer-events-none" />
                                         )}
-
-                                        {columnTasks.length === 0 && !showAppendPlaceholder && (
-                                            <div className="h-full min-h-[80px] flex items-center justify-center text-slate-400 text-xs select-none italic">
-                                                Thả thẻ vào đây
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             );
                         })}
-
-                        {/* Add Column Button */}
-                        <button
-                            onClick={handleAddColumn}
-                            className="flex-shrink-0 w-[280px] h-[50px] border-2 border-dashed border-slate-300 rounded-xl flex items-center justify-center gap-2 text-slate-500 hover:border-primary-500 hover:text-primary-600 transition-all hover:bg-white"
-                        >
-                            <Plus className="w-5 h-5" />
-                            <span className="font-medium">Thêm cột</span>
-                        </button>
+                        <div className="min-w-[50px] flex items-start justify-center pt-2">
+                            <button onClick={() => handleAddColumn()} className="p-2 rounded-full hover:bg-slate-200 text-slate-400" title="Thêm cột mới">
+                                <Plus className="w-6 h-6" />
+                            </button>
+                        </div>
                     </div>
                 </div>
             ) : (
-                <div className="bg-white border rounded-xl shadow-sm overflow-hidden">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-slate-50 text-slate-700 font-medium border-b">
-                            <tr>
-                                <th className="px-4 py-3">Công việc</th>
-                                <th className="px-4 py-3">Khách hàng</th>
-                                <th className="px-4 py-3">Hạn chót</th>
-                                <th className="px-4 py-3">Ưu tiên</th>
-                                <th className="px-4 py-3">Trạng thái</th>
-                                <th className="px-4 py-3 text-right">Thao tác</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {filteredTasks.map(task => (
-                                <tr key={task.id} className="hover:bg-slate-50">
-                                    <td className="px-4 py-3 font-medium text-slate-900">{task.title}</td>
-                                    <td className="px-4 py-3">
-                                        <div className="flex flex-col">
-                                            <span>{task.customerName || "-"}</span>
-                                            <span className="text-xs text-slate-500">{task.phone}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-3 text-slate-600">{task.dueDate || "-"}</td>
-                                    <td className="px-4 py-3"><PriorityBadge priority={task.priority} /></td>
-                                    <td className="px-4 py-3">
-                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800">
-                                            {getColumnLabel(task.status)}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-right">
-                                        <button className="text-primary-600 hover:text-primary-700 font-medium text-xs" onClick={() => handleEditTask(task)}>Sửa</button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {filteredTasks.length === 0 && (
-                                <tr>
-                                    <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
-                                        Không tìm thấy công việc nào.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                    {/* Simple List View implementation if needed, or just placeholder for now since Kanban is main */}
+                    <p className="text-slate-500">Chế độ xem danh sách chưa được cập nhật đầy đủ (Sử dụng Kanban để có trải nghiệm tốt nhất).</p>
+                    {/* Iterate tasks if we want list view */}
+                    <div className="mt-4 space-y-2">
+                        {filteredTasks.map(task => (
+                            <div key={task.id} className="flex justify-between p-3 border rounded hover:bg-slate-50 cursor-pointer" onClick={() => handleEditTask(task)}>
+                                <div>
+                                    <div className="font-semibold">{task.title}</div>
+                                    <div className="text-sm text-slate-500">{task.customer_name} - {task.phone}</div>
+                                </div>
+                                <div className="text-right">
+                                    <PriorityBadge priority={task.priority} />
+                                    <div className="text-xs text-slate-400 mt-1">{task.status}</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 
+            {/* Create/Edit Task Modal */}
             <CreateTaskModal
                 isOpen={isCreateModalOpen}
+                initialStatus={createModalInitialStatus}
+                initialData={editingTask || undefined}
                 onClose={() => setIsCreateModalOpen(false)}
                 onSave={handleSaveTask}
-                onDelete={handleDeleteTask}
-                initialStatus={createModalInitialStatus}
-                initialData={editingTask || {}}
-                columns={columns} // Pass dynamic columns
+                onDelete={editingTask ? () => handleDeleteTask(editingTask.id) : undefined}
             />
 
+            {/* Log Call Modal */}
             <LogCallModal
                 isOpen={isLogModalOpen}
+                taskTitle={taskToLog?.title || ""}
+                customerName={taskToLog?.customer_name || ""}
                 onClose={() => setIsLogModalOpen(false)}
                 onSave={handleSaveLog}
-                taskTitle={taskToLog?.title || ""}
-                customerName={taskToLog?.customerName || ""}
+            />
+            {isLoading && (
+                <div className="absolute inset-0 bg-white/50 z-[100] flex items-center justify-center">
+                    <div className="animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full"></div>
+                </div>
+            )}
+
+            {/* NEW Modals */}
+            <TaskSimpleModal
+                isOpen={isSimpleModalOpen}
+                onClose={() => setIsSimpleModalOpen(false)}
+                onSave={handleSaveTask}
+                currentUser={null} // Utils will update owner_id
             />
         </div>
     );

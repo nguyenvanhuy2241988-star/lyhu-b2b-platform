@@ -1,4 +1,14 @@
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabaseClient";
+
+const supabase = createClient();
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+const getHeaders = (token?: string) => ({
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_KEY || '',
+    'Authorization': `Bearer ${token || SUPABASE_KEY}`
+});
 
 export type SalesLeadStatus = "NEW" | "CONTACTED" | "IN_PROGRESS" | "WON" | "LOST";
 
@@ -17,6 +27,7 @@ export interface SalesLead {
     address?: string;
     createdAt: string;
     assignedTo?: string;
+    source?: string;
 }
 
 const STORAGE_KEY = "lyhu_sales_leads_v1";
@@ -42,27 +53,79 @@ export function saveSalesLeads(leads: SalesLead[]) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
 }
 
-// --- ASYNC ---
-export const fetchSalesLeads = async (): Promise<SalesLead[]> => {
-    const { data, error } = await supabase
-        .from('leads')
-        .select('*');
+export function addSalesLead(lead: Omit<SalesLead, "id" | "createdAt">): SalesLead {
+    const leads = loadSalesLeads();
+    const newLead: SalesLead = {
+        ...lead,
+        id: `lead_${Date.now()}`,
+        createdAt: new Date().toISOString(),
+    };
+    leads.unshift(newLead); // Add to top
+    saveSalesLeads(leads);
+    saveSalesLeads(leads);
+    return newLead;
+}
 
-    if (error) {
-        console.error("Error loading leads:", error);
+export function updateSalesLeadStatus(id: string, status: SalesLeadStatus): SalesLead[] {
+    const leads = loadSalesLeads();
+    const updated = leads.map(lead =>
+        lead.id === id ? { ...lead, status } : lead
+    );
+    saveSalesLeads(updated);
+    return updated;
+}
+
+export function getSalesStats(leads: SalesLead[]) {
+    return {
+        total: leads.length,
+        new: leads.filter(l => l.status === "NEW").length,
+        contacted: leads.filter(l => l.status === "CONTACTED").length,
+        inProgress: leads.filter(l => l.status === "IN_PROGRESS").length,
+        won: leads.filter(l => l.status === "WON").length,
+        lost: leads.filter(l => l.status === "LOST").length,
+        estimatedRevenue: leads.reduce((sum, l) => sum + (l.estimatedRevenue || 0), 0)
+    };
+}
+
+// --- ASYNC ---
+export const fetchSalesLeads = async (userId?: string, token?: string): Promise<SalesLead[]> => {
+    if (!userId) {
+        console.warn("[fetchSalesLeads] No userId provided, returning empty.");
         return [];
     }
 
-    return data.map((l: any) => ({
-        id: l.id,
-        storeName: l.name,
-        contactName: l.name,
-        phone: l.phone,
-        area: "Unknown",
-        type: "Unknown",
-        status: (l.status.toUpperCase() as SalesLeadStatus),
-        estimatedRevenue: 0,
-        createdAt: l.created_at,
-        assignedTo: l.assigned_to
-    }));
+    try {
+        const headers = getHeaders(token);
+        const query = `assigned_to=eq.${userId}&order=created_at.desc`;
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/leads?select=*&${query}`, { headers });
+
+        if (!res.ok) {
+            console.error("Error loading leads:", await res.text());
+            return [];
+        }
+
+        const data = await res.json();
+
+        return (data || []).map((l: any) => ({
+            id: l.id,
+            storeName: l.name, // Map 'name' to storeName
+            contactName: l.name,
+            phone: l.phone,
+            address: l.address,
+            area: l.address || "Unknown", // Use address as area
+            type: "Telesales Lead", // Default
+            // Map 'telesales_status' if exists, else fall back or default
+            status: (l.telesales_status?.toUpperCase() || l.status?.toUpperCase() || "NEW") as SalesLeadStatus,
+            estimatedRevenue: 0,
+            // Map notes
+            notes: l.telesales_notes || l.note || "",
+            createdAt: l.created_at,
+            assignedTo: l.assigned_to,
+            // Added source for Dashboard display compatibility
+            source: l.source || "TELESALES"
+        }));
+    } catch (err) {
+        console.error("fetchSalesLeads Exception:", err);
+        return [];
+    }
 };

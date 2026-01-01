@@ -9,30 +9,49 @@ import { getCurrentUser, logout } from "@/lib/auth";
 import { UserRole } from "@/lib/auth";
 
 interface DashboardShellProps {
-    children: React.ReactNode;
-    role: UserRole;
+    role?: UserRole;
+    allowedRoles?: UserRole[];
     title: string;
+    children: React.ReactNode;
 }
 
-export default function DashboardShell({ children, role, title }: DashboardShellProps) {
+export default function DashboardShell({ children, role, allowedRoles, title }: DashboardShellProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [currentUser, setCurrentUser] = useState<any>(null);
     const router = useRouter();
 
     useEffect(() => {
-        const user = getCurrentUser();
-        if (!user) {
-            router.replace("/login");
-            return;
-        }
-        if (user.role !== role) {
-            router.replace("/login");
-        }
-    }, [router, role]);
+        const check = async () => {
+            const user = await getCurrentUser();
+            if (!user) {
+                router.replace("/login");
+                return;
+            }
+
+            // Access Control Logic
+            if (role && user.role !== role) {
+                router.replace("/login");
+                return; // Early return
+            }
+
+            if (allowedRoles && !allowedRoles.includes(user.role)) {
+                router.replace("/login");
+                return;
+            }
+
+            setCurrentUser(user);
+        };
+        check();
+    }, [router, role, allowedRoles]); // Added allowedRoles to dependency
+
+    // Determine the role to display in Sidebar
+    // Priority: Enforced Role -> User's Actual Role -> Fallback
+    const displayRole = role || currentUser?.role || 'telesales';
 
     return (
         <div className="flex min-h-screen bg-slate-50">
             <Sidebar
-                role={role}
+                role={displayRole}
                 isOpen={sidebarOpen}
                 onClose={() => setSidebarOpen(false)}
             />

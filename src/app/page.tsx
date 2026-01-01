@@ -1,46 +1,129 @@
+"use client";
+
 import Link from "next/link";
-import { ShieldCheck, Users, TrendingUp, UserPlus, Headset } from "lucide-react";
+import { ShieldCheck, Users, TrendingUp, UserPlus, Headset, Briefcase, Archive, Megaphone, Globe, FlaskConical, Truck, Calculator, ClipboardCheck, Video } from "lucide-react";
 
 const roles = [
+    // 1. Nhóm Quản trị (Management)
     {
         title: "Admin",
         description: "Quản trị hệ thống và người dùng",
-        href: "/login",
+        href: "/login?role=admin",
         icon: ShieldCheck,
         color: "text-blue-600",
         bg: "bg-blue-50",
     },
     {
-        title: "Customer",
-        description: "Đặt hàng và quản lý đơn hàng",
-        href: "/login",
-        icon: Users,
-        color: "text-primary-600",
-        bg: "bg-primary-50",
+        title: "Kế toán (Accountant)",
+        description: "Tài chính & Lương",
+        href: "/login?role=accountant",
+        icon: Calculator,
+        color: "text-emerald-600",
+        bg: "bg-emerald-50",
     },
+
+    // 2. Nhóm Hậu Cần (Operations)
+    {
+        title: "Sale Admin (Hậu cần)",
+        description: "Xử lý đơn & Báo giá",
+        href: "/login?role=sale_admin",
+        icon: ClipboardCheck,
+        color: "text-rose-600",
+        bg: "bg-rose-50",
+    },
+    {
+        title: "Kho vận",
+        description: "Quản lý tồn kho & xuất nhập",
+        href: "/login?role=warehouse",
+        icon: Archive,
+        color: "text-amber-600",
+        bg: "bg-amber-50",
+    },
+    {
+        title: "R&D (Nghiên cứu)",
+        description: "Dự án & Mẫu sản phẩm",
+        href: "/login?role=rnd",
+        icon: FlaskConical,
+        color: "text-cyan-600",
+        bg: "bg-cyan-50",
+    },
+    {
+        title: "Tuyển dụng",
+        description: "Quản lý tuyển dụng & nhân sự",
+        href: "/login?role=recruiter",
+        icon: Briefcase,
+        color: "text-rose-600",
+        bg: "bg-rose-50",
+    },
+
+    // 3. Nhóm Tiền Tuyến (Front-line)
     {
         title: "Sales",
         description: "Quản lý khách hàng và đơn hàng",
-        href: "/login",
+        href: "/login?role=sales",
         icon: TrendingUp,
         color: "text-green-600",
         bg: "bg-green-50",
     },
     {
+        title: "Telesales",
+        description: "Quản lý lead & đơn hàng telesales",
+        href: "/login?role=telesales",
+        icon: Headset,
+        color: "text-orange-600",
+        bg: "bg-orange-50",
+    },
+    {
+        title: "Sale Live Stream",
+        description: "Chốt đơn Live & Kho",
+        href: "/login?role=livestream",
+        icon: Video,
+        color: "text-red-600",
+        bg: "bg-red-50",
+    },
+    {
+        title: "TMĐT (E-commerce)",
+        description: "Đơn hàng đa kênh & Shopee",
+        href: "/login?role=ecommerce",
+        icon: Globe,
+        color: "text-violet-600",
+        bg: "bg-violet-50",
+    },
+    {
+        title: "Marketing",
+        description: "Quản lý chiến dịch & Content",
+        href: "/login?role=marketing",
+        icon: Megaphone,
+        color: "text-fuchsia-600",
+        bg: "bg-fuchsia-50",
+    },
+    {
         title: "CTV",
         description: "Quản lý lead và khách tiềm năng",
-        href: "/login",
+        href: "/login?role=ctv",
         icon: UserPlus,
         color: "text-purple-600",
         bg: "bg-purple-50",
     },
+
+    // 4. Nhóm Logistics
     {
-        title: "Telesales",
-        description: "Quản lý lead & đơn hàng telesales",
-        href: "/login",
-        icon: Headset,
-        color: "text-orange-600",
-        bg: "bg-orange-50",
+        title: "Shipper (Vận chuyển)",
+        description: "Giao hàng & COD",
+        href: "/login?role=shipper",
+        icon: Truck,
+        color: "text-amber-600",
+        bg: "bg-amber-50",
+    },
+
+    // Customer
+    {
+        title: "Customer",
+        description: "Đặt hàng và quản lý đơn hàng",
+        href: "/login?role=customer",
+        icon: Users,
+        color: "text-primary-600",
+        bg: "bg-primary-50",
     },
 ];
 
@@ -48,25 +131,35 @@ export default function Home() {
     return (
         <main className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
             <div className="max-w-6xl w-full">
-                {/* Header */}
-                <div className="text-center mb-8 sm:mb-12">
-                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-3">
-                        LYHU B2B Platform
-                    </h1>
-                    <p className="text-base sm:text-lg text-slate-600">
-                        Ứng dụng đặt hàng và quản trị kênh GT/MT cho LYHU
+                {/* Header with Brand Logo */}
+                <div className="text-center mb-10 sm:mb-20 flex flex-col items-center">
+                    <img
+                        src="/logo-full.png"
+                        alt="LYHU Logo"
+                        className="h-32 sm:h-48 w-auto mb-8 object-contain px-4"
+                        onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            e.currentTarget.parentElement?.insertAdjacentHTML('afterbegin', '<h1 class="text-6xl sm:text-7xl font-bold text-primary-600 mb-2">LYHU</h1>');
+                        }}
+                    />
+                    <div className="h-2 w-48 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full mb-8 shadow-sm"></div>
+                    <p className="text-lg sm:text-2xl text-slate-700 font-bold max-w-2xl tracking-tight">
+                        KẾT NỐI CHÂN THÀNH • HỢP TÁC BỀN VỮNG
+                    </p>
+                    <p className="text-base text-slate-500 mt-4 font-medium">
+                        Giải pháp quản trị kênh phân phối GT/MT hàng đầu
                     </p>
                 </div>
 
                 {/* Role Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                     {roles.map((role) => {
                         const Icon = role.icon;
                         return (
                             <Link
                                 key={role.title}
                                 href={role.href}
-                                className="group bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-primary-200 transition-all duration-200"
+                                className="group bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-primary-200 transition-all duration-200 cursor-pointer relative z-10 focus:outline-none focus:ring-2 focus:ring-primary-500"
                             >
                                 <div className={`w-12 h-12 rounded-lg ${role.bg} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                                     <Icon className={`w-6 h-6 ${role.color}`} />

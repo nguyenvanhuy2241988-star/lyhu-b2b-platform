@@ -38,6 +38,11 @@ const STATUS_CONFIG = {
         icon: XCircle,
         color: "bg-red-100 text-red-700",
     },
+    draft: {
+        label: "Nháp",
+        icon: Package,
+        color: "bg-gray-100 text-gray-700",
+    }
 };
 
 const ORDER_STATUS_OPTIONS = [
@@ -53,12 +58,14 @@ export default function OrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
 
     useEffect(() => {
-        const user = getCurrentUser();
-        if (user) {
-            // Use helper function
-            const customerOrders = getOrdersByCustomer(user.id);
-            setOrders(customerOrders);
-        }
+        (async () => {
+            const user = await getCurrentUser();
+            if (user) {
+                // Use helper function
+                const customerOrders = getOrdersByCustomer(user.id);
+                setOrders(customerOrders);
+            }
+        })();
     }, []);
 
     const filteredOrders = useMemo(() => {
@@ -225,7 +232,7 @@ export default function OrdersPage() {
                                     <tr key={order.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4 font-medium text-slate-900">{order.id}</td>
                                         <td className="px-6 py-4 text-slate-600">{formatDate(order.createdAt)}</td>
-                                        <td className="px-6 py-4 text-slate-600">{order.items.length} sản phẩm</td>
+                                        <td className="px-6 py-4 text-slate-600">{order.items?.length ?? 0} sản phẩm</td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${statusConfig?.color || "bg-gray-100 text-gray-700"}`}>
                                                 <StatusIcon className="w-3.5 h-3.5" />

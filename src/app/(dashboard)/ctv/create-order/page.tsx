@@ -30,7 +30,7 @@ interface ReceiverInfo {
 
 export default function CreateOrderPage() {
     const router = useRouter();
-    const currentUser = getCurrentUser();
+    // const currentUser = getCurrentUser(); <--- Removed
 
     // Step 1: Select Fulfillment Mode
     const [fulfillmentMode, setFulfillmentMode] = useState<FulfillmentMode | null>(null);
@@ -145,7 +145,8 @@ export default function CreateOrderPage() {
         }, 0);
     };
 
-    const handleCreateOrder = () => {
+    const handleCreateOrder = async () => {
+        const currentUser = await getCurrentUser();
         if (!fulfillmentMode) return;
         if (fulfillmentMode === "LYHU_SHIP" && (!receiverInfo.name || !receiverInfo.phone || !receiverInfo.address)) {
             alert("Vui lòng điền đầy đủ thông tin người nhận");

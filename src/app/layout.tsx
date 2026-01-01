@@ -10,6 +10,10 @@ export const metadata: Metadata = {
     description: "B2B Application for LYHU",
 };
 
+import { ToastProvider } from "@/components/ui/toast";
+
+import { AuthProvider } from "@/components/auth/AuthProvider";
+
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -17,7 +21,13 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={cn(inter.className, "min-h-screen bg-gray-50")}>{children}</body>
+            <body className={cn(inter.className, "min-h-screen bg-gray-50")}>
+                <AuthProvider>
+                    <ToastProvider>
+                        {children}
+                    </ToastProvider>
+                </AuthProvider>
+            </body>
         </html>
     );
 }

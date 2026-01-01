@@ -21,22 +21,24 @@ export default function CTVProfilePage() {
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
     useEffect(() => {
-        const user = getCurrentUser();
-        setCurrentUser(user);
+        (async () => {
+            const user = await getCurrentUser();
+            setCurrentUser(user);
 
-        if (user) {
-            const users = loadUsers();
-            const fullUser = users.find(u => u.id === user.id);
-            if (fullUser) {
-                setFormData({
-                    name: fullUser.name || "",
-                    phone: fullUser.phone || "",
-                    address: fullUser.address || "",
-                    province: fullUser.province || "",
-                });
-                setDerivedRegion(fullUser.region || getRegionFromProvince(fullUser.province || ""));
+            if (user) {
+                const users = loadUsers();
+                const fullUser = users.find(u => u.id === user.id);
+                if (fullUser) {
+                    setFormData({
+                        name: fullUser.name || "",
+                        phone: fullUser.phone || "",
+                        address: fullUser.address || "",
+                        province: fullUser.province || "",
+                    });
+                    setDerivedRegion(fullUser.region || getRegionFromProvince(fullUser.province || ""));
+                }
             }
-        }
+        })();
     }, []);
 
     const handleChange = (field: string, value: string) => {
@@ -215,9 +217,9 @@ export default function CTVProfilePage() {
                             </label>
                             <div className="px-4 py-3 bg-slate-100 border border-slate-200 rounded-lg">
                                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${derivedRegion === "North" ? "bg-blue-100 text-blue-700" :
-                                        derivedRegion === "Central" ? "bg-green-100 text-green-700" :
-                                            derivedRegion === "South" ? "bg-orange-100 text-orange-700" :
-                                                "bg-slate-200 text-slate-700"
+                                    derivedRegion === "Central" ? "bg-green-100 text-green-700" :
+                                        derivedRegion === "South" ? "bg-orange-100 text-orange-700" :
+                                            "bg-slate-200 text-slate-700"
                                     }`}>
                                     {REGION_LABELS[derivedRegion]}
                                 </span>

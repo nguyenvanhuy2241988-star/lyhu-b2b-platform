@@ -1,124 +1,173 @@
+"use client";
+
 import React, { useState } from "react";
-import { X, Phone, Clock, FileText, CheckCircle2 } from "lucide-react";
-import { CallLog } from "@/lib/telesalesTasksStore";
+import { X, Phone, Clock, MessageSquare, Save } from "lucide-react";
+import { CallResult, CALL_RESULT_LABELS } from "@/lib/crmDealsStore";
 
 interface LogCallModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (log: Omit<CallLog, "id" | "taskId" | "timestamp">) => void;
-    taskTitle: string;
-    customerName: string;
+    onSave: (data: {
+        call_result?: CallResult;
+        call_duration_seconds?: number;
+        description?: string;
+        // For backward compatibility
+        result?: string;
+        duration?: number;
+        note?: string;
+    }) => void;
+    customerName?: string;
+    customerPhone?: string;
+    // Alias for tasks page compatibility
+    taskTitle?: string;
 }
 
-export const LogCallModal = ({ isOpen, onClose, onSave, taskTitle, customerName }: LogCallModalProps) => {
-    const [result, setResult] = useState<CallLog['result']>('connected');
-    const [duration, setDuration] = useState<number>(0);
-    const [note, setNote] = useState("");
+export const LogCallModal = ({
+    isOpen,
+    onClose,
+    onSave,
+    customerName = "Khách hàng",
+    customerPhone = "",
+    taskTitle = ""
+}: LogCallModalProps) => {
+    const [callResult, setCallResult] = useState<CallResult>("answered");
+    const [durationMinutes, setDurationMinutes] = useState(5);
+    const [description, setDescription] = useState("");
+
+    // Use taskTitle as fallback for customerName display
+    const displayName = customerName || taskTitle || "Khách hàng";
+
+    const handleSave = () => {
+        onSave({
+            // New CRM format
+            call_result: callResult,
+            call_duration_seconds: durationMinutes * 60,
+            description: description.trim(),
+            // Old tasks format (for backward compatibility)
+            result: CALL_RESULT_LABELS[callResult],
+            duration: durationMinutes,
+            note: description.trim()
+        });
+        // Reset form
+        setCallResult("answered");
+        setDurationMinutes(5);
+        setDescription("");
+    };
+
+    const handleClose = () => {
+        setCallResult("answered");
+        setDurationMinutes(5);
+        setDescription("");
+        onClose();
+    };
 
     if (!isOpen) return null;
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        onSave({
-            result,
-            durationSeconds: duration,
-            note
-        });
-        onClose();
-        // Reset form
-        setResult('connected');
-        setDuration(0);
-        setNote("");
-    };
-
     return (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div
-                className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <div className="flex justify-between items-center p-4 border-b border-slate-100 bg-slate-50/50">
-                    <div className="flex items-center gap-2">
-                        <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
-                            <Phone className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-slate-800">Ghi kết quả cuộc gọi</h3>
-                            <p className="text-xs text-slate-500 truncate max-w-[200px]">{customerName} - {taskTitle}</p>
-                        </div>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50" onClick={handleClose}>
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden" onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="flex items-center gap-3 p-4 border-b bg-green-50">
+                    <div className="p-2 bg-green-100 rounded-full">
+                        <Phone className="w-5 h-5 text-green-600" />
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-1 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
-                    >
+                    <div className="flex-1">
+                        <h3 className="font-semibold text-slate-900">Ghi nhận cuộc gọi</h3>
+                        <p className="text-sm text-slate-500">{displayName}{customerPhone ? ` • ${customerPhone}` : ''}</p>
+                    </div>
+                    <button onClick={handleClose} className="text-slate-400 hover:text-slate-600">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-5 space-y-4">
-                    {/* Result */}
+                {/* Content */}
+                <div className="p-4 space-y-4">
+                    {/* Call Result */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Kết quả cuộc gọi <span className="text-red-500">*</span></label>
-                        <select
-                            className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                            value={result}
-                            onChange={(e) => setResult(e.target.value as any)}
-                        >
-                            <option value="connected">Nghe máy (Connected)</option>
-                            <option value="no_answer">Không nghe máy (No Answer)</option>
-                            <option value="busy">Máy bận (Busy)</option>
-                            <option value="wrong_number">Sai số (Wrong Number)</option>
-                            <option value="other">Khác (Other)</option>
-                        </select>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                            Kết quả cuộc gọi <span className="text-red-500">*</span>
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                            {(Object.entries(CALL_RESULT_LABELS) as [CallResult, string][]).map(([value, label]) => (
+                                <label
+                                    key={value}
+                                    className={`flex items-center gap-2 p-2.5 border rounded-lg cursor-pointer transition-all ${callResult === value
+                                        ? "border-green-400 bg-green-50 ring-1 ring-green-200"
+                                        : "border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                                        }`}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="callResult"
+                                        value={value}
+                                        checked={callResult === value}
+                                        onChange={() => setCallResult(value)}
+                                        className="w-4 h-4 text-green-600 focus:ring-green-500"
+                                    />
+                                    <span className="text-sm text-slate-700">{label}</span>
+                                </label>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Duration */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Thời lượng (giây)</label>
-                        <div className="relative">
-                            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                            <Clock className="w-4 h-4 inline mr-1" />
+                            Thời lượng (phút)
+                        </label>
+                        <div className="flex items-center gap-3">
                             <input
-                                type="number"
-                                min="0"
-                                className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                                placeholder="0"
-                                value={duration}
-                                onChange={(e) => setDuration(parseInt(e.target.value) || 0)}
+                                type="range"
+                                min="1"
+                                max="60"
+                                value={durationMinutes}
+                                onChange={(e) => setDurationMinutes(parseInt(e.target.value))}
+                                className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-green-600"
                             />
+                            <div className="w-16 text-center">
+                                <span className="text-lg font-semibold text-slate-900">{durationMinutes}</span>
+                                <span className="text-xs text-slate-500 ml-1">phút</span>
+                            </div>
+                        </div>
+                        <div className="flex justify-between text-xs text-slate-400 mt-1">
+                            <span>1 phút</span>
+                            <span>60 phút</span>
                         </div>
                     </div>
 
-                    {/* Note */}
+                    {/* Description */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Ghi chú</label>
-                        <div className="relative">
-                            <FileText className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
-                            <textarea
-                                className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm min-h-[80px]"
-                                placeholder="Nhập ghi chú chi tiết..."
-                                value={note}
-                                onChange={(e) => setNote(e.target.value)}
-                            />
-                        </div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                            <MessageSquare className="w-4 h-4 inline mr-1" />
+                            Ghi chú cuộc gọi
+                        </label>
+                        <textarea
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            rows={3}
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 resize-none"
+                            placeholder="VD: Khách quan tâm UHi, hẹn gọi lại thứ 2 tuần sau..."
+                        />
                     </div>
+                </div>
 
-                    <div className="flex justify-end gap-3 pt-2">
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg border border-transparent hover:border-slate-200 transition-all"
-                        >
-                            Hủy bỏ
-                        </button>
-                        <button
-                            type="submit"
-                            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm hover:shadow flex items-center gap-2 transition-all"
-                        >
-                            <CheckCircle2 className="w-4 h-4" />
-                            Lưu kết quả
-                        </button>
-                    </div>
-                </form>
+                {/* Footer */}
+                <div className="p-4 bg-slate-50 border-t flex justify-end gap-3">
+                    <button
+                        onClick={handleClose}
+                        className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-lg"
+                    >
+                        Hủy
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg flex items-center gap-2"
+                    >
+                        <Save className="w-4 h-4" />
+                        Lưu cuộc gọi
+                    </button>
+                </div>
             </div>
         </div>
     );

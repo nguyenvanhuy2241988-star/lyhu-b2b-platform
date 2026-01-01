@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import { Users, ShoppingBag, DollarSign, TrendingUp, Package, CreditCard } from "lucide-react";
 import { getAdminLeadStats, AdminLeadStats } from "@/lib/adminStats";
 import { getOrdersSummary } from "@/lib/ordersStore";
+import { getRevenueByDate, getLowStockItems, RevenueDataPoint, LowStockItem } from "@/lib/dashboardStore";
+import RevenueChart from "@/components/dashboard/RevenueChart";
+import LowStockAlert from "@/components/dashboard/LowStockAlert";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -31,26 +35,52 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export default function AdminDashboard() {
+    const { session } = useAuth();
     const [stats, setStats] = useState<AdminLeadStats | null>(null);
     const [orderStats, setOrderStats] = useState<{
         totalOrders: number;
         totalRevenue: number;
     } | null>(null);
+    const [revenueData, setRevenueData] = useState<RevenueDataPoint[]>([]);
+    const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingChart, setIsLoadingChart] = useState(true);
+
+    const loadData = async () => {
+        setIsLoading(true);
+        setIsLoadingChart(true);
+        try {
+            const token = session?.access_token;
+            // Load stats and orders summary in parallel
+            const [leadStats, revenue, lowStock] = await Promise.all([
+                getAdminLeadStats(token),
+                getRevenueByDate(30),
+                getLowStockItems()
+            ]);
+
+            setStats(leadStats);
+            setOrderStats({
+                totalOrders: leadStats.totalOrders,
+                totalRevenue: leadStats.totalOrderRevenue
+            });
+            setRevenueData(revenue);
+            setLowStockItems(lowStock);
+        } catch (err) {
+            console.error('[AdminDashboard] Load data error:', err);
+        } finally {
+            setIsLoading(false);
+            setIsLoadingChart(false);
+        }
+    };
 
     useEffect(() => {
-        const data = getAdminLeadStats();
-        setStats(data);
+        loadData();
 
-        const ordersData = getOrdersSummary();
-        setOrderStats(ordersData);
-
-        // Listen for updates
-        const handleUpdates = () => {
-            setOrderStats(getOrdersSummary());
-        };
+        // Listen for internal updates
+        const handleUpdates = () => loadData();
         window.addEventListener("orders-updated", handleUpdates);
         return () => window.removeEventListener("orders-updated", handleUpdates);
-    }, []);
+    }, [session?.access_token]);
 
     const statsCards = [
         {
@@ -105,6 +135,9 @@ export default function AdminDashboard() {
 
     return (
         <div className="space-y-6">
+            {/* Low Stock Alert */}
+            <LowStockAlert items={lowStockItems} isLoading={isLoadingChart} />
+
             {/* KPI Cards - CORE APP Style */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-6">
                 {statsCards.map((stat, index) => {
@@ -134,14 +167,8 @@ export default function AdminDashboard() {
             {/* Charts & Tables Section */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Biểu đồ tổng quan</h3>
-                    <div className="h-64 flex items-center justify-center text-slate-400 bg-slate-50 rounded-lg">
-                        <div className="text-center">
-                            <TrendingUp className="w-12 h-12 mx-auto mb-2 text-slate-300" />
-                            <p className="text-sm">Chart Placeholder</p>
-                            <p className="text-xs text-slate-400 mt-1">Biểu đồ thống kê leads</p>
-                        </div>
-                    </div>
+                    <h3 className="text-lg font-semibold text-slate-900 mb-4">Doanh thu 30 ngày qua</h3>
+                    <RevenueChart data={revenueData} isLoading={isLoadingChart} />
                 </div>
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                     <h3 className="text-lg font-semibold text-slate-900 mb-4">Tổng quan nhanh</h3>

@@ -68,27 +68,29 @@ export default function OnboardingPage() {
     });
 
     useEffect(() => {
-        const currentUser = getCurrentUser();
-        // Simulate checking extended profile from "DB" (mock data)
-        // In real app, we fetch /api/me to get full profile
-        // Here we just use what's in localStorage or mapped from mockUsers if we had a backend
+        (async () => {
+            const currentUser = await getCurrentUser();
+            // Simulate checking extended profile from "DB" (mock data)
+            // In real app, we fetch /api/me to get full profile
+            // Here we just use what's in localStorage or mapped from mockUsers if we had a backend
 
-        if (currentUser) {
-            setUser(currentUser);
-            // Initialize form if data exists
-            setFormData(prev => ({
-                ...prev,
-                phone: (currentUser as any).phone || "",
-                address: (currentUser as any).address || "",
-                province: (currentUser as any).province || "",
-                region: (currentUser as any).region || "",
-                ctvType: (currentUser as any).ctvType || "",
-                ctvMode: (currentUser as any).ctvMode || "",
-            }));
+            if (currentUser) {
+                setUser(currentUser);
+                // Initialize form if data exists
+                setFormData(prev => ({
+                    ...prev,
+                    phone: (currentUser as any).phone || "",
+                    address: (currentUser as any).address || "",
+                    province: (currentUser as any).province || "",
+                    region: (currentUser as any).region || "",
+                    ctvType: (currentUser as any).ctvType || "",
+                    ctvMode: (currentUser as any).ctvMode || "",
+                }));
 
-            // If already onboarded, maybe redirect? For now we allow re-onboarding for testing
-        }
-        setIsLoading(false);
+                // If already onboarded, maybe redirect? For now we allow re-onboarding for testing
+            }
+            setIsLoading(false);
+        })();
     }, []);
 
     const handleNext = () => {
@@ -162,8 +164,8 @@ export default function OnboardingPage() {
                             <div key={s} className="relative z-10 flex flex-col items-center">
                                 <div
                                     className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all border-4 ${step >= s
-                                            ? "bg-primary-500 text-white border-white shadow-lg"
-                                            : "bg-white text-slate-400 border-slate-100"
+                                        ? "bg-primary-500 text-white border-white shadow-lg"
+                                        : "bg-white text-slate-400 border-slate-100"
                                         }`}
                                 >
                                     {step > s ? <CheckCircle className="w-5 h-5" /> : s}
@@ -266,8 +268,8 @@ export default function OnboardingPage() {
                                             key={type.id}
                                             onClick={() => setFormData({ ...formData, ctvType: type.id })}
                                             className={`w-full p-4 rounded-xl border-2 text-left transition-all flex items-start gap-4 ${isSelected
-                                                    ? "border-primary-500 bg-primary-50 shadow-md"
-                                                    : "border-slate-200 hover:border-slate-300"
+                                                ? "border-primary-500 bg-primary-50 shadow-md"
+                                                : "border-slate-200 hover:border-slate-300"
                                                 }`}
                                         >
                                             <div className={`p-3 rounded-lg ${isSelected ? "bg-white text-primary-600" : "bg-slate-100 text-slate-500"}`}>
@@ -303,8 +305,8 @@ export default function OnboardingPage() {
                                             key={mode.id}
                                             onClick={() => setFormData({ ...formData, ctvMode: mode.id })}
                                             className={`p-6 rounded-xl border-2 text-left transition-all h-full flex flex-col ${isSelected
-                                                    ? "border-primary-500 bg-primary-50 shadow-md"
-                                                    : "border-slate-200 hover:border-slate-300"
+                                                ? "border-primary-500 bg-primary-50 shadow-md"
+                                                : "border-slate-200 hover:border-slate-300"
                                                 }`}
                                         >
                                             <div className={`p-3 rounded-lg w-fit mb-4 ${isSelected ? "bg-white text-primary-600" : "bg-slate-100 text-slate-500"}`}>
@@ -335,8 +337,8 @@ export default function OnboardingPage() {
                             onClick={handleBack}
                             disabled={step === 1}
                             className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium transition-colors ${step === 1
-                                    ? "text-slate-300 cursor-not-allowed"
-                                    : "text-slate-600 hover:bg-slate-100"
+                                ? "text-slate-300 cursor-not-allowed"
+                                : "text-slate-600 hover:bg-slate-100"
                                 }`}
                         >
                             <ArrowLeft className="w-4 h-4" />
@@ -347,8 +349,8 @@ export default function OnboardingPage() {
                             onClick={handleNext}
                             disabled={!canProceed()}
                             className={`flex items-center gap-2 px-8 py-2.5 rounded-lg font-medium shadow-sm transition-all ${!canProceed()
-                                    ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-                                    : "bg-primary-500 hover:bg-primary-600 text-white hover:shadow-md"
+                                ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                                : "bg-primary-500 hover:bg-primary-600 text-white hover:shadow-md"
                                 }`}
                         >
                             {step === 3 ? "Hoàn tất" : "Tiếp tục"}

@@ -28,89 +28,88 @@ export interface AdminLeadStats {
     latestLeads: AdminLead[];
 }
 
-export function getAdminLeads(): AdminLead[] {
-    const ctvLeads = loadCTVLeads();
-    const salesLeads = loadSalesLeads();
-    const customerOrders = getAllOrders();
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    // Map CTV leads to AdminLead format
-    const ctvAdminLeads: AdminLead[] = ctvLeads.map((lead: CtvLead) => ({
-        id: `ctv-${lead.id}`,
-        source: "CTV" as AdminLeadSource,
-        name: lead.storeName,
-        contactName: lead.contactName,
-        phone: lead.phone,
-        area: lead.area,
-        status: lead.status,
-        estimatedRevenue: 0,
-        createdAt: lead.createdAt,
-    }));
+const getHeaders = (token?: string) => ({
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_KEY || '',
+    'Authorization': `Bearer ${token || SUPABASE_KEY}`
+});
 
-    // Map Sales leads to AdminLead format
-    const salesAdminLeads: AdminLead[] = salesLeads.map((lead: SalesLead) => ({
-        id: `sales-${lead.id}`,
-        source: "Sales" as AdminLeadSource,
-        name: lead.storeName,
-        contactName: lead.contactName,
-        phone: lead.phone,
-        area: lead.area,
-        status: lead.status,
-        estimatedRevenue: lead.estimatedRevenue,
-        createdAt: lead.createdAt,
-    }));
+export async function getAdminLeads(token?: string): Promise<AdminLead[]> {
+    try {
+        const headers = getHeaders(token);
 
-    // Map Customer Orders to AdminLead format
-    const orderAdminLeads: AdminLead[] = customerOrders.map((order: CustomerOrder) => ({
-        id: `order-${order.id}`,
-        source: "Customer Order" as AdminLeadSource,
-        name: order.customerName,
-        contactName: order.customerName,
-        status: order.status,
-        estimatedRevenue: order.totalAmount,
-        createdAt: order.createdAt,
-    }));
+        // Fetch CTV leads (from leads table where source=CTV or assigned_to is null/ctv-related)
+        // For simplicity, we fetch all leads and map them. In a real app, use better filters.
+        const leadsRes = await fetch(`${SUPABASE_URL}/rest/v1/leads?select=*&order=created_at.desc`, { headers });
+        const leadsData = leadsRes.ok ? await leadsRes.json() : [];
 
-    // Combine and sort by createdAt descending
-    const allLeads = [...ctvAdminLeads, ...salesAdminLeads, ...orderAdminLeads];
-    allLeads.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        const allLeads: AdminLead[] = (leadsData || []).map((l: any) => ({
+            id: l.id,
+            source: (l.source === 'CTV' ? 'CTV' : 'Sales') as AdminLeadSource,
+            name: l.name || "Khách hàng",
+            contactName: l.name,
+            phone: l.phone,
+            area: l.address || "Việt Nam",
+            status: l.status || "NEW",
+            estimatedRevenue: 0, // Could be enriched if leads table has this
+            createdAt: l.created_at
+        }));
 
-    return allLeads;
+        allLeads.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return allLeads;
+    } catch (err) {
+        console.error("[getAdminLeads] Error:", err);
+        return [];
+    }
 }
 
-export function getAdminLeadStats(): AdminLeadStats {
-    const allLeads = getAdminLeads();
-    const customerOrders = getAllOrders();
+export async function getAdminLeadStats(token?: string): Promise<AdminLeadStats> {
+    try {
+        const headers = getHeaders(token);
+        const [allLeads, ordersRes] = await Promise.all([
+            getAdminLeads(token),
+            fetch(`${SUPABASE_URL}/rest/v1/orders?select=total_amount,status`, { headers })
+        ]);
 
-    const totalLeads = allLeads.filter((l) => l.source !== "Customer Order").length;
-    const totalCTVLeads = allLeads.filter((l) => l.source === "CTV").length;
-    const totalSalesLeads = allLeads.filter((l) => l.source === "Sales").length;
-    const totalOrders = customerOrders.length;
+        const ordersData = ordersRes.ok ? await ordersRes.json() : [];
 
-    const totalEstimatedRevenue = allLeads
-        .filter((l) => l.source === "Sales")
-        .reduce((sum, lead) => sum + (lead.estimatedRevenue || 0), 0);
+        const totalLeads = allLeads.length;
+        const totalCTVLeads = allLeads.filter(l => l.source === 'CTV').length;
+        const totalSalesLeads = allLeads.filter(l => l.source === 'Sales').length;
+        const totalOrders = ordersData.length;
 
-    const totalOrderRevenue = customerOrders.reduce(
-        (sum, order) => sum + (order.totalAmount || 0),
-        0
-    );
+        const totalEstimatedRevenue = 0; // TBD if needed
+        const totalOrderRevenue = ordersData
+            .filter((o: any) => o.status !== 'cancelled' && o.status !== 'draft')
+            .reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0);
 
-    // Count converted leads (Sales leads with WON status)
-    const convertedLeads = allLeads.filter(
-        (l) => l.source === "Sales" && l.status === "WON"
-    ).length;
+        const convertedLeads = allLeads.filter(l => l.status === 'WON').length;
+        const latestLeads = allLeads.slice(0, 10);
 
-    // Get latest 10 leads/orders
-    const latestLeads = allLeads.slice(0, 10);
-
-    return {
-        totalLeads,
-        totalCTVLeads,
-        totalSalesLeads,
-        totalOrders,
-        totalEstimatedRevenue,
-        totalOrderRevenue,
-        convertedLeads,
-        latestLeads,
-    };
+        return {
+            totalLeads,
+            totalCTVLeads,
+            totalSalesLeads,
+            totalOrders,
+            totalEstimatedRevenue,
+            totalOrderRevenue,
+            convertedLeads,
+            latestLeads,
+        };
+    } catch (err) {
+        console.error("[getAdminLeadStats] Error:", err);
+        return {
+            totalLeads: 0,
+            totalCTVLeads: 0,
+            totalSalesLeads: 0,
+            totalOrders: 0,
+            totalEstimatedRevenue: 0,
+            totalOrderRevenue: 0,
+            convertedLeads: 0,
+            latestLeads: [],
+        };
+    }
 }

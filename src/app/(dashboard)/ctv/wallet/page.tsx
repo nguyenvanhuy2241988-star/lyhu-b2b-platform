@@ -27,19 +27,21 @@ export default function CTVWalletPage() {
     useEffect(() => {
         recomputeWalletsFromSourceData();
 
-        const user = getCurrentUser();
-        setCurrentUser(user);
+        (async () => {
+            const user = await getCurrentUser();
+            setCurrentUser(user);
 
-        if (user) {
-            const walletData = getWalletByCtv(user.id);
-            setWallet(walletData);
+            if (user) {
+                const walletData = getWalletByCtv(user.id);
+                setWallet(walletData);
 
-            const draft = getDraftForCycle(user.id, cycle.cycleKey);
-            setCurrentDraft(draft || null);
+                const draft = getDraftForCycle(user.id, cycle.cycleKey);
+                setCurrentDraft(draft || null);
 
-            const history = getPayoutsByCtv(user.id).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-            setPayoutHistory(history);
-        }
+                const history = getPayoutsByCtv(user.id).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                setPayoutHistory(history);
+            }
+        })();
     }, [cycle.cycleKey]);
 
     const walletCards = [

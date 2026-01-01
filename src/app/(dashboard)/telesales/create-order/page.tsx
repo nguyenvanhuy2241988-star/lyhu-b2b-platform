@@ -1,13 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Product } from "@/mocks/data";
-import { Customer, loadCustomers } from "@/lib/supabase/customers";
+import { fetchCustomers, Customer, fetchDealItems } from "@/lib/crmDealsStore";
 import { loadProducts } from "@/lib/supabase/products";
-import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, User } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, User, ArrowLeft, Building } from "lucide-react";
 import { addOrderSupabase } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { createClient } from "@/lib/supabaseClient";
+import { reserveStock, getInventoryLevel, getDefaultWarehouseId } from "@/lib/inventoryStore";
+
+const supabase = createClient();
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -21,29 +25,101 @@ interface OrderItem {
     quantity: number;
 }
 
-export default function TelesalesCreateOrderPage() {
+function TelesalesCreateOrderContent() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const { user, session } = useAuth();
+
+    // Get deal_id and customer_id from URL
+    const dealIdFromUrl = searchParams.get('deal_id');
+    const customerIdFromUrl = searchParams.get('customer_id');
+
     // Data State
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
+    const [inventory, setInventory] = useState<Record<string, number>>({});
     const [isLoading, setIsLoading] = useState(true);
+    const [currentWarehouseId, setCurrentWarehouseId] = useState<string | null>(null);
+    const [dealInfo, setDealInfo] = useState<{ id: string; title: string } | null>(null);
 
-    // Filtered My Customers logic? 
-    // loadCustomers() now returns what the API returns (filtered by RLS or all). 
-    // We'll assume the list is correct.
+
+
 
     useEffect(() => {
         const fetchData = async () => {
+            if (!user || !session?.access_token) return;
+
             setIsLoading(true);
-            const [custs, prods] = await Promise.all([
-                loadCustomers(),
-                loadProducts()
-            ]);
-            setCustomers(custs);
-            setProducts(prods);
-            setIsLoading(false);
+            try {
+                const [custs, prods, warehouseId] = await Promise.all([
+                    fetchCustomers(undefined, session.access_token), // Fetch ALL customers
+                    loadProducts(session.access_token),
+                    getDefaultWarehouseId(session.access_token)
+                ]);
+
+                if (custs) setCustomers(custs);
+                if (prods) setProducts(prods);
+                if (warehouseId) setCurrentWarehouseId(warehouseId);
+
+                // Fetch Real-time Inventory
+                if (warehouseId) {
+                    const invMap: Record<string, number> = {};
+                    await Promise.all(prods.map(async (p) => {
+                        const level = await getInventoryLevel(p.id, warehouseId, session.access_token);
+                        invMap[p.id] = level?.quantity_available ?? 0;
+                    }));
+                    setInventory(invMap);
+                }
+
+                // Auto-select customer if coming from CRM
+                if (customerIdFromUrl && custs) {
+                    const customer = custs.find(c => c.id === customerIdFromUrl);
+                    if (customer) {
+                        setSelectedCustomer(customer);
+                        setCurrentStep(2);
+                    }
+                }
+
+                if (dealIdFromUrl) {
+                    // TODO: Refactor fetchDeal to Pure Fetch in crmDealsStore. 
+                    // For now, if we use supabase client here it effectively might deadlock if Realtime is active elsewhere.
+                    // But we used createClient defined in file.
+                    // Ideally: const deal = await fetchDeal(dealIdFromUrl, session.access_token);
+                    // But fetchDeal isn't updated to take token yet. 
+
+                    // fetchDealItems IS updated to take token.
+                    const items = await fetchDealItems(dealIdFromUrl, session.access_token);
+                    if (items.length > 0) {
+                        const mappedItems: OrderItem[] = [];
+                        items.forEach(di => {
+                            const prod = prods.find(p => p.id === di.product_id);
+                            if (prod) {
+                                mappedItems.push({
+                                    product: prod,
+                                    quantity: di.quantity
+                                });
+                            }
+                        });
+                        if (mappedItems.length > 0) {
+                            setOrderItems(mappedItems);
+                        }
+                    }
+
+                    // Fetch deal title manually with fetch to be safe?
+                    // const { data } = await supabase.from('crm_deals').select('id, title').eq('id', dealIdFromUrl).single();
+                    // if (data) setDealInfo(data);
+                }
+            } catch (err) {
+                console.error("Error loading create-order data:", err);
+            } finally {
+                setIsLoading(false);
+            }
         };
-        fetchData();
-    }, []);
+
+        if (session?.access_token) {
+            fetchData();
+        }
+    }, [customerIdFromUrl, dealIdFromUrl, user, session?.access_token]);
 
     // Step 1: Select customer
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -66,6 +142,11 @@ export default function TelesalesCreateOrderPage() {
         const existingItem = orderItems.find((item) => item.product.id === product.id);
 
         if (existingItem) {
+            const available = inventory[product.id] ?? 0;
+            if (existingItem.quantity + 1 > available) {
+                alert(`Chỉ còn ${available} sản phẩm trong kho!`);
+                return;
+            }
             setOrderItems((prev) =>
                 prev.map((item) =>
                     item.product.id === product.id
@@ -83,6 +164,13 @@ export default function TelesalesCreateOrderPage() {
             prev.map((item) => {
                 if (item.product.id === productId) {
                     const newQuantity = Math.max(1, item.quantity + delta);
+                    const available = inventory[productId] ?? 0;
+
+                    if (newQuantity > available) {
+                        alert(`Kho chỉ còn ${available} sản phẩm!`);
+                        return item;
+                    }
+
                     return { ...item, quantity: newQuantity };
                 }
                 return item;
@@ -100,21 +188,23 @@ export default function TelesalesCreateOrderPage() {
         }, 0);
     };
 
-    const router = useRouter();
-    const { user } = useAuth(); // Use Auth Context
-
     const handleCreateOrder = async () => {
         if (!selectedCustomer) return;
+
+        const userId = user?.id;
+        if (!userId) {
+            alert("❌ Không xác định được người dùng. Vui lòng đăng nhập lại.");
+            return;
+        }
 
         const total = calculateTotal();
 
         // 1. Create Order in Shared Store
-        // Using async addOrderSupabase
-        const newOrder = await addOrderSupabase({
+        const res = await addOrderSupabase({
             customerId: selectedCustomer.id,
-            customerName: selectedCustomer.name, // Ensure 'name' or 'storeName' match interface
+            customerName: selectedCustomer.name,
             source: "TELESALES",
-            telesalesUserId: user?.id,
+            telesalesUserId: userId,
             items: orderItems.map((item) => ({
                 sku: item.product.sku || "N/A",
                 name: item.product.name,
@@ -126,13 +216,16 @@ export default function TelesalesCreateOrderPage() {
                 productId: item.product.id
             })),
             totalAmount: total,
-            status: "draft", // Default to draft as per prompt
-            notes: "Đơn hàng tạo bởi Telesales"
-        });
+            status: "pending",
+            notes: dealInfo ? `Đơn hàng từ cơ hội: ${dealInfo.title}` : "Đơn hàng tạo bởi Telesales"
+        }, session?.access_token);
 
-        if (newOrder) {
+        if (res?.success && res.data) {
+            const newOrder = res.data;
             console.log("Created telesales order:", newOrder);
-            alert("✅ Tạo đơn hàng thành công!");
+
+            // 2. Success message
+            alert("✅ Tạo đơn hàng thành công & Đã giữ hàng!");
 
             // 3. Reset and Redirect
             setSelectedCustomer(null);
@@ -140,7 +233,8 @@ export default function TelesalesCreateOrderPage() {
             setCurrentStep(1);
             router.push("/telesales/orders");
         } else {
-            alert("❌ Tạo đơn hàng thất bại. Vui lòng thử lại.");
+            console.error(res?.error);
+            alert(`❌ Tạo đơn hàng thất bại: ${res?.error || "Lỗi không xác định"}`);
         }
     };
 
@@ -300,14 +394,23 @@ export default function TelesalesCreateOrderPage() {
                                             {product.name}
                                         </h4>
                                         <p className="text-xs text-slate-500 mb-2">SKU: {product.sku}</p>
-                                        <p className="text-lg font-bold text-slate-900 mb-3">
+                                        <p className="text-lg font-bold text-slate-900 mb-1">
                                             {formatPrice(product.wholesalePrice || 0)}
+                                        </p>
+                                        <p className={`text-xs font-semibold mb-3 ${(inventory[product.id] ?? 0) > 0 ? 'text-green-600' : 'text-red-600'
+                                            }`}>
+                                            {(inventory[product.id] ?? 0) > 0
+                                                ? `Sẵn hàng: ${inventory[product.id]}`
+                                                : 'Hết hàng'}
                                         </p>
                                         <button
                                             onClick={() => handleAddProduct(product)}
-                                            className={`w-full py-2 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors ${inOrder
-                                                ? "bg-indigo-600 text-white hover:bg-indigo-700"
-                                                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                            disabled={(inventory[product.id] ?? 0) <= 0}
+                                            className={`w-full py-2 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors ${(inventory[product.id] ?? 0) <= 0
+                                                ? "bg-slate-100 text-slate-400 cursor-not-allowed" // Disabled style
+                                                : inOrder
+                                                    ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                                                 }`}
                                         >
                                             <Plus className="w-4 h-4" />
@@ -399,5 +502,17 @@ export default function TelesalesCreateOrderPage() {
                 </>
             )}
         </div>
+    );
+}
+
+export default function TelesalesCreateOrderPage() {
+    return (
+        <Suspense fallback={
+            <div className="p-6 flex items-center justify-center">
+                <div className="animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full"></div>
+            </div>
+        }>
+            <TelesalesCreateOrderContent />
+        </Suspense>
     );
 }

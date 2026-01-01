@@ -1,36 +1,46 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Bell, Check, Info, AlertTriangle, XCircle, CheckCircle } from "lucide-react";
+import { Bell, Check, Info, AlertTriangle, XCircle, CheckCircle, ShoppingCart } from "lucide-react";
 import {
-    getNotificationsByUser,
+    fetchNotifications,
     getUnreadCount,
     markAsRead,
     markAllAsRead,
-    Notification,
-    loadNotifications
+    Notification
 } from "@/lib/notificationsStore";
-import { getCurrentUser } from "@/lib/auth";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { supabase } from "@/lib/supabaseClient";
 
 export function NotificationCenter() {
     const [isOpen, setIsOpen] = useState(false);
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const dropdownRef = useRef<HTMLDivElement>(null);
-    const user = getCurrentUser();
+    const { user } = useAuth();
+
+    const loadData = async () => {
+        const notis = await fetchNotifications(20);
+        setNotifications(notis);
+        const count = await getUnreadCount();
+        setUnreadCount(count);
+    };
 
     useEffect(() => {
-        if (!user) return;
+        loadData();
 
-        const load = () => {
-            setNotifications(getNotificationsByUser(user.id));
-            setUnreadCount(getUnreadCount(user.id));
-        };
+        // Realtime subscription for new notifications
+        const channel = supabase
+            .channel('notifications_realtime')
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'notifications' },
+                () => {
+                    loadData();
+                }
+            )
+            .subscribe();
 
-        load();
-        window.addEventListener("notifications-updated", load);
-
-        // Also click outside to close
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setIsOpen(false);
@@ -39,19 +49,19 @@ export function NotificationCenter() {
         document.addEventListener("mousedown", handleClickOutside);
 
         return () => {
-            window.removeEventListener("notifications-updated", load);
+            supabase.removeChannel(channel);
             document.removeEventListener("mousedown", handleClickOutside);
         };
-    }, [user?.id]);
+    }, []);
 
-    const handleMarkAsRead = (id: string) => {
-        markAsRead(id);
+    const handleMarkAsRead = async (id: string) => {
+        await markAsRead(id);
+        loadData();
     };
 
-    const handleMarkAllRead = () => {
-        if (user) {
-            markAllAsRead(user.id);
-        }
+    const handleMarkAllRead = async () => {
+        await markAllAsRead();
+        loadData();
     };
 
     if (!user) return null;
@@ -61,6 +71,7 @@ export function NotificationCenter() {
             case "success": return <CheckCircle className="w-4 h-4 text-green-500" />;
             case "warning": return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
             case "error": return <XCircle className="w-4 h-4 text-red-500" />;
+            case "order": return <ShoppingCart className="w-4 h-4 text-primary-500" />;
             default: return <Info className="w-4 h-4 text-blue-500" />;
         }
     };

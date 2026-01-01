@@ -20,21 +20,25 @@ export function useAuthGuard(expectedRole: UserRole) {
     const [isAuthorized, setIsAuthorized] = useState(false);
 
     useEffect(() => {
-        const user = getCurrentUser();
+        const checkAuth = async () => {
+            const user = await getCurrentUser();
 
-        if (!user) {
-            router.push("/login");
-            return;
-        }
+            if (!user) {
+                router.push("/login");
+                return;
+            }
 
-        if (user.role !== expectedRole) {
-            // Redirect to their correct dashboard
-            const correctPath = ROLE_PATHS[user.role] || "/login";
-            router.push(correctPath);
-            return;
-        }
+            if (user.role !== expectedRole) {
+                // Redirect to their correct dashboard
+                const role = user.role as UserRole;
+                const correctPath = ROLE_PATHS[role] || "/login";
+                router.push(correctPath);
+                return;
+            }
 
-        setIsAuthorized(true);
+            setIsAuthorized(true);
+        };
+        checkAuth();
     }, [expectedRole, router]);
 
     return isAuthorized;

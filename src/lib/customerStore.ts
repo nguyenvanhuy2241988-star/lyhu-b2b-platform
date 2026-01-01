@@ -97,7 +97,7 @@ export async function createOrder(customerDetails: { id: string; name: string })
     const cart = getCart();
     if (cart.length === 0) return null;
 
-    const totalAmount = cart.reduce((sum, item) => sum + (item.product.wholesalePrice || item.product.price) * item.quantity, 0);
+    const totalAmount = cart.reduce((sum, item) => sum + (item.product.wholesalePrice || item.product.basePrice) * item.quantity, 0);
 
     // Prepare for Supabase
     const orderData = {
@@ -107,7 +107,7 @@ export async function createOrder(customerDetails: { id: string; name: string })
         items: cart.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,
-            price: item.product.wholesalePrice || item.product.price // Fallback
+            price: item.product.wholesalePrice || item.product.basePrice // Fallback
         }))
     };
 

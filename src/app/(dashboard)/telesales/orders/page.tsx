@@ -1,10 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Filter, Eye, FileText } from "lucide-react";
-import { fetchOrders } from "@/lib/ordersStore"; // Changed to fetchOrders
+import { Search, Filter, Eye, FileText, MessageCircle } from "lucide-react";
+import { fetchOrders } from "@/lib/ordersStore";
+import { supabase } from "@/lib/supabaseClient"
 import type { Order } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { OrderDetailsModal } from "@/components/orders/OrderDetailsModal";
+import { OrderChatModal } from "@/components/orders/OrderChatModal";
+import { getOrdersWithUnreadMessages } from "@/lib/orderChatStore";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -27,29 +31,88 @@ export default function TelesalesOrdersPage() {
     const [statusFilter, setStatusFilter] = useState("all");
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [chatOrder, setChatOrder] = useState<{ id: string; readableId: string } | null>(null);
+    const [unreadOrders, setUnreadOrders] = useState<Set<string>>(new Set());
 
-    const { user } = useAuth();
+    const { user, session } = useAuth(); // ADDED session
 
     useEffect(() => {
-        const fetchOrdersData = async () => {
+        let mounted = true;
+
+        const loadOrders = async () => {
             if (!user) return;
             setIsLoading(true);
-            const all = await fetchOrders(); // Use Async Fetch
 
-            // Filter
-            const myOrders = all.filter(o =>
-                o.source === "TELESALES"
-                // && o.telesalesUserId === user.id // Uncomment if RLS isn't strict enough
-            );
-            setOrders(myOrders);
-            setIsLoading(false);
+            try {
+                // Pass token to fetchOrders
+                const all = await fetchOrders(session?.access_token);
+
+                if (!mounted) return;
+                setOrders(all || []);
+
+                // Check unread messages
+                if (all && all.length > 0) {
+                    const unread = await getOrdersWithUnreadMessages(all.map(o => o.id), session?.access_token);
+                    if (mounted) setUnreadOrders(unread);
+                }
+            } catch (error) {
+                console.error("[TelesalesOrders] Error:", error);
+                if (mounted) setOrders([]);
+            } finally {
+                if (mounted) setIsLoading(false);
+            }
         };
-        fetchOrdersData();
-    }, [user]);
+
+        if (session?.access_token) {
+            // Explicitly set auth for Realtime
+            supabase.realtime.setAuth(session.access_token);
+            loadOrders();
+        }
+
+        // Realtime Subscription
+        const channel = supabase
+            .channel('telesales_orders_realtime')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'orders' },
+                () => {
+                    loadOrders();
+                }
+            )
+            .subscribe();
+
+        // Realtime subscription for chat messages (badge updates)
+        const chatChannel = supabase
+            .channel('telesales_chat_realtime')
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'order_messages' },
+                (payload) => {
+                    const newMsg = payload.new as any;
+                    if (newMsg?.order_id) {
+                        // Add to unread orders (show badge)
+                        setUnreadOrders(prev => {
+                            const next = new Set(prev);
+                            next.add(newMsg.order_id);
+                            return next;
+                        });
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => {
+            mounted = false;
+            supabase.removeChannel(channel);
+            supabase.removeChannel(chatChannel);
+        };
+    }, [user?.id, session?.access_token]); // Added session?.access_token
 
     // Apply filters
     const filteredOrders = orders.filter((order) => {
         const matchesSearch =
+            (order.readableId?.toString() || "").includes(searchTerm) ||
             order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
             order.customerName.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -140,9 +203,25 @@ export default function TelesalesOrdersPage() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <button className="text-slate-400 hover:text-primary-600 transition-colors">
-                                            <Eye className="w-4 h-4" />
-                                        </button>
+                                        <div className="flex items-center justify-end gap-2">
+                                            <button
+                                                onClick={() => setChatOrder({ id: order.id, readableId: String(order.readableId || order.id.slice(0, 8)) })}
+                                                className="relative text-slate-400 hover:text-primary-600 transition-colors bg-slate-50 hover:bg-primary-50 p-2 rounded-lg"
+                                                title="Chat"
+                                            >
+                                                <MessageCircle className="w-4 h-4" />
+                                                {unreadOrders.has(order.id) && (
+                                                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
+                                                )}
+                                            </button>
+                                            <button
+                                                onClick={() => setSelectedOrder(order)}
+                                                className="text-slate-400 hover:text-indigo-600 transition-colors bg-slate-50 hover:bg-slate-100 p-2 rounded-lg"
+                                                title="Xem chi tiết"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -160,6 +239,29 @@ export default function TelesalesOrdersPage() {
                     </table>
                 </div>
             </div>
+
+            <OrderDetailsModal
+                isOpen={!!selectedOrder}
+                order={selectedOrder}
+                onClose={() => setSelectedOrder(null)}
+            />
+
+            {/* Chat Modal */}
+            {chatOrder && (
+                <OrderChatModal
+                    isOpen={!!chatOrder}
+                    onClose={() => setChatOrder(null)}
+                    orderId={chatOrder.id}
+                    orderReadableId={chatOrder.readableId}
+                    onMarkAsRead={() => {
+                        setUnreadOrders(prev => {
+                            const next = new Set(prev);
+                            next.delete(chatOrder.id);
+                            return next;
+                        });
+                    }}
+                />
+            )}
         </div>
     );
 }

@@ -26,13 +26,15 @@ export default function CTVEarningsPage() {
     const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
 
     useEffect(() => {
-        const user = getCurrentUser();
-        setCurrentUser(user);
-        if (user) {
-            const allOrders = loadOrders();
-            const ctvOrders = getCtvOrders(allOrders, user.id);
-            setOrders(ctvOrders);
-        }
+        (async () => {
+            const user = await getCurrentUser();
+            setCurrentUser(user);
+            if (user) {
+                const allOrders = loadOrders();
+                const ctvOrders = getCtvOrders(allOrders, user.id);
+                setOrders(ctvOrders);
+            }
+        })();
     }, []);
 
     const stats = useMemo(() => {
@@ -151,8 +153,8 @@ export default function CTVEarningsPage() {
                                         <td className="px-6 py-4 text-slate-600">{formatDate(order.createdAt)}</td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${order.fulfillmentMode === "SELF_SHIP"
-                                                    ? "bg-blue-100 text-blue-700"
-                                                    : "bg-purple-100 text-purple-700"
+                                                ? "bg-blue-100 text-blue-700"
+                                                : "bg-purple-100 text-purple-700"
                                                 }`}>
                                                 {order.fulfillmentMode === "SELF_SHIP" ? "Tự giao" : "LYHU giao"}
                                             </span>
@@ -165,10 +167,10 @@ export default function CTVEarningsPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${order.status === "delivered"
-                                                    ? "bg-green-100 text-green-700"
-                                                    : order.status === "cancelled"
-                                                        ? "bg-red-100 text-red-700"
-                                                        : "bg-yellow-100 text-yellow-700"
+                                                ? "bg-green-100 text-green-700"
+                                                : order.status === "cancelled"
+                                                    ? "bg-red-100 text-red-700"
+                                                    : "bg-yellow-100 text-yellow-700"
                                                 }`}>
                                                 {ORDER_STATUS_LABELS[order.status]}
                                             </span>

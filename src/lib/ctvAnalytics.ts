@@ -1,4 +1,5 @@
 import { Order, OrderStatus } from "./ordersStore";
+import { loadUsers } from "./usersStore";
 
 export interface CtvMonthlyStats {
     selfShipSales: number;
@@ -56,6 +57,8 @@ export function getCtvMonthlySummary(orders: Order[], year: number, month: numbe
 }
 
 export function getAdminCtvLeaderboard(allOrders: Order[]): CtvPerformance[] {
+    const users = loadUsers();
+    const userMap = new Map(users.map(u => [u.id, u]));
     const ctvMap = new Map<string, CtvPerformance>();
 
     allOrders.filter(o => o.source === "CTV").forEach(order => {
@@ -63,7 +66,7 @@ export function getAdminCtvLeaderboard(allOrders: Order[]): CtvPerformance[] {
 
         const existing = ctvMap.get(order.ctvId) || {
             ctvId: order.ctvId,
-            ctvName: order.ctvName || "Unknown CTV",
+            ctvName: userMap.get(order.ctvId)?.name || "Unknown CTV",
             totalOrders: 0,
             totalSales: 0,
             totalCommission: 0,

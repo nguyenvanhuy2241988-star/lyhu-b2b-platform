@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Trash2 } from "lucide-react";
+import { X, Calendar, User, Phone, UserPlus, CheckCircle, AlertTriangle, Trash2 } from "lucide-react";
 import {
     TaskStatus,
     TaskPriority,
     TASK_STATUS_LABELS,
     TelesalesTask,
-    TelesalesColumn
+    TelesalesColumn,
+    TaskType
 } from "@/lib/telesalesTasksStore";
 
 interface CreateTaskModalProps {
@@ -36,10 +37,10 @@ export const CreateTaskModal = ({
     onSave,
     onDelete,
     initialStatus = "today",
-    initialData = {},
+    initialData,
     columns = []
 }: CreateTaskModalProps) => {
-    const isEditMode = !!initialData.id;
+    const isEditMode = !!initialData?.id;
 
     const [formData, setFormData] = useState<TaskFormData>({
         title: "",
@@ -51,18 +52,24 @@ export const CreateTaskModal = ({
         description: ""
     });
 
+    const [showContactFields, setShowContactFields] = useState(false); // Collapsible contact
+
+    const taskType: TaskType = 'task'; // Phase 3: Always 'task', removed type selector
+
     // Reset form when opening
     useEffect(() => {
         if (isOpen) {
             setFormData({
-                title: initialData.title || "",
-                customerName: initialData.customerName || "",
-                phone: initialData.phone || "",
-                priority: initialData.priority || "normal",
-                dueDate: initialData.dueDate || new Date().toISOString().split('T')[0],
-                status: initialStatus, // initialStatus takes precedence for status if provided via open args, otherwise derived in Page
-                description: initialData.description || ""
+                title: initialData?.title || "",
+                customerName: initialData?.customer_name || "",
+                phone: initialData?.phone || "",
+                priority: initialData?.priority || "normal",
+                dueDate: initialData?.due_date ? new Date(initialData.due_date).toISOString().split('T')[0] : "",
+                status: initialStatus,
+                description: initialData?.note || ""
             });
+
+            // Phase 3: Type is always 'task', removed inference logic
         }
     }, [isOpen, initialStatus, initialData]);
 
@@ -71,18 +78,21 @@ export const CreateTaskModal = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSave({
-            ...formData,
-            id: initialData.id, // Pass ID if editing
-            type: initialData.type || "other",
-            relatedLeadId: initialData.relatedLeadId,
-            relatedOrderId: initialData.relatedOrderId,
-            leadId: initialData.leadId
+            id: initialData?.id,
+            title: formData.title,
+            customer_name: formData.customerName,
+            phone: formData.phone,
+            priority: formData.priority,
+            status: formData.status,
+            due_date: formData.dueDate || null,
+            note: formData.description,
+            type: taskType,
         });
         onClose();
     };
 
     const handleDelete = () => {
-        if (isEditMode && onDelete && initialData.id) {
+        if (isEditMode && onDelete && initialData?.id) {
             if (window.confirm("Bạn có chắc muốn xóa việc này không? Hành động này không thể hoàn tác.")) {
                 onDelete(initialData.id);
                 onClose();
@@ -93,49 +103,78 @@ export const CreateTaskModal = ({
     return (
         <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4">
             <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-in fade-in zoom-in duration-200">
-                <div className="flex items-center justify-between p-4 border-b border-slate-100">
-                    <h3 className="font-semibold text-lg text-slate-900">
-                        {isEditMode ? "Chỉnh sửa việc cần làm" : "Thêm việc cần làm"}
-                    </h3>
-                    <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-full text-slate-500">
-                        <X className="w-5 h-5" />
-                    </button>
+                <div className="p-4 border-b border-slate-100">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold text-lg text-slate-900">
+                            {isEditMode ? "✏️ Chỉnh sửa" : "➕ Thêm mới"}
+                        </h3>
+                        <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-full text-slate-500">
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+                    {isEditMode && initialData?.title && (
+                        <div className="text-sm text-slate-600">
+                            <span className="font-medium">{initialData.title}</span>
+                        </div>
+                    )}
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-4 space-y-4">
+                    {/* Type selector removed - Phase 3: Tasks only */}
+
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Tiêu đề <span className="text-red-500">*</span></label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                            Tiêu đề công việc <span className="text-red-500">*</span>
+                        </label>
                         <input
                             type="text"
                             required
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                            placeholder="Ví dụ: Gọi lại anh Hùng"
+                            placeholder="Ví dụ: Gọi lại khách A"
                             value={formData.title}
                             onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Tên khách hàng</label>
-                            <input
-                                type="text"
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                placeholder="Nguyễn Văn A"
-                                value={formData.customerName}
-                                onChange={e => setFormData(prev => ({ ...prev, customerName: e.target.value }))}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Số điện thoại</label>
-                            <input
-                                type="text"
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                placeholder="09xxx"
-                                value={formData.phone}
-                                onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                            />
-                        </div>
+                    {/* Collapsible Contact Section - Phase B */}
+                    <div className="border border-slate-200 rounded-lg p-3">
+                        <button
+                            type="button"
+                            onClick={() => setShowContactFields(!showContactFields)}
+                            className="flex items-center justify-between w-full text-left"
+                        >
+                            <span className="text-sm font-medium text-slate-700">
+                                👤 Thông tin liên hệ (tùy chọn)
+                            </span>
+                            <span className="text-slate-400">
+                                {showContactFields ? '▲' : '▼'}
+                            </span>
+                        </button>
+
+                        {showContactFields && (
+                            <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-slate-100">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Khách hàng</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        placeholder="Tên khách..."
+                                        value={formData.customerName}
+                                        onChange={e => setFormData(prev => ({ ...prev, customerName: e.target.value }))}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">SĐT</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                        placeholder="09xxx"
+                                        value={formData.phone}
+                                        onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                                    />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -153,7 +192,7 @@ export const CreateTaskModal = ({
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Trạng thái</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Cột trạng thái</label>
                             <select
                                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 value={formData.status}
@@ -176,10 +215,13 @@ export const CreateTaskModal = ({
                         <label className="block text-sm font-medium text-slate-700 mb-1">Hạn hoàn thành</label>
                         <input
                             type="date"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm text-slate-700"
                             value={formData.dueDate}
                             onChange={e => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
                         />
+                        {!formData.dueDate && !initialData?.id && (
+                            <p className="text-xs text-orange-500 mt-1">Không chọn ngày sẽ tự động vào "Hộp thư đến".</p>
+                        )}
                     </div>
 
                     <div>
@@ -217,6 +259,29 @@ export const CreateTaskModal = ({
                             >
                                 Hủy
                             </button>
+                            {isEditMode && (
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        onSave({
+                                            id: initialData?.id,
+                                            title: formData.title,
+                                            customer_name: formData.customerName,
+                                            phone: formData.phone,
+                                            priority: formData.priority,
+                                            due_date: formData.dueDate || null,
+                                            note: formData.description,
+                                            type: taskType,
+                                            status: 'done' as TaskStatus  // Set to done
+                                        });
+                                        onClose();
+                                    }}
+                                    className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg flex items-center gap-2"
+                                >
+                                    <CheckCircle className="w-4 h-4" />
+                                    Hoàn thành
+                                </button>
+                            )}
                             <button
                                 type="submit"
                                 className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg"

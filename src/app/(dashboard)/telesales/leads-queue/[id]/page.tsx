@@ -57,7 +57,7 @@ export default function LeadDetailsPage() {
             ...taskData,
             leadId: lead.id,
             relatedLeadId: lead.id,
-            customerName: lead.name,
+            customer_name: lead.name,
             phone: lead.phone
         });
         alert("Đã tạo việc cần làm thành công!"); // Simple feedback
@@ -173,7 +173,7 @@ export default function LeadDetailsPage() {
                 // Pre-fill data if supported by Modal props (will add next if strictly needed, current Modal supports initialStatus only? Need to check)
                 initialData={{
                     title: `Gọi lại ${lead.name}`,
-                    customerName: lead.name,
+                    customer_name: lead.name,
                     phone: lead.phone
                 }}
             />

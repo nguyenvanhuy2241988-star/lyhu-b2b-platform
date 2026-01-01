@@ -36,24 +36,26 @@ export default function CTVDashboard() {
     const [users, setUsers] = useState<any[]>([]);
 
     useEffect(() => {
-        const user = getCurrentUser();
-        setCurrentUser(user);
+        (async () => {
+            const user = await getCurrentUser();
+            setCurrentUser(user);
 
-        // Load Leads
-        const leadsData = loadLeads();
-        setLeads(leadsData);
+            // Load Leads
+            const leadsData = loadLeads();
+            setLeads(leadsData);
 
-        // Load Users for missions
-        const usersData = loadUsers();
-        setUsers(usersData);
+            // Load Users for missions
+            const usersData = loadUsers();
+            setUsers(usersData);
 
-        // Load Orders
-        const ordersData = loadOrders();
-        setAllOrders(ordersData);
-        if (user) {
-            const ctvOrders = ordersData.filter(o => o.ctvId === user.id);
-            setOrders(ctvOrders);
-        }
+            // Load Orders
+            const ordersData = loadOrders();
+            setAllOrders(ordersData);
+            if (user) {
+                const ctvOrders = ordersData.filter(o => o.ctvId === user.id);
+                setOrders(ctvOrders);
+            }
+        })();
     }, []);
 
     const leadStats = getLeadStats(leads);

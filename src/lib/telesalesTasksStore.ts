@@ -1,158 +1,387 @@
-import { getCurrentUser } from "./auth"; // This helper in auth.ts handles sync user? We'll see.
-import { supabase } from "@/lib/supabaseClient";
+'use client';
 
-export type TaskStatus = string;
+import { supabase } from './supabaseClient';
+
+// Helper for Pure Fetch
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+const getAuthHeaders = async (token?: string) => {
+    let finalToken = token;
+    if (!finalToken) {
+        const { data } = await supabase.auth.getSession();
+        finalToken = data.session?.access_token;
+    }
+    return {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY || '',
+        'Authorization': `Bearer ${finalToken || SUPABASE_KEY}`
+    };
+};
+
+export const TABLE = 'telesales_tasks' as const;
+
 export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent';
-export type TaskType = 'call_new_lead' | 'follow_up_lead' | 'confirm_order' | 'care_old_customer' | 'other';
 
-export interface TelesalesTask {
+// Updated TaskStatus as per latest request (omitting 'later' if that was intent, but safely keeping it if legacy data exists? User prompt was specific: "inbox" | "today" | "tomorrow" | "this_week" | "done")
+export type TaskStatus = 'inbox' | 'today' | 'tomorrow' | 'this_week' | 'done';
+export type TaskType = 'task'; // Phase 3: Removed 'lead' - use Leads Queue instead
+
+export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+    inbox: 'Hộp thư đến',
+    today: 'Hôm nay',
+    tomorrow: 'Ngày mai',
+    this_week: 'Tuần này',
+    done: 'Hoàn tất',
+};
+
+export const TASK_PRIORITY_LABELS: Record<string, string> = {
+    low: 'Thấp',
+    normal: 'Bình thường',
+    high: 'Cao',
+    urgent: 'Khẩn',
+};
+
+// Updated TelesalesColumn as per request
+// Updated TelesalesColumn as per request
+export type TelesalesColumn = {
     id: string;
-    title: string;
-    description?: string;
-    priority: TaskPriority;
+    label: string; // Renamed from title to match Page expectation and User Request
     status: TaskStatus;
-    order: number;
-    type: TaskType;
-    telesalesUserId: string;
-    relatedLeadId?: string;
-    leadId?: string;
-    relatedCustomerId?: string;
-    relatedOrderId?: string;
-    phone?: string;
-    customerName?: string;
-    dueDate?: string;
-    createdAt: string;
-    updatedAt: string;
-    lastResult?: string;
-    nextActionDate?: string;
-    campaign?: string;
-    orderAmount?: number;
-    completedAt?: string;
-    tags?: string[];
-    logs?: CallLog[];
-}
-
-export interface CallLog {
-    id: string;
-    taskId: string;
-    timestamp: string;
-    durationSeconds: number;
-    result: 'connected' | 'no_answer' | 'busy' | 'wrong_number' | 'other';
-    note?: string;
-}
-
-export interface TelesalesColumn {
-    id: string;
-    label: string;
     order: number;
     isDefault?: boolean;
     isVisible?: boolean;
-}
+};
 
 export const DEFAULT_COLUMNS: TelesalesColumn[] = [
-    { id: "inbox", label: "Hộp thư đến", order: 0, isDefault: true, isVisible: true },
-    { id: "today", label: "Hôm nay", order: 1, isDefault: true, isVisible: true },
-    { id: "tomorrow", label: "Ngày mai", order: 2, isVisible: true },
-    { id: "this_week", label: "Tuần này", order: 3, isVisible: true },
-    { id: "later", label: "Để sau", order: 4, isVisible: true },
-    { id: "done", label: "Hoàn tất", order: 5, isDefault: true, isVisible: true },
+    { id: 'inbox', label: 'Hộp thư đến', status: 'inbox', order: 10, isDefault: true, isVisible: true },
+    { id: 'today', label: 'Hôm nay', status: 'today', order: 20, isDefault: true, isVisible: true },
+    { id: 'tomorrow', label: 'Ngày mai', status: 'tomorrow', order: 30, isDefault: true, isVisible: true },
+    { id: 'this_week', label: 'Tuần này', status: 'this_week', order: 40, isDefault: true, isVisible: true },
+    { id: 'done', label: 'Đã xong', status: 'done', order: 50, isDefault: true, isVisible: true },
 ];
 
-const MOCK_TELESALES_TASKS: TelesalesTask[] = [
-    // ... (Mock data omitted for brevity, or keep if needed for default)
-];
+const COLUMNS_KEY = 'lyhu:telesales:task_columns:v1';
 
-const STORAGE_KEY_TASKS = "lyhu_telesales_tasks";
-const STORAGE_KEY_COLS = "lyhu_cols_v2";
-
-// --- SYNC FUNCTIONS (Legacy/UI State) ---
-
-export const loadTasks = (): TelesalesTask[] => {
-    if (typeof window === "undefined") return [];
+export function loadColumns(): TelesalesColumn[] {
+    if (typeof window === 'undefined') return DEFAULT_COLUMNS;
     try {
-        const stored = localStorage.getItem(STORAGE_KEY_TASKS);
-        if (!stored) {
-            return MOCK_TELESALES_TASKS;
-        }
-        return JSON.parse(stored);
-    } catch (error) {
-        console.error("Failed to load tasks:", error);
-        return [];
+        const raw = localStorage.getItem(COLUMNS_KEY);
+        if (!raw) return DEFAULT_COLUMNS;
+
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_COLUMNS;
+
+        // Clean and ensure label exists
+        const cleaned = parsed
+            .filter((c: any) => c && typeof c.id === 'string')
+            .map((c: any) => ({
+                id: String(c.id),
+                // Ensure label is derived from label -> title -> id to prevent "disappearing name"
+                label: (typeof c.label === 'string' && c.label.trim()) ? c.label : (c.title || String(c.id)),
+                // Preserve status and order for board logic
+                status: (c.status as TaskStatus) || (c.id as TaskStatus),
+                order: typeof c.order === 'number' ? c.order : 0,
+                isDefault: !!c.isDefault,
+                isVisible: c.isVisible !== false
+            }));
+
+        return cleaned.length > 0 ? cleaned : DEFAULT_COLUMNS;
+    } catch {
+        return DEFAULT_COLUMNS;
     }
-};
-
-export const saveTasks = (tasks: TelesalesTask[]) => {
-    if (typeof window === "undefined") return;
-    try {
-        localStorage.setItem(STORAGE_KEY_TASKS, JSON.stringify(tasks));
-        window.dispatchEvent(new Event("telesales-tasks-updated"));
-    } catch (error) {
-        console.error("Failed to save tasks:", error);
-    }
-};
-
-export const addTask = (taskInput: any): TelesalesTask => { // Kept simplified signature matching usage
-    const tasks = loadTasks();
-    const newTask = { ...taskInput, id: `TASK-${Date.now()}` };
-    saveTasks([newTask, ...tasks]);
-    return newTask;
-};
-
-// ... Other sync updates omitted, assuming we rely on loadTasks mostly.
-
-// --- ASYNC SUPABASE FUNCTIONS ---
-
-export const fetchTasks = async (): Promise<TelesalesTask[]> => {
-    const { data, error } = await supabase
-        .from('telesales_tasks')
-        .select('*');
-
-    if (error) {
-        console.error("Error loading tasks form Supabase:", error);
-        return [];
-    }
-
-    return data.map((t: any) => ({
-        id: t.id,
-        title: t.type,
-        priority: 'normal',
-        status: t.status,
-        order: 0,
-        type: t.type as TaskType,
-        telesalesUserId: t.assigned_to,
-        relatedLeadId: t.lead_id,
-        createdAt: t.created_at,
-        updatedAt: t.created_at,
-        logs: []
-    }));
-};
-
-export const addTaskSupabase = async (taskInput: any) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    await supabase.from('telesales_tasks').insert({
-        type: taskInput.type,
-        status: taskInput.status,
-        assigned_to: user.id
-    });
-};
-
-// Columns (always local)
-export const loadColumns = (): TelesalesColumn[] => {
-    if (typeof window === "undefined") return DEFAULT_COLUMNS;
-    const stored = localStorage.getItem(STORAGE_KEY_COLS);
-    return stored ? JSON.parse(stored) : DEFAULT_COLUMNS;
-};
-export const saveColumns = (cols: TelesalesColumn[]) => {
-    if (typeof window === "undefined") return;
-    localStorage.setItem(STORAGE_KEY_COLS, JSON.stringify(cols));
 }
 
-// Helper needed by Earnings Page presumably?
-export const getMyTasks = (): TelesalesTask[] => {
-    const tasks = loadTasks();
-    // Logic to filter by current user (sync)
-    // Return all for now if auth not sync
-    return tasks;
+export function saveColumns(cols: TelesalesColumn[]) {
+    if (typeof window === 'undefined') return;
+    try {
+        localStorage.setItem(COLUMNS_KEY, JSON.stringify(cols ?? DEFAULT_COLUMNS));
+    } catch { }
+}
+
+export type TelesalesTask = {
+    id: string;
+    user_id: string;
+
+    title: string;
+    customer_name?: string | null;
+    phone?: string | null;
+    note?: string | null;
+
+    status: TaskStatus;
+    priority: TaskPriority;
+    type: TaskType; // FIXED: Changed from task_type to type
+
+    due_date?: string | null;      // ISO string
+    completed_at?: string | null;  // ISO string
+
+    assigned_to?: string | null;   // User ID of assignee
+
+    order?: number | null;
+
+    created_at?: string;
+    updated_at?: string;
 };
+
+// ---- helpers ----
+async function getUserIdSafe(): Promise<string | null> {
+    try {
+        // Use getSession instead of getUser to avoid server hit/deadlock
+        const { data, error } = await supabase.auth.getSession();
+        if (error || !data.session) {
+            // console.warn('[getUserIdSafe] no session'); // noisy
+            return null;
+        }
+        return data.session.user.id;
+    } catch (e) {
+        console.warn('[getUserIdSafe] exception:', e);
+        return null;
+    }
+}
+
+function logSupabaseError(where: string, error: any) {
+    console.error(`[${where}]`, error?.message ?? error, error);
+}
+
+// ---- API ----
+// ---- API ----
+export async function fetchTasks(userId?: string, token?: string, filters?: { startDate?: string, endDate?: string }): Promise<TelesalesTask[]> {
+    try {
+        const activeUserId = userId || await getUserIdSafe();
+        if (!activeUserId) return [];
+
+        const headers = await getAuthHeaders(token);
+        // Query: user_id=eq.ID or assigned_to=eq.ID
+        let query = `or=(user_id.eq.${activeUserId},assigned_to.eq.${activeUserId})&order=order.asc.nullsfirst,created_at.desc`;
+
+        if (filters?.startDate) {
+            query += `&completed_at=gte.${filters.startDate}`;
+        }
+        if (filters?.endDate) {
+            query += `&completed_at=lte.${filters.endDate}`;
+        }
+
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*&${query}`, { headers });
+
+        if (!res.ok) {
+            const err = await res.json();
+            logSupabaseError('fetchTasks', err);
+            return [];
+        }
+
+        const data = await res.json();
+        return (data ?? []) as TelesalesTask[];
+    } catch (e) {
+        logSupabaseError('fetchTasks - Exception', e);
+        return [];
+    }
+}
+
+export async function createTaskSupabase(input: {
+    title: string;
+    customer_name?: string;
+    phone?: string;
+    note?: string;
+    status?: TaskStatus;
+    priority?: TaskPriority;
+    due_date?: string | null;
+    type?: TaskType;
+    assigned_to?: string | null;
+}, token?: string): Promise<TelesalesTask> { // Added token param
+    const userId = await getUserIdSafe(); // Could pass this too, but for write mostly safe? Or use token payload?
+    // Write operations are less prone to "loading" deadlocks than "onMount" reads, but safer to use Pure Fetch.
+    // However, getting userId from token in Pure Fetch requires decoding.
+    // Let's stick to supabase client for Writes? 
+    // The deadlock usually happens on "await supabase.auth.getUser()" during page load.
+    // Writes happen on user interaction.
+    // BUT, if the WebSocket is trying to connect, ANY supabase client call might hang (mutex).
+    // So Pure Fetch is safer for Writes too.
+    // I need userId.
+
+    // Let's assume for Writes, we can get userId from the caller or keep using getUserIdSafe (might hang).
+    // Safest: Use Pure Fetch and pass userId explicitly if possible.
+    // If I can't change all signatures easily, I'll attempt Supabase Client for Writes but pass Token to helper?
+    // Ideally refactor all to Pure Fetch.
+
+    // For now, I'll implement Pure Fetch but still rely on getUserIdSafe if caller doesn't provide it...
+    // Wait, getUserIdSafe uses supabase.auth.getUser().
+    // If that hangs, this hangs.
+    // I'll update the signature to accept userId optionally, but I can't break existing callers easily yet.
+    // I'll use `supabase.auth.getSession()` in `getUserIdSafe` instead of getUser() maybe? 
+    // `getSession` reads from local storage/memory, `getUser` hits the server.
+    // `getUser` is the one that hangs.
+
+    // I will modify `getUserIdSafe` to try `getSession` first.
+
+    // ... Actually, I'll stick to: Refactor `createTaskSupabase` to use Pure Fetch and accept token.
+    // I will try to get userId from token if I can, or use logic.
+
+    // RE-STRATEGY: I will modify `getUserIdSafe` to be non-blocking (use getSession).
+    // And implement Pure Fetch for the HTTP request part.
+
+    const activeUserId = await getUserIdSafe();
+    if (!activeUserId) throw new Error('NOT_AUTHENTICATED');
+
+    const headers = await getAuthHeaders(token);
+    const payload = {
+        user_id: activeUserId,
+        title: input.title,
+        customer_name: input.customer_name ?? null,
+        phone: input.phone ?? null,
+        note: input.note ?? null,
+        status: input.status ?? 'inbox',
+        priority: input.priority ?? 'normal',
+        due_date: input.due_date ?? null,
+        type: input.type ?? 'task',
+        assigned_to: input.assigned_to ?? null,
+        order: Math.floor(Date.now() / 1000),
+    };
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
+        method: 'POST',
+        headers: { ...headers, 'Prefer': 'return=representation' },
+        body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+        const err = await res.json();
+        console.error("createTaskSupabase error:", err);
+        throw new Error(err.message);
+    }
+
+    const data = await res.json();
+    return data[0] as TelesalesTask;
+}
+
+export async function updateTaskSupabase(taskId: string, patch: Partial<TelesalesTask>, token?: string) {
+    const userId = await getUserIdSafe();
+    if (!userId) return { ok: false, error: 'NOT_AUTHENTICATED' as const };
+
+    const headers = await getAuthHeaders(token);
+    const body = {
+        title: patch.title,
+        customer_name: patch.customer_name ?? null,
+        phone: patch.phone ?? null,
+        note: patch.note ?? null,
+        status: patch.status,
+        priority: patch.priority,
+        due_date: patch.due_date ?? null,
+        completed_at: patch.completed_at ?? null,
+        order: patch.order ?? undefined,
+        type: patch.type,
+        assigned_to: patch.assigned_to ?? undefined,
+        updated_at: new Date().toISOString(),
+    };
+
+    // Clean undefined
+    Object.keys(body).forEach(key => (body as any)[key] === undefined && delete (body as any)[key]);
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${taskId}&user_id=eq.${userId}`, {
+        method: 'PATCH',
+        headers: { ...headers, 'Prefer': 'return=representation' },
+        body: JSON.stringify(body)
+    });
+
+    if (!res.ok) {
+        const err = await res.json();
+        logSupabaseError('updateTaskSupabase', err);
+        return { ok: false, error: err.message };
+    }
+
+    const data = await res.json();
+    return { ok: true, data: data[0] as TelesalesTask };
+}
+
+export async function moveTaskSupabase(taskId: string, status: TaskStatus, order?: number) {
+    return updateTaskSupabase(taskId, { status, order: order ?? Date.now() });
+}
+
+export async function deleteTaskSupabase(taskId: string) {
+    const userId = await getUserIdSafe();
+    if (!userId) return { ok: false, error: 'NOT_AUTHENTICATED' as const };
+
+    const { error } = await supabase
+        .from(TABLE)
+        .delete()
+        .eq('id', taskId)
+        .eq('user_id', userId);
+
+    if (error) {
+        logSupabaseError('deleteTaskSupabase', error);
+        return { ok: false, error: error.message };
+    }
+
+    return { ok: true };
+}
+
+// ---- backward-compatible aliases ----
+export const getMyTasks = fetchTasks;
+export const getTasks = fetchTasks;
+// backward-compatible alias (fix addTaskSupabase not defined)
+export const addTaskSupabase = createTaskSupabase;
+export const addTask = createTaskSupabase; // Alias for leads-queue pages
+
+// New: Dual-Write for Leads
+export async function createLeadSupabase(input: {
+    name: string;
+    phone: string;
+    note?: string;
+}): Promise<any> {
+    const userId = await getUserIdSafe();
+    if (!userId) throw new Error('NOT_AUTHENTICATED');
+
+    // Create Lead in public.leads
+    const { data: leadData, error: leadError } = await supabase
+        .from('leads')
+        .insert({
+            assigned_to: userId,
+            name: input.name,
+            phone: input.phone,
+            note: input.note,
+            telesales_status: 'new',
+            created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+    if (leadError) {
+        console.error("createLeadSupabase error:", leadError);
+        // Fallback: If 'leads' table missing or error, just log and continue? 
+        // User asked for "Auto add". We should try.
+        // If it fails, maybe we shouldn't block the task creation?
+        // But for "Lead" type, it's critical. Let's throw for now to see feedback.
+        throw leadError;
+    }
+    return leadData;
+}
+
+export async function createLeadAsTask(input: {
+    customer_name: string;
+    phone: string;
+    note?: string;
+    due_date?: string | null;
+}) {
+    // 1. Create Lead in 'leads' table (Dual Write)
+    try {
+        await createLeadSupabase({
+            name: input.customer_name,
+            phone: input.phone,
+            note: input.note
+        });
+    } catch (e) {
+        console.warn("Could not create lead in public.leads (dual-write failed), proceeding with task only.", e);
+        // We proceed so the user is not blocked, but we warn.
+    }
+
+    // 2. Create Task in 'telesales_tasks'
+    return createTaskSupabase({
+        title: 'Gọi lần 1',
+        customer_name: input.customer_name,
+        phone: input.phone,
+        note: input.note ?? '',
+        status: input.due_date ? 'today' : 'inbox',
+        priority: 'normal',
+        due_date: input.due_date ?? null,
+        type: 'task', // Phase 3: Changed from 'lead' to 'task'
+    });
+}

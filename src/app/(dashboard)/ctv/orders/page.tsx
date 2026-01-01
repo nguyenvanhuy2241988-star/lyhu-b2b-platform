@@ -38,6 +38,11 @@ const STATUS_CONFIG = {
         icon: XCircle,
         color: "bg-red-100 text-red-700",
     },
+    draft: {
+        label: "Nháp",
+        icon: Package,
+        color: "bg-gray-100 text-gray-700",
+    }
 };
 
 const ORDER_STATUS_OPTIONS = [
@@ -54,14 +59,17 @@ export default function CTVOrdersPage() {
     const [currentUser, setCurrentUser] = useState<any>(null);
 
     useEffect(() => {
-        const user = getCurrentUser();
-        setCurrentUser(user);
-        if (user) {
-            const allOrders = loadOrders();
-            // Filter orders for this CTV
-            const ctvOrders = allOrders.filter(o => o.ctvId === user.id);
-            setOrders(ctvOrders);
-        }
+        const fetchUser = async () => {
+            const user = await getCurrentUser();
+            setCurrentUser(user);
+            if (user) {
+                const allOrders = loadOrders();
+                // Filter orders for this CTV
+                const ctvOrders = allOrders.filter(o => o.ctvId === user.id);
+                setOrders(ctvOrders);
+            }
+        };
+        fetchUser();
     }, []);
 
     const filteredOrders = useMemo(() => {
@@ -154,7 +162,7 @@ export default function CTVOrdersPage() {
                                         </span>
                                     </div>
                                     <p className="text-sm text-slate-600">
-                                        Ngày đặt: {formatDate(order.createdAt)} • {order.items.length} sản phẩm
+                                        Ngày đặt: {formatDate(order.createdAt)} • {order.items?.length ?? 0} sản phẩm
                                     </p>
                                 </div>
                                 <span className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${statusConfig?.color || "bg-gray-100 text-gray-700"}`}>

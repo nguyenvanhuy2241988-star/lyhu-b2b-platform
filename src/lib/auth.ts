@@ -1,6 +1,19 @@
 import { supabase } from "@/lib/supabaseClient";
 import { User, loadUsers } from "@/lib/usersStore";
 
+export type AuthUser = User;
+
+export const getRoleRedirect = (role?: string | null): string => {
+    switch (role?.toLowerCase().trim()) {
+        case "admin": return "/admin";
+        case "telesales": return "/telesales";
+        case "sales": return "/sales";
+        case "ctv": return "/ctv";
+        case "customer": return "/customer";
+        default: return "/";
+    }
+};
+
 // --- SUPABASE AUTH ---
 
 export const signInWithPassword = async (email: string, password: string) => {
@@ -22,6 +35,10 @@ export const signOut = async () => {
     return { error };
 };
 
+export const logout = signOut;
+
+export type UserRole = "admin" | "sales" | "ctv" | "customer" | "telesales" | "recruiter" | "warehouse" | "marketing" | "ecommerce" | "rnd" | "shipper" | "accountant" | "sale_admin" | "livestream";
+
 export const getSession = async () => {
     const { data, error } = await supabase.auth.getSession();
     return { session: data.session, error };
@@ -32,16 +49,9 @@ export const getSession = async () => {
 const STORAGE_KEY_USER = "lyhu_user"; // Align with setCurrentUser logic if possible. login/page uses set item?
 // Actually login/page checks `authenticateUser` then `setCurrentUser`.
 
+// Mock authentication removed. Use Supabase Auth.
 export const authenticateUser = (email: string): User | null => {
-    // Mock authentication against loadUsers()
-    const users = loadUsers();
-    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    // For mock, any password works if email matches, or we can check logic.
-    // Original login checked 'admin123' hardcoded in state? NO, login/page has state `password`.
-    // But `authenticateUser` (step 594 viewed usage) only takes `email`.
-    // So password check was skipped or inside authenticateUser?
-    // Step 594: `const user = authenticateUser(email.trim());`. It ignored password.
-    return user || null;
+    return null;
 };
 
 export const setCurrentUser = (user: User) => {
@@ -56,26 +66,29 @@ export const setCurrentUser = (user: User) => {
 // Note: Supabase user has different shape than User interface.
 // We should standardize. Telesales pages expect `user.id`.
 export const getCurrentUser = async (): Promise<any | null> => {
-    // 1. Try Supabase
-    const { data } = await supabase.auth.getUser();
-    if (data.user) {
+    // 1. Try Supabase (Use getSession to avoid server-side hang on weak connections/sockets)
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.user) {
+        const user = data.session.user;
         // Map Supabase user to our User interface?
+        // Fetch role from profiles table (Source of Truth)
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
         return {
-            id: data.user.id,
-            email: data.user.email,
-            role: data.user.user_metadata?.role || 'telesales', // Fallback
-            name: data.user.user_metadata?.full_name || data.user.email,
+            id: user.id,
+            email: user.email,
+            role: profile?.role || 'telesales', // Fallback only if profile missing (shouldn't happen)
+            name: user.user_metadata?.full_name || user.email,
             // ... other fields
         };
     }
 
-    // 2. Try LocalStorage
-    if (typeof window !== "undefined") {
-        const stored = localStorage.getItem(STORAGE_KEY_USER);
-        if (stored) {
-            return JSON.parse(stored);
-        }
-    }
+    // 2. Try LocalStorage - REMOVED for Security Standardization
+    // User must be authenticated via Supabase.
 
     return null;
 };

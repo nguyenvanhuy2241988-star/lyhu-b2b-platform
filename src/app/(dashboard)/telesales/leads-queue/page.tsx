@@ -17,15 +17,37 @@ export default function LeadsQueuePage() {
     const { user } = useAuth(); // Need auth context
 
     useEffect(() => {
+        let mounted = true;
+
         const fetchLeads = async () => {
-            if (!user) return;
             setIsLoading(true);
-            const data = await fetchSalesLeads(); // Async Fetch
-            setLeads(data);
-            setIsLoading(false);
+            try {
+                console.log("AUTH_UID", user?.id);
+                console.log("telesales uid:", user?.id);
+                const data = await fetchSalesLeads(user?.id);
+
+                if (!mounted) return;
+
+                console.log("leads data length:", data?.length);
+                setLeads(data ?? []);
+            } catch (error) {
+                console.error("fetchSalesLeads error:", error);
+                if (mounted) setLeads([]);
+            } finally {
+                if (mounted) setIsLoading(false);
+            }
         };
-        fetchLeads();
-    }, [user]);
+
+        if (user?.id) {
+            fetchLeads();
+        } else {
+            setIsLoading(false);
+        }
+
+        return () => {
+            mounted = false;
+        };
+    }, [user?.id]);
 
     // Modal state
     const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);
@@ -130,9 +152,9 @@ export default function LeadsQueuePage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${lead.status === 'NEW' ? 'bg-blue-100 text-blue-800' :
-                                                lead.status === 'CONTACTED' ? 'bg-yellow-100 text-yellow-800' :
-                                                    lead.status === 'WON' ? 'bg-green-100 text-green-800' :
-                                                        'bg-red-100 text-red-800'
+                                            lead.status === 'CONTACTED' ? 'bg-yellow-100 text-yellow-800' :
+                                                lead.status === 'WON' ? 'bg-green-100 text-green-800' :
+                                                    'bg-red-100 text-red-800'
                                             }`}>
                                             {lead.status === 'NEW' ? 'Mới' :
                                                 lead.status === 'CONTACTED' ? 'Đã liên hệ' :
@@ -170,7 +192,7 @@ export default function LeadsQueuePage() {
                                     <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
                                         <div className="flex flex-col items-center gap-2">
                                             <Search className="w-8 h-8 text-slate-300" />
-                                            <p>Không tìm thấy lead nào phù hợp</p>
+                                            <p>Chưa có lead nào</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -187,10 +209,9 @@ export default function LeadsQueuePage() {
                 initialStatus="today"
                 initialData={selectedLeadForTask ? {
                     title: `Gọi lại ${selectedLeadForTask.storeName}`,
-                    customerName: selectedLeadForTask.storeName,
+                    customer_name: selectedLeadForTask.storeName,
                     phone: selectedLeadForTask.phone,
-                    type: "follow_up_lead",
-                    relatedLeadId: selectedLeadForTask.id
+                    type: "task" // Phase 3: Changed from "lead" to "task"
                 } : {}}
             />
         </div>

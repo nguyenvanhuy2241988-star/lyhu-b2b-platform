@@ -65,10 +65,34 @@ export default function AdminTelesalesKpiPage() {
         return { from: start, to: end, label: l };
     }, [dateRange]);
 
-    // Data Selectors
-    // We pass refreshKey to dependencies to re-calc when events fire
-    const teamStats = useMemo(() => getGlobalKpiSummary(from, to), [from, to, refreshKey]);
-    const userStats = useMemo(() => getKpiSummaryByUser(from, to), [from, to, refreshKey]);
+    // Data State (Async)
+    const [teamStats, setTeamStats] = useState<any>({
+        totalCalls: 0,
+        totalOrders: 0,
+        totalRevenue: 0,
+        totalCommission: 0,
+        conversionRate: 0
+    });
+    const [userStats, setUserStats] = useState<AdminTeleKpiRow[]>([]);
+
+    useEffect(() => {
+        let alive = true;
+        const fetchData = async () => {
+            try {
+                const [g, u] = await Promise.all([
+                    getGlobalKpiSummary(from, to),
+                    getKpiSummaryByUser(from, to)
+                ]);
+                if (!alive) return;
+                setTeamStats(g);
+                setUserStats(u);
+            } catch (err) {
+                console.error("Error loading KPI", err);
+            }
+        };
+        fetchData();
+        return () => { alive = false; };
+    }, [from, to, refreshKey]);
 
     // Sorting State
     const [sortConfig, setSortConfig] = useState<{ key: keyof AdminTeleKpiRow; direction: 'asc' | 'desc' } | null>({ key: 'totalRevenue', direction: 'desc' });

@@ -1,5 +1,7 @@
 import { ROLES } from "@/lib/constants";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@/lib/supabaseClient";
+
+const supabase = createClient();
 
 export type UserRole = (typeof ROLES)[keyof typeof ROLES];
 export type Region = "North" | "Central" | "South" | "Other";
@@ -26,37 +28,8 @@ export interface User {
 const USERS_STORAGE_KEY = "lyhu_users";
 
 // Default mock users with location data
-const defaultMockUsers: User[] = [
-    {
-        id: "1",
-        email: "admin@lyhu.vn",
-        name: "Admin LYHU",
-        role: ROLES.ADMIN,
-    },
-    {
-        id: "2",
-        email: "sales@lyhu.vn",
-        name: "Sales LYHU",
-        role: ROLES.SALES,
-    },
-    {
-        id: "3",
-        email: "ctv@lyhu.vn",
-        name: "CTV LYHU",
-        role: ROLES.CTV,
-        referralCode: "CTV-LYHU",
-        phone: "0901234567",
-        address: "123 Nguyễn Huệ, Quận 1",
-        province: "TP.HCM",
-        region: "South",
-    },
-    {
-        id: "4",
-        email: "customer@lyhu.vn",
-        name: "Khách hàng LYHU",
-        role: ROLES.CUSTOMER,
-    },
-];
+// Default mock users deleted to enforce Supabase Auth
+const defaultMockUsers: User[] = [];
 
 function generateReferralCode(): string {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -89,12 +62,25 @@ export function loadUsers(): User[] {
     if (typeof window === "undefined") return defaultMockUsers;
     try {
         const stored = localStorage.getItem(USERS_STORAGE_KEY);
-        if (stored) {
-            return JSON.parse(stored);
+        let users: User[] = stored ? JSON.parse(stored) : [];
+
+        if (users.length === 0) {
+            users = defaultMockUsers;
+            saveUsers(users);
+        } else {
+            // Ensure new defaults (like telesales) are present
+            let hasNewDefaults = false;
+            defaultMockUsers.forEach(defaultUser => {
+                if (!users.find(u => u.email === defaultUser.email)) {
+                    users.push(defaultUser);
+                    hasNewDefaults = true;
+                }
+            });
+            if (hasNewDefaults) {
+                saveUsers(users);
+            }
         }
-        // Initialize with defaults if not exists
-        saveUsers(defaultMockUsers);
-        return defaultMockUsers;
+        return users;
     } catch (error) {
         console.error("Failed to load users:", error);
         return defaultMockUsers;
@@ -121,6 +107,14 @@ export function getUserByReferralCode(code: string): User | undefined {
     return users.find(u => u.referralCode === code);
 }
 
+/**
+ * Get all CTV users referred by a specific referral code.
+ */
+export function getChildCtvs(referralCode: string): User[] {
+    const users = loadUsers();
+    return users.filter(u => u.referredByCode === referralCode);
+}
+
 // ... Additional Helpers (sync) omitted for brevity if unused, but preserving core ones
 
 export function updateUser(userId: string, updates: Partial<User>): void {
@@ -134,46 +128,92 @@ export function updateUser(userId: string, updates: Partial<User>): void {
     saveUsers(updatedUsers);
 }
 
+export function updateUserActivation(userId: string, activatedAt: string): void {
+    updateUser(userId, { activatedAt });
+}
+
+export function ensureCtvReferralCodes(): void {
+    if (typeof window === "undefined") return;
+    const users = loadUsers();
+    let hasUpdates = false;
+    const updatedUsers = users.map(user => {
+        if (user.role === ROLES.CTV && !user.referralCode) {
+            hasUpdates = true;
+            return {
+                ...user,
+                referralCode: generateReferralCode()
+            };
+        }
+        return user;
+    });
+
+    if (hasUpdates) {
+        saveUsers(updatedUsers);
+    }
+}
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+const getHeaders = (token?: string) => ({
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_KEY || '',
+    'Authorization': `Bearer ${token || SUPABASE_KEY}`
+});
+
 // --- SUPABASE ASYNC FUNCTIONS ---
 
-export const fetchUsers = async (): Promise<User[]> => {
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('*');
+export const fetchUsers = async (token?: string): Promise<User[]> => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=*&order=full_name.asc`, { headers });
+        if (!res.ok) throw new Error(`Fetch users error: ${res.statusText}`);
+        const data = await res.json();
 
-    if (error) {
-        console.error("Error loading profiles:", error);
+        return (data || []).map((p: any) => ({
+            id: p.id,
+            email: p.email,
+            name: p.full_name || "Chưa đặt tên",
+            role: p.role as UserRole,
+            phone: p.phone,
+            address: p.address,
+            province: p.province,
+            region: p.region,
+            referralCode: p.referral_code,
+            referredByCode: p.referred_by_code,
+            activatedAt: p.activated_at
+        }));
+    } catch (err) {
+        console.error("[fetchUsers] Error:", err);
         return [];
     }
-
-    return data.map((p: any) => ({
-        id: p.id,
-        email: p.email,
-        name: p.full_name,
-        role: p.role as UserRole,
-        phone: p.phone,
-        address: p.address,
-        province: p.province,
-        region: p.region,
-        referralCode: p.referral_code,
-        referredByCode: p.referred_by_code,
-        activatedAt: p.activated_at
-    }));
 };
 
-export const fetchUserById = async (userId: string): Promise<User | null> => {
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+export const fetchUserById = async (userId: string, token?: string): Promise<User | null> => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=*`, { headers });
+        if (!res.ok) throw new Error(`Fetch user by id error: ${res.statusText}`);
+        const data = await res.json();
 
-    if (error || !data) return null;
+        if (!data || data.length === 0) return null;
+        const p = data[0];
 
-    return {
-        id: data.id,
-        email: data.email,
-        name: data.full_name,
-        role: data.role as UserRole,
-    };
+        return {
+            id: p.id,
+            email: p.email,
+            name: p.full_name || "Chưa đặt tên",
+            role: p.role as UserRole,
+            phone: p.phone,
+            address: p.address,
+            province: p.province,
+            region: p.region,
+            referralCode: p.referral_code,
+            referredByCode: p.referred_by_code,
+            activatedAt: p.activated_at
+        };
+    } catch (err) {
+        console.error("[fetchUserById] Error:", err);
+        return null;
+    }
 };

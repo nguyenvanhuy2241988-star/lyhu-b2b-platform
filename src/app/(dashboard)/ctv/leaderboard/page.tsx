@@ -40,8 +40,10 @@ export default function CTVLeaderboardPage() {
     const [viewMode, setViewMode] = useState<"overall" | "region" | "province">("overall");
 
     useEffect(() => {
-        const user = getCurrentUser();
-        setCurrentUser(user);
+        (async () => {
+            const user = await getCurrentUser();
+            setCurrentUser(user);
+        })();
     }, []);
 
     const leaderboard = useMemo(() => {
