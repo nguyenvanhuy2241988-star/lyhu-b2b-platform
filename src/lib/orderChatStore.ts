@@ -149,7 +149,7 @@ export function subscribeToOrderMessages(
                 table: 'order_messages',
                 filter: `order_id=eq.${orderId}`
             },
-            (payload) => {
+            (payload: any) => {
                 onNewMessage(mapMessage(payload.new));
             }
         )
