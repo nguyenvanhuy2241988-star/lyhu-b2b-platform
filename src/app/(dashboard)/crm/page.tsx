@@ -479,7 +479,7 @@ export default function CRMPage() {
                     schema: 'public',
                     table: 'crm_deals'
                 },
-                (payload) => {
+                (payload: any) => {
                     console.log('[Realtime] Change detected:', payload);
                     // Debounce refresh to avoid conflicts
                     clearTimeout(refreshTimeout);

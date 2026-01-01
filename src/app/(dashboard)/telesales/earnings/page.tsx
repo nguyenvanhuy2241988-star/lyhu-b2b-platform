@@ -103,7 +103,7 @@ export default function TelesalesEarningsPage() {
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'financial_transactions', filter: `user_id=eq.${user.id}` },
-                (payload) => {
+                (payload: any) => {
                     console.log("[Realtime] Financial transactions changed:", payload);
                     loadData();
                 }
@@ -111,7 +111,7 @@ export default function TelesalesEarningsPage() {
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'orders' }, // Remove filter for robustness
-                (payload) => {
+                (payload: any) => {
                     console.log("[Realtime] Order event detected:", payload.eventType, payload.new?.id);
                     // Reload if it belongs to this user (we reload anyway for safety)
                     loadData();
@@ -120,7 +120,7 @@ export default function TelesalesEarningsPage() {
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'telesales_tasks', filter: `user_id=eq.${user.id}` },
-                (payload) => {
+                (payload: any) => {
                     console.log("[Realtime] Tasks changed:", payload);
                     loadData();
                 }

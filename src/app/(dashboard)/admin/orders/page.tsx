@@ -116,7 +116,7 @@ export default function AdminOrdersPage() {
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'orders' },
-                (payload) => {
+                (payload: any) => {
                     console.log('[AdminOrdersPage] Realtime change detected');
                     // Push notification for new orders
                     if (payload.eventType === 'INSERT' && payload.new) {
@@ -145,7 +145,7 @@ export default function AdminOrdersPage() {
             .on(
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'order_messages' },
-                (payload) => {
+                (payload: any) => {
                     const newMsg = payload.new as any;
                     if (newMsg?.order_id) {
                         // Add to unread orders (show badge)

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Calendar, User, FileText, Paperclip, Link as LinkIcon, Image as ImageIcon } from "lucide-react";
 import { TelesalesTask } from "@/lib/telesalesTasksStore";
-import { createClient } from "@/lib/supabaseClient";
+import { supabase } from "@/lib/supabaseClient";
 
 interface TaskSimpleModalProps {
     isOpen: boolean;
@@ -19,7 +19,7 @@ interface Profile {
 }
 
 export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSimpleModalProps) => {
-    const supabase = createClient();
+    // const supabase = createClient(); // Switched to shared singleton
     const [title, setTitle] = useState("");
     const [dueDate, setDueDate] = useState<string>("");
     const [priority, setPriority] = useState("normal"); // Phase B: Added
@@ -50,7 +50,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
         };
         loadProfiles();
         return () => { mounted = false; };
-    }, []);
+    }, [supabase]);
 
     // Reset loop
     useEffect(() => {

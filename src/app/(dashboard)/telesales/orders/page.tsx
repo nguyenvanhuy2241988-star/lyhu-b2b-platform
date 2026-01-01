@@ -88,7 +88,7 @@ export default function TelesalesOrdersPage() {
             .on(
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'order_messages' },
-                (payload) => {
+                (payload: any) => {
                     const newMsg = payload.new as any;
                     if (newMsg?.order_id) {
                         // Add to unread orders (show badge)
