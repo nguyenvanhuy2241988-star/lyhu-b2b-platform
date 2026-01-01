@@ -254,7 +254,7 @@ export function OrderChatModal({ isOpen, onClose, orderId, orderReadableId, onMa
                             {isUploading ? (
                                 <Loader2 className="w-5 h-5 animate-spin" />
                             ) : (
-                                <Image className="w-5 h-5" />
+                                <ImageIcon className="w-5 h-5" />
                             )}
                         </button>
 
