@@ -83,8 +83,8 @@ export default function RevenueChart({ data, isLoading }: RevenueChartProps) {
                             borderRadius: '8px',
                             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                         }}
-                        formatter={(value: number, name: string) => [
-                            formatTooltipValue(value),
+                        formatter={(value: any, name: any) => [
+                            formatTooltipValue(Number(value) || 0),
                             name === 'revenue' ? 'Doanh thu' : 'Đơn hàng'
                         ]}
                         labelFormatter={(label) => `Ngày: ${label}`}
