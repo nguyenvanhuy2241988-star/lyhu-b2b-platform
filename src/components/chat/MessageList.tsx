@@ -81,13 +81,16 @@ const MessageList = forwardRef<MessageListRef, MessageListProps>(({
         getMessages: () => messages
     }));
 
+    const handleForward = useCallback((msg: Message) => {
+        setSelectedMessageForForward(msg);
+        setForwardModalOpen(true);
+    }, []);
+
     useEffect(() => {
         // Auto-scroll logic:
         if (messages.length > prevMessagesLength.current) {
             const lastMsg = messages[messages.length - 1];
             const isMe = lastMsg?.sender_id === currentUser?.id;
-
-
 
             // Force scroll if it's me OR if we are properly following output
             // "auto" usually works but let's be explicit
@@ -95,7 +98,6 @@ const MessageList = forwardRef<MessageListRef, MessageListProps>(({
                 // Use a slight delay to ensure virtualizer has calculated sizes
                 // 100ms is safer than 50ms
                 setTimeout(() => {
-
                     virtuosoRef.current?.scrollToIndex({ index: messages.length - 1, align: 'end', behavior: 'smooth' });
                 }, 100);
             }
@@ -114,11 +116,6 @@ const MessageList = forwardRef<MessageListRef, MessageListProps>(({
         handleForward,
         onImageClick
     ]);
-
-    const handleForward = (msg: Message) => {
-        setSelectedMessageForForward(msg);
-        setForwardModalOpen(true);
-    };
 
     return (
         <div className="flex-1 min-h-0 bg-slate-50 flex flex-col relative">
