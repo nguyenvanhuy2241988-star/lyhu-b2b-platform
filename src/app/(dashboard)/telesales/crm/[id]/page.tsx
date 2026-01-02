@@ -39,7 +39,7 @@ export default function DealDetailPage() {
     const dealId = params.id as string;
 
     const router = useRouter();
-    const { user } = useAuth();
+    const { user, session } = useAuth();
     const [deal, setDeal] = useState<CRMDeal | null>(null);
     const [activities, setActivities] = useState<CRMActivity[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -73,9 +73,9 @@ export default function DealDetailPage() {
             setIsLoading(true);
             try {
                 const [d, acts, items] = await Promise.all([
-                    fetchDeal(dealId),
-                    fetchActivities(dealId),
-                    fetchDealItems(dealId)
+                    fetchDeal(dealId, session?.access_token),
+                    fetchActivities(dealId, session?.access_token),
+                    fetchDealItems(dealId, session?.access_token)
                 ]);
                 setDeal(d);
                 setActivities(acts);
@@ -97,7 +97,7 @@ export default function DealDetailPage() {
         // Update deal value and optimistic update
         const total = items.reduce((sum, i) => sum + (i.quantity * i.unit_price), 0);
         if (total !== deal.expected_value) {
-            await updateDeal(deal.id, { expected_value: total });
+            await updateDeal(deal.id, { expected_value: total }, session?.access_token);
             setDeal(prev => prev ? ({ ...prev, expected_value: total }) : null);
         }
     };
@@ -118,7 +118,7 @@ export default function DealDetailPage() {
             call_duration_seconds: duration,
             call_result: callResult as CallResult,
             user_id: user.id
-        });
+        }, session?.access_token);
 
         if (activity) {
             setActivities(prev => [activity, ...prev]);
@@ -129,7 +129,7 @@ export default function DealDetailPage() {
 
     const handleMarkWon = async () => {
         if (!deal) return;
-        await updateDeal(deal.id, { status: 'won', stage: 'done' });
+        await updateDeal(deal.id, { status: 'won', stage: 'done' }, session?.access_token);
         setDeal(prev => prev ? { ...prev, status: 'won', stage: 'done' } : null);
     };
 
@@ -139,7 +139,7 @@ export default function DealDetailPage() {
 
     const handleConfirmLost = async (reason: string) => {
         if (!deal) return;
-        await updateDeal(deal.id, { status: 'lost', stage: 'done', lost_reason: reason });
+        await updateDeal(deal.id, { status: 'lost', stage: 'done', lost_reason: reason }, session?.access_token);
         setDeal(prev => prev ? { ...prev, status: 'lost', stage: 'done', lost_reason: reason } : null);
         setIsLostModalOpen(false);
     };
@@ -148,7 +148,7 @@ export default function DealDetailPage() {
         if (!deal) return;
         if (confirm("Bạn muốn mở lại cơ hội này? Trạng thái sẽ về 'Đang mở'.")) {
             // Reset to open
-            await updateDeal(deal.id, { status: 'open' });
+            await updateDeal(deal.id, { status: 'open' }, session?.access_token);
             setDeal(prev => prev ? { ...prev, status: 'open' } : null);
         }
     };
@@ -166,13 +166,13 @@ export default function DealDetailPage() {
         setIsEditModalOpen(false);
 
         // Update DB
-        await updateDeal(deal.id, updatedData);
+        await updateDeal(deal.id, updatedData, session?.access_token);
     };
 
     const handleDelete = async () => {
         if (!deal) return;
         if (confirm("Bạn chắc chắn muốn xóa cơ hội này?")) {
-            await deleteDeal(deal.id);
+            await deleteDeal(deal.id, session?.access_token);
             router.push('/telesales/crm');
         }
     };

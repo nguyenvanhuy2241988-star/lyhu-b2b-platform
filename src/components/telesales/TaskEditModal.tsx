@@ -47,6 +47,8 @@ export const TaskEditModal = ({
         status: "today" as TaskStatus,
         description: "",
         assignedTo: "",
+        assigneeIds: [] as string[],
+        leaderId: "",
         leadId: "",
         relatedLeadId: ""
     });
@@ -75,6 +77,8 @@ export const TaskEditModal = ({
                 status: (initialData.status as TaskStatus) || 'today',
                 description: initialData.note || "",
                 assignedTo: initialData.assigned_to || "",
+                assigneeIds: initialData.assignee_ids || [],
+                leaderId: initialData.leader_id || "",
                 leadId: (initialData as any).lead_id || "",
                 relatedLeadId: "" // simplified
             });
@@ -90,6 +94,8 @@ export const TaskEditModal = ({
             id: initialData.id,
             due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
             assigned_to: formData.assignedTo,
+            assignee_ids: formData.assigneeIds,
+            leader_id: formData.leaderId,
             customer_name: formData.customerName,
             status: formData.status,
             priority: formData.priority,
@@ -170,32 +176,63 @@ export const TaskEditModal = ({
                         </div>
                     </div>
 
-                    {/* Due Date & Assignee */}
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* Due Date */}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Hạn hoàn thành</label>
+                        <input
+                            type="date"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            value={formData.dueDate}
+                            onChange={e => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
+                        />
+                        {!formData.dueDate && (
+                            <p className="text-xs text-slate-500 mt-1 italic">Không đặt hạn (Inbox)</p>
+                        )}
+                    </div>
+
+                    {/* Assignees Selection */}
+                    <div className="space-y-3">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Hạn hoàn thành</label>
-                            <input
-                                type="date"
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                value={formData.dueDate}
-                                onChange={e => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
-                            />
-                            {!formData.dueDate && (
-                                <p className="text-xs text-slate-500 mt-1 italic">Không đặt hạn (Inbox)</p>
-                            )}
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Người thực hiện</label>
-                            <select
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
-                                value={formData.assignedTo}
-                                onChange={e => setFormData(prev => ({ ...prev, assignedTo: e.target.value }))}
-                            >
-                                <option value="">Đang tải...</option>
+                            <label className="block text-sm font-medium text-slate-700 mb-2 font-semibold">Người thực hiện (Được chọn nhiều)</label>
+                            <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 border border-slate-200 rounded-lg bg-slate-50">
                                 {(profiles ?? []).map(p => (
-                                    <option key={p.id} value={p.id}>{p.full_name || p.email}</option>
+                                    <label key={p.id} className="flex items-center gap-2 text-sm p-1 hover:bg-white rounded cursor-pointer transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            className="w-4 h-4 rounded text-primary-600 focus:ring-primary-500"
+                                            checked={formData.assigneeIds.includes(p.id) || formData.assignedTo === p.id}
+                                            onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                setFormData(prev => {
+                                                    let newIds = [...prev.assigneeIds];
+                                                    if (checked) {
+                                                        if (!newIds.includes(p.id)) newIds.push(p.id);
+                                                    } else {
+                                                        newIds = newIds.filter(id => id !== p.id);
+                                                    }
+                                                    return { ...prev, assigneeIds: newIds };
+                                                });
+                                            }}
+                                        />
+                                        <span className="truncate">{p.full_name || p.email}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1 font-semibold text-blue-600">Trưởng nhóm (Team Leader)</label>
+                            <select
+                                className="w-full px-3 py-2 border border-blue-200 bg-blue-50/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 outline-none"
+                                value={formData.leaderId}
+                                onChange={e => setFormData(prev => ({ ...prev, leaderId: e.target.value }))}
+                            >
+                                <option value="">-- Không có trưởng nhóm --</option>
+                                {(profiles ?? []).filter(p => formData.assigneeIds.includes(p.id) || formData.assignedTo === p.id).map(p => (
+                                    <option key={p.id} value={p.id}>{p.full_name || p.email} (Trưởng nhóm)</option>
                                 ))}
                             </select>
+                            <p className="text-[10px] text-slate-500 mt-1 italic">* Trưởng nhóm phải nằm trong danh sách người thực hiện.</p>
                         </div>
                     </div>
 
@@ -307,6 +344,5 @@ export const TaskEditModal = ({
                     </div>
                 </div>
             </div>
-        </div>
-    );
+            );
 };

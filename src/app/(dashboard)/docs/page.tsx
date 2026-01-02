@@ -20,8 +20,10 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function DocsListPage() {
+    const { authIsLoading } = useAuth();
     const router = useRouter();
     const [docs, setDocs] = useState<DocumentItem[]>([]);
     const [categories, setCategories] = useState<DocumentCategory[]>([]);
@@ -55,6 +57,18 @@ export default function DocsListPage() {
     useEffect(() => {
         loadData();
     }, [loadData]);
+
+    useEffect(() => {
+        if (!authIsLoading) {
+            // Safety: if loading is still true after auth finishes, 
+            // and maybe loadData fails or hangs, we should eventually stop loading.
+            // docs/page.tsx usually loads public docs too, but let's be safe.
+            const timer = setTimeout(() => {
+                setLoading(false);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [authIsLoading]);
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">

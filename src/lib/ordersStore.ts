@@ -111,10 +111,17 @@ export const updateOrderStatus = async (
     if (!orderId.startsWith("ORD-")) {
         const headers = getHeaders(token);
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
         // Fetch current status from DB before updating (using FETCH)
         const fetchRes = await fetch(
             `${SUPABASE_URL}/rest/v1/orders?select=status&id=eq.${orderId}&limit=1`,
-            { headers, cache: 'no-store' }
+            {
+                headers,
+                cache: 'no-store',
+                signal: controller.signal
+            }
         );
 
         let oldStatus: OrderStatus | undefined;
@@ -130,9 +137,12 @@ export const updateOrderStatus = async (
                 method: 'PATCH',
                 headers,
                 body: JSON.stringify({ status: newStatus }),
-                cache: 'no-store'
+                cache: 'no-store',
+                signal: controller.signal
             }
         );
+
+        clearTimeout(timeoutId);
 
         if (!updateRes.ok) {
             const errText = await updateRes.text();
@@ -265,10 +275,19 @@ export const fetchOrders = async (token?: string, filters?: { userId?: string, s
             query += `&created_at=lte.${filters.endDate}`;
         }
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s for potentially larger data
+
         const response = await fetch(
             `${SUPABASE_URL}/rest/v1/orders?${query}`,
-            { headers, cache: 'no-store' }
+            {
+                headers,
+                cache: 'no-store',
+                signal: controller.signal
+            }
         );
+
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
             const errorText = await response.text();

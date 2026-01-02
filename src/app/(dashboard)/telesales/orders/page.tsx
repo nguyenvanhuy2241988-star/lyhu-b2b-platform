@@ -35,7 +35,7 @@ export default function TelesalesOrdersPage() {
     const [chatOrder, setChatOrder] = useState<{ id: string; readableId: string } | null>(null);
     const [unreadOrders, setUnreadOrders] = useState<Set<string>>(new Set());
 
-    const { user, session } = useAuth(); // ADDED session
+    const { user, session, isLoading: authIsLoading } = useAuth(); // ADDED session
 
     const loadOrders = useCallback(async (mounted = true) => {
         if (!user) return;
@@ -64,10 +64,10 @@ export default function TelesalesOrdersPage() {
     useEffect(() => {
         let mounted = true;
 
-        if (session?.access_token) {
-            // Explicitly set auth for Realtime
-            supabase.realtime.setAuth(session.access_token);
+        if (user?.id) {
             loadOrders(mounted);
+        } else if (!authIsLoading) {
+            setIsLoading(false);
         }
 
         // Realtime Subscription

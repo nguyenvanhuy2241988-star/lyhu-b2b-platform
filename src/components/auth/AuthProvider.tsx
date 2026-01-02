@@ -32,68 +32,81 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.log('[AuthProvider] checkAuth started');
             setIsLoading(true);
 
-            // 1. Try Supabase
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-            console.log('[AuthProvider] getSession result:', session ? 'Session found' : 'No session', sessionError);
+            let session = null;
+
+            try {
+                // 1. Try Supabase with a timeout
+                const sessionPromise = supabase.auth.getSession();
+                const timeoutPromise = new Promise<{ data: { session: null }, error: any }>((_, reject) =>
+                    setTimeout(() => reject(new Error('Auth Timeout')), 10000) // Increased to 10s
+                );
+
+                const result = await Promise.race([sessionPromise, timeoutPromise]) as any;
+                session = result?.data?.session;
+            } catch (authErr) {
+                console.warn('[AuthProvider] Supabase connection issue:', authErr);
+            }
 
             if (session?.user) {
                 setSession(session);
                 setUser(session.user);
 
-                // ✅ IMPORTANT: set realtime auth token for postgres_changes
-                if (session.access_token) {
-                    supabase.realtime.setAuth(session.access_token);
-                    if (typeof window !== "undefined") {
-                        localStorage.setItem("lyhu_access_token", session.access_token);
-                    }
+                if (session.access_token && typeof window !== "undefined") {
+                    localStorage.setItem("lyhu_access_token", session.access_token);
                 }
 
-                console.log('[AuthProvider] Fetching profile for:', session.user.id);
+                // Quick role fetch with timeout to prevent hangs
+                const { data: profile } = await Promise.race([
+                    supabase
+                        .from("profiles")
+                        .select("role")
+                        .eq("id", session.user.id)
+                        .maybeSingle(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Role Fetch Timeout')), 5000))
+                ]) as any;
 
-                // Fetch role from profiles
-                const { data: profile, error: profileError } = await supabase
-                    .from("profiles")
-                    .select("role")
-                    .eq("id", session.user.id)
-                    .single();
-
-                console.log('[AuthProvider] Profile fetch result:', profile, profileError);
-                setRole(profile?.role ?? null);
+                setRole(profile?.role ?? "customer");
             } else {
-                // 2. Fallback to localStorage mock user
+                // 2. FALLBACK: Always try local data if Supabase fails or session is missing
                 if (typeof window !== "undefined") {
                     const mockUserStr = localStorage.getItem("lyhu_user");
                     if (mockUserStr) {
                         try {
                             const mockUser = JSON.parse(mockUserStr);
                             setUser(mockUser);
-                            setRole(mockUser.role ?? null);
-                            console.log('[AuthProvider] Mock user loaded:', mockUser.role);
-                        } catch (e) {
-                            console.error("[AuthProvider] Failed to parse mock user:", e);
+                            setRole(mockUser.role || "customer");
+                            console.log('[AuthProvider] Fallback to local user successful');
+                        } catch {
                             setUser(null);
                             setRole(null);
                         }
                     } else {
-                        setSession(null);
                         setUser(null);
                         setRole(null);
                     }
-                } else {
-                    setSession(null);
-                    setUser(null);
-                    setRole(null);
                 }
             }
         } catch (err) {
-            console.error('[AuthProvider] checkAuth CRASHED:', err);
+            console.error('[AuthProvider] checkAuth catastrophic error:', err);
         } finally {
-            console.log('[AuthProvider] checkAuth finished, setting isLoading = false');
             setIsLoading(false);
+            console.log('[AuthProvider] checkAuth finished');
         }
     };
 
     useEffect(() => {
+        // One-time cleanup for legacy mock data in development
+        if (typeof window !== "undefined") {
+            const cleanupKeys = [
+                "lyhu_all_orders",
+                "lyhu_sales_leads_v1",
+                "lyhu_telesales_tasks",
+                "lyhu_recent_activities"
+            ];
+            cleanupKeys.forEach(key => localStorage.removeItem(key));
+            console.log('[AuthProvider] Legacy mock data keys cleared');
+        }
+
         checkAuth();
 
         // Listen for Supabase changes

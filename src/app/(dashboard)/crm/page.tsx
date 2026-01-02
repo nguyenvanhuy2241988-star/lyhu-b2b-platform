@@ -510,10 +510,13 @@ export default function CRMPage() {
             return;
         }
 
-        console.log('[CRM Effect] Auth loaded. User:', user?.id, 'Role:', authRole);
-        console.log('[CRM Effect] Calling refreshData...');
-
-        refreshData();
+        if (user?.id) {
+            console.log('[CRM Effect] Calling refreshData...');
+            refreshData();
+        } else if (!authIsLoading) {
+            // Stop spinner if auth finished but no user found
+            setIsLoading(false);
+        }
         const handleColumnUpdate = () => {
             setColumns(loadCRMColumns().sort((a, b) => a.order - b.order));
         };
@@ -576,7 +579,7 @@ export default function CRMPage() {
                     const newCustomer = await createCustomer({
                         ...dealData.newCustomerData,
                         owner_user_id: userInfo.id
-                    });
+                    }, session?.access_token);
                     // No need to check newCustomer is null here to alert, the function will throw.
                     if (newCustomer) {
                         customerId = newCustomer.id;
@@ -593,7 +596,7 @@ export default function CRMPage() {
                     expected_value: dealData.expected_value,
                     source: dealData.source,
                     owner_user_id: userInfo.id
-                });
+                }, session?.access_token);
             }
 
             await refreshData();
@@ -610,7 +613,7 @@ export default function CRMPage() {
 
     const handleDeleteDeal = async (dealId: string) => {
         if (confirm("Bạn chắc chắn muốn xóa cơ hội này?")) {
-            await deleteDeal(dealId);
+            await deleteDeal(dealId, session?.access_token);
             setIsCreateModalOpen(false);
             setEditingDeal(null);
             refreshData();

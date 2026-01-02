@@ -13,6 +13,7 @@ import {
     updateDeal
 } from "@/lib/crmDealsStore";
 import { getInventoryLevel, getDefaultWarehouseId } from "@/lib/inventoryStore";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 interface DealProductsProps {
     dealId: string;
@@ -21,6 +22,7 @@ interface DealProductsProps {
 }
 
 export default function DealProducts({ dealId, items, onItemsChange }: DealProductsProps) {
+    const { session } = useAuth();
     const [isAdding, setIsAdding] = useState(false);
     const [products, setProducts] = useState<Product[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
@@ -32,12 +34,12 @@ export default function DealProducts({ dealId, items, onItemsChange }: DealProdu
         if (isAdding && products.length === 0) {
             setIsLoadingProducts(true);
             const loadData = async () => {
-                const prods = await loadProducts();
-                const warehouseId = await getDefaultWarehouseId();
+                const prods = await loadProducts(session?.access_token);
+                const warehouseId = await getDefaultWarehouseId(session?.access_token);
                 if (warehouseId) {
                     const invMap: Record<string, number> = {};
                     await Promise.all(prods.map(async p => {
-                        const level = await getInventoryLevel(p.id, warehouseId);
+                        const level = await getInventoryLevel(p.id, warehouseId, session?.access_token);
                         invMap[p.id] = level?.quantity_available ?? 0;
                     }));
                     setInventory(invMap);
@@ -57,14 +59,14 @@ export default function DealProducts({ dealId, items, onItemsChange }: DealProdu
     const handleAddProduct = async (product: Product) => {
         const existing = items.find(i => i.product_id === product.id);
         if (existing) {
-            await updateDealItem(existing.id, { quantity: existing.quantity + 1 });
+            await updateDealItem(existing.id, { quantity: existing.quantity + 1 }, session?.access_token);
         } else {
             await addDealItem({
                 deal_id: dealId,
                 product_id: product.id,
                 quantity: 1,
                 unit_price: product.wholesalePrice || 0
-            });
+            }, session?.access_token);
         }
         setIsAdding(false);
         setSearchTerm("");
@@ -73,14 +75,14 @@ export default function DealProducts({ dealId, items, onItemsChange }: DealProdu
 
     const handleRemove = async (id: string) => {
         if (confirm("Xóa sản phẩm này?")) {
-            await deleteDealItem(id);
+            await deleteDealItem(id, session?.access_token);
             onItemsChange();
         }
     };
 
     const handleUpdateQuantity = async (id: string, newQty: number) => {
         if (newQty < 1) return;
-        await updateDealItem(id, { quantity: newQty });
+        await updateDealItem(id, { quantity: newQty }, session?.access_token);
         onItemsChange();
     };
 

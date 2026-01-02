@@ -15,7 +15,7 @@ const CUSTOMER_TYPES = [
 ];
 
 export default function TelesalesCustomersPage() {
-    const { user, session } = useAuth();
+    const { user, session, isLoading: authIsLoading } = useAuth();
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState("");
     const [showAddForm, setShowAddForm] = useState(false);
@@ -30,8 +30,6 @@ export default function TelesalesCustomersPage() {
     const [formEmail, setFormEmail] = useState("");
     const [isSaving, setIsSaving] = useState(false);
 
-
-
     const loadData = useCallback(async () => {
         if (!user || !session?.access_token) return;
         setIsLoading(true);
@@ -43,8 +41,10 @@ export default function TelesalesCustomersPage() {
     useEffect(() => {
         if (user && session?.access_token) {
             loadData();
+        } else if (!authIsLoading) {
+            setIsLoading(false);
         }
-    }, [user?.id, session?.access_token, loadData]);
+    }, [user?.id, session?.access_token, authIsLoading, loadData]);
 
     const filteredCustomers = customers.filter((customer) => {
         return (
@@ -74,7 +74,7 @@ export default function TelesalesCustomersPage() {
             type: formType,
             owner_user_id: userId,
             status: 'active'
-        });
+        }, session?.access_token);
 
         if (newCustomer) {
             setShowAddForm(false);

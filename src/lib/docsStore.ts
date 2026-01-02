@@ -55,7 +55,11 @@ export interface DocumentFileItem {
 // Get safe user ID
 async function getUserIdSafe(): Promise<string | null> {
     try {
-        const { data } = await supabase.auth.getSession();
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise<{ data: { session: null } }>((_, reject) =>
+            setTimeout(() => reject(new Error('Auth Timeout')), 3000)
+        );
+        const { data } = await Promise.race([sessionPromise, timeoutPromise]) as any;
         return data.session?.user?.id ?? null;
     } catch {
         return null;

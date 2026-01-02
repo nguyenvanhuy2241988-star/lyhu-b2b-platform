@@ -10,6 +10,7 @@ import {
     TelesalesColumn,
     TaskType
 } from "@/lib/telesalesTasksStore";
+import { supabase } from "@/lib/supabaseClient";
 
 interface CreateTaskModalProps {
     isOpen: boolean;
@@ -29,6 +30,14 @@ interface TaskFormData {
     dueDate: string;
     status: TaskStatus;
     description: string;
+    assigneeIds: string[];
+    leaderId: string;
+}
+
+interface Profile {
+    id: string;
+    full_name: string;
+    email: string;
 }
 
 export const CreateTaskModal = ({
@@ -49,12 +58,25 @@ export const CreateTaskModal = ({
         priority: "normal",
         dueDate: new Date().toISOString().split('T')[0],
         status: initialStatus,
-        description: ""
+        description: "",
+        assigneeIds: initialData?.assignee_ids || [],
+        leaderId: initialData?.leader_id || ""
     });
+
+    const [profiles, setProfiles] = useState<Profile[]>([]);
 
     const [showContactFields, setShowContactFields] = useState(false); // Collapsible contact
 
     const taskType: TaskType = 'task'; // Phase 3: Always 'task', removed type selector
+
+    // Load profiles
+    useEffect(() => {
+        const loadProfiles = async () => {
+            const { data } = await supabase.from('profiles').select('id, full_name, email').order('full_name');
+            if (data) setProfiles(data);
+        };
+        loadProfiles();
+    }, []);
 
     // Reset form when opening
     useEffect(() => {
@@ -66,7 +88,9 @@ export const CreateTaskModal = ({
                 priority: initialData?.priority || "normal",
                 dueDate: initialData?.due_date ? new Date(initialData.due_date).toISOString().split('T')[0] : "",
                 status: initialStatus,
-                description: initialData?.note || ""
+                description: initialData?.note || "",
+                assigneeIds: initialData?.assignee_ids || [],
+                leaderId: initialData?.leader_id || ""
             });
 
             // Phase 3: Type is always 'task', removed inference logic
@@ -86,6 +110,8 @@ export const CreateTaskModal = ({
             status: formData.status,
             due_date: formData.dueDate || null,
             note: formData.description,
+            assignee_ids: formData.assigneeIds,
+            leader_id: formData.leaderId,
             type: taskType,
         });
         onClose();
@@ -222,6 +248,62 @@ export const CreateTaskModal = ({
                         {!formData.dueDate && !initialData?.id && (
                             <p className="text-xs text-orange-500 mt-1">Không chọn ngày sẽ tự động vào "Hộp thư đến".</p>
                         )}
+                    </div>
+
+                    {/* Roles Assignment */}
+                    <div className="space-y-4 pt-2 border-t border-slate-100">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Người phối hợp thực hiện</label>
+                            <div className="flex flex-wrap gap-2 mb-2 p-2 border border-slate-200 rounded-lg bg-slate-50 min-h-[40px]">
+                                {formData.assigneeIds.map(id => {
+                                    const p = profiles.find(prof => prof.id === id);
+                                    return (
+                                        <span key={id} className="inline-flex items-center gap-1.5 px-2 py-1 bg-white border border-slate-200 rounded text-xs font-medium text-slate-700">
+                                            {p?.full_name || p?.email || id}
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, assigneeIds: prev.assigneeIds.filter(aid => aid !== id) }))}
+                                                className="text-slate-400 hover:text-red-500"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </span>
+                                    );
+                                })}
+                                {formData.assigneeIds.length === 0 && (
+                                    <span className="text-xs text-slate-400 italic self-center">Chưa chọn ai...</span>
+                                )}
+                            </div>
+                            <select
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                                value=""
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    if (val && !formData.assigneeIds.includes(val)) {
+                                        setFormData(prev => ({ ...prev, assigneeIds: [...prev.assigneeIds, val] }));
+                                    }
+                                }}
+                            >
+                                <option value="">+ Thêm người tham gia...</option>
+                                {profiles.map(p => (
+                                    <option key={p.id} value={p.id}>{p.full_name || p.email}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Trưởng nhóm (Lead)</label>
+                            <select
+                                className="w-full px-3 py-2 border border-blue-200 bg-blue-50/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 outline-none"
+                                value={formData.leaderId}
+                                onChange={e => setFormData(prev => ({ ...prev, leaderId: e.target.value }))}
+                            >
+                                <option value="">-- Không có --</option>
+                                {profiles.filter(p => formData.assigneeIds.includes(p.id)).map(p => (
+                                    <option key={p.id} value={p.id}>{p.full_name || p.email}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
 
                     <div>

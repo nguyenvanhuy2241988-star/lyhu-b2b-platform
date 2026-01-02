@@ -27,63 +27,16 @@ export interface User {
 
 const USERS_STORAGE_KEY = "lyhu_users";
 
-// Default mock users with location data
-// Default mock users deleted to enforce Supabase Auth
 const defaultMockUsers: User[] = [];
 
-function generateReferralCode(): string {
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    let code = "CTV-";
-    for (let i = 0; i < 4; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return code;
-}
-
-// Normalize phone: remove spaces, dots, dashes, +84 -> 0
-export function normalizePhone(phone: string): string {
-    if (!phone) return "";
-    let normalized = phone.replace(/[\s.\-()]/g, "");
-    if (normalized.startsWith("+84")) {
-        normalized = "0" + normalized.slice(3);
-    } else if (normalized.startsWith("84") && normalized.length > 9) {
-        normalized = "0" + normalized.slice(2);
-    }
-    return normalized;
-}
-
-// Normalize address: lowercase, trim, collapse spaces
-export function normalizeAddress(addr: string): string {
-    if (!addr) return "";
-    return addr.toLowerCase().trim().replace(/\s+/g, " ");
-}
-
 export function loadUsers(): User[] {
-    if (typeof window === "undefined") return defaultMockUsers;
+    if (typeof window === "undefined") return [];
     try {
         const stored = localStorage.getItem(USERS_STORAGE_KEY);
-        let users: User[] = stored ? JSON.parse(stored) : [];
-
-        if (users.length === 0) {
-            users = defaultMockUsers;
-            saveUsers(users);
-        } else {
-            // Ensure new defaults (like telesales) are present
-            let hasNewDefaults = false;
-            defaultMockUsers.forEach(defaultUser => {
-                if (!users.find(u => u.email === defaultUser.email)) {
-                    users.push(defaultUser);
-                    hasNewDefaults = true;
-                }
-            });
-            if (hasNewDefaults) {
-                saveUsers(users);
-            }
-        }
-        return users;
+        return stored ? JSON.parse(stored) : [];
     } catch (error) {
         console.error("Failed to load users:", error);
-        return defaultMockUsers;
+        return [];
     }
 }
 

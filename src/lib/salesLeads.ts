@@ -33,18 +33,18 @@ export interface SalesLead {
 const STORAGE_KEY = "lyhu_sales_leads_v1";
 
 function getDefaultSalesLeads(): SalesLead[] {
-    return []; // Return empty or mocks
+    return [];
 }
 
 // --- SYNC ---
 export function loadSalesLeads(): SalesLead[] {
-    if (typeof window === "undefined") return getDefaultSalesLeads();
+    if (typeof window === "undefined") return [];
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return getDefaultSalesLeads();
+    if (!raw) return [];
     try {
         return JSON.parse(raw);
     } catch {
-        return getDefaultSalesLeads();
+        return [];
     }
 }
 
@@ -95,9 +95,17 @@ export const fetchSalesLeads = async (userId?: string, token?: string): Promise<
     }
 
     try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+
         const headers = getHeaders(token);
         const query = `assigned_to=eq.${userId}&order=created_at.desc`;
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/leads?select=*&${query}`, { headers });
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/leads?select=*&${query}`, {
+            headers,
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
 
         if (!res.ok) {
             console.error("Error loading leads:", await res.text());

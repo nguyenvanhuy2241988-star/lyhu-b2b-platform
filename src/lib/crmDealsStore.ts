@@ -10,6 +10,21 @@ const getHeaders = (token?: string) => ({
     'Authorization': `Bearer ${token || SUPABASE_KEY}`
 });
 
+// Helper for Session with Timeout
+async function getSessionWithTimeout() {
+    try {
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise<{ data: { session: null } }>((_, reject) =>
+            setTimeout(() => reject(new Error('Auth Timeout')), 3000)
+        );
+        const { data } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+        return data?.session;
+    } catch (e) {
+        console.warn('[CRM Store] getSession timeout or error, using fallback');
+        return null;
+    }
+}
+
 // =====================================================
 // TYPES
 // =====================================================
@@ -247,7 +262,7 @@ export async function searchCustomers(query: string, ownerId?: string, token?: s
 }
 
 // Using PURE FETCH to avoid Supabase client Realtime conflict
-export async function createCustomer(customer: Omit<Customer, 'id' | 'created_at'>): Promise<Customer> {
+export async function createCustomer(customer: Omit<Customer, 'id' | 'created_at'>, token?: string): Promise<Customer> {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -258,11 +273,14 @@ export async function createCustomer(customer: Omit<Customer, 'id' | 'created_at
     try {
         console.log('[createCustomer] START (pure fetch)');
 
-        // Get current user session for RLS
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
+        // If token not provided, try to get from session with timeout
+        let authToken = token;
+        if (!authToken) {
+            const session = await getSessionWithTimeout();
+            authToken = session?.access_token;
+        }
 
-        if (!token) {
+        if (!authToken) {
             console.warn('[createCustomer] No auth token found, using ANON key (might fail RLS)');
         }
 
@@ -273,7 +291,7 @@ export async function createCustomer(customer: Omit<Customer, 'id' | 'created_at
                 headers: {
                     'Content-Type': 'application/json',
                     'apikey': supabaseKey,
-                    'Authorization': `Bearer ${token || supabaseKey}`,
+                    'Authorization': `Bearer ${authToken || supabaseKey}`,
                     'Prefer': 'return=representation'
                 },
                 body: JSON.stringify({
@@ -484,7 +502,7 @@ export async function createDeal(deal: {
     tags?: string[];
     expected_value?: number;
     owner_user_id: string;
-}): Promise<CRMDeal> {
+}, token?: string): Promise<CRMDeal> {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -495,11 +513,14 @@ export async function createDeal(deal: {
     try {
         console.log('[createDeal] START (pure fetch)');
 
-        // Get current user session for RLS
-        const { data: { session } } = await supabase.auth.getSession();
-        const token = session?.access_token;
+        // Get current user session for RLS with timeout
+        let authToken = token;
+        if (!authToken) {
+            const session = await getSessionWithTimeout();
+            authToken = session?.access_token;
+        }
 
-        if (!token) {
+        if (!authToken) {
             console.warn('[createDeal] No auth token found, using ANON key (might fail RLS)');
         }
 
@@ -510,7 +531,7 @@ export async function createDeal(deal: {
                 headers: {
                     'Content-Type': 'application/json',
                     'apikey': supabaseKey,
-                    'Authorization': `Bearer ${token || supabaseKey}`,
+                    'Authorization': `Bearer ${authToken || supabaseKey}`,
                     'Prefer': 'return=representation'
                 },
                 body: JSON.stringify({
@@ -551,7 +572,7 @@ export async function createDeal(deal: {
                         headers: {
                             'Content-Type': 'application/json',
                             'apikey': supabaseKey,
-                            'Authorization': `Bearer ${token || supabaseKey}` // Fixed: authToken -> token
+                            'Authorization': `Bearer ${authToken || supabaseKey}` // Fixed: authToken -> token
                         }
                     }
                 );
@@ -586,7 +607,7 @@ export async function updateDeal(id: string, updates: Partial<CRMDeal>, token?: 
 
         let authToken = token;
         if (!authToken) {
-            const { data: { session } } = await supabase.auth.getSession();
+            const session = await getSessionWithTimeout();
             authToken = session?.access_token;
         }
 
@@ -621,15 +642,30 @@ export async function updateDeal(id: string, updates: Partial<CRMDeal>, token?: 
     }
 }
 
-export async function deleteDeal(id: string): Promise<boolean> {
-    try {
-        const { error } = await supabase
-            .from('crm_deals')
-            .delete()
-            .eq('id', id);
+export async function deleteDeal(id: string, token?: string): Promise<boolean> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-        if (error) {
-            console.error('deleteDeal error:', error);
+    try {
+        let authToken = token;
+        if (!authToken) {
+            const session = await getSessionWithTimeout();
+            authToken = session?.access_token;
+        }
+
+        const response = await fetch(
+            `${supabaseUrl}/rest/v1/crm_deals?id=eq.${id}`,
+            {
+                method: 'DELETE',
+                headers: {
+                    'apikey': supabaseKey || '',
+                    'Authorization': `Bearer ${authToken || supabaseKey}`
+                }
+            }
+        );
+
+        if (!response.ok) {
+            console.error('[deleteDeal] Error:', await response.text());
             return false;
         }
 
@@ -641,19 +677,29 @@ export async function deleteDeal(id: string): Promise<boolean> {
 }
 
 // Check if customer has open deals
-export async function checkOpenDeals(customerId: string): Promise<CRMDeal[]> {
-    try {
-        const { data, error } = await supabase
-            .from('crm_deals')
-            .select('*')
-            .eq('customer_id', customerId)
-            .eq('status', 'open');
+export async function checkOpenDeals(customerId: string, token?: string): Promise<CRMDeal[]> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-        if (error) {
-            console.error('checkOpenDeals error:', error);
+    try {
+        let authToken = token;
+        if (!authToken) {
+            const session = await getSessionWithTimeout();
+            authToken = session?.access_token;
+        }
+        const headers = getHeaders(authToken);
+
+        const res = await fetch(
+            `${supabaseUrl}/rest/v1/crm_deals?select=*&customer_id=eq.${customerId}&status=eq.open`,
+            { headers }
+        );
+
+        if (!res.ok) {
+            console.error('checkOpenDeals error:', await res.text());
             return [];
         }
 
+        const data = await res.json();
         return (data || []) as CRMDeal[];
     } catch (err) {
         console.error('checkOpenDeals exception:', err);
@@ -714,19 +760,29 @@ export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
     task: 'Công việc'
 };
 
-export async function fetchActivities(dealId: string): Promise<CRMActivity[]> {
-    try {
-        const { data, error } = await supabase
-            .from('crm_activities')
-            .select('*')
-            .eq('deal_id', dealId)
-            .order('created_at', { ascending: false });
+export async function fetchActivities(dealId: string, token?: string): Promise<CRMActivity[]> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-        if (error) {
-            console.error('fetchActivities error:', error);
+    try {
+        let authToken = token;
+        if (!authToken) {
+            const session = await getSessionWithTimeout();
+            authToken = session?.access_token;
+        }
+        const headers = getHeaders(authToken);
+
+        const res = await fetch(
+            `${supabaseUrl}/rest/v1/crm_activities?select=*&deal_id=eq.${dealId}&order=created_at.desc`,
+            { headers }
+        );
+
+        if (!res.ok) {
+            console.error('fetchActivities error:', await res.text());
             return [];
         }
 
+        const data = await res.json();
         return (data || []) as CRMActivity[];
     } catch (err) {
         console.error('fetchActivities exception:', err);
@@ -743,44 +799,77 @@ export async function createActivity(activity: {
     call_duration_seconds?: number;
     call_result?: CallResult;
     user_id: string;
-}): Promise<CRMActivity | null> {
-    try {
-        const { data, error } = await supabase
-            .from('crm_activities')
-            .insert([{
-                deal_id: activity.deal_id,
-                customer_id: activity.customer_id,
-                type: activity.type,
-                subject: activity.subject,
-                description: activity.description,
-                call_duration_seconds: activity.call_duration_seconds,
-                call_result: activity.call_result,
-                user_id: activity.user_id
-            }])
-            .select()
-            .single();
+}, token?: string): Promise<CRMActivity | null> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-        if (error) {
-            console.error('createActivity error:', error);
+    try {
+        let authToken = token;
+        if (!authToken) {
+            const session = await getSessionWithTimeout();
+            authToken = session?.access_token;
+        }
+
+        const res = await fetch(
+            `${supabaseUrl}/rest/v1/crm_activities`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': supabaseKey || '',
+                    'Authorization': `Bearer ${authToken || supabaseKey}`,
+                    'Prefer': 'return=representation'
+                },
+                body: JSON.stringify({
+                    deal_id: activity.deal_id,
+                    customer_id: activity.customer_id,
+                    type: activity.type,
+                    subject: activity.subject,
+                    description: activity.description,
+                    call_duration_seconds: activity.call_duration_seconds,
+                    call_result: activity.call_result,
+                    user_id: activity.user_id
+                })
+            }
+        );
+
+        if (!res.ok) {
+            console.error('createActivity error:', await res.text());
             return null;
         }
 
-        return data as CRMActivity;
+        const data = await res.json();
+        return (Array.isArray(data) ? data[0] : data) as CRMActivity;
     } catch (err) {
         console.error('createActivity exception:', err);
         return null;
     }
 }
 
-export async function deleteActivity(id: string): Promise<boolean> {
-    try {
-        const { error } = await supabase
-            .from('crm_activities')
-            .delete()
-            .eq('id', id);
+export async function deleteActivity(id: string, token?: string): Promise<boolean> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-        if (error) {
-            console.error('deleteActivity error:', error);
+    try {
+        let authToken = token;
+        if (!authToken) {
+            const session = await getSessionWithTimeout();
+            authToken = session?.access_token;
+        }
+
+        const res = await fetch(
+            `${supabaseUrl}/rest/v1/crm_activities?id=eq.${id}`,
+            {
+                method: 'DELETE',
+                headers: {
+                    'apikey': supabaseKey || '',
+                    'Authorization': `Bearer ${authToken || supabaseKey}`
+                }
+            }
+        );
+
+        if (!res.ok) {
+            console.error('deleteActivity error:', await res.text());
             return false;
         }
 
@@ -796,11 +885,19 @@ export async function deleteActivity(id: string): Promise<boolean> {
 // =====================================================
 
 export async function fetchDealItems(dealId: string, token?: string): Promise<CRMDealItem[]> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
     try {
-        const headers = getHeaders(token);
+        let authToken = token;
+        if (!authToken) {
+            const session = await getSessionWithTimeout();
+            authToken = session?.access_token;
+        }
+        const headers = getHeaders(authToken);
 
         const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/crm_deal_items?select=*,product:products(name,sku)&deal_id=eq.${dealId}&order=created_at.asc`,
+            `${supabaseUrl}/rest/v1/crm_deal_items?select=*,product:products(name,sku)&deal_id=eq.${dealId}&order=created_at.asc`,
             { headers }
         );
 
@@ -823,60 +920,116 @@ export async function addDealItem(item: {
     product_id: string;
     quantity: number;
     unit_price: number;
-}): Promise<CRMDealItem | null> {
-    try {
-        const { data, error } = await supabase
-            .from('crm_deal_items')
-            .insert([{
-                deal_id: item.deal_id,
-                product_id: item.product_id,
-                quantity: item.quantity,
-                unit_price: item.unit_price
-            }])
-            .select(`
-                *,
-                product:products (
-                    name,
-                    sku
-                )
-            `)
-            .single();
+}, token?: string): Promise<CRMDealItem | null> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-        if (error) {
-            console.error('addDealItem error:', error);
+    try {
+        let authToken = token;
+        if (!authToken) {
+            const session = await getSessionWithTimeout();
+            authToken = session?.access_token;
+        }
+
+        const res = await fetch(
+            `${supabaseUrl}/rest/v1/crm_deal_items`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': supabaseKey || '',
+                    'Authorization': `Bearer ${authToken || supabaseKey}`,
+                    'Prefer': 'return=representation'
+                },
+                body: JSON.stringify({
+                    deal_id: item.deal_id,
+                    product_id: item.product_id,
+                    quantity: item.quantity,
+                    unit_price: item.unit_price
+                })
+            }
+        );
+
+        if (!res.ok) {
+            console.error('addDealItem error:', await res.text());
             return null;
         }
 
-        return data as CRMDealItem;
+        const data = await res.json();
+        const newItem = (Array.isArray(data) ? data[0] : data) as CRMDealItem;
+
+        // Fetch product details manually for consistent return type
+        try {
+            const pRes = await fetch(`${supabaseUrl}/rest/v1/products?select=name,sku&id=eq.${newItem.product_id}`, {
+                headers: { 'apikey': supabaseKey || '', 'Authorization': `Bearer ${authToken || supabaseKey}` }
+            });
+            if (pRes.ok) {
+                const pData = await pRes.json();
+                newItem.product = pData[0] || null;
+            }
+        } catch { }
+
+        return newItem;
     } catch (err) {
         console.error('addDealItem exception:', err);
         return null;
     }
 }
 
-export async function deleteDealItem(id: string): Promise<boolean> {
-    try {
-        const { error } = await supabase
-            .from('crm_deal_items')
-            .delete()
-            .eq('id', id);
+export async function deleteDealItem(id: string, token?: string): Promise<boolean> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-        if (error) return false;
-        return true;
+    try {
+        let authToken = token;
+        if (!authToken) {
+            const session = await getSessionWithTimeout();
+            authToken = session?.access_token;
+        }
+
+        const res = await fetch(
+            `${supabaseUrl}/rest/v1/crm_deal_items?id=eq.${id}`,
+            {
+                method: 'DELETE',
+                headers: {
+                    'apikey': supabaseKey || '',
+                    'Authorization': `Bearer ${authToken || supabaseKey}`
+                }
+            }
+        );
+
+        return res.ok;
     } catch (err) {
         return false;
     }
 }
 
-export async function updateDealItem(id: string, updates: { quantity?: number, unit_price?: number }): Promise<boolean> {
-    try {
-        const { error } = await supabase
-            .from('crm_deal_items')
-            .update(updates)
-            .eq('id', id);
+export async function updateDealItem(id: string, updates: { quantity?: number, unit_price?: number }, token?: string): Promise<boolean> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-        if (error) return false;
-        return true;
+    try {
+        let authToken = token;
+        if (!authToken) {
+            const session = await getSessionWithTimeout();
+            authToken = session?.access_token;
+        }
+
+        const res = await fetch(
+            `${supabaseUrl}/rest/v1/crm_deal_items?id=eq.${id}`,
+            {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': supabaseKey || '',
+                    'Authorization': `Bearer ${authToken || supabaseKey}`,
+                    'Prefer': 'return=minimal'
+                },
+                body: JSON.stringify(updates)
+            }
+        );
+
+        return res.ok;
     } catch (err) {
         return false;
     }

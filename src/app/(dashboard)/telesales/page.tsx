@@ -39,7 +39,7 @@ const formatDate = (dateString: string) => {
 };
 
 export default function TelesalesDashboard() {
-    const { user, session } = useAuth();
+    const { user, session, isLoading: authIsLoading } = useAuth();
 
     // State for data
     const [tasks, setTasks] = useState<TelesalesTask[]>([]);
@@ -94,7 +94,7 @@ export default function TelesalesDashboard() {
     }, [user, session]);
 
     useEffect(() => {
-        if (!user || !session) return;
+        if (!user) return;
 
         loadAll();
 
@@ -147,6 +147,13 @@ export default function TelesalesDashboard() {
     }, [user?.id, session?.access_token]); // Fixed: Added session?.access_token
 
     // --- KPI CALCULATIONS ---
+
+    // Stop local loading if auth finished and no user found
+    useEffect(() => {
+        if (!authIsLoading && !user) {
+            setIsLoading(false);
+        }
+    }, [authIsLoading, user]);
 
     // 1. Leads to Call - count leads with status 'new' or 'contacted'
     const leadsToCallCount = safeLeads.filter(l =>

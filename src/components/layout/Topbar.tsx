@@ -72,9 +72,12 @@ export default function Topbar({ onMenuClick, title = "Dashboard" }: TopbarProps
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const handleLogout = () => {
-        logout();
-        router.push("/login");
+    const handleLogout = async () => {
+        try {
+            await logout();
+        } finally {
+            router.push("/login");
+        }
     };
 
     return (

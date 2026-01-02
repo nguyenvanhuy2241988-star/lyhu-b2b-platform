@@ -82,32 +82,48 @@ const resetColumns = () => {
     return DEFAULT_COLUMNS;
 };
 
-// FIXED: Re-enabled log functionality
+// FIXED: Re-enabled log functionality with Pure Fetch
 const addLogSupabase = async (taskId: string, logData: any) => {
-    const supabase = createClient();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     try {
-        const { data: { user } } = await supabase.auth.getUser();
+        // Use a timeout for session to prevent hangs
+        const sessionPromise = createClient().auth.getSession();
+        const timeoutPromise = new Promise<{ data: { session: null } }>((_, reject) =>
+            setTimeout(() => reject(new Error('Auth Timeout')), 3000)
+        );
+        const { data } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+        const session = data?.session;
+        const user = session?.user;
+
         if (!user) {
-            console.error('[addLogSupabase] User not authenticated');
+            console.error('[addLogSupabase] User not authenticated or timeout');
             return [];
         }
 
-        const { data, error } = await supabase
-            .from('telesales_task_logs')
-            .insert({
+        const response = await fetch(`${supabaseUrl}/rest/v1/telesales_task_logs`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': supabaseKey || '',
+                'Authorization': `Bearer ${session?.access_token || supabaseKey}`,
+                'Prefer': 'return=representation'
+            },
+            body: JSON.stringify({
                 task_id: taskId,
                 user_id: user.id,
                 log: typeof logData === 'string' ? logData : JSON.stringify(logData),
             })
-            .select();
+        });
 
-        if (error) {
-            console.error('[addLogSupabase] Error:', error);
-            throw error;
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('[addLogSupabase] Error:', response.status, errorText);
+            return [];
         }
 
-        return data || [];
+        return await response.json();
     } catch (err) {
         console.error('[addLogSupabase] Exception:', err);
         return [];
@@ -136,6 +152,18 @@ const PriorityBadge = ({ priority }: { priority: TaskPriority }) => {
     );
 };
 
+interface Profile {
+    id: string;
+    full_name: string;
+    email: string;
+}
+
+const Star = ({ className }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+    </svg>
+);
+
 interface TaskCardProps {
     task: TelesalesTask;
     isDragging: boolean;
@@ -147,9 +175,10 @@ interface TaskCardProps {
     onRefresh: () => Promise<void>; // Option A: Direct refresh
     isOverdue?: boolean;
     isHighlighted?: boolean;
+    profiles?: Profile[];
 }
 
-const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, onLogCall, onEdit, onRefresh, isOverdue, isHighlighted }: TaskCardProps) => {
+const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, onLogCall, onEdit, onRefresh, isOverdue, isHighlighted, profiles = [] }: TaskCardProps) => {
     // Toggle Complete Handler - Option A: Direct Refresh
     const handleComplete = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -228,6 +257,36 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
                         <span className="font-medium">{task.customer_name}</span>
                     </div>
                 ) : null}
+
+                {/* Assignees and Leader - NEW */}
+                {task.assignee_ids && task.assignee_ids.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-3 pt-2 border-t border-slate-50">
+                        {task.assignee_ids.map(id => {
+                            const p = profiles.find(prof => prof.id === id);
+                            const isLeader = id === task.leader_id;
+                            const name = p?.full_name?.split(' ').pop() || p?.email?.split('@')[0] || '...';
+
+                            return (
+                                <div
+                                    key={id}
+                                    title={p?.full_name || p?.email || id}
+                                    className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] border transition-colors 
+                                        ${isLeader
+                                            ? 'bg-blue-50 border-blue-200 text-blue-700 font-bold shadow-sm'
+                                            : 'bg-slate-50 border-slate-100 text-slate-500'
+                                        }`}
+                                >
+                                    {isLeader ? (
+                                        <Star className="w-2.5 h-2.5 fill-blue-500 text-blue-500" />
+                                    ) : (
+                                        <User className="w-2.5 h-2.5 opacity-60" />
+                                    )}
+                                    <span>{name}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
 
                 {/* Attachments Indicator - DISABLED */}
                 {/* {task.attachments && task.attachments.length > 0 && (
@@ -327,8 +386,9 @@ function useDebounce<T>(value: T, delay: number): T {
 // --- Main Page ---
 
 export default function TelesalesTasksPage() {
-    const { user, session } = useAuth(); // ADDED
+    const { user, session, isLoading: authIsLoading } = useAuth(); // ADDED
     const [tasks, setTasks] = useState<TelesalesTask[]>([]);
+    const [profiles, setProfiles] = useState<Profile[]>([]);
     const [columns, setColumns] = useState<TelesalesColumn[]>([]);
     const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
     const [isLoading, setIsLoading] = useState(false);
@@ -373,7 +433,14 @@ export default function TelesalesTasksPage() {
     const refreshData = useCallback(async () => {
         if (!user) return; // Wait for user
         setIsLoading(prev => tasks.length === 0 ? true : prev);
-        const fetchedTasks = await fetchTasks(user.id, session?.access_token); // Pass token
+
+        // Parallel fetch for better performance
+        const [fetchedTasks, { data: profileData }] = await Promise.all([
+            fetchTasks(user.id, session?.access_token),
+            supabase.from('profiles').select('id, full_name, email')
+        ]);
+
+        if (profileData) setProfiles(profileData);
         setTasks(fetchedTasks);
         setColumns(loadColumns().sort((a, b) => a.order - b.order));
         setIsLoading(false);
@@ -396,8 +463,10 @@ export default function TelesalesTasksPage() {
     };
 
     useEffect(() => {
-        if (user && session?.access_token) {
+        if (user) {
             refreshData();
+        } else if (!authIsLoading) {
+            setIsLoading(false);
         }
 
         const handleColumnUpdate = () => setColumns(loadColumns().sort((a, b) => a.order - b.order));
@@ -1108,6 +1177,7 @@ export default function TelesalesTasksPage() {
                                                         onRefresh={refreshData}
                                                         isOverdue={isOverdue}
                                                         isHighlighted={highlightedTaskId === task.id}
+                                                        profiles={profiles}
                                                     />
                                                 )
                                             })
@@ -1179,7 +1249,7 @@ export default function TelesalesTasksPage() {
                 isOpen={isSimpleModalOpen}
                 onClose={() => setIsSimpleModalOpen(false)}
                 onSave={handleSaveTask}
-                currentUser={null} // Utils will update owner_id
+                currentUser={user} // Pass user from useAuth
             />
         </div>
     );

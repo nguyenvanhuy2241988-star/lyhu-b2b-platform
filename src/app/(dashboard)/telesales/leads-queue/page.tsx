@@ -14,7 +14,7 @@ export default function LeadsQueuePage() {
     const [leads, setLeads] = useState<SalesLead[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    const { user } = useAuth(); // Need auth context
+    const { user, isLoading: authIsLoading } = useAuth(); // Need auth context
 
     useEffect(() => {
         let mounted = true;
@@ -22,13 +22,10 @@ export default function LeadsQueuePage() {
         const fetchLeads = async () => {
             setIsLoading(true);
             try {
-                console.log("AUTH_UID", user?.id);
-                console.log("telesales uid:", user?.id);
                 const data = await fetchSalesLeads(user?.id);
 
                 if (!mounted) return;
 
-                console.log("leads data length:", data?.length);
                 setLeads(data ?? []);
             } catch (error) {
                 console.error("fetchSalesLeads error:", error);
@@ -40,14 +37,14 @@ export default function LeadsQueuePage() {
 
         if (user?.id) {
             fetchLeads();
-        } else {
+        } else if (!authIsLoading) {
             setIsLoading(false);
         }
 
         return () => {
             mounted = false;
         };
-    }, [user?.id]);
+    }, [user?.id, authIsLoading]);
 
     // Modal state
     const [isCreateTaskModalOpen, setIsCreateTaskModalOpen] = useState(false);

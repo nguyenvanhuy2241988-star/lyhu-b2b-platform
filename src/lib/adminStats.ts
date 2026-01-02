@@ -41,9 +41,15 @@ export async function getAdminLeads(token?: string): Promise<AdminLead[]> {
     try {
         const headers = getHeaders(token);
 
-        // Fetch CTV leads (from leads table where source=CTV or assigned_to is null/ctv-related)
-        // For simplicity, we fetch all leads and map them. In a real app, use better filters.
-        const leadsRes = await fetch(`${SUPABASE_URL}/rest/v1/leads?select=*&order=created_at.desc`, { headers });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+
+        const leadsRes = await fetch(`${SUPABASE_URL}/rest/v1/leads?select=*&order=created_at.desc`, {
+            headers,
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
         const leadsData = leadsRes.ok ? await leadsRes.json() : [];
 
         const allLeads: AdminLead[] = (leadsData || []).map((l: any) => ({
@@ -69,11 +75,18 @@ export async function getAdminLeads(token?: string): Promise<AdminLead[]> {
 export async function getAdminLeadStats(token?: string): Promise<AdminLeadStats> {
     try {
         const headers = getHeaders(token);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
         const [allLeads, ordersRes] = await Promise.all([
             getAdminLeads(token),
-            fetch(`${SUPABASE_URL}/rest/v1/orders?select=total_amount,status`, { headers })
+            fetch(`${SUPABASE_URL}/rest/v1/orders?select=total_amount,status`, {
+                headers,
+                signal: controller.signal
+            })
         ]);
 
+        clearTimeout(timeoutId);
         const ordersData = ordersRes.ok ? await ordersRes.json() : [];
 
         const totalLeads = allLeads.length;

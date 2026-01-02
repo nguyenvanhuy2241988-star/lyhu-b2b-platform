@@ -9,8 +9,16 @@ const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const getAuthHeaders = async (token?: string) => {
     let finalToken = token;
     if (!finalToken) {
-        const { data } = await supabase.auth.getSession();
-        finalToken = data.session?.access_token;
+        try {
+            const sessionPromise = supabase.auth.getSession();
+            const timeoutPromise = new Promise<{ data: { session: null } }>((_, reject) =>
+                setTimeout(() => reject(new Error('Auth Timeout')), 3000)
+            );
+            const { data } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+            finalToken = data?.session?.access_token;
+        } catch (e) {
+            console.warn('[Tasks Store] getAuthHeaders session timeout');
+        }
     }
     return {
         'Content-Type': 'application/json',
@@ -115,7 +123,9 @@ export type TelesalesTask = {
     due_date?: string | null;      // ISO string
     completed_at?: string | null;  // ISO string
 
-    assigned_to?: string | null;   // User ID of assignee
+    assigned_to?: string | null;   // User ID of assignee (legacy)
+    assignee_ids?: string[] | null; // Array of user IDs
+    leader_id?: string | null;     // User ID of leader
 
     order?: number | null;
 
@@ -126,15 +136,13 @@ export type TelesalesTask = {
 // ---- helpers ----
 async function getUserIdSafe(): Promise<string | null> {
     try {
-        // Use getSession instead of getUser to avoid server hit/deadlock
-        const { data, error } = await supabase.auth.getSession();
-        if (error || !data.session) {
-            // console.warn('[getUserIdSafe] no session'); // noisy
-            return null;
-        }
-        return data.session.user.id;
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise<{ data: { session: null } }>((_, reject) =>
+            setTimeout(() => reject(new Error('Auth Timeout')), 3000)
+        );
+        const { data } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+        return data.session?.user?.id ?? null;
     } catch (e) {
-        console.warn('[getUserIdSafe] exception:', e);
         return null;
     }
 }
@@ -151,8 +159,8 @@ export async function fetchTasks(userId?: string, token?: string, filters?: { st
         if (!activeUserId) return [];
 
         const headers = await getAuthHeaders(token);
-        // Query: user_id=eq.ID or assigned_to=eq.ID
-        let query = `or=(user_id.eq.${activeUserId},assigned_to.eq.${activeUserId})&order=order.asc.nullsfirst,created_at.desc`;
+        // Query: user_id=eq.ID or assigned_to=eq.ID or assignee_ids contains ID or leader_id=eq.ID
+        let query = `or=(user_id.eq.${activeUserId},assigned_to.eq.${activeUserId},assignee_ids.cs.{${activeUserId}},leader_id.eq.${activeUserId})&order=order.asc.nullsfirst,created_at.desc`;
 
         if (filters?.startDate) {
             query += `&completed_at=gte.${filters.startDate}`;
@@ -161,7 +169,15 @@ export async function fetchTasks(userId?: string, token?: string, filters?: { st
             query += `&completed_at=lte.${filters.endDate}`;
         }
 
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*&${query}`, { headers });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*&${query}`, {
+            headers,
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
 
         if (!res.ok) {
             const err = await res.json();
@@ -187,6 +203,8 @@ export async function createTaskSupabase(input: {
     due_date?: string | null;
     type?: TaskType;
     assigned_to?: string | null;
+    assignee_ids?: string[];
+    leader_id?: string | null;
 }, token?: string): Promise<TelesalesTask> { // Added token param
     const userId = await getUserIdSafe(); // Could pass this too, but for write mostly safe? Or use token payload?
     // Write operations are less prone to "loading" deadlocks than "onMount" reads, but safer to use Pure Fetch.
@@ -234,6 +252,8 @@ export async function createTaskSupabase(input: {
         due_date: input.due_date ?? null,
         type: input.type ?? 'task',
         assigned_to: input.assigned_to ?? null,
+        assignee_ids: input.assignee_ids ?? [],
+        leader_id: input.leader_id ?? null,
         order: Math.floor(Date.now() / 1000),
     };
 
@@ -270,6 +290,8 @@ export async function updateTaskSupabase(taskId: string, patch: Partial<Telesale
         order: patch.order ?? undefined,
         type: patch.type,
         assigned_to: patch.assigned_to ?? undefined,
+        assignee_ids: patch.assignee_ids ?? undefined,
+        leader_id: patch.leader_id ?? undefined,
         updated_at: new Date().toISOString(),
     };
 
@@ -296,22 +318,28 @@ export async function moveTaskSupabase(taskId: string, status: TaskStatus, order
     return updateTaskSupabase(taskId, { status, order: order ?? Date.now() });
 }
 
-export async function deleteTaskSupabase(taskId: string) {
+export async function deleteTaskSupabase(taskId: string, token?: string) {
     const userId = await getUserIdSafe();
     if (!userId) return { ok: false, error: 'NOT_AUTHENTICATED' as const };
 
-    const { error } = await supabase
-        .from(TABLE)
-        .delete()
-        .eq('id', taskId)
-        .eq('user_id', userId);
+    try {
+        const headers = await getAuthHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${taskId}&user_id=eq.${userId}`, {
+            method: 'DELETE',
+            headers
+        });
 
-    if (error) {
-        logSupabaseError('deleteTaskSupabase', error);
-        return { ok: false, error: error.message };
+        if (!res.ok) {
+            const err = await res.json();
+            logSupabaseError('deleteTaskSupabase', err);
+            return { ok: false, error: err.message };
+        }
+
+        return { ok: true };
+    } catch (e) {
+        logSupabaseError('deleteTaskSupabase exception', e);
+        return { ok: false, error: 'Network error or timeout' };
     }
-
-    return { ok: true };
 }
 
 // ---- backward-compatible aliases ----
@@ -326,33 +354,40 @@ export async function createLeadSupabase(input: {
     name: string;
     phone: string;
     note?: string;
-}): Promise<any> {
+}, token?: string): Promise<any> {
     const userId = await getUserIdSafe();
     if (!userId) throw new Error('NOT_AUTHENTICATED');
 
-    // Create Lead in public.leads
-    const { data: leadData, error: leadError } = await supabase
-        .from('leads')
-        .insert({
-            assigned_to: userId,
-            name: input.name,
-            phone: input.phone,
-            note: input.note,
-            telesales_status: 'new',
-            created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+    try {
+        const headers = await getAuthHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/leads`, {
+            method: 'POST',
+            headers: {
+                ...headers,
+                'Prefer': 'return=representation'
+            },
+            body: JSON.stringify({
+                assigned_to: userId,
+                name: input.name,
+                phone: input.phone,
+                note: input.note,
+                telesales_status: 'new',
+                created_at: new Date().toISOString()
+            })
+        });
 
-    if (leadError) {
-        console.error("createLeadSupabase error:", leadError);
-        // Fallback: If 'leads' table missing or error, just log and continue? 
-        // User asked for "Auto add". We should try.
-        // If it fails, maybe we shouldn't block the task creation?
-        // But for "Lead" type, it's critical. Let's throw for now to see feedback.
-        throw leadError;
+        if (!res.ok) {
+            const err = await res.json();
+            console.error("createLeadSupabase error:", err);
+            throw new Error(err.message || 'Failed to create lead');
+        }
+
+        const data = await res.json();
+        return Array.isArray(data) ? data[0] : data;
+    } catch (e) {
+        console.error("createLeadSupabase exception:", e);
+        throw e;
     }
-    return leadData;
 }
 
 export async function createLeadAsTask(input: {

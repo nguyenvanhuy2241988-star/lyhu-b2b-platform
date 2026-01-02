@@ -25,6 +25,8 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
     const [priority, setPriority] = useState("normal"); // Phase B: Added
     const [status, setStatus] = useState("today"); // Phase B: Added
     const [assignedTo, setAssignedTo] = useState("");
+    const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
+    const [leaderId, setLeaderId] = useState("");
     const [note, setNote] = useState("");
     const [attachments, setAttachments] = useState<{ type: 'image' | 'file' | 'link'; url: string; name: string; }[]>([]);
 
@@ -58,6 +60,8 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
             setTitle("");
             setDueDate("");
             setAssignedTo(currentUser?.id || "");
+            setAssigneeIds(currentUser?.id ? [currentUser.id] : []);
+            setLeaderId("");
             setNote("");
             setAttachments([]);
             setIsAttachOpen(false);
@@ -76,7 +80,9 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                 due_date: dueDate ? new Date(dueDate).toISOString() : null,
                 note,
                 type: 'task',
-                assigned_to: assignedTo || currentUser?.id
+                assigned_to: assignedTo || currentUser?.id,
+                assignee_ids: assigneeIds,
+                leader_id: leaderId
             });
             // Form is reset by useEffect on next open or we can close
         } catch (error) {
@@ -106,6 +112,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
 
     // Derived Display Name
     const currentAssigneeName = profiles.find(p => p.id === assignedTo)?.full_name || profiles.find(p => p.id === assignedTo)?.email || 'Tôi';
+    const assigneeNames = profiles.filter(p => assigneeIds.includes(p.id)).map(p => p.full_name || p.email).join(', ');
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
@@ -175,22 +182,50 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                             />
                         </div>
 
-                        {/* Assignee */}
-                        <div className="relative group max-w-[200px]">
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-600 cursor-pointer hover:border-primary-300">
-                                <User className="w-4 h-4" />
-                                <span className="truncate max-w-[120px]">{currentAssigneeName}</span>
-                                <select
-                                    className="absolute inset-0 opacity-0 cursor-pointer"
-                                    value={assignedTo}
-                                    onChange={(e) => setAssignedTo(e.target.value)}
-                                >
-                                    <option value={currentUser?.id || ""}>Tôi</option>
-                                    {(profiles ?? []).filter(p => p.id !== currentUser?.id).map(p => (
-                                        <option key={p.id} value={p.id}>{p.full_name || p.email}</option>
-                                    ))}
-                                </select>
+                        {/* Assignees (Multi) */}
+                        <div className="flex-1 min-w-[200px] border border-slate-200 rounded-lg p-2 bg-slate-50">
+                            <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-tight">Người phối hợp ({assigneeIds.length})</label>
+                            <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto mb-2">
+                                {profiles.filter(p => assigneeIds.includes(p.id)).map(p => (
+                                    <span key={p.id} className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-white border border-slate-200 rounded text-[10px] text-slate-700">
+                                        {p.full_name || p.email}
+                                        <button onClick={() => setAssigneeIds(prev => prev.filter(id => id !== p.id))} className="text-slate-400 hover:text-red-500">
+                                            <X className="w-2.5 h-2.5" />
+                                        </button>
+                                    </span>
+                                ))}
+                                {assigneeIds.length === 0 && <span className="text-[10px] text-slate-400 italic">Chọn bên dưới...</span>}
                             </div>
+                            <select
+                                className="w-full bg-transparent border-none text-[11px] font-medium focus:ring-0 p-0 text-primary-600 outline-none cursor-pointer"
+                                value=""
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val && !assigneeIds.includes(val)) {
+                                        setAssigneeIds([...assigneeIds, val]);
+                                    }
+                                }}
+                            >
+                                <option value="">+ Thêm người phối hợp...</option>
+                                {profiles.map(p => (
+                                    <option key={p.id} value={p.id}>{p.full_name || p.email}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Leader */}
+                        <div className={`flex-1 min-w-[150px] border rounded-lg p-2 transition-colors ${leaderId ? 'border-blue-200 bg-blue-50/50' : 'border-slate-200 bg-slate-50'}`}>
+                            <label className="block text-[10px] font-bold text-blue-600 mb-1 uppercase tracking-tight">Trưởng nhóm</label>
+                            <select
+                                className="w-full bg-transparent border-none text-[11px] font-semibold focus:ring-0 p-0 text-slate-700 outline-none cursor-pointer"
+                                value={leaderId}
+                                onChange={(e) => setLeaderId(e.target.value)}
+                            >
+                                <option value="">-- Chọn trưởng nhóm --</option>
+                                {profiles.filter(p => assigneeIds.includes(p.id)).map(p => (
+                                    <option key={p.id} value={p.id}>{p.full_name || p.email}</option>
+                                ))}
+                            </select>
                         </div>
                     </div>
 
