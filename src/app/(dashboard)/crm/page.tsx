@@ -515,7 +515,7 @@ export default function CRMPage() {
             refreshData();
         } else if (!authIsLoading) {
             // Stop spinner if auth finished but no user found
-            setIsLoading(false);
+            setIsDataLoading(false);
         }
         const handleColumnUpdate = () => {
             setColumns(loadCRMColumns().sort((a, b) => a.order - b.order));
