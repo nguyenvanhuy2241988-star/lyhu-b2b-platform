@@ -388,6 +388,8 @@ function useDebounce<T>(value: T, delay: number): T {
 export default function TelesalesTasksPage() {
     const { user, session, isLoading: authIsLoading } = useAuth(); // ADDED
     const [tasks, setTasks] = useState<TelesalesTask[]>([]);
+    const tasksRef = useRef(tasks);
+    useEffect(() => { tasksRef.current = tasks; }, [tasks]);
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [columns, setColumns] = useState<TelesalesColumn[]>([]);
     const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
@@ -432,7 +434,7 @@ export default function TelesalesTasksPage() {
     // Initial Load & Listeners
     const refreshData = useCallback(async () => {
         if (!user) return; // Wait for user
-        setIsLoading(prev => tasks.length === 0 ? true : prev);
+        setIsLoading(prev => tasksRef.current.length === 0 ? true : prev);
 
         // Parallel fetch for better performance
         const [fetchedTasks, { data: profileData }] = await Promise.all([
@@ -444,7 +446,7 @@ export default function TelesalesTasksPage() {
         setTasks(fetchedTasks);
         setColumns(loadColumns().sort((a, b) => a.order - b.order));
         setIsLoading(false);
-    }, [user, session]);
+    }, [user, session, tasks.length]);
 
     // Helper to scroll to task
     const handleLocateTask = (taskId: string) => {
@@ -475,7 +477,7 @@ export default function TelesalesTasksPage() {
         return () => {
             window.removeEventListener("telesales-columns-updated", handleColumnUpdate);
         };
-    }, [user, session?.access_token, refreshData]);
+    }, [user, session?.access_token, refreshData, authIsLoading]); // Added authIsLoading
 
     const handleLogCall = (task: TelesalesTask) => {
         setTaskToLog(task);

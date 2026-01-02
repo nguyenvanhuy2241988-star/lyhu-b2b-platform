@@ -87,7 +87,7 @@ export default function DealDetailPage() {
             }
         };
         loadData();
-    }, [dealId]);
+    }, [dealId, session?.access_token]);
 
     const handleItemsChange = async () => {
         if (!deal) return;

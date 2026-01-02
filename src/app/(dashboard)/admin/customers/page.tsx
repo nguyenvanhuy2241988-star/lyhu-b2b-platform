@@ -50,7 +50,7 @@ export default function CustomersPage() {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                 <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-4 gap-4">
                     {CUSTOMER_TYPES.slice(1).map((type) => {
-                        const count = mockCustomers.filter((c) => c.type === type).length;
+                        const count = customers.filter((c: any) => c.type === type).length;
                         return (
                             <div key={type} className="bg-white p-4 rounded-lg border border-slate-200">
                                 <p className="text-xs text-slate-600">{type}</p>
