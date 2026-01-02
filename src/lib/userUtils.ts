@@ -30,3 +30,9 @@ export function isValidVietnamesePhone(phone: string): boolean {
     // Vietnamese phone: 10 digits, starts with 0
     return /^0\d{9}$/.test(normalized);
 }
+
+// Normalize address: trim, fix multiple spaces
+export function normalizeAddress(address: string): string {
+    if (!address) return "";
+    return address.trim().replace(/\s\s+/g, ' ');
+}

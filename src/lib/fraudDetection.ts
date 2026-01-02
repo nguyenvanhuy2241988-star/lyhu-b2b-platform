@@ -1,5 +1,6 @@
 import { Order, FraudStatus } from "./ordersStore";
-import { User, normalizePhone, normalizeAddress } from "./usersStore";
+import { User } from "./usersStore";
+import { normalizePhone, normalizeAddress } from "./userUtils";
 
 export interface FraudDetectionResult {
     flagged: boolean;
