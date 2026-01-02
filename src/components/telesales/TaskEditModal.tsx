@@ -344,5 +344,6 @@ export const TaskEditModal = ({
                     </div>
                 </div>
             </div>
-            );
+        </div>
+    );
 };
