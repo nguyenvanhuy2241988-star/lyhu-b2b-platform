@@ -85,6 +85,10 @@ export function updateUserActivation(userId: string, activatedAt: string): void 
     updateUser(userId, { activatedAt });
 }
 
+function generateReferralCode(): string {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
 export function ensureCtvReferralCodes(): void {
     if (typeof window === "undefined") return;
     const users = loadUsers();
