@@ -1,19 +1,17 @@
 import type { Metadata } from "next";
-export const dynamic = 'force-dynamic';
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { ToastProvider } from "@/components/ui/toast";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
     title: "LYHU App",
     description: "B2B Application for LYHU",
 };
 
-import { ToastProvider } from "@/components/ui/toast";
-
-import { AuthProvider } from "@/components/auth/AuthProvider";
+const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({
     children,
