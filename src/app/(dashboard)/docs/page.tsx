@@ -23,7 +23,7 @@ import { vi } from 'date-fns/locale';
 import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function DocsListPage() {
-    const { authIsLoading } = useAuth();
+    const { isLoading: authIsLoading } = useAuth();
     const router = useRouter();
     const [docs, setDocs] = useState<DocumentItem[]>([]);
     const [categories, setCategories] = useState<DocumentCategory[]>([]);
