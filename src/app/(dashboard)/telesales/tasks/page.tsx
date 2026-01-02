@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { createClient } from "@/lib/supabaseClient";
+import { createClient, supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider"; // ADDED // ADDED: For addLogSupabase
 
 import Link from "next/link";
