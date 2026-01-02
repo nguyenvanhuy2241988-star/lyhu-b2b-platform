@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { ToastProvider } from "@/components/ui/toast";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
     title: "LYHU App",

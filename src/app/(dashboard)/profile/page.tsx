@@ -36,7 +36,7 @@ export default function ProfilePage() {
         } finally {
             setIsLoading(false);
         }
-    }, [user.id]);
+    }, [user?.id]);
 
     useEffect(() => {
         if (!user) return;
