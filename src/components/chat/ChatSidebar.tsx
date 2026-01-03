@@ -273,24 +273,52 @@ export function ChatSidebar({
                     </div>
                 )}
 
+                {/* Suggested Users / Empty State Improvement */}
+                {!searchTerm && filteredChannels.length === 0 && filteredGroups.length === 0 && filteredDMs.length === 0 && (
+                    <div className="px-2 py-4 text-center">
+                        <div className="w-12 h-12 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <Plus className="w-6 h-6 text-blue-500" />
+                        </div>
+                        <p className="text-xs font-bold text-slate-800 mb-1">Bắt đầu trò chuyện</p>
+                        <p className="text-[11px] text-slate-500 mb-4 px-4">Hãy tìm một đồng nghiệp để bắt đầu gửi tin nhắn nhé.</p>
+
+                        <div className="text-left">
+                            <h4 className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2 px-2">Nhân viên khác</h4>
+                            <div className="space-y-1">
+                                {users.filter(u => u.id !== currentUser?.id).slice(0, 10).map(u => (
+                                    <div key={u.id} onClick={() => onStartChat(u.id)} className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer hover:bg-slate-100/80 text-sm text-slate-600 transition-colors">
+                                        <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center text-[10px] text-blue-600 uppercase font-bold border border-blue-200">
+                                            {(u.full_name || u.email || "?").charAt(0).toUpperCase()}
+                                        </div>
+                                        <span className="truncate flex-1">{u.full_name || u.email}</span>
+                                        <Plus className="w-3 h-3 text-slate-400" />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Global Search Results (Other Users) */}
                 {searchTerm && searchResults.length > 0 && (
                     <div>
                         <div className="flex items-center justify-between px-2 mb-1 mt-4 border-t border-slate-100 pt-2">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Người dùng khác</h4>
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Kết quả tìm kiếm</h4>
                         </div>
                         <div className="space-y-0.5">
                             {searchResults.map((u) => {
                                 const displayName = u.full_name || u.email || "No Name";
                                 const isOnline = isUserOnline(u.id);
                                 return (
-                                    <div key={u.id} onClick={() => onStartChat(u.id)} className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer hover:bg-slate-100/80 text-sm text-slate-500 hover:text-slate-900 transition-colors opacity-80 hover:opacity-100">
+                                    <div key={u.id} onClick={() => onStartChat(u.id)} className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer hover:bg-slate-100/80 text-sm text-slate-600 transition-colors">
                                         <div className="relative">
-                                            <div className="w-6 h-6 rounded bg-slate-100 flex items-center justify-center text-[10px] text-slate-500 uppercase font-bold border border-slate-200">{displayName.charAt(0).toUpperCase()}</div>
+                                            <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center text-[10px] text-blue-600 uppercase font-bold border border-blue-200">
+                                                {displayName.charAt(0).toUpperCase()}
+                                            </div>
                                             {isOnline && <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>}
                                         </div>
-                                        <span className="truncate font-medium">{displayName}</span>
-                                        <Plus className="w-3 h-3 text-slate-400 ml-auto" />
+                                        <span className="truncate flex-1 font-medium">{displayName}</span>
+                                        <Plus className="w-3 h-3 text-slate-400" />
                                     </div>
                                 );
                             })}

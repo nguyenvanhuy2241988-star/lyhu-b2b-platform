@@ -46,33 +46,30 @@ export default function ChatPage() {
         subscribeToNewConversations(user.id);
 
         const fetchProfiles = async () => {
-            const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-            const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-            const token = session?.access_token;
-
-            const headers = {
-                'Content-Type': 'application/json',
-                'apikey': SUPABASE_KEY || '',
-                'Authorization': `Bearer ${token || SUPABASE_KEY}`
-            };
-
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id,full_name,role,email`, { headers });
-                const data = await res.json();
-                if (res.ok) {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('id, full_name, role, email')
+                    .order('full_name', { ascending: true });
+
+                if (error) {
+                    console.error("[ChatPage] Failed to fetch profiles via client:", error);
+                    // Fallback attempt if a column is missing (e.g. full_name)
+                    const { data: fallbackData } = await supabase
+                        .from('profiles')
+                        .select('id, role, email')
+                        .limit(100);
+                    if (fallbackData) setUsers(fallbackData);
+                } else {
                     console.log(`[ChatPage] Fetched ${data.length} profiles successfully`);
                     setUsers(data);
-                } else {
-                    console.error("[ChatPage] Failed to fetch profiles:", data);
                 }
             } catch (e) {
                 console.error("[ChatPage] Error fetching profiles:", e);
             }
         };
 
-        if (session?.access_token) {
-            fetchProfiles();
-        }
+        fetchProfiles();
 
         return () => {
             unsubscribeFromNewConversations(); // Assuming this is the intended cleanup for new conversations
