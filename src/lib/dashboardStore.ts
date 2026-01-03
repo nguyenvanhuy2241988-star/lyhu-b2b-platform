@@ -53,7 +53,7 @@ async function getRevenueByDateFallback(days: number): Promise<RevenueDataPoint[
     if (error || !data) return [];
 
     // Group by date
-    const grouped = data.reduce((acc: Record<string, { revenue: number; orders: number }>, order) => {
+    const grouped = data.reduce((acc: Record<string, { revenue: number; orders: number }>, order: any) => {
         const date = new Date(order.created_at).toLocaleDateString('vi-VN', {
             day: '2-digit',
             month: '2-digit'
