@@ -120,7 +120,7 @@ interface ChatState {
     deleteMessage: (messageId: string) => Promise<void>;
     pinMessage: (messageId: string) => Promise<void>;
     unpinMessage: (messageId: string) => Promise<void>;
-    searchMessages: (query: string, conversationId?: string) => Promise<Message[]>;
+    searchMessages: (query: string, conversationId?: string, signal?: AbortSignal) => Promise<Message[]>;
     forwardMessage: (message: Message, conversationIds: string[]) => Promise<void>;
     updateConversationName: (conversationId: string, name: string) => Promise<void>;
     addParticipants: (conversationId: string, userIds: string[]) => Promise<void>;

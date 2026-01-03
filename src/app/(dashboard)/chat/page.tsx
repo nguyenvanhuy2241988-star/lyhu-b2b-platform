@@ -50,7 +50,7 @@ export default function ChatPage() {
         // Subscribe to NEW conversations (sidebar sync)
         subscribeToNewConversations(user.id);
 
-        const fetchProfiles = async () => {
+        const fetchProfiles = useCallback(async () => {
             const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
             const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -75,7 +75,7 @@ export default function ChatPage() {
             } catch (e) {
                 console.error("[ChatPage] Profile fetch failed", e);
             }
-        };
+        }, [session?.access_token]);
 
         fetchProfiles();
         if (user?.id) {
@@ -86,7 +86,7 @@ export default function ChatPage() {
         return () => {
             unsubscribeFromNewConversations(); // Assuming this is the intended cleanup for new conversations
         };
-    }, [user, session?.access_token, fetchConversations, subscribeToNewConversations, unsubscribeFromNewConversations]);
+    }, [user, mounted, session?.access_token, fetchConversations, subscribeToNewConversations, unsubscribeFromNewConversations, fetchProfiles]);
 
     // Polling and Realtime are handled internally by selectConversation in chatStore.ts
     // No need for redundant useEffect here to avoid duplicate intervals/channels.
@@ -99,7 +99,7 @@ export default function ChatPage() {
                 markRead(activeConversationId, currentUser.id);
             }
         }
-    }, [messages, activeConversationId, currentUser, markRead]);
+    }, [messages, activeConversationId, currentUser, markRead, conversations]);
 
     const handleStartChat = async (targetUserId: string) => {
         console.log("[ChatPage] handleStartChat called:", { targetUserId, currentUserId: currentUser?.id });

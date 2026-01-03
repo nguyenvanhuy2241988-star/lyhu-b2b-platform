@@ -515,7 +515,7 @@ export default function CRMPage() {
         };
         window.addEventListener("crm-columns-updated", handleColumnUpdate);
         return () => window.removeEventListener("crm-columns-updated", handleColumnUpdate);
-    }, [user?.id, authRole, authIsLoading]);
+    }, [user, authRole, authIsLoading, refreshData]);
 
     useEffect(() => {
         if (editingColumnId && editInputRef.current) {
