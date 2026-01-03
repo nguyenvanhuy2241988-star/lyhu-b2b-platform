@@ -571,60 +571,40 @@ export const useChatStore = create<ChatState>((set, get) => ({
     },
 
     createDirectConversation: async (myId, theirId) => {
-        // RPC Call: get_or_create_direct_conversation(target_user_id)
-        // Note: The RPC internally uses auth.uid() for the current user.
-        // We shouldn't pass myId if the RPC infers it, BUT
-        // strict RPCs usually take params by name.
-        // Let's match the SQL signature: target_user_id
+        console.log("[ChatStore] createDirectConversation called:", { myId, theirId });
 
-        const { data: convId, error } = await supabase
-            .rpc('get_or_create_direct_conversation', {
-                target_user_id: theirId
-            });
-        if (error) throw error;
+        try {
+            // Step 1: Create conversation via RPC
+            console.log("[ChatStore] Calling RPC get_or_create_direct_conversation...");
+            const { data: convId, error } = await supabase
+                .rpc('get_or_create_direct_conversation', {
+                    target_user_id: theirId
+                });
 
-        // Manual fetch to update store immediately
-        // Waiting for realtime might be too slow for UX
-        const { data: newConv } = await supabase
-            .rpc('get_conversations_with_unread', { user_id_param: myId })
-            .eq('conversation_id', convId)
-            .single();
+            console.log("[ChatStore] RPC result:", { convId, error: error?.message });
 
-        if (newConv) {
-            set(state => {
-                const exists = state.conversations.find(c => c.id === convId);
-                if (exists) return { activeConversationId: convId };
+            if (error) {
+                console.error("[ChatStore] RPC Error:", error);
+                throw error;
+            }
 
-                // Map RPC result to Conversation object
-                const mapped: any = {
-                    id: newConv.conversation_id,
-                    type: newConv.type,
-                    name: newConv.name,
-                    is_public: newConv.is_public,
-                    created_at: newConv.created_at,
-                    updated_at: newConv.last_message_at,
-                    last_message_at: newConv.last_message_at,
-                    last_message: newConv.last_message_content ? {
-                        id: newConv.last_message_id,
-                        content: newConv.last_message_content,
-                        sender_id: newConv.last_message_sender_id,
-                        created_at: newConv.last_message_created_at,
-                        is_read: newConv.is_last_message_read
-                    } : null,
-                    unread_count: newConv.unread_count,
-                    participants: newConv.participants
-                };
-                return {
-                    conversations: [mapped, ...state.conversations],
-                    activeConversationId: convId
-                };
-            });
+            if (!convId) {
+                throw new Error("RPC returned null conversation ID");
+            }
+
+            // Step 2: Fetch full conversation data
+            console.log("[ChatStore] Fetching fresh conversations...");
+            await get().fetchConversations(myId);
+
+            // Step 3: Select the conversation
+            console.log("[ChatStore] Selecting conversation:", convId);
             get().selectConversation(convId);
-        } else {
-            // Fallback
-            get().selectConversation(convId);
+
+            return convId;
+        } catch (e: any) {
+            console.error("[ChatStore] createDirectConversation error:", e.message || e);
+            throw e;
         }
-        return convId;
     },
 
     createGroupConversation: async (myId, name, members) => {
