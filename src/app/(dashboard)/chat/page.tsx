@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useChatStore } from "@/lib/chatStore";
 import { supabase } from "@/lib/supabaseClient";
 import { X, Check } from "lucide-react";
