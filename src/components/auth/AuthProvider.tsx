@@ -98,17 +98,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
                     setRole(profile?.role ?? "customer");
                 } catch (roleErr) {
-                    console.warn('[AuthProvider] Role fetch timeout, using default or cache');
-                    // If we already set a role from localStorage, keep it. Otherwise default to customer.
+                    console.warn('[AuthProvider] Role fetch timeout, using cache');
                     setRole(prev => prev || "customer");
                 }
+            } else if (session === null) {
+                // EXPLICIT null from getSession (not timeout) means logged out
+                setUser(null);
+                setRole(null);
             } else {
-                // If no session but we didn't have mock data, clear.
-                // or if we had mock data but session is explicitly empty (logged out).
-                if (!session) {
-                    setUser(null);
-                    setRole(null);
-                }
+                // Timeout or Error: KEEP current user/role from FAST PATH
+                console.log('[AuthProvider] Preserving auth state despite fetch issue');
             }
         } catch (err) {
             console.error('[AuthProvider] checkAuth catastrophic error:', err);

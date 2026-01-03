@@ -125,6 +125,7 @@ export const getCurrentUser = async (): Promise<any | null> => {
         }
     } catch (err) {
         console.warn('[getCurrentUser] Error or Timeout:', err);
+        // Do NOT return null here yet, let the fallback logic below check localStorage
     }
 
     // 2. FALLBACK: LocalStorage
@@ -132,7 +133,9 @@ export const getCurrentUser = async (): Promise<any | null> => {
         const mockUserStr = localStorage.getItem(STORAGE_KEY_USER);
         if (mockUserStr) {
             try {
-                return JSON.parse(mockUserStr);
+                const user = JSON.parse(mockUserStr);
+                console.log('[getCurrentUser] Using fallback user from localStorage');
+                return user;
             } catch {
                 return null;
             }

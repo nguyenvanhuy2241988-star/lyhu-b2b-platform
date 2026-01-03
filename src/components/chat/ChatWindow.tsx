@@ -222,204 +222,228 @@ export function ChatWindow(props: ChatWindowProps) {
             {/* Lightbox */}
             {lightboxUrl && <Lightbox src={lightboxUrl} onClose={() => setLightboxUrl(null)} />}
 
-            {/* Header */}
-            <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white z-10 h-16 shadow-sm shrink-0">
-                <div className="flex items-center gap-3">
-                    {/* Back Button (Mobile) */}
-                    <button onClick={onBack} className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-full">
-                        <ChevronLeft className="w-5 h-5" />
-                    </button>
-
-                    {activeTargetUser ? (
-                        <div className="relative">
-                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold border border-slate-200">
-                                {getDisplayName(activeConversation).charAt(0).toUpperCase()}
-                            </div>
-                            {onlineUsers.includes(activeTargetUser.id) && <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>}
-                        </div>
-                    ) : activeConversation?.type === 'group' ? (
-                        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold border border-slate-200">
-                            <Users className="w-5 h-5" />
-                        </div>
-                    ) : null}
-                    <div>
-                        <h3 className="font-bold text-slate-800">{getDisplayName(activeConversation)}</h3>
-                        {activeConversation?.type === 'group' && <span className="text-xs text-slate-500">{activeConversation.internal_participants?.length} thành viên</span>}
-                        {activeTargetUser && <span className="text-xs text-slate-500">{onlineUsers.includes(activeTargetUser.id) ? 'Đang hoạt động' : 'Offline'}</span>}
+            {/* Empty State when no conversation selected */}
+            {!activeConversationId && (
+                <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 text-slate-400 p-8 text-center animate-in fade-in zoom-in-95 duration-300">
+                    <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 shadow-sm border border-slate-100">
+                        <Search className="w-10 h-10 text-slate-200" />
                     </div>
-                </div>
-                <div className="flex items-center gap-1">
-                    {/* Search Toggle */}
-                    {showSearch ? (
-                        <div className="flex items-center bg-slate-100 rounded-full px-3 py-1.5 animate-in fade-in slide-in-from-right-4">
-                            <Search className="w-4 h-4 text-slate-400 mr-2" />
-                            <input
-                                autoFocus
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="bg-transparent border-none text-sm focus:ring-0 w-32 md:w-48 placeholder:text-slate-400"
-                                placeholder="Tìm trong tin nhắn..."
-                            />
-                            <button onClick={() => { setShowSearch(false); setSearchTerm(""); }} className="ml-1 hover:text-red-500"><X className="w-4 h-4" /></button>
-                        </div>
-                    ) : (
-                        <button onClick={() => setShowSearch(true)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" title="Tìm kiếm tin nhắn">
-                            <Search className="w-5 h-5" />
-                        </button>
-                    )}
-
-                    <div className="w-px h-6 bg-slate-200 mx-1"></div>
-
-                    {/* Settings / Info Toggle */}
-                    {activeConversation?.type === 'group' && !showInfoPanel && (
+                    <h3 className="text-xl font-bold text-slate-700 mb-2">Chào mừng bạn đến với Chat</h3>
+                    <p className="max-w-xs text-sm leading-relaxed">
+                        Hãy chọn một cuộc hội thoại ở bên trái hoặc bắt đầu trò chuyện với đồng nghiệp để bắt đầu.
+                    </p>
+                    {onBack && (
                         <button
-                            onClick={() => setShowSettings(true)}
-                            className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
-                            title="Cài đặt nhóm"
+                            onClick={onBack}
+                            className="mt-6 md:hidden bg-blue-600 text-white px-6 py-2 rounded-full font-medium shadow-lg shadow-blue-200"
                         >
-                            <Settings className="w-5 h-5" />
+                            Xem danh sách chat
                         </button>
                     )}
-
-                    {/* Chat Info Panel Toggle */}
-                    <button
-                        onClick={() => setShowInfoPanel(!showInfoPanel)}
-                        className={`p-2 rounded-full transition-colors ${showInfoPanel ? 'bg-blue-100 text-blue-600' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'}`}
-                        title="Thông tin hội thoại"
-                    >
-                        <Info className="w-5 h-5" />
-                    </button>
                 </div>
-            </div>
+            )}
 
-            {/* Main Layout: Chat + Info Panel */}
-            <div className="flex-1 flex overflow-hidden relative">
+            {activeConversationId && (
+                <>
+                    <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white z-10 h-16 shadow-sm shrink-0">
+                        <div className="flex items-center gap-3">
+                            {/* Back Button (Mobile) */}
+                            <button onClick={onBack} className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-full">
+                                <ChevronLeft className="w-5 h-5" />
+                            </button>
 
-                {/* Chat Area */}
-                <div className="flex-1 flex flex-col min-w-0 bg-white">
-                    {/* In-Chat Search Bar Results Overlay */}
-                    {showSearch && searchTerm && (
-                        <div className="absolute top-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-md p-0 flex flex-col max-h-64">
-                            <div className="p-2 border-b flex justify-between items-center text-xs text-slate-500">
-                                <span>Kết quả tìm kiếm cho "{searchTerm}"</span>
-                                <button onClick={() => { setShowSearch(false); setSearchTerm('') }} className="text-blue-500">Đóng</button>
-                            </div>
-                            <div className="overflow-y-auto custom-scrollbar flex-1">
-                                {isSearching ? (
-                                    <div className="p-4 text-center text-xs text-slate-500">Đang tìm kiếm...</div>
-                                ) : searchResults.length > 0 ? (
-                                    <div className="divide-y divide-slate-50">
-                                        {searchResults.map(msg => {
-                                            const sender = users.find(u => u.id === msg.sender_id);
-                                            const safeDate = (d: any) => {
-                                                const date = new Date(d);
-                                                return isNaN(date.getTime()) ? new Date() : date;
-                                            };
-                                            return (
-                                                <div
-                                                    key={msg.id}
-                                                    onClick={() => scrollToMessage(msg.id)}
-                                                    className="p-3 hover:bg-slate-50 cursor-pointer transition-colors"
-                                                >
-                                                    <div className="flex justify-between items-baseline mb-1">
-                                                        <span className="text-xs font-bold text-slate-700">{sender?.full_name || "Unknown"}</span>
-                                                        <span className="text-[10px] text-slate-400">{format(safeDate(msg.created_at), 'dd/MM HH:mm')}</span>
-                                                    </div>
-                                                    <div className="text-xs text-slate-600 truncate">{msg.content}</div>
-                                                </div>
-                                            );
-                                        })}
+                            {activeTargetUser ? (
+                                <div className="relative">
+                                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold border border-slate-200">
+                                        {getDisplayName(activeConversation).charAt(0).toUpperCase()}
                                     </div>
-                                ) : (
-                                    <div className="p-4 text-center text-xs text-slate-500">Không tìm thấy kết quả.</div>
-                                )}
+                                    {onlineUsers.includes(activeTargetUser.id) && <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>}
+                                </div>
+                            ) : activeConversation?.type === 'group' ? (
+                                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold border border-slate-200">
+                                    <Users className="w-5 h-5" />
+                                </div>
+                            ) : null}
+                            <div>
+                                <h3 className="font-bold text-slate-800">{getDisplayName(activeConversation)}</h3>
+                                {activeConversation?.type === 'group' && <span className="text-xs text-slate-500">{activeConversation.internal_participants?.length} thành viên</span>}
+                                {activeTargetUser && <span className="text-xs text-slate-500">{onlineUsers.includes(activeTargetUser.id) ? 'Đang hoạt động' : 'Offline'}</span>}
                             </div>
                         </div>
-                    )}
+                        <div className="flex items-center gap-1">
+                            {/* Search Toggle */}
+                            {showSearch ? (
+                                <div className="flex items-center bg-slate-100 rounded-full px-3 py-1.5 animate-in fade-in slide-in-from-right-4">
+                                    <Search className="w-4 h-4 text-slate-400 mr-2" />
+                                    <input
+                                        autoFocus
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="bg-transparent border-none text-sm focus:ring-0 w-32 md:w-48 placeholder:text-slate-400"
+                                        placeholder="Tìm trong tin nhắn..."
+                                    />
+                                    <button onClick={() => { setShowSearch(false); setSearchTerm(""); }} className="ml-1 hover:text-red-500"><X className="w-4 h-4" /></button>
+                                </div>
+                            ) : (
+                                <button onClick={() => setShowSearch(true)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" title="Tìm kiếm tin nhắn">
+                                    <Search className="w-5 h-5" />
+                                </button>
+                            )}
 
-                    {/* Pinned Messages Banner */}
-                    {pinnedMessages.length > 0 && (
-                        <div className="bg-amber-50 border-b border-amber-100 px-4 py-2 flex items-center gap-2 shrink-0 z-10">
-                            <Pin className="w-3 h-3 text-amber-500 flex-shrink-0" fill="currentColor" />
-                            <div className="flex-1 overflow-hidden">
-                                {pinnedMessages.map(pm => (
-                                    <div key={pm.id} className="text-xs text-slate-700 truncate cursor-pointer hover:underline" onClick={() => scrollToMessage(pm.id)}>
-                                        <span className="font-bold">{users.find(u => u.id === pm.sender_id)?.full_name}:</span> {pm.content}
-                                    </div>
-                                ))}
-                            </div>
+                            <div className="w-px h-6 bg-slate-200 mx-1"></div>
+
+                            {/* Settings / Info Toggle */}
+                            {activeConversation?.type === 'group' && !showInfoPanel && (
+                                <button
+                                    onClick={() => setShowSettings(true)}
+                                    className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
+                                    title="Cài đặt nhóm"
+                                >
+                                    <Settings className="w-5 h-5" />
+                                </button>
+                            )}
+
+                            {/* Chat Info Panel Toggle */}
+                            <button
+                                onClick={() => setShowInfoPanel(!showInfoPanel)}
+                                className={`p-2 rounded-full transition-colors ${showInfoPanel ? 'bg-blue-100 text-blue-600' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'}`}
+                                title="Thông tin hội thoại"
+                            >
+                                <Info className="w-5 h-5" />
+                            </button>
                         </div>
+                    </div>
+
+                    {/* Main Layout: Chat + Info Panel */}
+                    <div className="flex-1 flex overflow-hidden relative">
+
+                        {/* Chat Area */}
+                        <div className="flex-1 flex flex-col min-w-0 bg-white">
+                            {/* In-Chat Search Bar Results Overlay */}
+                            {showSearch && searchTerm && (
+                                <div className="absolute top-0 left-0 right-0 z-20 bg-white/95 backdrop-blur-sm border-b border-slate-200 shadow-md p-0 flex flex-col max-h-64">
+                                    <div className="p-2 border-b flex justify-between items-center text-xs text-slate-500">
+                                        <span>Kết quả tìm kiếm cho "{searchTerm}"</span>
+                                        <button onClick={() => { setShowSearch(false); setSearchTerm('') }} className="text-blue-500">Đóng</button>
+                                    </div>
+                                    <div className="overflow-y-auto custom-scrollbar flex-1">
+                                        {isSearching ? (
+                                            <div className="p-4 text-center text-xs text-slate-500">Đang tìm kiếm...</div>
+                                        ) : searchResults.length > 0 ? (
+                                            <div className="divide-y divide-slate-50">
+                                                {searchResults.map(msg => {
+                                                    const sender = users.find(u => u.id === msg.sender_id);
+                                                    const safeDate = (d: any) => {
+                                                        const date = new Date(d);
+                                                        return isNaN(date.getTime()) ? new Date() : date;
+                                                    };
+                                                    return (
+                                                        <div
+                                                            key={msg.id}
+                                                            onClick={() => scrollToMessage(msg.id)}
+                                                            className="p-3 hover:bg-slate-50 cursor-pointer transition-colors"
+                                                        >
+                                                            <div className="flex justify-between items-baseline mb-1">
+                                                                <span className="text-xs font-bold text-slate-700">{sender?.full_name || "Unknown"}</span>
+                                                                <span className="text-[10px] text-slate-400">{format(safeDate(msg.created_at), 'dd/MM HH:mm')}</span>
+                                                            </div>
+                                                            <div className="text-xs text-slate-600 truncate">{msg.content}</div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <div className="p-4 text-center text-xs text-slate-500">Không tìm thấy kết quả.</div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Pinned Messages Banner */}
+                            {pinnedMessages.length > 0 && (
+                                <div className="bg-amber-50 border-b border-amber-100 px-4 py-2 flex items-center gap-2 shrink-0 z-10">
+                                    <Pin className="w-3 h-3 text-amber-500 flex-shrink-0" fill="currentColor" />
+                                    <div className="flex-1 overflow-hidden">
+                                        {pinnedMessages.map(pm => (
+                                            <div key={pm.id} className="text-xs text-slate-700 truncate cursor-pointer hover:underline" onClick={() => scrollToMessage(pm.id)}>
+                                                <span className="font-bold">{users.find(u => u.id === pm.sender_id)?.full_name}:</span> {pm.content}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <MessageList
+                                ref={messageListRef}
+                                messages={messages}
+                                currentUser={currentUser}
+                                users={users}
+                                activeConversationType={activeConversation?.type}
+                                hasMore={hasMore}
+                                isLoadingMore={isLoadingMore}
+                                loadMoreMessages={loadMoreMessages}
+                                seenByUsers={seenByUsers}
+                                activeTypingUsers={activeTypingUsers}
+                                typingNames={typingNames}
+                                onReply={(msg) => {
+                                    setReplyingTo(msg);
+                                    setEditingMessage(null);
+                                }}
+                                onEdit={(msg) => {
+                                    setEditingMessage(msg);
+                                    setReplyingTo(null);
+                                }}
+                                onDelete={handleDelete}
+                                onPin={(id) => pinMessage(id)}
+                                onUnpin={(id) => unpinMessage(id)}
+                                onImageClick={(url) => setLightboxUrl(url)}
+                            />
+
+                            <ChatInput
+                                currentUser={currentUser}
+                                users={users}
+                                activeConversationId={activeConversationId}
+                                replyingTo={replyingTo}
+                                editingMessage={editingMessage}
+                                pendingFile={pendingFile}
+                                onSetPendingFile={setPendingFile}
+                                onSend={async (content, file) => {
+                                    await sendMessage(content, currentUser.id, file, replyingTo?.id);
+                                    setReplyingTo(null);
+                                    setPendingFile(null);
+                                    // Auto scroll to bottom handled by message list new message detection
+                                }}
+                                onEdit={async (msgId, content) => {
+                                    await editMessage(msgId, content);
+                                    setEditingMessage(null);
+                                }}
+                                onCancelAction={handleCancelAction}
+                                onTyping={(isTyping) => {
+                                    if (activeConversationId) sendTyping(activeConversationId, isTyping);
+                                }}
+                            />
+                        </div>
+
+                        {/* Right Sidebar: Info Panel */}
+                        {showInfoPanel && (
+                            <ChatInfoPanel
+                                conversation={activeConversation}
+                                users={users}
+                                onClose={() => setShowInfoPanel(false)}
+                            />
+                        )}
+                    </div>
+
+                    {/* Settings Modal */}
+                    {showSettings && activeConversation && (
+                        <ChatSettingsModal
+                            conversation={activeConversation}
+                            currentUser={currentUser}
+                            users={users}
+                            onClose={() => setShowSettings(false)}
+                        />
                     )}
-
-                    <MessageList
-                        ref={messageListRef}
-                        messages={messages}
-                        currentUser={currentUser}
-                        users={users}
-                        activeConversationType={activeConversation?.type}
-                        hasMore={hasMore}
-                        isLoadingMore={isLoadingMore}
-                        loadMoreMessages={loadMoreMessages}
-                        seenByUsers={seenByUsers}
-                        activeTypingUsers={activeTypingUsers}
-                        typingNames={typingNames}
-                        onReply={(msg) => {
-                            setReplyingTo(msg);
-                            setEditingMessage(null);
-                        }}
-                        onEdit={(msg) => {
-                            setEditingMessage(msg);
-                            setReplyingTo(null);
-                        }}
-                        onDelete={handleDelete}
-                        onPin={(id) => pinMessage(id)}
-                        onUnpin={(id) => unpinMessage(id)}
-                        onImageClick={(url) => setLightboxUrl(url)}
-                    />
-
-                    <ChatInput
-                        currentUser={currentUser}
-                        users={users}
-                        activeConversationId={activeConversationId}
-                        replyingTo={replyingTo}
-                        editingMessage={editingMessage}
-                        pendingFile={pendingFile}
-                        onSetPendingFile={setPendingFile}
-                        onSend={async (content, file) => {
-                            await sendMessage(content, currentUser.id, file, replyingTo?.id);
-                            setReplyingTo(null);
-                            setPendingFile(null);
-                            // Auto scroll to bottom handled by message list new message detection
-                        }}
-                        onEdit={async (msgId, content) => {
-                            await editMessage(msgId, content);
-                            setEditingMessage(null);
-                        }}
-                        onCancelAction={handleCancelAction}
-                        onTyping={(isTyping) => {
-                            if (activeConversationId) sendTyping(activeConversationId, isTyping);
-                        }}
-                    />
-                </div>
-
-                {/* Right Sidebar: Info Panel */}
-                {showInfoPanel && (
-                    <ChatInfoPanel
-                        conversation={activeConversation}
-                        users={users}
-                        onClose={() => setShowInfoPanel(false)}
-                    />
-                )}
-            </div>
-
-            {/* Settings Modal */}
-            {showSettings && activeConversation && (
-                <ChatSettingsModal
-                    conversation={activeConversation}
-                    currentUser={currentUser}
-                    users={users}
-                    onClose={() => setShowSettings(false)}
-                />
+                </>
             )}
         </div>
     );
