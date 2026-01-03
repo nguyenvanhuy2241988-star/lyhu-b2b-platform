@@ -164,7 +164,7 @@ export default function AdminOrdersPage() {
             supabase.removeChannel(chatChannel);
             window.removeEventListener("orders-updated", handleLegacyUpdate);
         };
-    }, [session?.access_token, loadData, scanOrdersForFraud]);
+    }, [session?.access_token, loadData]);
 
 
 
