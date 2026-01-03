@@ -1,7 +1,6 @@
-// [FORCE-SYNC-V23] - Triggering Git update for Vercel
+// [FINAL-SYNC-V25] - Nuclear fix for all TypeScript implicit any issues
 import { create } from 'zustand';
 import { supabase } from './supabaseClient';
-import { createClient } from '@supabase/supabase-js';
 
 // ============================================
 // 1. ROBUST HELPERS (CORE STABILITY)
@@ -202,7 +201,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     deleteConversation: async (conversationId: string) => {
         const { error } = await supabase.from('internal_conversations').delete().eq('id', conversationId);
         if (error) throw error;
-        set(state => ({
+        set((state: ChatState) => ({
             conversations: state.conversations.filter((c: any) => c.id !== conversationId),
             activeConversationId: state.activeConversationId === conversationId ? null : state.activeConversationId
         }));
@@ -223,9 +222,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'internal_messages' }, (payload: any) => {
                 const newMsg = payload.new as Message;
                 if (newMsg.conversation_id !== conversationId) return;
-                set(state => {
-                    if (state.messages.some(m => m.id === newMsg.id)) return state;
-                    return { messages: [...state.messages, newMsg].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) };
+                set((state: ChatState) => {
+                    if (state.messages.some((m: Message) => m.id === newMsg.id)) return state;
+                    return { messages: [...state.messages, newMsg].sort((a: Message, b: Message) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) };
                 });
             })
             .subscribe((status: any) => {
@@ -257,12 +256,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
             let data = await res.json();
             if (isInitial || messages.length === 0) data = data.reverse();
 
-            set(state => {
+            set((state: ChatState) => {
                 if (state.activeConversationId !== conversationId) return state;
-                const existing = new Map(state.messages.map(m => [m.id, m]));
+                const existing = new Map(state.messages.map((m: Message) => [m.id, m]));
                 data.forEach((m: Message) => existing.set(m.id, m));
                 return {
-                    messages: Array.from(existing.values()).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()),
+                    messages: Array.from(existing.values()).sort((a: Message, b: Message) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()),
                     isLoading: false
                 };
             });
@@ -283,7 +282,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             const res = await robustFetch(url, token);
             if (res.ok) {
                 const data = (await res.json()).reverse();
-                set(state => ({ messages: [...data, ...state.messages], isLoadingMore: false, hasMore: data.length === 20 }));
+                set((state: ChatState) => ({ messages: [...data, ...state.messages], isLoadingMore: false, hasMore: data.length === 20 }));
             }
         } finally {
             set({ isLoadingMore: false });
@@ -308,7 +307,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             created_at: new Date().toISOString(),
             status: 'sending'
         };
-        set(state => ({ messages: [...state.messages, optimistic] }));
+        set((state: ChatState) => ({ messages: [...state.messages, optimistic] }));
 
         try {
             let attachment_url, attachment_type, attachment_name;
@@ -332,7 +331,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
             const [data] = await sendRequest<Message[]>('internal_messages', 'POST', messagePayload);
             updateStatusInStore(tempId, 'sent');
-            set(state => ({ messages: state.messages.map(m => m.id === tempId ? { ...data, status: 'sent' } : m) }));
+            set((state: ChatState) => ({ messages: state.messages.map((m: Message) => m.id === tempId ? { ...data, status: 'sent' } : m) }));
         } catch (error) {
             console.error("Failed to send message:", error);
             updateStatusInStore(tempId, 'error');
@@ -451,7 +450,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     createGroupConversation: async (myId: string, name: string, members: string[]) => {
         const { data, error } = await supabase.from('internal_conversations').insert({ type: 'group', name, created_by: myId }).select().single();
         if (error) throw error;
-        const participants = [myId, ...members].map(uid => ({ conversation_id: data.id, user_id: uid }));
+        const participants = [myId, ...members].map((uid: string) => ({ conversation_id: data.id, user_id: uid }));
         await supabase.from('internal_participants').insert(participants);
         return data.id;
     },
@@ -461,12 +460,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
     },
 
     editMessage: async (messageId: string, content: string) => {
-        set(state => ({ messages: state.messages.map(m => m.id === messageId ? { ...m, content } : m) }));
+        set((state: ChatState) => ({ messages: state.messages.map((m: Message) => m.id === messageId ? { ...m, content } : m) }));
         await supabase.from('internal_messages').update({ content }).eq('id', messageId);
     },
 
     deleteMessage: async (messageId: string) => {
-        set(state => ({ messages: state.messages.map(m => m.id === messageId ? { ...m, is_deleted: true, content: 'Tin nhắn đã bị xóa' } : m) }));
+        set((state: ChatState) => ({ messages: state.messages.map((m: Message) => m.id === messageId ? { ...m, is_deleted: true, content: 'Tin nhắn đã bị xóa' } : m) }));
         await supabase.from('internal_messages').update({ is_deleted: true }).eq('id', messageId);
     },
 
@@ -501,24 +500,24 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     updateConversationName: async (conversationId: string, name: string) => {
         await supabase.from('internal_conversations').update({ name }).eq('id', conversationId);
-        set(state => ({ conversations: state.conversations.map(c => c.id === conversationId ? { ...c, name } : c) }));
+        set((state: ChatState) => ({ conversations: state.conversations.map((c: any) => c.id === conversationId ? { ...c, name } : c) }));
     },
 
     addParticipants: async (conversationId: string, userIds: string[]) => {
-        await supabase.from('internal_participants').insert(userIds.map(uid => ({ conversation_id: conversationId, user_id: uid })));
+        await supabase.from('internal_participants').insert(userIds.map((uid: string) => ({ conversation_id: conversationId, user_id: uid })));
         const { data: { user } } = await supabase.auth.getUser();
         if (user) get().fetchConversations(user.id);
     },
 
     leaveConversation: async (conversationId: string, userId: string) => {
         await supabase.from('internal_participants').delete().eq('conversation_id', conversationId).eq('user_id', userId);
-        set(state => ({ conversations: state.conversations.filter(c => c.id !== conversationId), activeConversationId: state.activeConversationId === conversationId ? null : state.activeConversationId }));
+        set((state: ChatState) => ({ conversations: state.conversations.filter((c: any) => c.id !== conversationId), activeConversationId: state.activeConversationId === conversationId ? null : state.activeConversationId }));
     },
 
     addReaction: async (messageId: string, emoji: string) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
-        set(state => ({ messages: state.messages.map(m => m.id === messageId ? { ...m, reactions: [...(m.reactions || []), { emoji, user_id: user.id }] } : m) }));
+        set((state: ChatState) => ({ messages: state.messages.map((m: Message) => m.id === messageId ? { ...m, reactions: [...(m.reactions || []), { emoji, user_id: user.id }] } : m) }));
         const { data: msg } = await supabase.from('internal_messages').select('reactions').eq('id', messageId).single();
         await supabase.from('internal_messages').update({ reactions: [...(msg?.reactions || []), { emoji, user_id: user.id }] }).eq('id', messageId);
     },
@@ -526,7 +525,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     removeReaction: async (messageId: string, emoji: string) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
-        set(state => ({ messages: state.messages.map(m => m.id === messageId ? { ...m, reactions: (m.reactions || []).filter(r => !(r.emoji === emoji && r.user_id === user.id)) } : m) }));
+        set((state: ChatState) => ({ messages: state.messages.map((m: Message) => m.id === messageId ? { ...m, reactions: (m.reactions || []).filter((r: any) => !(r.emoji === emoji && r.user_id === user.id)) } : m) }));
         const { data: msg } = await supabase.from('internal_messages').select('reactions').eq('id', messageId).single();
         await supabase.from('internal_messages').update({ reactions: (msg?.reactions || []).filter((r: any) => !(r.emoji === emoji && r.user_id === user.id)) }).eq('id', messageId);
     },
@@ -551,7 +550,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({ globalChannel: null });
     },
 
-    subscribeToNewConversations: (userId) => {
+    subscribeToNewConversations: (userId: string) => {
         const channel = supabase.channel(`participants-${userId}`).on('postgres_changes', { event: '*', schema: 'public', table: 'internal_participants', filter: `user_id=eq.${userId}` }, () => get().fetchConversations(userId)).subscribe();
         set({ participantsChannel: channel });
     },
@@ -562,8 +561,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({ participantsChannel: null });
     },
 
-    getTotalUnreadCount: () => get().conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0),
+    getTotalUnreadCount: () => get().conversations.reduce((sum: number, c: any) => sum + (c.unread_count || 0), 0),
 }));
+
 // --- Helpers for cleaner code ---
 async function sendRequest<T>(path: string, method: string, payload: any = null): Promise<T> {
     const token = await getRealtimeToken();
@@ -588,8 +588,8 @@ async function sendRequest<T>(path: string, method: string, payload: any = null)
 }
 
 function updateStatusInStore(messageId: string, status: 'sending' | 'sent' | 'error') {
-    useChatStore.setState((state) => ({
-        messages: state.messages.map((m) =>
+    useChatStore.setState((state: ChatState) => ({
+        messages: state.messages.map((m: Message) =>
             m.id === messageId ? { ...m, status } : m
         ),
     }));
