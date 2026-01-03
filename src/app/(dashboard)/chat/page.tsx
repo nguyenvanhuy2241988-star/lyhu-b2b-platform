@@ -135,13 +135,14 @@ export default function ChatPage() {
         }
         try {
             console.log("[ChatPage] Creating direct conversation...");
-            const id = await createDirectConversation(currentUser.id, targetUserId);
+            // Pass the token explicitly to avoid hangs in the store
+            const id = await createDirectConversation(currentUser.id, targetUserId, session?.access_token);
             console.log("[ChatPage] Conversation created:", id);
             selectConversation(id);
             console.log("[ChatPage] Conversation selected:", id);
         } catch (e: any) {
             console.error("[ChatPage] handleStartChat error:", e.message || e);
-            alert(`Lỗi tạo cuộc hội thoại: ${e.message || 'Unknown error'}`);
+            alert(`Không thể bắt đầu chat: ${e.message || 'Lỗi không xác định'}`);
         }
     };
 

@@ -570,8 +570,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
     },
 
-    createDirectConversation: async (myId, theirId) => {
-        console.log("[ChatStore] createDirectConversation called:", { myId, theirId });
+    createDirectConversation: async (myId, theirId, providedToken?: string) => {
+        console.log("[ChatStore] createDirectConversation called:", { myId, theirId, hasProvidedToken: !!providedToken });
 
         try {
             // Step 1: Create conversation via RPC using REST API (to avoid client hangs)
@@ -582,8 +582,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
             if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error("Missing Supabase env vars");
 
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token || SUPABASE_KEY;
+            let token = providedToken;
+            if (!token) {
+                try {
+                    // Try to get session token but don't hang for too long
+                    const sessionPromise = supabase.auth.getSession();
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Session timeout")), 2000));
+                    const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+                    token = session?.access_token || SUPABASE_KEY;
+                } catch (e) {
+                    console.warn("[ChatStore] getSession failed or timed out, using anon key");
+                    token = SUPABASE_KEY;
+                }
+            }
+
+            const controller = new AbortController();
+            const fetchTimeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
             const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_or_create_direct_conversation`, {
                 method: 'POST',
@@ -592,8 +606,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ target_user_id: theirId })
+                body: JSON.stringify({ target_user_id: theirId }),
+                signal: controller.signal
             });
+
+            clearTimeout(fetchTimeoutId);
 
             if (!res.ok) {
                 const errText = await res.text();
@@ -601,8 +618,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             }
 
             const convId = await res.json(); // RPC returns uuid directly
-
-            console.log("[ChatStore] RPC Rest result:", convId);
+            console.log("[ChatStore] RPC Rest success, ID:", convId);
 
             if (!convId) {
                 throw new Error("RPC returned null conversation ID");
