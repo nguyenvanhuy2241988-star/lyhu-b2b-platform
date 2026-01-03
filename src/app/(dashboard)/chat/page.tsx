@@ -128,12 +128,20 @@ export default function ChatPage() {
     }, [messages, activeConversationId, currentUser, markRead]);
 
     const handleStartChat = async (targetUserId: string) => {
-        if (!currentUser) return;
+        console.log("[ChatPage] handleStartChat called:", { targetUserId, currentUserId: currentUser?.id });
+        if (!currentUser) {
+            console.error("[ChatPage] No currentUser, aborting");
+            return;
+        }
         try {
+            console.log("[ChatPage] Creating direct conversation...");
             const id = await createDirectConversation(currentUser.id, targetUserId);
+            console.log("[ChatPage] Conversation created:", id);
             selectConversation(id);
-        } catch (e) {
-            console.error(e);
+            console.log("[ChatPage] Conversation selected:", id);
+        } catch (e: any) {
+            console.error("[ChatPage] handleStartChat error:", e.message || e);
+            alert(`Lỗi tạo cuộc hội thoại: ${e.message || 'Unknown error'}`);
         }
     };
 
