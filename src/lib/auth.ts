@@ -1,7 +1,9 @@
 import { supabase } from "@/lib/supabaseClient";
-import { User, loadUsers } from "@/lib/usersStore";
+import { Role } from "./roles";
+import { User } from "@/lib/usersStore";
 
 export type AuthUser = User;
+export type UserRole = Role;
 
 export const getRoleRedirect = (role?: string | null): string => {
     switch (role?.toLowerCase().trim()) {

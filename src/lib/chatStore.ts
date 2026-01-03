@@ -434,8 +434,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     initPresence: () => { },
     cleanupPresence: () => { },
 
-    subscribeToGlobalMessages: (userId, callback) => {
-        const channel = supabase.channel(`global-${userId}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'internal_messages' }, payload => callback(payload.new)).subscribe();
+    subscribeToGlobalMessages: (userId: string, callback: (payload: any) => void) => {
+        const channel = supabase.channel(`global-${userId}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'internal_messages' }, (payload: any) => callback(payload.new)).subscribe();
         set({ globalChannel: channel });
     },
 
