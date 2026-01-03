@@ -577,13 +577,54 @@ export const useChatStore = create<ChatState>((set, get) => ({
         // strict RPCs usually take params by name.
         // Let's match the SQL signature: target_user_id
 
-        const { data, error } = await supabase
+        const { data: convId, error } = await supabase
             .rpc('get_or_create_direct_conversation', {
                 target_user_id: theirId
             });
         if (error) throw error;
-        get().selectConversation(data);
-        return data; // conv ID
+
+        // Manual fetch to update store immediately
+        // Waiting for realtime might be too slow for UX
+        const { data: newConv } = await supabase
+            .rpc('get_conversations_with_unread', { user_id_param: myId })
+            .eq('conversation_id', convId)
+            .single();
+
+        if (newConv) {
+            set(state => {
+                const exists = state.conversations.find(c => c.id === convId);
+                if (exists) return { activeConversationId: convId };
+
+                // Map RPC result to Conversation object
+                const mapped: any = {
+                    id: newConv.conversation_id,
+                    type: newConv.type,
+                    name: newConv.name,
+                    is_public: newConv.is_public,
+                    created_at: newConv.created_at,
+                    updated_at: newConv.last_message_at,
+                    last_message_at: newConv.last_message_at,
+                    last_message: newConv.last_message_content ? {
+                        id: newConv.last_message_id,
+                        content: newConv.last_message_content,
+                        sender_id: newConv.last_message_sender_id,
+                        created_at: newConv.last_message_created_at,
+                        is_read: newConv.is_last_message_read
+                    } : null,
+                    unread_count: newConv.unread_count,
+                    participants: newConv.participants
+                };
+                return {
+                    conversations: [mapped, ...state.conversations],
+                    activeConversationId: convId
+                };
+            });
+            get().selectConversation(convId);
+        } else {
+            // Fallback
+            get().selectConversation(convId);
+        }
+        return convId;
     },
 
     createGroupConversation: async (myId, name, members) => {
