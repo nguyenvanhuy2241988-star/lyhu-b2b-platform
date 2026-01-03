@@ -114,8 +114,8 @@ async function getLowStockItemsFallback(): Promise<LowStockItem[]> {
 
     // Filter low stock items (default min = 10)
     return data
-        .filter(item => item.quantity_on_hand < (item.min_stock_level || 10))
-        .map(item => ({
+        .filter((item: any) => item.quantity_on_hand < (item.min_stock_level || 10))
+        .map((item: any) => ({
             productId: item.product_id,
             productName: (item.product as any)?.name || 'Unknown',
             sku: (item.product as any)?.sku || '',
