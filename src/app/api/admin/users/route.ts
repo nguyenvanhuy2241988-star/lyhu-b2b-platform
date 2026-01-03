@@ -157,9 +157,10 @@ export async function PUT(request: Request) {
         const body = await request.json();
         const { id, email, password, fullName, role, status } = body;
 
-        console.log(`[Admin Update] Request for ID: ${id}`, { fullName, role, status, hasPassword: !!password });
+        console.log(`[Admin Update] Starting for ID: ${id}`, { fullName, role, status });
 
-        if (!id) return NextResponse.json({ error: "Missing user ID" }, { status: 400 });
+        if (!id) return NextResponse.json({ error: "Missing user ID (ID không được để trống)" }, { status: 400 });
+        if (!role) return NextResponse.json({ error: "Missing role (Vai trò không được để trống)" }, { status: 400 });
 
         // 3. Update Auth User
         const authUpdates: any = {
@@ -177,22 +178,27 @@ export async function PUT(request: Request) {
         }
 
         // 4. Update Profile
+        // Using update instead of upsert for better reliability when ID exists
         const { data: updatedProfile, error: profileError } = await supabaseAdmin
             .from("profiles")
-            .upsert({
-                id: id,
+            .update({
                 email: email,
                 full_name: fullName,
                 role: role,
                 status: status,
                 updated_at: new Date().toISOString()
             })
-            .select() // Return data to verify
+            .eq("id", id)
+            .select()
             .single();
 
         if (profileError) {
-            console.error("Profile Update Error:", profileError);
-            return NextResponse.json({ error: "Failed to update profile: " + profileError.message }, { status: 500 });
+            console.error("[Admin Update] Profile DB Update Error:", profileError);
+            return NextResponse.json({
+                error: "Failed to update profile",
+                details: profileError.message,
+                code: profileError.code
+            }, { status: 500 });
         }
 
         console.log(`[Admin Update] Success for ID: ${id}. DB Data:`, updatedProfile);
@@ -200,8 +206,11 @@ export async function PUT(request: Request) {
         return NextResponse.json({ success: true, user: updatedProfile });
 
     } catch (error: any) {
-        console.error("Admin Update User Error:", error);
-        return NextResponse.json({ error: "Internal Server Error: " + (error?.message || String(error)) }, { status: 500 });
+        console.error("Admin Update User Error (Exception):", error);
+        return NextResponse.json({
+            error: "Internal Server Error",
+            message: error?.message || String(error)
+        }, { status: 500 });
     }
 }
 

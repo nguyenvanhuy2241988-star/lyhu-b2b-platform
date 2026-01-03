@@ -172,23 +172,18 @@ interface TaskCardProps {
     dropIndicator: { taskId: string; position: 'top' | 'bottom' } | null;
     onLogCall: (task: TelesalesTask) => void;
     onEdit: (task: TelesalesTask) => void;
-    onRefresh: () => Promise<void>; // Option A: Direct refresh
+    onToggleStatus: (task: TelesalesTask) => void;
+    onRefresh: () => Promise<void>;
     isOverdue?: boolean;
     isHighlighted?: boolean;
     profiles?: Profile[];
 }
 
-const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, onLogCall, onEdit, onRefresh, isOverdue, isHighlighted, profiles = [] }: TaskCardProps) => {
+const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, onLogCall, onEdit, onToggleStatus, onRefresh, isOverdue, isHighlighted, profiles = [] }: TaskCardProps) => {
     // Toggle Complete Handler - Option A: Direct Refresh
-    const handleComplete = async (e: React.MouseEvent) => {
+    const handleComplete = (e: React.MouseEvent) => {
         e.stopPropagation();
-
-        const newStatus = task.status === 'done' ? 'today' : 'done'; // Toggle
-
-        await updateTaskSupabase(task.id, { status: newStatus as TaskStatus });
-
-        // Direct refresh - no event needed
-        await onRefresh();
+        onToggleStatus(task);
     };
 
     return (
@@ -430,6 +425,24 @@ export default function TelesalesTasksPage() {
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [activeNotifTab, setActiveNotifTab] = useState<'overdue' | 'today'>('overdue');
     const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
+
+    const handleToggleTaskStatus = async (task: TelesalesTask) => {
+        const originalTasks = [...tasks];
+        const taskId = task.id;
+        const newStatus = task.status === 'done' ? 'today' : 'done';
+
+        // 🚀 Optimistic update
+        setTasks(prev => prev.map(t =>
+            t.id === taskId ? { ...t, status: newStatus as TaskStatus } : t
+        ));
+
+        const success = await updateTaskSupabase(taskId, { status: newStatus as TaskStatus });
+
+        if (!success) {
+            setTasks(originalTasks);
+            alert("Lỗi: Không thể cập nhật trạng thái công việc.");
+        }
+    };
 
     // Initial Load & Listeners
     const refreshData = useCallback(async () => {
@@ -1176,6 +1189,7 @@ export default function TelesalesTasksPage() {
                                                         dropIndicator={dropIndicator}
                                                         onLogCall={handleLogCall}
                                                         onEdit={handleEditTask}
+                                                        onToggleStatus={handleToggleTaskStatus}
                                                         onRefresh={refreshData}
                                                         isOverdue={isOverdue}
                                                         isHighlighted={highlightedTaskId === task.id}

@@ -21,6 +21,7 @@ import {
 } from "@/lib/engagementStore";
 import { Award, Star, Trophy, PartyPopper, ChevronRight, Crown, Medal, Flame } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import { StatsSkeleton, TableSkeleton } from "@/components/ui/SkeletonUI";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -236,8 +237,14 @@ export default function TelesalesDashboard() {
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center h-64">
-                <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+            <div className="space-y-6">
+                <div className="bg-slate-100 h-16 rounded-xl animate-pulse" /> {/* Quote Skeleton */}
+                <StatsSkeleton />
+                <div className="bg-white p-6 rounded-xl border border-slate-200 h-48 animate-pulse" /> {/* Charts Skeleton */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <TableSkeleton rows={5} cols={3} />
+                    <TableSkeleton rows={5} cols={4} />
+                </div>
             </div>
         );
     }

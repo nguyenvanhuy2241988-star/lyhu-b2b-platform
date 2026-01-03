@@ -46,6 +46,7 @@ import { CreateDealModal } from "@/components/telesales/CreateDealModal";
 import { LostReasonModal } from "@/components/telesales/LostReasonModal";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { supabase } from "@/lib/supabaseClient";
+import { Skeleton, KanbanSkeleton, TableSkeleton } from "@/components/ui/SkeletonUI";
 
 // --- Local Column Management Functions ---
 const addColumn = () => {
@@ -129,19 +130,19 @@ interface DealCardProps {
     onEdit: (deal: CRMDeal) => void;
     onViewDetails: (dealId: string) => void;
     onCreateOrder: (deal: CRMDeal) => void;
+    onMarkWon: (deal: CRMDeal) => void;
     onMarkLost: (deal: CRMDeal) => void;
     onRefresh: () => Promise<void>;
     isOverdue?: boolean;
     isHighlighted?: boolean;
 }
 
-const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIndicator, onEdit, onViewDetails, onCreateOrder, onMarkLost, onRefresh, isOverdue, isHighlighted }: DealCardProps) => {
+const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIndicator, onEdit, onViewDetails, onCreateOrder, onMarkWon, onMarkLost, onRefresh, isOverdue, isHighlighted }: DealCardProps) => {
     const { session } = useAuth();
 
-    const handleMarkWon = async (e: React.MouseEvent) => {
+    const handleMarkWon = (e: React.MouseEvent) => {
         e.stopPropagation();
-        await updateDeal(deal.id, { status: 'won', stage: 'done' }, session?.access_token);
-        await onRefresh();
+        onMarkWon(deal);
     };
 
     const handleMarkLost = (e: React.MouseEvent) => {
@@ -620,6 +621,30 @@ export default function CRMPage() {
         }
     };
 
+    const handleMarkWon = async (deal: CRMDeal) => {
+        const originalDeals = [...deals];
+        const dealId = deal.id;
+
+        // 🚀 Optimistic update
+        setDeals(prev => prev.map(d =>
+            d.id === dealId ? { ...d, status: 'won', stage: 'done' } : d
+        ));
+        logDebug(`Optimistically marked deal ${deal.title} as WON.`);
+
+        const success = await updateDeal(dealId, {
+            status: 'won',
+            stage: 'done'
+        }, session?.access_token);
+
+        if (!success) {
+            logDebug(`FAILED to mark deal as WON. Reverting...`, 'error');
+            setDeals(originalDeals);
+            alert("Lỗi: Không thể cập nhật trạng thái Thắng.");
+        } else {
+            logDebug(`SUCCESS marked deal as WON.`, 'info');
+        }
+    };
+
     // Lost Modal Handlers
     const handleOpenLostModal = (deal: CRMDeal) => {
         setDealToMarkLost(deal);
@@ -628,14 +653,30 @@ export default function CRMPage() {
 
     const handleConfirmLost = async (reason: string) => {
         if (dealToMarkLost) {
-            await updateDeal(dealToMarkLost.id, {
-                status: 'lost',
-                stage: 'done',  // Chuyển sang cột Hoàn tất
-                lost_reason: reason
-            }, session?.access_token);
+            const originalDeals = [...deals];
+            const dealId = dealToMarkLost.id;
+
+            // 🚀 Optimistic update
+            setDeals(prev => prev.map(d =>
+                d.id === dealId ? { ...d, status: 'lost', stage: 'done', lost_reason: reason } : d
+            ));
             setIsLostModalOpen(false);
             setDealToMarkLost(null);
-            await refreshData();
+            logDebug(`Optimistically marked deal ${dealToMarkLost.title} as LOST.`);
+
+            const success = await updateDeal(dealId, {
+                status: 'lost',
+                stage: 'done',
+                lost_reason: reason
+            }, session?.access_token);
+
+            if (!success) {
+                logDebug(`FAILED to mark deal as LOST. Reverting...`, 'error');
+                setDeals(originalDeals);
+                alert("Lỗi: Không thể cập nhật trạng thái Thua.");
+            } else {
+                logDebug(`SUCCESS marked deal as LOST.`, 'info');
+            }
         }
     };
 
@@ -802,10 +843,17 @@ export default function CRMPage() {
     const todayCount = isMounted ? deals.filter(d => d.next_action_at && new Date(d.next_action_at).setHours(0, 0, 0, 0) === msToday && d.status === 'open').length : 0;
 
     // Prevent hydration mismatch by only rendering content on client
-    if (!isMounted) {
+    if (isDataLoading && deals.length === 0) {
         return (
-            <div className="flex h-full items-center justify-center">
-                <div className="animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full"></div>
+            <div className="space-y-6">
+                <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200">
+                    <Skeleton className="h-8 w-48" />
+                    <div className="flex gap-2">
+                        <Skeleton className="h-10 w-32" />
+                        <Skeleton className="h-10 w-32" />
+                    </div>
+                </div>
+                {viewMode === "kanban" ? <KanbanSkeleton /> : <TableSkeleton rows={8} cols={6} />}
             </div>
         );
     }
@@ -1053,6 +1101,7 @@ export default function CRMPage() {
                                                             onEdit={handleEditDeal}
                                                             onViewDetails={handleViewDetails}
                                                             onCreateOrder={handleCreateOrder}
+                                                            onMarkWon={handleMarkWon}
                                                             onMarkLost={handleOpenLostModal}
                                                             onRefresh={refreshData}
                                                             isOverdue={isOverdue}

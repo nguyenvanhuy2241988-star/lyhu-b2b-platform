@@ -257,20 +257,32 @@ export async function createTaskSupabase(input: {
         order: Math.floor(Date.now() / 1000),
     };
 
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
-        method: 'POST',
-        headers: { ...headers, 'Prefer': 'return=representation' },
-        body: JSON.stringify(payload)
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-    if (!res.ok) {
-        const err = await res.json();
-        console.error("createTaskSupabase error:", err);
-        throw new Error(err.message);
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
+            method: 'POST',
+            headers: { ...headers, 'Prefer': 'return=representation' },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!res.ok) {
+            const err = await res.json();
+            console.error("createTaskSupabase error:", err);
+            throw new Error(err.message);
+        }
+
+        const data = await res.json();
+        return data[0] as TelesalesTask;
+    } catch (e: any) {
+        clearTimeout(timeoutId);
+        console.error("createTaskSupabase Exception:", e);
+        throw e;
     }
-
-    const data = await res.json();
-    return data[0] as TelesalesTask;
 }
 
 export async function updateTaskSupabase(taskId: string, patch: Partial<TelesalesTask>, token?: string) {
@@ -298,20 +310,31 @@ export async function updateTaskSupabase(taskId: string, patch: Partial<Telesale
     // Clean undefined
     Object.keys(body).forEach(key => (body as any)[key] === undefined && delete (body as any)[key]);
 
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${taskId}&user_id=eq.${userId}`, {
-        method: 'PATCH',
-        headers: { ...headers, 'Prefer': 'return=representation' },
-        body: JSON.stringify(body)
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
-    if (!res.ok) {
-        const err = await res.json();
-        logSupabaseError('updateTaskSupabase', err);
-        return { ok: false, error: err.message };
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${taskId}`, {
+            method: 'PATCH',
+            headers: { ...headers, 'Prefer': 'return=representation' }, // Preserve Prefer header
+            body: JSON.stringify(body),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!res.ok) {
+            const err = await res.json();
+            console.error("updateTaskSupabase error:", err);
+            return false;
+        }
+
+        return true;
+    } catch (e) {
+        clearTimeout(timeoutId);
+        console.error("updateTaskSupabase Exception:", e);
+        return false;
     }
-
-    const data = await res.json();
-    return { ok: true, data: data[0] as TelesalesTask };
 }
 
 export async function moveTaskSupabase(taskId: string, status: TaskStatus, order?: number) {

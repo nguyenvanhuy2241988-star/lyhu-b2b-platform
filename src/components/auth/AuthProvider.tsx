@@ -22,29 +22,59 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [user, setUser] = useState<any | null>(null);
+    const [user, setUser] = useState<any | null>(() => {
+        if (typeof window !== "undefined") {
+            const stored = localStorage.getItem("lyhu_user");
+            try { return stored ? JSON.parse(stored) : null; } catch { return null; }
+        }
+        return null;
+    });
     const [session, setSession] = useState<Session | null>(null);
-    const [role, setRole] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [role, setRole] = useState<string | null>(() => {
+        if (typeof window !== "undefined") {
+            const stored = localStorage.getItem("lyhu_user");
+            try { return stored ? JSON.parse(stored).role || "customer" : null; } catch { return null; }
+        }
+        return null;
+    });
+    const [isLoading, setIsLoading] = useState(() => {
+        if (typeof window !== "undefined") {
+            return !localStorage.getItem("lyhu_user"); // Only load if no local user
+        }
+        return true;
+    });
 
     const checkAuth = async () => {
         try {
             console.log('[AuthProvider] checkAuth started');
-            setIsLoading(true);
+
+            // 🚀 FAST PATH: Try local data first to unblock UI immediately
+            if (typeof window !== "undefined") {
+                const mockUserStr = localStorage.getItem("lyhu_user");
+                if (mockUserStr) {
+                    try {
+                        const mockUser = JSON.parse(mockUserStr);
+                        setUser(mockUser);
+                        setRole(mockUser.role || "customer");
+                        setIsLoading(false); // Unblock early if we have a trace of a user
+                        console.log('[AuthProvider] Early unblock with local user');
+                    } catch (e) { }
+                }
+            }
 
             let session = null;
 
             try {
-                // 1. Try Supabase with a timeout
+                // 1. Try Supabase with a FAST timeout (3s)
                 const sessionPromise = supabase.auth.getSession();
                 const timeoutPromise = new Promise<{ data: { session: null }, error: any }>((_, reject) =>
-                    setTimeout(() => reject(new Error('Auth Timeout')), 10000) // Increased to 10s
+                    setTimeout(() => reject(new Error('Auth Timeout')), 3000)
                 );
 
                 const result = await Promise.race([sessionPromise, timeoutPromise]) as any;
                 session = result?.data?.session;
             } catch (authErr) {
-                console.warn('[AuthProvider] Supabase connection issue:', authErr);
+                console.warn('[AuthProvider] Supabase session fetch issue:', authErr);
             }
 
             if (session?.user) {
@@ -55,35 +85,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     localStorage.setItem("lyhu_access_token", session.access_token);
                 }
 
-                // Quick role fetch with timeout to prevent hangs
-                const { data: profile } = await Promise.race([
-                    supabase
-                        .from("profiles")
-                        .select("role")
-                        .eq("id", session.user.id)
-                        .maybeSingle(),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Role Fetch Timeout')), 5000))
-                ]) as any;
+                // 2. Quick role fetch with FASTER timeout (2s)
+                try {
+                    const { data: profile } = await Promise.race([
+                        supabase
+                            .from("profiles")
+                            .select("role")
+                            .eq("id", session.user.id)
+                            .maybeSingle(),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Role Fetch Timeout')), 2000))
+                    ]) as any;
 
-                setRole(profile?.role ?? "customer");
+                    setRole(profile?.role ?? "customer");
+                } catch (roleErr) {
+                    console.warn('[AuthProvider] Role fetch timeout, using default or cache');
+                    // If we already set a role from localStorage, keep it. Otherwise default to customer.
+                    setRole(prev => prev || "customer");
+                }
             } else {
-                // 2. FALLBACK: Always try local data if Supabase fails or session is missing
-                if (typeof window !== "undefined") {
-                    const mockUserStr = localStorage.getItem("lyhu_user");
-                    if (mockUserStr) {
-                        try {
-                            const mockUser = JSON.parse(mockUserStr);
-                            setUser(mockUser);
-                            setRole(mockUser.role || "customer");
-                            console.log('[AuthProvider] Fallback to local user successful');
-                        } catch {
-                            setUser(null);
-                            setRole(null);
-                        }
-                    } else {
-                        setUser(null);
-                        setRole(null);
-                    }
+                // If no session but we didn't have mock data, clear.
+                // or if we had mock data but session is explicitly empty (logged out).
+                if (!session) {
+                    setUser(null);
+                    setRole(null);
                 }
             }
         } catch (err) {

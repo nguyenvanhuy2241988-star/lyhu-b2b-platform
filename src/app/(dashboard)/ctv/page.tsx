@@ -9,6 +9,7 @@ import { getCtvLevel, LEVEL_COLORS, type CtvLevel } from "@/lib/ctvLevels";
 import { getCtvMonthlyMissionsSummary, formatMissionProgress, getMissionProgressPercent } from "@/lib/ctvMissions";
 import { loadUsers } from "@/lib/usersStore";
 import { StarterQuest } from "@/components/ctv/StarterQuest";
+import { Skeleton, StatsSkeleton, TableSkeleton } from "@/components/ui/SkeletonUI";
 
 const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -35,25 +36,32 @@ export default function CTVDashboard() {
     const [currentUser, setCurrentUser] = useState<any>(null);
     const [users, setUsers] = useState<any[]>([]);
 
+    const [isLoading, setIsLoading] = useState(true);
+
     useEffect(() => {
         (async () => {
-            const user = await getCurrentUser();
-            setCurrentUser(user);
+            setIsLoading(true);
+            try {
+                const [user, leadsData, usersData, ordersData] = await Promise.all([
+                    getCurrentUser(),
+                    loadLeads(),
+                    loadUsers(),
+                    loadOrders()
+                ]);
 
-            // Load Leads
-            const leadsData = loadLeads();
-            setLeads(leadsData);
+                setCurrentUser(user);
+                setLeads(leadsData || []);
+                setUsers(usersData || []);
+                setAllOrders(ordersData || []);
 
-            // Load Users for missions
-            const usersData = loadUsers();
-            setUsers(usersData);
-
-            // Load Orders
-            const ordersData = loadOrders();
-            setAllOrders(ordersData);
-            if (user) {
-                const ctvOrders = ordersData.filter(o => o.ctvId === user.id);
-                setOrders(ctvOrders);
+                if (user) {
+                    const ctvOrders = (ordersData || []).filter(o => o.ctvId === user.id);
+                    setOrders(ctvOrders);
+                }
+            } catch (error) {
+                console.error("[CTVDashboard] Load error:", error);
+            } finally {
+                setIsLoading(false);
             }
         })();
     }, []);
@@ -132,6 +140,23 @@ export default function CTVDashboard() {
             bg: "bg-purple-50",
         },
     ];
+
+    if (isLoading) {
+        return (
+            <div className="space-y-6">
+                <div className="bg-slate-100 h-24 rounded-xl animate-pulse" /> {/* Starter Quest Skeleton */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div className="bg-white p-6 rounded-xl border border-slate-200 h-40 animate-pulse" />
+                    <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 h-40 animate-pulse" />
+                </div>
+                <StatsSkeleton />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {[1, 2, 3].map(i => <div key={i} className="bg-white h-24 rounded-xl border border-slate-200 animate-pulse" />)}
+                </div>
+                <TableSkeleton rows={5} cols={7} />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">

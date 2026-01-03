@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Users, DollarSign, ShoppingBag, TrendingUp } from "lucide-react";
 import { SalesLead, loadSalesLeads, getSalesStats } from "@/lib/salesLeads";
+import { StatsSkeleton, TableSkeleton } from "@/components/ui/SkeletonUI";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -18,13 +19,33 @@ const formatDate = (dateString: string) => {
 
 export default function SalesDashboard() {
     const [leads, setLeads] = useState<SalesLead[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
+        setIsLoading(true);
+        // Simulate async load if needed, or just load directly
         const data = loadSalesLeads();
         setLeads(data);
+        setIsLoading(false);
     }, []);
 
     const stats = getSalesStats(leads);
+
+    if (isLoading) {
+        return (
+            <div className="space-y-6">
+                <StatsSkeleton />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 bg-white p-6 rounded-xl border border-slate-200 h-64 animate-pulse" />
+                    <TableSkeleton rows={5} cols={2} />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-white h-24 rounded-xl border border-slate-200 animate-pulse" />
+                    <div className="bg-white h-24 rounded-xl border border-slate-200 animate-pulse" />
+                </div>
+            </div>
+        );
+    }
 
     const statsCards = [
         {
