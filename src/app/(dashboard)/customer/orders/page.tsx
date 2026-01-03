@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { loadOrders, getOrdersByCustomer, type Order } from "@/lib/ordersStore";
-import { getCurrentUser } from "@/lib/auth";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { Package, Clock, CheckCircle, XCircle, Filter } from "lucide-react";
 
 const formatPrice = (price: number) => {

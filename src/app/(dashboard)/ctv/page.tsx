@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { Users, UserPlus, TrendingUp, DollarSign, ShoppingBag, Wallet, Award, Target, CheckCircle } from "lucide-react";
 import { CtvLead, loadLeads, getLeadStats } from "@/lib/ctvLeads";
 import { loadOrders, type Order } from "@/lib/ordersStore";
-import { getCurrentUser } from "@/lib/auth";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { getCtvLevel, LEVEL_COLORS, type CtvLevel } from "@/lib/ctvLevels";
 import { getCtvMonthlyMissionsSummary, formatMissionProgress, getMissionProgressPercent } from "@/lib/ctvMissions";
 import { loadUsers } from "@/lib/usersStore";
