@@ -51,23 +51,40 @@ export default function ChatPage() {
         subscribeToNewConversations(user.id);
 
         const fetchProfiles = async () => {
+            console.log("[ChatPage] Starting profile fetch...");
             try {
-                const { data, error } = await supabase
+                const { data, error, status } = await supabase
                     .from('profiles')
-                    .select('id, full_name, role, email')
-                    .order('full_name', { ascending: true });
+                    .select('id, full_name, role, email');
+
+                console.log("[ChatPage] Profile fetch result:", {
+                    count: data?.length || 0,
+                    error: error?.message,
+                    status,
+                    sample: data?.slice(0, 2)
+                });
 
                 if (error) {
-                    console.error("[ChatPage] Failed to fetch profiles via client:", error);
+                    console.error("[ChatPage] Failed to fetch profiles:", error.message, error.details);
                     // Fallback attempt if a column is missing (e.g. full_name)
-                    const { data: fallbackData } = await supabase
+                    const { data: fallbackData, error: fallbackError } = await supabase
                         .from('profiles')
                         .select('id, role, email')
                         .limit(100);
-                    if (fallbackData) setUsers(fallbackData);
-                } else {
+
+                    console.log("[ChatPage] Fallback result:", {
+                        count: fallbackData?.length || 0,
+                        error: fallbackError?.message
+                    });
+
+                    if (fallbackData && fallbackData.length > 0) {
+                        setUsers(fallbackData);
+                    }
+                } else if (data && data.length > 0) {
                     console.log(`[ChatPage] Fetched ${data.length} profiles successfully`);
                     setUsers(data);
+                } else {
+                    console.warn("[ChatPage] Profiles query returned 0 results - RLS might be blocking");
                 }
             } catch (e) {
                 console.error("[ChatPage] Error fetching profiles:", e);
