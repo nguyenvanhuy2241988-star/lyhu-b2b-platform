@@ -40,6 +40,33 @@ export default function ChatPage() {
         setMounted(true);
     }, []);
 
+    const fetchProfiles = useCallback(async () => {
+        const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+        if (!SUPABASE_URL || !SUPABASE_KEY) return;
+
+        let token = session?.access_token || SUPABASE_KEY;
+        const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,full_name,role,email`;
+
+        try {
+            const res = await fetch(url, {
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data)) setUsers(data);
+            }
+        } catch (e) {
+            console.error("[ChatPage] Profile fetch failed", e);
+        }
+    }, [session?.access_token]);
+
     useEffect(() => {
         // Wait for auth and mounting
         if (!user || !mounted) return;
@@ -50,43 +77,12 @@ export default function ChatPage() {
         // Subscribe to NEW conversations (sidebar sync)
         subscribeToNewConversations(user.id);
 
-        const fetchProfiles = useCallback(async () => {
-            const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-            const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-            if (!SUPABASE_URL || !SUPABASE_KEY) return;
-
-            let token = session?.access_token || SUPABASE_KEY;
-            const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,full_name,role,email`;
-
-            try {
-                const res = await fetch(url, {
-                    headers: {
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    if (Array.isArray(data)) setUsers(data);
-                }
-            } catch (e) {
-                console.error("[ChatPage] Profile fetch failed", e);
-            }
-        }, [session?.access_token]);
-
         fetchProfiles();
-        if (user?.id) {
-            fetchConversations(user.id);
-            subscribeToNewConversations(user.id);
-        }
 
         return () => {
-            unsubscribeFromNewConversations(); // Assuming this is the intended cleanup for new conversations
+            unsubscribeFromNewConversations();
         };
-    }, [user, mounted, session?.access_token, fetchConversations, subscribeToNewConversations, unsubscribeFromNewConversations, fetchProfiles]);
+    }, [user, mounted, fetchConversations, subscribeToNewConversations, unsubscribeFromNewConversations, fetchProfiles]);
 
     // Polling and Realtime are handled internally by selectConversation in chatStore.ts
     // No need for redundant useEffect here to avoid duplicate intervals/channels.
