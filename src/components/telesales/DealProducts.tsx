@@ -49,7 +49,7 @@ export default function DealProducts({ dealId, items, onItemsChange }: DealProdu
             };
             loadData();
         }
-    }, [isAdding, products.length]);
+    }, [isAdding, products.length, session?.access_token]);
 
     const filteredProducts = products.filter(p =>
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

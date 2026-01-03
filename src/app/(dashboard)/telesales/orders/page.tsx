@@ -59,7 +59,7 @@ export default function TelesalesOrdersPage() {
         } finally {
             if (mounted) setIsLoading(false);
         }
-    }, [user?.id, session?.access_token]);
+    }, [user, session?.access_token]);
 
     useEffect(() => {
         let mounted = true;
@@ -107,7 +107,7 @@ export default function TelesalesOrdersPage() {
             supabase.removeChannel(channel);
             supabase.removeChannel(chatChannel);
         };
-    }, [user?.id, session?.access_token, loadOrders]);
+    }, [user, session?.access_token, authIsLoading, loadOrders]);
 
     // Apply filters
     const filteredOrders = orders.filter((order) => {

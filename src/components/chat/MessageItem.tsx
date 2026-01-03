@@ -230,13 +230,6 @@ export const MessageItem = React.memo(({
             )}
         </div>
     );
-}, (prev, next) => {
-    return (
-        prev.msg.id === next.msg.id &&
-        prev.msg.content === next.msg.content &&
-        prev.msg.is_pinned === next.msg.is_pinned &&
-        prev.msg.is_deleted === next.msg.is_deleted &&
-        prev.messages.length === next.messages.length &&
-        prev.seenByUsers.length === next.seenByUsers.length
-    );
 });
+
+MessageItem.displayName = 'MessageItem';

@@ -107,7 +107,7 @@ const MessageList = React.memo(forwardRef<MessageListRef, MessageListProps>(({
             }
         }
         prevMessagesLength.current = messages.length;
-    }, [messages.length, currentUser?.id, showScrollBottom]);
+    }, [messages, currentUser?.id, showScrollBottom]);
 
     return (
         <div className="flex-1 min-h-0 bg-slate-50 flex flex-col relative">
