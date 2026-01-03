@@ -377,7 +377,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 }
 
                 // Check if any of these conversations also has theirId
-                const dmMatch = manualResult?.find(conv => {
+                const dmMatch = manualResult?.find((conv: any) => {
                     const participants = (conv as any).internal_participants;
                     // We need a way to check if theirId is among participants.
                     // Since we filtered by myId, we just need to see if theirId is also there.
