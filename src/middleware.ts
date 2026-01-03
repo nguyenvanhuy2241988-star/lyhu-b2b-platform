@@ -32,9 +32,18 @@ export async function middleware(request: NextRequest) {
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
 
+  let user = null;
+  let role: Role = "customer";
+
   try {
-    const { data: userRes } = await supabase.auth.getUser();
-    const user = userRes.user;
+    // Add timeout protection for slow Supabase connections
+    const userPromise = supabase.auth.getUser();
+    const timeoutPromise = new Promise<{ data: { user: null } }>((resolve) =>
+      setTimeout(() => resolve({ data: { user: null } }), 3000)
+    );
+
+    const { data: userRes } = await Promise.race([userPromise, timeoutPromise]) as any;
+    user = userRes?.user;
 
     // Chưa login mà vào khu protected => đá về /login?next=...
     if (!user && isProtected) {
@@ -46,13 +55,19 @@ export async function middleware(request: NextRequest) {
 
     // Đã login: lấy role
     if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .maybeSingle();
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", user.id)
+          .maybeSingle();
 
-      const role = (profile?.role || "customer") as Role;
+        role = (profile?.role || "customer") as Role;
+      } catch {
+        // Profile fetch failed, use default role
+        role = "customer";
+      }
+
       const home = getHomePath(role);
 
       // Nếu vào /login hoặc "/" thì đẩy về đúng dashboard
@@ -69,6 +84,7 @@ export async function middleware(request: NextRequest) {
     if (isConfigured) {
       console.error("[Middleware] Runtime error:", err);
     }
+    // On error, allow through (will be caught by page-level auth)
   }
 
   return response;
