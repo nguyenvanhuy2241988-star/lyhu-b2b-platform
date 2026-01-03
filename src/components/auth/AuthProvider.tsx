@@ -79,10 +79,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (session?.user) {
                 setSession(session);
-                setUser(session.user);
+                const userObj = {
+                    id: session.user.id,
+                    email: session.user.email,
+                    ...(session.user.user_metadata || {})
+                };
+                setUser(userObj);
 
-                if (session.access_token && typeof window !== "undefined") {
-                    localStorage.setItem("lyhu_access_token", session.access_token);
+                if (typeof window !== "undefined") {
+                    localStorage.setItem("lyhu_user", JSON.stringify(userObj));
+                    if (session.access_token) {
+                        localStorage.setItem("lyhu_access_token", session.access_token);
+                    }
                 }
 
                 // 2. Quick role fetch with FASTER timeout (2s)
@@ -136,12 +144,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
             if (session) {
                 setSession(session);
-                setUser(session.user);
+                const userObj = {
+                    id: session.user.id,
+                    email: session.user.email,
+                    ...(session.user.user_metadata || {})
+                };
+                setUser(userObj);
 
                 // ✅ Set realtime auth token on auth state change
                 if (session.access_token) {
                     supabase.realtime.setAuth(session.access_token);
                     if (typeof window !== "undefined") {
+                        localStorage.setItem("lyhu_user", JSON.stringify(userObj));
                         localStorage.setItem("lyhu_access_token", session.access_token);
                     }
                 }

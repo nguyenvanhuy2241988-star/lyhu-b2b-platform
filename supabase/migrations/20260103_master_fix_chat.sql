@@ -1,4 +1,9 @@
--- 1. Đảm bảo bảng profiles có đầy đủ các cột cần thiết
+-- 1. Đảm bảo bảng internal_conversations có đầy đủ các cột cho RPC
+ALTER TABLE public.internal_conversations ADD COLUMN IF NOT EXISTS created_by uuid REFERENCES auth.users(id);
+ALTER TABLE public.internal_conversations ADD COLUMN IF NOT EXISTS is_public boolean DEFAULT false;
+ALTER TABLE public.internal_conversations ADD COLUMN IF NOT EXISTS name text;
+
+-- 2. Đảm bảo bảng profiles có đầy đủ các cột cần thiết
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS full_name TEXT;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
 
