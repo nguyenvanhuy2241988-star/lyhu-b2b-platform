@@ -574,19 +574,35 @@ export const useChatStore = create<ChatState>((set, get) => ({
         console.log("[ChatStore] createDirectConversation called:", { myId, theirId });
 
         try {
-            // Step 1: Create conversation via RPC
-            console.log("[ChatStore] Calling RPC get_or_create_direct_conversation...");
-            const { data: convId, error } = await supabase
-                .rpc('get_or_create_direct_conversation', {
-                    target_user_id: theirId
-                });
+            // Step 1: Create conversation via RPC using REST API (to avoid client hangs)
+            console.log("[ChatStore] Calling RPC get_or_create_direct_conversation via REST...");
 
-            console.log("[ChatStore] RPC result:", { convId, error: error?.message });
+            const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+            const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-            if (error) {
-                console.error("[ChatStore] RPC Error:", error);
-                throw error;
+            if (!SUPABASE_URL || !SUPABASE_KEY) throw new Error("Missing Supabase env vars");
+
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token || SUPABASE_KEY;
+
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_or_create_direct_conversation`, {
+                method: 'POST',
+                headers: {
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ target_user_id: theirId })
+            });
+
+            if (!res.ok) {
+                const errText = await res.text();
+                throw new Error(`RPC failed: ${res.status} ${errText}`);
             }
+
+            const convId = await res.json(); // RPC returns uuid directly
+
+            console.log("[ChatStore] RPC Rest result:", convId);
 
             if (!convId) {
                 throw new Error("RPC returned null conversation ID");
