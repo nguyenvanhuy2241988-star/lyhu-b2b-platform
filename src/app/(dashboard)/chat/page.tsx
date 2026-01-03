@@ -51,40 +51,44 @@ export default function ChatPage() {
         subscribeToNewConversations(user.id);
 
         const fetchProfiles = async () => {
-            console.log("[ChatPage] Starting profile fetch...");
-            try {
-                const { data, error, status } = await supabase
-                    .from('profiles')
-                    .select('id, full_name, role, email');
+            console.log("[ChatPage] Starting profile fetch with REST API...");
 
-                console.log("[ChatPage] Profile fetch result:", {
-                    count: data?.length || 0,
-                    error: error?.message,
-                    status,
-                    sample: data?.slice(0, 2)
+            // Use direct REST API to bypass potential Supabase client issues
+            const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+            const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+            if (!SUPABASE_URL || !SUPABASE_KEY) {
+                console.error("[ChatPage] Missing Supabase env vars");
+                return;
+            }
+
+            // Get current auth token
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            const token = currentSession?.access_token || SUPABASE_KEY;
+
+            try {
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id,full_name,role,email`, {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 });
 
-                if (error) {
-                    console.error("[ChatPage] Failed to fetch profiles:", error.message, error.details);
-                    // Fallback attempt if a column is missing (e.g. full_name)
-                    const { data: fallbackData, error: fallbackError } = await supabase
-                        .from('profiles')
-                        .select('id, role, email')
-                        .limit(100);
+                const data = await res.json();
+                console.log("[ChatPage] REST API Profile fetch result:", {
+                    status: res.status,
+                    count: Array.isArray(data) ? data.length : 0,
+                    sample: Array.isArray(data) ? data.slice(0, 2) : data
+                });
 
-                    console.log("[ChatPage] Fallback result:", {
-                        count: fallbackData?.length || 0,
-                        error: fallbackError?.message
-                    });
-
-                    if (fallbackData && fallbackData.length > 0) {
-                        setUsers(fallbackData);
-                    }
-                } else if (data && data.length > 0) {
-                    console.log(`[ChatPage] Fetched ${data.length} profiles successfully`);
+                if (res.ok && Array.isArray(data) && data.length > 0) {
                     setUsers(data);
+                    console.log(`[ChatPage] ✓ Set ${data.length} users`);
+                } else if (!res.ok) {
+                    console.error("[ChatPage] REST API error:", res.status, data);
                 } else {
-                    console.warn("[ChatPage] Profiles query returned 0 results - RLS might be blocking");
+                    console.warn("[ChatPage] REST API returned 0 profiles");
                 }
             } catch (e) {
                 console.error("[ChatPage] Error fetching profiles:", e);
