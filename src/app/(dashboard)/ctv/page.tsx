@@ -67,7 +67,7 @@ export default function CTVDashboard() {
                 setIsLoading(false);
             }
         })();
-    }, [authUser, authIsLoading]);
+    }, [authUser, authIsLoading, currentUser]);
 
     const leadStats = getLeadStats(leads);
 

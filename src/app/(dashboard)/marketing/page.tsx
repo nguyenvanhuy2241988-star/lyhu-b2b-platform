@@ -22,7 +22,7 @@ export default function MarketingDashboard() {
 
             let budget = 0;
             if (campaignsRes.data) {
-                budget = campaignsRes.data.reduce((acc, curr) => acc + (curr.budget || 0), 0);
+                budget = campaignsRes.data.reduce((acc: number, curr: { budget?: number }) => acc + (curr.budget || 0), 0);
             }
 
             setStats({

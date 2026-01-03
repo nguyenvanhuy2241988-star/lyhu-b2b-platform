@@ -36,7 +36,7 @@ export default function TelesalesCustomersPage() {
         const data = await fetchCustomers(user.id, session.access_token);
         setCustomers(data);
         setIsLoading(false);
-    }, [user?.id, session?.access_token]);
+    }, [user, session?.access_token]);
 
     useEffect(() => {
         if (user && session?.access_token) {
@@ -44,7 +44,7 @@ export default function TelesalesCustomersPage() {
         } else if (!authIsLoading) {
             setIsLoading(false);
         }
-    }, [user?.id, session?.access_token, authIsLoading, loadData]);
+    }, [user, session?.access_token, authIsLoading, loadData]);
 
     const filteredCustomers = customers.filter((customer) => {
         return (
