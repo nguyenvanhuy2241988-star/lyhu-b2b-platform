@@ -28,8 +28,22 @@ export async function GET(request: Request) {
     const code = url.searchParams.get("code");
     const nextParam = url.searchParams.get("next"); // dạng "/admin" ...
 
-    // Use NEXT_PUBLIC_SITE_URL if available (for LAN/ngrok testing), fallback to request origin
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || url.origin;
+    // Use NEXT_PUBLIC_SITE_URL if available
+    let baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
+
+    // Fallback logic for Vercel
+    if (!baseUrl) {
+        if (process.env.VERCEL_URL) {
+            baseUrl = `https://${process.env.VERCEL_URL}`;
+        } else {
+            baseUrl = url.origin;
+        }
+    }
+
+    // Safety check: Avoid localhost on non-local environments
+    if (baseUrl.includes('localhost') && process.env.NODE_ENV === 'production' && process.env.VERCEL_URL) {
+        baseUrl = `https://${process.env.VERCEL_URL}`;
+    }
 
     if (!code) return NextResponse.redirect(`${baseUrl}/login?error=no_code`);
 

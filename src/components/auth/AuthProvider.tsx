@@ -45,60 +45,51 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 }
             }
 
-            let session = null;
+            // 1. Gọi Supabase KHÔNG TIMEOUT
+            // Tháo bỏ hoàn toàn Promise.race để tránh lỗi "Auth Timeout" khi mạng chậm
+            const { data: { session: currentSession }, error: authError } = await supabase.auth.getSession();
 
-            try {
-                // 1. Try Supabase with a FAST timeout (3s)
-                const sessionPromise = supabase.auth.getSession();
-                const timeoutPromise = new Promise<{ data: { session: null }, error: any }>((_, reject) =>
-                    setTimeout(() => reject(new Error('Auth Timeout')), 3000)
-                );
-
-                const result = await Promise.race([sessionPromise, timeoutPromise]) as any;
-                session = result?.data?.session;
-            } catch (authErr) {
-                console.warn('[AuthProvider] Supabase session fetch issue:', authErr);
+            if (authError) {
+                console.warn('[AuthProvider] Supabase session fetch issue:', authError.message);
             }
 
-            if (session?.user) {
-                setSession(session);
+            if (currentSession?.user) {
+                setSession(currentSession);
                 const userObj = {
-                    id: session.user.id,
-                    email: session.user.email,
-                    ...(session.user.user_metadata || {})
+                    id: currentSession.user.id,
+                    email: currentSession.user.email,
+                    ...(currentSession.user.user_metadata || {})
                 };
                 setUser(userObj);
 
                 if (typeof window !== "undefined") {
                     localStorage.setItem("lyhu_user", JSON.stringify(userObj));
-                    if (session.access_token) {
-                        localStorage.setItem("lyhu_access_token", session.access_token);
+                    if (currentSession.access_token) {
+                        localStorage.setItem("lyhu_access_token", currentSession.access_token);
                     }
                 }
 
-                // 2. Quick role fetch with FASTER timeout (2s)
+                // 2. Role fetch không timeout
                 try {
-                    const { data: profile } = await Promise.race([
-                        supabase
-                            .from("profiles")
-                            .select("role")
-                            .eq("id", session.user.id)
-                            .maybeSingle(),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('Role Fetch Timeout')), 2000))
-                    ]) as any;
+                    const { data: profile } = await supabase
+                        .from("profiles")
+                        .select("role")
+                        .eq("id", currentSession.user.id)
+                        .maybeSingle();
 
                     setRole(profile?.role ?? "customer");
                 } catch (roleErr) {
-                    console.warn('[AuthProvider] Role fetch timeout, using cache');
+                    console.warn('[AuthProvider] Role fetch failed, using fallback');
                     setRole(prev => prev || "customer");
                 }
-            } else if (session === null) {
-                // EXPLICIT null from getSession (not timeout) means logged out
+            } else {
+                // EXPLICIT null from getSession means logged out
                 setUser(null);
                 setRole(null);
-            } else {
-                // Timeout or Error: KEEP current user/role from FAST PATH
-                console.log('[AuthProvider] Preserving auth state despite fetch issue');
+                if (typeof window !== "undefined") {
+                    localStorage.removeItem("lyhu_user");
+                    localStorage.removeItem("lyhu_access_token");
+                }
             }
         } catch (err) {
             console.error('[AuthProvider] checkAuth catastrophic error:', err);
@@ -136,6 +127,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
                 // ✅ Set realtime auth token on auth state change
                 if (session.access_token) {
+                    console.log('[AuthProvider] Auth state change: SETTING REALTIME AUTH', session.access_token.substring(0, 10) + '...');
                     supabase.realtime.setAuth(session.access_token);
                     if (typeof window !== "undefined") {
                         localStorage.setItem("lyhu_user", JSON.stringify(userObj));

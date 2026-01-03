@@ -1,7 +1,7 @@
-import { Menu, User, MessageCircle, LogOut, Settings, UserCircle, Bell, ChevronDown } from "lucide-react";
+import { Menu, MessageCircle, LogOut, Settings, UserCircle, Bell, ChevronDown } from "lucide-react";
 import { NotificationCenter } from "../common/NotificationCenter";
 import { useRouter, usePathname } from "next/navigation";
-import { getCurrentUser, logout } from "@/lib/auth";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { useEffect, useState, useRef } from "react";
 import { useChatStore } from "@/lib/chatStore";
 import { useToast } from "@/components/ui/toast";
@@ -12,10 +12,7 @@ interface TopbarProps {
 }
 
 export default function Topbar({ onMenuClick, title = "Dashboard" }: TopbarProps) {
-    const [userName, setUserName] = useState<string>("User Name");
-    const [userEmail, setUserEmail] = useState<string>("");
-    const [userRole, setUserRole] = useState<string>("");
-    const [userId, setUserId] = useState<string | null>(null);
+    const { user, role, signOut: authSignOut } = useAuth();
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -31,35 +28,31 @@ export default function Topbar({ onMenuClick, title = "Dashboard" }: TopbarProps
 
     const unreadCount = getTotalUnreadCount();
 
+    const userName = user?.full_name || user?.name || user?.email?.split('@')[0] || "User";
+    const userEmail = user?.email || "";
+    const userRole = role || "";
+
     useEffect(() => {
-        (async () => {
-            const user = await getCurrentUser();
-            if (user) {
-                setUserName(user.name || "User");
-                setUserEmail(user.email || "");
-                setUserRole(user.role || "");
-                setUserId(user.id);
+        if (user?.id) {
+            // Initial fetch to get unread counts
+            fetchConversations(user.id);
 
-                // Initial fetch to get unread counts
-                fetchConversations(user.id);
-
-                // Subscribe to chat notifications
-                subscribeToGlobalMessages(user.id, (msg) => {
-                    if (pathname === '/chat') return;
-                    const isMentioned = msg.content.includes(`@${user.email?.split('@')[0]}`) || msg.content.includes(`@${user.name}`);
-                    showToast(
-                        `${isMentioned ? '🔴 Bạn được nhắc đến: ' : 'Tin nhắn mới: '} ${msg.content}`,
-                        'info',
-                        4000
-                    );
-                });
-            }
-        })();
+            // Subscribe to chat notifications
+            subscribeToGlobalMessages(user.id, (msg) => {
+                if (pathname === '/chat') return;
+                const isMentioned = msg.content.includes(`@${user.email?.split('@')[0]}`) || msg.content.includes(`@${user.name}`);
+                showToast(
+                    `${isMentioned ? '🔴 Bạn được nhắc đến: ' : 'Tin nhắn mới: '} ${msg.content}`,
+                    'info',
+                    4000
+                );
+            });
+        }
 
         return () => {
             unsubscribeFromGlobalMessages();
         }
-    }, [subscribeToGlobalMessages, unsubscribeFromGlobalMessages, pathname, showToast, fetchConversations]);
+    }, [user?.id, user?.email, user?.name, subscribeToGlobalMessages, unsubscribeFromGlobalMessages, pathname, showToast, fetchConversations]);
 
     // Close dropdown on click outside
     useEffect(() => {
@@ -74,7 +67,7 @@ export default function Topbar({ onMenuClick, title = "Dashboard" }: TopbarProps
 
     const handleLogout = async () => {
         try {
-            await logout();
+            await authSignOut();
         } finally {
             router.push("/login");
         }

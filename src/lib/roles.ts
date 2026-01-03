@@ -17,7 +17,9 @@ export const ROLE_HOME: Record<Role, string> = {
     livestream: "/livestream",
 };
 
-export const PROTECTED_PREFIXES = Object.values(ROLE_HOME); // ['/admin', '/telesales', ...]
+export const PROTECTED_PREFIXES = [...Object.values(ROLE_HOME), "/chat"];
+
+export const SHARED_PATHS = ["/chat", "/profile", "/settings"];
 
 export function getHomePath(role?: string | null): string {
     if (!role) return "/";
@@ -26,7 +28,12 @@ export function getHomePath(role?: string | null): string {
 }
 
 export function isRoleAllowedPath(role: Role, pathname: string): boolean {
-    // strict: đúng role mới vào đúng khu
+    // 1. Cho phép các trang dùng chung
+    if (SHARED_PATHS.some(p => pathname === p || pathname.startsWith(p + "/"))) {
+        return true;
+    }
+
+    // 2. Kiểm tra đúng khu vực bảo vệ theo role
     const prefix = ROLE_HOME[role];
     return pathname === prefix || pathname.startsWith(prefix + "/");
 }

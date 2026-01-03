@@ -13,33 +13,22 @@ if (!isConfigured && typeof window !== 'undefined') {
     console.warn("Supabase environment variables are missing. Please configure them in your .env file or Vercel dashboard.");
 }
 
-// =====================================================
-// SEPARATE CLIENTS TO AVOID CONFLICTS
-// =====================================================
+// SEPARATE CLIENTS NO LONGER NEEDED - USE SINGLETON
+let supabaseInstance: ReturnType<typeof createBrowserClient> | null = null;
 
-// Client for Realtime subscriptions ONLY
-// This client maintains the WebSocket connection
-let realtimeClientInstance: ReturnType<typeof createBrowserClient> | null = null;
-export function getRealtimeClient() {
-    if (!realtimeClientInstance) {
-        realtimeClientInstance = createBrowserClient(supabaseUrl, supabaseAnonKey);
+export function getSupabase() {
+    if (!supabaseInstance) {
+        supabaseInstance = createBrowserClient(supabaseUrl, supabaseAnonKey);
     }
-    return realtimeClientInstance;
+    return supabaseInstance;
 }
 
-// Client for CRUD operations (REST API calls)
-// Creates a fresh client each time to avoid state conflicts
-export function getCrudClient() {
-    return createBrowserClient(supabaseUrl, supabaseAnonKey);
-}
+// Client for Realtime and CRUD
+export const supabase = getSupabase();
 
-// Legacy exports for backward compatibility
-export function createClient() {
-    return createBrowserClient(supabaseUrl, supabaseAnonKey);
-}
+// Backward compatibility helper
+export function getRealtimeClient() { return supabase; }
+export function getCrudClient() { return supabase; }
+export function createClient() { return supabase; }
 
-// Export a singleton instance. 
-// Note: During build/prerender, this will use placeholder values.
-export const supabase = getRealtimeClient();
-
-export default createClient;
+export default supabase;

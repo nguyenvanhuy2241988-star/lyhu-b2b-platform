@@ -10,14 +10,10 @@ const getAuthHeaders = async (token?: string) => {
     let finalToken = token;
     if (!finalToken) {
         try {
-            const sessionPromise = supabase.auth.getSession();
-            const timeoutPromise = new Promise<{ data: { session: null } }>((_, reject) =>
-                setTimeout(() => reject(new Error('Auth Timeout')), 3000)
-            );
-            const { data } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+            const { data } = await supabase.auth.getSession();
             finalToken = data?.session?.access_token;
         } catch (e) {
-            console.warn('[Tasks Store] getAuthHeaders session timeout');
+            console.warn('[Tasks Store] getAuthHeaders session issue');
         }
     }
     return {
@@ -136,11 +132,7 @@ export type TelesalesTask = {
 // ---- helpers ----
 async function getUserIdSafe(): Promise<string | null> {
     try {
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise<{ data: { session: null } }>((_, reject) =>
-            setTimeout(() => reject(new Error('Auth Timeout')), 3000)
-        );
-        const { data } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+        const { data } = await supabase.auth.getSession();
         return data.session?.user?.id ?? null;
     } catch (e) {
         return null;
@@ -169,15 +161,9 @@ export async function fetchTasks(userId?: string, token?: string, filters?: { st
             query += `&completed_at=lte.${filters.endDate}`;
         }
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
-
         const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*&${query}`, {
-            headers,
-            signal: controller.signal
+            headers
         });
-
-        clearTimeout(timeoutId);
 
         if (!res.ok) {
             const err = await res.json();
@@ -257,18 +243,12 @@ export async function createTaskSupabase(input: {
         order: Math.floor(Date.now() / 1000),
     };
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
     try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}`, {
             method: 'POST',
             headers: { ...headers, 'Prefer': 'return=representation' },
-            body: JSON.stringify(payload),
-            signal: controller.signal
+            body: JSON.stringify(payload)
         });
-
-        clearTimeout(timeoutId);
 
         if (!res.ok) {
             const err = await res.json();
@@ -279,7 +259,6 @@ export async function createTaskSupabase(input: {
         const data = await res.json();
         return data[0] as TelesalesTask;
     } catch (e: any) {
-        clearTimeout(timeoutId);
         console.error("createTaskSupabase Exception:", e);
         throw e;
     }
@@ -310,18 +289,12 @@ export async function updateTaskSupabase(taskId: string, patch: Partial<Telesale
     // Clean undefined
     Object.keys(body).forEach(key => (body as any)[key] === undefined && delete (body as any)[key]);
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
     try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${taskId}`, {
             method: 'PATCH',
             headers: { ...headers, 'Prefer': 'return=representation' }, // Preserve Prefer header
-            body: JSON.stringify(body),
-            signal: controller.signal
+            body: JSON.stringify(body)
         });
-
-        clearTimeout(timeoutId);
 
         if (!res.ok) {
             const err = await res.json();
@@ -331,7 +304,6 @@ export async function updateTaskSupabase(taskId: string, patch: Partial<Telesale
 
         return true;
     } catch (e) {
-        clearTimeout(timeoutId);
         console.error("updateTaskSupabase Exception:", e);
         return false;
     }

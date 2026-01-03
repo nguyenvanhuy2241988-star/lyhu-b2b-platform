@@ -445,15 +445,7 @@ export default function CRMPage() {
         }
 
         try {
-            // Add timeout to prevent hanging
-            const timeoutPromise = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error('Timeout')), 10000)
-            );
-
-            const fetchedDeals = await Promise.race([
-                fetchDealsForUser(userInfo.id, userInfo.role, session?.access_token),
-                timeoutPromise
-            ]) as CRMDeal[];
+            const fetchedDeals = await fetchDealsForUser(userInfo.id, userInfo.role, session?.access_token);
 
             console.log('[CRM Debug] fetched deals:', fetchedDeals.length);
             setDeals(fetchedDeals);

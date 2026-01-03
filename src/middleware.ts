@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { getHomePath, isRoleAllowedPath, PROTECTED_PREFIXES, type Role } from "@/lib/roles";
+import { getHomePath, isRoleAllowedPath, PROTECTED_PREFIXES, SHARED_PATHS, type Role } from "@/lib/roles";
 
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
@@ -32,21 +32,25 @@ export async function middleware(request: NextRequest) {
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
 
-  let user = null;
-  let role: Role = "customer";
-
   try {
-    // Add timeout protection for slow Supabase connections
-    const userPromise = supabase.auth.getUser();
-    const timeoutPromise = new Promise<{ data: { user: null } }>((resolve) =>
-      setTimeout(() => resolve({ data: { user: null } }), 3000)
-    );
+    let user = null;
+    let role: Role = "customer";
 
-    const { data: userRes } = await Promise.race([userPromise, timeoutPromise]) as any;
-    user = userRes?.user;
+    try {
+      // Removed timeout protection - let Supabase handle its own connection lifecycle
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      user = authUser;
 
-    // Chưa login mà vào khu protected => đá về /login?next=...
+      if (authError) {
+        console.warn("[Middleware] Auth fetch error (possibly connection issue):", authError.message);
+      }
+    } catch (err: any) {
+      console.error("[Middleware] Auth catastrophic fail:", err);
+    }
+
+    // Only redirect if we definitely know there is no user AND it's a protected route
     if (!user && isProtected) {
+      console.log("[Middleware] No user for protected route, redirecting to login.");
       const next = `${pathname}${search || ""}`;
       const loginUrl = new URL("/login", origin);
       loginUrl.searchParams.set("next", next);
@@ -56,6 +60,7 @@ export async function middleware(request: NextRequest) {
     // Đã login: lấy role
     if (user) {
       try {
+        // Removed role fetch timeout
         const { data: profile } = await supabase
           .from("profiles")
           .select("role")
@@ -63,20 +68,24 @@ export async function middleware(request: NextRequest) {
           .maybeSingle();
 
         role = (profile?.role || "customer") as Role;
-      } catch {
-        // Profile fetch failed, use default role
-        role = "customer";
+      } catch (roleErr) {
+        console.warn("[Middleware] Role fetch error, checking shared paths.", roleErr);
+        if (SHARED_PATHS.some(p => pathname === p || pathname.startsWith(p + "/"))) {
+          return response;
+        }
+        role = "customer"; // Fallback
       }
 
       const home = getHomePath(role);
 
-      // Nếu vào /login hoặc "/" thì đẩy về đúng dashboard
+      // 1. Nếu vào /login hoặc "/" thì đẩy về đúng dashboard
       if (pathname === "/login" || pathname === "/") {
         return NextResponse.redirect(new URL(home, origin));
       }
 
-      // Nếu cố vào sai khu role => đá về dashboard role
+      // 2. Nếu cố vào sai khu vực bảo vệ VÀ không phải trang dùng chung => đá về dashboard role
       if (isProtected && !isRoleAllowedPath(role, pathname)) {
+        console.warn(`[Middleware] Path ${pathname} not allowed for role ${role}. Redirecting to ${home}`);
         return NextResponse.redirect(new URL(home, origin));
       }
     }
@@ -84,13 +93,11 @@ export async function middleware(request: NextRequest) {
     if (isConfigured) {
       console.error("[Middleware] Runtime error:", err);
     }
-    // On error, allow through (will be caught by page-level auth)
   }
 
   return response;
 }
 
-// Chạy middleware cho mọi route trừ static assets và các file định dạng hình ảnh/icon
 export const config = {
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',

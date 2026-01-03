@@ -11,16 +11,11 @@ const getHeaders = (token?: string) => ({
 });
 
 // Helper for Session with Timeout
-async function getSessionWithTimeout() {
+async function getSessionSafe() {
     try {
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise<{ data: { session: null } }>((_, reject) =>
-            setTimeout(() => reject(new Error('Auth Timeout')), 3000)
-        );
-        const { data } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+        const { data } = await supabase.auth.getSession();
         return data?.session;
     } catch (e) {
-        console.warn('[CRM Store] getSession timeout or error, using fallback');
         return null;
     }
 }
@@ -276,7 +271,7 @@ export async function createCustomer(customer: Omit<Customer, 'id' | 'created_at
         // If token not provided, try to get from session with timeout
         let authToken = token;
         if (!authToken) {
-            const session = await getSessionWithTimeout();
+            const session = await getSessionSafe();
             authToken = session?.access_token;
         }
 
@@ -516,7 +511,7 @@ export async function createDeal(deal: {
         // Get current user session for RLS with timeout
         let authToken = token;
         if (!authToken) {
-            const session = await getSessionWithTimeout();
+            const session = await getSessionSafe();
             authToken = session?.access_token;
         }
 
@@ -607,7 +602,7 @@ export async function updateDeal(id: string, updates: Partial<CRMDeal>, token?: 
 
         let authToken = token;
         if (!authToken) {
-            const session = await getSessionWithTimeout();
+            const session = await getSessionSafe();
             authToken = session?.access_token;
         }
 
@@ -649,7 +644,7 @@ export async function deleteDeal(id: string, token?: string): Promise<boolean> {
     try {
         let authToken = token;
         if (!authToken) {
-            const session = await getSessionWithTimeout();
+            const session = await getSessionSafe();
             authToken = session?.access_token;
         }
 
@@ -684,7 +679,7 @@ export async function checkOpenDeals(customerId: string, token?: string): Promis
     try {
         let authToken = token;
         if (!authToken) {
-            const session = await getSessionWithTimeout();
+            const session = await getSessionSafe();
             authToken = session?.access_token;
         }
         const headers = getHeaders(authToken);
@@ -767,7 +762,7 @@ export async function fetchActivities(dealId: string, token?: string): Promise<C
     try {
         let authToken = token;
         if (!authToken) {
-            const session = await getSessionWithTimeout();
+            const session = await getSessionSafe();
             authToken = session?.access_token;
         }
         const headers = getHeaders(authToken);
@@ -806,7 +801,7 @@ export async function createActivity(activity: {
     try {
         let authToken = token;
         if (!authToken) {
-            const session = await getSessionWithTimeout();
+            const session = await getSessionSafe();
             authToken = session?.access_token;
         }
 
@@ -853,7 +848,7 @@ export async function deleteActivity(id: string, token?: string): Promise<boolea
     try {
         let authToken = token;
         if (!authToken) {
-            const session = await getSessionWithTimeout();
+            const session = await getSessionSafe();
             authToken = session?.access_token;
         }
 
@@ -891,7 +886,7 @@ export async function fetchDealItems(dealId: string, token?: string): Promise<CR
     try {
         let authToken = token;
         if (!authToken) {
-            const session = await getSessionWithTimeout();
+            const session = await getSessionSafe();
             authToken = session?.access_token;
         }
         const headers = getHeaders(authToken);
@@ -927,7 +922,7 @@ export async function addDealItem(item: {
     try {
         let authToken = token;
         if (!authToken) {
-            const session = await getSessionWithTimeout();
+            const session = await getSessionSafe();
             authToken = session?.access_token;
         }
 
@@ -983,7 +978,7 @@ export async function deleteDealItem(id: string, token?: string): Promise<boolea
     try {
         let authToken = token;
         if (!authToken) {
-            const session = await getSessionWithTimeout();
+            const session = await getSessionSafe();
             authToken = session?.access_token;
         }
 
@@ -1011,7 +1006,7 @@ export async function updateDealItem(id: string, updates: { quantity?: number, u
     try {
         let authToken = token;
         if (!authToken) {
-            const session = await getSessionWithTimeout();
+            const session = await getSessionSafe();
             authToken = session?.access_token;
         }
 

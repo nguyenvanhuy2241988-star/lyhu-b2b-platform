@@ -54,19 +54,18 @@ const ORDER_STATUS_OPTIONS = [
 ];
 
 export default function OrdersPage() {
+    const { user: authUser, isLoading: authIsLoading } = useAuth();
     const [selectedStatus, setSelectedStatus] = useState("ALL");
     const [orders, setOrders] = useState<Order[]>([]);
 
     useEffect(() => {
-        (async () => {
-            const user = await getCurrentUser();
-            if (user) {
-                // Use helper function
-                const customerOrders = getOrdersByCustomer(user.id);
-                setOrders(customerOrders);
-            }
-        })();
-    }, []);
+        if (authIsLoading) return;
+        if (authUser) {
+            // Use helper function
+            const customerOrders = getOrdersByCustomer(authUser.id);
+            setOrders(customerOrders);
+        }
+    }, [authUser, authIsLoading]);
 
     const filteredOrders = useMemo(() => {
         if (!orders || !Array.isArray(orders)) {

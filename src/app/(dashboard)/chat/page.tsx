@@ -51,33 +51,13 @@ export default function ChatPage() {
         subscribeToNewConversations(user.id);
 
         const fetchProfiles = async () => {
-            console.log("[ChatPage] 1. Starting profile fetch...");
-
             const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
             const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-            console.log("[ChatPage] 2. Env vars check:", {
-                hasUrl: !!SUPABASE_URL,
-                hasKey: !!SUPABASE_KEY,
-                urlPreview: SUPABASE_URL?.substring(0, 30)
-            });
+            if (!SUPABASE_URL || !SUPABASE_KEY) return;
 
-            if (!SUPABASE_URL || !SUPABASE_KEY) {
-                console.error("[ChatPage] Missing Supabase env vars");
-                return;
-            }
-
-            // Use session token if available, otherwise use anon key
-            let token = SUPABASE_KEY;
-            if (session?.access_token) {
-                token = session.access_token;
-                console.log("[ChatPage] 3. Using session token");
-            } else {
-                console.log("[ChatPage] 3. Using anon key (no session token)");
-            }
-
+            let token = session?.access_token || SUPABASE_KEY;
             const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,full_name,role,email`;
-            console.log("[ChatPage] 4. Fetching from:", url);
 
             try {
                 const res = await fetch(url, {
@@ -88,29 +68,20 @@ export default function ChatPage() {
                     }
                 });
 
-                console.log("[ChatPage] 5. Response received:", res.status);
-
-                const data = await res.json();
-                console.log("[ChatPage] 6. Data parsed:", {
-                    count: Array.isArray(data) ? data.length : 0,
-                    isArray: Array.isArray(data),
-                    sample: Array.isArray(data) ? data.slice(0, 2) : data
-                });
-
-                if (res.ok && Array.isArray(data) && data.length > 0) {
-                    setUsers(data);
-                    console.log(`[ChatPage] ✓ SUCCESS: Set ${data.length} users`);
-                } else if (!res.ok) {
-                    console.error("[ChatPage] REST API error:", res.status, data);
-                } else {
-                    console.warn("[ChatPage] Empty profiles array");
+                if (res.ok) {
+                    const data = await res.json();
+                    if (Array.isArray(data)) setUsers(data);
                 }
-            } catch (e: any) {
-                console.error("[ChatPage] Fetch error:", e.message || e);
+            } catch (e) {
+                console.error("[ChatPage] Profile fetch failed", e);
             }
         };
 
         fetchProfiles();
+        if (user?.id) {
+            fetchConversations(user.id);
+            subscribeToNewConversations(user.id);
+        }
 
         return () => {
             unsubscribeFromNewConversations(); // Assuming this is the intended cleanup for new conversations
@@ -123,7 +94,10 @@ export default function ChatPage() {
     useEffect(() => {
         // Mark as read when messages update
         if (activeConversationId && currentUser && messages.length > 0) {
-            markRead(activeConversationId, currentUser.id);
+            const conv = conversations.find(c => c.id === activeConversationId);
+            if (conv && (conv.unread_count || 0) > 0) {
+                markRead(activeConversationId, currentUser.id);
+            }
         }
     }, [messages, activeConversationId, currentUser, markRead]);
 
@@ -138,7 +112,7 @@ export default function ChatPage() {
             // Pass the token explicitly to avoid hangs in the store
             const id = await createDirectConversation(currentUser.id, targetUserId, session?.access_token);
             console.log("[ChatPage] Conversation created:", id);
-            selectConversation(id);
+            selectConversation(id, currentUser?.id);
             console.log("[ChatPage] Conversation selected:", id);
         } catch (e: any) {
             console.error("[ChatPage] handleStartChat error:", e.message || e);
@@ -150,7 +124,7 @@ export default function ChatPage() {
         if (!groupName.trim() || selectedUsers.length === 0 || !currentUser) return;
         try {
             const id = await createGroupConversation(currentUser.id, groupName, selectedUsers);
-            selectConversation(id);
+            selectConversation(id, currentUser.id);
             setShowCreateGroup(false);
             setGroupName("");
             setSelectedUsers([]);
@@ -171,15 +145,34 @@ export default function ChatPage() {
     const [showMobileSidebar, setShowMobileSidebar] = useState(true);
 
     const handleSelectConversation = (id: string) => {
-        selectConversation(id);
+        selectConversation(id, currentUser?.id);
         setShowMobileSidebar(false); // Mobile: Hide sidebar when chat selected
     };
 
 
-    if (isAuthLoading || !currentUser) {
+    if (isAuthLoading) {
         return (
             <div className="h-[calc(100vh-8rem)] bg-white rounded-lg shadow-sm border border-slate-200 flex items-center justify-center">
-                <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+                <div className="flex flex-col items-center gap-4">
+                    <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
+                    <p className="text-sm text-slate-500 animate-pulse">Đang kết nối bảo mật...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!currentUser) {
+        return (
+            <div className="h-[calc(100vh-8rem)] bg-white rounded-lg shadow-sm border border-slate-200 flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-slate-600 mb-4">Bạn chưa đăng nhập hoặc phiên làm việc đã hết hạn.</p>
+                    <button
+                        onClick={() => window.location.href = '/login'}
+                        className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium"
+                    >
+                        Đăng nhập ngay
+                    </button>
+                </div>
             </div>
         );
     }

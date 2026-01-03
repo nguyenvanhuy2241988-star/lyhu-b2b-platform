@@ -88,12 +88,7 @@ const addLogSupabase = async (taskId: string, logData: any) => {
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     try {
-        // Use a timeout for session to prevent hangs
-        const sessionPromise = createClient().auth.getSession();
-        const timeoutPromise = new Promise<{ data: { session: null } }>((_, reject) =>
-            setTimeout(() => reject(new Error('Auth Timeout')), 3000)
-        );
-        const { data } = await Promise.race([sessionPromise, timeoutPromise]) as any;
+        const { data } = await createClient().auth.getSession();
         const session = data?.session;
         const user = session?.user;
 

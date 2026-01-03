@@ -1,8 +1,6 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { ROLES } from "@/lib/constants";
 
 const ROLE_PATHS = {
@@ -16,30 +14,24 @@ const ROLE_PATHS = {
 export type UserRole = keyof typeof ROLE_PATHS;
 
 export function useAuthGuard(expectedRole: UserRole) {
+    const { user, role, isLoading } = useAuth();
     const router = useRouter();
-    const [isAuthorized, setIsAuthorized] = useState(false);
 
     useEffect(() => {
-        const checkAuth = async () => {
-            const user = await getCurrentUser();
+        if (isLoading) return;
 
-            if (!user) {
-                router.push("/login");
-                return;
-            }
+        if (!user) {
+            console.log("[useAuthGuard] No user, redirecting to login");
+            router.push("/login");
+            return;
+        }
 
-            if (user.role !== expectedRole) {
-                // Redirect to their correct dashboard
-                const role = user.role as UserRole;
-                const correctPath = ROLE_PATHS[role] || "/login";
-                router.push(correctPath);
-                return;
-            }
+        if (role && role !== expectedRole) {
+            console.warn(`[useAuthGuard] Role mismatch: ${role} vs ${expectedRole}. Redirecting home.`);
+            const correctPath = ROLE_PATHS[role as UserRole] || "/login";
+            router.push(correctPath);
+        }
+    }, [user, role, isLoading, expectedRole, router]);
 
-            setIsAuthorized(true);
-        };
-        checkAuth();
-    }, [expectedRole, router]);
-
-    return isAuthorized;
+    return !isLoading && user && role === expectedRole;
 }

@@ -30,32 +30,35 @@ const STATUS_CONFIG = {
 };
 
 export default function CTVDashboard() {
+    const { user: authUser, isLoading: authIsLoading } = useAuth();
     const [leads, setLeads] = useState<CtvLead[]>([]);
     const [orders, setOrders] = useState<Order[]>([]);
     const [allOrders, setAllOrders] = useState<Order[]>([]);
-    const [currentUser, setCurrentUser] = useState<any>(null);
     const [users, setUsers] = useState<any[]>([]);
 
     const [isLoading, setIsLoading] = useState(true);
 
+    const currentUser = authUser;
+
     useEffect(() => {
+        if (authIsLoading) return;
+
         (async () => {
             setIsLoading(true);
             try {
-                const [user, leadsData, usersData, ordersData] = await Promise.all([
-                    getCurrentUser(),
+                // Now we only load data, user is already from useAuth
+                const [leadsData, usersData, ordersData] = await Promise.all([
                     loadLeads(),
                     loadUsers(),
                     loadOrders()
                 ]);
 
-                setCurrentUser(user);
                 setLeads(leadsData || []);
                 setUsers(usersData || []);
                 setAllOrders(ordersData || []);
 
-                if (user) {
-                    const ctvOrders = (ordersData || []).filter(o => o.ctvId === user.id);
+                if (currentUser) {
+                    const ctvOrders = (ordersData || []).filter(o => o.ctvId === currentUser.id);
                     setOrders(ctvOrders);
                 }
             } catch (error) {
@@ -64,7 +67,7 @@ export default function CTVDashboard() {
                 setIsLoading(false);
             }
         })();
-    }, []);
+    }, [authUser, authIsLoading]);
 
     const leadStats = getLeadStats(leads);
 

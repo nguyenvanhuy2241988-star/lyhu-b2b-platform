@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/auth/AuthProvider";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
-import { ROLES, NAV_ITEMS } from "@/lib/constants";
-import { getCurrentUser, logout } from "@/lib/auth";
 import { UserRole } from "@/lib/auth";
 
 interface DashboardShellProps {
@@ -17,36 +16,19 @@ interface DashboardShellProps {
 
 export default function DashboardShell({ children, role, allowedRoles, title }: DashboardShellProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [currentUser, setCurrentUser] = useState<any>(null);
+    const { user, isLoading } = useAuth();
     const router = useRouter();
 
-    useEffect(() => {
-        const check = async () => {
-            const user = await getCurrentUser();
-            if (!user) {
-                router.replace("/login");
-                return;
-            }
-
-            // Access Control Logic
-            if (role && user.role !== role) {
-                router.replace("/login");
-                return; // Early return
-            }
-
-            if (allowedRoles && !allowedRoles.includes(user.role)) {
-                router.replace("/login");
-                return;
-            }
-
-            setCurrentUser(user);
-        };
-        check();
-    }, [router, role, allowedRoles]); // Added allowedRoles to dependency
-
     // Determine the role to display in Sidebar
-    // Priority: Enforced Role -> User's Actual Role -> Fallback
-    const displayRole = role || currentUser?.role || 'telesales';
+    const displayRole = role || user?.role || 'telesales';
+
+    if (isLoading && !user) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+                <div className="animate-spin w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="flex min-h-screen bg-slate-50">

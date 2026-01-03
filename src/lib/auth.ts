@@ -26,26 +26,19 @@ export const signInWithPassword = async (email: string, password: string) => {
 
 export const signOut = async () => {
     try {
-        // Try Supabase sign out with timeout
-        const signOutPromise = supabase.auth.signOut();
-        const timeoutPromise = new Promise<{ error: any }>((_, reject) =>
-            setTimeout(() => reject(new Error('SignOut Timeout')), 3000)
-        );
-
-        await Promise.race([signOutPromise, timeoutPromise]);
+        await supabase.auth.signOut();
     } catch (err) {
-        console.warn('[signOut] Error or Timeout:', err);
+        console.warn('[signOut] Supabase signout error:', err);
     }
 
     // ALWAYS clear local session even if Supabase hang
     if (typeof window !== "undefined") {
         localStorage.removeItem(STORAGE_KEY_USER);
         localStorage.removeItem("lyhu_user"); // standard key
-        localStorage.removeItem("sb-access-token");
-        localStorage.removeItem("sb-refresh-token");
+        localStorage.removeItem("lyhu_access_token");
         sessionStorage.clear();
 
-        // Clear all cookies (brute force)
+        // Clear all cookies
         document.cookie.split(";").forEach((c) => {
             document.cookie = c
                 .replace(/^ +/, "")
@@ -55,92 +48,62 @@ export const signOut = async () => {
     return { error: null };
 };
 
-export const logout = signOut;
+// ... (omitting logout export)
 
-export type UserRole = "admin" | "sales" | "ctv" | "customer" | "telesales" | "recruiter" | "warehouse" | "marketing" | "ecommerce" | "rnd" | "shipper" | "accountant" | "sale_admin" | "livestream";
-
-export const getSession = async () => {
-    const { data, error } = await supabase.auth.getSession();
-    return { session: data.session, error };
-};
-
-// --- MOCK / HYBRID AUTH ---
-
-const STORAGE_KEY_USER = "lyhu_user"; // Align with setCurrentUser logic if possible. login/page uses set item?
-// Actually login/page checks `authenticateUser` then `setCurrentUser`.
-
-// Mock authentication removed. Use Supabase Auth.
-export const authenticateUser = (email: string): User | null => {
-    return null;
-};
-
-export const setCurrentUser = (user: User) => {
-    if (typeof window === "undefined") return;
-    localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
-    // Dispatch event for UI updates if any listen to it
-    window.dispatchEvent(new Event("user-updated"));
-};
+const STORAGE_KEY_USER = "lyhu_user";
 
 // Hybrid getCurrentUser
-// Returns Supabase user (mapped to User type?) or LocalStorage user
-// Note: Supabase user has different shape than User interface.
-// We should standardize. Telesales pages expect `user.id`.
-// Hybrid getCurrentUser with timeout
 export const getCurrentUser = async (): Promise<any | null> => {
-    try {
-        // 1. Try Supabase with timeout
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise<{ data: { session: null } }>((_, reject) =>
-            setTimeout(() => reject(new Error('Auth Timeout')), 5000)
-        );
-
-        const { data } = await Promise.race([sessionPromise, timeoutPromise]) as any;
-
-        if (data?.session?.user) {
-            const user = data.session.user;
-
-            // Try fetching profile with its own (short) timeout
-            try {
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('role')
-                    .eq('id', user.id)
-                    .maybeSingle();
-
-                return {
-                    id: user.id,
-                    email: user.email,
-                    role: profile?.role || 'customer',
-                    name: user.user_metadata?.full_name || user.email,
-                };
-            } catch {
-                // Return user even if profile fetch fails
-                return {
-                    id: user.id,
-                    email: user.email,
-                    role: 'customer',
-                    name: user.user_metadata?.full_name || user.email,
-                };
-            }
-        }
-    } catch (err) {
-        console.warn('[getCurrentUser] Error or Timeout:', err);
-        // Do NOT return null here yet, let the fallback logic below check localStorage
-    }
-
-    // 2. FALLBACK: LocalStorage
+    // FAST PATH: Try to get from localStorage immediately
     if (typeof window !== "undefined") {
         const mockUserStr = localStorage.getItem(STORAGE_KEY_USER);
         if (mockUserStr) {
             try {
-                const user = JSON.parse(mockUserStr);
-                console.log('[getCurrentUser] Using fallback user from localStorage');
-                return user;
-            } catch {
-                return null;
-            }
+                const userData = JSON.parse(mockUserStr);
+                console.log('[getCurrentUser] Found local user, returning early');
+                return userData;
+            } catch (e) { }
         }
     }
 
+    try {
+        console.log('[getCurrentUser] Fetching session from Supabase (No Timeout)...');
+        // No Promise.race here - we wait as long as it takes
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+            console.warn('[getCurrentUser] Supabase error:', error.message);
+            return null;
+        }
+
+        if (session?.user) {
+            const user = session.user;
+            console.log('[getCurrentUser] Session found, fetching role...');
+
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', user.id)
+                .maybeSingle();
+
+            const role = profile?.role || 'customer';
+
+            const finalUser = {
+                id: user.id,
+                email: user.email,
+                role: role,
+                name: user.user_metadata?.full_name || user.email,
+            };
+
+            if (typeof window !== "undefined") {
+                localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(finalUser));
+            }
+            return finalUser;
+        }
+    } catch (err: any) {
+        console.error('[getCurrentUser] Catastrophic error:', err);
+    }
+
+    console.log('[getCurrentUser] No user found');
     return null;
 };
