@@ -29,6 +29,7 @@ export default function ChatPage() {
     // Use user directly from context instead of duplicate state
     const currentUser = user;
     const [users, setUsers] = useState<any[]>([]);
+    const [mounted, setMounted] = useState(false);
 
     // Feature States
     const [showCreateGroup, setShowCreateGroup] = useState(false);
@@ -36,8 +37,12 @@ export default function ChatPage() {
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
     useEffect(() => {
-        // Wait for auth
-        if (!user) return;
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        // Wait for auth and mounting
+        if (!user || !mounted) return;
 
         // Fetch initial data
         fetchConversations(user.id);

@@ -22,27 +22,10 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [user, setUser] = useState<any | null>(() => {
-        if (typeof window !== "undefined") {
-            const stored = localStorage.getItem("lyhu_user");
-            try { return stored ? JSON.parse(stored) : null; } catch { return null; }
-        }
-        return null;
-    });
+    const [user, setUser] = useState<any | null>(null);
     const [session, setSession] = useState<Session | null>(null);
-    const [role, setRole] = useState<string | null>(() => {
-        if (typeof window !== "undefined") {
-            const stored = localStorage.getItem("lyhu_user");
-            try { return stored ? JSON.parse(stored).role || "customer" : null; } catch { return null; }
-        }
-        return null;
-    });
-    const [isLoading, setIsLoading] = useState(() => {
-        if (typeof window !== "undefined") {
-            return !localStorage.getItem("lyhu_user"); // Only load if no local user
-        }
-        return true;
-    });
+    const [role, setRole] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     const checkAuth = async () => {
         try {
