@@ -8,6 +8,7 @@ DROP POLICY IF EXISTS "profiles_select_all_authenticated" ON public.profiles;
 DROP POLICY IF EXISTS "Allow select for authenticated" ON public.profiles;
 DROP POLICY IF EXISTS "Allow users to read all profiles" ON public.profiles;
 DROP POLICY IF EXISTS "Users can view all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "authenticated_can_read_all_profiles" ON public.profiles;
 
 -- 2. TẠO POLICY MỚI CHO PHÉP TẤT CẢ NGƯỜI ĐĂNG NHẬP ĐỌC PROFILES
 CREATE POLICY "authenticated_can_read_all_profiles"
