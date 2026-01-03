@@ -202,7 +202,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
             });
 
             if (error) {
-                console.error("[ChatStore] RPC fetchConversations failed:", error.message);
+                console.error("[ChatStore] RPC get_conversations_with_unread failed:", {
+                    message: error.message,
+                    details: error.details,
+                    hint: error.hint,
+                    code: error.code
+                });
 
                 // Fallback to legacy fetch if RPC fails (e.g. not migrated yet)
                 const token = await getRealtimeToken();

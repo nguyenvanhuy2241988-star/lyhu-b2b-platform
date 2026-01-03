@@ -59,9 +59,14 @@ export default function ChatPage() {
             try {
                 const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id,full_name,role,email`, { headers });
                 const data = await res.json();
-                if (res.ok) setUsers(data);
+                if (res.ok) {
+                    console.log(`[ChatPage] Fetched ${data.length} profiles successfully`);
+                    setUsers(data);
+                } else {
+                    console.error("[ChatPage] Failed to fetch profiles:", data);
+                }
             } catch (e) {
-                console.error("Error fetching profiles:", e);
+                console.error("[ChatPage] Error fetching profiles:", e);
             }
         };
 
