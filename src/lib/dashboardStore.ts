@@ -66,7 +66,7 @@ async function getRevenueByDateFallback(days: number): Promise<RevenueDataPoint[
         return acc;
     }, {});
 
-    return Object.entries(grouped).map(([date, data]) => ({
+    return Object.entries(grouped).map(([date, data]: [string, any]) => ({
         date,
         revenue: data.revenue,
         orders: data.orders
