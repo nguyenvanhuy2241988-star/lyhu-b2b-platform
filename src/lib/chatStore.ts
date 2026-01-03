@@ -124,7 +124,7 @@ interface ChatState {
     // Placeholders for UI compatibility (can be implemented as needed)
     loadMoreMessages: () => Promise<void>;
     markRead: (conversationId: string, userId: string) => Promise<void>;
-    createDirectConversation: (myId: string, theirId: string) => Promise<string>;
+    createDirectConversation: (myId: string, theirId: string, token?: string) => Promise<string>;
     createGroupConversation: (myId: string, name: string, members: string[]) => Promise<string>;
     editMessage: (messageId: string, content: string) => Promise<void>;
     deleteMessage: (messageId: string) => Promise<void>;
