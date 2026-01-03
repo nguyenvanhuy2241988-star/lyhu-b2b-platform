@@ -197,6 +197,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
         set({ pollingInterval: null, realtimeChannel: null });
     },
 
+    deleteConversation: async (conversationId: string) => {
+        const { error } = await supabase.from('internal_conversations').delete().eq('id', conversationId);
+        if (error) throw error;
+        set(state => ({
+            conversations: state.conversations.filter(c => c.id !== conversationId),
+            activeConversationId: state.activeConversationId === conversationId ? null : state.activeConversationId
+        }));
+    },
+
     selectConversation: async (conversationId: string, userId?: string) => {
         get().stopPolling();
         set({ activeConversationId: conversationId, messages: [], isLoading: true, hasMore: true });
@@ -279,7 +288,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
     },
 
-    sendMessage: async (content, userId, file, replyToId) => {
+    sendMessage: async (content: string, userId: string, file?: File, replyToId?: string) => {
         const { activeConversationId } = get();
         if (!activeConversationId) return;
 
@@ -342,7 +351,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         return convId;
     },
 
-    createGroupConversation: async (myId, name, members) => {
+    createGroupConversation: async (myId: string, name: string, members: string[]) => {
         const { data, error } = await supabase.from('internal_conversations').insert({ type: 'group', name, created_by: myId }).select().single();
         if (error) throw error;
         const participants = [myId, ...members].map(uid => ({ conversation_id: data.id, user_id: uid }));
@@ -350,29 +359,29 @@ export const useChatStore = create<ChatState>((set, get) => ({
         return data.id;
     },
 
-    markRead: async (conversationId, userId) => {
+    markRead: async (conversationId: string, userId: string) => {
         await supabase.rpc('mark_conversation_read', { p_conversation_id: conversationId, p_user_id: userId });
     },
 
-    editMessage: async (messageId, content) => {
+    editMessage: async (messageId: string, content: string) => {
         set(state => ({ messages: state.messages.map(m => m.id === messageId ? { ...m, content } : m) }));
         await supabase.from('internal_messages').update({ content }).eq('id', messageId);
     },
 
-    deleteMessage: async (messageId) => {
+    deleteMessage: async (messageId: string) => {
         set(state => ({ messages: state.messages.map(m => m.id === messageId ? { ...m, is_deleted: true, content: 'Tin nhắn đã bị xóa' } : m) }));
         await supabase.from('internal_messages').update({ is_deleted: true }).eq('id', messageId);
     },
 
-    pinMessage: async (messageId) => {
+    pinMessage: async (messageId: string) => {
         await supabase.from('internal_messages').update({ is_pinned: true, pinned_at: new Date().toISOString() }).eq('id', messageId);
     },
 
-    unpinMessage: async (messageId) => {
+    unpinMessage: async (messageId: string) => {
         await supabase.from('internal_messages').update({ is_pinned: false, pinned_at: null }).eq('id', messageId);
     },
 
-    searchMessages: async (query, conversationId) => {
+    searchMessages: async (query: string, conversationId?: string) => {
         const token = await getRealtimeToken();
         let url = `${SUPABASE_URL}/rest/v1/internal_messages?content=ilike.*${encodeURIComponent(query)}*&limit=20`;
         if (conversationId) url += `&conversation_id=eq.${conversationId}`;
@@ -380,7 +389,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         return res.ok ? await res.json() : [];
     },
 
-    forwardMessage: async (message, conversationIds) => {
+    forwardMessage: async (message: Message, conversationIds: string[]) => {
         const token = await getRealtimeToken();
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
@@ -393,23 +402,23 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
     },
 
-    updateConversationName: async (conversationId, name) => {
+    updateConversationName: async (conversationId: string, name: string) => {
         await supabase.from('internal_conversations').update({ name }).eq('id', conversationId);
         set(state => ({ conversations: state.conversations.map(c => c.id === conversationId ? { ...c, name } : c) }));
     },
 
-    addParticipants: async (conversationId, userIds) => {
+    addParticipants: async (conversationId: string, userIds: string[]) => {
         await supabase.from('internal_participants').insert(userIds.map(uid => ({ conversation_id: conversationId, user_id: uid })));
         const { data: { user } } = await supabase.auth.getUser();
         if (user) get().fetchConversations(user.id);
     },
 
-    leaveConversation: async (conversationId, userId) => {
+    leaveConversation: async (conversationId: string, userId: string) => {
         await supabase.from('internal_participants').delete().eq('conversation_id', conversationId).eq('user_id', userId);
         set(state => ({ conversations: state.conversations.filter(c => c.id !== conversationId), activeConversationId: state.activeConversationId === conversationId ? null : state.activeConversationId }));
     },
 
-    addReaction: async (messageId, emoji) => {
+    addReaction: async (messageId: string, emoji: string) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
         set(state => ({ messages: state.messages.map(m => m.id === messageId ? { ...m, reactions: [...(m.reactions || []), { emoji, user_id: user.id }] } : m) }));
@@ -417,7 +426,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         await supabase.from('internal_messages').update({ reactions: [...(msg?.reactions || []), { emoji, user_id: user.id }] }).eq('id', messageId);
     },
 
-    removeReaction: async (messageId, emoji) => {
+    removeReaction: async (messageId: string, emoji: string) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
         set(state => ({ messages: state.messages.map(m => m.id === messageId ? { ...m, reactions: (m.reactions || []).filter(r => !(r.emoji === emoji && r.user_id === user.id)) } : m) }));
@@ -425,7 +434,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         await supabase.from('internal_messages').update({ reactions: (msg?.reactions || []).filter((r: any) => !(r.emoji === emoji && r.user_id === user.id)) }).eq('id', messageId);
     },
 
-    getChatMedia: async (conversationId) => {
+    getChatMedia: async (conversationId: string) => {
         const { data } = await supabase.from('internal_messages').select('*').eq('conversation_id', conversationId).not('attachment_url', 'is', null).order('created_at', { ascending: false });
         return data || [];
     },

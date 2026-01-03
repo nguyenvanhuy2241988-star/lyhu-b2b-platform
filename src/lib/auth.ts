@@ -2,6 +2,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { Role } from "./roles";
 import { User } from "@/lib/usersStore";
 
+export const STORAGE_KEY_USER = "lyhu_user";
+
 export type AuthUser = User;
 export type UserRole = Role;
 
@@ -50,9 +52,11 @@ export const signOut = async () => {
     return { error: null };
 };
 
-// ... (omitting logout export)
-
-const STORAGE_KEY_USER = "lyhu_user";
+export const setCurrentUser = (user: any) => {
+    if (typeof window !== "undefined") {
+        localStorage.setItem(STORAGE_KEY_USER, JSON.stringify(user));
+    }
+};
 
 // Hybrid getCurrentUser
 export const getCurrentUser = async (): Promise<any | null> => {
