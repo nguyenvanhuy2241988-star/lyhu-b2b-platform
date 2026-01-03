@@ -51,23 +51,36 @@ export default function ChatPage() {
         subscribeToNewConversations(user.id);
 
         const fetchProfiles = async () => {
-            console.log("[ChatPage] Starting profile fetch with REST API...");
+            console.log("[ChatPage] 1. Starting profile fetch...");
 
-            // Use direct REST API to bypass potential Supabase client issues
             const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
             const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+            console.log("[ChatPage] 2. Env vars check:", {
+                hasUrl: !!SUPABASE_URL,
+                hasKey: !!SUPABASE_KEY,
+                urlPreview: SUPABASE_URL?.substring(0, 30)
+            });
 
             if (!SUPABASE_URL || !SUPABASE_KEY) {
                 console.error("[ChatPage] Missing Supabase env vars");
                 return;
             }
 
-            // Get current auth token
-            const { data: { session: currentSession } } = await supabase.auth.getSession();
-            const token = currentSession?.access_token || SUPABASE_KEY;
+            // Use session token if available, otherwise use anon key
+            let token = SUPABASE_KEY;
+            if (session?.access_token) {
+                token = session.access_token;
+                console.log("[ChatPage] 3. Using session token");
+            } else {
+                console.log("[ChatPage] 3. Using anon key (no session token)");
+            }
+
+            const url = `${SUPABASE_URL}/rest/v1/profiles?select=id,full_name,role,email`;
+            console.log("[ChatPage] 4. Fetching from:", url);
 
             try {
-                const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=id,full_name,role,email`, {
+                const res = await fetch(url, {
                     headers: {
                         'apikey': SUPABASE_KEY,
                         'Authorization': `Bearer ${token}`,
@@ -75,23 +88,25 @@ export default function ChatPage() {
                     }
                 });
 
+                console.log("[ChatPage] 5. Response received:", res.status);
+
                 const data = await res.json();
-                console.log("[ChatPage] REST API Profile fetch result:", {
-                    status: res.status,
+                console.log("[ChatPage] 6. Data parsed:", {
                     count: Array.isArray(data) ? data.length : 0,
+                    isArray: Array.isArray(data),
                     sample: Array.isArray(data) ? data.slice(0, 2) : data
                 });
 
                 if (res.ok && Array.isArray(data) && data.length > 0) {
                     setUsers(data);
-                    console.log(`[ChatPage] ✓ Set ${data.length} users`);
+                    console.log(`[ChatPage] ✓ SUCCESS: Set ${data.length} users`);
                 } else if (!res.ok) {
                     console.error("[ChatPage] REST API error:", res.status, data);
                 } else {
-                    console.warn("[ChatPage] REST API returned 0 profiles");
+                    console.warn("[ChatPage] Empty profiles array");
                 }
-            } catch (e) {
-                console.error("[ChatPage] Error fetching profiles:", e);
+            } catch (e: any) {
+                console.error("[ChatPage] Fetch error:", e.message || e);
             }
         };
 
