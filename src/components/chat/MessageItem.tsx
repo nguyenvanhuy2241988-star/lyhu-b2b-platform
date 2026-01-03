@@ -8,6 +8,10 @@ import Image from "next/image";
 import { Message } from "@/lib/chatStore";
 import { MessageReaction } from "@/components/chat/MessageReaction";
 import { LinkPreview } from "./LinkPreview";
+import DOMPurify from 'isomorphic-dompurify';
+import { CHAT_CONSTANTS } from "@/lib/chatConstants";
+import { parseChatDate, formatHeaderDate, formatShortTime, isSameChatDay } from "@/utils/dateHelpers";
+import React from "react";
 
 interface MessageItemProps {
     msg: Message;
@@ -27,7 +31,7 @@ interface MessageItemProps {
     onImageClick: (url: string) => void;
 }
 
-export function MessageItem({
+export const MessageItem = React.memo(({
     msg,
     index,
     messages,
@@ -43,26 +47,19 @@ export function MessageItem({
     onUnpin,
     handleForward,
     onImageClick
-}: MessageItemProps) {
+}: MessageItemProps) => {
     const isMe = msg.sender_id === currentUser?.id;
     const prevMsg = messages[index - 1];
 
-    // Robust Date Parsing (prevents crashes on invalid dates)
-    const safeDate = (dateStr: any): Date => {
-        if (!dateStr) return new Date(); // Fallback
-        const d = new Date(dateStr);
-        return isNaN(d.getTime()) ? new Date() : d;
-    };
-
-    const msgDate = safeDate(msg.created_at);
-    const prevMsgDate = prevMsg ? safeDate(prevMsg.created_at) : null;
+    const msgDate = parseChatDate(msg.created_at);
+    const prevMsgDate = prevMsg ? parseChatDate(prevMsg.created_at) : null;
 
     // Grouping & Logic
     const isConsecutive = prevMsg &&
         prevMsg.sender_id === msg.sender_id &&
         prevMsgDate &&
-        isSameDay(prevMsgDate, msgDate) &&
-        (msgDate.getTime() - prevMsgDate.getTime() < 300000); // 5 mins
+        isSameChatDay(prevMsgDate, msgDate) &&
+        (msgDate.getTime() - prevMsgDate.getTime() < CHAT_CONSTANTS.MESSAGE_GROUP_TIME_WINDOW_MS);
 
     const showDateHeader = !prevMsg || !prevMsgDate || !isSameDay(prevMsgDate, msgDate);
 
@@ -84,12 +81,7 @@ export function MessageItem({
             {showDateHeader && (
                 <div className="flex justify-center my-4">
                     <span className="text-xs text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
-                        {isToday(msgDate)
-                            ? "Hôm nay"
-                            : isYesterday(msgDate)
-                                ? "Hôm qua"
-                                : format(msgDate, "dd/MM/yyyy", { locale: vi })
-                        }
+                        {formatHeaderDate(msgDate)}
                     </span>
                 </div>
             )}
@@ -185,7 +177,15 @@ export function MessageItem({
                                     {msg.content && <div>{msg.content}</div>}
                                 </div>
                             ) : (
-                                <div dangerouslySetInnerHTML={{ __html: msg.content.replace(/\n/g, '<br/>') }} />
+                                <div dangerouslySetInnerHTML={{
+                                    __html: DOMPurify.sanitize(
+                                        msg.content.replace(/\n/g, '<br/>'),
+                                        {
+                                            ALLOWED_TAGS: ['br', 'b', 'i', 'u', 'a', 'strong', 'em'],
+                                            ALLOWED_ATTR: ['href', 'target']
+                                        }
+                                    )
+                                }} />
                             )}
 
                             <MessageReaction message={msg} currentUserId={currentUser?.id} />
@@ -212,9 +212,8 @@ export function MessageItem({
                             </div>
                         )}
 
-                        {/* Timestamp & Status */}
                         <div className={`flex items-center gap-1 mt-1 text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity ${isMe ? 'justify-end' : ''}`}>
-                            <span>{format(msgDate, 'HH:mm')}</span>
+                            <span>{formatShortTime(msgDate)}</span>
                             {isMe && msg.is_pinned && <Pin className="w-3 h-3 text-amber-500" />}
 
                             {/* Actions */}
@@ -231,4 +230,13 @@ export function MessageItem({
             )}
         </div>
     );
-}
+}, (prev, next) => {
+    return (
+        prev.msg.id === next.msg.id &&
+        prev.msg.content === next.msg.content &&
+        prev.msg.is_pinned === next.msg.is_pinned &&
+        prev.msg.is_deleted === next.msg.is_deleted &&
+        prev.messages.length === next.messages.length &&
+        prev.seenByUsers.length === next.seenByUsers.length
+    );
+});

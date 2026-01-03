@@ -6,6 +6,8 @@ import { Download, Smile, Reply } from "lucide-react";
 import { ForwardModal } from "./ForwardModal";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { MessageItem } from "./MessageItem";
+import { CHAT_CONSTANTS } from "@/lib/chatConstants";
+import React from "react";
 
 export interface MessageListRef {
     scrollToIndex: (index: number) => void;
@@ -40,7 +42,7 @@ interface MessageListProps {
     onImageClick: (url: string) => void;
 }
 
-const MessageList = forwardRef<MessageListRef, MessageListProps>(({
+const MessageList = React.memo(forwardRef<MessageListRef, MessageListProps>(({
     messages,
     currentUser,
     users,
@@ -93,29 +95,19 @@ const MessageList = forwardRef<MessageListRef, MessageListProps>(({
             const isMe = lastMsg?.sender_id === currentUser?.id;
 
             // Force scroll if it's me OR if we are properly following output
-            // "auto" usually works but let's be explicit
             if (!showScrollBottom || isMe) {
                 // Use a slight delay to ensure virtualizer has calculated sizes
-                // 100ms is safer than 50ms
                 setTimeout(() => {
-                    virtuosoRef.current?.scrollToIndex({ index: messages.length - 1, align: 'end', behavior: 'smooth' });
-                }, 100);
+                    virtuosoRef.current?.scrollToIndex({
+                        index: messages.length - 1,
+                        align: 'end',
+                        behavior: 'smooth'
+                    });
+                }, CHAT_CONSTANTS.SCROLL_DELAY_MS);
             }
         }
         prevMessagesLength.current = messages.length;
-    }, [
-        messages,
-        currentUser?.id,
-        showScrollBottom,
-        virtuosoRef,
-        onReply,
-        onEdit,
-        onDelete,
-        onPin,
-        onUnpin,
-        handleForward,
-        onImageClick
-    ]);
+    }, [messages.length, currentUser?.id, showScrollBottom]);
 
     return (
         <div className="flex-1 min-h-0 bg-slate-50 flex flex-col relative">
@@ -203,6 +195,16 @@ const MessageList = forwardRef<MessageListRef, MessageListProps>(({
                 />
             )}
         </div>
+    );
+}), (prevProps: Readonly<MessageListProps>, nextProps: Readonly<MessageListProps>) => {
+    // Custom comparison: skip re-render if fundamental props haven't changed
+    return (
+        prevProps.messages?.length === nextProps.messages?.length &&
+        prevProps.messages?.[prevProps.messages.length - 1]?.id === nextProps.messages?.[nextProps.messages.length - 1]?.id &&
+        prevProps.currentUser?.id === nextProps.currentUser?.id &&
+        prevProps.isLoadingMore === nextProps.isLoadingMore &&
+        prevProps.activeTypingUsers?.length === nextProps.activeTypingUsers?.length &&
+        prevProps.seenByUsers?.length === nextProps.seenByUsers?.length
     );
 });
 

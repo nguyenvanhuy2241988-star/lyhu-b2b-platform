@@ -34,7 +34,7 @@ interface ChatWindowProps {
     sendTyping: (convId: string, isTyping: boolean) => void;
     markRead: (convId: string, userId: string) => void;
     onBack?: () => void;
-    searchMessages: (query: string, conversationId?: string) => Promise<Message[]>;
+    searchMessages: (query: string, conversationId?: string, signal?: AbortSignal) => Promise<Message[]>;
 }
 
 export function ChatWindow(props: ChatWindowProps) {
@@ -85,15 +85,27 @@ export function ChatWindow(props: ChatWindowProps) {
             setSearchResults([]);
             return;
         }
+
+        const controller = new AbortController();
+
         const timeoutId = setTimeout(async () => {
             setIsSearching(true);
             try {
-                const results = await searchMessages(searchTerm, activeConversationId);
+                const results = await searchMessages(searchTerm, activeConversationId, controller.signal);
                 setSearchResults(results);
-            } catch (e) { console.error(e); }
-            finally { setIsSearching(false); }
+            } catch (e: any) {
+                if (e.name !== 'AbortError') {
+                    console.error(e);
+                }
+            } finally {
+                setIsSearching(false);
+            }
         }, 500);
-        return () => clearTimeout(timeoutId);
+
+        return () => {
+            clearTimeout(timeoutId);
+            controller.abort();
+        };
     }, [searchTerm, activeConversationId, searchMessages]);
 
     // Cleanup Search & Info Panel on Conversation Change

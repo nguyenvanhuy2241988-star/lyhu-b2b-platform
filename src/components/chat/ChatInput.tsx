@@ -48,18 +48,25 @@ export function ChatInput({
     // Typing Debounce
     const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+    // Track previous editing ID to avoid race conditions
+    const prevEditingIdRef = useRef<string | null>(null);
+
     // Effect: Update input when editing
     useEffect(() => {
-        if (editingMessage) {
-            setInput(editingMessage.content);
-            inputRef.current?.focus();
-        } else if (!replyingTo && !pendingFile) {
-            // Only clear if NOT replying AND NOT pending file
-            if (input === (editingMessage as any)?.content) {
-                setInput("");
+        if (editingMessage?.id !== prevEditingIdRef.current) {
+            if (editingMessage) {
+                setInput(editingMessage.content);
+                setTimeout(() => inputRef.current?.focus(), 10);
+                prevEditingIdRef.current = editingMessage.id;
+            } else {
+                // Only clear if we were previously editing
+                if (prevEditingIdRef.current) {
+                    setInput("");
+                }
+                prevEditingIdRef.current = null;
             }
         }
-    }, [editingMessage, replyingTo, pendingFile, input]);
+    }, [editingMessage]);
 
     // Cleanup typing timeout
     useEffect(() => {

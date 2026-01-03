@@ -37,19 +37,26 @@ export function ChatSidebar({
             return;
         }
 
+        const controller = new AbortController();
+
         const timeoutId = setTimeout(async () => {
             setIsSearchingMessages(true);
             try {
-                const results = await searchMessages(searchTerm);
+                const results = await searchMessages(searchTerm, undefined, controller.signal);
                 setMessageSearchResults(results);
-            } catch (error) {
-                console.error("Search failed", error);
+            } catch (error: any) {
+                if (error.name !== 'AbortError') {
+                    console.error("Search failed", error);
+                }
             } finally {
                 setIsSearchingMessages(false);
             }
         }, 500); // 500ms debounce
 
-        return () => clearTimeout(timeoutId);
+        return () => {
+            clearTimeout(timeoutId);
+            controller.abort();
+        };
     }, [searchTerm, searchMessages]);
 
     const isUserOnline = (userId: string) => onlineUsers.includes(userId);

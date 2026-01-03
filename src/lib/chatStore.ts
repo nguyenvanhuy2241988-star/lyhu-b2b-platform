@@ -39,14 +39,14 @@ const getRealtimeToken = async (): Promise<string | null> => {
 };
 
 // Robust Fetch Wrapper
-const robustFetch = async (url: string, token: string | null) => {
+const robustFetch = async (url: string, token: string | null, options?: RequestInit) => {
     const headers: any = {
         'apikey': SUPABASE_KEY || '',
         'Authorization': `Bearer ${token || SUPABASE_KEY}`,
         'Content-Type': 'application/json',
         'Prefer': 'return=representation'
     };
-    return fetch(url, { headers });
+    return fetch(url, { headers, ...options });
 };
 
 // Safe Date Parsing
@@ -381,11 +381,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
         await supabase.from('internal_messages').update({ is_pinned: false, pinned_at: null }).eq('id', messageId);
     },
 
-    searchMessages: async (query: string, conversationId?: string) => {
+    searchMessages: async (query: string, conversationId?: string, signal?: AbortSignal) => {
         const token = await getRealtimeToken();
         let url = `${SUPABASE_URL}/rest/v1/internal_messages?content=ilike.*${encodeURIComponent(query)}*&limit=20`;
         if (conversationId) url += `&conversation_id=eq.${conversationId}`;
-        const res = await robustFetch(url, token);
+        const res = await robustFetch(url, token, { signal });
         return res.ok ? await res.json() : [];
     },
 
