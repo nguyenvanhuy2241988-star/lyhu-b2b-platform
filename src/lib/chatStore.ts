@@ -1,5 +1,7 @@
+// [FORCE-SYNC-V23] - Triggering Git update for Vercel
 import { create } from 'zustand';
 import { supabase } from './supabaseClient';
+import { createClient } from '@supabase/supabase-js';
 
 // ============================================
 // 1. ROBUST HELPERS (CORE STABILITY)
@@ -201,7 +203,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const { error } = await supabase.from('internal_conversations').delete().eq('id', conversationId);
         if (error) throw error;
         set(state => ({
-            conversations: state.conversations.filter(c => c.id !== conversationId),
+            conversations: state.conversations.filter((c: any) => c.id !== conversationId),
             activeConversationId: state.activeConversationId === conversationId ? null : state.activeConversationId
         }));
     },
