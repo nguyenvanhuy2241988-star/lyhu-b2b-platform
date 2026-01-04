@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Product } from "@/mocks/data";
-import { Package, Search, Loader2, Plus, Pencil, Trash2, X, Check } from "lucide-react";
+import { Package, Search, Loader2, Plus, Pencil, Trash2, X, Check, MoreHorizontal, Settings2, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthProvider";
 
@@ -14,7 +14,6 @@ interface AppProduct extends Product {
     unit: string;
     price: number;
     stock: number;
-    // Extra fields for DB compatibility
     image_url?: string;
     is_active?: boolean;
 }
@@ -24,9 +23,15 @@ export default function ProductsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
 
-    // Modal State
+    // Selection State
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+    // Modal States
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Edit/Create State
     const [editingProduct, setEditingProduct] = useState<AppProduct | null>(null);
     const [formData, setFormData] = useState({
         sku: "",
@@ -38,16 +43,22 @@ export default function ProductsPage() {
         image_url: ""
     });
 
+    // Bulk Edit State
+    const [bulkConfig, setBulkConfig] = useState<{
+        field: 'price' | 'stock' | 'brand' | 'is_active';
+        value: string | number | boolean;
+    }>({ field: 'stock', value: 0 });
+
     const { session } = useAuth();
 
-    // Helper to get headers safely
+    // Helper to get headers
     const getHeaders = useCallback(() => {
         const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
             'apikey': SUPABASE_KEY || ''
         };
-        // CRITICAL: Use User Token if available for RLS "Admin" check
+        // Use User Token for RLS
         if (session?.access_token) {
             headers['Authorization'] = `Bearer ${session.access_token}`;
         } else {
@@ -60,7 +71,6 @@ export default function ProductsPage() {
         if (!silent) setIsLoading(true);
         try {
             const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-            // Filter by is_active=true to default show only active products
             const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&is_active=eq.true&order=created_at.desc`, {
                 headers: getHeaders()
             });
@@ -68,6 +78,8 @@ export default function ProductsPage() {
             if (!res.ok) throw new Error("Failed to fetch products");
             const data = await res.json();
             setProducts(data || []);
+            // Clear selection on refresh to avoid ghost selections
+            if (!silent) setSelectedIds(new Set());
         } catch (err) {
             console.error("Error loading products:", err);
             toast.error("Không thể tải danh sách sản phẩm");
@@ -80,17 +92,38 @@ export default function ProductsPage() {
         fetchProducts();
     }, [fetchProducts]);
 
+    // --- Selection Logic ---
+    const filteredProducts = useMemo(() => {
+        return products.filter(
+            (p) =>
+                (p.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (p.sku || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (p.brand || "").toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [products, searchQuery]);
+
+    const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.checked) {
+            setSelectedIds(new Set(filteredProducts.map(p => p.id)));
+        } else {
+            setSelectedIds(new Set());
+        }
+    };
+
+    const handleSelectOne = (id: string) => {
+        const newSet = new Set(selectedIds);
+        if (newSet.has(id)) {
+            newSet.delete(id);
+        } else {
+            newSet.add(id);
+        }
+        setSelectedIds(newSet);
+    };
+
+    // --- CRUD Actions ---
     const handleOpenCreate = () => {
         setEditingProduct(null);
-        setFormData({
-            sku: "",
-            name: "",
-            brand: "LYHU",
-            unit: "Gói",
-            price: 0,
-            stock: 100,
-            image_url: ""
-        });
+        setFormData({ sku: "", name: "", brand: "LYHU", unit: "Gói", price: 0, stock: 100, image_url: "" });
         setIsModalOpen(true);
     };
 
@@ -117,10 +150,7 @@ export default function ProductsPage() {
             const url = editingProduct
                 ? `${SUPABASE_URL}/rest/v1/products?id=eq.${editingProduct.id}`
                 : `${SUPABASE_URL}/rest/v1/products`;
-
             const method = editingProduct ? "PATCH" : "POST";
-
-            // Allow Supabase to handle ID generation on POST
             const payload = {
                 ...formData,
                 is_active: true,
@@ -129,23 +159,16 @@ export default function ProductsPage() {
 
             const res = await fetch(url, {
                 method,
-                headers: {
-                    ...getHeaders(),
-                    'Prefer': 'return=minimal'
-                },
+                headers: { ...getHeaders(), 'Prefer': 'return=minimal' },
                 body: JSON.stringify(payload)
             });
 
-            if (!res.ok) {
-                const err = await res.json();
-                throw new Error(err.message || "Lỗi khi lưu sản phẩm");
-            }
+            if (!res.ok) throw new Error((await res.json()).message || "Lỗi khi lưu");
 
             toast.success(editingProduct ? "Cập nhật thành công!" : "Thêm mới thành công!");
             setIsModalOpen(false);
             fetchProducts(true);
         } catch (error: any) {
-            console.error(error);
             toast.error("Lỗi: " + error.message);
         } finally {
             setIsSubmitting(false);
@@ -153,44 +176,91 @@ export default function ProductsPage() {
     };
 
     const handleDelete = async (product: AppProduct) => {
-        if (!confirm(`Bạn chắc chắn muốn xóa sản phẩm: ${product.name}?`)) return;
-
+        if (!confirm(`Bạn chắc chắn muốn xóa: ${product.name}?`)) return;
         const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const toastId = toast.loading("Đang xóa...");
 
         try {
-            // Soft Delete: Set is_active to false
             const res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${product.id}`, {
                 method: "PATCH",
                 headers: getHeaders(),
                 body: JSON.stringify({ is_active: false })
             });
+            if (!res.ok) throw new Error("Thất bại");
 
-            if (!res.ok) throw new Error("Không thể xóa sản phẩm");
-
-            toast.success("Đã xóa sản phẩm (đã ẩn)", { id: toastId });
+            toast.success("Đã ẩn sản phẩm", { id: toastId });
             fetchProducts(true);
         } catch (error: any) {
             toast.error(error.message, { id: toastId });
         }
     };
 
-    const filteredProducts = useMemo(() => {
-        return products.filter(
-            (p) =>
-                (p.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (p.sku || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (p.brand || "").toLowerCase().includes(searchQuery.toLowerCase())
-        );
-    }, [products, searchQuery]);
+    // --- Bulk Actions ---
+    const handleBulkDelete = async () => {
+        if (!confirm(`Bạn chắc chắn muốn xóa ${selectedIds.size} sản phẩm đã chọn?`)) return;
+        const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const toastId = toast.loading("Đang xử lý hàng loạt...");
 
-    const formatPrice = (price: number) => {
-        return new Intl.NumberFormat("vi-VN", {
-            style: "currency",
-            currency: "VND",
-        }).format(price);
+        try {
+            const ids = Array.from(selectedIds);
+            // PATCH to update multiple is_active = false
+            // Supabase REST supports filtering id=in.(...)
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=in.(${ids.join(',')})`, {
+                method: "PATCH",
+                headers: getHeaders(),
+                body: JSON.stringify({ is_active: false, updated_at: new Date().toISOString() })
+            });
+
+            if (!res.ok) throw new Error("Lỗi khi xóa hàng loạt");
+
+            toast.success(`Đã xóa ${ids.length} sản phẩm`, { id: toastId });
+            setSelectedIds(new Set());
+            fetchProducts(true);
+        } catch (error: any) {
+            toast.error(error.message, { id: toastId });
+        }
     };
 
+    const handleBulkEditSubmit = async () => {
+        if (!bulkConfig.value && bulkConfig.value !== 0) {
+            toast.error("Vui lòng nhập giá trị");
+            return;
+        }
+
+        const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        setIsSubmitting(true);
+
+        try {
+            const ids = Array.from(selectedIds);
+            const payload = {
+                [bulkConfig.field]: bulkConfig.value,
+                updated_at: new Date().toISOString()
+            };
+
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=in.(${ids.join(',')})`, {
+                method: "PATCH",
+                headers: getHeaders(),
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) throw new Error("Lỗi cập nhật hàng loạt");
+
+            toast.success(`Đã cập nhật ${ids.length} sản phẩm!`);
+            setIsBulkEditOpen(false);
+            setSelectedIds(new Set());
+            fetchProducts(true);
+        } catch (error: any) {
+            toast.error(error.message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const formatPrice = (price: number) => {
+        return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
+    };
+
+    // Calculate Brand Stats
     const brandStats = useMemo(() => {
         return products.reduce((acc, p) => {
             const b = p.brand || "Khác";
@@ -199,19 +269,18 @@ export default function ProductsPage() {
         }, {} as Record<string, number>);
     }, [products]);
 
+    // Checkbox State
+    const allSelected = filteredProducts.length > 0 && selectedIds.size === filteredProducts.length;
+    const isIndeterminate = selectedIds.size > 0 && selectedIds.size < filteredProducts.length;
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 pb-20">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Quản lý sản phẩm</h1>
-                    <p className="text-sm text-slate-600 mt-1">
-                        Danh sách sản phẩm và giá sỉ
-                    </p>
+                    <p className="text-sm text-slate-600 mt-1">Danh sách sản phẩm và giá sỉ</p>
                 </div>
-                {/* Only Admin sees this, but we handle logic via RLS. UI logic: show if user is admin? 
-                    For now, show to everyone, let RLS block if unauthorized, OR check session role. 
-                    Let's check session role for better UI UX */}
                 {session?.user && (
                     <button
                         onClick={handleOpenCreate}
@@ -236,15 +305,12 @@ export default function ProductsPage() {
                         </div>
                     </div>
                 </div>
-
                 {Object.entries(brandStats).slice(0, 3).map(([brand, count]) => (
                     <div key={brand} className="bg-white p-4 rounded-lg border border-slate-200">
                         <p className="text-xs text-slate-600">{brand}</p>
                         <p className="text-xl font-bold text-slate-900 mt-1">{count} SP</p>
                     </div>
                 ))}
-
-                {/* Search - Span remaining */}
                 <div className="lg:col-span-1 bg-white p-4 rounded-lg border border-slate-200">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -260,27 +326,33 @@ export default function ProductsPage() {
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[400px]">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[400px] relative">
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-                        <p className="text-sm text-slate-500 mt-2">Đang tải danh sách sản phẩm...</p>
+                        <p className="text-sm text-slate-500 mt-2">Đang tải danh sách...</p>
                     </div>
                 ) : filteredProducts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center px-4">
                         <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
                             <Package className="w-8 h-8 text-slate-300" />
                         </div>
-                        <h3 className="text-lg font-medium text-slate-900">Chưa có sản phẩm nào</h3>
-                        <p className="text-sm text-slate-500 mt-1 max-w-xs">
-                            {searchQuery ? 'Không tìm thấy kết quả phù hợp.' : 'Danh sách sản phẩm đang trống.'}
-                        </p>
+                        <h3 className="text-lg font-medium text-slate-900">Không tìm thấy sản phẩm</h3>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm min-w-[900px]">
                             <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                                 <tr>
+                                    <th className="px-4 py-3 w-10">
+                                        <input
+                                            type="checkbox"
+                                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                            checked={allSelected}
+                                            onChange={handleSelectAll}
+                                            ref={input => { if (input) input.indeterminate = isIndeterminate; }}
+                                        />
+                                    </th>
                                     <th className="px-6 py-3 font-medium">SKU</th>
                                     <th className="px-6 py-3 font-medium">Tên sản phẩm</th>
                                     <th className="px-6 py-3 font-medium">Thương hiệu</th>
@@ -292,24 +364,26 @@ export default function ProductsPage() {
                             </thead>
                             <tbody className="divide-y divide-slate-200">
                                 {filteredProducts.map((product) => (
-                                    <tr key={product.id} className="hover:bg-slate-50 transition-colors">
+                                    <tr key={product.id} className={`hover:bg-slate-50 transition-colors ${selectedIds.has(product.id) ? 'bg-blue-50/50' : ''}`}>
+                                        <td className="px-4 py-4">
+                                            <input
+                                                type="checkbox"
+                                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                checked={selectedIds.has(product.id)}
+                                                onChange={() => handleSelectOne(product.id)}
+                                            />
+                                        </td>
                                         <td className="px-6 py-4">
                                             <span className="font-mono text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded">
                                                 {product.sku}
                                             </span>
                                         </td>
+                                        <td className="px-6 py-4 font-medium text-slate-900">{product.name}</td>
                                         <td className="px-6 py-4">
-                                            <div className="font-medium text-slate-900">{product.name}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
-                                                {product.brand}
-                                            </span>
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">{product.brand}</span>
                                         </td>
                                         <td className="px-6 py-4 text-slate-600">{product.unit}</td>
-                                        <td className="px-6 py-4 text-right font-medium text-slate-900">
-                                            {formatPrice(product.price || 0)}
-                                        </td>
+                                        <td className="px-6 py-4 text-right font-medium text-slate-900">{formatPrice(product.price || 0)}</td>
                                         <td className="px-6 py-4 text-right">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
                                                 ${(product.stock || 0) > 20 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -318,16 +392,10 @@ export default function ProductsPage() {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleOpenEdit(product)}
-                                                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                >
+                                                <button onClick={() => handleOpenEdit(product)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
                                                     <Pencil className="w-4 h-4" />
                                                 </button>
-                                                <button
-                                                    onClick={() => handleDelete(product)}
-                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                >
+                                                <button onClick={() => handleDelete(product)} className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg">
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
@@ -340,7 +408,36 @@ export default function ProductsPage() {
                 )}
             </div>
 
-            {/* Modal */}
+            {/* Bulk Actions Bar */}
+            {selectedIds.size > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-6 z-40 animate-in slide-in-from-bottom-5 fade-in duration-300">
+                    <div className="flex items-center gap-2 border-r border-slate-700 pr-4">
+                        <span className="bg-blue-600 text-xs font-bold px-2 py-0.5 rounded-full">{selectedIds.size}</span>
+                        <span className="text-sm font-medium">Đã chọn</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setIsBulkEditOpen(true)}
+                            className="flex items-center gap-2 hover:bg-slate-800 px-3 py-1.5 rounded-lg transition-colors text-sm"
+                        >
+                            <Settings2 className="w-4 h-4" />
+                            Cập nhật nhanh
+                        </button>
+                        <button
+                            onClick={handleBulkDelete}
+                            className="flex items-center gap-2 hover:bg-red-600/20 text-red-400 hover:text-red-300 px-3 py-1.5 rounded-lg transition-colors text-sm"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Xóa
+                        </button>
+                    </div>
+                    <button onClick={() => setSelectedIds(new Set())} className="ml-2 text-slate-400 hover:text-white">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+            )}
+
+            {/* Create/Edit Modal */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95">
@@ -348,113 +445,95 @@ export default function ProductsPage() {
                             <h3 className="font-bold text-lg text-slate-800">
                                 {editingProduct ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
                             </h3>
-                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                                <X className="w-5 h-5" />
-                            </button>
+                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
                         </div>
-
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">SKU (Mã hàng)</label>
-                                    <input
-                                        required
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                        placeholder="VD: SP001"
-                                        value={formData.sku}
-                                        onChange={e => setFormData({ ...formData, sku: e.target.value })}
-                                    />
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">SKU</label>
+                                    <input required className="w-full border rounded-lg px-3 py-2" placeholder="VD: SP001" value={formData.sku} onChange={e => setFormData({ ...formData, sku: e.target.value })} />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Thương hiệu</label>
-                                    <input
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                        placeholder="VD: LYHU"
-                                        value={formData.brand}
-                                        onChange={e => setFormData({ ...formData, brand: e.target.value })}
-                                    />
+                                    <input className="w-full border rounded-lg px-3 py-2" placeholder="VD: LYHU" value={formData.brand} onChange={e => setFormData({ ...formData, brand: e.target.value })} />
                                 </div>
                             </div>
-
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Tên sản phẩm</label>
-                                <input
-                                    required
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                    placeholder="VD: Kẹo dẻo vị táo..."
-                                    value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                />
+                                <input required className="w-full border rounded-lg px-3 py-2" placeholder="VD: Sản phẩm A..." value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
                             </div>
-
                             <div className="grid grid-cols-3 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Đơn vị</label>
-                                    <select
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                                        value={formData.unit}
-                                        onChange={e => setFormData({ ...formData, unit: e.target.value })}
-                                    >
-                                        <option value="Gói">Gói</option>
-                                        <option value="Thùng">Thùng</option>
-                                        <option value="Hộp">Hộp</option>
-                                        <option value="Chai">Chai</option>
-                                        <option value="Cái">Cái</option>
+                                    <select className="w-full border rounded-lg px-3 py-2 bg-white" value={formData.unit} onChange={e => setFormData({ ...formData, unit: e.target.value })}>
+                                        <option value="Gói">Gói</option><option value="Thùng">Thùng</option><option value="Hộp">Hộp</option><option value="Chai">Chai</option><option value="Cái">Cái</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Giá bán</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                        value={formData.price}
-                                        onChange={e => setFormData({ ...formData, price: Number(e.target.value) })}
-                                    />
+                                    <input type="number" min="0" className="w-full border rounded-lg px-3 py-2" value={formData.price} onChange={e => setFormData({ ...formData, price: Number(e.target.value) })} />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Tồn kho</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                        value={formData.stock}
-                                        onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })}
-                                    />
+                                    <input type="number" min="0" className="w-full border rounded-lg px-3 py-2" value={formData.stock} onChange={e => setFormData({ ...formData, stock: Number(e.target.value) })} />
                                 </div>
                             </div>
-
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Link Ảnh (Tùy chọn)</label>
-                                <input
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                    placeholder="https://..."
-                                    value={formData.image_url}
-                                    onChange={e => setFormData({ ...formData, image_url: e.target.value })}
-                                />
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Link Ảnh</label>
+                                <input className="w-full border rounded-lg px-3 py-2" placeholder="https://..." value={formData.image_url} onChange={e => setFormData({ ...formData, image_url: e.target.value })} />
                             </div>
-
                             <div className="pt-4 flex justify-end gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium"
-                                >
-                                    Hủy bỏ
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50"
-                                >
-                                    {isSubmitting ? (
-                                        <><Loader2 className="w-4 h-4 animate-spin" /> Đang lưu...</>
-                                    ) : (
-                                        <><Check className="w-4 h-4" /> {editingProduct ? "Cập nhật" : "Tạo mới"}</>
-                                    )}
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">Hủy bỏ</button>
+                                <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2">
+                                    {isSubmitting ? <Loader2 className="animate-spin w-4 h-4" /> : <Check className="w-4 h-4" />} {editingProduct ? "Cập nhật" : "Tạo mới"}
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Bulk Edit Modal */}
+            {isBulkEditOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95">
+                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                            <h3 className="font-bold text-lg text-slate-800">Cập nhật nhanh {selectedIds.size} SP</h3>
+                            <button onClick={() => setIsBulkEditOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Chọn trường cần sửa</label>
+                                <select
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                                    value={bulkConfig.field}
+                                    onChange={e => setBulkConfig({ ...bulkConfig, field: e.target.value as any, value: '' })}
+                                >
+                                    <option value="stock">Cập nhật Tồn kho</option>
+                                    <option value="price">Cập nhật Giá bán</option>
+                                    <option value="brand">Cập nhật Thương hiệu</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Giá trị mới</label>
+                                <input
+                                    type={bulkConfig.field === 'brand' ? 'text' : 'number'}
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    placeholder="Nhập giá trị..."
+                                    value={bulkConfig.value.toString()}
+                                    onChange={e => setBulkConfig({ ...bulkConfig, value: bulkConfig.field === 'brand' ? e.target.value : Number(e.target.value) })}
+                                />
+                            </div>
+                            <div className="pt-2">
+                                <button
+                                    onClick={handleBulkEditSubmit}
+                                    disabled={isSubmitting}
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium flex items-center justify-center gap-2"
+                                >
+                                    {isSubmitting ? <Loader2 className="animate-spin w-4 h-4" /> : "Áp dụng thay đổi"}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}
