@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Product } from "@/mocks/data";
-import { Package, Search, Loader2, Plus, Pencil, Trash2, X, Check, MoreHorizontal, Settings2, ShieldAlert } from "lucide-react";
+import { Package, Search, Loader2, Plus, Pencil, Trash2, X, Check, MoreHorizontal, Settings2, ShieldAlert, Filter, ArrowUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthProvider";
 
@@ -16,12 +16,18 @@ interface AppProduct extends Product {
     stock: number;
     image_url?: string;
     is_active?: boolean;
+    created_at?: string;
 }
 
 export default function ProductsPage() {
     const [products, setProducts] = useState<AppProduct[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+
+    // Sort & Filter State
+    const [filterBrand, setFilterBrand] = useState("all");
+    const [filterStock, setFilterStock] = useState("all"); // all, in_stock, out_of_stock
+    const [sortBy, setSortBy] = useState("newest"); // newest, price_asc, price_desc, name_asc, stock_desc
 
     // Selection State
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -71,6 +77,7 @@ export default function ProductsPage() {
         if (!silent) setIsLoading(true);
         try {
             const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+            // Fetch all active products
             const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&is_active=eq.true&order=created_at.desc`, {
                 headers: getHeaders()
             });
@@ -78,7 +85,7 @@ export default function ProductsPage() {
             if (!res.ok) throw new Error("Failed to fetch products");
             const data = await res.json();
             setProducts(data || []);
-            // Clear selection on refresh to avoid ghost selections
+            // Clear selection on refresh
             if (!silent) setSelectedIds(new Set());
         } catch (err) {
             console.error("Error loading products:", err);
@@ -92,16 +99,52 @@ export default function ProductsPage() {
         fetchProducts();
     }, [fetchProducts]);
 
-    // --- Selection Logic ---
+    // --- Filter & Sort Logic ---
     const filteredProducts = useMemo(() => {
-        return products.filter(
+        let result = products.filter(
             (p) =>
                 (p.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (p.sku || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (p.brand || "").toLowerCase().includes(searchQuery.toLowerCase())
         );
-    }, [products, searchQuery]);
 
+        // Apply Brand Filter
+        if (filterBrand !== "all") {
+            result = result.filter(p => p.brand === filterBrand);
+        }
+
+        // Apply Stock Filter
+        if (filterStock === "in_stock") {
+            result = result.filter(p => (p.stock || 0) > 0);
+        } else if (filterStock === "out_of_stock") {
+            result = result.filter(p => (p.stock || 0) <= 0);
+        }
+
+        // Apply Sorting
+        result.sort((a, b) => {
+            switch (sortBy) {
+                case "price_asc": return (a.price || 0) - (b.price || 0);
+                case "price_desc": return (b.price || 0) - (a.price || 0);
+                case "stock_desc": return (b.stock || 0) - (a.stock || 0);
+                case "name_asc": return (a.name || "").localeCompare(b.name || "");
+                case "newest": default:
+                    // Safe date parsing
+                    const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+                    const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+                    return timeB - timeA;
+            }
+        });
+
+        return result;
+    }, [products, searchQuery, filterBrand, filterStock, sortBy]);
+
+    // Unique Brands for Filter
+    const uniqueBrands = useMemo(() => {
+        const brands = new Set(products.map(p => p.brand).filter(Boolean));
+        return Array.from(brands).sort();
+    }, [products]);
+
+    // ... Selection handlers ...
     const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.checked) {
             setSelectedIds(new Set(filteredProducts.map(p => p.id)));
@@ -151,11 +194,7 @@ export default function ProductsPage() {
                 ? `${SUPABASE_URL}/rest/v1/products?id=eq.${editingProduct.id}`
                 : `${SUPABASE_URL}/rest/v1/products`;
             const method = editingProduct ? "PATCH" : "POST";
-            const payload = {
-                ...formData,
-                is_active: true,
-                updated_at: new Date().toISOString()
-            };
+            const payload = { ...formData, is_active: true, updated_at: new Date().toISOString() };
 
             const res = await fetch(url, {
                 method,
@@ -164,7 +203,6 @@ export default function ProductsPage() {
             });
 
             if (!res.ok) throw new Error((await res.json()).message || "Lỗi khi lưu");
-
             toast.success(editingProduct ? "Cập nhật thành công!" : "Thêm mới thành công!");
             setIsModalOpen(false);
             fetchProducts(true);
@@ -202,10 +240,8 @@ export default function ProductsPage() {
         const toastId = toast.loading("Đang xử lý hàng loạt...");
 
         try {
-            const ids = Array.from(selectedIds);
-            // PATCH to update multiple is_active = false
-            // Supabase REST supports filtering id=in.(...)
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=in.(${ids.join(',')})`, {
+            const ids = Array.from(selectedIds).map(id => `"${id}"`).join(','); // Quote UUIDs
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=in.(${ids})`, {
                 method: "PATCH",
                 headers: getHeaders(),
                 body: JSON.stringify({ is_active: false, updated_at: new Date().toISOString() })
@@ -213,7 +249,7 @@ export default function ProductsPage() {
 
             if (!res.ok) throw new Error("Lỗi khi xóa hàng loạt");
 
-            toast.success(`Đã xóa ${ids.length} sản phẩm`, { id: toastId });
+            toast.success(`Đã xóa ${selectedIds.size} sản phẩm`, { id: toastId });
             setSelectedIds(new Set());
             fetchProducts(true);
         } catch (error: any) {
@@ -226,18 +262,17 @@ export default function ProductsPage() {
             toast.error("Vui lòng nhập giá trị");
             return;
         }
-
         const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
         setIsSubmitting(true);
 
         try {
-            const ids = Array.from(selectedIds);
+            const ids = Array.from(selectedIds).map(id => `"${id}"`).join(','); // Quote UUIDs
             const payload = {
                 [bulkConfig.field]: bulkConfig.value,
                 updated_at: new Date().toISOString()
             };
 
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=in.(${ids.join(',')})`, {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=in.(${ids})`, {
                 method: "PATCH",
                 headers: getHeaders(),
                 body: JSON.stringify(payload)
@@ -245,7 +280,7 @@ export default function ProductsPage() {
 
             if (!res.ok) throw new Error("Lỗi cập nhật hàng loạt");
 
-            toast.success(`Đã cập nhật ${ids.length} sản phẩm!`);
+            toast.success(`Đã cập nhật ${selectedIds.size} sản phẩm!`);
             setIsBulkEditOpen(false);
             setSelectedIds(new Set());
             fetchProducts(true);
@@ -256,11 +291,9 @@ export default function ProductsPage() {
         }
     };
 
-    const formatPrice = (price: number) => {
-        return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
-    };
+    const formatPrice = (price: number) => new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(price);
 
-    // Calculate Brand Stats
+    // Helpers
     const brandStats = useMemo(() => {
         return products.reduce((acc, p) => {
             const b = p.brand || "Khác";
@@ -268,8 +301,6 @@ export default function ProductsPage() {
             return acc;
         }, {} as Record<string, number>);
     }, [products]);
-
-    // Checkbox State
     const allSelected = filteredProducts.length > 0 && selectedIds.size === filteredProducts.length;
     const isIndeterminate = selectedIds.size > 0 && selectedIds.size < filteredProducts.length;
 
@@ -282,62 +313,109 @@ export default function ProductsPage() {
                     <p className="text-sm text-slate-600 mt-1">Danh sách sản phẩm và giá sỉ</p>
                 </div>
                 {session?.user && (
-                    <button
-                        onClick={handleOpenCreate}
-                        className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg shadow-sm transition-all"
-                    >
+                    <button onClick={handleOpenCreate} className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg shadow-sm transition-all hover:scale-105 active:scale-95">
                         <Plus className="w-5 h-5" />
                         <span>Thêm sản phẩm</span>
                     </button>
                 )}
             </div>
 
-            {/* Stats & Search */}
-            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-                <div className="bg-white p-4 rounded-lg border border-slate-200">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-primary-50 rounded-lg">
-                            <Package className="w-5 h-5 text-primary-600" />
-                        </div>
-                        <div>
-                            <p className="text-xs text-slate-600">Tổng SP</p>
-                            <p className="text-xl font-bold text-slate-900">{products.length}</p>
+            {/* Stats & Tools */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+                {/* Stats */}
+                <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <div className="bg-white p-4 rounded-lg border border-slate-200">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-primary-50 rounded-lg">
+                                <Package className="w-5 h-5 text-primary-600" />
+                            </div>
+                            <div>
+                                <p className="text-xs text-slate-600">Tổng SP</p>
+                                <p className="text-xl font-bold text-slate-900">{products.length}</p>
+                            </div>
                         </div>
                     </div>
+                    {Object.entries(brandStats).slice(0, 3).map(([brand, count]) => (
+                        <div key={brand} className="bg-white p-4 rounded-lg border border-slate-200">
+                            <p className="text-xs text-slate-600">{brand}</p>
+                            <p className="text-xl font-bold text-slate-900 mt-1">{count}</p>
+                        </div>
+                    ))}
                 </div>
-                {Object.entries(brandStats).slice(0, 3).map(([brand, count]) => (
-                    <div key={brand} className="bg-white p-4 rounded-lg border border-slate-200">
-                        <p className="text-xs text-slate-600">{brand}</p>
-                        <p className="text-xl font-bold text-slate-900 mt-1">{count} SP</p>
-                    </div>
-                ))}
-                <div className="lg:col-span-1 bg-white p-4 rounded-lg border border-slate-200">
-                    <div className="relative">
+
+                {/* Search */}
+                <div className="lg:col-span-1 bg-white p-4 rounded-lg border border-slate-200 flex items-center">
+                    <div className="relative w-full">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <input
                             type="text"
-                            placeholder="Tìm kiếm..."
+                            placeholder="Tìm tên, SKU, brand..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
                 </div>
             </div>
 
+            {/* Filters Toolbar */}
+            <div className="flex flex-col sm:flex-row gap-3 items-end sm:items-center justify-between bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <Filter className="w-4 h-4" />
+                        <span className="font-medium">Lọc:</span>
+                    </div>
+                    <select
+                        value={filterBrand}
+                        onChange={(e) => setFilterBrand(e.target.value)}
+                        className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none cursor-pointer"
+                    >
+                        <option value="all">Tất cả thương hiệu</option>
+                        {uniqueBrands.map(b => <option key={b} value={b}>{b}</option>)}
+                    </select>
+
+                    <select
+                        value={filterStock}
+                        onChange={(e) => setFilterStock(e.target.value)}
+                        className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none cursor-pointer"
+                    >
+                        <option value="all">Tất cả trạng thái</option>
+                        <option value="in_stock">Còn hàng</option>
+                        <option value="out_of_stock">Hết hàng</option>
+                    </select>
+                </div>
+
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <ArrowUpDown className="w-4 h-4" />
+                        <span className="font-medium">Sắp xếp:</span>
+                    </div>
+                    <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 outline-none cursor-pointer min-w-[140px]"
+                    >
+                        <option value="newest">Mới nhất</option>
+                        <option value="price_asc">Giá tăng dần</option>
+                        <option value="price_desc">Giá giảm dần</option>
+                        <option value="stock_desc">Tồn kho giảm dần</option>
+                        <option value="name_asc">Tên A-Z</option>
+                    </select>
+                </div>
+            </div>
+
             {/* Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[400px] relative">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[400px]">
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-                        <p className="text-sm text-slate-500 mt-2">Đang tải danh sách...</p>
+                        <p className="text-sm text-slate-500 mt-2">Đang tải...</p>
                     </div>
                 ) : filteredProducts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                            <Package className="w-8 h-8 text-slate-300" />
-                        </div>
+                        <Package className="w-12 h-12 text-slate-300 mb-2" />
                         <h3 className="text-lg font-medium text-slate-900">Không tìm thấy sản phẩm</h3>
+                        <p className="text-sm text-slate-500">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -347,7 +425,7 @@ export default function ProductsPage() {
                                     <th className="px-4 py-3 w-10">
                                         <input
                                             type="checkbox"
-                                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                                             checked={allSelected}
                                             onChange={handleSelectAll}
                                             ref={input => { if (input) input.indeterminate = isIndeterminate; }}
@@ -368,7 +446,7 @@ export default function ProductsPage() {
                                         <td className="px-4 py-4">
                                             <input
                                                 type="checkbox"
-                                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                                                 checked={selectedIds.has(product.id)}
                                                 onChange={() => handleSelectOne(product.id)}
                                             />
