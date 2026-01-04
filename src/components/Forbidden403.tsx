@@ -35,6 +35,34 @@ export function Forbidden403({ role, requiredPerms, userPerms }: Forbidden403Pro
                     <div><span className="font-bold">Required:</span> {requiredPerms?.join(', ') || 'None'}</div>
                     <div><span className="font-bold">Your Perms:</span> {userPerms?.join(', ') || 'None'}</div>
                 </div>
+
+                {/* NEW DEBUG BUTTON */}
+                <div className="mt-4 pt-4 border-t border-slate-200">
+                    <button
+                        onClick={async () => {
+                            const { supabase } = await import('@/lib/supabaseClient'); // Dynamic import to be safe
+
+                            const { data: { user } } = await supabase.auth.getUser();
+                            console.log('Current User:', user);
+
+                            if (!user) {
+                                alert('No User Logged In (Auth is null)!');
+                                return;
+                            }
+
+                            const { data, error } = await supabase
+                                .from('profiles')
+                                .select('*')
+                                .eq('id', user.id)
+                                .maybeSingle();
+
+                            alert(`User ID: ${user.id}\nEmail: ${user.email}\n\nProfile Data: ${JSON.stringify(data, null, 2)}\n\nError: ${JSON.stringify(error, null, 2)}`);
+                        }}
+                        className="text-primary-600 hover:underline font-bold"
+                    >
+                        [Click để kiểm tra dữ liệu gốc từ Server]
+                    </button>
+                </div>
             </details>
         </div>
     );
