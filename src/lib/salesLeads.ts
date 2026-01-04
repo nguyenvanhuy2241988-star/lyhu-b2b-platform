@@ -4,11 +4,18 @@ const supabase = createClient();
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const getHeaders = (token?: string) => ({
-    'Content-Type': 'application/json',
-    'apikey': SUPABASE_KEY || '',
-    'Authorization': `Bearer ${token || SUPABASE_KEY}`
-});
+const getHeaders = (token?: string) => {
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY || ''
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    } else {
+        headers['Authorization'] = `Bearer ${SUPABASE_KEY}`;
+    }
+    return headers;
+};
 
 export type SalesLeadStatus = "NEW" | "CONTACTED" | "IN_PROGRESS" | "WON" | "LOST";
 
@@ -99,8 +106,12 @@ export const fetchSalesLeads = async (userId?: string, token?: string): Promise<
         const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
 
         const headers = getHeaders(token);
-        const query = `assigned_to=eq.${userId}&order=created_at.desc`;
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/leads?select=*&${query}`, {
+        const params = new URLSearchParams({
+            select: '*',
+            assigned_to: `eq.${userId}`,
+            order: 'created_at.desc'
+        });
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/leads?${params.toString()}`, {
             headers,
             signal: controller.signal
         });

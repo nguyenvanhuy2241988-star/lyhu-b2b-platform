@@ -7,12 +7,19 @@ import { Product } from "@/mocks/data";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const getHeaders = (token?: string) => ({
-    'Content-Type': 'application/json',
-    'apikey': SUPABASE_KEY || '',
-    'Authorization': `Bearer ${token || SUPABASE_KEY}`,
-    'Prefer': 'return=representation'
-});
+const getHeaders = (token?: string) => {
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY || '',
+        'Prefer': 'return=representation'
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    } else {
+        headers['Authorization'] = `Bearer ${SUPABASE_KEY}`;
+    }
+    return headers;
+};
 
 export type OrderStatus = 'pending' | 'processing' | 'delivered' | 'cancelled' | 'draft';
 export type OrderSource = 'TELESALES' | 'CUSTOMER' | 'SALES' | 'CTV' | 'SHOPEE' | 'TIKTOK' | 'WEB' | 'FACEBOOK' | 'ZALO';
@@ -263,23 +270,26 @@ export const getOrdersByCustomer = (customerId: string): Order[] => {
 export const fetchOrders = async (token?: string, filters?: { userId?: string, startDate?: string, endDate?: string }): Promise<Order[]> => {
     try {
         const headers = getHeaders(token);
-        let query = `select=*,items:order_items(*,product:products(name,sku))&order=created_at.desc`;
+        const params = new URLSearchParams({
+            select: '*,items:order_items(*,product:products(name,sku))',
+            order: 'created_at.desc'
+        });
 
         if (filters?.userId) {
-            query += `&telesales_user_id=eq.${filters.userId}`;
+            params.set('telesales_user_id', `eq.${filters.userId}`);
         }
         if (filters?.startDate) {
-            query += `&created_at=gte.${filters.startDate}`;
+            params.set('created_at', `gte.${filters.startDate}`);
         }
         if (filters?.endDate) {
-            query += `&created_at=lte.${filters.endDate}`;
+            params.set('created_at', `lte.${filters.endDate}`);
         }
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s for potentially larger data
 
         const response = await fetch(
-            `${SUPABASE_URL}/rest/v1/orders?${query}`,
+            `${SUPABASE_URL}/rest/v1/orders?${params.toString()}`,
             {
                 headers,
                 cache: 'no-store',
@@ -319,6 +329,9 @@ export const fetchOrders = async (token?: string, filters?: { userId?: string, s
 export const callTelesalesMetricsRPC = async (userId: string, startDate: string, endDate: string, token?: string) => {
     try {
         const headers = getHeaders(token);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
         const res = await fetch(`${SUPABASE_URL}/rpc/get_telesales_metrics_v2`, {
             method: 'POST',
             headers,
@@ -326,9 +339,11 @@ export const callTelesalesMetricsRPC = async (userId: string, startDate: string,
                 p_user_id: userId,
                 p_start_date: startDate,
                 p_end_date: endDate
-            })
+            }),
+            signal: controller.signal
         });
 
+        clearTimeout(timeoutId);
         if (!res.ok) return null;
         return await res.json();
     } catch {

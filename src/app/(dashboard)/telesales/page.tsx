@@ -120,7 +120,8 @@ export default function TelesalesDashboard() {
             )
             .subscribe((status: string) => {
                 console.log('[TelesalesDashboard] Channel status:', status);
-                if (status === 'SUBSCRIBED') loadAll(true);
+                // Initial load is already handled by loadAll() call above.
+                // We only need to listen for subsequent changes.
             });
 
         return () => {
@@ -137,7 +138,7 @@ export default function TelesalesDashboard() {
 
         // 2. Subscribe to User Achievements
         const achievementSub = user?.id ? subscribeToUserAchievements(user.id, async () => {
-            const achievementsData = await fetchUserAchievements(user.id);
+            const achievementsData = await fetchUserAchievements(user.id, session?.access_token);
             setUserAchievements(achievementsData);
         }) : null;
 
@@ -463,7 +464,7 @@ export default function TelesalesDashboard() {
                         </div>
                         <div className="flex gap-2">
                             {userAchievements.slice(0, 5).map((ua, i) => (
-                                <div key={i} title={ua.achievement.name} className={`p-1.5 bg-white border border-slate-200 rounded-lg ${ua.achievement.color_class} hover:scale-110 transition-all cursor-help shadow-sm`}>
+                                <div key={i} title={ua.achievement?.name || "Huy hiệu"} className={`p-1.5 bg-white border border-slate-200 rounded-lg ${ua.achievement?.color_class || 'text-slate-400'} hover:scale-110 transition-all cursor-help shadow-sm`}>
                                     <Star className="w-4 h-4 fill-current" />
                                 </div>
                             ))}

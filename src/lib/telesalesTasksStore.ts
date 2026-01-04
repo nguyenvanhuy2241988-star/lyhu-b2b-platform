@@ -16,11 +16,18 @@ const getAuthHeaders = async (token?: string) => {
             console.warn('[Tasks Store] getAuthHeaders session issue');
         }
     }
-    return {
+    const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        'apikey': SUPABASE_KEY || '',
-        'Authorization': `Bearer ${finalToken || SUPABASE_KEY}`
+        'apikey': SUPABASE_KEY || ''
     };
+    if (finalToken) {
+        headers['Authorization'] = `Bearer ${finalToken}`;
+    } else {
+        // Fallback to anon key in Authorization ONLY if that's what's intended for public access
+        // but usually just 'apikey' is enough for Supabase.
+        headers['Authorization'] = `Bearer ${SUPABASE_KEY}`;
+    }
+    return headers;
 };
 
 // =====================================================
@@ -203,18 +210,26 @@ export async function fetchTasks(userId?: string, token?: string, filters?: { st
         try {
             console.log(`[Tasks Store] Fetching tasks for: ${activeUserId}`);
             const headers = await getAuthHeaders(token);
-            let query = `or=(user_id.eq.${activeUserId},assigned_to.eq.${activeUserId},assignee_ids.cs.{${activeUserId}},leader_id.eq.${activeUserId})&order=order.asc.nullsfirst,created_at.desc`;
+            const params = new URLSearchParams();
+            params.set('or', `(user_id.eq.${activeUserId},assigned_to.eq.${activeUserId},assignee_ids.cs.{${activeUserId}},leader_id.eq.${activeUserId})`);
+            params.set('order', 'order.asc.nullsfirst,created_at.desc');
 
             if (filters?.startDate) {
-                query += `&completed_at=gte.${filters.startDate}`;
+                params.set('completed_at', `gte.${filters.startDate}`);
             }
             if (filters?.endDate) {
-                query += `&completed_at=lte.${filters.endDate}`;
+                params.set('completed_at', `lte.${filters.endDate}`);
             }
 
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*&${query}`, {
-                headers
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*&${params.toString()}`, {
+                headers,
+                signal: controller.signal
             });
+
+            clearTimeout(timeoutId);
 
             if (!res.ok) {
                 const err = await res.json();
@@ -230,7 +245,7 @@ export async function fetchTasks(userId?: string, token?: string, filters?: { st
             return [];
         }
     });
-}
+};
 
 export async function createTaskSupabase(input: {
     title: string;

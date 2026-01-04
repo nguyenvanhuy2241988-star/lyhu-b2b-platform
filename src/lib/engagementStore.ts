@@ -45,16 +45,30 @@ const getHeaders = (token?: string) => ({
     'Authorization': `Bearer ${token || SUPABASE_KEY}`
 });
 
+const getSignal = (timeout: number) => {
+    try {
+        if (typeof AbortSignal !== 'undefined' && 'timeout' in AbortSignal) {
+            return (AbortSignal as any).timeout(timeout);
+        }
+    } catch (e) {
+        // Fallback below
+    }
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), timeout);
+    return controller.signal;
+};
+
 /**
  * Fetch the collective bonding fund data
  */
 export const fetchBondingFund = async (token?: string) => {
     try {
         const headers = getHeaders(token);
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/bonding_fund?select=*`, {
+        const params = new URLSearchParams({ select: '*' });
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/bonding_fund?${params.toString()}`, {
             headers,
             cache: 'no-store',
-            signal: AbortSignal.timeout(8000)
+            signal: getSignal(8000)
         });
 
         if (!res.ok) return { balance: 0, last_updated_at: new Date().toISOString() } as BondingFund;
@@ -73,9 +87,10 @@ export const fetchBondingFund = async (token?: string) => {
 export const fetchAchievements = async (token?: string) => {
     try {
         const headers = getHeaders(token);
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/achievements?select=*`, {
+        const params = new URLSearchParams({ select: '*' });
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/achievements?${params.toString()}`, {
             headers,
-            signal: AbortSignal.timeout(8000)
+            signal: getSignal(8000)
         });
         if (!res.ok) return [] as Achievement[];
         return await res.json() as Achievement[];
@@ -92,9 +107,13 @@ export const fetchUserAchievements = async (userId: string, token?: string) => {
     if (!userId) return [];
     try {
         const headers = getHeaders(token);
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/user_achievements?select=user_id,achievement_id,earned_at,achievement:achievements(*)&user_id=eq.${userId}`, {
+        const params = new URLSearchParams({
+            select: 'user_id,achievement_id,earned_at,achievement:achievements(*)',
+            user_id: `eq.${userId}`
+        });
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/user_achievements?${params.toString()}`, {
             headers,
-            signal: AbortSignal.timeout(8000)
+            signal: getSignal(8000)
         });
         if (!res.ok) return [];
         return await res.json() as any[];
@@ -110,9 +129,13 @@ export const fetchUserAchievements = async (userId: string, token?: string) => {
 export const fetchCareerLevels = async (token?: string) => {
     try {
         const headers = getHeaders(token);
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/career_levels?select=*&order=min_exp.asc`, {
+        const params = new URLSearchParams({
+            select: '*',
+            order: 'min_exp.asc'
+        });
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/career_levels?${params.toString()}`, {
             headers,
-            signal: AbortSignal.timeout(8000)
+            signal: getSignal(8000)
         });
         if (!res.ok) return [] as CareerLevel[];
         return await res.json() as CareerLevel[];
@@ -136,12 +159,16 @@ export const getLeaderboard = async (period: 'this_month' | 'this_week' = 'this_
 
     try {
         const headers = getHeaders(token);
-        const query = `created_at=gte.${startOfPeriod.toISOString()}&status=neq.cancelled&select=total_amount,telesales_user_id,profiles:profiles!orders_telesales_user_id_profiles_fkey(full_name,email)`;
+        const params = new URLSearchParams({
+            created_at: `gte.${startOfPeriod.toISOString()}`,
+            status: 'neq.cancelled',
+            select: 'total_amount,telesales_user_id,profiles:profiles!orders_telesales_user_id_profiles_fkey(full_name,email)'
+        });
 
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?${query}`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?${params.toString()}`, {
             headers,
             cache: 'no-store',
-            signal: AbortSignal.timeout(10000)
+            signal: getSignal(10000)
         });
 
         if (!res.ok) return [];
