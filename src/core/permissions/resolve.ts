@@ -37,7 +37,7 @@ const ROLE_PERMS: Record<Role, PermissionKey[]> = {
         'orders.read',
         'docs.read'
     ],
-    accounting: [
+    accountant: [
         'orders.read',
         'reports.read',
         'docs.read'
