@@ -47,6 +47,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 try {
                     const mockUser = JSON.parse(mockUserStr);
                     setUser(mockUser);
+                    // FIXED: Also load role from cache so we don't fall back to 'customer' on timeout
+                    if (mockUser.role) {
+                        console.log('[AuthProvider] Restore cached role:', mockUser.role);
+                        setRole(mockUser.role);
+                    }
                     // Note: We don't set isLoading(false) here yet to allow 
                     // the real check to confirm valid session, OR timeout to occur.
                 } catch (e) { }
