@@ -338,6 +338,70 @@ export async function updateCustomer(id: string, updates: Partial<Customer>, tok
     }
 }
 
+/**
+ * Creates a new customer record using pure fetch.
+ * This matches the pattern used in createDeal to avoid Supabase Realtime hangs.
+ */
+export async function createCustomer(customer: {
+    name: string;
+    phone: string;
+    email?: string;
+    address?: string;
+    type?: string;
+    province?: string;
+    district?: string;
+    owner_user_id: string;
+    status?: string;
+}, token?: string): Promise<Customer> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Missing Supabase credentials');
+    }
+
+    try {
+        console.log('[createCustomer] START (pure fetch)');
+
+        let authToken = token;
+        if (!authToken) {
+            const session = await getSessionSafe();
+            authToken = session?.access_token;
+        }
+
+        const response = await fetch(
+            `${supabaseUrl}/rest/v1/customers`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': supabaseKey,
+                    'Authorization': `Bearer ${authToken || supabaseKey}`,
+                    'Prefer': 'return=representation'
+                },
+                body: JSON.stringify(customer)
+            }
+        );
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('[createCustomer] Error:', response.status, errorText);
+            throw new Error(`Failed to create customer: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('[createCustomer] SUCCESS');
+
+        invalidateCRMCache();
+
+        // Return first item from array (POST returns array)
+        return (Array.isArray(data) ? data[0] : data) as Customer;
+    } catch (err) {
+        console.error('[createCustomer] exception:', err);
+        throw err;
+    }
+}
+
 export async function deleteCustomer(id: string, token?: string): Promise<boolean> {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

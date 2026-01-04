@@ -45,7 +45,7 @@ export default function WarehouseInventoryPage() {
 
     // Filter & Pagination State
     const [searchTerm, setSearchTerm] = useState("");
-    const [debouncedSearchTerm] = useDebounce(searchTerm, 500);
+    const debouncedSearchTerm = useDebounce(searchTerm, 500);
     const [currentPage, setCurrentPage] = useState(1);
     const [warehouseName] = useState("Kho Tổng Hà Nội");
 

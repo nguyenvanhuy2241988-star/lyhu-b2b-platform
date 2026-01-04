@@ -12,6 +12,22 @@ import { useAuth } from "@/components/auth/AuthProvider";
 
 const CUSTOMER_TYPES = ["Tất cả", "Tạp hóa", "Mini mart", "Đại lý", "NPP", "Siêu thị"] as const;
 
+const reverseTypeMap: Record<string, string> = {
+    'Tạp hóa': 'tap_hoa',
+    'Mini mart': 'mini_mart',
+    'Đại lý': 'dai_ly',
+    'NPP': 'npp',
+    'Siêu thị': 'sieu_thi'
+};
+
+const typeMap: Record<string, string> = {
+    'tap_hoa': 'Tạp hóa',
+    'mini_mart': 'Mini mart',
+    'dai_ly': 'Đại lý',
+    'npp': 'NPP',
+    'sieu_thi': 'Siêu thị'
+};
+
 export default function AdminCustomersPage() {
     const { session } = useAuth();
     const [selectedType, setSelectedType] = useState<string>("Tất cả");
@@ -46,21 +62,6 @@ export default function AdminCustomersPage() {
         loadData();
     }, [loadData]);
 
-    const reverseTypeMap: Record<string, string> = {
-        'Tạp hóa': 'tap_hoa',
-        'Mini mart': 'mini_mart',
-        'Đại lý': 'dai_ly',
-        'NPP': 'npp',
-        'Siêu thị': 'sieu_thi'
-    };
-
-    const typeMap: Record<string, string> = {
-        'tap_hoa': 'Tạp hóa',
-        'mini_mart': 'Mini mart',
-        'dai_ly': 'Đại lý',
-        'npp': 'NPP',
-        'sieu_thi': 'Siêu thị'
-    };
 
     const filteredCustomers = useMemo(() => {
         if (!customers) return [];

@@ -529,7 +529,7 @@ export default function CRMPage() {
         } finally {
             setIsDataLoading(false);
         }
-    }, [userInfo.id, isAdminOrSaleAdmin, session?.access_token, currentPage, stageFilter, debouncedSearchQuery, viewMode, refreshCounts, loadDealsForStage]);
+    }, [userInfo.id, isAdminOrSaleAdmin, session?.access_token, currentPage, stageFilter, debouncedSearchQuery, viewMode, refreshCounts, loadDealsForStage, deals.length]);
 
     // Realtime Subscription
     useEffect(() => {
@@ -556,7 +556,7 @@ export default function CRMPage() {
                     }, 1000); // 1s debounce for stability
                 }
             )
-            .subscribe((status) => {
+            .subscribe((status: string) => {
                 console.log('[CRM Realtime] Status:', status);
             });
 

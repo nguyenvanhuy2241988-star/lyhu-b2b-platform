@@ -500,7 +500,7 @@ export async function fetchPaginatedTasks({
         const activeUserId = userId || await getUserIdSafe();
         if (!activeUserId) return { data: [], count: 0 };
 
-        const headers = await getAuthHeaders(token);
+        const headers = (await getAuthHeaders(token)) as Record<string, string>;
         headers['Prefer'] = 'count=exact'; // Important for getting total count
         const offset = (page - 1) * pageSize;
 
