@@ -103,7 +103,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setIsLoading(false);
             isInitialized.current = true;
         }
-    }, [user?.id]);
+    }, []); // 🚀 Removed session/user dependency to make it a stable initializer
 
     useEffect(() => {
         // One-time cleanup for legacy mock data in development
@@ -216,7 +216,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return () => {
             useChatStore.getState().cleanupPresence();
         };
-    }, [user?.id]); // ❌ Removed 'role' from dependency to break re-subscription loop
+    }, [user]); // 🚀 Added user as dependency
 
     const signOut = async () => {
         await supabase.auth.signOut();

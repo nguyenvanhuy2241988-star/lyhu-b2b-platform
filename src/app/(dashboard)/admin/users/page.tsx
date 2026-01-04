@@ -6,7 +6,7 @@ import { Plus, Pencil, Trash2, X, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { ROLES } from "@/lib/constants";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { fetchPaginatedUsers, AdminUser as User } from "@/lib/admin/users";
+import { fetchPaginatedUsers, AdminUser as AdminUserType } from "@/lib/admin/users";
 import { useDebounce } from "use-debounce";
 
 
@@ -78,7 +78,7 @@ export default function UsersPage() {
                 debouncedSearchTerm
             );
 
-            setUsers(data || []);
+            setUsers(data as any || []);
             setTotalCount(count);
         } catch (error) {
             console.error(error);
