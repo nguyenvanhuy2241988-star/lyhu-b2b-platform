@@ -1,19 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
-import { getHomePath, isRoleAllowedPath, PROTECTED_PREFIXES, SHARED_PATHS, type Role } from "@/lib/roles";
+import { PROTECTED_PREFIXES } from "@/lib/roles";
 
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const origin = request.nextUrl.origin;
 
-  // chuẩn bị response để supabase set cookie
+  // Chuẩn bị response
   let response = NextResponse.next({ request });
 
-  // Chuẩn bị URL an toàn để tránh crash middleware nếu thiếu env vars
+  // Safe Env Vars
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
   const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key";
-
-  const isConfigured = !!(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
   const supabase = createServerClient(supabaseUrl, supabaseAnon, {
     cookies: {
@@ -28,71 +26,36 @@ export async function middleware(request: NextRequest) {
     },
   });
 
+  // Check Protected Route
   const isProtected = PROTECTED_PREFIXES.some(
     (p) => pathname === p || pathname.startsWith(p + "/")
   );
 
   try {
-    let user = null;
-    let role: Role = "customer";
+    // 1. Chỉ check Auth (Có user hay không)
+    const { data: { user }, error } = await supabase.auth.getUser();
 
-    try {
-      // Removed timeout protection - let Supabase handle its own connection lifecycle
-      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-      user = authUser;
-
-      if (authError) {
-        console.warn("[Middleware] Auth fetch error (possibly connection issue):", authError.message);
-      }
-    } catch (err: any) {
-      console.error("[Middleware] Auth catastrophic fail:", err);
-    }
-
-    // Only redirect if we definitely know there is no user AND it's a protected route
+    // 2. Xử lý chưa đăng nhập
     if (!user && isProtected) {
-      console.log("[Middleware] No user for protected route, redirecting to login.");
+      console.log(`[Middleware] Unauthorized access to ${pathname}. Redirecting to /login`);
       const next = `${pathname}${search || ""}`;
       const loginUrl = new URL("/login", origin);
       loginUrl.searchParams.set("next", next);
       return NextResponse.redirect(loginUrl);
     }
 
-    // Đã login: lấy role
+    // 3. Đã đăng nhập -> CHO QUA (Không fetch role nữa)
+    // Client-side sẽ lo việc redirect nếu sai role hoặc vào /login lại
     if (user) {
-      try {
-        // Removed role fetch timeout
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        role = (profile?.role || "customer") as Role;
-      } catch (roleErr) {
-        console.warn("[Middleware] Role fetch error, checking shared paths.", roleErr);
-        if (SHARED_PATHS.some(p => pathname === p || pathname.startsWith(p + "/"))) {
-          return response;
-        }
-        role = "customer"; // Fallback
-      }
-
-      const home = getHomePath(role);
-
-      // 1. Nếu vào /login hoặc "/" thì đẩy về đúng dashboard
-      if (pathname === "/login" || pathname === "/") {
-        return NextResponse.redirect(new URL(home, origin));
-      }
-
-      // 2. Nếu cố vào sai khu vực bảo vệ VÀ không phải trang dùng chung => đá về dashboard role
-      if (isProtected && !isRoleAllowedPath(role, pathname)) {
-        console.warn(`[Middleware] Path ${pathname} not allowed for role ${role}. Redirecting to ${home}`);
-        return NextResponse.redirect(new URL(home, origin));
-      }
+      // Optional: Nếu đang ở /login mà có user thì có thể muốn đẩy đi đâu đó, 
+      // nhưng vì không biết role nên tốt nhất để Client xử lý để tránh sai hướng.
+      // Tuy nhiên, để tránh user bị kẹt ở login, ta có thể cho vào callback hoặc dashboard chung nếu cần.
+      // NHƯNG theo yêu cầu "Nếu có user -> cho qua", ta sẽ return response.
+      return response;
     }
+
   } catch (err) {
-    if (isConfigured) {
-      console.error("[Middleware] Runtime error:", err);
-    }
+    console.error("[Middleware] Error:", err);
   }
 
   return response;
@@ -100,6 +63,14 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - api (API routes)
+     * - public files with extensions
+     */
+    '/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
