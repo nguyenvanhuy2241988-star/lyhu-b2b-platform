@@ -2,16 +2,30 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Initialize Supabase
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Initialize Supabase lazily to avoid build-time errors when env vars are missing
+const getSupabaseClient = () => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+        return null;
+    }
+
+    return createClient(supabaseUrl, supabaseKey);
+};
 
 export async function GET(request: NextRequest) {
     console.log('[API /api/chat] GET request received');
 
     try {
+        const supabase = getSupabaseClient();
+        if (!supabase) {
+            console.error('[API /api/chat] Server configuration error: Missing Supabase env vars');
+            return NextResponse.json(
+                { error: 'Server configuration error' },
+                { status: 500 }
+            );
+        }
         // Get userId from query params
         const searchParams = request.nextUrl.searchParams;
         const userId = searchParams.get('userId');
