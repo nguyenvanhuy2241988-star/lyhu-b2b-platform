@@ -305,9 +305,9 @@ export async function createTaskSupabase(input: {
         priority: input.priority ?? 'normal',
         due_date: input.due_date ?? null,
         type: input.type ?? 'task',
-        assigned_to: input.assigned_to ?? null,
+        assigned_to: input.assigned_to || null,
         assignee_ids: input.assignee_ids ?? [],
-        leader_id: input.leader_id ?? null,
+        leader_id: input.leader_id || null,
         order: Math.floor(Date.now() / 1000),
     };
 
@@ -519,18 +519,22 @@ export async function fetchPaginatedTasks({
         headers['Prefer'] = 'count=exact'; // Important for getting total count
         const offset = (page - 1) * pageSize;
 
-        // Base Query
-        let query = `status=eq.${status}&or=(user_id.eq.${activeUserId},assigned_to.eq.${activeUserId},assignee_ids.cs.{${activeUserId}},leader_id.eq.${activeUserId})&order=order.asc.nullsfirst,created_at.desc&offset=${offset}&limit=${pageSize}`;
+        const params = new URLSearchParams();
+        params.set('select', '*');
+        params.set('status', `eq.${status}`);
+        params.set('or', `(user_id.eq.${activeUserId},assigned_to.eq.${activeUserId},assignee_ids.cs.{${activeUserId}},leader_id.eq.${activeUserId})`);
+        params.set('order', 'order.asc.nullsfirst,created_at.desc');
+        params.set('offset', offset.toString());
+        params.set('limit', pageSize.toString());
 
         // Search Filter
         if (filters.searchTerm) {
-            const safeSearch = encodeURIComponent(`%${filters.searchTerm}%`);
-            query += `&or=(title.ilike.${safeSearch},customer_name.ilike.${safeSearch},phone.ilike.${safeSearch})`;
+            params.set('or', `(title.ilike.%${filters.searchTerm}%,customer_name.ilike.%${filters.searchTerm}%,phone.ilike.%${filters.searchTerm}%)`);
         }
 
         // Priority Filter
         if (filters.priority && filters.priority !== 'all') {
-            query += `&priority=eq.${filters.priority}`;
+            params.set('priority', `eq.${filters.priority}`);
         }
 
         // Due Date Filter
@@ -538,34 +542,38 @@ export async function fetchPaginatedTasks({
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             if (filters.dueDate === "overdue") {
-                query += `&due_date=lt.${today.toISOString()}&status=neq.done`;
+                params.set('due_date', `lt.${today.toISOString()}`);
+                params.set('status', 'neq.done');
             } else if (filters.dueDate === "today") {
                 const tomorrow = new Date(today);
                 tomorrow.setDate(tomorrow.getDate() + 1);
-                query += `&due_date=gte.${today.toISOString()}&due_date=lt.${tomorrow.toISOString()}`;
+                params.append('due_date', `gte.${today.toISOString()}`);
+                params.append('due_date', `lt.${tomorrow.toISOString()}`);
             } else if (filters.dueDate === "week") {
                 const weekFromNow = new Date(today);
                 weekFromNow.setDate(weekFromNow.getDate() + 7);
-                query += `&due_date=gte.${today.toISOString()}&due_date=lt.${weekFromNow.toISOString()}`;
+                params.append('due_date', `gte.${today.toISOString()}`);
+                params.append('due_date', `lt.${weekFromNow.toISOString()}`);
             }
         }
 
         // Customer Type Filter
         if (filters.customerType && filters.customerType !== 'all') {
             if (filters.customerType === 'customer') {
-                query += '&or=(customer_name.is.not.null,phone.is.not.null)';
+                params.set('or', '(customer_name.is.not.null,phone.is.not.null)');
             } else if (filters.customerType === 'personal') {
-                query += '&customer_name=is.null&phone=is.null';
+                params.set('customer_name', 'is.null');
+                params.set('phone', 'is.null');
             }
         }
 
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*,count=exact&${query}`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?${params.toString()}`, {
             headers
         });
 
         if (!res.ok) {
-            const err = await res.json();
-            logSupabaseError('fetchPaginatedTasks', err);
+            const errBody = await res.text();
+            console.error('[fetchPaginatedTasks] error:', res.status, errBody);
             return { data: [], count: 0 };
         }
 

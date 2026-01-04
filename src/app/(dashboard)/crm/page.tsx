@@ -501,14 +501,14 @@ export default function CRMPage() {
         if (isManual || deals.length === 0) setIsDataLoading(true);
 
         try {
-            // 1. Get counts first (Instant UI feedback)
+            // 1. Get counts first
             await refreshCounts();
 
-            // 2. If List View, or Search is active, fallback to global pagination
+            // 2. Load data
             if (viewMode === 'list' || debouncedSearchQuery) {
                 const { data, count } = await fetchPaginatedDeals(
                     currentPage,
-                    25, // Table view size
+                    25,
                     stageFilter,
                     debouncedSearchQuery,
                     isAdminOrSaleAdmin ? undefined : userInfo.id,
@@ -517,11 +517,8 @@ export default function CRMPage() {
                 setDeals(data);
                 setTotalCount(count);
             } else {
-                // 3. If Kanban View, load first page for each visible column
                 const visibleCols = loadCRMColumns().filter(c => c.isVisible !== false);
-                // Clear existing deals to reset columns
                 setDeals([]);
-                // Load in parallel
                 await Promise.all(visibleCols.map(col => loadDealsForStage(col.stage, 1)));
             }
         } catch (err) {
@@ -529,7 +526,10 @@ export default function CRMPage() {
         } finally {
             setIsDataLoading(false);
         }
-    }, [userInfo.id, isAdminOrSaleAdmin, session?.access_token, currentPage, stageFilter, debouncedSearchQuery, viewMode, refreshCounts, loadDealsForStage, deals.length]);
+        // Removed refreshCounts and loadDealsForStage from deps as they depend on the same things 
+        // as this function, and we want to avoid unnecessary recreations of this callback.
+        // We use them inside, so we'll just keep the primary data deps.
+    }, [userInfo.id, isAdminOrSaleAdmin, session?.access_token, currentPage, stageFilter, debouncedSearchQuery, viewMode]);
 
     // Realtime Subscription
     useEffect(() => {
