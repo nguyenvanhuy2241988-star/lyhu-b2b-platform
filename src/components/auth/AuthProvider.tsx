@@ -173,6 +173,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
                 const newRole = profile?.role ?? null;
                 setRole(prev => (prev === newRole ? prev : newRole));
+
+                // FIXED: Save role to localStorage so optimistic load works on next refresh
+                if (typeof window !== "undefined" && newRole) {
+                    const updatedUser = { ...userObj, role: newRole };
+                    localStorage.setItem("lyhu_user", JSON.stringify(updatedUser));
+                }
             } else {
                 setSession(null);
                 setUser(null);
