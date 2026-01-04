@@ -175,7 +175,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // Initialize Presence & Role Sync
     useEffect(() => {
-        if (user?.id) {
+        // IMPORTANT: Only start Realtime if we have a valid confirmed SESSION.
+        // Starting it with just 'user' (from localStorage) can race with initial auth check
+        // and cause the HTTP request to hang/timeout.
+        if (user?.id && session) {
             useChatStore.getState().initPresence(user.id);
 
             const channelName = `auth-profile-sync-${user.id}`;
