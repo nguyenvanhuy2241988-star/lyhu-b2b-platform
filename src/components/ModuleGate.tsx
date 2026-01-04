@@ -42,12 +42,23 @@ export function ModuleGate({ moduleDef }: ModuleGateProps) {
     }
 
     // Check Permissions
-    // NOTE: role in AuthProvider is string, cast to Role type
-    const userRole = (role || 'customer') as Role;
+    // NOTE: Normalize role to prevent mismatch (e.g. "Telesales " vs "telesales")
+    const rawRole = role || 'customer';
+    const userRole = String(rawRole).trim().toLowerCase() as Role;
+
+    // Get actual perms for debug
+    const userPermsSet = resolvePermissions(userRole);
+    const userPerms = Array.from(userPermsSet);
+
+    // Check if user has required perms
     const isAllowed = hasAllPermissions(userRole, moduleDef.requiredPerms);
 
     if (!isAllowed) {
-        return <Forbidden403 />;
+        return <Forbidden403
+            role={userRole}
+            requiredPerms={moduleDef.requiredPerms}
+            userPerms={userPerms}
+        />;
     }
 
     return <ModuleScreen />;

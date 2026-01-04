@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { ShieldAlert } from "lucide-react";
 
-export function Forbidden403() {
+interface Forbidden403Props {
+    role?: string;
+    requiredPerms?: string[];
+    userPerms?: string[];
+}
+
+export function Forbidden403({ role, requiredPerms, userPerms }: Forbidden403Props) {
     return (
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
             <div className="bg-red-50 p-4 rounded-full mb-4">
@@ -20,6 +26,16 @@ export function Forbidden403() {
             >
                 Về Trang chủ
             </Link>
+
+            {/* ALWAYS SHOW DEBUG INFO FOR NOW */}
+            <details className="mt-8 text-xs text-slate-400 text-left bg-slate-100 p-4 rounded max-w-md w-full" open>
+                <summary className="cursor-pointer hover:text-slate-600 font-medium">Debug Info (Dành cho Kỹ thuật)</summary>
+                <div className="mt-2 space-y-1 font-mono">
+                    <div><span className="font-bold">Role:</span> {role || 'undefined'}</div>
+                    <div><span className="font-bold">Required:</span> {requiredPerms?.join(', ') || 'None'}</div>
+                    <div><span className="font-bold">Your Perms:</span> {userPerms?.join(', ') || 'None'}</div>
+                </div>
+            </details>
         </div>
     );
 }
