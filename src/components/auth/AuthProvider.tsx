@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useRef } from "react";
+import { createContext, useContext, useEffect, useState, useRef, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import { useChatStore } from "@/lib/chatStore";
@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const isInitialized = useRef(false);
     const authCheckInProgress = useRef(false);
 
-    const checkAuth = async () => {
+    const checkAuth = useCallback(async () => {
         if (authCheckInProgress.current) return;
         authCheckInProgress.current = true;
         try {
@@ -102,9 +102,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             authCheckInProgress.current = false;
             setIsLoading(false);
             isInitialized.current = true;
-            console.log('[AuthProvider] checkAuth finished');
         }
-    };
+    }, [user?.id]);
 
     useEffect(() => {
         // One-time cleanup for legacy mock data in development
@@ -170,7 +169,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return () => {
             subscription.unsubscribe();
         };
-    }, []);
+    }, [checkAuth, isInitialized]);
 
     // Initialize Presence ONCE when user ID changes (SINGLETON)
     useEffect(() => {

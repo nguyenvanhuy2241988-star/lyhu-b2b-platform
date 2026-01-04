@@ -214,7 +214,7 @@ export default function AccountantDashboard() {
                                     />
                                     <Tooltip
                                         contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                                        formatter={(val: number) => formatCurrency(val)}
+                                        formatter={(val: any) => formatCurrency(Number(val))}
                                     />
                                     <Area type="monotone" dataKey="Doanh thu" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
                                     <Line type="monotone" dataKey="Chi phí" stroke="#ef4444" strokeWidth={2} dot={{ r: 4 }} />
