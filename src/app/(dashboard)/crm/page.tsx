@@ -22,8 +22,12 @@ import {
     Building,
     FileText,
     ShoppingCart,
-    XCircle
+    XCircle,
+    ChevronLeft,
+    ChevronRight,
+    Loader2
 } from "lucide-react";
+import { useDebounce } from "use-debounce";
 import {
     CRMDeal,
     DealStage,
@@ -40,7 +44,9 @@ import {
     CRMColumn,
     DEFAULT_CRM_COLUMNS,
     canEditDeal,
-    canDeleteDeal
+    canDeleteDeal,
+    fetchPaginatedDeals,
+    getDealStageCounts
 } from "@/lib/crmDealsStore";
 import { CreateDealModal } from "@/components/telesales/CreateDealModal";
 import { LostReasonModal } from "@/components/telesales/LostReasonModal";
@@ -293,15 +299,6 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
     );
 };
 
-// Debounce Hook
-function useDebounce<T>(value: T, delay: number): T {
-    const [debouncedValue, setDebouncedValue] = useState(value);
-    useEffect(() => {
-        const handler = setTimeout(() => setDebouncedValue(value), delay);
-        return () => clearTimeout(handler);
-    }, [value, delay]);
-    return debouncedValue;
-}
 
 // --- Main Page ---
 
@@ -316,11 +313,26 @@ export default function CRMPage() {
 
     // Filters
     const [searchQuery, setSearchQuery] = useState("");
-    const debouncedSearchQuery = useDebounce(searchQuery, 150);
+    const [debouncedSearchQuery] = useDebounce(searchQuery, 150);
     const [filterPriority, setFilterPriority] = useState<DealPriority | "all">("all");
     const [filterStatus, setFilterStatus] = useState<"all" | "open" | "won" | "lost">("open");
     const [filterCustomerType, setFilterCustomerType] = useState<string>("all");
     const [sortBy, setSortBy] = useState<"newest" | "oldest" | "due_date">("newest");
+
+    // Pagination & Stage Filter
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize] = useState(15); // Smaller page size for columns
+    const [totalCount, setTotalCount] = useState(0);
+    const [stageFilter, setStageFilter] = useState<DealStage | 'all'>('all');
+
+    // Per-column Load More States
+    const [stageCounts, setStageCounts] = useState<Record<string, number>>({});
+    const [overdueCountServer, setOverdueCountServer] = useState(0);
+    const [todayCountServer, setTodayCountServer] = useState(0);
+
+    const [stagePages, setStagePages] = useState<Record<string, number>>({});
+    const [stageHasMore, setStageHasMore] = useState<Record<string, boolean>>({});
+    const [loadingStages, setLoadingStages] = useState<Record<string, boolean>>({});
 
     // Modal states
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -430,41 +442,104 @@ export default function CRMPage() {
     // Only Admin can customize columns
     const isAdmin = useMemo(() => userInfo.role === 'admin', [userInfo.role]);
 
-    const refreshData = useCallback(async () => {
-        console.log('[CRM Debug] refreshData called, userInfo:', userInfo);
-        if (!userInfo.id) {
-            setIsDataLoading(false);
-            return;
-        }
+    const refreshCounts = useCallback(async () => {
+        if (!userInfo.id) return;
+        try {
+            const telemetry = await getDealStageCounts(isAdminOrSaleAdmin ? undefined : userInfo.id, session?.access_token);
+            setStageCounts(telemetry.stages);
+            setOverdueCountServer(telemetry.overdue);
+            setTodayCountServer(telemetry.today);
 
-        // Don't show loading spinner for background refreshes (Realtime triggers)
-        // Only show for initial load (when deals is empty)
-        const isInitialLoad = deals.length === 0;
-        if (isInitialLoad) {
-            setIsDataLoading(true);
+            // Calculate total count from per-stage counts
+            const total = Object.values(telemetry.stages).reduce((a, b) => a + (b || 0), 0);
+            setTotalCount(total);
+        } catch (err) {
+            console.error('[CRM Debug] Error refreshing counts:', err);
         }
+    }, [userInfo.id, isAdminOrSaleAdmin, session?.access_token]);
+
+    const loadDealsForStage = useCallback(async (stage: DealStage, pageNum: number = 1, append: boolean = false) => {
+        if (!userInfo.id) return;
+
+        setLoadingStages(prev => ({ ...prev, [stage]: true }));
+        try {
+            const { data, count } = await fetchPaginatedDeals(
+                pageNum,
+                pageSize,
+                stage,
+                debouncedSearchQuery,
+                isAdminOrSaleAdmin ? undefined : userInfo.id,
+                session?.access_token
+            );
+
+            setDeals(prev => {
+                if (append) {
+                    // Filter out any duplicates just in case
+                    const existingIds = new Set(prev.map(d => d.id));
+                    const newDeals = data.filter(d => !existingIds.has(d.id));
+                    return [...prev, ...newDeals];
+                } else {
+                    // Replace all deals for this stage in the flat array
+                    const otherDeals = prev.filter(d => d.stage !== stage);
+                    return [...otherDeals, ...data];
+                }
+            });
+
+            setStagePages(prev => ({ ...prev, [stage]: pageNum }));
+            setStageHasMore(prev => ({ ...prev, [stage]: (pageNum * pageSize) < count }));
+        } catch (err) {
+            console.error(`[CRM Debug] Error loading stage ${stage}:`, err);
+        } finally {
+            setLoadingStages(prev => ({ ...prev, [stage]: false }));
+        }
+    }, [userInfo.id, isAdminOrSaleAdmin, session?.access_token, pageSize, debouncedSearchQuery]);
+
+    const refreshData = useCallback(async (isManual = false) => {
+        if (!userInfo.id) return;
+
+        console.log('[CRM Debug] refreshData (Kanban Optimized) START');
+        if (isManual || deals.length === 0) setIsDataLoading(true);
 
         try {
-            const fetchedDeals = await fetchDealsForUser(userInfo.id, userInfo.role, session?.access_token);
+            // 1. Get counts first (Instant UI feedback)
+            await refreshCounts();
 
-            console.log('[CRM Debug] fetched deals:', fetchedDeals.length);
-            setDeals(fetchedDeals);
-            setColumns(loadCRMColumns().sort((a, b) => a.order - b.order));
+            // 2. If List View, or Search is active, fallback to global pagination
+            if (viewMode === 'list' || debouncedSearchQuery) {
+                const { data, count } = await fetchPaginatedDeals(
+                    currentPage,
+                    25, // Table view size
+                    stageFilter,
+                    debouncedSearchQuery,
+                    isAdminOrSaleAdmin ? undefined : userInfo.id,
+                    session?.access_token
+                );
+                setDeals(data);
+                setTotalCount(count);
+            } else {
+                // 3. If Kanban View, load first page for each visible column
+                const visibleCols = loadCRMColumns().filter(c => c.isVisible !== false);
+                // Clear existing deals to reset columns
+                setDeals([]);
+                // Load in parallel
+                await Promise.all(visibleCols.map(col => loadDealsForStage(col.stage, 1)));
+            }
         } catch (err) {
-            console.error('[CRM Debug] refreshData error/timeout:', err);
+            console.error('[CRM Debug] refreshData error:', err);
         } finally {
             setIsDataLoading(false);
         }
-    }, [userInfo, session?.access_token, deals.length]);
+    }, [userInfo.id, isAdminOrSaleAdmin, session?.access_token, currentPage, stageFilter, debouncedSearchQuery, viewMode, refreshCounts, loadDealsForStage]);
 
+    // Realtime Subscription
     useEffect(() => {
-        // Realtime Subscription - RE-ENABLED after fixing updateDeal to use pure fetch
-        if (!userInfo.id) return;
+        if (!userInfo.id || !isMounted) return;
 
+        console.log('[CRM Realtime] Initializing subscription for user:', userInfo.id);
         let refreshTimeout: NodeJS.Timeout;
 
         const channel = supabase
-            .channel('crm_realtime_updates')
+            .channel(`crm-realtime-${userInfo.id}`)
             .on(
                 'postgres_changes',
                 {
@@ -473,25 +548,24 @@ export default function CRMPage() {
                     table: 'crm_deals'
                 },
                 (payload: any) => {
-                    console.log('[Realtime] Change detected:', payload);
-                    // Debounce refresh to avoid conflicts
+                    console.log('[CRM Realtime] Change detected:', payload.eventType);
+                    // Debounce refresh
                     clearTimeout(refreshTimeout);
                     refreshTimeout = setTimeout(() => {
-                        console.log('[Realtime] Triggering refresh...');
                         refreshData();
-                    }, 500);
+                    }, 1000); // 1s debounce for stability
                 }
             )
-            .subscribe((status: any) => {
-                console.log('[Realtime] Status:', status);
+            .subscribe((status) => {
+                console.log('[CRM Realtime] Status:', status);
             });
 
         return () => {
+            console.log('[CRM Realtime] Cleanup channel');
             clearTimeout(refreshTimeout);
             supabase.removeChannel(channel);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [userInfo.id, userInfo.role, refreshData]);
+    }, [userInfo.id, refreshData, isMounted]);
 
     useEffect(() => {
         // Always set default columns first to ensure UI shows something
@@ -516,6 +590,11 @@ export default function CRMPage() {
         window.addEventListener("crm-columns-updated", handleColumnUpdate);
         return () => window.removeEventListener("crm-columns-updated", handleColumnUpdate);
     }, [user, authRole, authIsLoading, refreshData]);
+
+    // Reset page on filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [debouncedSearchQuery, stageFilter]);
 
     useEffect(() => {
         if (editingColumnId && editInputRef.current) {
@@ -830,12 +909,14 @@ export default function CRMPage() {
 
     const visibleColumns = columns.filter(c => c.isVisible !== false);
     const msToday = new Date().setHours(0, 0, 0, 0);
-    // Hydration fix: only calculate date dependent metrics on client
-    const overdueCount = isMounted ? deals.filter(d => d.next_action_at && new Date(d.next_action_at).getTime() < msToday && d.status === 'open').length : 0;
-    const todayCount = isMounted ? deals.filter(d => d.next_action_at && new Date(d.next_action_at).setHours(0, 0, 0, 0) === msToday && d.status === 'open').length : 0;
+    // Use server counts for badges
+    const overdueCount = overdueCountServer;
+    const todayCount = todayCountServer;
 
-    // Prevent hydration mismatch by only rendering content on client
-    if (isDataLoading && deals.length === 0) {
+    // Optimized loading: If we have counts, show the UI even if deals are still loading
+    const showGlobalLoading = isDataLoading && Object.keys(stageCounts).length === 0 && deals.length === 0;
+
+    if (showGlobalLoading) {
         return (
             <div className="space-y-6">
                 <div className="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200">
@@ -968,7 +1049,14 @@ export default function CRMPage() {
                     />
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex gap-3 flex-wrap">
+                    <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value as any)} className="px-3 py-2 border rounded-lg text-sm bg-primary-50 text-primary-700 font-medium border-primary-100">
+                        <option value="all">Tất cả giai đoạn</option>
+                        {Object.entries(DEAL_STAGE_LABELS).map(([value, label]) => (
+                            <option key={value} value={value}>{label}</option>
+                        ))}
+                    </select>
+
                     <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as any)} className="px-3 py-2 border rounded-lg text-sm">
                         <option value="all">Tất cả trạng thái</option>
                         <option value="open">Đang mở</option>
@@ -1045,7 +1133,9 @@ export default function CRMPage() {
                                                 ) : (
                                                     <div className="flex items-center gap-2" onDoubleClick={() => startEditing(col)}>
                                                         <h3 className="font-semibold text-slate-700 text-sm uppercase truncate">{col.label}</h3>
-                                                        <span className="bg-slate-200 text-slate-600 text-xs px-2 py-0.5 rounded-full">{columnDeals.length}</span>
+                                                        <span className="bg-slate-200 text-slate-600 text-xs px-2 py-0.5 rounded-full">
+                                                            {stageCounts[col.id] || 0}
+                                                        </span>
                                                     </div>
                                                 )}
                                             </div>
@@ -1073,7 +1163,13 @@ export default function CRMPage() {
 
                                         {/* Deals */}
                                         <div className="p-2 flex-1 overflow-y-auto min-h-[100px]">
-                                            {columnDeals.length === 0 && !showAppendPlaceholder ? (
+                                            {loadingStages[col.id] && columnDeals.length === 0 ? (
+                                                <div className="space-y-3 p-1">
+                                                    {[1, 2, 3].map(i => (
+                                                        <div key={i} className="bg-slate-100/50 h-24 rounded-lg animate-pulse border border-slate-100" />
+                                                    ))}
+                                                </div>
+                                            ) : columnDeals.length === 0 && !showAppendPlaceholder ? (
                                                 <div className="text-center py-12 text-slate-400">
                                                     <div className="text-4xl mb-2">📋</div>
                                                     <p className="text-sm">Chưa có cơ hội</p>
@@ -1104,6 +1200,27 @@ export default function CRMPage() {
                                             )}
                                             {showAppendPlaceholder && (
                                                 <div className="h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse" />
+                                            )}
+
+                                            {/* Load More Button for Column */}
+                                            {stageHasMore[col.stage] && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        loadDealsForStage(col.stage as DealStage, (stagePages[col.stage] || 1) + 1, true);
+                                                    }}
+                                                    disabled={loadingStages[col.stage]}
+                                                    className="w-full py-2 mt-2 text-xs font-medium text-primary-600 hover:bg-primary-50 rounded-lg border border-dashed border-primary-200 transition-colors disabled:opacity-50"
+                                                >
+                                                    {loadingStages[col.stage] ? (
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                                            <span>Đang tải...</span>
+                                                        </div>
+                                                    ) : (
+                                                        "Xem thêm..."
+                                                    )}
+                                                </button>
                                             )}
                                         </div>
                                     </div>
@@ -1147,6 +1264,33 @@ export default function CRMPage() {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Pagination Controls */}
+            {!isDataLoading && totalCount > pageSize && (
+                <div className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border shadow-sm mt-4">
+                    <div className="text-sm text-slate-500">
+                        Hiển thị <span className="font-medium">{deals.length}</span> cơ hội
+                        (Tổng <span className="font-medium">{totalCount}</span>)
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setCurrentPage(p => Math.max(1, p - 1)); }}
+                            disabled={currentPage === 1}
+                            className="p-2 border rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <span className="text-sm font-medium">Trang {currentPage} / {Math.ceil(totalCount / pageSize)}</span>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setCurrentPage(p => p + 1); }}
+                            disabled={currentPage >= Math.ceil(totalCount / pageSize)}
+                            className="p-2 border rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
                     </div>
                 </div>
             )}

@@ -16,11 +16,12 @@ interface DashboardShellProps {
 
 export default function DashboardShell({ children, role, allowedRoles, title }: DashboardShellProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const { user, isLoading } = useAuth();
+    const { user, role: userRole, isLoading } = useAuth();
     const router = useRouter();
 
     // Determine the role to display in Sidebar
-    const displayRole = role || user?.role || 'telesales';
+    // Priority: Prop role > Context role > User object role > Default 'admin'
+    const sidebarRole = (role || userRole || user?.role || 'admin') as UserRole;
 
     if (isLoading && !user) {
         return (
@@ -33,7 +34,7 @@ export default function DashboardShell({ children, role, allowedRoles, title }: 
     return (
         <div className="flex min-h-screen bg-slate-50">
             <Sidebar
-                role={displayRole}
+                role={sidebarRole}
                 isOpen={sidebarOpen}
                 onClose={() => setSidebarOpen(false)}
             />

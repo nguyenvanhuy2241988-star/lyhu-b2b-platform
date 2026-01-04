@@ -26,7 +26,19 @@ export function useAuthGuard(expectedRole: UserRole) {
             return;
         }
 
+        // Wait for role to be populated if user exists
+        if (user && role === null) {
+            console.log("[useAuthGuard] User found but role still loading. Waiting...");
+            return;
+        }
+
         if (role && role !== expectedRole) {
+            // 🚀 Special case: Admins are always allowed to access other role pages
+            if (role === ROLES.ADMIN) {
+                console.log(`[useAuthGuard] Admin accessing ${expectedRole} page. Permitted.`);
+                return;
+            }
+
             console.warn(`[useAuthGuard] Role mismatch: ${role} vs ${expectedRole}. Redirecting home.`);
             const correctPath = ROLE_PATHS[role as UserRole] || "/login";
             router.push(correctPath);

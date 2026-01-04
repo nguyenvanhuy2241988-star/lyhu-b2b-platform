@@ -6,6 +6,9 @@ import { Plus, Pencil, Trash2, X, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { ROLES } from "@/lib/constants";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { fetchPaginatedUsers, AdminUser as User } from "@/lib/admin/users";
+import { useDebounce } from "use-debounce";
+
 
 // Helper for Vietnamese Role Names
 const ROLE_LABELS: Record<string, string> = {
@@ -43,6 +46,12 @@ export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
+
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize] = useState(20);
+    const [totalCount, setTotalCount] = useState(0);
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -59,41 +68,32 @@ export default function UsersPage() {
     const { session } = useAuth();
 
     const fetchUsers = useCallback(async (silent = false) => {
+        if (!session?.access_token) return;
+
         try {
             if (!silent) setIsLoading(true);
-            const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-            const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-            if (!supabaseUrl || !supabaseKey) throw new Error("Missing Supabase credentials");
-
-            const token = session?.access_token;
-
-            const res = await fetch(`${supabaseUrl}/rest/v1/profiles?select=*&order=created_at.desc`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': supabaseKey,
-                    'Authorization': `Bearer ${token || supabaseKey}`
-                }
-            });
-
-            if (!res.ok) throw new Error(`Fetch error: ${res.statusText}`);
-            const data = await res.json();
+            const { data, count } = await fetchPaginatedUsers(
+                currentPage,
+                debouncedSearchTerm
+            );
 
             setUsers(data || []);
+            setTotalCount(count);
         } catch (error) {
             console.error(error);
             toast.error("Không thể tải danh sách người dùng");
         } finally {
             if (!silent) setIsLoading(false);
         }
-    }, [session?.access_token]);
+    }, [currentPage, debouncedSearchTerm, session?.access_token]);
 
     useEffect(() => {
         if (!session?.access_token) return;
 
         fetchUsers();
 
-        // Realtime Subscription
+        // Realtime Subscription (Optional, but keeping for live status updates if needed)
         const channel = supabase
             .channel('admin_users_realtime')
             .on(
@@ -104,15 +104,17 @@ export default function UsersPage() {
                     fetchUsers(true);
                 }
             )
-            .subscribe((status: string) => {
-                console.log('[UsersPage] Channel status:', status);
-                if (status === 'SUBSCRIBED') fetchUsers(true);
-            });
+            .subscribe();
 
         return () => {
             supabase.removeChannel(channel);
         };
     }, [session?.access_token, fetchUsers]);
+
+    // Reset page on search
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [debouncedSearchTerm]);
 
     const handleOpenCreate = () => {
         setEditingUser(null);
@@ -215,7 +217,7 @@ export default function UsersPage() {
                     onChange={e => setSearchTerm(e.target.value)}
                 />
                 <div className="text-sm text-slate-500">
-                    Tổng: <b>{users.length}</b> • Hoạt động: <b>{users.filter(u => u.status === 'active').length}</b>
+                    Tổng: <b>{totalCount}</b> • Hiển thị: <b>{users.length}</b>
                 </div>
             </div>
 
@@ -237,7 +239,7 @@ export default function UsersPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-200">
-                                {filteredUsers.map((user) => (
+                                {users.map((user) => (
                                     <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4 font-medium text-slate-900">{user.full_name || "Chưa đặt tên"}</td>
                                         <td className="px-6 py-4 text-slate-600">{user.email}</td>
@@ -277,7 +279,7 @@ export default function UsersPage() {
                                         </td>
                                     </tr>
                                 ))}
-                                {filteredUsers.length === 0 && (
+                                {users.length === 0 && (
                                     <tr>
                                         <td colSpan={6} className="p-8 text-center text-slate-500">
                                             Không tìm thấy người dùng nào.
@@ -289,6 +291,34 @@ export default function UsersPage() {
                     </div>
                 )}
             </div>
+
+            {/* Pagination UI */}
+            {!isLoading && totalCount > pageSize && (
+                <div className="flex items-center justify-between bg-white px-6 py-4 rounded-xl border border-slate-200">
+                    <div className="text-sm text-slate-500">
+                        Hiển thị <span className="font-medium">{(currentPage - 1) * pageSize + 1}</span> - <span className="font-medium">{Math.min(currentPage * pageSize, totalCount)}</span> trong tổng số <span className="font-medium">{totalCount}</span> nhân sự
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(prev => prev - 1)}
+                            className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            Trước
+                        </button>
+                        <div className="flex items-center px-4 text-sm font-medium text-slate-700">
+                            Trang {currentPage} / {Math.ceil(totalCount / pageSize)}
+                        </div>
+                        <button
+                            disabled={currentPage >= Math.ceil(totalCount / pageSize)}
+                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            Sau
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Create/Edit Modal */}
             {isModalOpen && (

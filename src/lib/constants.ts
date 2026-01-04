@@ -32,7 +32,8 @@ import {
     Calculator,    // Accountant
     ClipboardCheck, // Sale Admin
     Video,         // Livestream
-    ToggleLeft     // Role Switch
+    ToggleLeft,     // Role Switch
+    ArrowRightLeft, // Accountant Reconciliation
 } from "lucide-react";
 
 export const ROLES = {
@@ -63,6 +64,7 @@ export const NAV_ITEMS = {
     [ROLES.SALE_ADMIN]: [
         { label: "Tổng quan Admin", href: "/sale-admin", icon: LayoutDashboard },
         { label: "CRM", href: "/crm", icon: TrendingUp },
+        { label: "Khách hàng", href: "/sale-admin/customers", icon: Users },
         { label: "Quản lý Đơn hàng", href: "/sale-admin/orders", icon: ClipboardCheck },
         { label: "Báo giá & Hợp đồng", href: "/sale-admin/quotes", icon: FileText },
         { label: "Hỗ trợ Sales", href: "/sale-admin/support", icon: Users },
@@ -70,9 +72,14 @@ export const NAV_ITEMS = {
     ],
     [ROLES.ACCOUNTANT]: [
         { label: "Tổng quan Kế toán", href: "/accountant", icon: LayoutDashboard },
+        { label: "Việc cần làm", href: "/accountant/tasks", icon: ListTodo },
         { label: "Quản lý Doanh thu", href: "/accountant/revenue", icon: TrendingUp },
         { label: "Quản lý Chi phí", href: "/accountant/expenses", icon: CreditCard },
+        { label: "Quản lý Nhập hàng", href: "/accountant/purchases", icon: ShoppingCart },
+        { label: "Đối soát Ngân hàng", href: "/accountant/reconciliation", icon: ArrowRightLeft },
         { label: "Lương & Hoa hồng", href: "/accountant/payroll", icon: DollarSign },
+        { label: "Quản lý Công nợ", href: "/accountant/debts", icon: Wallet },
+        { label: "Danh mục MISA", href: "/accountant/master-data", icon: Book },
         { label: "Tài liệu", href: "/documents", icon: FileText },
     ],
     [ROLES.SHIPPER]: [
@@ -101,6 +108,7 @@ export const NAV_ITEMS = {
     [ROLES.ADMIN]: [
         { label: "Tổng quan", href: "/admin", icon: LayoutDashboard },
         { label: "CRM", href: "/crm", icon: TrendingUp },
+        { label: "Việc cần làm", href: "/admin/tasks", icon: ListTodo },
         { label: "Đơn hàng", href: "/admin/orders", icon: FileText },
         { label: "Người dùng", href: "/admin/users", icon: Users },
         { label: "Khách hàng", href: "/admin/customers", icon: UserCheck },

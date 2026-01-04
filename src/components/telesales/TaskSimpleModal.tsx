@@ -151,7 +151,7 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                                 <option value="low">Thấp</option>
                                 <option value="normal">Bình thường</option>
                                 <option value="high">Cao</option>
-                                <option value="urgent">Khẩn cấp</option>
+                                <option value="urgent">Khẩn</option>
                             </select>
                         </div>
                         <div>
@@ -162,8 +162,8 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                                 onChange={e => setStatus(e.target.value)}
                             >
                                 <option value="today">Hôm nay</option>
-                                <option value="this_week">Ngày mai</option>
-                                <option value="next_week">Tuần này</option>
+                                <option value="tomorrow">Ngày mai</option>
+                                <option value="this_week">Tuần này</option>
                                 <option value="inbox">Inbox</option>
                             </select>
                         </div>

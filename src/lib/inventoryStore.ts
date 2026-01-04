@@ -280,6 +280,58 @@ export async function fetchAllInventoryLevels(warehouseId?: string, token?: stri
         return [];
     }
 }
+
+export async function fetchPaginatedInventory(
+    page: number = 1,
+    pageSize: number = 20,
+    searchTerm?: string,
+    warehouseId?: string,
+    token?: string
+): Promise<{ data: any[]; count: number }> {
+    try {
+        const headers = getHeaders(token);
+        let targetWarehouseId = warehouseId;
+        if (!targetWarehouseId) {
+            targetWarehouseId = await getDefaultWarehouseId(token) || undefined;
+        }
+
+        if (!targetWarehouseId) return { data: [], count: 0 };
+
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize - 1;
+
+        // Note: We use ilike on the joined product name. 
+        // PostgREST syntax for filtering on joined table: product.name.ilike.*searchTerm*
+        const select = '*,product:products!inner(name,sku,brand)';
+        let url = `${SUPABASE_URL}/rest/v1/inventory_levels?select=${select}&warehouse_id=eq.${targetWarehouseId}`;
+
+        if (searchTerm) {
+            // Filter by name or SKU
+            url += `&or=(product.name.ilike.*${searchTerm}*,product.sku.ilike.*${searchTerm}*)`;
+        }
+
+        url += `&order=product(name).asc&offset=${from}&limit=${pageSize}`;
+
+        const res = await fetch(url, {
+            headers: { ...headers, 'Prefer': 'count=exact' }
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            console.error('fetchPaginatedInventory API error:', err);
+            return { data: [], count: 0 };
+        }
+
+        const countHeader = res.headers.get('content-range');
+        const count = countHeader ? parseInt(countHeader.split('/')[1]) : 0;
+        const data = await res.json();
+
+        return { data, count };
+    } catch (err) {
+        console.error('fetchPaginatedInventory exception:', err);
+        return { data: [], count: 0 };
+    }
+}
 export async function fetchInventoryTransactions(warehouseId?: string, limit = 50, token?: string): Promise<(InventoryTransaction & { product: { name: string; sku: string } })[]> {
     try {
         const headers = getHeaders(token);

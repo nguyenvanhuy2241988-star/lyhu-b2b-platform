@@ -214,7 +214,7 @@ export const CreateTaskModal = ({
                                 <option value="low">Thấp</option>
                                 <option value="normal">Bình thường</option>
                                 <option value="high">Cao</option>
-                                <option value="urgent">Khẩn cấp</option>
+                                <option value="urgent">Khẩn</option>
                             </select>
                         </div>
                         <div>

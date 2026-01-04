@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createClient, supabase } from "@/lib/supabaseClient";
-import { useAuth } from "@/components/auth/AuthProvider"; // ADDED // ADDED: For addLogSupabase
+import { useAuth } from "@/components/auth/AuthProvider";
 
 import Link from "next/link";
 import {
@@ -24,7 +24,7 @@ import {
     RotateCcw,
     Bell,
     AlertTriangle,
-    Loader2
+    ListTodo
 } from "lucide-react";
 import {
     TelesalesTask,
@@ -32,28 +32,21 @@ import {
     TaskPriority,
     TaskType,
     TASK_PRIORITY_LABELS,
+    fetchTasks,
     updateTaskSupabase,
     createTaskSupabase,
+    moveTaskSupabase,
     deleteTaskSupabase,
     loadColumns,
     saveColumns,
     TelesalesColumn,
-    DEFAULT_COLUMNS,
-    fetchPaginatedTasks,
-    updateTasksOrderSupabase
+    DEFAULT_COLUMNS
 } from "@/lib/telesalesTasksStore";
 
 // --- Local Implementations for Column Management (Missing in Store) ---
 const addColumn = () => {
     const cols = loadColumns();
     const newId = `col_${Date.now()}`;
-    // Force cast string to TaskStatus if needed, or update type to string
-    // TelesalesColumn id is TaskStatus. If we allow dynamic columns, TaskStatus type needs to be looser or id type.
-    // However, in new store, TaskStatus is union.
-    // Making id `any` for local compat or avoiding custom columns.
-    // If strict, we can't add custom columns.
-    // But UI has "Add Column".
-    // I will cast to any to satisfy TS for now.
     const newCol: TelesalesColumn = { id: newId as any, label: "Cột mới", status: 'inbox', order: cols.length, isDefault: false, isVisible: true };
     const newCols = [...cols, newCol];
     saveColumns(newCols);
@@ -142,7 +135,7 @@ const PriorityBadge = ({ priority }: { priority: TaskPriority }) => {
         urgent: "bg-red-100 text-red-700",
     };
     return (
-        <span className={`px-2 py-0.5 rounded text-xs font-medium ${colors[priority] || colors.normal}`}>
+        <span className={`px-2 py-0.5 rounded textxs font-medium ${colors[priority] || colors.normal}`}>
             {TASK_PRIORITY_LABELS[priority]}
         </span>
     );
@@ -176,7 +169,6 @@ interface TaskCardProps {
 }
 
 const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, onLogCall, onEdit, onToggleStatus, onRefresh, isOverdue, isHighlighted, profiles = [] }: TaskCardProps) => {
-    // Toggle Complete Handler - Option A: Direct Refresh
     const handleComplete = (e: React.MouseEvent) => {
         e.stopPropagation();
         onToggleStatus(task);
@@ -184,7 +176,6 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
 
     return (
         <>
-            {/* Ghost Placeholder Top */}
             {dropIndicator?.taskId === task.id && dropIndicator.position === 'top' && (
                 <div className="mb-3 h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse pointer-events-none" />
             )}
@@ -192,11 +183,12 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
             <div
                 id={`task-${task.id}`}
                 draggable
-                onClick={() => onEdit(task)} // Trigger Edit
+                onClick={() => onEdit(task)}
                 onDragStart={(e) => {
                     e.stopPropagation();
                     onDragStart(e, task.id, task.status);
                 }}
+                onDragEnd={() => { }}
                 onDragOver={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -215,20 +207,17 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
                 ${isDragging ? '' : 'active:cursor-grabbing'}
             `}
             >
-                {/* Type Badge - LYHU Minimal */}
                 <div className="mb-2">
                     <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs font-medium border border-slate-200">
                         Công việc
                     </span>
                 </div>
 
-                {/* Header: Title + Prio */}
                 <div className="flex justify-between items-start mb-2 pointer-events-none">
                     <h4 className="font-medium text-slate-900 text-sm line-clamp-2 leading-snug">{task.title}</h4>
                     <PriorityBadge priority={task.priority} />
                 </div>
 
-                {/* Adaptive Content - Phase B: Show phone if exists, else note snippet */}
                 {task.phone ? (
                     <div className="flex items-center gap-2 text-xs text-slate-600 mb-2 pointer-events-auto">
                         <Phone className="w-3 h-3 flex-shrink-0 text-slate-400" />
@@ -249,7 +238,6 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
                     </div>
                 ) : null}
 
-                {/* Assignees and Leader - NEW */}
                 {task.assignee_ids && task.assignee_ids.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-3 pt-2 border-t border-slate-50">
                         {task.assignee_ids.map(id => {
@@ -279,21 +267,7 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
                     </div>
                 )}
 
-                {/* Attachments Indicator - DISABLED */}
-                {/* {task.attachments && task.attachments.length > 0 && (
-                    <div className="flex gap-2 mb-2">
-                        {task.attachments.map((att, i) => (
-                            <div key={i} className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded flex items-center gap-1 text-slate-500 truncate max-w-[100px]">
-                                {att.type === 'link' ? <LinkIcon className="w-2.5 h-2.5" /> : <Paperclip className="w-2.5 h-2.5" />}
-                                <span className="truncate">{att.name}</span>
-                            </div>
-                        ))}
-                    </div>
-                )} */}
-
-                {/* Footer & Quick Actions */}
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs text-slate-400 pointer-events-auto">
-                    {/* Due Date */}
                     <div className={`flex items-center gap-1 ${isOverdue ? 'text-red-600 font-medium' : ''}`}>
                         {task.due_date ? (
                             <>
@@ -305,7 +279,6 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
                         )}
                     </div>
 
-                    {/* Quick Actions Row */}
                     <div className="flex items-center gap-1">
                         <button
                             onClick={(e) => { e.stopPropagation(); onEdit(task); }}
@@ -334,7 +307,6 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
                             </button>
                         )}
 
-                        {/* Complete Toggle - LYHU Minimalist */}
                         <button
                             onClick={handleComplete}
                             className={`p-1 rounded transition-colors ${task.status === 'done'
@@ -349,7 +321,6 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
                 </div>
             </div>
 
-            {/* Ghost Placeholder Bottom */}
             {dropIndicator?.taskId === task.id && dropIndicator.position === 'bottom' && (
                 <div className="mb-3 h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse pointer-events-none" />
             )}
@@ -357,10 +328,8 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
     );
 };
 
-// Optimization #1: Memoize TaskCard to reduce re-renders
 const MemoizedTaskCard = React.memo(TaskCard);
 
-// --- Use Debounce Hook ---
 function useDebounce<T>(value: T, delay: number): T {
     const [debouncedValue, setDebouncedValue] = useState(value);
     useEffect(() => {
@@ -374,153 +343,149 @@ function useDebounce<T>(value: T, delay: number): T {
     return debouncedValue;
 }
 
-// --- Main Page ---
-
-export default function TelesalesTasksPage() {
+export default function AdminTasksPage() {
     const { user, session, isLoading: authIsLoading } = useAuth();
-
-    // Per-column states
-    const [columnTasks, setColumnTasks] = useState<Record<string, TelesalesTask[]>>({});
-    const [columnPages, setColumnPages] = useState<Record<string, number>>({});
-    const [columnHasMore, setColumnHasMore] = useState<Record<string, boolean>>({});
-    const [loadingColumns, setLoadingColumns] = useState<Record<string, boolean>>({});
-    const [totalCounts, setTotalCounts] = useState<Record<string, number>>({});
-
+    const [tasks, setTasks] = useState<TelesalesTask[]>([]);
+    const tasksRef = useRef(tasks);
+    useEffect(() => { tasksRef.current = tasks; }, [tasks]);
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [columns, setColumns] = useState<TelesalesColumn[]>([]);
     const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
     const [isLoading, setIsLoading] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+    const [isTimeout, setIsTimeout] = useState(false);
+    const [fetchError, setFetchError] = useState<string | null>(null);
 
-    // Filters
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     const [searchQuery, setSearchQuery] = useState("");
-    const debouncedSearchQuery = useDebounce(searchQuery, 150); // Optimization #2: Reduced from 300ms
+    const debouncedSearchQuery = useDebounce(searchQuery, 150);
     const [filterPriority, setFilterPriority] = useState<TaskPriority | "all">("all");
-    const [filterDueDate, setFilterDueDate] = useState<"all" | "overdue" | "today" | "week">("all"); // Phase B
-    const [filterCustomerType, setFilterCustomerType] = useState<"all" | "customer" | "personal">("all"); // Phase B
+    const [filterDueDate, setFilterDueDate] = useState<"all" | "overdue" | "today" | "week">("all");
+    const [filterCustomerType, setFilterCustomerType] = useState<"all" | "customer" | "personal">("all");
     const [filterType, setFilterType] = useState<TaskType | "all">("all");
 
-    // Modal states
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); // Legacy full modal
-    const [isSimpleModalOpen, setIsSimpleModalOpen] = useState(false); // New Simple Modal
-    const [isCreateLeadModalOpen, setIsCreateLeadModalOpen] = useState(false); // New Lead Modal
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [isSimpleModalOpen, setIsSimpleModalOpen] = useState(false);
 
     const [createModalInitialStatus, setCreateModalInitialStatus] = useState<TaskStatus>("today");
-    const [editingTask, setEditingTask] = useState<TelesalesTask | null>(null); // New state for editing
+    const [editingTask, setEditingTask] = useState<TelesalesTask | null>(null);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-    // Log Modal State
     const [isLogModalOpen, setIsLogModalOpen] = useState(false);
     const [taskToLog, setTaskToLog] = useState<TelesalesTask | null>(null);
 
-    // Inline editing states
     const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
     const [editingTitle, setEditingTitle] = useState("");
     const editInputRef = useRef<HTMLInputElement>(null);
 
-    // DnD States
     const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
     const [dropIndicator, setDropIndicator] = useState<{ taskId: string; position: 'top' | 'bottom' } | null>(null);
     const [dragOverColId, setDragOverColId] = useState<string | null>(null);
 
-    // Notification States
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [activeNotifTab, setActiveNotifTab] = useState<'overdue' | 'today'>('overdue');
     const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
 
-    const msToday = new Date().setHours(0, 0, 0, 0);
-
     const handleToggleTaskStatus = async (task: TelesalesTask) => {
+        const originalTasks = [...tasks];
         const taskId = task.id;
         const newStatus = task.status === 'done' ? 'today' : 'done';
 
-        // 🚀 Optimistic update
-        setColumnTasks(prev => {
-            const newColumnTasks = { ...prev };
-            // Find and update the task in its current column
-            for (const colId in newColumnTasks) {
-                newColumnTasks[colId] = newColumnTasks[colId].map(t =>
-                    t.id === taskId ? { ...t, status: newStatus as TaskStatus } : t
-                );
-            }
-            return newColumnTasks;
-        });
+        setTasks(prev => prev.map(t =>
+            t.id === taskId ? { ...t, status: newStatus as TaskStatus } : t
+        ));
 
         const success = await updateTaskSupabase(taskId, { status: newStatus as TaskStatus });
 
         if (!success) {
-            refreshData(); // Hard refresh on error
+            setTasks(originalTasks);
             alert("Lỗi: Không thể cập nhật trạng thái công việc.");
         }
     };
 
-    const loadTasksForColumn = useCallback(async (colId: string, pageNum: number = 1, isLoadMore: boolean = false) => {
-        if (!user || !session?.access_token) return;
-
-        setLoadingColumns(prev => ({ ...prev, [colId]: true }));
-        try {
-            const filters = {
-                searchTerm: debouncedSearchQuery,
-                priority: filterPriority,
-                dueDate: filterDueDate,
-                customerType: filterCustomerType
-            };
-
-            const { data, count } = await fetchPaginatedTasks({
-                userId: user.id,
-                status: colId,
-                page: pageNum,
-                pageSize: 20,
-                filters,
-                token: session.access_token
-            });
-
-            setColumnTasks(prev => ({
-                ...prev,
-                [colId]: isLoadMore ? [...(prev[colId] || []), ...data] : data
-            }));
-            setColumnHasMore(prev => ({ ...prev, [colId]: (pageNum * 20) < count }));
-            setColumnPages(prev => ({ ...prev, [colId]: pageNum }));
-            setTotalCounts(prev => ({ ...prev, [colId]: count }));
-        } catch (error) {
-            console.error(`[loadTasksForColumn] Error for ${colId}:`, error);
-        } finally {
-            setLoadingColumns(prev => ({ ...prev, [colId]: false }));
-        }
-    }, [user, session?.access_token, debouncedSearchQuery, filterPriority, filterDueDate, filterCustomerType]);
-
-    const refreshData = useCallback(async () => {
+    const refreshData = useCallback(async (isManual = false) => {
         if (!user) return;
-        setIsLoading(true);
+        setIsLoading(prev => tasksRef.current.length === 0 || isManual ? true : prev);
+        setIsTimeout(false);
+        setFetchError(null);
 
-        // Fetch profiles once
-        const { data: profileData } = await supabase.from('profiles').select('id, full_name, email');
-        if (profileData) setProfiles(profileData);
+        // ✅ TIMEOUT PROTECTION (10s)
+        const timeoutId = setTimeout(() => {
+            if (tasksRef.current.length === 0) {
+                console.error('[AdminTasks] ⏰ Loading timeout detected!');
+                setIsTimeout(true);
+                setIsLoading(false);
+            }
+        }, 10000);
 
-        const loadedCols = loadColumns().sort((a, b) => a.order - b.order);
-        setColumns(loadedCols);
+        try {
+            const [fetchedTasks, { data: profileData }] = await Promise.all([
+                fetchTasks(user.id, session?.access_token),
+                supabase.from('profiles').select('id, full_name, email')
+            ]);
 
-        // Load each visible column independently
-        const visibleCols = loadedCols.filter(c => c.isVisible !== false);
-        await Promise.all(visibleCols.map(col => loadTasksForColumn(col.id, 1, false)));
+            clearTimeout(timeoutId);
 
-        setIsLoading(false);
-    }, [user, loadTasksForColumn]);
+            if (profileData) setProfiles(profileData);
+            setTasks(fetchedTasks);
+            setColumns(loadColumns().sort((a, b) => a.order - b.order));
+        } catch (err: any) {
+            console.error('[AdminTasks] Fetch failed:', err);
+            setFetchError(err.message || 'Lỗi kết nối server');
+        } finally {
+            clearTimeout(timeoutId);
+            setIsLoading(false);
+        }
+    }, [user, session]);
 
-    // Helper to scroll to task
     const handleLocateTask = (taskId: string) => {
         setIsNotificationOpen(false);
-        setViewMode("kanban"); // Switch to kanban to see the card
+        setViewMode("kanban");
 
-        // Timeout to allow potential view switch render
         setTimeout(() => {
             const element = document.getElementById(`task-${taskId}`);
             if (element) {
                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 setHighlightedTaskId(taskId);
-                setTimeout(() => setHighlightedTaskId(null), 2000); // Clear highlight after 2s
+                setTimeout(() => setHighlightedTaskId(null), 2000);
             }
         }, 100);
     };
+
+    useEffect(() => {
+        if (!user || !isMounted) return;
+
+        console.log('[Tasks Realtime] Initializing subscription');
+        let refreshTimeout: NodeJS.Timeout;
+
+        const channel = supabase
+            .channel(`tasks-realtime-${user.id}`)
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'telesales_tasks'
+                },
+                () => {
+                    console.log('[Tasks Realtime] Change detected, refreshing...');
+                    clearTimeout(refreshTimeout);
+                    refreshTimeout = setTimeout(() => {
+                        refreshData();
+                    }, 1000); // 1s debounce
+                }
+            )
+            .subscribe();
+
+        return () => {
+            console.log('[Tasks Realtime] Cleanup');
+            clearTimeout(refreshTimeout);
+            supabase.removeChannel(channel);
+        };
+    }, [user, refreshData, isMounted]);
 
     useEffect(() => {
         if (user) {
@@ -530,12 +495,12 @@ export default function TelesalesTasksPage() {
         }
 
         const handleColumnUpdate = () => setColumns(loadColumns().sort((a, b) => a.order - b.order));
-
         window.addEventListener("telesales-columns-updated", handleColumnUpdate);
+
         return () => {
             window.removeEventListener("telesales-columns-updated", handleColumnUpdate);
         };
-    }, [user, session?.access_token, refreshData, authIsLoading]); // Added authIsLoading
+    }, [user, refreshData, authIsLoading]);
 
     const handleLogCall = (task: TelesalesTask) => {
         setTaskToLog(task);
@@ -547,39 +512,34 @@ export default function TelesalesTasksPage() {
             await addLogSupabase(taskToLog.id, logData);
             setIsLogModalOpen(false);
             setTaskToLog(null);
-            refreshData(); // Refresh to get logs if needed
+            refreshData();
         }
     };
 
-    // Focus input when editing starts
     useEffect(() => {
         if (editingColumnId && editInputRef.current) {
             editInputRef.current.focus();
         }
     }, [editingColumnId]);
 
-    // Handle Open Create/Edit
     const openCreateModal = (status: TaskStatus = "today") => {
         setCreateModalInitialStatus(status);
-        setEditingTask(null); // Clear editing task
+        setEditingTask(null);
         setIsCreateModalOpen(true);
     };
 
     const handleEditTask = (task: TelesalesTask) => {
         setEditingTask(task);
         setCreateModalInitialStatus(task.status);
-        setIsCreateModalOpen(true); // Edit still uses full modal for now to show all fields
+        setIsCreateModalOpen(true);
     };
 
-    // Handle Save (Create or Update)
-    // Handle Save (Create or Update)
     const handleSaveTask = async (taskData: any) => {
         setIsLoading(true);
         try {
-            if (taskData.id) { // Trust the ID if present to prevent duplication
+            if (taskData.id) {
                 await updateTaskSupabase(taskData.id, taskData, session?.access_token);
             } else {
-                // Create mode
                 await createTaskSupabase(taskData, session?.access_token);
             }
             await refreshData();
@@ -593,7 +553,6 @@ export default function TelesalesTasksPage() {
         }
     };
 
-    // Handle Delete
     const handleDeleteTask = async (taskId: string) => {
         if (confirm("Bạn chắc chắn muốn xóa việc này?")) {
             await deleteTaskSupabase(taskId);
@@ -601,9 +560,6 @@ export default function TelesalesTasksPage() {
             refreshData();
         }
     };
-
-
-    // --- Drag & Drop Logic ---
 
     const handleTaskDragStart = (e: React.DragEvent, id: string, colId: string) => {
         setDraggedTaskId(id);
@@ -649,102 +605,6 @@ export default function TelesalesTasksPage() {
         setDragOverColId(null);
     };
 
-    const handleDrop = async (e: React.DragEvent, targetColId: string) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const draggedTaskIdData = e.dataTransfer.getData("telesales/task");
-        const draggedColId = e.dataTransfer.getData("telesales/column");
-
-        setDraggedTaskId(null);
-        setDropIndicator(null);
-        setDragOverColId(null);
-
-        // 1. Handle Task Drop
-        if (draggedTaskIdData) {
-            const allTasks = Object.values(columnTasks).flat();
-            const draggedTask = allTasks.find(t => t.id === draggedTaskIdData);
-
-            if (!draggedTask) return;
-
-            // Determine New State based on Target Column
-            let newDueDate = draggedTask.due_date;
-            let newStatus = targetColId;
-
-            const today = new Date(); // Local time
-            const msOneDay = 24 * 60 * 60 * 1000;
-
-            if (targetColId === 'inbox') {
-                newDueDate = null as any;
-                newStatus = 'inbox';
-            } else if (targetColId === 'today') {
-                newDueDate = new Date().toISOString();
-                newStatus = 'today';
-            } else if (targetColId === 'tomorrow') {
-                const tmr = new Date(today.getTime() + msOneDay);
-                newDueDate = tmr.toISOString();
-                newStatus = 'tomorrow';
-            } else if (targetColId === 'this_week') {
-                // Check if current date is effectively this week, if not set to +3 days default?
-                // Existing logic was fuzzy. Let's set to +2 days as default placement
-                const d = new Date(today.getTime() + (2 * msOneDay));
-                newDueDate = d.toISOString();
-                newStatus = 'this_week';
-            } else if (targetColId === 'later') {
-                const d = new Date(today.getTime() + (7 * msOneDay));
-                newDueDate = d.toISOString();
-                newStatus = 'later';
-            }
-
-            // Keep done as done status
-            if (targetColId === 'done') {
-                newStatus = 'done';
-                // Don't change date if moving to done, keep record
-            }
-
-            // Optimistic Update
-            const updatedTask = { ...draggedTask, status: newStatus as TaskStatus, due_date: newDueDate };
-            setColumnTasks(prev => {
-                const newColumnTasks = { ...prev };
-                // Remove from old column
-                for (const colId in newColumnTasks) {
-                    if (Array.isArray(newColumnTasks[colId])) {
-                        newColumnTasks[colId] = newColumnTasks[colId].filter(t => t.id !== draggedTaskIdData);
-                    }
-                }
-                // Add to new column
-                newColumnTasks[newStatus] = [...(Array.isArray(newColumnTasks[newStatus]) ? newColumnTasks[newStatus] : []), updatedTask];
-                return newColumnTasks;
-            });
-
-            await updateTaskSupabase(draggedTaskIdData, {
-                status: newStatus as TaskStatus,
-                due_date: newDueDate
-            });
-
-            // No refresh needed if optimistic is correct, but let's refresh for sort order consistency occasionally?
-            // For now, let's skip refresh to avoid jumpiness, or only refresh if needed.
-            // refreshData(); 
-        }
-
-        // 2. Handle Column Drop
-        if (draggedColId && draggedColId !== targetColId) {
-            const currentCols = [...columns];
-            const sourceIndex = currentCols.findIndex(c => c.id === draggedColId);
-            const targetIndex = currentCols.findIndex(c => c.id === targetColId);
-
-            if (sourceIndex >= 0 && targetIndex >= 0) {
-                const [movedCol] = currentCols.splice(sourceIndex, 1);
-                currentCols.splice(targetIndex, 0, movedCol);
-
-                setColumns(currentCols);
-                reorderColumns(currentCols);
-            }
-        }
-    };
-
-    // --- Column Management ---
-
     const handleAddColumn = () => {
         addColumn();
         setColumns(loadColumns());
@@ -755,7 +615,7 @@ export default function TelesalesTasksPage() {
             alert("Không thể xóa cột mặc định này.");
             return;
         }
-        const hasTasks = (columnTasks[id] || []).length > 0;
+        const hasTasks = tasks.some(t => t.status === id);
         if (hasTasks) {
             if (!window.confirm("Cột này đang có việc cần làm. Nếu xóa, các việc này sẽ chuyển về Hộp thư đến. Bạn chắc chắn chứ?")) {
                 return;
@@ -765,12 +625,6 @@ export default function TelesalesTasksPage() {
         }
         deleteColumn(id);
         setColumns(loadColumns());
-        // Also clear tasks for this column from state
-        setColumnTasks(prev => {
-            const newTasks = { ...prev };
-            delete newTasks[id];
-            return newTasks;
-        });
     };
 
     const toggleColumnVisibility = (colId: string, currentVisible: boolean) => {
@@ -798,22 +652,17 @@ export default function TelesalesTasksPage() {
         setEditingTitle("");
     };
 
-    // --- Filtering Logic (Phase B: Enhanced) ---
-    const allTasks = Object.values(columnTasks).filter(Array.isArray).flat();
-    const filteredTasks = allTasks.filter(task => {
-        // Search filter
+    const msToday = new Date().setHours(0, 0, 0, 0);
+
+    const filteredTasks = tasks.filter(task => {
         const matchesSearch = !debouncedSearchQuery ||
             task.title.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
             (task.customer_name && task.customer_name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())) ||
             (task.phone && task.phone.includes(debouncedSearchQuery));
 
-        // Priority filter
         const matchesPriority = filterPriority === "all" || task.priority === filterPriority;
-
-        // Type filter (deprecated but kept for compatibility)
         const matchesType = filterType === "all" || task.type === filterType;
 
-        // Due date filter (Phase B)
         let matchesDueDate = true;
         if (filterDueDate !== "all" && task.due_date) {
             const taskDate = new Date(task.due_date);
@@ -833,7 +682,6 @@ export default function TelesalesTasksPage() {
             }
         }
 
-        // Customer type filter (Phase B)
         let matchesCustomerType = true;
         if (filterCustomerType === "customer") {
             matchesCustomerType = !!(task.customer_name || task.phone);
@@ -844,25 +692,61 @@ export default function TelesalesTasksPage() {
         return matchesSearch && matchesPriority && matchesType && matchesDueDate && matchesCustomerType;
     });
 
-
     const visibleColumns = columns.filter(c => c.isVisible !== false);
+    const overdueCount = tasks.filter(t => t.due_date && new Date(t.due_date).getTime() < msToday && t.status !== 'done').length;
 
-    // Simplified metrics for bell (approximate based on loaded columns or we could fetch metrics)
-    // For now, let's use what's loaded
-    const loadedTasks = Object.values(columnTasks).filter(Array.isArray).flat();
-    const overdueCount = loadedTasks.filter(t => t.due_date && new Date(t.due_date).getTime() < msToday && t.status !== 'done').length;
-    const todayCount = loadedTasks.filter(t => t.due_date && new Date(t.due_date).setHours(0, 0, 0, 0) === msToday && t.status !== 'done').length;
+    if (fetchError || isTimeout) {
+        return (
+            <div className="h-full flex flex-col items-center justify-center p-8 text-center space-y-4">
+                <div className={`p-4 rounded-full ${isTimeout ? 'bg-orange-100 text-orange-600' : 'bg-red-100 text-red-600'}`}>
+                    {isTimeout ? <Clock className="w-12 h-12" /> : <AlertTriangle className="w-12 h-12" />}
+                </div>
+                <div>
+                    <h3 className="text-lg font-bold text-slate-900">
+                        {isTimeout ? '⏰ Tải dữ liệu quá lâu' : '❌ Lỗi tải dữ liệu'}
+                    </h3>
+                    <p className="text-slate-500 max-w-sm">
+                        {isTimeout
+                            ? 'Có thể do kết nối mạng yếu hoặc máy chủ đang phản hồi chậm. Bạn vui lòng thử lại nhé.'
+                            : `Đã có lỗi xảy ra: ${fetchError}. Vui lòng kiểm tra lại kết nối.`}
+                    </p>
+                </div>
+                <button
+                    onClick={() => refreshData(true)}
+                    className="flex items-center gap-2 bg-primary-600 text-white px-6 py-2.5 rounded-lg hover:bg-primary-700 transition-all shadow-md active:scale-95"
+                >
+                    <RotateCcw className="w-4 h-4" />
+                    <span>Thử lại ngay</span>
+                </button>
+            </div>
+        );
+    }
+
+    if (isLoading && tasks.length === 0) {
+        return (
+            <div className="h-full flex flex-col items-center justify-center space-y-4">
+                <div className="relative">
+                    <div className="w-16 h-16 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <ListTodo className="w-6 h-6 text-primary-600 animate-pulse" />
+                    </div>
+                </div>
+                <div className="text-center">
+                    <p className="font-medium text-slate-700">Đang chuẩn bị danh sách...</p>
+                    <p className="text-xs text-slate-400">Vui lòng đợi trong giây lát</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-4 sm:p-6 space-y-6 h-full flex flex-col relative" onClick={() => setIsSettingsOpen(false)}>
-            {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-[60] relative">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Việc cần làm</h1>
                     <p className="text-sm text-slate-500">Quản lý các đầu việc và cuộc gọi hằng ngày</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    {/* Lead button removed - use CRM for lead management */}
                     <button
                         onClick={(e) => { e.stopPropagation(); setIsSimpleModalOpen(true); }}
                         className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
@@ -871,28 +755,24 @@ export default function TelesalesTasksPage() {
                         <span>Việc mới</span>
                     </button>
 
-                    {/* Notification Bell */}
                     <button
                         onClick={(e) => { e.stopPropagation(); setIsNotificationOpen(true); }}
                         className="relative p-2 bg-white border rounded-lg hover:bg-slate-50 text-slate-600"
                     >
                         <Bell className="w-4 h-4" />
-                        {(overdueCount + todayCount) > 0 && (
+                        {(overdueCount + tasks.filter(t => t.due_date && new Date(t.due_date).setHours(0, 0, 0, 0) === msToday && t.status !== 'done').length) > 0 && (
                             <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm animate-pulse">
-                                {overdueCount + todayCount}
+                                {overdueCount + tasks.filter(t => t.due_date && new Date(t.due_date).setHours(0, 0, 0, 0) === msToday && t.status !== 'done').length}
                             </span>
                         )}
                     </button>
 
-                    {/* Notification Panel (Slide-in) */}
                     {isNotificationOpen && (
                         <>
-                            {/* Overlay */}
                             <div
                                 className="fixed inset-0 bg-black/20 z-[9990]"
                                 onClick={() => setIsNotificationOpen(false)}
                             />
-                            {/* Panel */}
                             <div className="fixed top-0 right-0 h-full w-[320px] bg-white shadow-2xl z-[9999] flex flex-col animate-in slide-in-from-right duration-200">
                                 <div className="p-4 border-b border-slate-100 flex items-center justify-between">
                                     <h3 className="font-semibold text-slate-900 flex items-center gap-2">
@@ -900,7 +780,6 @@ export default function TelesalesTasksPage() {
                                     </h3>
                                     <button onClick={() => setIsNotificationOpen(false)} className="text-slate-400 hover:text-slate-600">×</button>
                                 </div>
-                                {/* Tabs */}
                                 <div className="flex border-b border-slate-100">
                                     <button
                                         className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${activeNotifTab === 'overdue' ? 'border-red-500 text-red-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
@@ -912,15 +791,14 @@ export default function TelesalesTasksPage() {
                                         className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${activeNotifTab === 'today' ? 'border-blue-500 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                                         onClick={() => setActiveNotifTab('today')}
                                     >
-                                        Hôm nay <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">{todayCount}</span>
+                                        Hôm nay <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">{tasks.filter(t => t.due_date && new Date(t.due_date).setHours(0, 0, 0, 0) === msToday && t.status !== 'done').length}</span>
                                     </button>
                                 </div>
-                                {/* List */}
                                 <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">
                                     {(() => {
                                         const list = activeNotifTab === 'overdue'
-                                            ? Object.values(columnTasks).flat().filter(t => t.due_date && new Date(t.due_date).getTime() < msToday && t.status !== 'done')
-                                            : Object.values(columnTasks).flat().filter(t => t.due_date && new Date(t.due_date).setHours(0, 0, 0, 0) === msToday && t.status !== 'done');
+                                            ? tasks.filter(t => t.due_date && new Date(t.due_date).getTime() < msToday && t.status !== 'done')
+                                            : tasks.filter(t => t.due_date && new Date(t.due_date).setHours(0, 0, 0, 0) === msToday && t.status !== 'done');
 
                                         if (list.length === 0) {
                                             return <div className="text-center text-sm text-slate-400 py-8">Không có công việc nào.</div>
@@ -949,7 +827,6 @@ export default function TelesalesTasksPage() {
                         </>
                     )}
 
-                    {/* Settings Menu */}
                     <div className="relative z-[60]">
                         <button
                             onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(!isSettingsOpen); }}
@@ -985,7 +862,7 @@ export default function TelesalesTasksPage() {
                                     <button
                                         onClick={() => {
                                             resetColumns();
-                                            setColumns(loadColumns()); // Reload immediately
+                                            setColumns(loadColumns());
                                             setIsSettingsOpen(false);
                                         }}
                                         className="w-full flex items-center justify-center gap-2 text-sm text-slate-500 hover:bg-slate-50 py-2 rounded font-medium hover:text-red-600 mt-1"
@@ -1014,7 +891,6 @@ export default function TelesalesTasksPage() {
                 </div>
             </div>
 
-            {/* Toolbar: Filters & Search */}
             <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between z-10 sticky top-[60px]">
                 <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto flex-1">
                     <div className="relative flex-1 max-w-md">
@@ -1046,7 +922,6 @@ export default function TelesalesTasksPage() {
                         </select>
                     </div>
 
-                    {/* Phase B: Due Date Filter */}
                     <div className="flex items-center gap-2 min-w-[140px]">
                         <select
                             className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -1060,7 +935,6 @@ export default function TelesalesTasksPage() {
                         </select>
                     </div>
 
-                    {/* Phase B: Customer Type Filter */}
                     <div className="flex items-center gap-2 min-w-[140px]">
                         <select
                             className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -1072,19 +946,15 @@ export default function TelesalesTasksPage() {
                             <option value="personal">Cá nhân</option>
                         </select>
                     </div>
-
-                    {/* Type filter removed - Phase 3: Tasks only have one type */}
                 </div>
             </div>
 
-            {/* Content */}
             {viewMode === "kanban" ? (
                 <div className="flex-1 overflow-x-auto pb-4">
                     <div className="flex gap-4 min-w-[100%] h-full items-start">
                         {visibleColumns.length > 0 && visibleColumns.map(col => {
-                            const tasks = columnTasks[col.id] || [];
-                            const isLoadingCol = loadingColumns[col.id];
-                            const hasMore = columnHasMore[col.id];
+                            const columnTasks = filteredTasks.filter(t => t.status === col.id)
+                                .sort((a, b) => (a.order || 0) - (b.order || 0) || new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
 
                             const showAppendPlaceholder = draggedTaskId && dragOverColId === col.id && !dropIndicator;
 
@@ -1096,7 +966,6 @@ export default function TelesalesTasksPage() {
                                     onDragEnd={handleColumnDragEnd}
                                     onDragOver={(e) => handleDragOverColumn(e, col.id)}
                                     onDrop={async (e) => {
-                                        // Custom Handle Drop for Date Logic
                                         e.preventDefault();
                                         e.stopPropagation();
 
@@ -1108,62 +977,39 @@ export default function TelesalesTasksPage() {
                                         setDragOverColId(null);
 
                                         if (draggedTaskIdData) {
-                                            const allTasks = Object.values(columnTasks).flat();
-                                            const task = allTasks.find(t => t.id === draggedTaskIdData);
+                                            const currentTasks = [...tasks];
+                                            const task = currentTasks.find(t => t.id === draggedTaskIdData);
                                             if (!task) return;
 
-                                            // Determine New Date & Status based on Target Col
                                             let newStatus = col.id;
                                             let newDueDate: string | null = task.due_date || null;
-
                                             const today = new Date();
 
                                             if (col.id === 'inbox') {
                                                 newDueDate = null;
-                                                newStatus = 'inbox';
                                             } else if (col.id === 'today') {
                                                 newDueDate = today.toISOString();
-                                                newStatus = 'today';
                                             } else if (col.id === 'tomorrow') {
                                                 const tmr = new Date(today);
                                                 tmr.setDate(tmr.getDate() + 1);
                                                 newDueDate = tmr.toISOString();
-                                                newStatus = 'tomorrow'; // Logical status
                                             } else if (col.id === 'this_week') {
                                                 const next = new Date(today);
-                                                next.setDate(next.getDate() + 3); // Approx
+                                                next.setDate(next.getDate() + 3);
                                                 newDueDate = next.toISOString();
-                                                newStatus = 'this_week';
                                             } else if (col.id === 'later') {
                                                 const later = new Date(today);
                                                 later.setDate(later.getDate() + 7);
                                                 newDueDate = later.toISOString();
-                                                newStatus = 'later';
-                                            } else if (col.id === 'done') {
-                                                newStatus = 'done';
-                                                // Keep existing date or set today? Keep existing.
                                             }
 
-                                            // Optimistic Update
                                             const updatedTask = { ...task, status: newStatus as TaskStatus, due_date: newDueDate as string };
-                                            setColumnTasks(prev => {
-                                                const newColumnTasks = { ...prev };
-                                                // Remove from old column
-                                                for (const colId in newColumnTasks) {
-                                                    if (Array.isArray(newColumnTasks[colId])) {
-                                                        newColumnTasks[colId] = newColumnTasks[colId].filter(t => t.id !== draggedTaskIdData);
-                                                    }
-                                                }
-                                                // Add to new column
-                                                newColumnTasks[newStatus] = [...(Array.isArray(newColumnTasks[newStatus]) ? newColumnTasks[newStatus] : []), updatedTask];
-                                                return newColumnTasks;
-                                            });
+                                            setTasks(currentTasks.map(t => t.id === task.id ? updatedTask : t));
 
                                             await updateTaskSupabase(task.id, { status: newStatus as TaskStatus, due_date: newDueDate as any });
                                             refreshData();
                                         }
 
-                                        // Column Reorder (same as before)
                                         if (draggedColId && draggedColId !== col.id) {
                                             const currentCols = [...columns];
                                             const sourceIndex = currentCols.findIndex(c => c.id === draggedColId);
@@ -1180,7 +1026,6 @@ export default function TelesalesTasksPage() {
                                         ${dragOverColId === col.id ? 'border-primary-300 bg-primary-50/20' : 'border-transparent hover:border-slate-200'}
                                     `}
                                 >
-                                    {/* Column Header */}
                                     <div className="p-3 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-slate-50/95 backdrop-blur-sm rounded-t-xl z-20 cursor-grab active:cursor-grabbing">
                                         <div className="flex items-center gap-2 flex-1 min-w-0">
                                             {editingColumnId === col.id ? (
@@ -1205,13 +1050,12 @@ export default function TelesalesTasksPage() {
                                                 >
                                                     <h3 className="font-semibold text-slate-700 text-sm uppercase truncate">{col.label}</h3>
                                                     <span className="bg-slate-200 text-slate-600 text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0">
-                                                        {totalCounts[col.id] || 0}
+                                                        {columnTasks.length}
                                                     </span>
                                                 </div>
                                             )}
                                         </div>
 
-                                        {/* Actions */}
                                         <div className="flex items-center gap-0.5 opacity-0 group-hover/col:opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => startEditing(col)}
@@ -1237,61 +1081,36 @@ export default function TelesalesTasksPage() {
                                         </div>
                                     </div>
 
-                                    {/* Tasks Container */}
                                     <div className="p-2 flex-1 overflow-y-auto space-y-1 relative min-h-[100px]">
-                                        {tasks.length === 0 && !isLoadingCol && !showAppendPlaceholder ? (
+                                        {columnTasks.length === 0 && !showAppendPlaceholder ? (
                                             <div className="text-center py-12 text-slate-400">
                                                 <div className="text-4xl mb-2">📝</div>
                                                 <p className="text-sm font-medium text-slate-500">Chưa có việc nào</p>
                                                 <p className="text-xs mt-1">Kéo thả hoặc click + để thêm</p>
                                             </div>
                                         ) : (
-                                            <>
-                                                {tasks.map(task => {
-                                                    const isOverdueTask = task.due_date ? new Date(task.due_date).getTime() < msToday && task.status !== 'done' : false;
-                                                    return (
-                                                        <MemoizedTaskCard
-                                                            key={task.id}
-                                                            task={task}
-                                                            isDragging={draggedTaskId === task.id}
-                                                            onDragStart={handleTaskDragStart}
-                                                            onDragOver={handleTaskDragOver}
-                                                            dropIndicator={dropIndicator}
-                                                            onLogCall={handleLogCall}
-                                                            onEdit={handleEditTask}
-                                                            onToggleStatus={handleToggleTaskStatus}
-                                                            onRefresh={refreshData}
-                                                            isOverdue={isOverdueTask}
-                                                            isHighlighted={highlightedTaskId === task.id}
-                                                            profiles={profiles}
-                                                        />
-                                                    )
-                                                })}
-
-                                                {/* Load More Button */}
-                                                {hasMore && (
-                                                    <button
-                                                        onClick={() => loadTasksForColumn(col.id, (columnPages[col.id] || 1) + 1, true)}
-                                                        disabled={isLoadingCol}
-                                                        className="w-full py-2 bg-white border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
-                                                    >
-                                                        {isLoadingCol ? (
-                                                            <Loader2 className="w-3 h-3 animate-spin" />
-                                                        ) : (
-                                                            'Tải thêm...'
-                                                        )}
-                                                    </button>
-                                                )}
-
-                                                {isLoadingCol && tasks.length === 0 && (
-                                                    <div className="flex justify-center py-8">
-                                                        <Loader2 className="w-6 h-6 animate-spin text-primary-600" />
-                                                    </div>
-                                                )}
-                                            </>
+                                            columnTasks.map(task => {
+                                                const isOverdue = task.due_date ? new Date(task.due_date).getTime() < msToday && task.status !== 'done' : false;
+                                                return (
+                                                    <TaskCard
+                                                        key={task.id}
+                                                        task={task}
+                                                        isDragging={draggedTaskId === task.id}
+                                                        onDragStart={handleTaskDragStart}
+                                                        onDragOver={handleTaskDragOver}
+                                                        dropIndicator={dropIndicator}
+                                                        onLogCall={handleLogCall}
+                                                        onEdit={handleEditTask}
+                                                        onToggleStatus={handleToggleTaskStatus}
+                                                        onRefresh={refreshData}
+                                                        isOverdue={isOverdue}
+                                                        isHighlighted={highlightedTaskId === task.id}
+                                                        profiles={profiles}
+                                                    />
+                                                )
+                                            })
                                         )}
 
-                                        {/* Append Placeholder */}
                                         {showAppendPlaceholder && (
                                             <div className="h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse mt-1 pointer-events-none" />
                                         )}
@@ -1308,9 +1127,7 @@ export default function TelesalesTasksPage() {
                 </div>
             ) : (
                 <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-                    {/* Simple List View implementation if needed, or just placeholder for now since Kanban is main */}
                     <p className="text-slate-500">Chế độ xem danh sách chưa được cập nhật đầy đủ (Sử dụng Kanban để có trải nghiệm tốt nhất).</p>
-                    {/* Iterate tasks if we want list view */}
                     <div className="mt-4 space-y-2">
                         {filteredTasks.map(task => (
                             <div key={task.id} className="flex justify-between p-3 border rounded hover:bg-slate-50 cursor-pointer" onClick={() => handleEditTask(task)}>
@@ -1328,7 +1145,6 @@ export default function TelesalesTasksPage() {
                 </div>
             )}
 
-            {/* Create/Edit Task Modal */}
             <CreateTaskModal
                 isOpen={isCreateModalOpen}
                 initialStatus={createModalInitialStatus}
@@ -1338,7 +1154,6 @@ export default function TelesalesTasksPage() {
                 onDelete={editingTask ? () => handleDeleteTask(editingTask.id) : undefined}
             />
 
-            {/* Log Call Modal */}
             <LogCallModal
                 isOpen={isLogModalOpen}
                 taskTitle={taskToLog?.title || ""}
@@ -1352,12 +1167,11 @@ export default function TelesalesTasksPage() {
                 </div>
             )}
 
-            {/* NEW Modals */}
             <TaskSimpleModal
                 isOpen={isSimpleModalOpen}
                 onClose={() => setIsSimpleModalOpen(false)}
                 onSave={handleSaveTask}
-                currentUser={user} // Pass user from useAuth
+                currentUser={user}
             />
         </div>
     );

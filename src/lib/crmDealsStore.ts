@@ -10,6 +10,48 @@ const getHeaders = (token?: string) => ({
     'Authorization': `Bearer ${token || SUPABASE_KEY}`
 });
 
+// =====================================================
+// PERFORMANCE OPTIMIZATION (Cache & Deduplication)
+// =====================================================
+const G_CACHE = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 5000; // 5 seconds
+const G_FETCHING = new Map<string, Promise<any>>();
+
+async function fetchWithCache<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+    const now = Date.now();
+    const cached = G_CACHE.get(key);
+
+    if (cached && (now - cached.timestamp) < CACHE_TTL) {
+        console.log(`[Cache] Using cached data for ${key}`);
+        return cached.data as T;
+    }
+
+    // Deduplication: if already fetching same key, return same promise
+    if (G_FETCHING.has(key)) {
+        console.log(`[Dedupe] Already fetching ${key}, reusing promise`);
+        return G_FETCHING.get(key) as Promise<T>;
+    }
+
+    const fetchPromise = (async () => {
+        try {
+            const data = await fetcher();
+            G_CACHE.set(key, { data, timestamp: Date.now() });
+            return data;
+        } finally {
+            G_FETCHING.delete(key);
+        }
+    })();
+
+    G_FETCHING.set(key, fetchPromise);
+    return fetchPromise;
+}
+
+// Clear cache when data changes
+export function invalidateCRMCache() {
+    console.log('[Cache] Invalidating CRM Cache');
+    G_CACHE.clear();
+}
+
 // Helper for Session with Timeout
 async function getSessionSafe() {
     try {
@@ -74,6 +116,8 @@ export interface Customer {
     owner_user_id?: string;
     status?: string;
     created_at?: string;
+    tax_code?: string;
+    misa_code?: string;
 }
 
 export interface CRMDeal {
@@ -256,77 +300,74 @@ export async function searchCustomers(query: string, ownerId?: string, token?: s
     }
 }
 
-// Using PURE FETCH to avoid Supabase client Realtime conflict
-export async function createCustomer(customer: Omit<Customer, 'id' | 'created_at'>, token?: string): Promise<Customer> {
+export async function updateCustomer(id: string, updates: Partial<Customer>, token?: string): Promise<boolean> {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    if (!supabaseUrl || !supabaseKey) {
-        throw new Error('Missing Supabase credentials');
-    }
-
     try {
-        console.log('[createCustomer] START (pure fetch)');
-
-        // If token not provided, try to get from session with timeout
         let authToken = token;
         if (!authToken) {
             const session = await getSessionSafe();
             authToken = session?.access_token;
         }
 
-        if (!authToken) {
-            console.warn('[createCustomer] No auth token found, using ANON key (might fail RLS)');
-        }
-
         const response = await fetch(
-            `${supabaseUrl}/rest/v1/customers`,
+            `${supabaseUrl}/rest/v1/customers?id=eq.${id}`,
             {
-                method: 'POST',
+                method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
-                    'apikey': supabaseKey,
+                    'apikey': supabaseKey || '',
                     'Authorization': `Bearer ${authToken || supabaseKey}`,
-                    'Prefer': 'return=representation'
+                    'Prefer': 'return=minimal'
                 },
                 body: JSON.stringify({
-                    name: customer.name,
-                    phone: customer.phone,
-                    email: customer.email,
-                    address: customer.address,
-                    type: customer.type || 'tap_hoa',
-                    province: customer.province,
-                    district: customer.district,
-                    owner_user_id: customer.owner_user_id,
-                    status: customer.status || 'active'
+                    ...updates,
+                    // If we want to track update timestamps on customers too
                 })
             }
         );
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('[createCustomer] Error:', response.status, errorText);
-            let errorMessage = errorText;
-            try {
-                const errorJson = JSON.parse(errorText);
-                errorMessage = errorJson.message || errorJson.error || errorText;
-            } catch { }
+        if (response.ok) {
+            invalidateCRMCache();
+            return true;
+        }
+        return false;
+    } catch (err) {
+        return false;
+    }
+}
 
-            // Helpful messages for common errors
-            if (response.status === 409) errorMessage = "Số điện thoại này đã tồn tại!";
-            if (response.status === 401) errorMessage = "Bạn không có quyền thực hiện hành động này (Unauthorized).";
+export async function deleteCustomer(id: string, token?: string): Promise<boolean> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-            throw new Error(errorMessage);
+    try {
+        let authToken = token;
+        if (!authToken) {
+            const session = await getSessionSafe();
+            authToken = session?.access_token;
         }
 
-        const data = await response.json();
-        console.log('[createCustomer] SUCCESS');
+        const response = await fetch(
+            `${supabaseUrl}/rest/v1/customers?id=eq.${id}`,
+            {
+                method: 'DELETE',
+                headers: {
+                    'apikey': supabaseKey || '',
+                    'Authorization': `Bearer ${authToken || supabaseKey}`
+                }
+            }
+        );
 
-        // Return first item from array (POST returns array)
-        return (Array.isArray(data) ? data[0] : data) as Customer;
+        if (response.ok) {
+            invalidateCRMCache();
+            return true;
+        }
+        return false;
     } catch (err) {
-        console.error('[createCustomer] exception:', err);
-        throw err;
+        console.error('deleteCustomer exception:', err);
+        return false;
     }
 }
 
@@ -349,38 +390,41 @@ export async function fetchDeals(ownerId?: string, token?: string): Promise<CRMD
         return [];
     }
 
-    try {
-        console.log('[fetchDeals] START (pure fetch) for owner:', ownerId);
+    const cacheKey = `deals:${ownerId}`;
+    return fetchWithCache(cacheKey, async () => {
+        try {
+            console.log('[fetchDeals] START (pure fetch) for owner:', ownerId);
 
-        const response = await fetch(
-            `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*)&owner_user_id=eq.${ownerId}&order=created_at.desc`,
-            {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': supabaseKey,
-                    'Authorization': `Bearer ${token || supabaseKey}`
+            const response = await fetch(
+                `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*)&owner_user_id=eq.${ownerId}&order=created_at.desc`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${token || supabaseKey}`
+                    }
                 }
-            }
-        );
+            );
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('[fetchDeals] Error:', response.status, errorText);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('[fetchDeals] Error:', response.status, errorText);
+                return [];
+            }
+
+            const data = await response.json();
+            console.log('[fetchDeals] SUCCESS, count:', data.length);
+
+            return (data || []).map((d: any) => ({
+                ...d,
+                customer: Array.isArray(d.customer) ? d.customer[0] || null : (d.customer || null)
+            })) as CRMDeal[];
+        } catch (err) {
+            console.error('[fetchDeals] exception:', err);
             return [];
         }
-
-        const data = await response.json();
-        console.log('[fetchDeals] SUCCESS, count:', data.length);
-
-        return (data || []).map((d: any) => ({
-            ...d,
-            customer: Array.isArray(d.customer) ? d.customer[0] || null : (d.customer || null)
-        })) as CRMDeal[];
-    } catch (err) {
-        console.error('[fetchDeals] exception:', err);
-        return [];
-    }
+    });
 }
 
 // Fetch ALL deals (Admin, Sale Admin use this) - Using PURE FETCH
@@ -393,38 +437,41 @@ export async function fetchAllDeals(token?: string): Promise<CRMDeal[]> {
         return [];
     }
 
-    try {
-        console.log('[fetchAllDeals] START (pure fetch)');
+    const cacheKey = `deals:all`;
+    return fetchWithCache(cacheKey, async () => {
+        try {
+            console.log('[fetchAllDeals] START (pure fetch)');
 
-        const response = await fetch(
-            `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*)&order=created_at.desc`,
-            {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': supabaseKey,
-                    'Authorization': `Bearer ${token || supabaseKey}`
+            const response = await fetch(
+                `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*)&order=created_at.desc`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': supabaseKey,
+                        'Authorization': `Bearer ${token || supabaseKey}`
+                    }
                 }
-            }
-        );
+            );
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('[fetchAllDeals] Error:', response.status, errorText);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('[fetchAllDeals] Error:', response.status, errorText);
+                return [];
+            }
+
+            const data = await response.json();
+            console.log('[fetchAllDeals] SUCCESS, count:', data.length);
+
+            return (data || []).map((d: any) => ({
+                ...d,
+                customer: Array.isArray(d.customer) ? d.customer[0] || null : (d.customer || null)
+            })) as CRMDeal[];
+        } catch (err) {
+            console.error('[fetchAllDeals] exception:', err);
             return [];
         }
-
-        const data = await response.json();
-        console.log('[fetchAllDeals] SUCCESS, count:', data.length);
-
-        return (data || []).map((d: any) => ({
-            ...d,
-            customer: Array.isArray(d.customer) ? d.customer[0] || null : (d.customer || null)
-        })) as CRMDeal[];
-    } catch (err) {
-        console.error('[fetchAllDeals] exception:', err);
-        return [];
-    }
+    });
 }
 
 // Wrapper: Auto-select based on user role
@@ -439,6 +486,103 @@ export async function fetchDealsForUser(
     }
     // Others (telesales, sales) see only their own
     return fetchDeals(userId, token);
+}
+
+/**
+ * Fetches a paginated and filterable list of deals.
+ * All filtering, searching, and pagination is done on the server using REST.
+ */
+export async function fetchPaginatedDeals(
+    page: number = 1,
+    pageSize: number = 15,
+    stage: DealStage | 'all' = 'all',
+    searchTerm?: string,
+    ownerId?: string,
+    token?: string
+): Promise<{ data: CRMDeal[]; count: number }> {
+    const from = (page - 1) * pageSize;
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    try {
+        let url = `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*)`;
+
+        const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            'apikey': supabaseKey || '',
+            'Authorization': `Bearer ${token || supabaseKey}`,
+            'Prefer': 'count=exact'
+        };
+
+        const filters: string[] = [];
+
+        if (stage !== 'all') {
+            filters.push(`stage=eq.${stage}`);
+        }
+
+        if (searchTerm) {
+            filters.push(`title=ilike.*${searchTerm}*`);
+        }
+
+        if (ownerId) {
+            filters.push(`owner_user_id=eq.${ownerId}`);
+        }
+
+        if (filters.length > 0) {
+            url += `&${filters.join('&')}`;
+        }
+
+        // Ordering and Range (PostgREST uses offset/limit)
+        url += `&order=updated_at.desc&offset=${from}&limit=${pageSize}`;
+
+        const response = await fetch(url, { method: 'GET', headers });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('[fetchPaginatedDeals] Error:', response.status, errorText);
+            throw new Error(`Failed to fetch paginated deals: ${errorText}`);
+        }
+
+        const countHeader = response.headers.get('Content-Range');
+        const count = countHeader ? parseInt(countHeader.split('/')[1]) : 0;
+        const data = await response.json();
+
+        const formattedData = (data || []).map((d: any) => ({
+            ...d,
+            customer: Array.isArray(d.customer) ? d.customer[0] || null : (d.customer || null)
+        })) as CRMDeal[];
+
+        return { data: formattedData, count };
+    } catch (err) {
+        console.error('[fetchPaginatedDeals] exception:', err);
+        throw err;
+    }
+}
+
+/**
+ * Fetches the count of deals per stage and global metrics (overdue/today) using efficient RPC.
+ */
+export async function getDealStageCounts(ownerId?: string, token?: string): Promise<{
+    stages: Record<string, number>;
+    overdue: number;
+    today: number;
+}> {
+    try {
+        const { data, error } = await supabase.rpc('get_crm_deal_counts', {
+            p_owner_id: ownerId || null
+        });
+
+        if (error) {
+            console.error('[getDealStageCounts] error:', error);
+            return { stages: {}, overdue: 0, today: 0 };
+        }
+
+        return (data || { stages: {}, overdue: 0, today: 0 }) as any;
+    } catch (err) {
+        console.error('[getDealStageCounts] exception:', err);
+        return { stages: {}, overdue: 0, today: 0 };
+    }
 }
 
 // Check if user can edit/delete a deal
@@ -554,6 +698,9 @@ export async function createDeal(deal: {
         const data = await response.json();
         console.log('[createDeal] SUCCESS');
 
+        // IMPORTANT: Invalidate cache when data changes
+        invalidateCRMCache();
+
         // Return first item from array (POST returns array)
         const newDeal = Array.isArray(data) ? data[0] : data;
 
@@ -630,6 +777,8 @@ export async function updateDeal(id: string, updates: Partial<CRMDeal>, token?: 
         }
 
         console.log('[updateDeal] SUCCESS (pure fetch)');
+        // IMPORTANT: Invalidate cache when data changes
+        invalidateCRMCache();
         return true;
     } catch (err) {
         console.error('[updateDeal] exception:', err);
@@ -664,6 +813,8 @@ export async function deleteDeal(id: string, token?: string): Promise<boolean> {
             return false;
         }
 
+        // IMPORTANT: Invalidate cache when data changes
+        invalidateCRMCache();
         return true;
     } catch (err) {
         console.error('deleteDeal exception:', err);

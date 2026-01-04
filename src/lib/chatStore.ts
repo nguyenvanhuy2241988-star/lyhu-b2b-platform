@@ -139,6 +139,7 @@ interface ChatState {
     initPresence: (userId: string) => void;
     cleanupPresence: () => void;
     getTotalUnreadCount: () => number;
+    cleanupAll: () => void;
 }
 
 // ============================================
@@ -535,9 +536,51 @@ export const useChatStore = create<ChatState>((set, get) => ({
         return data || [];
     },
 
-    sendTyping: () => { },
-    initPresence: () => { },
-    cleanupPresence: () => { },
+    sendTyping: (conversationId: string, isTyping: boolean) => {
+        const { realtimeChannel } = get();
+        if (realtimeChannel) {
+            realtimeChannel.track({ is_typing: isTyping });
+        }
+    },
+
+    initPresence: (userId: string) => {
+        console.log('[ChatStore] Initializing Presence for:', userId);
+        const { globalChannel } = get();
+        if (globalChannel) supabase.removeChannel(globalChannel);
+
+        const channel = supabase.channel(`presence-${userId}`, {
+            config: { presence: { key: userId } }
+        });
+
+        channel
+            .on('presence', { event: 'sync' }, () => {
+                const state = channel.presenceState();
+                const users = Object.keys(state);
+                set({ onlineUsers: users });
+            })
+            .on('presence', { event: 'join', key: userId }, ({ newPresences }: any) => {
+                console.log('[Presence] Join:', newPresences);
+            })
+            .on('presence', { event: 'leave', key: userId }, ({ leftPresences }: any) => {
+                console.log('[Presence] Leave:', leftPresences);
+            })
+            .subscribe(async (status: string) => {
+                if (status === 'SUBSCRIBED') {
+                    await channel.track({ online_at: new Date().toISOString() });
+                }
+            });
+
+        set({ globalChannel: channel });
+    },
+
+    cleanupPresence: () => {
+        const { globalChannel } = get();
+        if (globalChannel) {
+            console.log('[ChatStore] Cleaning up Presence');
+            supabase.removeChannel(globalChannel);
+        }
+        set({ globalChannel: null, onlineUsers: [] });
+    },
 
     subscribeToGlobalMessages: (userId: string, callback: (payload: any) => void) => {
         const channel = supabase.channel(`global-${userId}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'internal_messages' }, (payload: any) => callback(payload.new)).subscribe();
@@ -562,6 +605,23 @@ export const useChatStore = create<ChatState>((set, get) => ({
     },
 
     getTotalUnreadCount: () => get().conversations.reduce((sum: number, c: any) => sum + (c.unread_count || 0), 0),
+
+    cleanupAll: () => {
+        console.log('[ChatStore] Running global cleanup');
+        const { realtimeChannel, globalChannel, participantsChannel, pollingInterval } = get();
+        if (realtimeChannel) supabase.removeChannel(realtimeChannel);
+        if (globalChannel) supabase.removeChannel(globalChannel);
+        if (participantsChannel) supabase.removeChannel(participantsChannel);
+        if (pollingInterval) clearInterval(pollingInterval);
+        set({
+            realtimeChannel: null,
+            globalChannel: null,
+            participantsChannel: null,
+            pollingInterval: null,
+            activeConversationId: null,
+            messages: []
+        });
+    }
 }));
 
 // --- Helpers for cleaner code ---

@@ -28,21 +28,17 @@ export async function GET(request: Request) {
     const code = url.searchParams.get("code");
     const nextParam = url.searchParams.get("next"); // dạng "/admin" ...
 
-    // Use NEXT_PUBLIC_SITE_URL if available
-    let baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    // Priority: 1. Avoid localhost redirect in Production, 2. Current origin on localhost, 3. NEXT_PUBLIC_SITE_URL
+    let baseUrl = url.origin;
 
-    // Fallback logic for Vercel
-    if (!baseUrl) {
-        if (process.env.VERCEL_URL) {
+    // In production, if NEXT_PUBLIC_SITE_URL is set, use it.
+    // If not, use VERCEL_URL if available.
+    if (process.env.NODE_ENV === 'production') {
+        if (process.env.NEXT_PUBLIC_SITE_URL) {
+            baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
+        } else if (process.env.VERCEL_URL) {
             baseUrl = `https://${process.env.VERCEL_URL}`;
-        } else {
-            baseUrl = url.origin;
         }
-    }
-
-    // Safety check: Avoid localhost on non-local environments
-    if (baseUrl.includes('localhost') && process.env.NODE_ENV === 'production' && process.env.VERCEL_URL) {
-        baseUrl = `https://${process.env.VERCEL_URL}`;
     }
 
     if (!code) return NextResponse.redirect(`${baseUrl}/login?error=no_code`);

@@ -23,6 +23,46 @@ const getAuthHeaders = async (token?: string) => {
     };
 };
 
+// =====================================================
+// PERFORMANCE OPTIMIZATION (Cache & Deduplication)
+// =====================================================
+const TASK_CACHE = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 5000; // 5 seconds
+const TASK_FETCHING = new Map<string, Promise<any>>();
+
+async function fetchWithCache<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+    const now = Date.now();
+    const cached = TASK_CACHE.get(key);
+
+    if (cached && (now - cached.timestamp) < CACHE_TTL) {
+        console.log(`[Tasks Cache] Using cached data for ${key}`);
+        return cached.data as T;
+    }
+
+    if (TASK_FETCHING.has(key)) {
+        console.log(`[Tasks Dedupe] Already fetching ${key}`);
+        return TASK_FETCHING.get(key) as Promise<T>;
+    }
+
+    const fetchPromise = (async () => {
+        try {
+            const data = await fetcher();
+            TASK_CACHE.set(key, { data, timestamp: Date.now() });
+            return data;
+        } finally {
+            TASK_FETCHING.delete(key);
+        }
+    })();
+
+    TASK_FETCHING.set(key, fetchPromise);
+    return fetchPromise;
+}
+
+export function invalidateTasksCache() {
+    console.log('[Tasks Cache] Invalidating Tasks Cache');
+    TASK_CACHE.clear();
+}
+
 export const TABLE = 'telesales_tasks' as const;
 
 export type TaskPriority = 'low' | 'normal' | 'high' | 'urgent';
@@ -146,37 +186,50 @@ function logSupabaseError(where: string, error: any) {
 // ---- API ----
 // ---- API ----
 export async function fetchTasks(userId?: string, token?: string, filters?: { startDate?: string, endDate?: string }): Promise<TelesalesTask[]> {
-    try {
-        const activeUserId = userId || await getUserIdSafe();
-        if (!activeUserId) return [];
-
-        const headers = await getAuthHeaders(token);
-        // Query: user_id=eq.ID or assigned_to=eq.ID or assignee_ids contains ID or leader_id=eq.ID
-        let query = `or=(user_id.eq.${activeUserId},assigned_to.eq.${activeUserId},assignee_ids.cs.{${activeUserId}},leader_id.eq.${activeUserId})&order=order.asc.nullsfirst,created_at.desc`;
-
-        if (filters?.startDate) {
-            query += `&completed_at=gte.${filters.startDate}`;
-        }
-        if (filters?.endDate) {
-            query += `&completed_at=lte.${filters.endDate}`;
-        }
-
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*&${query}`, {
-            headers
-        });
-
-        if (!res.ok) {
-            const err = await res.json();
-            logSupabaseError('fetchTasks', err);
-            return [];
-        }
-
-        const data = await res.json();
-        return (data ?? []) as TelesalesTask[];
-    } catch (e) {
-        logSupabaseError('fetchTasks - Exception', e);
+    const activeUserId = userId || await getUserIdSafe();
+    if (!activeUserId) {
+        console.warn('[Tasks Store] fetchTasks failed: No activeUserId');
         return [];
     }
+
+    const cacheKey = `tasks:${activeUserId}:${filters?.startDate || ''}:${filters?.endDate || ''}`;
+
+    if (TASK_FETCHING.has(cacheKey)) {
+        console.log(`[Tasks Dedupe] Already fetching tasks for: ${activeUserId}. Skipping duplicate call.`);
+        return TASK_FETCHING.get(cacheKey) as Promise<TelesalesTask[]>;
+    }
+
+    return fetchWithCache(cacheKey, async () => {
+        try {
+            console.log(`[Tasks Store] Fetching tasks for: ${activeUserId}`);
+            const headers = await getAuthHeaders(token);
+            let query = `or=(user_id.eq.${activeUserId},assigned_to.eq.${activeUserId},assignee_ids.cs.{${activeUserId}},leader_id.eq.${activeUserId})&order=order.asc.nullsfirst,created_at.desc`;
+
+            if (filters?.startDate) {
+                query += `&completed_at=gte.${filters.startDate}`;
+            }
+            if (filters?.endDate) {
+                query += `&completed_at=lte.${filters.endDate}`;
+            }
+
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*&${query}`, {
+                headers
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                logSupabaseError('fetchTasks', err);
+                return [];
+            }
+
+            const data = await res.json();
+            console.log(`[Tasks Store] ✅ Fetched successfully: ${data?.length || 0} tasks`);
+            return (data ?? []) as TelesalesTask[];
+        } catch (e) {
+            logSupabaseError('fetchTasks - Exception', e);
+            return [];
+        }
+    });
 }
 
 export async function createTaskSupabase(input: {
@@ -257,6 +310,7 @@ export async function createTaskSupabase(input: {
         }
 
         const data = await res.json();
+        invalidateTasksCache();
         return data[0] as TelesalesTask;
     } catch (e: any) {
         console.error("createTaskSupabase Exception:", e);
@@ -302,6 +356,7 @@ export async function updateTaskSupabase(taskId: string, patch: Partial<Telesale
             return false;
         }
 
+        invalidateTasksCache();
         return true;
     } catch (e) {
         console.error("updateTaskSupabase Exception:", e);
@@ -330,6 +385,7 @@ export async function deleteTaskSupabase(taskId: string, token?: string) {
             return { ok: false, error: err.message };
         }
 
+        invalidateTasksCache();
         return { ok: true };
     } catch (e) {
         logSupabaseError('deleteTaskSupabase exception', e);
@@ -414,4 +470,133 @@ export async function createLeadAsTask(input: {
         due_date: input.due_date ?? null,
         type: 'task', // Phase 3: Changed from 'lead' to 'task'
     });
+}
+
+/**
+ * NEW: Fetches tasks with server-side pagination, search, and filtering.
+ * Optimized for Kanban column loading.
+ */
+export async function fetchPaginatedTasks({
+    userId,
+    status,
+    page = 1,
+    pageSize = 20,
+    filters = {},
+    token
+}: {
+    userId?: string;
+    status: TaskStatus | string;
+    page?: number;
+    pageSize?: number;
+    filters?: {
+        searchTerm?: string;
+        priority?: TaskPriority | "all";
+        dueDate?: "all" | "overdue" | "today" | "week";
+        customerType?: "all" | "customer" | "personal";
+    };
+    token?: string;
+}): Promise<{ data: TelesalesTask[], count: number }> {
+    try {
+        const activeUserId = userId || await getUserIdSafe();
+        if (!activeUserId) return { data: [], count: 0 };
+
+        const headers = await getAuthHeaders(token);
+        headers['Prefer'] = 'count=exact'; // Important for getting total count
+        const offset = (page - 1) * pageSize;
+
+        // Base Query
+        let query = `status=eq.${status}&or=(user_id.eq.${activeUserId},assigned_to.eq.${activeUserId},assignee_ids.cs.{${activeUserId}},leader_id.eq.${activeUserId})&order=order.asc.nullsfirst,created_at.desc&offset=${offset}&limit=${pageSize}`;
+
+        // Search Filter
+        if (filters.searchTerm) {
+            const safeSearch = encodeURIComponent(`%${filters.searchTerm}%`);
+            query += `&or=(title.ilike.${safeSearch},customer_name.ilike.${safeSearch},phone.ilike.${safeSearch})`;
+        }
+
+        // Priority Filter
+        if (filters.priority && filters.priority !== 'all') {
+            query += `&priority=eq.${filters.priority}`;
+        }
+
+        // Due Date Filter
+        if (filters.dueDate && filters.dueDate !== 'all') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (filters.dueDate === "overdue") {
+                query += `&due_date=lt.${today.toISOString()}&status=neq.done`;
+            } else if (filters.dueDate === "today") {
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                query += `&due_date=gte.${today.toISOString()}&due_date=lt.${tomorrow.toISOString()}`;
+            } else if (filters.dueDate === "week") {
+                const weekFromNow = new Date(today);
+                weekFromNow.setDate(weekFromNow.getDate() + 7);
+                query += `&due_date=gte.${today.toISOString()}&due_date=lt.${weekFromNow.toISOString()}`;
+            }
+        }
+
+        // Customer Type Filter
+        if (filters.customerType && filters.customerType !== 'all') {
+            if (filters.customerType === 'customer') {
+                query += '&or=(customer_name.is.not.null,phone.is.not.null)';
+            } else if (filters.customerType === 'personal') {
+                query += '&customer_name=is.null&phone=is.null';
+            }
+        }
+
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?select=*,count=exact&${query}`, {
+            headers
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            logSupabaseError('fetchPaginatedTasks', err);
+            return { data: [], count: 0 };
+        }
+
+        const contentRange = res.headers.get('content-range');
+        const count = contentRange ? parseInt(contentRange.split('/')[1], 10) : 0;
+        const data = await res.json();
+
+        return { data: (data ?? []) as TelesalesTask[], count };
+    } catch (e) {
+        logSupabaseError('fetchPaginatedTasks - Exception', e);
+        return { data: [], count: 0 };
+    }
+}
+
+/**
+ * NEW: Updates the order/rank of tasks in bulk.
+ * Essential for smooth Kanban Drag & Drop.
+ */
+export async function updateTasksOrderSupabase(updates: { id: string, order: number }[], token?: string): Promise<boolean> {
+    const userId = await getUserIdSafe();
+    if (!userId) {
+        console.error("[updateTasksOrderSupabase] Not authenticated.");
+        return false;
+    }
+
+    try {
+        const headers = await getAuthHeaders(token);
+
+        // Use Promise.all to update orders in parallel via REST API
+        const requests = updates.map(u => fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${u.id}`, {
+            method: 'PATCH',
+            headers: { ...headers, 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ order: u.order })
+        }));
+
+        const responses = await Promise.all(requests);
+        const allOk = responses.every(res => res.ok);
+
+        if (!allOk) {
+            console.error("[updateTasksOrderSupabase] One or more requests failed.");
+            return false;
+        }
+
+        return true;
+    } catch (e) {
+        logSupabaseError('updateTasksOrderSupabase - Exception', e);
+        return false;
+    }
 }

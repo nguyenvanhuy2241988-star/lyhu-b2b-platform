@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useRef } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import { useChatStore } from "@/lib/chatStore";
@@ -27,20 +27,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [role, setRole] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
+    const isInitialized = useRef(false);
+    const authCheckInProgress = useRef(false);
+
     const checkAuth = async () => {
+        if (authCheckInProgress.current) return;
+        authCheckInProgress.current = true;
         try {
             console.log('[AuthProvider] checkAuth started');
 
-            // 🚀 FAST PATH: Try local data first to unblock UI immediately
+            // 🚀 FAST PATH: Load from localStorage but DO NOT set isLoading(false) here
+            // setting isLoading(false) here causes Guard to trigger before Role is confirmed from server
             if (typeof window !== "undefined") {
                 const mockUserStr = localStorage.getItem("lyhu_user");
                 if (mockUserStr) {
                     try {
                         const mockUser = JSON.parse(mockUserStr);
                         setUser(mockUser);
-                        setRole(mockUser.role || "customer");
-                        setIsLoading(false); // Unblock early if we have a trace of a user
-                        console.log('[AuthProvider] Early unblock with local user');
+                        // Do NOT setRole or setIsLoading(false) yet to avoid mismatch
+                        console.log('[AuthProvider] Pre-loaded local user data');
                     } catch (e) { }
                 }
             }
@@ -94,7 +99,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } catch (err) {
             console.error('[AuthProvider] checkAuth catastrophic error:', err);
         } finally {
+            authCheckInProgress.current = false;
             setIsLoading(false);
+            isInitialized.current = true;
             console.log('[AuthProvider] checkAuth finished');
         }
     };
@@ -112,7 +119,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.log('[AuthProvider] Legacy mock data keys cleared');
         }
 
-        checkAuth();
+        if (!isInitialized.current) {
+            checkAuth();
+        }
 
         // Listen for Supabase changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
@@ -123,7 +132,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     email: session.user.email,
                     ...(session.user.user_metadata || {})
                 };
-                setUser(userObj);
+
+                // ✅ ONLY update user state if the ID or metadata actually changed
+                setUser((prev: any) => {
+                    if (prev?.id === userObj.id && JSON.stringify(prev) === JSON.stringify(userObj)) return prev;
+                    return userObj;
+                });
 
                 // ✅ Set realtime auth token on auth state change
                 if (session.access_token) {
@@ -140,13 +154,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     .select("role")
                     .eq("id", session.user.id)
                     .single();
-                setRole(profile?.role ?? null);
+
+                const newRole = profile?.role ?? null;
+                setRole(prev => {
+                    if (prev === newRole) return prev;
+                    return newRole;
+                });
             } else {
-                // If Supabase signs out, check if we fell back to Mock?
-                // Usually sign out means clear everything.
-                // But let's re-check auth to be safe or just clear.
-                // checkAuth(); // Might be recursive loop if not careful.
-                // Better to just clear unless we have a "user-updated" event handling mock login.
                 setSession(null);
                 setUser(null);
                 setRole(null);
@@ -162,11 +176,48 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         if (user?.id) {
             useChatStore.getState().initPresence(user.id);
+
+            // 🚀 REAL-TIME ROLE SYNC: Watch for profile updates
+            console.log('[AuthProvider] Subscribing to profile changes for:', user.id);
+            const channelName = `auth-profile-sync-${user.id}`;
+            const profileSubscription = supabase
+                .channel(channelName)
+                .on(
+                    'postgres_changes',
+                    {
+                        event: 'UPDATE',
+                        schema: 'public',
+                        table: 'profiles',
+                        filter: `id=eq.${user.id}`,
+                    },
+                    (payload: any) => {
+                        console.log('[AuthProvider] Profile updated in Realtime:', payload.new);
+                        const newSyncRole = payload.new.role;
+                        // Avoid direct role dependency in useEffect to prevent loop
+                        // instead use internal comparison inside setter
+                        setRole(prev => {
+                            if (newSyncRole && newSyncRole !== prev) {
+                                console.log(`[AuthProvider] Role synced from ${prev} to ${newSyncRole}`);
+                                // Update local storage too
+                                const updatedUser = { ...user, role: newSyncRole };
+                                localStorage.setItem("lyhu_user", JSON.stringify(updatedUser));
+                                return newSyncRole;
+                            }
+                            return prev;
+                        });
+                    }
+                )
+                .subscribe();
+
+            return () => {
+                console.log('[AuthProvider] Cleanup profile sync channel:', channelName);
+                supabase.removeChannel(profileSubscription);
+            };
         }
         return () => {
             useChatStore.getState().cleanupPresence();
         };
-    }, [user?.id]);
+    }, [user?.id]); // ❌ Removed 'role' from dependency to break re-subscription loop
 
     const signOut = async () => {
         await supabase.auth.signOut();

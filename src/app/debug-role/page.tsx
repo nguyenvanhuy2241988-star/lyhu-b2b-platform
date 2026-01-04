@@ -3,30 +3,31 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabaseClient';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function DebugRolePage() {
-    const [user, setUser] = useState<any>(null);
+    const { user, role: currentRole, isLoading: authLoading } = useAuth();
     const [profile, setProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
     useEffect(() => {
-        loadData();
-    }, []);
+        if (authLoading) return;
+        if (user) {
+            loadProfile();
+        } else {
+            setLoading(false);
+        }
+    }, [user, authLoading]);
 
-    const loadData = async () => {
+    const loadProfile = async () => {
         try {
             setLoading(true);
             const supabase = createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-            setUser(user);
-
-            if (user) {
-                const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-                setProfile(data);
-            }
+            const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
+            setProfile(data);
         } catch (err) {
-            console.error("loadData error:", err);
+            console.error("loadProfile error:", err);
         } finally {
             setLoading(false);
         }
@@ -41,14 +42,14 @@ export default function DebugRolePage() {
         if (error) {
             alert('Lỗi: ' + error.message);
         } else {
-            alert('Thành công! Hãy logout và login lại để áp dụng.');
-            // Force logout
-            await supabase.auth.signOut();
-            router.push('/login');
+            console.log(`[DebugRole] Role updated to ${newRole}. The AuthProvider realtime subscription will handle the state update.`);
+            alert('Thành công! Vai trò đã được cập nhật.');
+            // We no longer strictly need logout/login if Realtime sync is active, but a refresh helps clean state.
+            window.location.reload();
         }
     };
 
-    if (loading) return <div className="p-10">Loading...</div>;
+    if (authLoading || loading) return <div className="p-10 flex items-center gap-2"><div className="animate-spin w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full" /> Loading...</div>;
     if (!user) return <div className="p-10">Chưa đăng nhập. <a href="/login" className="text-blue-600 underline">Login</a></div>;
 
     const roles = ['admin', 'telesales', 'marketing', 'warehouse', 'recruiter', 'sales', 'ctv', 'customer', 'ecommerce', 'rnd', 'shipper', 'accountant', 'sale_admin', 'livestream'];

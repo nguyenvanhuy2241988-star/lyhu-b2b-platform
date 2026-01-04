@@ -19,6 +19,7 @@ export default function TelesalesCustomersPage() {
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState("");
     const [showAddForm, setShowAddForm] = useState(false);
+    const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -66,6 +67,7 @@ export default function TelesalesCustomersPage() {
         }
 
         setIsSaving(true);
+        const { createCustomer } = await import("@/lib/crmDealsStore");
         const newCustomer = await createCustomer({
             name: formName.trim(),
             phone: formPhone.trim(),
@@ -77,17 +79,54 @@ export default function TelesalesCustomersPage() {
         }, session?.access_token);
 
         if (newCustomer) {
-            setShowAddForm(false);
-            setFormName("");
-            setFormPhone("");
-            setFormType("tap_hoa");
-            setFormAddress("");
-            setFormEmail("");
+            resetForm();
             loadData();
         } else {
             alert("Không thể tạo khách hàng. Vui lòng thử lại.");
         }
         setIsSaving(false);
+    };
+
+    const handleEditCustomer = async () => {
+        if (!editingCustomer || !formName.trim() || !formPhone.trim()) return;
+
+        setIsSaving(true);
+        const { updateCustomer } = await import("@/lib/crmDealsStore");
+        const success = await updateCustomer(editingCustomer.id, {
+            name: formName.trim(),
+            phone: formPhone.trim(),
+            email: formEmail.trim() || undefined,
+            address: formAddress.trim() || undefined,
+            type: formType,
+        }, session?.access_token);
+
+        if (success) {
+            resetForm();
+            loadData();
+        } else {
+            alert("Không thể cập nhật thông tin. Vui lòng thử lại.");
+        }
+        setIsSaving(false);
+    };
+
+    const resetForm = () => {
+        setShowAddForm(false);
+        setEditingCustomer(null);
+        setFormName("");
+        setFormPhone("");
+        setFormType("tap_hoa");
+        setFormAddress("");
+        setFormEmail("");
+    };
+
+    const handleEditClick = (customer: Customer) => {
+        setEditingCustomer(customer);
+        setFormName(customer.name);
+        setFormPhone(customer.phone);
+        setFormType(customer.type || "tap_hoa");
+        setFormAddress(customer.address || "");
+        setFormEmail(customer.email || "");
+        setShowAddForm(true);
     };
 
     const handleCreateDeal = (customer: Customer) => {
@@ -216,6 +255,12 @@ export default function TelesalesCustomersPage() {
                                                 <UserPlus className="w-3.5 h-3.5 inline mr-1" />
                                                 Tạo cơ hội
                                             </button>
+                                            <button
+                                                onClick={() => handleEditClick(customer)}
+                                                className="px-3 py-1.5 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded text-xs font-medium transition-colors"
+                                            >
+                                                Sửa
+                                            </button>
                                             <button className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100">
                                                 <MoreHorizontal className="w-4 h-4" />
                                             </button>
@@ -242,8 +287,10 @@ export default function TelesalesCustomersPage() {
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
                         <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-                            <h3 className="font-semibold text-slate-900">Thêm khách hàng mới</h3>
-                            <button onClick={() => setShowAddForm(false)} className="text-slate-400 hover:text-slate-600">
+                            <h3 className="font-semibold text-slate-900">
+                                {editingCustomer ? "Chỉnh sửa khách hàng" : "Thêm khách hàng mới"}
+                            </h3>
+                            <button onClick={resetForm} className="text-slate-400 hover:text-slate-600">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
@@ -303,18 +350,18 @@ export default function TelesalesCustomersPage() {
                             </div>
                             <div className="pt-2 flex justify-end gap-3">
                                 <button
-                                    onClick={() => setShowAddForm(false)}
+                                    onClick={resetForm}
                                     className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium"
                                 >
                                     Hủy
                                 </button>
                                 <button
-                                    onClick={handleCreateCustomer}
+                                    onClick={editingCustomer ? handleEditCustomer : handleCreateCustomer}
                                     disabled={isSaving}
                                     className="px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50"
                                 >
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                    Lưu khách hàng
+                                    {editingCustomer ? "Cập nhật" : "Lưu khách hàng"}
                                 </button>
                             </div>
                         </div>

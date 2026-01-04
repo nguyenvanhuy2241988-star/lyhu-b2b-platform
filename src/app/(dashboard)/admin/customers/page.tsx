@@ -1,156 +1,264 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { fetchUsers } from "@/lib/usersStore";
-import { User } from "@/lib/usersStore";
-import { Phone, Mail, MapPin, Loader2 } from "lucide-react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { fetchCustomers, Customer, updateCustomer, deleteCustomer } from "@/lib/crmDealsStore";
+import { fetchUsers, User } from "@/lib/usersStore";
+import {
+    Phone, Mail, MapPin, Loader2, Building2,
+    Search, Filter, Pencil, Trash2, X, Save,
+    UserCircle, AlertCircle
+} from "lucide-react";
+import { useAuth } from "@/components/auth/AuthProvider";
 
-const CUSTOMER_TYPES = ["Tất cả", "Tạp hóa", "Mini mart", "Đại lý", "NPP"] as const;
+const CUSTOMER_TYPES = ["Tất cả", "Tạp hóa", "Mini mart", "Đại lý", "NPP", "Siêu thị"] as const;
 
-export default function CustomersPage() {
+export default function AdminCustomersPage() {
+    const { session } = useAuth();
     const [selectedType, setSelectedType] = useState<string>("Tất cả");
-    const [customers, setCustomers] = useState<User[]>([]);
+    const [selectedOwner, setSelectedOwner] = useState<string>("Tất cả");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Edit state
+    const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+    const [editForm, setEditForm] = useState<Partial<Customer>>({});
+
+    const loadData = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const [custData, userData] = await Promise.all([
+                fetchCustomers(undefined, session?.access_token),
+                fetchUsers(session?.access_token)
+            ]);
+            setCustomers(custData);
+            setUsers(userData);
+        } catch (err) {
+            console.error("Failed to load data:", err);
+        } finally {
+            setIsLoading(false);
+        }
+    }, [session]);
 
     useEffect(() => {
-        const load = async () => {
-            setIsLoading(true);
-            try {
-                const allUsers = await fetchUsers();
-                // Filter only customers
-                const justCustomers = allUsers.filter(u => u.role === 'customer');
-                setCustomers(justCustomers);
-            } catch (err) {
-                console.error("Failed to load customers:", err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        load();
-    }, []);
+        loadData();
+    }, [loadData]);
+
+    const reverseTypeMap: Record<string, string> = {
+        'Tạp hóa': 'tap_hoa',
+        'Mini mart': 'mini_mart',
+        'Đại lý': 'dai_ly',
+        'NPP': 'npp',
+        'Siêu thị': 'sieu_thi'
+    };
+
+    const typeMap: Record<string, string> = {
+        'tap_hoa': 'Tạp hóa',
+        'mini_mart': 'Mini mart',
+        'dai_ly': 'Đại lý',
+        'npp': 'NPP',
+        'sieu_thi': 'Siêu thị'
+    };
 
     const filteredCustomers = useMemo(() => {
-        if (selectedType === "Tất cả") {
-            return customers;
+        if (!customers) return [];
+        return customers.filter((c) => {
+            const typeMatch = selectedType === "Tất cả" || c.type === reverseTypeMap[selectedType] || c.type === selectedType;
+            const ownerMatch = selectedOwner === "Tất cả" || c.owner_user_id === selectedOwner;
+            const searchMatch = !searchQuery ||
+                c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (c.phone && c.phone.includes(searchQuery));
+            return typeMatch && ownerMatch && searchMatch;
+        });
+    }, [selectedType, selectedOwner, searchQuery, customers]);
+
+    const handleEditClick = (customer: Customer) => {
+        setEditingCustomer(customer);
+        setEditForm({
+            name: customer.name,
+            phone: customer.phone,
+            email: customer.email || "",
+            address: customer.address || "",
+            type: customer.type || "tap_hoa"
+        });
+    };
+
+    const handleUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingCustomer) return;
+
+        setIsSaving(true);
+        try {
+            const success = await updateCustomer(editingCustomer.id, editForm, session?.access_token);
+            if (success) {
+                setEditingCustomer(null);
+                loadData();
+            } else {
+                alert("Cập nhật thất bại.");
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsSaving(false);
         }
-        return customers.filter((c: any) => c.type === selectedType || (selectedType === "Khác" && !c.type));
-    }, [selectedType, customers]);
+    };
+
+    const handleDelete = async (id: string, name: string) => {
+        if (!window.confirm(`Bạn có chắc chắn muốn xóa khách hàng "${name}"?`)) return;
+
+        try {
+            const success = await deleteCustomer(id, session?.access_token);
+            if (success) {
+                loadData();
+            } else {
+                alert("Xóa thất bại.");
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const getOwnerName = (ownerId?: string) => {
+        if (!ownerId) return "Chưa phân bổ";
+        const user = users.find(u => u.id === ownerId);
+        return user ? user.name : "Không xác định";
+    };
 
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div>
                 <h1 className="text-2xl font-bold text-slate-900">Quản lý khách hàng</h1>
-                <p className="text-sm text-slate-600 mt-1">
-                    Danh sách khách hàng B2B (GT/MT)
-                </p>
+                <p className="text-sm text-slate-600 mt-1">Danh sách khách hàng toàn hệ thống (Admin)</p>
             </div>
 
-            {/* Stats & Filter */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    {CUSTOMER_TYPES.slice(1).map((type) => {
-                        const count = customers.filter((c: any) => c.type === type).length;
-                        return (
-                            <div key={type} className="bg-white p-4 rounded-lg border border-slate-200">
-                                <p className="text-xs text-slate-600">{type}</p>
-                                <p className="text-xl font-bold text-slate-900 mt-1">{count}</p>
-                            </div>
-                        );
-                    })}
+            {/* Advanced Filters */}
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                    <div className="flex-1 relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="Tìm tên, số điện thoại..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                    </div>
                 </div>
-
-                {/* Filter */}
-                <div className="bg-white p-4 rounded-lg border border-slate-200">
-                    <label className="block text-xs text-slate-600 mb-2">Lọc theo loại</label>
-                    <select
-                        value={selectedType}
-                        onChange={(e) => setSelectedType(e.target.value)}
-                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    >
-                        {CUSTOMER_TYPES.map((type) => (
-                            <option key={type} value={type}>
-                                {type}
-                            </option>
-                        ))}
-                    </select>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Loại hình</label>
+                        <select
+                            value={selectedType}
+                            onChange={(e) => setSelectedType(e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        >
+                            {CUSTOMER_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Người phụ trách</label>
+                        <select
+                            value={selectedOwner}
+                            onChange={(e) => setSelectedOwner(e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        >
+                            <option value="Tất cả">Tất cả nhân viên</option>
+                            {users.filter(u => ['sales', 'telesales', 'ctv'].includes(u.role)).map(u => (
+                                <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="flex items-end lg:col-start-4 justify-end">
+                        <span className="text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg">
+                            Khách hàng: {filteredCustomers.length}
+                        </span>
+                    </div>
                 </div>
             </div>
 
             {/* Table */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden min-h-[400px]">
-                <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-                    <h3 className="font-semibold text-slate-900">
-                        Danh sách khách hàng
-                        {!isLoading && (
-                            <span className="ml-2 text-sm font-normal text-slate-500">
-                                ({filteredCustomers.length} khách hàng)
-                            </span>
-                        )}
-                    </h3>
-                </div>
-
                 {isLoading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-                        <p className="text-sm text-slate-500 mt-2">Đang tải danh sách khách hàng...</p>
+                        <p className="text-sm text-slate-500 mt-2">Đang tải dữ liệu khách hàng...</p>
                     </div>
                 ) : filteredCustomers.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                            <MapPin className="w-8 h-8 text-slate-300" />
-                        </div>
-                        <h3 className="text-lg font-medium text-slate-900">Chưa có khách hàng nào</h3>
-                        <p className="text-sm text-slate-500 mt-1 max-w-xs">
-                            Danh sách khách hàng đang trống. Nhân viên kinh doanh chưa cập nhật khách hàng nào lên hệ thống.
-                        </p>
+                        <Building2 className="w-12 h-12 text-slate-200 mb-4" />
+                        <p className="text-slate-500">Không tìm thấy khách hàng nào phù hợp.</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm min-w-[768px]">
-                            <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                        <table className="w-full text-left text-sm min-w-[1000px]">
+                            <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-medium">
                                 <tr>
-                                    <th className="px-6 py-3 font-medium">Tên cửa hàng</th>
-                                    <th className="px-6 py-3 font-medium">Loại hình</th>
-                                    <th className="px-6 py-3 font-medium">Khu vực</th>
-                                    <th className="px-6 py-3 font-medium">Liên hệ</th>
+                                    <th className="px-6 py-4">Tên khách hàng</th>
+                                    <th className="px-6 py-4">Loại hình</th>
+                                    <th className="px-6 py-4">Địa chỉ / Khu vực</th>
+                                    <th className="px-6 py-4">Liên hệ</th>
+                                    <th className="px-6 py-4">Người phụ trách</th>
+                                    <th className="px-6 py-4 text-right">Hành động</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-200">
                                 {filteredCustomers.map((customer) => (
                                     <tr key={customer.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4">
-                                            <div className="font-medium text-slate-900">{customer.name}</div>
-                                            {customer.address && (
-                                                <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                                                    <MapPin className="w-3 h-3" />
-                                                    {customer.address}
-                                                </div>
-                                            )}
+                                            <div className="font-semibold text-slate-900">{customer.name}</div>
+                                            <div className="text-[10px] text-slate-400 font-mono mt-0.5 uppercase tracking-wider">{customer.id.split('-')[0]}</div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span
-                                                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${customer.role === "admin"
-                                                    ? "bg-purple-100 text-purple-700"
-                                                    : "bg-orange-100 text-orange-700"
-                                                    }`}
-                                            >
-                                                {customer.role === 'customer' ? 'Khách hàng' : customer.role}
+                                            <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-bold uppercase">
+                                                {typeMap[customer.type || ''] || customer.type || '-'}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-slate-600">{customer.province || customer.region || "N/A"}</td>
+                                        <td className="px-6 py-4 text-slate-600">
+                                            <div className="max-w-[250px] truncate leading-relaxed">
+                                                {customer.address || "Chưa cập nhật"}
+                                            </div>
+                                        </td>
                                         <td className="px-6 py-4">
-                                            <div className="space-y-1">
-                                                <div className="flex items-center gap-2 text-slate-600">
-                                                    <Phone className="w-4 h-4" />
-                                                    <span className="text-sm">{customer.phone || "N/A"}</span>
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-1.5 text-slate-700">
+                                                    <Phone className="w-3.5 h-3.5 text-slate-400" />
+                                                    <span className="font-medium">{customer.phone}</span>
                                                 </div>
                                                 {customer.email && (
-                                                    <div className="flex items-center gap-2 text-slate-500">
-                                                        <Mail className="w-4 h-4" />
-                                                        <span className="text-xs">{customer.email}</span>
+                                                    <div className="flex items-center gap-1.5 text-slate-500 text-xs">
+                                                        <Mail className="w-3.5 h-3.5 text-slate-400" />
+                                                        <span>{customer.email}</span>
                                                     </div>
                                                 )}
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                                                    <UserCircle className="w-5 h-5" />
+                                                </div>
+                                                <span className="text-slate-700 font-medium">{getOwnerName(customer.owner_user_id)}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex justify-end gap-1">
+                                                <button
+                                                    onClick={() => handleEditClick(customer)}
+                                                    className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                                                    title="Sửa"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(customer.id, customer.name)}
+                                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Xóa"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -159,12 +267,99 @@ export default function CustomersPage() {
                         </table>
                     </div>
                 )}
-
-                {/* Mobile hint */}
-                <div className="p-4 text-xs text-slate-500 text-center border-t border-slate-200 sm:hidden">
-                    Vuốt sang trái/phải để xem thêm
-                </div>
             </div>
+
+            {/* Edit Modal */}
+            {editingCustomer && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-200">
+                        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-white">
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-900">Chi tiết khách hàng</h3>
+                                <p className="text-xs text-slate-500 mt-0.5">Cập nhật thông tin định danh và liên hệ</p>
+                            </div>
+                            <button onClick={() => setEditingCustomer(null)} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+                                <X className="w-5 h-5 text-slate-400" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleUpdate} className="p-8 space-y-5">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Tên hiển thị</label>
+                                    <input
+                                        required
+                                        value={editForm.name || ""}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Điện thoại</label>
+                                        <input
+                                            required
+                                            value={editForm.phone || ""}
+                                            onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Phân loại</label>
+                                        <select
+                                            value={editForm.type || "tap_hoa"}
+                                            onChange={(e) => setEditForm(prev => ({ ...prev, type: e.target.value }))}
+                                            className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                        >
+                                            <option value="tap_hoa">Tạp hóa</option>
+                                            <option value="mini_mart">Mini mart</option>
+                                            <option value="dai_ly">Đại lý</option>
+                                            <option value="npp">NPP</option>
+                                            <option value="sieu_thi">Siêu thị</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Địa chỉ email</label>
+                                    <input
+                                        type="email"
+                                        value={editForm.email || ""}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, email: e.target.value }))}
+                                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all"
+                                        placeholder="ví dụ: contact@store.com"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Địa chỉ chi tiết</label>
+                                    <textarea
+                                        rows={3}
+                                        value={editForm.address || ""}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, address: e.target.value }))}
+                                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-primary-500 outline-none transition-all resize-none"
+                                        placeholder="Số nhà, tên đường, phường/xã..."
+                                    />
+                                </div>
+                            </div>
+                            <div className="pt-6 flex gap-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingCustomer(null)}
+                                    className="flex-1 px-4 py-3 border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50 transition-colors"
+                                >
+                                    Đóng
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSaving}
+                                    className="flex-1 px-4 py-3 bg-primary-600 text-white rounded-xl font-bold hover:bg-primary-700 disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-primary-200 transition-all active:scale-95"
+                                >
+                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-5 h-5" />}
+                                    Cập nhật ngay
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
