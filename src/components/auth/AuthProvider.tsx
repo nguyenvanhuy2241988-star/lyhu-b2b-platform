@@ -103,7 +103,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         .eq("id", currentSession.user.id)
                         .maybeSingle();
 
-                    setRole(profile?.role ?? "customer");
+                    const fetchedRole = profile?.role ?? "customer";
+                    setRole(fetchedRole);
+
+                    // FIXED: Update localStorage with the fetched role so next time we can restore it from cache
+                    if (typeof window !== "undefined") {
+                        const updatedUser = { ...userObj, role: fetchedRole };
+                        localStorage.setItem("lyhu_user", JSON.stringify(updatedUser));
+                    }
                 } catch (roleErr) {
                     console.warn('[AuthProvider] Role fetch failed, using fallback');
                     setRole(prev => prev || "customer");
