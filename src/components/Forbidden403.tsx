@@ -63,6 +63,27 @@ export function Forbidden403({ role, requiredPerms, userPerms }: Forbidden403Pro
                         [Click để kiểm tra dữ liệu gốc từ Server]
                     </button>
                 </div>
+
+                {/* FORCE LOGOUT BUTTON */}
+                <div className="mt-4 pt-4 border-t border-slate-200">
+                    <button
+                        onClick={() => {
+                            if (window.confirm("Bạn có chắc muốn xóa toàn bộ dữ liệu cache và đăng xuất cưỡng chế?")) {
+                                localStorage.clear();
+                                sessionStorage.clear();
+                                document.cookie.split(";").forEach((c) => {
+                                    document.cookie = c
+                                        .replace(/^ +/, "")
+                                        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+                                });
+                                window.location.href = "/login";
+                            }
+                        }}
+                        className="text-red-500 hover:text-red-700 font-bold text-xs"
+                    >
+                        [Đăng xuất cưỡng chế & Xóa Cache lỗi]
+                    </button>
+                </div>
             </details>
         </div>
     );
