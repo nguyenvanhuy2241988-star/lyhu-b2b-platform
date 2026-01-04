@@ -4,9 +4,10 @@ import { createContext, useContext, useEffect, useState, useRef, useCallback } f
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import { useChatStore } from "@/lib/chatStore";
+import { toast } from "sonner"; // Optional: Notify user on timeout
 
 interface AuthContextType {
-    user: any | null; // Loosen type to allow Mock User
+    user: any | null;
     session: Session | null;
     role: string | null;
     isLoading: boolean;
@@ -21,6 +22,8 @@ const AuthContext = createContext<AuthContextType>({
     signOut: async () => { },
 });
 
+const AUTH_TIMEOUT_MS = 15000; // 15 seconds max wait
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<any | null>(null);
     const [session, setSession] = useState<Session | null>(null);
@@ -33,29 +36,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const checkAuth = useCallback(async () => {
         if (authCheckInProgress.current) return;
         authCheckInProgress.current = true;
-        try {
-            console.log('[AuthProvider] checkAuth started');
 
-            // 🚀 FAST PATH: Load from localStorage but DO NOT set isLoading(false) here
-            // setting isLoading(false) here causes Guard to trigger before Role is confirmed from server
-            if (typeof window !== "undefined") {
-                const mockUserStr = localStorage.getItem("lyhu_user");
-                if (mockUserStr) {
-                    try {
-                        const mockUser = JSON.parse(mockUserStr);
-                        setUser(mockUser);
-                        // Do NOT setRole or setIsLoading(false) yet to avoid mismatch
-                        console.log('[AuthProvider] Pre-loaded local user data');
-                    } catch (e) { }
-                }
+        console.log('[AuthProvider] checkAuth started');
+
+        // 🚀 FAST PATH: Optimistic UI from localStorage
+        // Allows rendering UI immediately while background verification happens
+        if (typeof window !== "undefined") {
+            const mockUserStr = localStorage.getItem("lyhu_user");
+            if (mockUserStr) {
+                try {
+                    const mockUser = JSON.parse(mockUserStr);
+                    setUser(mockUser);
+                    // Note: We don't set isLoading(false) here yet to allow 
+                    // the real check to confirm valid session, OR timeout to occur.
+                } catch (e) { }
             }
+        }
 
-            // 1. Gọi Supabase KHÔNG TIMEOUT
-            // Tháo bỏ hoàn toàn Promise.race để tránh lỗi "Auth Timeout" khi mạng chậm
-            const { data: { session: currentSession }, error: authError } = await supabase.auth.getSession();
+        try {
+            // 🛑 TIMEOUT PROTECTION 
+            // Race between Supabase and a 15s timer.
+            const timeoutPromise = new Promise<{ data: { session: null }, error: any }>((_, reject) =>
+                setTimeout(() => reject(new Error("Auth Timeout")), AUTH_TIMEOUT_MS)
+            );
+
+            // Fetch Session with Timeout
+            const { data: { session: currentSession }, error: authError } = await Promise.race([
+                supabase.auth.getSession(),
+                timeoutPromise
+            ]) as any;
 
             if (authError) {
-                console.warn('[AuthProvider] Supabase session fetch issue:', authError.message);
+                console.warn('[AuthProvider] Session fetch error:', authError.message);
+                if (authError.message === "Auth Timeout") {
+                    toast.warning("Kết nối chậm, đang thử lại...");
+                    // Don't throw, just let it settle as null/guest so app doesn't hang
+                }
             }
 
             if (currentSession?.user) {
@@ -74,7 +90,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     }
                 }
 
-                // 2. Role fetch không timeout
+                // Fetch Role (Also with simple fallback, no strict timeout needed as it's secondary)
                 try {
                     const { data: profile } = await supabase
                         .from("profiles")
@@ -88,7 +104,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     setRole(prev => prev || "customer");
                 }
             } else {
-                // EXPLICIT null from getSession means logged out
+                // Not logged in or Error
                 setUser(null);
                 setRole(null);
                 if (typeof window !== "undefined") {
@@ -96,33 +112,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     localStorage.removeItem("lyhu_access_token");
                 }
             }
-        } catch (err) {
-            console.error('[AuthProvider] checkAuth catastrophic error:', err);
+        } catch (err: any) {
+            console.error('[AuthProvider] Auth Check Fatal:', err);
+            // If it was a timeout that threw up to here
+            if (err.message === "Auth Timeout") {
+                toast.error("Không thể kết nối đến máy chủ xác thực.");
+            }
         } finally {
             authCheckInProgress.current = false;
-            setIsLoading(false);
+            setIsLoading(false); // ✅ GUARANTEED to run
             isInitialized.current = true;
         }
-    }, []); // 🚀 Removed session/user dependency to make it a stable initializer
+    }, []);
 
     useEffect(() => {
-        // One-time cleanup for legacy mock data in development
-        if (typeof window !== "undefined") {
-            const cleanupKeys = [
-                "lyhu_all_orders",
-                "lyhu_sales_leads_v1",
-                "lyhu_telesales_tasks",
-                "lyhu_recent_activities"
-            ];
-            cleanupKeys.forEach(key => localStorage.removeItem(key));
-            console.log('[AuthProvider] Legacy mock data keys cleared');
-        }
-
         if (!isInitialized.current) {
             checkAuth();
         }
 
-        // Listen for Supabase changes
+        // Listen for Supabase changes (Login/Logout events)
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event: string, session: Session | null) => {
             if (session) {
                 setSession(session);
@@ -132,15 +140,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     ...(session.user.user_metadata || {})
                 };
 
-                // ✅ ONLY update user state if the ID or metadata actually changed
                 setUser((prev: any) => {
                     if (prev?.id === userObj.id && JSON.stringify(prev) === JSON.stringify(userObj)) return prev;
                     return userObj;
                 });
 
-                // ✅ Set realtime auth token on auth state change
                 if (session.access_token) {
-                    console.log('[AuthProvider] Auth state change: SETTING REALTIME AUTH', session.access_token.substring(0, 10) + '...');
                     supabase.realtime.setAuth(session.access_token);
                     if (typeof window !== "undefined") {
                         localStorage.setItem("lyhu_user", JSON.stringify(userObj));
@@ -155,10 +160,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     .single();
 
                 const newRole = profile?.role ?? null;
-                setRole(prev => {
-                    if (prev === newRole) return prev;
-                    return newRole;
-                });
+                setRole(prev => (prev === newRole ? prev : newRole));
             } else {
                 setSession(null);
                 setUser(null);
@@ -169,15 +171,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return () => {
             subscription.unsubscribe();
         };
-    }, [checkAuth, isInitialized]);
+    }, [checkAuth]);
 
-    // Initialize Presence ONCE when user ID changes (SINGLETON)
+    // Initialize Presence & Role Sync
     useEffect(() => {
         if (user?.id) {
             useChatStore.getState().initPresence(user.id);
 
-            // 🚀 REAL-TIME ROLE SYNC: Watch for profile updates
-            console.log('[AuthProvider] Subscribing to profile changes for:', user.id);
             const channelName = `auth-profile-sync-${user.id}`;
             const profileSubscription = supabase
                 .channel(channelName)
@@ -190,14 +190,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         filter: `id=eq.${user.id}`,
                     },
                     (payload: any) => {
-                        console.log('[AuthProvider] Profile updated in Realtime:', payload.new);
                         const newSyncRole = payload.new.role;
-                        // Avoid direct role dependency in useEffect to prevent loop
-                        // instead use internal comparison inside setter
                         setRole(prev => {
                             if (newSyncRole && newSyncRole !== prev) {
-                                console.log(`[AuthProvider] Role synced from ${prev} to ${newSyncRole}`);
-                                // Update local storage too
                                 const updatedUser = { ...user, role: newSyncRole };
                                 localStorage.setItem("lyhu_user", JSON.stringify(updatedUser));
                                 return newSyncRole;
@@ -209,23 +204,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 .subscribe();
 
             return () => {
-                console.log('[AuthProvider] Cleanup profile sync channel:', channelName);
                 supabase.removeChannel(profileSubscription);
             };
         }
-        return () => {
-            useChatStore.getState().cleanupPresence();
-        };
-    }, [user]); // 🚀 Added user as dependency
+    }, [user]);
 
     const signOut = async () => {
-        await supabase.auth.signOut();
+        setIsLoading(true);
+        try {
+            await supabase.auth.signOut();
+        } catch (e) { console.error(e) }
+
         if (typeof window !== "undefined") {
             localStorage.removeItem("lyhu_user");
+            localStorage.removeItem("lyhu_access_token");
         }
         setUser(null);
         setSession(null);
         setRole(null);
+        setIsLoading(false);
     };
 
     return (

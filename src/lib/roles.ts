@@ -17,9 +17,21 @@ export const ROLE_HOME: Record<Role, string> = {
     livestream: "/livestream",
 };
 
-export const PROTECTED_PREFIXES = [...Object.values(ROLE_HOME), "/chat"];
+// Các đường dẫn dùng chung cho nhiều role
+export const SHARED_PATHS = [
+    "/chat",
+    "/profile",
+    "/settings",
+    "/crm",       // CRM chung cho Admin, Sales, Telesales...
+    "/tasks",     // Todo list chung
+    "/documents"  // Tài liệu chung
+];
 
-export const SHARED_PATHS = ["/chat", "/profile", "/settings"];
+// Danh sách tất cả các prefix cần bảo vệ (Yêu cầu đăng nhập)
+export const PROTECTED_PREFIXES = [
+    ...Object.values(ROLE_HOME),
+    ...SHARED_PATHS
+];
 
 export function getHomePath(role?: string | null): string {
     if (!role) return "/";
