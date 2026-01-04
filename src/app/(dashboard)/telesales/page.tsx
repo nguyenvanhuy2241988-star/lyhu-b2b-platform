@@ -77,10 +77,10 @@ export default function TelesalesDashboard() {
 
             // Load Engagement Data
             const [fundData, leaderboardData, achievementsData, roadmapData] = await Promise.all([
-                fetchBondingFund(),
-                getLeaderboard('this_month'),
-                fetchUserAchievements(user?.id || ""),
-                fetchCareerLevels()
+                fetchBondingFund(token),
+                getLeaderboard('this_month', token),
+                fetchUserAchievements(user?.id || "", token),
+                fetchCareerLevels(token)
             ]);
 
             setBondingFund(fundData);

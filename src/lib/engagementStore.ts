@@ -36,61 +36,96 @@ export interface LeaderboardEntry {
     rank: number;
 }
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+const getHeaders = (token?: string) => ({
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_KEY || '',
+    'Authorization': `Bearer ${token || SUPABASE_KEY}`
+});
+
 /**
  * Fetch the collective bonding fund data
  */
-export const fetchBondingFund = async () => {
-    const { data, error } = await supabase
-        .from('bonding_fund')
-        .select('*')
-        .single();
-    if (error) {
+export const fetchBondingFund = async (token?: string) => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/bonding_fund?select=*`, {
+            headers,
+            cache: 'no-store',
+            signal: AbortSignal.timeout(8000)
+        });
+
+        if (!res.ok) return { balance: 0, last_updated_at: new Date().toISOString() } as BondingFund;
+
+        const data = await res.json();
+        return (data && data.length > 0) ? data[0] as BondingFund : { balance: 0, last_updated_at: new Date().toISOString() } as BondingFund;
+    } catch (error) {
         console.error("Error fetching bonding fund:", error);
         return { balance: 0, last_updated_at: new Date().toISOString() } as BondingFund;
     }
-    return data as BondingFund;
 };
 
 /**
  * Fetch all available achievement definitions
  */
-export const fetchAchievements = async () => {
-    const { data, error } = await supabase
-        .from('achievements')
-        .select('*');
-    if (error) throw error;
-    return data as Achievement[];
+export const fetchAchievements = async (token?: string) => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/achievements?select=*`, {
+            headers,
+            signal: AbortSignal.timeout(8000)
+        });
+        if (!res.ok) return [] as Achievement[];
+        return await res.json() as Achievement[];
+    } catch (error) {
+        console.error("Error fetching achievements:", error);
+        return [] as Achievement[];
+    }
 };
 
 /**
  * Fetch achievements earned by a specific user
  */
-export const fetchUserAchievements = async (userId: string) => {
+export const fetchUserAchievements = async (userId: string, token?: string) => {
     if (!userId) return [];
-    const { data, error } = await supabase
-        .from('user_achievements')
-        .select('user_id, achievement_id, earned_at, achievement:achievements(*)')
-        .eq('user_id', userId);
-    if (error) throw error;
-    return data as any[];
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/user_achievements?select=user_id,achievement_id,earned_at,achievement:achievements(*)&user_id=eq.${userId}`, {
+            headers,
+            signal: AbortSignal.timeout(8000)
+        });
+        if (!res.ok) return [];
+        return await res.json() as any[];
+    } catch (error) {
+        console.error("Error fetching user achievements:", error);
+        return [];
+    }
 };
 
 /**
  * Fetch career level progression roadmap
  */
-export const fetchCareerLevels = async () => {
-    const { data, error } = await supabase
-        .from('career_levels')
-        .select('*')
-        .order('min_exp', { ascending: true });
-    if (error) throw error;
-    return data as CareerLevel[];
+export const fetchCareerLevels = async (token?: string) => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/career_levels?select=*&order=min_exp.asc`, {
+            headers,
+            signal: AbortSignal.timeout(8000)
+        });
+        if (!res.ok) return [] as CareerLevel[];
+        return await res.json() as CareerLevel[];
+    } catch (error) {
+        console.error("Error fetching career levels:", error);
+        return [] as CareerLevel[];
+    }
 };
 
 /**
  * Calculate Leaderboard based on actual orders
  */
-export const getLeaderboard = async (period: 'this_month' | 'this_week' = 'this_month'): Promise<LeaderboardEntry[]> => {
+export const getLeaderboard = async (period: 'this_month' | 'this_week' = 'this_month', token?: string): Promise<LeaderboardEntry[]> => {
     const now = new Date();
     const startOfPeriod = new Date(now.getFullYear(), now.getMonth(), 1);
     if (period === 'this_week') {
@@ -99,45 +134,48 @@ export const getLeaderboard = async (period: 'this_month' | 'this_week' = 'this_
         startOfPeriod.setDate(diff);
     }
 
-    // Fixed query: Use telesales_user_id and profiles!orders_telesales_user_id_profiles_fkey(full_name, email)
-    const { data, error } = await supabase
-        .from('orders')
-        .select('total_amount, telesales_user_id, profiles!orders_telesales_user_id_profiles_fkey(full_name, email)')
-        .gte('created_at', startOfPeriod.toISOString())
-        .not('status', 'eq', 'cancelled');
+    try {
+        const headers = getHeaders(token);
+        const query = `created_at=gte.${startOfPeriod.toISOString()}&status=neq.cancelled&select=total_amount,telesales_user_id,profiles:profiles!orders_telesales_user_id_profiles_fkey(full_name,email)`;
 
-    if (error) {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?${query}`, {
+            headers,
+            cache: 'no-store',
+            signal: AbortSignal.timeout(10000)
+        });
+
+        if (!res.ok) return [];
+
+        const data = await res.json();
+        const statsMap: Record<string, { name: string; orders: number; revenue: number }> = {};
+
+        (data || []).forEach((order: any) => {
+            const userId = order.telesales_user_id;
+            if (!userId) return;
+            const profile = order.profiles;
+            const userName = profile?.full_name || profile?.email || "Nhân viên ẩn danh";
+
+            if (!statsMap[userId]) {
+                statsMap[userId] = { name: userName, orders: 0, revenue: 0 };
+            }
+
+            statsMap[userId].orders += 1;
+            statsMap[userId].revenue += (Number(order.total_amount) || 0);
+        });
+
+        const result: LeaderboardEntry[] = Object.entries(statsMap).map(([userId, stats]) => ({
+            user_id: userId,
+            user_name: stats.name,
+            total_orders: stats.orders,
+            total_revenue: stats.revenue,
+            rank: 0
+        })).sort((a, b) => b.total_revenue - a.total_revenue);
+
+        return result.map((entry, index) => ({ ...entry, rank: index + 1 }));
+    } catch (error) {
         console.error("Error calculating leaderboard:", error);
         return [];
     }
-
-    // Aggregate by user
-    const statsMap: Record<string, { name: string; orders: number; revenue: number }> = {};
-
-    data.forEach((order: any) => {
-        const userId = order.telesales_user_id;
-        const profile = order.profiles;
-        const userName = profile?.full_name || profile?.email || "Nhân viên ẩn danh";
-
-        if (!statsMap[userId]) {
-            statsMap[userId] = { name: userName, orders: 0, revenue: 0 };
-        }
-
-        statsMap[userId].orders += 1;
-        statsMap[userId].revenue += (Number(order.total_amount) || 0);
-    });
-
-    // Convert to array and sort
-    const result: LeaderboardEntry[] = Object.entries(statsMap).map(([userId, stats]) => ({
-        user_id: userId,
-        user_name: stats.name,
-        total_orders: stats.orders,
-        total_revenue: stats.revenue,
-        rank: 0
-    })).sort((a, b) => b.total_revenue - a.total_revenue);
-
-    // Assign ranks
-    return result.map((entry, index) => ({ ...entry, rank: index + 1 }));
 };
 
 /**
