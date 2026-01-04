@@ -60,9 +60,8 @@ export default function ProductsPage() {
         if (!silent) setIsLoading(true);
         try {
             const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-            // Use getHeaders() to ensure we might see more if policies change? 
-            // Actually 'Everyone' policy uses anon, but good practice to use auth.
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+            // Filter by is_active=true to default show only active products
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&is_active=eq.true&order=created_at.desc`, {
                 headers: getHeaders()
             });
 
@@ -160,14 +159,16 @@ export default function ProductsPage() {
         const toastId = toast.loading("Đang xóa...");
 
         try {
+            // Soft Delete: Set is_active to false
             const res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${product.id}`, {
-                method: "DELETE",
-                headers: getHeaders()
+                method: "PATCH",
+                headers: getHeaders(),
+                body: JSON.stringify({ is_active: false })
             });
 
             if (!res.ok) throw new Error("Không thể xóa sản phẩm");
 
-            toast.success("Đã xóa sản phẩm", { id: toastId });
+            toast.success("Đã xóa sản phẩm (đã ẩn)", { id: toastId });
             fetchProducts(true);
         } catch (error: any) {
             toast.error(error.message, { id: toastId });
