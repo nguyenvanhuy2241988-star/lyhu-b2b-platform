@@ -35,6 +35,16 @@ import {
     ToggleLeft,     // Role Switch
     ArrowRightLeft, // Accountant Reconciliation
 } from "lucide-react";
+import { MODULES } from '@/modules/registry';
+
+// FEATURE FLAGS
+const USE_NEW_MODULE_LEADS = process.env.NEXT_PUBLIC_NEW_MODULE_LEADS === '1';
+const USE_NEW_MODULE_ORDERS = process.env.NEXT_PUBLIC_NEW_MODULE_ORDERS === '1';
+
+const PATH_LEADS = USE_NEW_MODULE_LEADS ? MODULES.leads.path : "/crm";
+const PATH_ORDERS_TELESALES = USE_NEW_MODULE_ORDERS ? MODULES.orders.path : "/telesales/orders";
+const PATH_ORDERS_ADMIN = USE_NEW_MODULE_ORDERS ? MODULES.orders.path : "/admin/orders";
+const PATH_ORDERS_SALES = USE_NEW_MODULE_ORDERS ? MODULES.orders.path : "/sales/orders";
 
 export const ROLES = {
     ADMIN: "admin",
@@ -63,7 +73,7 @@ export const NAV_ITEMS = {
     ],
     [ROLES.SALE_ADMIN]: [
         { label: "Tổng quan Admin", href: "/sale-admin", icon: LayoutDashboard },
-        { label: "CRM", href: "/crm", icon: TrendingUp },
+        { label: "CRM", href: PATH_LEADS, icon: TrendingUp },
         { label: "Khách hàng", href: "/sale-admin/customers", icon: Users },
         { label: "Quản lý Đơn hàng", href: "/sale-admin/orders", icon: ClipboardCheck },
         { label: "Báo giá & Hợp đồng", href: "/sale-admin/quotes", icon: FileText },
@@ -107,9 +117,9 @@ export const NAV_ITEMS = {
     ],
     [ROLES.ADMIN]: [
         { label: "Tổng quan", href: "/admin", icon: LayoutDashboard },
-        { label: "CRM", href: "/crm", icon: TrendingUp },
+        { label: "CRM", href: PATH_LEADS, icon: TrendingUp },
         { label: "Việc cần làm", href: "/admin/tasks", icon: ListTodo },
-        { label: "Đơn hàng", href: "/admin/orders", icon: FileText },
+        { label: "Đơn hàng", href: PATH_ORDERS_ADMIN, icon: FileText },
         { label: "Người dùng", href: "/admin/users", icon: Users },
         { label: "Khách hàng", href: "/admin/customers", icon: UserCheck },
         { label: "Sản phẩm", href: "/admin/products", icon: Package },
@@ -127,9 +137,9 @@ export const NAV_ITEMS = {
     ],
     [ROLES.SALES]: [
         { label: "Tổng quan Sales", href: "/sales", icon: LayoutDashboard },
-        { label: "CRM", href: "/crm", icon: TrendingUp },
+        { label: "CRM", href: PATH_LEADS, icon: TrendingUp },
         { label: "Khách hàng", href: "/sales/customers", icon: Users },
-        { label: "Đơn hàng", href: "/sales/orders", icon: ShoppingCart },
+        { label: "Đơn hàng", href: PATH_ORDERS_SALES, icon: ShoppingCart },
         { label: "Tài liệu", href: "/documents", icon: FileText },
     ],
     [ROLES.CTV]: [
@@ -144,10 +154,10 @@ export const NAV_ITEMS = {
     ],
     [ROLES.TELESALES]: [
         { label: "Tổng quan", href: "/telesales", icon: LayoutDashboard },
-        { label: "CRM", href: "/crm", icon: TrendingUp },
+        { label: "CRM", href: PATH_LEADS, icon: TrendingUp },
         { label: "Việc cần làm", href: "/telesales/tasks", icon: ListTodo },
         { label: "Tạo đơn hàng", href: "/telesales/create-order", icon: ShoppingCart },
-        { label: "Đơn hàng", href: "/telesales/orders", icon: Package },
+        { label: "Đơn hàng", href: PATH_ORDERS_TELESALES, icon: Package },
         { label: "Khách hàng", href: "/telesales/customers", icon: Users },
         { label: "Thu nhập & KPI", href: "/telesales/earnings", icon: DollarSign },
         { label: "Quy định & Chính sách", href: "/telesales/rules", icon: Book },
