@@ -40,23 +40,42 @@ export function Forbidden403({ role, requiredPerms, userPerms }: Forbidden403Pro
                 <div className="mt-4 pt-4 border-t border-slate-200">
                     <button
                         onClick={async () => {
-                            const { supabase } = await import('@/lib/supabaseClient'); // Dynamic import to be safe
+                            // 1. Check LocalStorage First (Synchronous & Reliable)
+                            const localUserStr = localStorage.getItem("lyhu_user");
+                            let localUser = null;
+                            try { localUser = localUserStr ? JSON.parse(localUserStr) : null; } catch (e) { }
 
-                            const { data: { user } } = await supabase.auth.getUser();
-                            console.log('Current User:', user);
+                            // 2. Try Async Supabase
+                            let supabaseUser = null;
+                            let profileData = null;
+                            let profileError = null;
 
-                            if (!user) {
-                                alert('No User Logged In (Auth is null)!');
-                                return;
-                            }
+                            try {
+                                const { supabase } = await import('@/lib/supabaseClient');
+                                const { data: { user } } = await supabase.auth.getUser();
+                                supabaseUser = user;
 
-                            const { data, error } = await supabase
-                                .from('profiles')
-                                .select('*')
-                                .eq('id', user.id)
-                                .maybeSingle();
+                                if (user) {
+                                    const { data, error } = await supabase
+                                        .from('profiles')
+                                        .select('*')
+                                        .eq('id', user.id)
+                                        .maybeSingle();
+                                    profileData = data;
+                                    profileError = error;
+                                }
+                            } catch (e) { console.error(e); }
 
-                            alert(`User ID: ${user.id}\nEmail: ${user.email}\n\nProfile Data: ${JSON.stringify(data, null, 2)}\n\nError: ${JSON.stringify(error, null, 2)}`);
+                            alert(
+                                `--- LOCAL STORAGE (Browser Cache) ---\n` +
+                                `Cached User: ${localUser ? 'YES' : 'NO'}\n` +
+                                `Cached Role: ${localUser?.role || 'MISSING'}\n` +
+                                `Cached Email: ${localUser?.email}\n\n` +
+                                `--- SERVER (Supabase) ---\n` +
+                                `Live User ID: ${supabaseUser?.id || 'Timeout/Null'}\n` +
+                                `Live Profile: ${JSON.stringify(profileData)}\n` +
+                                `Error: ${JSON.stringify(profileError)}`
+                            );
                         }}
                         className="text-primary-600 hover:underline font-bold"
                     >

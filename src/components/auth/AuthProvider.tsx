@@ -117,11 +117,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 }
             } else {
                 // Not logged in or Error
-                setUser(null);
-                setRole(null);
-                if (typeof window !== "undefined") {
-                    localStorage.removeItem("lyhu_user");
-                    localStorage.removeItem("lyhu_access_token");
+                // CRITICAL FIX: If it was just a Timeout, DO NOT wipe the optimistic user!
+                // Only wipe if it's a genuine "No Session" (null) result from a successful request.
+                if (authError?.message === "Auth Timeout") {
+                    console.warn('[AuthProvider] Timeout occurred, keeping optimistic state.');
+                    // Do nothing, keep existing (optimistic) user/role
+                } else {
+                    console.log('[AuthProvider] No session found, clearing state');
+                    setUser(null);
+                    setRole(null);
+                    if (typeof window !== "undefined") {
+                        localStorage.removeItem("lyhu_user");
+                        localStorage.removeItem("lyhu_access_token");
+                    }
                 }
             }
         } catch (err: any) {
