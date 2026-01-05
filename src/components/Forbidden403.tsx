@@ -20,12 +20,16 @@ export function Forbidden403({ role, requiredPerms, userPerms }: Forbidden403Pro
                 Tài khoản của bạn không có đủ quyền hạn để truy cập vào module hoặc chức năng này.
                 Vui lòng liên hệ quản trị viên hoặc quay lại trang chủ.
             </p>
-            <Link
-                href="/"
+            <button
+                onClick={async () => {
+                    const { getHomePath } = await import("@/lib/roles");
+                    const home = getHomePath(role);
+                    window.location.href = home;
+                }}
                 className="px-6 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors font-medium"
             >
-                Về Trang chủ
-            </Link>
+                Về Dashboard của bạn ({role})
+            </button>
 
             {/* ALWAYS SHOW DEBUG INFO FOR NOW */}
             <details className="mt-8 text-xs text-slate-400 text-left bg-slate-100 p-4 rounded max-w-md w-full" open>
