@@ -169,7 +169,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 if (session.access_token) {
                     supabase.realtime.setAuth(session.access_token);
                     if (typeof window !== "undefined") {
-                        localStorage.setItem("lyhu_user", JSON.stringify(userObj));
+                        // REMOVED: Do NOT save lyhu_user here yet! It wipes the role.
+                        // localStorage.setItem("lyhu_user", JSON.stringify(userObj));
                         localStorage.setItem("lyhu_access_token", session.access_token);
                     }
                 }
