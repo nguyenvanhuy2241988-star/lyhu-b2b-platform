@@ -167,14 +167,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 });
 
                 // 1. Fetch Role FIRST (Critical for Access)
+                // 1. Fetch Role FIRST (Critical for Access) - USE RAW FETCH TO AVOID CLIENT HANG
                 let fetchedRole = null;
                 try {
-                    const { data: profile } = await supabase
-                        .from("profiles")
-                        .select("role")
-                        .eq("id", session.user.id)
-                        .maybeSingle();
-                    fetchedRole = profile?.role ?? null;
+                    // Start Raw Fetch
+                    const fetchPromise = fetch(
+                        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/profiles?id=eq.${session.user.id}&select=role`,
+                        {
+                            headers: {
+                                "apikey": process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                                "Authorization": `Bearer ${session.access_token}`,
+                                "Content-Type": "application/json"
+                            }
+                        }
+                    );
+
+                    // Race with 5s timeout
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Profile Timeout")), 5000));
+
+                    const response = await Promise.race([fetchPromise, timeoutPromise]) as Response;
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        fetchedRole = data?.[0]?.role ?? null;
+                    } else {
+                        console.error("Profile fetch failed:", response.status, response.statusText);
+                    }
                 } catch (err) {
                     console.error("Profile fetch error:", err);
                 }
