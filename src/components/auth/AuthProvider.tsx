@@ -89,7 +89,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setUser(userObj);
 
                 if (typeof window !== "undefined") {
-                    localStorage.setItem("lyhu_user", JSON.stringify(userObj));
+                    // REMOVED: Do NOT save lyhu_user here yet! 
+                    // It lacks the 'role' field and will overwrite our valid cache.
                     if (currentSession.access_token) {
                         localStorage.setItem("lyhu_access_token", currentSession.access_token);
                     }
