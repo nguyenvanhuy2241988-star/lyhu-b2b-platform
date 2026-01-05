@@ -166,28 +166,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     return userObj;
                 });
 
-                if (session.access_token) {
-                    supabase.realtime.setAuth(session.access_token);
-                    if (typeof window !== "undefined") {
-                        // REMOVED: Do NOT save lyhu_user here yet! It wipes the role.
-                        // localStorage.setItem("lyhu_user", JSON.stringify(userObj));
+                // 1. Fetch Role FIRST (Critical for Access)
+                let fetchedRole = null;
+                try {
+                    const { data: profile } = await supabase
+                        .from("profiles")
+                        .select("role")
+                        .eq("id", session.user.id)
+                        .maybeSingle();
+                    fetchedRole = profile?.role ?? null;
+                } catch (err) {
+                    console.error("Profile fetch error:", err);
+                }
+
+                setRole(prev => (prev === fetchedRole ? prev : fetchedRole));
+
+                // 2. Save to Cache IMMEDIATELY (Before starting Realtime which might hang)
+                if (typeof window !== "undefined") {
+                    const updatedUser = { ...userObj, role: fetchedRole };
+                    localStorage.setItem("lyhu_user", JSON.stringify(updatedUser));
+                    if (session.access_token) {
                         localStorage.setItem("lyhu_access_token", session.access_token);
                     }
                 }
 
-                const { data: profile } = await supabase
-                    .from("profiles")
-                    .select("role")
-                    .eq("id", session.user.id)
-                    .single();
-
-                const newRole = profile?.role ?? null;
-                setRole(prev => (prev === newRole ? prev : newRole));
-
-                // FIXED: Save role to localStorage so optimistic load works on next refresh
-                if (typeof window !== "undefined" && newRole) {
-                    const updatedUser = { ...userObj, role: newRole };
-                    localStorage.setItem("lyhu_user", JSON.stringify(updatedUser));
+                // 3. Initialize Realtime LAST (So it doesn't block the critical path)
+                if (session.access_token) {
+                    supabase.realtime.setAuth(session.access_token);
                 }
             } else {
                 setSession(null);
