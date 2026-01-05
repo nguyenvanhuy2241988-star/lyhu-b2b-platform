@@ -36,46 +36,56 @@ export function Forbidden403({ role, requiredPerms, userPerms }: Forbidden403Pro
                     <div><span className="font-bold">Your Perms:</span> {userPerms?.join(', ') || 'None'}</div>
                 </div>
 
-                {/* NEW DEBUG BUTTON */}
                 <div className="mt-4 pt-4 border-t border-slate-200">
                     <button
-                        onClick={async () => {
-                            // 1. Check LocalStorage First (Synchronous & Reliable)
+                        onClick={() => {
+                            // PART 1: SYNC CHECK (GUARANTEED TO RUN)
                             const localUserStr = localStorage.getItem("lyhu_user");
                             let localUser = null;
                             try { localUser = localUserStr ? JSON.parse(localUserStr) : null; } catch (e) { }
 
-                            // 2. Try Async Supabase
-                            let supabaseUser = null;
-                            let profileData = null;
-                            let profileError = null;
-
-                            try {
-                                const { supabase } = await import('@/lib/supabaseClient');
-                                const { data: { user } } = await supabase.auth.getUser();
-                                supabaseUser = user;
-
-                                if (user) {
-                                    const { data, error } = await supabase
-                                        .from('profiles')
-                                        .select('*')
-                                        .eq('id', user.id)
-                                        .maybeSingle();
-                                    profileData = data;
-                                    profileError = error;
-                                }
-                            } catch (e) { console.error(e); }
-
                             alert(
-                                `--- LOCAL STORAGE (Browser Cache) ---\n` +
-                                `Cached User: ${localUser ? 'YES' : 'NO'}\n` +
-                                `Cached Role: ${localUser?.role || 'MISSING'}\n` +
+                                `--- BƯỚC 1: KIỂM TRA CACHE TRÌNH DUYỆT ---\n` +
+                                `(Thông tin này lấy từ máy của bạn, không cần mạng)\n\n` +
+                                `Cached User: ${localUser ? 'CÓ' : 'KHÔNG'}\n` +
+                                `Cached ID: ${localUser?.id || 'N/A'}\n` +
+                                `Cached Role: ${localUser?.role || 'TRỐNG (Đây là nguyên nhân 403)'}\n` +
                                 `Cached Email: ${localUser?.email}\n\n` +
-                                `--- SERVER (Supabase) ---\n` +
-                                `Live User ID: ${supabaseUser?.id || 'Timeout/Null'}\n` +
-                                `Live Profile: ${JSON.stringify(profileData)}\n` +
-                                `Error: ${JSON.stringify(profileError)}`
+                                `Bấm OK để tiếp tục kiểm tra Server...`
                             );
+
+                            // PART 2: ASYNC CHECK
+                            (async () => {
+                                let supabaseUser = null;
+                                let profileData = null;
+                                let profileError = null;
+
+                                try {
+                                    const { supabase } = await import('@/lib/supabaseClient');
+                                    const { data: { user } } = await supabase.auth.getUser();
+                                    supabaseUser = user;
+
+                                    if (user) {
+                                        const { data, error } = await supabase
+                                            .from('profiles')
+                                            .select('*')
+                                            .eq('id', user.id)
+                                            .maybeSingle();
+                                        profileData = data;
+                                        profileError = error;
+                                    }
+                                } catch (e: any) {
+                                    console.error(e);
+                                    profileError = e.message || e;
+                                }
+
+                                alert(
+                                    `--- BƯỚC 2: KIỂM TRA SERVER (REALTIME) ---\n` +
+                                    `Live User ID: ${supabaseUser?.id || 'Không lấy được (Timeout/Null)'}\n` +
+                                    `Live Profile Data: ${JSON.stringify(profileData)}\n` +
+                                    `Error: ${JSON.stringify(profileError)}`
+                                );
+                            })();
                         }}
                         className="text-primary-600 hover:underline font-bold"
                     >
