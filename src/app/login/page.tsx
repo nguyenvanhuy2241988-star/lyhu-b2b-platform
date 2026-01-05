@@ -40,10 +40,17 @@ function LoginPageContent() {
                     .single();
 
                 const nextParam = searchParams.get("next");
-                if (nextParam && nextParam.startsWith("/")) {
+
+                // FIXED: Check if user is allowed to go to 'next' param
+                // This prevents redirection loops where user logs in but is sent back to a forbidden page
+                const { isRoleAllowedPath, getHomePath } = await import("@/lib/roles");
+                const userRole = profile?.role;
+                const homePath = getHomePath(userRole);
+
+                if (nextParam && nextParam.startsWith("/") && isRoleAllowedPath(userRole as any, nextParam)) {
                     router.push(nextParam);
                 } else {
-                    router.push(getHomePath(profile?.role));
+                    router.push(homePath);
                 }
             }
         } catch (err: any) {
