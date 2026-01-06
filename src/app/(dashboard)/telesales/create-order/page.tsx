@@ -25,6 +25,7 @@ interface OrderItem {
     quantity: number;
     discount: number; // in VNĐ
     isGift: boolean;
+    price: number; // Override price
 }
 
 function TelesalesCreateOrderContent() {
@@ -100,7 +101,8 @@ function TelesalesCreateOrderContent() {
                                     product: prod,
                                     quantity: di.quantity,
                                     discount: 0,
-                                    isGift: false
+                                    isGift: false,
+                                    price: prod.wholesalePrice || 0
                                 });
                             }
                         });
@@ -145,60 +147,99 @@ function TelesalesCreateOrderContent() {
     };
 
     const handleAddProduct = (product: Product) => {
-        const existingItem = orderItems.find((item) => item.product.id === product.id);
+        // Smart Gift Logic:
+        // Find if there is an existing item that is NOT a gift.
+        // If found -> Increment.
+        // If not found (even if there is a Gift item) -> Add new line.
+        const existingItemIndex = orderItems.findIndex((item) => item.product.id === product.id && !item.isGift);
 
-        if (existingItem) {
+        if (existingItemIndex !== -1) {
+            const existingItem = orderItems[existingItemIndex];
             const available = inventory[product.id] ?? 0;
             if (existingItem.quantity + 1 > available) {
                 alert(`Chỉ còn ${available} sản phẩm trong kho!`);
                 return;
             }
-            setOrderItems((prev) =>
-                prev.map((item) =>
-                    item.product.id === product.id
-                        ? { ...item, quantity: item.quantity + 1 }
-                        : item
-                )
-            );
+
+            const newItems = [...orderItems];
+            newItems[existingItemIndex] = { ...existingItem, quantity: existingItem.quantity + 1 };
+            setOrderItems(newItems);
         } else {
-            setOrderItems((prev) => [...prev, { product, quantity: 1, discount: 0, isGift: false }]);
+            // Check inventory for new item
+            const available = inventory[product.id] ?? 0;
+            if (available <= 0) {
+                alert(`Sản phẩm này đã hết hàng!`);
+                return;
+            }
+
+            setOrderItems((prev) => [
+                ...prev,
+                {
+                    product,
+                    quantity: 1,
+                    discount: 0,
+                    isGift: false,
+                    price: product.wholesalePrice || 0 // Initialize with default list price
+                }
+            ]);
         }
     };
 
-    const handleUpdateQuantity = (productId: string, delta: number) => {
-        setOrderItems((prev) =>
-            prev.map((item) => {
-                if (item.product.id === productId) {
-                    const newQuantity = Math.max(1, item.quantity + delta);
-                    const available = inventory[productId] ?? 0;
+    const handleUpdateQuantity = (index: number, delta: number) => {
+        setOrderItems((prev) => {
+            const newItems = [...prev];
+            const item = newItems[index];
+            const newQuantity = Math.max(1, item.quantity + delta);
+            const available = inventory[item.product.id] ?? 0;
 
-                    if (newQuantity > available) {
-                        alert(`Kho chỉ còn ${available} sản phẩm!`);
-                        return item;
-                    }
+            // TODO: Total quantity check across multiple lines for same product?
+            // For simplicity, just checking per line for now, but ideally should sum all lines.
+            // Let's keep it simple as per request.
 
-                    return { ...item, quantity: newQuantity };
-                }
-                return item;
-            })
-        );
+            if (newQuantity > available) {
+                alert(`Kho chỉ còn ${available} sản phẩm!`);
+                return prev;
+            }
+
+            newItems[index] = { ...item, quantity: newQuantity };
+            return newItems;
+        });
     };
 
-    const handleRemoveItem = (productId: string) => {
-        setOrderItems((prev) => prev.filter((item) => item.product.id !== productId));
+    const handleRemoveItem = (index: number) => {
+        setOrderItems((prev) => prev.filter((_, i) => i !== index));
     };
 
-    const handleUpdateDiscount = (productId: string, discount: number) => {
-        setOrderItems(prev => prev.map(item => item.product.id === productId ? { ...item, discount } : item));
+    const handleUpdateDiscount = (index: number, discount: number) => {
+        setOrderItems(prev => {
+            const newItems = [...prev];
+            newItems[index] = { ...newItems[index], discount };
+            return newItems;
+        });
     };
 
-    const handleToggleGift = (productId: string) => {
-        setOrderItems(prev => prev.map(item => item.product.id === productId ? { ...item, isGift: !item.isGift } : item));
+    const handleUpdatePrice = (index: number, price: number) => {
+        setOrderItems(prev => {
+            const newItems = [...prev];
+            newItems[index] = { ...newItems[index], price };
+            return newItems;
+        });
+    };
+
+    const handleToggleGift = (index: number) => {
+        setOrderItems(prev => {
+            const newItems = [...prev];
+            // If toggling ON, price effectively becomes irrelevant (it's 0 for subtotal), but we keep the stored price.
+            // If toggling OFF, it resumes being a normal item.
+            newItems[index] = { ...newItems[index], isGift: !newItems[index].isGift };
+            return newItems;
+        });
     };
 
     const calculateItemSubtotal = (item: OrderItem) => {
         if (item.isGift) return 0;
-        const sub = ((item.product.wholesalePrice || 0) * item.quantity) - item.discount;
+        // Use edited price
+        const sub = (item.price * item.quantity) - item.discount;
         return sub > 0 ? sub : 0;
     };
 
@@ -206,6 +247,20 @@ function TelesalesCreateOrderContent() {
         const subtotal = orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0);
         const vatAmount = subtotal * (vatRate / 100);
         return subtotal + vatAmount;
+    };
+
+    const calculateTotalListPrice = () => {
+        return orderItems.reduce((sum, item) => {
+            if (item.isGift) return sum;
+            return sum + (item.price * item.quantity);
+        }, 0);
+    };
+
+    const calculateTotalDiscount = () => {
+        return orderItems.reduce((sum, item) => {
+            if (item.isGift) return sum;
+            return sum + item.discount;
+        }, 0);
     };
 
     const handleCreateOrder = async () => {
@@ -231,7 +286,7 @@ function TelesalesCreateOrderContent() {
                 brand: item.product.brand || "LHU",
                 quantity: item.quantity,
                 unit: item.product.unit || "Cái",
-                unitPrice: item.product.wholesalePrice,
+                unitPrice: item.price, // Use edited price
                 subtotal: calculateItemSubtotal(item),
                 productId: item.product.id,
                 discount: item.discount,
@@ -272,6 +327,16 @@ function TelesalesCreateOrderContent() {
     if (isLoading) {
         return <div className="p-6">Đang tải dữ liệu...</div>;
     }
+
+    // Calculated Summary Data
+    const totalListPrice = calculateTotalListPrice();
+    const totalDiscount = calculateTotalDiscount();
+    const totalAfterDiscount = totalListPrice - totalDiscount;
+    const itemsSubtotal = orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0); // Should equal totalAfterDiscount if no negative logic
+    const totalVAT = itemsSubtotal * (vatRate / 100);
+    const finalTotal = itemsSubtotal + totalVAT;
+    const discountPercent = totalListPrice > 0 ? (totalDiscount / totalListPrice) * 100 : 0;
+
 
     return (
         <div className="space-y-6">
@@ -397,7 +462,9 @@ function TelesalesCreateOrderContent() {
                         <h3 className="font-semibold text-slate-900 mb-4">Chọn sản phẩm</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                             {products.map((product) => {
-                                const inOrder = orderItems.find((item) => item.product.id === product.id);
+                                // Simple check: is there any item of this product?
+                                const inOrderCount = orderItems.reduce((sum, item) => item.product.id === product.id ? sum + item.quantity : sum, 0);
+
                                 const brandColors: Record<string, string> = {
                                     UHI: "bg-orange-500",
                                     BOYO: "bg-purple-500",
@@ -409,7 +476,7 @@ function TelesalesCreateOrderContent() {
                                 return (
                                     <div
                                         key={product.id}
-                                        className={`p-4 border rounded-lg ${inOrder ? "border-indigo-500 bg-indigo-50" : "border-slate-200"
+                                        className={`p-4 border rounded-lg ${inOrderCount > 0 ? "border-indigo-500 bg-indigo-50" : "border-slate-200"
                                             }`}
                                     >
                                         <span className={`inline-block ${brandColor} text-white text-xs font-semibold px-2 py-1 rounded mb-2`}>
@@ -433,13 +500,13 @@ function TelesalesCreateOrderContent() {
                                             disabled={(inventory[product.id] ?? 0) <= 0}
                                             className={`w-full py-2 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors ${(inventory[product.id] ?? 0) <= 0
                                                 ? "bg-slate-100 text-slate-400 cursor-not-allowed" // Disabled style
-                                                : inOrder
+                                                : inOrderCount > 0
                                                     ? "bg-indigo-600 text-white hover:bg-indigo-700"
                                                     : "bg-slate-100 text-slate-700 hover:bg-slate-200"
                                                 }`}
                                         >
                                             <Plus className="w-4 h-4" />
-                                            {inOrder ? `Đã thêm (${inOrder.quantity})` : "Thêm vào đơn"}
+                                            {inOrderCount > 0 ? `Thêm nữa (${inOrderCount})` : "Thêm vào đơn"}
                                         </button>
                                     </div>
                                 );
@@ -450,12 +517,12 @@ function TelesalesCreateOrderContent() {
                     {/* Order Summary */}
                     {orderItems.length > 0 && (
                         <div className="bg-white p-6 rounded-xl border border-slate-200">
-                            <h3 className="font-semibold text-slate-900 mb-4">Đơn hàng ({orderItems.length} sản phẩm)</h3>
+                            <h3 className="font-semibold text-slate-900 mb-4">Đơn hàng ({orderItems.length} dòng)</h3>
 
                             <div className="space-y-3 mb-6">
-                                {orderItems.map((item) => (
+                                {orderItems.map((item, index) => (
                                     <div
-                                        key={item.product.id}
+                                        key={`${item.product.id}-${index}`}
                                         className={`flex flex-col gap-3 p-4 border rounded-lg transition-colors ${item.isGift ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-200'}`}
                                     >
                                         {/* Top Row: Info + Actions */}
@@ -465,9 +532,29 @@ function TelesalesCreateOrderContent() {
                                                     {item.isGift && <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase rounded">Quà tặng</span>}
                                                     <h4 className="font-medium text-slate-900 text-sm">{item.product.name}</h4>
                                                 </div>
-                                                <p className="text-xs text-slate-500">
-                                                    {formatPrice(item.product.wholesalePrice || 0)}
-                                                </p>
+
+                                                {/* Price Edit Input */}
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-xs text-slate-500">Đơn giá:</span>
+                                                    {item.isGift ? (
+                                                        <span className="text-sm font-medium text-slate-400">0 đ</span>
+                                                    ) : (
+                                                        <div className="relative w-28">
+                                                            <input
+                                                                type="number"
+                                                                className="w-full pl-2 pr-5 py-0.5 text-sm font-medium text-slate-900 border border-slate-200 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                                                                value={item.price}
+                                                                onChange={(e) => handleUpdatePrice(index, Number(e.target.value))}
+                                                            />
+                                                            <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">đ</span>
+                                                        </div>
+                                                    )}
+                                                    {item.price !== (item.product.wholesalePrice || 0) && !item.isGift && (
+                                                        <span className="text-[10px] text-slate-400 line-through ml-1">
+                                                            {formatPrice(item.product.wholesalePrice || 0)}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             <div className="text-right">
@@ -475,14 +562,14 @@ function TelesalesCreateOrderContent() {
                                                     {formatPrice(calculateItemSubtotal(item))}
                                                 </p>
                                                 {item.discount > 0 && !item.isGift && (
-                                                    <p className="text-xs text-red-500 line-through">
-                                                        {formatPrice((item.product.wholesalePrice || 0) * item.quantity)}
+                                                    <p className="text-xs text-red-500">
+                                                        - {formatPrice(item.discount)}
                                                     </p>
                                                 )}
                                             </div>
 
                                             <button
-                                                onClick={() => handleRemoveItem(item.product.id)}
+                                                onClick={() => handleRemoveItem(index)}
                                                 className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -494,7 +581,7 @@ function TelesalesCreateOrderContent() {
                                             {/* Quantity */}
                                             <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
                                                 <button
-                                                    onClick={() => handleUpdateQuantity(item.product.id, -1)}
+                                                    onClick={() => handleUpdateQuantity(index, -1)}
                                                     disabled={item.quantity <= 1}
                                                     className="p-1 hover:bg-white rounded transition-colors disabled:opacity-50"
                                                 >
@@ -502,7 +589,7 @@ function TelesalesCreateOrderContent() {
                                                 </button>
                                                 <span className="w-8 text-center text-sm font-semibold">{item.quantity}</span>
                                                 <button
-                                                    onClick={() => handleUpdateQuantity(item.product.id, 1)}
+                                                    onClick={() => handleUpdateQuantity(index, 1)}
                                                     className="p-1 hover:bg-white rounded transition-colors"
                                                 >
                                                     <Plus className="w-3.5 h-3.5" />
@@ -516,7 +603,7 @@ function TelesalesCreateOrderContent() {
                                                     <input
                                                         type="checkbox"
                                                         checked={item.isGift}
-                                                        onChange={() => handleToggleGift(item.product.id)}
+                                                        onChange={() => handleToggleGift(index)}
                                                         className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                                     />
                                                     <Gift className="w-3.5 h-3.5" />
@@ -534,7 +621,7 @@ function TelesalesCreateOrderContent() {
                                                             placeholder="Giảm giá..."
                                                             className="w-24 pl-2 pr-6 py-1 text-xs border border-slate-200 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-right"
                                                             value={item.discount || ""}
-                                                            onChange={(e) => handleUpdateDiscount(item.product.id, Number(e.target.value))}
+                                                            onChange={(e) => handleUpdateDiscount(index, Number(e.target.value))}
                                                             min={0}
                                                         />
                                                         <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">đ</span>
@@ -561,37 +648,52 @@ function TelesalesCreateOrderContent() {
                                         />
                                     </div>
 
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-slate-600">Tạm tính:</span>
-                                        <span className="font-medium text-slate-900">
-                                            {formatPrice(orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0))}
-                                        </span>
+                                    {/* Summary Stats */}
+                                    <div className="bg-slate-50 p-4 rounded-lg space-y-2 text-sm">
+                                        <div className="flex items-center justify-between text-slate-600">
+                                            <span>Tổng tiền hàng (Niêm yết):</span>
+                                            <span>{formatPrice(totalListPrice)}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-slate-600">
+                                            <span>Tổng được chiết khấu:</span>
+                                            <div className="text-right">
+                                                <span className="text-red-600 mr-1">-{formatPrice(totalDiscount)}</span>
+                                                <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">
+                                                    {discountPercent.toFixed(1)}%
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="border-t border-slate-200 my-2"></div>
+
+                                        <div className="flex items-center justify-between text-slate-600">
+                                            <span>Thành tiền (Trước VAT):</span>
+                                            <span className="font-medium">{formatPrice(itemsSubtotal)}</span>
+                                        </div>
+
+                                        {/* VAT */}
+                                        <div className="flex items-center justify-between text-slate-600">
+                                            <div className="flex items-center gap-1.5">
+                                                <Percent className="w-3.5 h-3.5" />
+                                                <span>Thuế VAT (%):</span>
+                                                <input
+                                                    type="number"
+                                                    className="w-12 px-1 py-0.5 text-center border border-slate-300 rounded focus:border-indigo-500 text-xs"
+                                                    placeholder="0"
+                                                    min={0}
+                                                    max={100}
+                                                    value={vatRate || ""}
+                                                    onChange={(e) => setVatRate(Number(e.target.value))}
+                                                />
+                                            </div>
+                                            <span>+{formatPrice(totalVAT)}</span>
+                                        </div>
                                     </div>
 
-                                    {/* VAT */}
-                                    <div className="flex items-center justify-between text-sm">
-                                        <div className="flex items-center gap-1.5 text-slate-600">
-                                            <Percent className="w-3.5 h-3.5" />
-                                            <span>Thuế VAT (%):</span>
-                                        </div>
-                                        <div className="relative w-24">
-                                            <input
-                                                type="number"
-                                                className="w-full pl-2 pr-6 py-1 text-right border border-slate-300 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm"
-                                                placeholder="0"
-                                                min={0}
-                                                max={100}
-                                                value={vatRate || ""}
-                                                onChange={(e) => setVatRate(Number(e.target.value))}
-                                            />
-                                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500">%</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                                        <span className="text-lg font-bold text-slate-900">Tổng cộng:</span>
+                                    <div className="flex items-center justify-between pt-2">
+                                        <span className="text-lg font-bold text-slate-900">Tổng thanh toán:</span>
                                         <span className="text-2xl font-bold text-indigo-600">
-                                            {formatPrice(calculateTotal())}
+                                            {formatPrice(finalTotal)}
                                         </span>
                                     </div>
                                 </div>

@@ -61,9 +61,9 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                             <div>
                                 <p className="text-xs text-slate-500">Trạng thái</p>
                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
-                                        order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                                            order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                                'bg-indigo-100 text-indigo-800'
+                                    order.status === 'delivered' ? 'bg-green-100 text-green-800' :
+                                        order.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                            'bg-indigo-100 text-indigo-800'
                                     }`}>
                                     {order.status === 'processing' ? 'Đang xử lý' :
                                         order.status === 'delivered' ? 'Đã giao' :
@@ -83,6 +83,16 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                             <p className="font-medium text-slate-900">{order.customerName}</p>
                             <p className="text-sm text-slate-600 mt-1">{order.customer?.phone || 'Không có sđt'}</p>
                             <p className="text-sm text-slate-600">{order.customer?.address || 'Không có địa chỉ'}</p>
+
+                            {/* Note */}
+                            {order.note && (
+                                <div className="mt-3 pt-3 border-t border-slate-200">
+                                    <p className="text-xs text-slate-500 mb-1">Ghi chú đơn hàng:</p>
+                                    <p className="text-sm text-slate-800 italic bg-white p-2 rounded border border-slate-100">
+                                        "{order.note}"
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -99,28 +109,70 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                                         <th className="px-4 py-2">Sản phẩm</th>
                                         <th className="px-4 py-2 text-center">SL</th>
                                         <th className="px-4 py-2 text-right">Đơn giá</th>
+                                        <th className="px-4 py-2 text-right">Giảm giá</th>
                                         <th className="px-4 py-2 text-right">Thành tiền</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {(order.items || []).map((item: any, idx: number) => (
-                                        <tr key={idx}>
+                                        <tr key={idx} className={item.is_gift ? "bg-indigo-50/50" : ""}>
                                             <td className="px-4 py-3 font-medium text-slate-900">
-                                                {item.product?.name || item.name || 'Sản phẩm'}
+                                                <div className="flex items-center gap-2">
+                                                    {item.is_gift && <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase rounded">Quà</span>}
+                                                    <span>{item.product?.name || item.name || 'Sản phẩm'}</span>
+                                                </div>
                                             </td>
                                             <td className="px-4 py-3 text-center">{item.quantity}</td>
                                             <td className="px-4 py-3 text-right text-slate-600">
                                                 {formatPrice(item.price || item.unitPrice || 0)}
                                             </td>
+                                            <td className="px-4 py-3 text-right text-red-500 text-xs">
+                                                {item.discount > 0 ? `-${formatPrice(item.discount)}` : "-"}
+                                            </td>
                                             <td className="px-4 py-3 text-right font-medium text-slate-900">
-                                                {formatPrice((item.price || item.unitPrice || 0) * item.quantity)}
+                                                {formatPrice(item.subtotal || ((item.price || 0) * item.quantity))}
                                             </td>
                                         </tr>
                                     ))}
                                 </tbody>
-                                <tfoot className="bg-slate-50 font-semibold text-slate-900">
-                                    <tr>
-                                        <td colSpan={3} className="px-4 py-3 text-right">Tổng cộng</td>
+                                <tfoot className="bg-slate-50 text-slate-900">
+                                    {/* Summary Rows */}
+                                    {/* Only show detailed breakdown if there is discount or VAT */}
+                                    {(order.vat > 0 || (order.items || []).some((i: any) => i.discount > 0)) && (
+                                        <>
+                                            <tr>
+                                                <td colSpan={4} className="px-4 py-2 text-right text-slate-500 text-xs mt-2">Tổng tiền hàng</td>
+                                                <td className="px-4 py-2 text-right text-slate-600 text-xs">
+                                                    {formatPrice(
+                                                        (order.items || []).reduce((sum: number, item: any) => {
+                                                            if (item.is_gift) return sum;
+                                                            return sum + ((item.price || item.unitPrice || 0) * item.quantity);
+                                                        }, 0)
+                                                    )}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colSpan={4} className="px-4 py-1 text-right text-slate-500 text-xs">Tổng chiết khấu</td>
+                                                <td className="px-4 py-1 text-right text-red-500 text-xs">
+                                                    -{formatPrice(
+                                                        (order.items || []).reduce((sum: number, item: any) => sum + (item.discount || 0), 0)
+                                                    )}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colSpan={4} className="px-4 py-1 text-right text-slate-500 text-xs">VAT</td>
+                                                <td className="px-4 py-1 text-right text-slate-600 text-xs">
+                                                    +{formatPrice(order.vat || 0)}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td colSpan={5} className="border-t border-slate-200 my-2"></td>
+                                            </tr>
+                                        </>
+                                    )}
+
+                                    <tr className="font-bold text-base">
+                                        <td colSpan={4} className="px-4 py-3 text-right">Tổng thanh toán</td>
                                         <td className="px-4 py-3 text-right text-indigo-600">
                                             {formatPrice(order.totalAmount)}
                                         </td>
