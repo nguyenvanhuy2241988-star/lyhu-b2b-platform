@@ -111,7 +111,7 @@ export const CreateTaskModal = ({
             due_date: formData.dueDate || null,
             note: formData.description,
             assignee_ids: formData.assigneeIds,
-            leader_id: formData.leaderId,
+            leader_id: formData.leaderId || null,
             type: taskType,
         });
         onClose();
