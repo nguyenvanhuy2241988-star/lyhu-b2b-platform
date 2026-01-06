@@ -1,4 +1,5 @@
 "use client";
+// Force deploy: 2026-01-06 17:05
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { DollarSign, TrendingUp, Calendar, ArrowUpRight, ArrowDownRight, ChevronDown, Clock, Download, Package, Target, Zap, Award, Receipt, ShieldAlert, Info } from "lucide-react";
