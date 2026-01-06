@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Plus, Pencil, Trash2, X, Loader2, Check, BarChart3, Smartphone, Monitor, Target, Settings, User as UserIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Loader2, Check, BarChart3, Smartphone, Monitor, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { ROLES } from "@/lib/constants";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -51,15 +51,8 @@ interface User {
     device_info: string | null;
 }
 
-interface KpiSettings {
-    daily_calls_target: number;
-    daily_orders_target: number;
-    daily_revenue_target: number;
-    commission_rate: number;
-}
-
 type TimeRange = '7d' | '30d' | '1y' | '3y' | '5y';
-type ModalTab = 'overview' | 'kpi';
+type ModalTab = 'overview';
 
 export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([]);
@@ -85,15 +78,7 @@ export default function UsersPage() {
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const [timeRange, setTimeRange] = useState<TimeRange>('7d');
 
-    // KPI State
-    const [kpiSettings, setKpiSettings] = useState<KpiSettings>({
-        daily_calls_target: 50,
-        daily_orders_target: 5,
-        daily_revenue_target: 5000000,
-        commission_rate: 0.03
-    });
-    const [isLoadingKpi, setIsLoadingKpi] = useState(false);
-    const [isSavingKpi, setIsSavingKpi] = useState(false);
+
 
     const [formData, setFormData] = useState({
         email: "",
@@ -162,48 +147,7 @@ export default function UsersPage() {
         }
     };
 
-    const fetchKpiSettings = async (userId: string) => {
-        setIsLoadingKpi(true);
-        try {
-            const { data, error } = await supabase.rpc('get_user_kpi_settings', { p_user_id: userId });
-            if (error) throw error;
-            if (data) {
-                setKpiSettings({
-                    daily_calls_target: data.daily_calls_target,
-                    daily_orders_target: data.daily_orders_target,
-                    daily_revenue_target: data.daily_revenue_target,
-                    commission_rate: data.commission_rate
-                });
-            }
-        } catch (error) {
-            console.error("Failed to fetch KPI", error);
-            toast.error("Không thể tải cấu hình KPI");
-        } finally {
-            setIsLoadingKpi(false);
-        }
-    };
 
-    const handleSaveKpi = async () => {
-        if (!viewingUser) return;
-        setIsSavingKpi(true);
-        try {
-            const { error } = await supabase.rpc('update_user_kpi_settings', {
-                p_user_id: viewingUser.id,
-                p_daily_calls: kpiSettings.daily_calls_target,
-                p_daily_orders: kpiSettings.daily_orders_target,
-                p_daily_revenue: kpiSettings.daily_revenue_target,
-                p_commission_rate: kpiSettings.commission_rate
-            });
-
-            if (error) throw error;
-            toast.success("Cập nhật KPI thành công!");
-        } catch (error) {
-            console.error(error);
-            toast.error("Lỗi khi lưu KPI");
-        } finally {
-            setIsSavingKpi(false);
-        }
-    };
 
     useEffect(() => {
         if (!session?.access_token) return;
@@ -237,9 +181,6 @@ export default function UsersPage() {
     useEffect(() => {
         if (viewingUser && isDetailOpen && currentTab === 'overview') {
             fetchUserHistory(viewingUser.id, timeRange);
-        }
-        if (viewingUser && isDetailOpen && currentTab === 'kpi') {
-            fetchKpiSettings(viewingUser.id);
         }
     }, [timeRange, viewingUser, isDetailOpen, currentTab]);
 
@@ -533,13 +474,7 @@ export default function UsersPage() {
                                 <BarChart3 className="w-4 h-4" />
                                 Tổng quan & Hoạt động
                             </button>
-                            <button
-                                onClick={() => setCurrentTab('kpi')}
-                                className={`py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${currentTab === 'kpi' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
-                            >
-                                <Target className="w-4 h-4" />
-                                Cấu hình KPI
-                            </button>
+
                         </div>
 
                         <div className="p-6 overflow-y-auto flex-1 font-sans">
@@ -582,8 +517,8 @@ export default function UsersPage() {
                                                     key={range}
                                                     onClick={() => setTimeRange(range)}
                                                     className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${timeRange === range
-                                                            ? 'bg-white text-blue-600 shadow-sm'
-                                                            : 'text-slate-500 hover:text-slate-700'
+                                                        ? 'bg-white text-blue-600 shadow-sm'
+                                                        : 'text-slate-500 hover:text-slate-700'
                                                         }`}
                                                 >
                                                     {range === '1y' ? '1 Năm' : range === '3y' ? '3 Năm' : range === '5y' ? '5 Năm' : range === '30d' ? '30 Ngày' : '7 Ngày'}
@@ -655,95 +590,7 @@ export default function UsersPage() {
                                 </div>
                             )}
 
-                            {currentTab === 'kpi' && (
-                                <div className="max-w-xl mx-auto py-4">
-                                    <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl mb-6">
-                                        <h5 className="font-bold text-blue-800 text-sm flex items-center gap-2 mb-1">
-                                            <Settings className="w-4 h-4" />
-                                            Cấu hình chỉ tiêu KPI
-                                        </h5>
-                                        <p className="text-xs text-blue-600">
-                                            Thiết lập các chỉ tiêu hàng ngày và mức hoa hồng cho nhân sự. Thay đổi sẽ có hiệu lực ngay lập tức.
-                                        </p>
-                                    </div>
 
-                                    {isLoadingKpi ? (
-                                        <div className="flex justify-center py-10">
-                                            <Loader2 className="w-8 h-8 animate-spin text-slate-300" />
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-5">
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-700 mb-1">Chỉ tiêu Cuộc gọi / Ngày</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type="number"
-                                                        className="w-full border border-slate-300 rounded-lg pl-3 pr-12 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
-                                                        value={kpiSettings.daily_calls_target}
-                                                        onChange={e => setKpiSettings({ ...kpiSettings, daily_calls_target: parseInt(e.target.value) || 0 })}
-                                                    />
-                                                    <span className="absolute right-3 top-2.5 text-sm text-slate-500 font-medium">Calls</span>
-                                                </div>
-                                                <p className="text-xs text-slate-500 mt-1">Số lượng cuộc gọi telesales cần thực hiện mỗi ngày.</p>
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-700 mb-1">Chỉ tiêu Đơn hàng / Ngày</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type="number"
-                                                        className="w-full border border-slate-300 rounded-lg pl-3 pr-12 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
-                                                        value={kpiSettings.daily_orders_target}
-                                                        onChange={e => setKpiSettings({ ...kpiSettings, daily_orders_target: parseInt(e.target.value) || 0 })}
-                                                    />
-                                                    <span className="absolute right-3 top-2.5 text-sm text-slate-500 font-medium">Đơn</span>
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-sm font-medium text-slate-700 mb-1">Chỉ tiêu Doanh thu / Ngày</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type="number"
-                                                        className="w-full border border-slate-300 rounded-lg pl-3 pr-12 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
-                                                        value={kpiSettings.daily_revenue_target}
-                                                        onChange={e => setKpiSettings({ ...kpiSettings, daily_revenue_target: parseInt(e.target.value) || 0 })}
-                                                    />
-                                                    <span className="absolute right-3 top-2.5 text-sm text-slate-500 font-medium">VNĐ</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="border-t border-slate-100 pt-4">
-                                                <label className="block text-sm font-medium text-slate-700 mb-1">Tỉ lệ Hoa hồng (Commission Rate)</label>
-                                                <div className="relative">
-                                                    <input
-                                                        type="number"
-                                                        step="0.01"
-                                                        className="w-full border border-slate-300 rounded-lg pl-3 pr-12 py-2.5 focus:ring-2 focus:ring-blue-500 outline-none"
-                                                        value={kpiSettings.commission_rate * 100}
-                                                        onChange={e => setKpiSettings({ ...kpiSettings, commission_rate: (parseFloat(e.target.value) || 0) / 100 })}
-                                                    />
-                                                    <span className="absolute right-3 top-2.5 text-sm text-slate-500 font-medium">%</span>
-                                                </div>
-                                                <p className="text-xs text-slate-500 mt-1">
-                                                    Nhập 3 cho 3%, 5 cho 5%. Giá trị lưu DB: {kpiSettings.commission_rate}
-                                                </p>
-                                            </div>
-
-                                            <div className="pt-4 flex justify-end">
-                                                <button
-                                                    onClick={handleSaveKpi}
-                                                    disabled={isSavingKpi}
-                                                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-sm flex items-center gap-2 disabled:opacity-70"
-                                                >
-                                                    {isSavingKpi ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                                                    Lưu cấu hình
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
