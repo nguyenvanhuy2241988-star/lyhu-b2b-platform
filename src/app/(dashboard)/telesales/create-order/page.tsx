@@ -23,7 +23,9 @@ const formatPrice = (price: number) => {
 interface OrderItem {
     product: Product;
     quantity: number;
-    discount: number; // in VNĐ
+    discount: number; // in VNĐ (Always the effective money amount)
+    discountType: 'amount' | 'percent';
+    discountValue: number; // The input value (e.g. 10 for 10% or 10000 for 10k)
     isGift: boolean;
     price: number; // Override price
 }
@@ -101,6 +103,8 @@ function TelesalesCreateOrderContent() {
                                     product: prod,
                                     quantity: di.quantity,
                                     discount: 0,
+                                    discountType: 'amount',
+                                    discountValue: 0,
                                     isGift: false,
                                     price: prod.wholesalePrice || 0
                                 });
@@ -134,6 +138,7 @@ function TelesalesCreateOrderContent() {
     const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
     const [vatRate, setVatRate] = useState<number>(0); // Percentage
     const [orderNote, setOrderNote] = useState<string>("");
+    const [paymentMethod, setPaymentMethod] = useState<string>("COD");
 
     // UI state
     const [currentStep, setCurrentStep] = useState(1);
@@ -177,9 +182,11 @@ function TelesalesCreateOrderContent() {
                 {
                     product,
                     quantity: 1,
+                    price: product.wholesalePrice || 0, // Initialize with default list price
                     discount: 0,
-                    isGift: false,
-                    price: product.wholesalePrice || 0 // Initialize with default list price
+                    discountType: 'amount',
+                    discountValue: 0,
+                    isGift: false
                 }
             ]);
         }
@@ -210,10 +217,25 @@ function TelesalesCreateOrderContent() {
         setOrderItems((prev) => prev.filter((_, i) => i !== index));
     };
 
-    const handleUpdateDiscount = (index: number, discount: number) => {
+    const handleUpdateDiscount = (index: number, value: number, type: 'amount' | 'percent') => {
         setOrderItems(prev => {
             const newItems = [...prev];
-            newItems[index] = { ...newItems[index], discount };
+            const item = newItems[index];
+            const subtotal = item.price * item.quantity;
+
+            let newDiscount = 0;
+            if (type === 'amount') {
+                newDiscount = value; // Direct money
+            } else {
+                newDiscount = subtotal * (value / 100); // Percentage
+            }
+
+            newItems[index] = {
+                ...item,
+                discount: newDiscount,
+                discountType: type,
+                discountValue: value
+            };
             return newItems;
         });
     };
@@ -290,12 +312,14 @@ function TelesalesCreateOrderContent() {
                 subtotal: calculateItemSubtotal(item),
                 productId: item.product.id,
                 discount: item.discount,
+                discountType: item.discountType,
                 isGift: item.isGift
             })),
             totalAmount: total,
             status: "pending",
             notes: orderNote || (dealInfo ? `Đơn hàng từ cơ hội: ${dealInfo.title}` : "Đơn hàng tạo bởi Telesales"),
-            vat: calculateTotal() - orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0) // exact vat val
+            vat: calculateTotal() - orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0), // exact vat val
+            paymentMethod: paymentMethod
         }, session?.access_token);
 
         if (res?.success && res.data) {
@@ -321,6 +345,7 @@ function TelesalesCreateOrderContent() {
         setOrderItems([]);
         setVatRate(0);
         setOrderNote("");
+        setPaymentMethod("COD");
         setCurrentStep(1);
     };
 
@@ -615,16 +640,22 @@ function TelesalesCreateOrderContent() {
                                                 {/* Discount Input */}
                                                 <div className={`flex items-center gap-1.5 ${item.isGift ? 'opacity-50 pointer-events-none' : ''}`}>
                                                     <Tag className="w-3.5 h-3.5 text-slate-400" />
-                                                    <div className="relative">
+                                                    <div className="flex items-center border border-slate-200 rounded overflow-hidden">
                                                         <input
                                                             type="number"
-                                                            placeholder="Giảm giá..."
-                                                            className="w-24 pl-2 pr-6 py-1 text-xs border border-slate-200 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-right"
-                                                            value={item.discount || ""}
-                                                            onChange={(e) => handleUpdateDiscount(index, Number(e.target.value))}
+                                                            placeholder="Giảm..."
+                                                            className="w-20 pl-2 pr-1 py-1 text-xs outline-none text-right"
+                                                            value={item.discountValue || ""}
+                                                            onChange={(e) => handleUpdateDiscount(index, Number(e.target.value), item.discountType)}
                                                             min={0}
                                                         />
-                                                        <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">đ</span>
+                                                        <button
+                                                            onClick={() => handleUpdateDiscount(index, item.discountValue, item.discountType === 'amount' ? 'percent' : 'amount')}
+                                                            className="px-1.5 py-1 bg-slate-50 border-l border-slate-200 text-[10px] text-slate-600 font-bold hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                                                            title="Đổi đơn vị (đ / %)"
+                                                        >
+                                                            {item.discountType === 'amount' ? 'đ' : '%'}
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -646,6 +677,31 @@ function TelesalesCreateOrderContent() {
                                             value={orderNote}
                                             onChange={(e) => setOrderNote(e.target.value)}
                                         />
+                                    </div>
+
+                                    {/* Payment Method */}
+                                    <div>
+                                        <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1">
+                                            <Building className="w-4 h-4" /> Phương thức thanh toán
+                                        </label>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {[
+                                                { id: 'COD', label: 'Tiền mặt (COD/Ship)' },
+                                                { id: 'BANKING', label: 'Chuyển khoản' },
+                                                { id: 'DEBT', label: 'Công nợ' }
+                                            ].map((method) => (
+                                                <button
+                                                    key={method.id}
+                                                    onClick={() => setPaymentMethod(method.id)}
+                                                    className={`py-2 px-3 text-sm rounded-lg border text-center transition-colors ${paymentMethod === method.id
+                                                            ? 'bg-indigo-50 border-indigo-500 text-indigo-700 font-medium'
+                                                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                                                        }`}
+                                                >
+                                                    {method.label}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
 
                                     {/* Summary Stats */}

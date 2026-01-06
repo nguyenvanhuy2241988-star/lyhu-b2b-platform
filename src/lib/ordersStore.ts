@@ -25,6 +25,22 @@ export type OrderStatus = 'pending' | 'processing' | 'delivered' | 'cancelled' |
 export type OrderSource = 'TELESALES' | 'CUSTOMER' | 'SALES' | 'CTV' | 'SHOPEE' | 'TIKTOK' | 'WEB' | 'FACEBOOK' | 'ZALO';
 export type FraudStatus = "NONE" | "FLAGGED" | "CONFIRMED" | "CLEARED";
 
+export interface OrderItem {
+    sku?: string;
+    name?: string;
+    brand?: string;
+    quantity: number;
+    unit?: string;
+    unitPrice?: number;
+    price?: number; // Alias
+    subtotal?: number;
+    productId: string;
+    discount?: number;
+    discountType?: 'amount' | 'percent';
+    isGift?: boolean;
+    is_gift?: boolean; // Alias for specific DB mapping cases
+}
+
 export interface Order {
     id: string;
     readableId: number;
@@ -34,7 +50,7 @@ export interface Order {
     createdAt: string;
     source: OrderSource;
     telesalesUserId?: string;
-    items?: any[];
+    items?: OrderItem[];
     customerId?: string;
     leadId?: string;
     flagged?: boolean; // For fraud scan
@@ -47,7 +63,9 @@ export interface Order {
     receiverPhone?: string;
     receiverAddress?: string;
     notes?: string;
+    note?: string; // Alias
     vat?: number;
+    paymentMethod?: string;
     ctvPaidAt?: string; // Timestamp when commission was paid
 }
 
@@ -369,7 +387,8 @@ export const addOrderSupabase = async (orderData: any, token?: string) => {
             total_amount: orderData.totalAmount,
             source: orderData.source || 'CUSTOMER',
             vat: orderData.vat || 0,
-            note: orderData.notes || null,
+            note: orderData.notes || orderData.note || null,
+            payment_method: orderData.paymentMethod || 'COD'
         };
 
         const orderRes = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
@@ -399,6 +418,7 @@ export const addOrderSupabase = async (orderData: any, token?: string) => {
                 quantity: item.quantity,
                 price: item.unitPrice || item.price || 0,
                 discount: item.discount || 0,
+                discount_type: item.discountType || 'amount',
                 is_gift: item.isGift || false,
             }));
 

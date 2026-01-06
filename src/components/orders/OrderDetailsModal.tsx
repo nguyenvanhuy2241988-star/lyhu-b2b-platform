@@ -1,5 +1,7 @@
 import React from "react";
-import { X, Calendar, User, Package, CreditCard, ShoppingBag } from "lucide-react";
+import { X, Calendar, User, MapPin, ShoppingBag, CreditCard, Printer } from "lucide-react";
+import { Order } from "@/lib/ordersStore";
+import { OrderPrintTemplate } from "./OrderPrintTemplate";
 
 interface OrderDetailsModalProps {
     order: any;
@@ -183,14 +185,26 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                     </div>
                 </div>
 
-                {/* Footer */}
-                <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end">
+                {/* Footer Actions */}
+                <div className="p-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 rounded-b-xl print:hidden">
+                    <button
+                        onClick={() => window.print()}
+                        className="px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 font-medium flex items-center gap-2"
+                    >
+                        <Printer className="w-4 h-4" />
+                        In đơn hàng
+                    </button>
                     <button
                         onClick={onClose}
-                        className="px-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm text-slate-700 hover:bg-slate-50 font-medium"
+                        className="px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 font-medium"
                     >
                         Đóng
                     </button>
+                </div>
+
+                {/* Print Template (Hidden in screen, Visible in Print) */}
+                <div className="hidden print:block fixed inset-0 bg-white z-[9999]">
+                    <OrderPrintTemplate order={order} />
                 </div>
             </div>
         </div>
