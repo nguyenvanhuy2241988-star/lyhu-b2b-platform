@@ -171,7 +171,7 @@ export default function OrdersPage() {
                                             {item.name} <span className="text-slate-400">× {item.quantity}</span>
                                         </span>
                                         <span className="font-medium text-slate-900">
-                                            {formatPrice(item.subtotal)}
+                                            {formatPrice(item.subtotal || 0)}
                                         </span>
                                     </div>
                                 ))}

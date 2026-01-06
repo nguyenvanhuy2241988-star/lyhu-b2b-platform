@@ -305,7 +305,7 @@ export default function CreateOrderPage() {
                                         <div className="flex-1 min-w-0">
                                             <h4 className="font-medium text-slate-900 text-sm">{item.product.name}</h4>
                                             <p className="text-xs text-slate-500 mt-1">
-                                                {formatPrice(item.product.wholesalePrice)} × {item.quantity}
+                                                {formatPrice(item.product.wholesalePrice || 0)} × {item.quantity}
                                             </p>
                                         </div>
 
@@ -328,7 +328,7 @@ export default function CreateOrderPage() {
 
                                         <div className="text-right">
                                             <p className="font-semibold text-slate-900">
-                                                {formatPrice(item.product.wholesalePrice * item.quantity)}
+                                                {formatPrice((item.product.wholesalePrice || 0) * item.quantity)}
                                             </p>
                                         </div>
 
