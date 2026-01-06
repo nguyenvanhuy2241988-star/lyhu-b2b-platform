@@ -20,7 +20,7 @@ import {
     fetchPayrollConfig,
     fetchUserTransactions
 } from "@/lib/payrollStore";
-import { getRealtimeClient } from "@/lib/supabaseClient";
+import { supabase, getRealtimeClient } from "@/lib/supabaseClient";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
