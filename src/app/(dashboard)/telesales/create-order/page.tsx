@@ -451,95 +451,96 @@ function TelesalesCreateOrderContent() {
                             <h3 className="font-semibold text-slate-900 mb-4">Đơn hàng ({orderItems.length} sản phẩm)</h3>
 
                             <div className="space-y-3 mb-6">
-                                <div
-                                    key={item.product.id}
-                                    className={`flex flex-col gap-3 p-4 border rounded-lg transition-colors ${item.isGift ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-200'}`}
-                                >
-                                    {/* Top Row: Info + Actions */}
-                                    <div className="flex items-start justify-between gap-4">
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                {item.isGift && <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase rounded">Quà tặng</span>}
-                                                <h4 className="font-medium text-slate-900 text-sm">{item.product.name}</h4>
-                                            </div>
-                                            <p className="text-xs text-slate-500">
-                                                {formatPrice(item.product.wholesalePrice || 0)}
-                                            </p>
-                                        </div>
-
-                                        <div className="text-right">
-                                            <p className={`font-semibold ${item.isGift ? 'text-indigo-600' : 'text-slate-900'}`}>
-                                                {formatPrice(calculateItemSubtotal(item))}
-                                            </p>
-                                            {item.discount > 0 && !item.isGift && (
-                                                <p className="text-xs text-red-500 line-through">
-                                                    {formatPrice((item.product.wholesalePrice || 0) * item.quantity)}
+                                {orderItems.map((item) => (
+                                    <div
+                                        key={item.product.id}
+                                        className={`flex flex-col gap-3 p-4 border rounded-lg transition-colors ${item.isGift ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-200'}`}
+                                    >
+                                        {/* Top Row: Info + Actions */}
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    {item.isGift && <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase rounded">Quà tặng</span>}
+                                                    <h4 className="font-medium text-slate-900 text-sm">{item.product.name}</h4>
+                                                </div>
+                                                <p className="text-xs text-slate-500">
+                                                    {formatPrice(item.product.wholesalePrice || 0)}
                                                 </p>
-                                            )}
-                                        </div>
+                                            </div>
 
-                                        <button
-                                            onClick={() => handleRemoveItem(item.product.id)}
-                                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
+                                            <div className="text-right">
+                                                <p className={`font-semibold ${item.isGift ? 'text-indigo-600' : 'text-slate-900'}`}>
+                                                    {formatPrice(calculateItemSubtotal(item))}
+                                                </p>
+                                                {item.discount > 0 && !item.isGift && (
+                                                    <p className="text-xs text-red-500 line-through">
+                                                        {formatPrice((item.product.wholesalePrice || 0) * item.quantity)}
+                                                    </p>
+                                                )}
+                                            </div>
 
-                                    {/* Bottom Row: Controls */}
-                                    <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100">
-                                        {/* Quantity */}
-                                        <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
                                             <button
-                                                onClick={() => handleUpdateQuantity(item.product.id, -1)}
-                                                disabled={item.quantity <= 1}
-                                                className="p-1 hover:bg-white rounded transition-colors disabled:opacity-50"
+                                                onClick={() => handleRemoveItem(item.product.id)}
+                                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                                             >
-                                                <Minus className="w-3.5 h-3.5" />
-                                            </button>
-                                            <span className="w-8 text-center text-sm font-semibold">{item.quantity}</span>
-                                            <button
-                                                onClick={() => handleUpdateQuantity(item.product.id, 1)}
-                                                className="p-1 hover:bg-white rounded transition-colors"
-                                            >
-                                                <Plus className="w-3.5 h-3.5" />
+                                                <Trash2 className="w-4 h-4" />
                                             </button>
                                         </div>
 
-                                        {/* Options */}
-                                        <div className="flex items-center gap-3">
-                                            {/* Gift Toggle */}
-                                            <label className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-600 select-none">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={item.isGift}
-                                                    onChange={() => handleToggleGift(item.product.id)}
-                                                    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                                                />
-                                                <Gift className="w-3.5 h-3.5" />
-                                                <span>Tặng</span>
-                                            </label>
+                                        {/* Bottom Row: Controls */}
+                                        <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100">
+                                            {/* Quantity */}
+                                            <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+                                                <button
+                                                    onClick={() => handleUpdateQuantity(item.product.id, -1)}
+                                                    disabled={item.quantity <= 1}
+                                                    className="p-1 hover:bg-white rounded transition-colors disabled:opacity-50"
+                                                >
+                                                    <Minus className="w-3.5 h-3.5" />
+                                                </button>
+                                                <span className="w-8 text-center text-sm font-semibold">{item.quantity}</span>
+                                                <button
+                                                    onClick={() => handleUpdateQuantity(item.product.id, 1)}
+                                                    className="p-1 hover:bg-white rounded transition-colors"
+                                                >
+                                                    <Plus className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
 
-                                            <div className="w-px h-4 bg-slate-200"></div>
-
-                                            {/* Discount Input */}
-                                            <div className={`flex items-center gap-1.5 ${item.isGift ? 'opacity-50 pointer-events-none' : ''}`}>
-                                                <Tag className="w-3.5 h-3.5 text-slate-400" />
-                                                <div className="relative">
+                                            {/* Options */}
+                                            <div className="flex items-center gap-3">
+                                                {/* Gift Toggle */}
+                                                <label className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-600 select-none">
                                                     <input
-                                                        type="number"
-                                                        placeholder="Giảm giá..."
-                                                        className="w-24 pl-2 pr-6 py-1 text-xs border border-slate-200 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-right"
-                                                        value={item.discount || ""}
-                                                        onChange={(e) => handleUpdateDiscount(item.product.id, Number(e.target.value))}
-                                                        min={0}
+                                                        type="checkbox"
+                                                        checked={item.isGift}
+                                                        onChange={() => handleToggleGift(item.product.id)}
+                                                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
                                                     />
-                                                    <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">đ</span>
+                                                    <Gift className="w-3.5 h-3.5" />
+                                                    <span>Tặng</span>
+                                                </label>
+
+                                                <div className="w-px h-4 bg-slate-200"></div>
+
+                                                {/* Discount Input */}
+                                                <div className={`flex items-center gap-1.5 ${item.isGift ? 'opacity-50 pointer-events-none' : ''}`}>
+                                                    <Tag className="w-3.5 h-3.5 text-slate-400" />
+                                                    <div className="relative">
+                                                        <input
+                                                            type="number"
+                                                            placeholder="Giảm giá..."
+                                                            className="w-24 pl-2 pr-6 py-1 text-xs border border-slate-200 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-right"
+                                                            value={item.discount || ""}
+                                                            onChange={(e) => handleUpdateDiscount(item.product.id, Number(e.target.value))}
+                                                            min={0}
+                                                        />
+                                                        <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">đ</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
                                 ))}
                             </div>
 
