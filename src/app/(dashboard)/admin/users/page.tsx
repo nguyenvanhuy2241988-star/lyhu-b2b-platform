@@ -1,4 +1,3 @@
-```javascript
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -70,7 +69,7 @@ export default function UsersPage() {
     const [viewingUser, setViewingUser] = useState<User | null>(null);
     const [historyData, setHistoryData] = useState<any[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-    
+
     const [formData, setFormData] = useState({
         email: "",
         password: "",
@@ -89,13 +88,13 @@ export default function UsersPage() {
 
             // Use the new RPC to get users with activity stats
             const { data, error } = await supabase.rpc('get_users_activity_stats');
-            
+
             if (error) throw error;
 
             // Normalize ID
             const normalizedData = (data || []).map((u: any) => ({
                 ...u,
-                id: u.user_id 
+                id: u.user_id
             }));
 
             setUsers(normalizedData);
@@ -206,11 +205,11 @@ export default function UsersPage() {
     };
 
     const handleDelete = async (user: User) => {
-        if (!confirm(`Bạn có chắc chắn muốn xóa tài khoản ${ user.email }?`)) return;
+        if (!confirm(`Bạn có chắc chắn muốn xóa tài khoản ${user.email}?`)) return;
 
         const toastId = toast.loading("Đang xóa...");
         try {
-            const res = await fetch(`/ api / admin / users ? id = ${ user.id } `, { method: "DELETE" });
+            const res = await fetch(`/api/admin/users?id=${user.id}`, { method: "DELETE" });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "Xóa thất bại");
 
@@ -226,7 +225,7 @@ export default function UsersPage() {
         if (!seconds) return "0p";
         const h = Math.floor(seconds / 3600);
         const m = Math.floor((seconds % 3600) / 60);
-        return h > 0 ? `${ h }h ${ m } p` : `${ m } p`;
+        return h > 0 ? `${h}h ${m}p` : `${m}p`;
     };
 
     const formatLastSeen = (dateString: string | null) => {
@@ -319,14 +318,13 @@ export default function UsersPage() {
                                             <div className="text-xs text-slate-500">{user.full_name || "Chưa đặt tên"}</div>
                                         </td>
                                         <td className="px-6 py-4">
-                                             <div className="flex flex-col gap-1 items-start">
-                                                <span className={`inline - flex items - center gap - 1.5 px - 2.5 py - 0.5 rounded - full text - xs font - medium border
-                                                    ${
-    user.is_online
-    ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-    : 'bg-slate-50 text-slate-500 border-slate-100'
-} `}>
-                                                    <span className={`w - 1.5 h - 1.5 rounded - full ${ user.is_online ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400' } `}></span>
+                                            <div className="flex flex-col gap-1 items-start">
+                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border
+                                                    ${user.is_online
+                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                                        : 'bg-slate-50 text-slate-500 border-slate-100'
+                                                    }`}>
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${user.is_online ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
                                                     {user.is_online ? "Online" : "Offline"}
                                                 </span>
                                                 {user.is_online && user.last_path && (
@@ -334,23 +332,22 @@ export default function UsersPage() {
                                                         {user.last_path}
                                                     </span>
                                                 )}
-                                             </div>
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="font-mono text-slate-700 font-medium">
                                                 {formatDuration(user.online_seconds)}
                                             </div>
                                             <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
-                                                {user.device_info == 'Mobile' ? <Smartphone size={10}/> : <Monitor size={10}/>}
+                                                {user.device_info == 'Mobile' ? <Smartphone size={10} /> : <Monitor size={10} />}
                                                 {user.device_info || 'Unknown'}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline - flex items - center px - 2.5 py - 0.5 rounded - full text - xs font - medium 
-                                                ${
-    user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
-    user.role === 'customer' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-} `}>
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                                ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                                                    user.role === 'customer' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                                                }`}>
                                                 {ROLE_LABELS[user.role] || user.role}
                                             </span>
                                         </td>
@@ -418,15 +415,15 @@ export default function UsersPage() {
                 </div>
             )}
 
-             {/* Detail Modal */}
-             {isDetailOpen && viewingUser && (
+            {/* Detail Modal */}
+            {isDetailOpen && viewingUser && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl overflow-hidden animate-in zoom-in-95 h-[90vh] flex flex-col">
                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <div>
                                 <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
                                     {viewingUser.full_name || viewingUser.email}
-                                    <span className={`text - xs px - 2 py - 0.5 rounded - full ${ viewingUser.is_online ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500' } `}>
+                                    <span className={`text-xs px-2 py-0.5 rounded-full ${viewingUser.is_online ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
                                         {viewingUser.is_online ? 'Online' : 'Offline'}
                                     </span>
                                 </h3>
@@ -436,7 +433,7 @@ export default function UsersPage() {
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
-                        
+
                         <div className="p-6 overflow-y-auto flex-1 font-sans">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
@@ -451,38 +448,38 @@ export default function UsersPage() {
                                 <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
                                     <p className="text-slate-500 text-xs font-medium uppercase">Thiết bị</p>
                                     <p className="text-lg font-semibold text-slate-700 mt-1 flex items-center gap-2">
-                                        {viewingUser.device_info == 'Mobile' ? <Smartphone size={18}/> : <Monitor size={18}/>}
+                                        {viewingUser.device_info == 'Mobile' ? <Smartphone size={18} /> : <Monitor size={18} />}
                                         {viewingUser.device_info || 'Unknown'}
                                     </p>
                                 </div>
                             </div>
 
                             <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                <BarChart3 className="w-5 h-5 text-blue-600"/>
+                                <BarChart3 className="w-5 h-5 text-blue-600" />
                                 Biểu đồ hoạt động 7 ngày qua
                             </h4>
-                            
+
                             <div className="h-[300px] w-full border border-slate-100 rounded-xl p-4 bg-white/50 relative">
                                 {isLoadingHistory ? (
                                     <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
-                                        <Loader2 className="w-8 h-8 animate-spin text-blue-500"/>
+                                        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
                                     </div>
                                 ) : (
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={historyData}>
-                                            <XAxis 
-                                                dataKey="date" 
-                                                fontSize={12} 
-                                                tickFormatter={(value) => new Date(value).toLocaleDateString('vi-VN', {day: '2-digit', month: '2-digit'})} 
+                                            <XAxis
+                                                dataKey="date"
+                                                fontSize={12}
+                                                tickFormatter={(value) => new Date(value).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
                                             />
-                                            <YAxis 
-                                                fontSize={12} 
-                                                tickFormatter={(val) => `${ Math.floor(val / 60) } p`}
+                                            <YAxis
+                                                fontSize={12}
+                                                tickFormatter={(val) => `${Math.floor(val / 60)}p`}
                                             />
                                             <Tooltip content={<CustomTooltip />} />
                                             <Bar dataKey="online_seconds" radius={[4, 4, 0, 0]}>
                                                 {historyData.map((entry, index) => (
-                                                    <Cell key={`cell - ${ index } `} fill={entry.online_seconds > 28800 ? '#10b981' : '#3b82f6'} />
+                                                    <Cell key={`cell-${index}`} fill={entry.online_seconds > 28800 ? '#10b981' : '#3b82f6'} />
                                                 ))}
                                             </Bar>
                                         </BarChart>
@@ -492,7 +489,7 @@ export default function UsersPage() {
                         </div>
                     </div>
                 </div>
-             )}
+            )}
 
             {/* Create/Edit Modal */}
             {isModalOpen && (
