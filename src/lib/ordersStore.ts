@@ -47,6 +47,7 @@ export interface Order {
     receiverPhone?: string;
     receiverAddress?: string;
     notes?: string;
+    vat?: number;
     ctvPaidAt?: string; // Timestamp when commission was paid
 }
 
@@ -366,7 +367,9 @@ export const addOrderSupabase = async (orderData: any, token?: string) => {
             telesales_user_id: orderData.telesalesUserId,
             status: orderData.status || 'pending',
             total_amount: orderData.totalAmount,
-            source: orderData.source || 'CUSTOMER'
+            source: orderData.source || 'CUSTOMER',
+            vat: orderData.vat || 0,
+            note: orderData.notes || null,
         };
 
         const orderRes = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
@@ -394,7 +397,9 @@ export const addOrderSupabase = async (orderData: any, token?: string) => {
                 order_id: order.id,
                 product_id: item.productId,
                 quantity: item.quantity,
-                price: item.unitPrice || item.price || 0
+                price: item.unitPrice || item.price || 0,
+                discount: item.discount || 0,
+                is_gift: item.isGift || false,
             }));
 
             const itemsRes = await fetch(`${SUPABASE_URL}/rest/v1/order_items`, {

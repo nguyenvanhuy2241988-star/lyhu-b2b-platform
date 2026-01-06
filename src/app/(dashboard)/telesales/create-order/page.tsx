@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Product } from "@/mocks/data";
 import { fetchCustomers, Customer, fetchDealItems } from "@/lib/crmDealsStore";
 import { loadProducts } from "@/lib/supabase/products";
-import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, User, ArrowLeft, Building } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, User, ArrowLeft, Building, Gift, Tag, FileText, Percent } from "lucide-react";
 import { addOrderSupabase } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { createClient } from "@/lib/supabaseClient";
@@ -23,6 +23,8 @@ const formatPrice = (price: number) => {
 interface OrderItem {
     product: Product;
     quantity: number;
+    discount: number; // in VNĐ
+    isGift: boolean;
 }
 
 function TelesalesCreateOrderContent() {
@@ -126,6 +128,8 @@ function TelesalesCreateOrderContent() {
 
     // Step 2 & 3: Add products and quantities
     const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+    const [vatRate, setVatRate] = useState<number>(0); // Percentage
+    const [orderNote, setOrderNote] = useState<string>("");
 
     // UI state
     const [currentStep, setCurrentStep] = useState(1);
@@ -155,7 +159,7 @@ function TelesalesCreateOrderContent() {
                 )
             );
         } else {
-            setOrderItems((prev) => [...prev, { product, quantity: 1 }]);
+            setOrderItems((prev) => [...prev, { product, quantity: 1, discount: 0, isGift: false }]);
         }
     };
 
@@ -182,10 +186,24 @@ function TelesalesCreateOrderContent() {
         setOrderItems((prev) => prev.filter((item) => item.product.id !== productId));
     };
 
+    const handleUpdateDiscount = (productId: string, discount: number) => {
+        setOrderItems(prev => prev.map(item => item.product.id === productId ? { ...item, discount } : item));
+    };
+
+    const handleToggleGift = (productId: string) => {
+        setOrderItems(prev => prev.map(item => item.product.id === productId ? { ...item, isGift: !item.isGift } : item));
+    };
+
+    const calculateItemSubtotal = (item: OrderItem) => {
+        if (item.isGift) return 0;
+        const sub = ((item.product.wholesalePrice || 0) * item.quantity) - item.discount;
+        return sub > 0 ? sub : 0;
+    };
+
     const calculateTotal = () => {
-        return orderItems.reduce((sum, item) => {
-            return sum + (item.product.wholesalePrice || 0) * item.quantity;
-        }, 0);
+        const subtotal = orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0);
+        const vatAmount = subtotal * (vatRate / 100);
+        return subtotal + vatAmount;
     };
 
     const handleCreateOrder = async () => {
@@ -212,12 +230,15 @@ function TelesalesCreateOrderContent() {
                 quantity: item.quantity,
                 unit: item.product.unit || "Cái",
                 unitPrice: item.product.wholesalePrice,
-                subtotal: (item.product.wholesalePrice || 0) * item.quantity,
-                productId: item.product.id
+                subtotal: calculateItemSubtotal(item),
+                productId: item.product.id,
+                discount: item.discount,
+                isGift: item.isGift
             })),
             totalAmount: total,
             status: "pending",
-            notes: dealInfo ? `Đơn hàng từ cơ hội: ${dealInfo.title}` : "Đơn hàng tạo bởi Telesales"
+            notes: orderNote || (dealInfo ? `Đơn hàng từ cơ hội: ${dealInfo.title}` : "Đơn hàng tạo bởi Telesales"),
+            vat: calculateTotal() - orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0) // exact vat val
         }, session?.access_token);
 
         if (res?.success && res.data) {
@@ -241,6 +262,8 @@ function TelesalesCreateOrderContent() {
     const handleReset = () => {
         setSelectedCustomer(null);
         setOrderItems([]);
+        setVatRate(0);
+        setOrderNote("");
         setCurrentStep(1);
     };
 
@@ -428,57 +451,146 @@ function TelesalesCreateOrderContent() {
                             <h3 className="font-semibold text-slate-900 mb-4">Đơn hàng ({orderItems.length} sản phẩm)</h3>
 
                             <div className="space-y-3 mb-6">
-                                {orderItems.map((item) => (
-                                    <div
-                                        key={item.product.id}
-                                        className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg"
-                                    >
+                                <div
+                                    key={item.product.id}
+                                    className={`flex flex-col gap-3 p-4 border rounded-lg transition-colors ${item.isGift ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-200'}`}
+                                >
+                                    {/* Top Row: Info + Actions */}
+                                    <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1 min-w-0">
-                                            <h4 className="font-medium text-slate-900 text-sm">{item.product.name}</h4>
-                                            <p className="text-xs text-slate-500 mt-1">
-                                                {formatPrice(item.product.wholesalePrice || 0)} × {item.quantity}
+                                            <div className="flex items-center gap-2 mb-1">
+                                                {item.isGift && <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase rounded">Quà tặng</span>}
+                                                <h4 className="font-medium text-slate-900 text-sm">{item.product.name}</h4>
+                                            </div>
+                                            <p className="text-xs text-slate-500">
+                                                {formatPrice(item.product.wholesalePrice || 0)}
                                             </p>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => handleUpdateQuantity(item.product.id, -1)}
-                                                disabled={item.quantity <= 1}
-                                                className="p-1.5 hover:bg-white rounded transition-colors disabled:opacity-50"
-                                            >
-                                                <Minus className="w-4 h-4" />
-                                            </button>
-                                            <span className="w-8 text-center font-semibold">{item.quantity}</span>
-                                            <button
-                                                onClick={() => handleUpdateQuantity(item.product.id, 1)}
-                                                className="p-1.5 hover:bg-white rounded transition-colors"
-                                            >
-                                                <Plus className="w-4 h-4" />
-                                            </button>
                                         </div>
 
                                         <div className="text-right">
-                                            <p className="font-semibold text-slate-900">
-                                                {formatPrice((item.product.wholesalePrice || 0) * item.quantity)}
+                                            <p className={`font-semibold ${item.isGift ? 'text-indigo-600' : 'text-slate-900'}`}>
+                                                {formatPrice(calculateItemSubtotal(item))}
                                             </p>
+                                            {item.discount > 0 && !item.isGift && (
+                                                <p className="text-xs text-red-500 line-through">
+                                                    {formatPrice((item.product.wholesalePrice || 0) * item.quantity)}
+                                                </p>
+                                            )}
                                         </div>
 
                                         <button
                                             onClick={() => handleRemoveItem(item.product.id)}
-                                            className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
+
+                                    {/* Bottom Row: Controls */}
+                                    <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100">
+                                        {/* Quantity */}
+                                        <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
+                                            <button
+                                                onClick={() => handleUpdateQuantity(item.product.id, -1)}
+                                                disabled={item.quantity <= 1}
+                                                className="p-1 hover:bg-white rounded transition-colors disabled:opacity-50"
+                                            >
+                                                <Minus className="w-3.5 h-3.5" />
+                                            </button>
+                                            <span className="w-8 text-center text-sm font-semibold">{item.quantity}</span>
+                                            <button
+                                                onClick={() => handleUpdateQuantity(item.product.id, 1)}
+                                                className="p-1 hover:bg-white rounded transition-colors"
+                                            >
+                                                <Plus className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+
+                                        {/* Options */}
+                                        <div className="flex items-center gap-3">
+                                            {/* Gift Toggle */}
+                                            <label className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-600 select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={item.isGift}
+                                                    onChange={() => handleToggleGift(item.product.id)}
+                                                    className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                />
+                                                <Gift className="w-3.5 h-3.5" />
+                                                <span>Tặng</span>
+                                            </label>
+
+                                            <div className="w-px h-4 bg-slate-200"></div>
+
+                                            {/* Discount Input */}
+                                            <div className={`flex items-center gap-1.5 ${item.isGift ? 'opacity-50 pointer-events-none' : ''}`}>
+                                                <Tag className="w-3.5 h-3.5 text-slate-400" />
+                                                <div className="relative">
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Giảm giá..."
+                                                        className="w-24 pl-2 pr-6 py-1 text-xs border border-slate-200 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-right"
+                                                        value={item.discount || ""}
+                                                        onChange={(e) => handleUpdateDiscount(item.product.id, Number(e.target.value))}
+                                                        min={0}
+                                                    />
+                                                    <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">đ</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 ))}
                             </div>
 
                             <div className="border-t border-slate-200 pt-4">
-                                <div className="flex items-center justify-between mb-4">
-                                    <span className="text-lg font-semibold text-slate-900">Tổng cộng:</span>
-                                    <span className="text-2xl font-bold text-indigo-600">
-                                        {formatPrice(calculateTotal())}
-                                    </span>
+                                <div className="space-y-3 mb-4">
+                                    {/* Note */}
+                                    <div>
+                                        <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1">
+                                            <FileText className="w-4 h-4" /> Ghi chú đơn hàng
+                                        </label>
+                                        <textarea
+                                            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[60px]"
+                                            placeholder="Ghi chú thêm..."
+                                            value={orderNote}
+                                            onChange={(e) => setOrderNote(e.target.value)}
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-slate-600">Tạm tính:</span>
+                                        <span className="font-medium text-slate-900">
+                                            {formatPrice(orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0))}
+                                        </span>
+                                    </div>
+
+                                    {/* VAT */}
+                                    <div className="flex items-center justify-between text-sm">
+                                        <div className="flex items-center gap-1.5 text-slate-600">
+                                            <Percent className="w-3.5 h-3.5" />
+                                            <span>Thuế VAT (%):</span>
+                                        </div>
+                                        <div className="relative w-24">
+                                            <input
+                                                type="number"
+                                                className="w-full pl-2 pr-6 py-1 text-right border border-slate-300 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none text-sm"
+                                                placeholder="0"
+                                                min={0}
+                                                max={100}
+                                                value={vatRate || ""}
+                                                onChange={(e) => setVatRate(Number(e.target.value))}
+                                            />
+                                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500">%</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                                        <span className="text-lg font-bold text-slate-900">Tổng cộng:</span>
+                                        <span className="text-2xl font-bold text-indigo-600">
+                                            {formatPrice(calculateTotal())}
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <div className="flex gap-3">
