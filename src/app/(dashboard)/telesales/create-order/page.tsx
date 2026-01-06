@@ -98,7 +98,9 @@ function TelesalesCreateOrderContent() {
                             if (prod) {
                                 mappedItems.push({
                                     product: prod,
-                                    quantity: di.quantity
+                                    quantity: di.quantity,
+                                    discount: 0,
+                                    isGift: false
                                 });
                             }
                         });
