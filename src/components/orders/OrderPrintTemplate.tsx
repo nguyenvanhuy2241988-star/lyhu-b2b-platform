@@ -35,7 +35,7 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order })
                 </div>
                 <div className="text-right">
                     <h2 className="text-xl font-bold uppercase text-indigo-900">ĐƠN ĐẶT HÀNG</h2>
-                    <p className="text-sm font-medium mt-1">Mã đơn: {order.readableId || order.code}</p>
+                    <p className="text-sm font-medium mt-1">Mã đơn: {order.readableId || order.id}</p>
                     <p className="text-sm text-gray-600">Ngày tạo: {formatDate(order.createdAt)}</p>
                 </div>
             </div>
