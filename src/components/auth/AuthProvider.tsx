@@ -262,7 +262,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 supabase.removeChannel(profileSubscription);
             };
         }
-    }, [user]);
+    }, [user, session]);
 
     const signOut = async () => {
         setIsLoading(true);

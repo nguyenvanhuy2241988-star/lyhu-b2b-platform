@@ -89,7 +89,94 @@ export default function UsersPage() {
         }
     }, [session?.access_token]);
 
-    // ... (keep useEffects)
+    useEffect(() => {
+        if (!session?.access_token) return;
+
+        fetchUsers();
+
+        // Realtime Subscription
+        const channel = supabase
+            .channel('admin_users_realtime')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'profiles' },
+                () => {
+                    console.log('[UsersPage] Realtime change detected');
+                    fetchUsers(true);
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [session?.access_token, fetchUsers]);
+
+    // Reset page on search
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [debouncedSearchTerm]);
+
+    const handleOpenCreate = () => {
+        setEditingUser(null);
+        setFormData({ email: "", password: "", fullName: "", role: "telesales", status: "active" });
+        setIsModalOpen(true);
+    };
+
+    const handleOpenEdit = (user: User) => {
+        setEditingUser(user);
+        setFormData({
+            email: user.email,
+            password: "", // Empty means no change
+            fullName: user.full_name || "",
+            role: user.role,
+            status: user.status
+        });
+        setIsModalOpen(true);
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+
+        try {
+            const method = editingUser ? "PUT" : "POST";
+            const body = editingUser ? { ...formData, id: editingUser.id } : formData;
+
+            const res = await fetch("/api/admin/users", {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Có lỗi xảy ra");
+
+            toast.success(editingUser ? "Cập nhật thành công!" : "Tạo người dùng thành công!");
+            setIsModalOpen(false);
+            fetchUsers();
+        } catch (error: any) {
+            toast.error(error.message);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleDelete = async (user: User) => {
+        if (!confirm(`Bạn có chắc chắn muốn xóa tài khoản ${user.email}?`)) return;
+
+        const toastId = toast.loading("Đang xóa...");
+        try {
+            const res = await fetch(`/api/admin/users?id=${user.id}`, { method: "DELETE" });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Xóa thất bại");
+
+            toast.success("Đã xóa người dùng", { id: toastId });
+            fetchUsers();
+        } catch (error: any) {
+            toast.error(error.message, { id: toastId });
+        }
+    };
 
     // Helper to format seconds to HH:mm
     const formatDuration = (seconds: number) => {
