@@ -266,25 +266,33 @@ export default function ProductsPage() {
         setIsSubmitting(true);
 
         try {
-            const ids = Array.from(selectedIds).map(id => `"${id}"`).join(','); // Quote UUIDs
+            // Use RPC for safe updates (especially stock)
             const payload = {
-                [bulkConfig.field]: bulkConfig.value,
-                updated_at: new Date().toISOString()
+                p_product_ids: Array.from(selectedIds),
+                p_field: bulkConfig.field,
+                p_value: bulkConfig.value.toString()
             };
 
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/products?id=in.(${ids})`, {
-                method: "PATCH",
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/fn_quick_update_products`, {
+                method: "POST",
                 headers: getHeaders(),
                 body: JSON.stringify(payload)
             });
 
-            if (!res.ok) throw new Error("Lỗi cập nhật hàng loạt");
+            if (!res.ok) {
+                const error = await res.json();
+                throw new Error(error.message || "Lỗi cập nhật hàng loạt");
+            }
 
-            toast.success(`Đã cập nhật ${selectedIds.size} sản phẩm!`);
+            const result = await res.json();
+            if (!result.success) throw new Error(result.message);
+
+            toast.success(result.message || `Đã cập nhật ${selectedIds.size} sản phẩm!`);
             setIsBulkEditOpen(false);
             setSelectedIds(new Set());
             fetchProducts(true);
         } catch (error: any) {
+            console.error(error);
             toast.error(error.message);
         } finally {
             setIsSubmitting(false);
