@@ -39,6 +39,7 @@ export default function TelesalesEarningsPage() {
     const [dateRange, setDateRange] = useState<DateRangeOption>('this_month');
     const [isLoading, setIsLoading] = useState(true);
     const [viewMode, setViewMode] = useState<'finance' | 'orders'>('finance');
+    const [kpiSettings, setKpiSettings] = useState<any>(null);
 
     const { user, session } = useAuth();
 
@@ -55,7 +56,7 @@ export default function TelesalesEarningsPage() {
             endOfMonth.setMonth(endOfMonth.getMonth() + 1);
             endOfMonth.setMilliseconds(-1);
 
-            const [allTasks, allOrders, userTransactions, config] = await Promise.all([
+            const [allTasks, allOrders, userTransactions, config, kpiData] = await Promise.all([
                 fetchTasks(user.id, session.access_token, {
                     startDate: startOfMonth.toISOString(),
                     endDate: endOfMonth.toISOString()
@@ -66,13 +67,15 @@ export default function TelesalesEarningsPage() {
                     endDate: endOfMonth.toISOString()
                 }),
                 fetchUserTransactions(user.id, session.access_token),
-                fetchPayrollConfig('telesales_parttime', session.access_token)
+                fetchPayrollConfig('telesales_parttime', session.access_token),
+                supabase.rpc('get_user_kpi_settings', { p_user_id: user.id })
             ]);
 
             setTasks(allTasks);
             setOrders(allOrders);
             setTransactions(userTransactions);
             setPayrollConfig(config);
+            if (kpiData.data) setKpiSettings(kpiData.data);
         } catch (error) {
             console.error("loadData error:", error);
             setTasks([]);
@@ -122,6 +125,14 @@ export default function TelesalesEarningsPage() {
                 { event: '*', schema: 'public', table: 'telesales_tasks', filter: `user_id=eq.${user.id}` },
                 (payload: any) => {
                     console.log("[Realtime] Tasks changed:", payload);
+                    loadData();
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'user_kpi_settings', filter: `user_id=eq.${user.id}` },
+                (payload: any) => {
+                    console.log("[Realtime] KPI Settings changed:", payload);
                     loadData();
                 }
             )
@@ -185,14 +196,23 @@ export default function TelesalesEarningsPage() {
         };
     }, [dateRange]);
 
-    const rate = payrollConfig?.commissionRate || 0.03;
+    const rate = kpiSettings?.commission_rate !== undefined ? kpiSettings.commission_rate : (payrollConfig?.commissionRate || 0.03);
 
     // Metrics
     const currentMetrics = useMemo(() => calculateCombinedMetrics(tasks, orders, currentRange.from, currentRange.to, rate), [tasks, orders, currentRange, rate]);
 
     // Today & Target Metrics
     const todayMetrics = useMemo(() => calculateCombinedMetrics(tasks, orders, todayRange.from, todayRange.to, rate), [tasks, orders, todayRange, rate]);
-    const todayTarget = useMemo(() => getTodayTargetForCurrentUser(), []);
+    const todayTarget = useMemo(() => {
+        if (kpiSettings) {
+            return {
+                callsPerDay: kpiSettings.daily_calls_target,
+                ordersPerDay: kpiSettings.daily_orders_target,
+                revenuePerDay: kpiSettings.daily_revenue_target
+            };
+        }
+        return getTodayTargetForCurrentUser();
+    }, [kpiSettings]);
     const todayRemaining = useMemo(() => calculateKpiRemaining(todayMetrics, todayTarget), [todayMetrics, todayTarget]);
     const { status: todayKpiStatus, percentage: todayKpiPercent } = useMemo(() => calculateKpiProgress(todayMetrics), [todayMetrics]);
 
