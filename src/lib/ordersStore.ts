@@ -67,6 +67,10 @@ export interface Order {
     vat?: number;
     paymentMethod?: string;
     ctvPaidAt?: string; // Timestamp when commission was paid
+    customer?: {
+        phone?: string;
+        address?: string;
+    };
 }
 
 export type FulfillmentMode = 'SELF_SHIP' | 'LYHU_SHIP';
