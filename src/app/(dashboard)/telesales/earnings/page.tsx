@@ -72,10 +72,12 @@ export default function TelesalesEarningsPage() {
                 fetchUserTransactions(user.id, session.access_token),
                 fetchPayrollConfig('telesales_parttime', session.access_token),
                 supabase.rpc('get_user_kpi_settings', { p_user_id: user.id }),
-                supabase.rpc('get_telesales_kpi_v2', {
-                    p_user_id: user.id,
-                    p_month: new Date().getMonth() + 1,
-                    p_year: new Date().getFullYear()
+                supabase.rpc('get_telesales_kpi_v3', {
+                    payload: {
+                        user_id: user.id,
+                        month: new Date().getMonth() + 1,
+                        year: new Date().getFullYear()
+                    }
                 })
             ]);
 
