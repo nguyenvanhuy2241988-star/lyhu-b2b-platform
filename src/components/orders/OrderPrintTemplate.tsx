@@ -24,7 +24,7 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order })
     };
 
     return (
-        <div className="hidden print:block p-8 bg-white text-black font-sans print-container">
+        <div id="order-print-template" className="hidden print:block p-8 bg-white text-black font-sans print-container">
             {/* Header */}
             <div className="flex justify-between items-start mb-8 border-b border-gray-300 pb-6">
                 <div>
@@ -141,9 +141,24 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order })
                 @media print {
                     @page { margin: 1cm; size: A4; }
                     body { -webkit-print-color-adjust: exact; }
-                    .print-container { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 9999; }
-                    /* Hide everything else */
-                    body > *:not(.print-container) { display: none !important; }
+                    /* Use visibility instead of display:none to override parent hiding */
+                    body * {
+                        visibility: hidden;
+                    }
+                    .print-container, .print-container * {
+                        visibility: visible;
+                    }
+                    .print-container {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        z-index: 9999;
+                        background: white;
+                        margin: 0;
+                        padding: 2cm; /* Add padding for print */
+                    }
                 }
             `}</style>
         </div>
