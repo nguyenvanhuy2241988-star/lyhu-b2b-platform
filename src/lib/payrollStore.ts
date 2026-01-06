@@ -164,6 +164,8 @@ export const updateTransactionStatus = async (referenceId: string, status: Trans
         return false;
     }
 };
+// ... (previous exports)
+
 export const deleteFinancialTransactions = async (referenceId: string, token?: string) => {
     try {
         const headers = getHeaders(token);
@@ -173,6 +175,55 @@ export const deleteFinancialTransactions = async (referenceId: string, token?: s
         });
         return res.ok;
     } catch {
+        return false;
+    }
+};
+
+// --- KPI SETTINGS ---
+
+export interface UserKpiSettings {
+    user_id: string;
+    daily_calls_target: number;
+    daily_orders_target: number;
+    daily_revenue_target: number;
+    commission_rate: number;
+    base_salary_monthly: number;
+    kpi_targets: Record<string, any>; // JSONB
+}
+
+export const fetchUserKpiSettings = async (userId: string, token?: string): Promise<UserKpiSettings | null> => {
+    try {
+        const { data, error } = await supabase.rpc('get_user_kpi_settings', { p_user_id: userId });
+        if (error) {
+            console.error('get_user_kpi_settings RPC error:', error);
+            return null;
+        }
+        return data as UserKpiSettings;
+    } catch (e) {
+        console.error('fetchUserKpiSettings Exception:', e);
+        return null;
+    }
+};
+
+export const updateUserKpiSettings = async (settings: UserKpiSettings, token?: string): Promise<boolean> => {
+    try {
+        const { error } = await supabase.rpc('update_user_kpi_settings', {
+            p_user_id: settings.user_id,
+            p_daily_calls_target: settings.daily_calls_target,
+            p_daily_orders_target: settings.daily_orders_target,
+            p_daily_revenue_target: settings.daily_revenue_target,
+            p_commission_rate: settings.commission_rate,
+            p_base_salary_monthly: settings.base_salary_monthly,
+            p_kpi_targets: settings.kpi_targets
+        });
+
+        if (error) {
+            console.error('update_user_kpi_settings RPC error:', error);
+            return false;
+        }
+        return true;
+    } catch (e) {
+        console.error('updateUserKpiSettings Exception:', e);
         return false;
     }
 };
