@@ -74,14 +74,14 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order })
                             <tr key={index}>
                                 <td className="border border-gray-300 px-3 py-2 text-center">{index + 1}</td>
                                 <td className="border border-gray-300 px-3 py-2">
-                                    {item.product?.name || item.name}
+                                    {item.name || 'Sản phẩm'}
                                     {item.isGift ? <span className="ml-2 text-xs font-bold uppercase">(Quà tặng)</span> : ''}
                                 </td>
                                 <td className="border border-gray-300 px-3 py-2 text-center">{item.unit || 'Cái'}</td>
                                 <td className="border border-gray-300 px-3 py-2 text-center">{item.quantity}</td>
                                 <td className="border border-gray-300 px-3 py-2 text-right">{formatPrice(item.price || item.unitPrice || 0)}</td>
                                 <td className="border border-gray-300 px-3 py-2 text-right text-red-600">
-                                    {item.discount > 0 ? `-${formatPrice(item.discount)}` : '-'}
+                                    {(item.discount || 0) > 0 ? `-${formatPrice(item.discount || 0)}` : '-'}
                                 </td>
                                 <td className="border border-gray-300 px-3 py-2 text-right font-medium">
                                     {formatPrice(item.subtotal || ((item.price || 0) * item.quantity))}
@@ -107,10 +107,10 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order })
                             -{formatPrice((order.items || []).reduce((sum: number, item: any) => sum + (item.discount || 0), 0))}
                         </span>
                     </div>
-                    {order.vat > 0 && (
+                    {(order.vat || 0) > 0 && (
                         <div className="flex justify-between">
                             <span>VAT:</span>
-                            <span className="font-medium">+{formatPrice(order.vat)}</span>
+                            <span className="font-medium">+{formatPrice(order.vat || 0)}</span>
                         </div>
                     )}
                     <div className="border-t border-gray-300 my-2"></div>
