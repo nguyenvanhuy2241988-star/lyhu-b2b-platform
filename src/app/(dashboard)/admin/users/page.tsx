@@ -9,7 +9,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { fetchPaginatedUsers, AdminUser as AdminUserType } from "@/lib/admin/users";
 import { useDebounce } from "use-debounce";
 import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Defs, LinearGradient, Stop
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 
 // Helper for Vietnamese Role Names
@@ -497,8 +497,8 @@ export default function UsersPage() {
                                             key={range}
                                             onClick={() => setTimeRange(range)}
                                             className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${timeRange === range
-                                                    ? 'bg-white text-blue-600 shadow-sm'
-                                                    : 'text-slate-500 hover:text-slate-700'
+                                                ? 'bg-white text-blue-600 shadow-sm'
+                                                : 'text-slate-500 hover:text-slate-700'
                                                 }`}
                                         >
                                             {range === '1y' ? '1 Năm' : range === '3y' ? '3 Năm' : range === '5y' ? '5 Năm' : range === '30d' ? '30 Ngày' : '7 Ngày'}
@@ -516,12 +516,12 @@ export default function UsersPage() {
                                 ) : (
                                     <ResponsiveContainer width="100%" height="100%">
                                         <AreaChart data={historyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                                            <Defs>
-                                                <LinearGradient id="colorOnline" x1="0" y1="0" x2="0" y2="1">
-                                                    <Stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                                                    <Stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                                </LinearGradient>
-                                            </Defs>
+                                            <defs>
+                                                <linearGradient id="colorOnline" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                             <XAxis
                                                 dataKey={['1y', '3y', '5y'].includes(timeRange) ? "agg_date" : "date"}
