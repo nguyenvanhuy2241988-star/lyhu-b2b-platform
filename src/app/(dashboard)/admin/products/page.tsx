@@ -338,7 +338,7 @@ export default function ProductsPage() {
             {/* Stats & Tools */}
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
                 {/* Stats */}
-                <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="lg:col-span-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                     <div className="bg-white p-4 rounded-lg border border-slate-200">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-primary-50 rounded-lg">
@@ -350,12 +350,15 @@ export default function ProductsPage() {
                             </div>
                         </div>
                     </div>
-                    {Object.entries(brandStats).slice(0, 3).map(([brand, count]) => (
-                        <div key={brand} className="bg-white p-4 rounded-lg border border-slate-200">
-                            <p className="text-xs text-slate-600">{brand}</p>
-                            <p className="text-xl font-bold text-slate-900 mt-1">{count}</p>
-                        </div>
-                    ))}
+                    {Object.entries(brandStats)
+                        .sort(([, a], [, b]) => b - a)
+                        .slice(0, 5)
+                        .map(([brand, count]) => (
+                            <div key={brand} className="bg-white p-4 rounded-lg border border-slate-200">
+                                <p className="text-xs text-slate-600 truncate" title={brand}>{brand}</p>
+                                <p className="text-xl font-bold text-slate-900 mt-1">{count}</p>
+                            </div>
+                        ))}
                 </div>
 
                 {/* Search */}
