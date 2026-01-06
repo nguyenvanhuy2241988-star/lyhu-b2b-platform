@@ -5,6 +5,7 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import { useChatStore } from "@/lib/chatStore";
 import { toast } from "sonner"; // Optional: Notify user on timeout
+import { ActivityTracker } from "./ActivityTracker";
 
 interface AuthContextType {
     user: any | null;
@@ -279,8 +280,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setIsLoading(false);
     };
 
+    // ... (rest of imports)
+
+    // ...
+
     return (
         <AuthContext.Provider value={{ user, session, role, isLoading, signOut }}>
+            {/* Start tracking activity when authenticated */}
+            <ActivityTracker />
             {children}
         </AuthContext.Provider>
     );
