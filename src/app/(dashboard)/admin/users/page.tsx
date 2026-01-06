@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Plus, Pencil, Trash2, X, Loader2, Check, BarChart3, Smartphone, Monitor } from "lucide-react";
 import { toast } from "sonner";
@@ -8,8 +8,9 @@ import { ROLES } from "@/lib/constants";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { fetchPaginatedUsers, AdminUser as AdminUserType } from "@/lib/admin/users";
 import { useDebounce } from "use-debounce";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'; // Needs recharts installed
-
+import {
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Defs, LinearGradient, Stop
+} from 'recharts';
 
 // Helper for Vietnamese Role Names
 const ROLE_LABELS: Record<string, string> = {
@@ -50,6 +51,8 @@ interface User {
     device_info: string | null;
 }
 
+type TimeRange = '7d' | '30d' | '1y' | '3y' | '5y';
+
 export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -67,8 +70,11 @@ export default function UsersPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [viewingUser, setViewingUser] = useState<User | null>(null);
+
+    // Chart State
     const [historyData, setHistoryData] = useState<any[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const [timeRange, setTimeRange] = useState<TimeRange>('7d');
 
     const [formData, setFormData] = useState({
         email: "",
@@ -108,12 +114,24 @@ export default function UsersPage() {
         }
     }, [session?.access_token]);
 
-    const fetchUserHistory = async (userId: string) => {
+    const fetchUserHistory = async (userId: string, range: TimeRange) => {
         setIsLoadingHistory(true);
         try {
+            let days = 7;
+            let interval = 'day';
+
+            switch (range) {
+                case '7d': days = 7; interval = 'day'; break;
+                case '30d': days = 30; interval = 'day'; break;
+                case '1y': days = 365; interval = 'month'; break;
+                case '3y': days = 365 * 3; interval = 'month'; break;
+                case '5y': days = 365 * 5; interval = 'month'; break;
+            }
+
             const { data, error } = await supabase.rpc('get_user_activity_history', {
                 p_user_id: userId,
-                p_days: 7
+                p_days: days,
+                p_interval: interval
             });
             if (error) throw error;
             setHistoryData(data || []);
@@ -153,6 +171,13 @@ export default function UsersPage() {
         setCurrentPage(1);
     }, [debouncedSearchTerm]);
 
+    // Fetch history when dragging range
+    useEffect(() => {
+        if (viewingUser && isDetailOpen) {
+            fetchUserHistory(viewingUser.id, timeRange);
+        }
+    }, [timeRange, viewingUser, isDetailOpen]);
+
     const handleOpenCreate = () => {
         setEditingUser(null);
         setFormData({ email: "", password: "", fullName: "", role: "telesales", status: "active" });
@@ -173,8 +198,9 @@ export default function UsersPage() {
 
     const handleViewDetail = (user: User) => {
         setViewingUser(user);
+        setTimeRange('7d'); // Reset default
         setIsDetailOpen(true);
-        fetchUserHistory(user.id);
+        // Effect will trigger fetch
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -245,22 +271,30 @@ export default function UsersPage() {
     // Chart Components
     const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
+            const dateStr = ['1y', '3y', '5y'].includes(timeRange)
+                ? new Date(label).toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })
+                : new Date(label).toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' });
+
             return (
-                <div className="bg-white p-3 border border-slate-200 shadow-lg rounded-lg text-xs">
-                    <p className="font-bold text-slate-700 mb-1">{new Date(label).toLocaleDateString('vi-VN')}</p>
-                    <p className="text-blue-600 font-medium">
-                        Online: {formatDuration(payload[0].value)}
-                    </p>
-                    {payload[0].payload.path_summary && (
-                        <p className="text-slate-500 mt-1 italic max-w-[200px] truncate">
-                            {payload[0].payload.path_summary}
-                        </p>
-                    )}
+                <div className="bg-white p-3 border border-slate-200 shadow-xl rounded-xl text-xs z-50">
+                    <p className="font-bold text-slate-800 mb-1">{dateStr}</p>
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                        <span className="text-slate-500">Hoạt động:</span>
+                        <span className="font-bold text-blue-700">{formatDuration(payload[0].value)}</span>
+                    </div>
                 </div>
             );
         }
         return null;
     };
+
+    // Avg Stats
+    const avgDaily = useMemo(() => {
+        if (!historyData.length) return 0;
+        const total = historyData.reduce((acc, curr) => acc + (curr.online_seconds || 0), 0);
+        return Math.floor(total / historyData.length);
+    }, [historyData]);
 
     return (
         <div className="space-y-6">
@@ -278,10 +312,8 @@ export default function UsersPage() {
                 </button>
             </div>
 
-            {/* Replace Stats/Filter section slightly to remove server-side total count dependence if needed, 
-                 but totalCount logic in fetch above handles it. */}
+            {/* Filter section */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-4 justify-between items-center">
-                {/* ... (Search input same) ... */}
                 <input
                     placeholder="Tìm kiếm theo tên hoặc email..."
                     className="border border-slate-300 rounded-lg px-4 py-2 w-full sm:w-80 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
@@ -374,13 +406,6 @@ export default function UsersPage() {
                                         </td>
                                     </tr>
                                 ))}
-                                {paginatedUsers.length === 0 && (
-                                    <tr>
-                                        <td colSpan={6} className="p-8 text-center text-slate-500">
-                                            Không tìm thấy người dùng nào.
-                                        </td>
-                                    </tr>
-                                )}
                             </tbody>
                         </table>
                     </div>
@@ -418,7 +443,7 @@ export default function UsersPage() {
             {/* Detail Modal */}
             {isDetailOpen && viewingUser && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl overflow-hidden animate-in zoom-in-95 h-[90vh] flex flex-col">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl overflow-hidden animate-in zoom-in-95 h-[90vh] flex flex-col">
                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <div>
                                 <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
@@ -435,10 +460,16 @@ export default function UsersPage() {
                         </div>
 
                         <div className="p-6 overflow-y-auto flex-1 font-sans">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            {/* Summary Cards */}
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
                                     <p className="text-blue-600 text-xs font-medium uppercase">Hôm nay</p>
                                     <p className="text-2xl font-bold text-slate-800 mt-1">{formatDuration(viewingUser.online_seconds)}</p>
+                                </div>
+                                <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
+                                    <p className="text-indigo-600 text-xs font-medium uppercase">Trung bình / ngày</p>
+                                    <p className="text-2xl font-bold text-slate-800 mt-1">{formatDuration(avgDaily)}</p>
+                                    <p className="text-[10px] text-slate-400">Trong thời gian đã chọn</p>
                                 </div>
                                 <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
                                     <p className="text-slate-500 text-xs font-medium uppercase">Cập nhật cuối</p>
@@ -454,38 +485,88 @@ export default function UsersPage() {
                                 </div>
                             </div>
 
-                            <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                <BarChart3 className="w-5 h-5 text-blue-600" />
-                                Biểu đồ hoạt động 7 ngày qua
-                            </h4>
+                            {/* Chart Header & Filters */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-4">
+                                <h4 className="font-bold text-slate-800 flex items-center gap-2">
+                                    <BarChart3 className="w-5 h-5 text-blue-600" />
+                                    Lịch sử hoạt động
+                                </h4>
+                                <div className="flex bg-slate-100 p-1 rounded-lg">
+                                    {(['7d', '30d', '1y', '3y', '5y'] as TimeRange[]).map((range) => (
+                                        <button
+                                            key={range}
+                                            onClick={() => setTimeRange(range)}
+                                            className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${timeRange === range
+                                                    ? 'bg-white text-blue-600 shadow-sm'
+                                                    : 'text-slate-500 hover:text-slate-700'
+                                                }`}
+                                        >
+                                            {range === '1y' ? '1 Năm' : range === '3y' ? '3 Năm' : range === '5y' ? '5 Năm' : range === '30d' ? '30 Ngày' : '7 Ngày'}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
 
-                            <div className="h-[300px] w-full border border-slate-100 rounded-xl p-4 bg-white/50 relative">
+                            {/* Chart Area */}
+                            <div className="h-[350px] w-full border border-slate-100 rounded-xl p-4 bg-white relative">
                                 {isLoadingHistory ? (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-white/50 z-10">
+                                    <div className="absolute inset-0 flex items-center justify-center bg-white/80 z-10 rounded-xl">
                                         <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
                                     </div>
                                 ) : (
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={historyData}>
+                                        <AreaChart data={historyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                            <Defs>
+                                                <LinearGradient id="colorOnline" x1="0" y1="0" x2="0" y2="1">
+                                                    <Stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                                                    <Stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                                </LinearGradient>
+                                            </Defs>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                             <XAxis
-                                                dataKey="date"
-                                                fontSize={12}
-                                                tickFormatter={(value) => new Date(value).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
+                                                dataKey={['1y', '3y', '5y'].includes(timeRange) ? "agg_date" : "date"}
+                                                fontSize={11}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                tickFormatter={(value) => {
+                                                    const date = new Date(value);
+                                                    if (['1y', '3y', '5y'].includes(timeRange)) {
+                                                        return date.toLocaleDateString('vi-VN', { month: '2-digit', year: '2-digit' });
+                                                    }
+                                                    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+                                                }}
+                                                dy={10}
                                             />
                                             <YAxis
-                                                fontSize={12}
-                                                tickFormatter={(val) => `${Math.floor(val / 60)}p`}
+                                                fontSize={11}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                tickFormatter={(val) => {
+                                                    const hours = val / 3600;
+                                                    return hours >= 1 ? `${hours.toFixed(1)}h` : `${Math.floor(val / 60)}p`
+                                                }}
                                             />
                                             <Tooltip content={<CustomTooltip />} />
-                                            <Bar dataKey="online_seconds" radius={[4, 4, 0, 0]}>
-                                                {historyData.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={entry.online_seconds > 28800 ? '#10b981' : '#3b82f6'} />
-                                                ))}
-                                            </Bar>
-                                        </BarChart>
+                                            <Area
+                                                type="monotone"
+                                                dataKey={['1y', '3y', '5y'].includes(timeRange) ? "total_seconds" : "online_seconds"}
+                                                stroke="#3b82f6"
+                                                strokeWidth={2}
+                                                fillOpacity={1}
+                                                fill="url(#colorOnline)"
+                                                animationDuration={1000}
+                                            />
+                                        </AreaChart>
                                     </ResponsiveContainer>
                                 )}
                             </div>
+
+                            {/* Annotation */}
+                            {['1y', '3y', '5y'].includes(timeRange) && (
+                                <p className="text-center text-xs text-slate-400 mt-2 italic">
+                                    * Dữ liệu được tổng hợp theo tháng để tối ưu hiệu năng
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -510,7 +591,7 @@ export default function UsersPage() {
                                 <input
                                     required
                                     type="email"
-                                    disabled={!!editingUser} // Disable email edit for simplicity
+                                    disabled={!!editingUser}
                                     className="w-full border border-slate-300 rounded-lg px-3 py-2 disabled:bg-slate-100 disabled:text-slate-500 focus:ring-2 focus:ring-blue-500 outline-none"
                                     placeholder="vd: nhanvien@lyhu.vn"
                                     value={formData.email}
