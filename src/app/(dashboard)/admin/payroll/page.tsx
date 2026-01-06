@@ -19,7 +19,9 @@ import {
     Package,
     Lock,
     ShieldCheck,
-    Mail
+    Mail,
+    Settings,
+    Save as SaveIcon
 } from "lucide-react";
 import { User, fetchUsers } from "@/lib/usersStore";
 import { Order, fetchOrders } from "@/lib/ordersStore";
@@ -32,10 +34,14 @@ import {
     addFinancialTransaction,
     updateTransactionStatus,
     fetchPayrollLocks,
-    setPayrollLock
+    setPayrollLock,
+    UserKpiSettings,
+    fetchUserKpiSettings,
+    updateUserKpiSettings
 } from "@/lib/payrollStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getRealtimeClient } from "@/lib/supabaseClient";
+import { KPI_TEMPLATES, KpiFieldType, formatKpiValue } from "@/lib/kpi_config";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -55,6 +61,11 @@ export default function AdminPayrollPage() {
     const [viewMode, setViewMode] = useState<'finance' | 'orders'>('finance');
     const [payrollConfig, setPayrollConfig] = useState<PayrollConfig | null>(null);
     const [locks, setLocks] = useState<PayrollLock[]>([]);
+
+    // KPI Config State
+    const [isKpiModalOpen, setIsKpiModalOpen] = useState(false);
+    const [kpiSettings, setKpiSettings] = useState<UserKpiSettings | null>(null);
+    const [isLoadingKpi, setIsLoadingKpi] = useState(false);
 
     // Form state
     const [newTx, setNewTx] = useState({
@@ -236,6 +247,43 @@ export default function AdminPayrollPage() {
         alert("Tính năng cập nhật trạng thái theo ID đang được phát triển.");
     };
 
+    const handleOpenKpiConfig = async () => {
+        if (!selectedUserId) return;
+        setIsLoadingKpi(true);
+        setIsKpiModalOpen(true);
+        try {
+            const settings = await fetchUserKpiSettings(selectedUserId, session?.access_token);
+            setKpiSettings(settings);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsLoadingKpi(false);
+        }
+    };
+
+    const handleSaveKpiConfigs = async () => {
+        if (!kpiSettings) return;
+        setIsLoadingKpi(true);
+        try {
+            const success = await updateUserKpiSettings(kpiSettings, session?.access_token);
+            if (success) {
+                alert("Đã lưu cấu hình KPI thành công!");
+                setIsKpiModalOpen(false);
+            } else {
+                alert("Lỗi khi lưu cấu hình.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Lỗi hệ thống.");
+        } finally {
+            setIsLoadingKpi(false);
+        }
+    };
+
+    const getKpiTemplate = (role: string = 'telesales') => {
+        return KPI_TEMPLATES[role] || KPI_TEMPLATES['telesales']; // Default to telesales for now
+    };
+
     if (isLoading) return <div className="p-8">Đang tải dữ liệu nhân sự...</div>;
 
     return (
@@ -323,6 +371,13 @@ export default function AdminPayrollPage() {
                                         Chốt lương
                                     </button>
                                 )}
+                                <button
+                                    onClick={handleOpenKpiConfig}
+                                    className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
+                                >
+                                    <Settings className="w-4 h-4" />
+                                    Cấu hình KPI
+                                </button>
                                 <button
                                     onClick={() => setIsModalOpen(true)}
                                     className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
@@ -510,6 +565,123 @@ export default function AdminPayrollPage() {
                 )}
             </div>
 
+            {/* Modal: KPI Configuration */}
+            {isKpiModalOpen && kpiSettings && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <div>
+                                <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                                    <Settings className="w-5 h-5 text-primary-600" />
+                                    Cấu hình Lương & KPI
+                                </h2>
+                                <p className="text-xs text-slate-500 mt-1">Thiết lập chỉ tiêu cho nhân sự {staff.find(s => s.id === selectedUserId)?.name}</p>
+                            </div>
+                            <button onClick={() => setIsKpiModalOpen(false)} className="p-2 hover:bg-white rounded-full text-slate-400 transition-colors">
+                                <Plus className="w-6 h-6 rotate-45" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                            {isLoadingKpi ? (
+                                <div className="text-center py-12 text-slate-400">Đang tải dữ liệu...</div>
+                            ) : (
+                                <>
+                                    {/* Section 1: Base Salary & Commission */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest border-l-4 border-primary-500 pl-3">
+                                            1. Cơ chế Lương & Thưởng
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                            <div>
+                                                <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Lương cứng (VNĐ/Tháng)</label>
+                                                <div className="relative">
+                                                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                                    <input
+                                                        type="number"
+                                                        className="w-full pl-9 pr-4 py-2 rounded-lg border-slate-200 text-sm font-bold focus:ring-primary-500 focus:border-primary-500"
+                                                        value={kpiSettings.base_salary_monthly || 0}
+                                                        onChange={(e) => setKpiSettings({ ...kpiSettings, base_salary_monthly: parseInt(e.target.value) || 0 })}
+                                                    />
+                                                </div>
+                                                <p className="text-[10px] text-slate-400 mt-1 italic">Mức lương cứng riêng cho nhân sự này.</p>
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Hoa hồng (% Doanh thu)</label>
+                                                <div className="relative">
+                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">%</span>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        className="w-full pl-9 pr-4 py-2 rounded-lg border-slate-200 text-sm font-bold focus:ring-primary-500 focus:border-primary-500"
+                                                        value={(kpiSettings.commission_rate || 0) * 100}
+                                                        onChange={(e) => setKpiSettings({ ...kpiSettings, commission_rate: parseFloat(e.target.value) / 100 })}
+                                                    />
+                                                </div>
+                                                <p className="text-[10px] text-slate-400 mt-1 italic">VD: Nhập 3 là 3%.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Section 2: Dynamic KPI Targets */}
+                                    <div className="space-y-4">
+                                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest border-l-4 border-rose-500 pl-3">
+                                            2. Chỉ tiêu KPI Quan trọng
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            {getKpiTemplate(staff.find(s => s.id === selectedUserId)?.role).fields.map((field) => (
+                                                <div key={field.key} className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-primary-200 transition-colors">
+                                                    <label className="block text-xs font-bold text-slate-700 mb-1">{field.label}</label>
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="number"
+                                                            className="flex-1 py-2 px-3 bg-slate-50 border-none rounded-lg text-sm font-black text-slate-900 focus:ring-2 focus:ring-primary-500"
+                                                            value={kpiSettings.kpi_targets?.[field.key] || 0}
+                                                            onChange={(e) => {
+                                                                const val = parseFloat(e.target.value) || 0;
+                                                                setKpiSettings({
+                                                                    ...kpiSettings,
+                                                                    kpi_targets: {
+                                                                        ...kpiSettings.kpi_targets,
+                                                                        [field.key]: val
+                                                                    }
+                                                                });
+                                                            }}
+                                                        />
+                                                        <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">
+                                                            {field.suffix}
+                                                        </span>
+                                                    </div>
+                                                    {field.description && (
+                                                        <p className="text-[10px] text-slate-400 mt-1.5 leading-snug">{field.description}</p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+
+                        <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                            <button
+                                onClick={() => setIsKpiModalOpen(false)}
+                                className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-200 transition-colors"
+                            >
+                                Hủy bỏ
+                            </button>
+                            <button
+                                onClick={handleSaveKpiConfigs}
+                                disabled={isLoadingKpi}
+                                className="px-6 py-2.5 rounded-xl text-sm font-bold bg-primary-600 text-white shadow-lg shadow-primary-200 hover:bg-primary-700 hover:shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                {isLoadingKpi ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <SaveIcon className="w-4 h-4" />}
+                                Lưu cấu hình
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* Modal: Add Transaction */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
