@@ -78,13 +78,20 @@ export default function ProductsPage() {
         try {
             const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
             // Fetch all active products
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&is_active=eq.true&order=created_at.desc`, {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*,inventory_levels(quantity_on_hand)&is_active=eq.true&order=created_at.desc`, {
                 headers: getHeaders()
             });
 
             if (!res.ok) throw new Error("Failed to fetch products");
             const data = await res.json();
-            setProducts(data || []);
+
+            // Map inventory_levels to stock
+            const mappedData = data?.map((p: any) => ({
+                ...p,
+                stock: p.inventory_levels?.[0]?.quantity_on_hand || 0
+            })) || [];
+
+            setProducts(mappedData);
             // Clear selection on refresh
             if (!silent) setSelectedIds(new Set());
         } catch (err) {
