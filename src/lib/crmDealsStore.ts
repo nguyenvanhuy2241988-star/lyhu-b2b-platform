@@ -120,6 +120,7 @@ export interface Customer {
     misa_code?: string;
     contact_person?: string;
     zalo?: string;
+    ward?: string;
     notes?: string;
 }
 
@@ -359,6 +360,7 @@ export async function createCustomer(customer: {
     zalo?: string;
     notes?: string;
     tax_code?: string;
+    ward?: string;
 }, token?: string): Promise<Customer> {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

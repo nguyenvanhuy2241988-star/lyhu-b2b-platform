@@ -5,6 +5,7 @@ import { X, Save, Loader2, Copy, User, MessageSquare, MapPin, Building, Info } f
 import { Customer, createCustomer, updateCustomer } from "@/lib/crmDealsStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { toast } from "sonner";
+import { PROVINCES, fetchDistricts, fetchWards, LocationOption } from "@/lib/vn-locations";
 
 const CUSTOMER_TYPES = [
     { value: 'tap_hoa', label: 'Tạp hóa' },
@@ -37,8 +38,17 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
         zalo: "",
         email: "",
         address: "",
+        province: "",
+        district: "",
+        ward: "",
         notes: ""
     });
+
+    // Location State
+    const [districts, setDistricts] = useState<LocationOption[]>([]);
+    const [wards, setWards] = useState<LocationOption[]>([]);
+    const [loadingDistricts, setLoadingDistricts] = useState(false);
+    const [loadingWards, setLoadingWards] = useState(false);
 
     // Errors
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -56,10 +66,20 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                     zalo: initialData.zalo || "",
                     email: initialData.email || "",
                     address: initialData.address || "",
+                    province: initialData.province || "",
+                    district: initialData.district || "",
+                    ward: initialData.ward || "",
                     notes: initialData.notes || ""
                 });
+
+                // Initialize cascading data if exists
+                if (initialData.province) onProvinceChange(initialData.province, false);
+                // Cannot fully auto-load district/ward lists easily without codes, 
+                // typically we'd look up code from name or store code. 
+                // For simplicity here, we re-fetch based on PROVINCES lookup if name matches.
+                // Or better: store code in hidden field? 
+                // Current plan uses Name for storage. We will try to reverse lookup Code from Name
             } else {
-                // Reset form
                 setFormData({
                     name: "",
                     type: "tap_hoa",
@@ -69,8 +89,13 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                     zalo: "",
                     email: "",
                     address: "",
+                    province: "",
+                    district: "",
+                    ward: "",
                     notes: ""
                 });
+                setDistricts([]);
+                setWards([]);
             }
             setErrors({});
         }
@@ -78,13 +103,54 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
 
     const handleChange = (field: string, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
-        // Clear error when typing
         if (errors[field]) {
             setErrors(prev => {
                 const newErrors = { ...prev };
                 delete newErrors[field];
                 return newErrors;
             });
+        }
+    };
+
+    const onProvinceChange = async (provinceName: string, resetLower = true) => {
+        handleChange('province', provinceName);
+        if (resetLower) {
+            setFormData(prev => ({ ...prev, district: "", ward: "" })); // Update state directly
+            setDistricts([]);
+            setWards([]);
+        }
+
+        const province = PROVINCES.find(p => p.value === provinceName);
+        if (province) {
+            setLoadingDistricts(true);
+            const data = await fetchDistricts(province.code);
+            setDistricts(data);
+            setLoadingDistricts(false);
+
+            // If editing and has district, try to load wards too
+            if (!resetLower && initialData?.district) {
+                const district = data.find(d => d.value === initialData.district);
+                if (district) {
+                    const wData = await fetchWards(district.code);
+                    setWards(wData);
+                }
+            }
+        }
+    };
+
+    const onDistrictChange = async (districtName: string, resetLower = true) => {
+        handleChange('district', districtName);
+        if (resetLower) {
+            setFormData(prev => ({ ...prev, ward: "" }));
+            setWards([]);
+        }
+
+        const district = districts.find(d => d.value === districtName);
+        if (district) {
+            setLoadingWards(true);
+            const wData = await fetchWards(district.code);
+            setWards(wData);
+            setLoadingWards(false);
         }
     };
 
@@ -97,19 +163,15 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
 
     const validate = () => {
         const newErrors: Record<string, string> = {};
-
         if (!formData.name.trim()) newErrors.name = "Vui lòng nhập tên cửa hàng";
-
         if (!formData.phone.trim()) {
             newErrors.phone = "Vui lòng nhập số điện thoại";
         } else if (!/^\d{8,12}$/.test(formData.phone.trim())) {
             newErrors.phone = "Số điện thoại không hợp lệ";
         }
-
         if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
             newErrors.email = "Email không hợp lệ";
         }
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -123,14 +185,30 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
 
         setIsSaving(true);
         try {
-            if (initialData) {
-                // Update
-                const success = await updateCustomer(initialData.id, {
-                    ...formData,
-                    name: formData.name.trim(),
-                    phone: formData.phone.trim()
-                }, session.access_token);
+            // Build full address string
+            // "123 Le Loi, P. Ben Thanh, Quan 1, TP. HCM"
+            const addressParts = [
+                formData.address,
+                formData.ward,
+                formData.district,
+                formData.province
+            ].filter(Boolean);
+            const fullAddress = addressParts.join(", ");
 
+            const payload = {
+                ...formData,
+                name: formData.name.trim(),
+                phone: formData.phone.trim(),
+                // Store explicit fields
+                province: formData.province,
+                district: formData.district,
+                ward: formData.ward,
+                // Also update legacy address field primarily for display
+                address: fullAddress
+            };
+
+            if (initialData) {
+                const success = await updateCustomer(initialData.id, payload, session.access_token);
                 if (success) {
                     toast.success("Cập nhật khách hàng thành công");
                     onSuccess();
@@ -139,11 +217,8 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                     toast.error("Không thể cập nhật. Vui lòng thử lại.");
                 }
             } else {
-                // Create
                 const newCustomer = await createCustomer({
-                    ...formData,
-                    name: formData.name.trim(),
-                    phone: formData.phone.trim(),
+                    ...payload,
                     owner_user_id: user.id,
                     status: 'active'
                 }, session.access_token);
@@ -169,7 +244,6 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
     return (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col">
-                {/* Header */}
                 <div className="flex justify-between items-center p-5 border-b border-slate-100 bg-slate-50/50 sticky top-0 z-10 backdrop-blur-md">
                     <div>
                         <h2 className="text-xl font-bold text-slate-800">
@@ -184,7 +258,6 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                     </button>
                 </div>
 
-                {/* Body */}
                 <div className="p-6 flex-1 overflow-y-auto">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Column 1: Store Info */}
@@ -211,7 +284,6 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                     value={formData.tax_code}
                                     onChange={(e) => handleChange('tax_code', e.target.value)}
                                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
-                                    placeholder="Nhập mã số thuế..."
                                 />
                             </div>
 
@@ -235,7 +307,6 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                     onChange={(e) => handleChange('notes', e.target.value)}
                                     rows={4}
                                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none resize-none"
-                                    placeholder="Ghi chú về khách hàng..."
                                 />
                             </div>
                         </div>
@@ -253,7 +324,6 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                     value={formData.contact_person}
                                     onChange={(e) => handleChange('contact_person', e.target.value)}
                                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
-                                    placeholder="VD: Chị Lan, Anh Ba..."
                                 />
                             </div>
 
@@ -264,53 +334,83 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                         value={formData.phone}
                                         onChange={(e) => handleChange('phone', e.target.value)}
                                         className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none ${errors.phone ? 'border-red-500' : 'border-slate-300'}`}
-                                        placeholder="0912..."
                                     />
                                     {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
                                 </div>
                                 <div className="space-y-1.5 relative">
                                     <label className="text-sm font-medium text-slate-700 flex justify-between">
                                         Zalo
-                                        <button
-                                            onClick={copyPhoneToZalo}
-                                            type="button"
-                                            className="text-indigo-600 text-xs hover:underline flex items-center gap-1"
-                                            title="Copy từ SĐT"
-                                        >
-                                            <Copy className="w-3 h-3" /> Copy SĐT
+                                        <button onClick={copyPhoneToZalo} type="button" className="text-indigo-600 text-xs hover:underline flex items-center gap-1">
+                                            <Copy className="w-3 h-3" /> Copy
                                         </button>
                                     </label>
                                     <input
                                         value={formData.zalo}
                                         onChange={(e) => handleChange('zalo', e.target.value)}
                                         className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
-                                        placeholder="Số Zalo..."
                                     />
                                 </div>
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-slate-700">Email</label>
+                                <label className="text-sm font-medium text-slate-700">Tỉnh / Thành phố</label>
+                                <select
+                                    value={formData.province}
+                                    onChange={(e) => onProvinceChange(e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none bg-white"
+                                >
+                                    <option value="">-- Chọn Tỉnh/Thành --</option>
+                                    {PROVINCES.map(p => (
+                                        <option key={p.code} value={p.value}>{p.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-medium text-slate-700">Quận / Huyện</label>
+                                    <div className="relative">
+                                        <select
+                                            value={formData.district}
+                                            onChange={(e) => onDistrictChange(e.target.value)}
+                                            disabled={!formData.province || loadingDistricts}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none bg-white disabled:bg-slate-100"
+                                        >
+                                            <option value="">-- Chọn Quận/Huyện --</option>
+                                            {districts.map(d => (
+                                                <option key={d.code} value={d.value}>{d.label}</option>
+                                            ))}
+                                        </select>
+                                        {loadingDistricts && <Loader2 className="absolute right-8 top-2.5 w-4 h-4 animate-spin text-slate-400" />}
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-medium text-slate-700">Phường / Xã</label>
+                                    <div className="relative">
+                                        <select
+                                            value={formData.ward}
+                                            onChange={(e) => handleChange('ward', e.target.value)}
+                                            disabled={!formData.district || loadingWards}
+                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none bg-white disabled:bg-slate-100"
+                                        >
+                                            <option value="">-- Chọn Phường/Xã --</option>
+                                            {wards.map(w => (
+                                                <option key={w.code} value={w.value}>{w.label}</option>
+                                            ))}
+                                        </select>
+                                        {loadingWards && <Loader2 className="absolute right-8 top-2.5 w-4 h-4 animate-spin text-slate-400" />}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-slate-700">Số nhà, Tên đường</label>
                                 <input
-                                    value={formData.email}
-                                    onChange={(e) => handleChange('email', e.target.value)}
-                                    className={`w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none ${errors.email ? 'border-red-500' : 'border-slate-300'}`}
-                                    placeholder="email@example.com"
+                                    value={formData.address}
+                                    onChange={(e) => handleChange('address', e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                                    placeholder="Số 123..."
                                 />
-                                {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-slate-700">Địa chỉ</label>
-                                <div className="relative">
-                                    <MapPin className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-                                    <input
-                                        value={formData.address}
-                                        onChange={(e) => handleChange('address', e.target.value)}
-                                        className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
-                                        placeholder="Số nhà, Tên đường, Khu vực..."
-                                    />
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -321,12 +421,8 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                     </div>
                 </div>
 
-                {/* Footer */}
                 <div className="p-5 border-t border-slate-100 flex justify-end gap-3 bg-slate-50/50 sticky bottom-0 z-10 backdrop-blur-md">
-                    <button
-                        onClick={onClose}
-                        className="px-5 py-2.5 text-slate-600 hover:bg-white hover:border-slate-300 border border-transparent rounded-lg text-sm font-medium transition-all"
-                    >
+                    <button onClick={onClose} className="px-5 py-2.5 text-slate-600 hover:bg-white border border-transparent hover:border-slate-300 rounded-lg text-sm font-medium transition-all">
                         Hủy bỏ
                     </button>
                     <button
