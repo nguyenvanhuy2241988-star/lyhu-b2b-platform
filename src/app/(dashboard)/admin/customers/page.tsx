@@ -136,7 +136,7 @@ export default function AdminCustomersPage() {
 
             return typeMatch && ownerMatch && provinceMatch && districtMatch && wardMatch && searchMatch;
         });
-    }, [selectedType, selectedOwner, searchQuery, customers]);
+    }, [selectedType, selectedOwner, searchQuery, customers, selectedProvince, selectedDistrict, selectedWard]);
 
     const handleEditClick = (customer: Customer) => {
         setEditingCustomer(customer);
