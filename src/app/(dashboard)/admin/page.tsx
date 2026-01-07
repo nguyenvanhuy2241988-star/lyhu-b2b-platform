@@ -92,7 +92,6 @@ export default function AdminDashboard() {
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'crm_leads' },
                 (payload: any) => {
-                    console.log('Realtime Lead update:', payload);
                     loadData();
                 }
             )
@@ -100,7 +99,6 @@ export default function AdminDashboard() {
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'orders' },
                 (payload: any) => {
-                    console.log('Realtime Order update:', payload);
                     loadData();
                 }
             )
