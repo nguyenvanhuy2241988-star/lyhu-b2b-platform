@@ -14,6 +14,10 @@ CREATE TABLE IF NOT EXISTS app_settings (
 -- Policy to allow authenticated users to read settings (public info like company name)
 ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies to prevent "already exists" error
+DROP POLICY IF EXISTS "Enable read access for all authenticated users" ON app_settings;
+DROP POLICY IF EXISTS "Enable update access for admins only" ON app_settings;
+
 CREATE POLICY "Enable read access for all authenticated users" ON app_settings
     FOR SELECT
     TO authenticated
