@@ -32,6 +32,9 @@ export default function TelesalesCustomersPage() {
     const [selectedProvince, setSelectedProvince] = useState("");
     const [selectedDistrict, setSelectedDistrict] = useState("");
     const [selectedWard, setSelectedWard] = useState("");
+    const [fromDate, setFromDate] = useState("");
+    const [toDate, setToDate] = useState("");
+    const [sortBy, setSortBy] = useState("newest");
 
     // Location Data
     const [districts, setDistricts] = useState<LocationOption[]>([]);
@@ -75,6 +78,9 @@ export default function TelesalesCustomersPage() {
         setSelectedProvince("");
         setSelectedDistrict("");
         setSelectedWard("");
+        setFromDate("");
+        setToDate("");
+        setSortBy("newest");
     };
 
 
@@ -90,13 +96,16 @@ export default function TelesalesCustomersPage() {
             district: selectedDistrict,
             ward: selectedWard,
             type: selectedType,
-            search: searchTerm
+            search: searchTerm,
+            fromDate,
+            toDate,
+            sortBy: sortBy as any
         };
 
         const data = await fetchCustomers(user.id, session.access_token, filters);
         setCustomers(data);
         setIsLoading(false);
-    }, [user, session?.access_token, selectedProvince, selectedDistrict, selectedWard, selectedType, searchTerm]);
+    }, [user, session?.access_token, selectedProvince, selectedDistrict, selectedWard, selectedType, searchTerm, fromDate, toDate, sortBy]);
 
     // Debounce effect
     useEffect(() => {
@@ -184,7 +193,7 @@ export default function TelesalesCustomersPage() {
 
                 {showFilters && (
                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm animate-in slide-in-from-top-2">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1">Loại hình</label>
                                 <select
@@ -219,24 +228,59 @@ export default function TelesalesCustomersPage() {
                                     {districts.map(d => <option key={d.code} value={d.value}>{d.label}</option>)}
                                 </select>
                             </div>
-                            <div className="flex items-end gap-2">
-                                <div className="flex-1">
-                                    <label className="block text-xs font-medium text-slate-500 mb-1">Phường / Xã</label>
-                                    <select
-                                        value={selectedWard}
-                                        onChange={e => setSelectedWard(e.target.value)}
-                                        disabled={!selectedDistrict}
-                                        className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 disabled:bg-slate-50"
-                                    >
-                                        <option value="">Tất cả</option>
-                                        {wards.map(w => <option key={w.code} value={w.value}>{w.label}</option>)}
-                                    </select>
-                                </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">Phường / Xã</label>
+                                <select
+                                    value={selectedWard}
+                                    onChange={e => setSelectedWard(e.target.value)}
+                                    disabled={!selectedDistrict}
+                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 disabled:bg-slate-50"
+                                >
+                                    <option value="">Tất cả</option>
+                                    {wards.map(w => <option key={w.code} value={w.value}>{w.label}</option>)}
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* More Filters Row 2 */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-slate-100">
+                            <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">Từ ngày</label>
+                                <input
+                                    type="date"
+                                    value={fromDate}
+                                    onChange={e => setFromDate(e.target.value)}
+                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">Đến ngày</label>
+                                <input
+                                    type="date"
+                                    value={toDate}
+                                    onChange={e => setToDate(e.target.value)}
+                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">Sắp xếp</label>
+                                <select
+                                    value={sortBy}
+                                    onChange={e => setSortBy(e.target.value)}
+                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20"
+                                >
+                                    <option value="newest">Mới nhất</option>
+                                    <option value="oldest">Cũ nhất</option>
+                                    <option value="name_asc">Tên A-Z</option>
+                                    <option value="name_desc">Tên Z-A</option>
+                                </select>
+                            </div>
+                            <div className="flex items-end justify-end">
                                 <button
                                     onClick={resetFilters}
-                                    className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-xs font-medium border border-transparent hover:border-red-100 transition-colors"
+                                    className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium border border-red-200 hover:border-red-300 transition-colors w-full sm:w-auto"
                                 >
-                                    Xóa
+                                    Xóa bộ lọc
                                 </button>
                             </div>
                         </div>

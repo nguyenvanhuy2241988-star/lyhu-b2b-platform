@@ -205,6 +205,9 @@ export async function fetchCustomers(
         ward?: string;
         type?: string;
         search?: string;
+        fromDate?: string;
+        toDate?: string;
+        sortBy?: 'newest' | 'oldest' | 'name_asc' | 'name_desc';
     }
 ): Promise<Customer[]> {
     try {
@@ -223,10 +226,19 @@ export async function fetchCustomers(
             if (filters.province) url += `&province=eq.${encodeURIComponent(filters.province)}`;
             if (filters.district) url += `&district=eq.${encodeURIComponent(filters.district)}`;
             if (filters.ward) url += `&ward=eq.${encodeURIComponent(filters.ward)}`;
+
             if (filters.type && filters.type !== 'Tất cả') {
-                // Map UI label to DB value if needed, handled by caller
                 url += `&type=eq.${filters.type}`;
             }
+
+            // Date Range Filters
+            if (filters.fromDate) {
+                url += `&created_at=gte.${filters.fromDate}T00:00:00`;
+            }
+            if (filters.toDate) {
+                url += `&created_at=lte.${filters.toDate}T23:59:59`;
+            }
+
             if (filters.search) {
                 // Combine search with owner logic if both present is tricky with simple query params
                 // But here we append AND condition. 
@@ -236,13 +248,22 @@ export async function fetchCustomers(
             }
         }
 
-        // Order by name
-        url += `&order=name.asc`;
+        // Sorting
+        const sortMap: Record<string, string> = {
+            'newest': 'created_at.desc',
+            'oldest': 'created_at.asc',
+            'name_asc': 'name.asc',
+            'name_desc': 'name.desc'
+        };
+
+        const sortParam = filters?.sortBy ? sortMap[filters.sortBy] : 'created_at.desc';
+        url += `&order=${sortParam}`;
+
         // Limit to prevent huge payloads if no filters
-        if (!filters?.search && !filters?.province && !filters?.district) {
-            url += `&limit=100`; // Default limit if no specific filter to avoid 5MB JSON
+        if (!filters?.search && !filters?.province && !filters?.district && !filters?.fromDate) {
+            url += `&limit=100`;
         } else {
-            url += `&limit=500`; // Higher limit when filtering
+            url += `&limit=500`;
         }
 
         const res = await fetch(url, { headers });

@@ -44,6 +44,9 @@ export default function AdminCustomersPage() {
     const [selectedProvince, setSelectedProvince] = useState<string>("");
     const [selectedDistrict, setSelectedDistrict] = useState<string>("");
     const [selectedWard, setSelectedWard] = useState<string>("");
+    const [fromDate, setFromDate] = useState("");
+    const [toDate, setToDate] = useState("");
+    const [sortBy, setSortBy] = useState("newest");
 
     // Location data state
     const [districts, setDistricts] = useState<LocationOption[]>([]);
@@ -98,6 +101,9 @@ export default function AdminCustomersPage() {
         setSelectedProvince("");
         setSelectedDistrict("");
         setSelectedWard("");
+        setFromDate("");
+        setToDate("");
+        setSortBy("newest");
     };
 
     // Debounce search query
@@ -122,7 +128,10 @@ export default function AdminCustomersPage() {
                 district: selectedDistrict,
                 ward: selectedWard,
                 type: selectedType,
-                search: searchQuery
+                search: searchQuery,
+                fromDate,
+                toDate,
+                sortBy: sortBy as any
             };
 
             const [custData, userData] = await Promise.all([
@@ -136,7 +145,7 @@ export default function AdminCustomersPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [session, selectedProvince, selectedDistrict, selectedWard, selectedType, selectedOwner, searchQuery]);
+    }, [session, selectedProvince, selectedDistrict, selectedWard, selectedType, selectedOwner, searchQuery, fromDate, toDate, sortBy]);
 
     // Removed filteredCustomers useMemo, use customers directly (as it is now filtered from server)
     const filteredCustomers = customers;
@@ -296,6 +305,41 @@ export default function AdminCustomersPage() {
                         <span className="text-sm font-medium text-slate-600 bg-slate-100 px-3 py-2 rounded-lg">
                             Kết quả: {filteredCustomers.length}
                         </span>
+                    </div>
+                </div>
+
+                {/* Row 3: Date & Sort */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 pt-2 border-t border-slate-100">
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Từ ngày</label>
+                        <input
+                            type="date"
+                            value={fromDate}
+                            onChange={(e) => setFromDate(e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Đến ngày</label>
+                        <input
+                            type="date"
+                            value={toDate}
+                            onChange={(e) => setToDate(e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Sắp xếp</label>
+                        <select
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        >
+                            <option value="newest">Mới nhất</option>
+                            <option value="oldest">Cũ nhất</option>
+                            <option value="name_asc">Tên A-Z</option>
+                            <option value="name_desc">Tên Z-A</option>
+                        </select>
                     </div>
                 </div>
             </div>
