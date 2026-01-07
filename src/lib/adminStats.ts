@@ -2,6 +2,9 @@ import { loadLeads as loadCTVLeads, CtvLead } from "./ctvLeads";
 import { loadSalesLeads, SalesLead } from "./salesLeads";
 import { getAllOrders } from "./customerStore";
 import type { CustomerOrder } from "@/mocks/data";
+import { createClient } from "@/lib/supabaseClient";
+
+const supabase = createClient();
 
 export type AdminLeadSource = "CTV" | "Sales" | "Customer Order";
 
@@ -28,16 +31,10 @@ export interface AdminLeadStats {
     latestLeads: AdminLead[];
 }
 
-import { createClient } from "@/lib/supabaseClient";
-
-const supabase = createClient();
-
-// ... existing interfaces ...
-
 export async function getAdminLeads(): Promise<AdminLead[]> {
     try {
         const { data, error } = await supabase
-            .from('leads')
+            .from('crm_leads') // Corrected table name
             .select('*')
             .order('created_at', { ascending: false });
 
@@ -45,12 +42,12 @@ export async function getAdminLeads(): Promise<AdminLead[]> {
 
         const allLeads: AdminLead[] = (data || []).map((l: any) => ({
             id: l.id,
-            source: (l.source === 'CTV' ? 'CTV' : 'Sales') as AdminLeadSource,
-            name: l.name || "Khách hàng",
-            contactName: l.name,
+            source: 'Sales', // crm_leads are mostly Sales leads
+            name: l.title || l.customer_name || "Khách hàng", // Map title/customer_name
+            contactName: l.customer_name,
             phone: l.phone,
-            area: l.address || "Việt Nam",
-            status: l.status || "NEW",
+            area: l.address || "-", // Address might not be in crm_leads
+            status: l.stage || "new_data", // Map stage to status
             estimatedRevenue: 0,
             createdAt: l.created_at
         }));
@@ -89,7 +86,7 @@ export async function getAdminLeadStats(token?: string, fromDate?: string, toDat
 
         // 2. Fetch Latest Leads (Limit 10) - Separate fast query
         const { data: leadsData, error: leadsError } = await supabase
-            .from('leads')
+            .from('crm_leads') // Corrected table name
             .select('*')
             .order('created_at', { ascending: false })
             .limit(10);
@@ -97,12 +94,12 @@ export async function getAdminLeadStats(token?: string, fromDate?: string, toDat
         // Map latest leads
         const latestLeads: AdminLead[] = (leadsData || []).map((l: any) => ({
             id: l.id,
-            source: (l.source === 'CTV' ? 'CTV' : 'Sales') as AdminLeadSource,
-            name: l.name || "Khách hàng",
-            contactName: l.name,
+            source: 'Sales',
+            name: l.title || l.customer_name || "Khách hàng",
+            contactName: l.customer_name,
             phone: l.phone,
-            area: l.address || "Việt Nam",
-            status: l.status || "NEW",
+            area: "-", // No address in simple schema
+            status: l.stage || "new_data",
             estimatedRevenue: 0,
             createdAt: l.created_at
         }));
@@ -135,7 +132,6 @@ export async function getAdminLeadStats(token?: string, fromDate?: string, toDat
 }
 
 // Old method moved to fallback
-// Old method moved to fallback
 async function getAdminLeadStatsFallback(token?: string): Promise<AdminLeadStats> {
     try {
         const [allLeads, ordersRes] = await Promise.all([
@@ -146,14 +142,14 @@ async function getAdminLeadStatsFallback(token?: string): Promise<AdminLeadStats
         const ordersData = ordersRes.data || [];
 
         const totalLeads = allLeads.length;
-        const totalCTVLeads = allLeads.filter(l => l.source === 'CTV').length;
-        const totalSalesLeads = allLeads.filter(l => l.source === 'Sales').length;
+        const totalCTVLeads = 0; // allLeads.filter(l => l.source === 'CTV').length;
+        const totalSalesLeads = allLeads.length;
         const totalOrders = ordersData.length;
         const totalOrderRevenue = ordersData
             .filter((o: any) => o.status !== 'cancelled' && o.status !== 'draft')
             .reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0);
 
-        const convertedLeads = allLeads.filter(l => l.status === 'WON').length;
+        const convertedLeads = allLeads.filter(l => l.status === 'won').length;
         const latestLeads = allLeads.slice(0, 10);
 
         return {

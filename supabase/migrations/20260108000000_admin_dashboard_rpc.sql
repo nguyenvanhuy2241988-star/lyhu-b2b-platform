@@ -20,18 +20,18 @@ DECLARE
     
     v_result json;
 BEGIN
-    -- 1. Aggregating Leads Data
+    -- 1. Aggregating Leads Data (Table: crm_leads)
     SELECT 
         COUNT(*),
         0, -- Placeholder for CTV leads (source column missing)
         COUNT(*), -- Assume all current leads in table are Sales/System leads
-        COUNT(*) FILTER (WHERE status = 'WON')
+        COUNT(*) FILTER (WHERE stage = 'won') -- Correct column is 'stage'
     INTO 
         v_total_leads,
         v_total_ctv_leads,
         v_total_sales_leads,
         v_converted_leads
-    FROM leads
+    FROM crm_leads
     WHERE created_at >= p_start_date AND created_at <= p_end_date;
 
     -- 2. Aggregating Orders Data (Revenue)
