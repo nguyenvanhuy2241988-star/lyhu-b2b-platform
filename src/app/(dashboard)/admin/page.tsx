@@ -91,7 +91,7 @@ export default function AdminDashboard() {
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'crm_leads' },
-                (payload) => {
+                (payload: any) => {
                     console.log('Realtime Lead update:', payload);
                     loadData();
                 }
@@ -99,7 +99,7 @@ export default function AdminDashboard() {
             .on(
                 'postgres_changes',
                 { event: '*', schema: 'public', table: 'orders' },
-                (payload) => {
+                (payload: any) => {
                     console.log('Realtime Order update:', payload);
                     loadData();
                 }
@@ -281,7 +281,7 @@ export default function AdminDashboard() {
                                         </td>
                                         <td className="px-6 py-3">
                                             <span className={`px-2 py-1 rounded text-xs font-semibold ${lead.source === 'CTV' ? 'bg-green-100 text-green-700' :
-                                                    lead.source === 'Sales' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
+                                                lead.source === 'Sales' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
                                                 }`}>
                                                 {lead.source}
                                             </span>
