@@ -30,6 +30,22 @@ const formatTooltipValue = (value: number) => {
     }).format(value);
 };
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-white p-3 border border-slate-200 rounded-lg shadow-lg">
+                <p className="text-sm font-medium text-slate-700 mb-1">{`Ngày: ${label}`}</p>
+                <div className="flex flex-col gap-1">
+                    <p className="text-sm text-sky-500 font-semibold">
+                        {`Doanh thu: ${formatTooltipValue(payload[0].value)}`}
+                    </p>
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
+
 export default function RevenueChart({ data, isLoading }: RevenueChartProps) {
     if (isLoading) {
         return (
