@@ -139,6 +139,56 @@ export default function AdminDashboard() {
 
     return (
         <div className="space-y-6">
+            {/* Header & Filters */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900">Tổng quan Admin</h1>
+                    <p className="text-sm text-slate-600 mt-1">
+                        {fromDate && toDate
+                            ? `Dữ liệu từ ${formatDate(fromDate)} đến ${formatDate(toDate)}`
+                            : "Danh sách thống kê toàn hệ thống"}
+                    </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                        <input
+                            type="date"
+                            value={fromDate}
+                            onChange={(e) => setFromDate(e.target.value)}
+                            className="px-2 py-1.5 text-sm border-none outline-none bg-transparent text-slate-600 uppercase font-medium"
+                        />
+                        <span className="text-slate-400">-</span>
+                        <input
+                            type="date"
+                            value={toDate}
+                            onChange={(e) => setToDate(e.target.value)}
+                            className="px-2 py-1.5 text-sm border-none outline-none bg-transparent text-slate-600 uppercase font-medium"
+                        />
+                    </div>
+
+                    <button
+                        onClick={() => {
+                            const now = new Date();
+                            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+                            setFromDate(firstDay.toISOString().split('T')[0]);
+                            setToDate(now.toISOString().split('T')[0]);
+                        }}
+                        className="px-3 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+                    >
+                        Tháng này
+                    </button>
+
+                    <button
+                        onClick={loadData}
+                        disabled={isLoading}
+                        className="p-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-all disabled:opacity-70"
+                    >
+                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Filter className="w-4 h-4" />}
+                    </button>
+                </div>
+            </div>
+
             {/* Low Stock Alert */}
             <LowStockAlert items={lowStockItems} isLoading={isLoadingChart} />
 
