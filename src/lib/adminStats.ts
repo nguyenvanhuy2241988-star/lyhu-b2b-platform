@@ -31,25 +31,37 @@ export interface AdminLeadStats {
     latestLeads: AdminLead[];
 }
 
+export interface TopProduct {
+    productName: string;
+    sku: string;
+    quantity: number;
+    revenue: number;
+}
+
+export interface FunnelStat {
+    stage: string;
+    count: number;
+}
+
 export async function getAdminLeads(): Promise<AdminLead[]> {
     try {
         const { data, error } = await supabase
-            .from('crm_leads') // Corrected table name
+            .from('crm_leads')
             .select('*')
-            .order('created_at', { ascending: false });
+            .order('updated_at', { ascending: false });
 
         if (error) throw error;
 
         const allLeads: AdminLead[] = (data || []).map((l: any) => ({
             id: l.id,
-            source: 'Sales', // crm_leads are mostly Sales leads
-            name: l.title || l.customer_name || "Khách hàng", // Map title/customer_name
+            source: (l.source === 'CTV' ? 'CTV' : 'Sales') as AdminLeadSource,
+            name: l.title || l.customer_name || "Khách hàng",
             contactName: l.customer_name,
             phone: l.phone,
-            area: l.address || "-", // Address might not be in crm_leads
-            status: l.stage || "new_data", // Map stage to status
+            area: l.address || "-",
+            status: l.stage || "new_data",
             estimatedRevenue: 0,
-            createdAt: l.created_at
+            createdAt: l.updated_at || l.created_at
         }));
 
         return allLeads;
@@ -86,22 +98,22 @@ export async function getAdminLeadStats(token?: string, fromDate?: string, toDat
 
         // 2. Fetch Latest Leads (Limit 10) - Sort by Last Updated
         const { data: leadsData, error: leadsError } = await supabase
-            .from('crm_leads') // Corrected table name
+            .from('crm_leads')
             .select('*')
-            .order('updated_at', { ascending: false }) // Changed to updated_at
+            .order('updated_at', { ascending: false }) // Sort by updated_at
             .limit(10);
 
         // Map latest leads
         const latestLeads: AdminLead[] = (leadsData || []).map((l: any) => ({
             id: l.id,
-            source: (l.source === 'CTV' ? 'CTV' : 'Sales') as AdminLeadSource, // Use real source
+            source: (l.source === 'CTV' ? 'CTV' : 'Sales') as AdminLeadSource,
             name: l.title || l.customer_name || "Khách hàng",
             contactName: l.customer_name,
             phone: l.phone,
             area: "-",
             status: l.stage || "new_data",
             estimatedRevenue: 0,
-            createdAt: l.updated_at || l.created_at // Display updated time
+            createdAt: l.updated_at || l.created_at
         }));
 
         if (statsData) {
@@ -131,18 +143,47 @@ export async function getAdminLeadStats(token?: string, fromDate?: string, toDat
     }
 }
 
+export async function getAdvancedStats(fromDate?: string, toDate?: string): Promise<{ topProducts: TopProduct[], funnel: FunnelStat[] }> {
+    try {
+        const { p_start_date, p_end_date } = getDateRange(fromDate, toDate);
+
+        const [productsRes, funnelRes] = await Promise.all([
+            supabase.rpc('get_top_products', { p_start_date, p_end_date, p_limit: 5 }),
+            supabase.rpc('get_lead_funnel_stats', { p_start_date, p_end_date })
+        ]);
+
+        const topProducts: TopProduct[] = (productsRes.data || []).map((p: any) => ({
+            productName: p.product_name,
+            sku: p.sku,
+            quantity: p.total_quantity,
+            revenue: p.total_revenue
+        }));
+
+        const funnel: FunnelStat[] = (funnelRes.data || []).map((f: any) => ({
+            stage: f.stage_name,
+            count: f.lead_count
+        }));
+
+        return { topProducts, funnel };
+
+    } catch (err) {
+        console.error("[getAdvancedStats] Error:", err);
+        return { topProducts: [], funnel: [] };
+    }
+}
+
 // Old method moved to fallback
 async function getAdminLeadStatsFallback(token?: string): Promise<AdminLeadStats> {
     try {
         const [allLeads, ordersRes] = await Promise.all([
-            getAdminLeads(), // Fixed: No token argument needed
-            supabase.from('orders').select('total_amount,status') // Fixed: Use Supabase client
+            getAdminLeads(),
+            supabase.from('orders').select('total_amount,status')
         ]);
 
         const ordersData = ordersRes.data || [];
 
         const totalLeads = allLeads.length;
-        const totalCTVLeads = 0; // allLeads.filter(l => l.source === 'CTV').length;
+        const totalCTVLeads = 0;
         const totalSalesLeads = allLeads.length;
         const totalOrders = ordersData.length;
         const totalOrderRevenue = ordersData
