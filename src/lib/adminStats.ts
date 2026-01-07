@@ -28,31 +28,22 @@ export interface AdminLeadStats {
     latestLeads: AdminLead[];
 }
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+import { createClient } from "@/lib/supabaseClient";
 
-const getHeaders = (token?: string) => ({
-    'Content-Type': 'application/json',
-    'apikey': SUPABASE_KEY || '',
-    'Authorization': `Bearer ${token || SUPABASE_KEY}`
-});
+const supabase = createClient();
 
-export async function getAdminLeads(token?: string): Promise<AdminLead[]> {
+// ... existing interfaces ...
+
+export async function getAdminLeads(): Promise<AdminLead[]> {
     try {
-        const headers = getHeaders(token);
+        const { data, error } = await supabase
+            .from('leads')
+            .select('*')
+            .order('created_at', { ascending: false });
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+        if (error) throw error;
 
-        const leadsRes = await fetch(`${SUPABASE_URL}/rest/v1/leads?select=*&order=created_at.desc`, {
-            headers,
-            signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-        const leadsData = leadsRes.ok ? await leadsRes.json() : [];
-
-        const allLeads: AdminLead[] = (leadsData || []).map((l: any) => ({
+        const allLeads: AdminLead[] = (data || []).map((l: any) => ({
             id: l.id,
             source: (l.source === 'CTV' ? 'CTV' : 'Sales') as AdminLeadSource,
             name: l.name || "Khách hàng",
@@ -60,11 +51,10 @@ export async function getAdminLeads(token?: string): Promise<AdminLead[]> {
             phone: l.phone,
             area: l.address || "Việt Nam",
             status: l.status || "NEW",
-            estimatedRevenue: 0, // Could be enriched if leads table has this
+            estimatedRevenue: 0,
             createdAt: l.created_at
         }));
 
-        allLeads.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         return allLeads;
     } catch (err) {
         console.error("[getAdminLeads] Error:", err);
@@ -72,48 +62,24 @@ export async function getAdminLeads(token?: string): Promise<AdminLead[]> {
     }
 }
 
-// Helper to get today's range if no date provided, or parse provided dates
-const getDateRange = (from?: string, to?: string) => {
-    // Default to last 30 days if not provided, or "All time"?
-    // Existing app fetched *everything*. To match that for now without filters, we allow wide range.
-    // However, fast RPC allows us to be precise.
-
-    // If no dates provided, we default to a wide range to simulate "All Time" but safer?
-    // Or we should default to "This Month" for better UX? 
-    // Let's stick to "All Time" (1970 to now+1y) to preserve existing behavior until UI adds filters.
-    const start = from ? new Date(from) : new Date('2023-01-01'); // Project started ~2023?
-    const end = to ? new Date(to) : new Date();
-    end.setHours(23, 59, 59, 999);
-
-    return {
-        p_start_date: start.toISOString(),
-        p_end_date: end.toISOString()
-    };
-};
+// Helper ... (getDateRange)
 
 export async function getAdminLeadStats(token?: string, fromDate?: string, toDate?: string): Promise<AdminLeadStats> {
     try {
-        const headers = getHeaders(token);
         const { p_start_date, p_end_date } = getDateRange(fromDate, toDate);
 
         // 1. Call RPC for aggregated sums (Fast)
-        const statsRes = await fetch(`${SUPABASE_URL}/rpc/get_admin_dashboard_stats`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({ p_start_date, p_end_date })
-        });
+        const { data: statsData, error: statsError } = await supabase
+            .rpc('get_admin_dashboard_stats', { p_start_date, p_end_date });
+
+        if (statsError) throw statsError;
 
         // 2. Fetch Latest Leads (Limit 10) - Separate fast query
-        // We don't filter latest leads by date strictly? Or should we?
-        // Usually "Latest activity" ignores filter range or respects it?
-        // Let's respect it if possible, but existing `getAdminLeads` fetched all.
-        // Let's just fetch latest 10 globally for "Activity Feed" style.
-        const latestLeadsRes = await fetch(`${SUPABASE_URL}/rest/v1/leads?select=*&order=created_at.desc&limit=10`, {
-            headers
-        });
-
-        const statsData = statsRes.ok ? await statsRes.json() : null;
-        const leadsData = latestLeadsRes.ok ? await latestLeadsRes.json() : [];
+        const { data: leadsData, error: leadsError } = await supabase
+            .from('leads')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(10);
 
         // Map latest leads
         const latestLeads: AdminLead[] = (leadsData || []).map((l: any) => ({
@@ -134,42 +100,37 @@ export async function getAdminLeadStats(token?: string, fromDate?: string, toDat
                 totalCTVLeads: statsData.totalCTVLeads || 0,
                 totalSalesLeads: statsData.totalSalesLeads || 0,
                 totalOrders: statsData.totalOrders || 0,
-                totalEstimatedRevenue: statsData.totalEstimatedRevenue || 0, // RPC currently returns 0
+                totalEstimatedRevenue: statsData.totalEstimatedRevenue || 0,
                 totalOrderRevenue: statsData.totalOrderRevenue || 0,
                 convertedLeads: statsData.convertedLeads || 0,
                 latestLeads: latestLeads
             };
         }
 
-        // Fallback: If RPC fails (e.g., function not found), use old Slow Method (Client-side aggregation)
-        console.warn("[getAdminLeadStats] RPC failed, falling back to client-side aggregation.");
-        return getAdminLeadStatsFallback(token);
+        return {
+            totalLeads: 0, totalCTVLeads: 0, totalSalesLeads: 0, totalOrders: 0,
+            totalEstimatedRevenue: 0, totalOrderRevenue: 0, convertedLeads: 0, latestLeads: []
+        };
 
     } catch (err) {
         console.error("[getAdminLeadStats] Error:", err);
         return {
-            totalLeads: 0,
-            totalCTVLeads: 0,
-            totalSalesLeads: 0,
-            totalOrders: 0,
-            totalEstimatedRevenue: 0,
-            totalOrderRevenue: 0,
-            convertedLeads: 0,
-            latestLeads: [],
+            totalLeads: 0, totalCTVLeads: 0, totalSalesLeads: 0, totalOrders: 0,
+            totalEstimatedRevenue: 0, totalOrderRevenue: 0, convertedLeads: 0, latestLeads: []
         };
     }
 }
 
 // Old method moved to fallback
+// Old method moved to fallback
 async function getAdminLeadStatsFallback(token?: string): Promise<AdminLeadStats> {
     try {
-        const headers = getHeaders(token);
         const [allLeads, ordersRes] = await Promise.all([
-            getAdminLeads(token),
-            fetch(`${SUPABASE_URL}/rest/v1/orders?select=total_amount,status`, { headers })
+            getAdminLeads(), // Fixed: No token argument needed
+            supabase.from('orders').select('total_amount,status') // Fixed: Use Supabase client
         ]);
 
-        const ordersData = ordersRes.ok ? await ordersRes.json() : [];
+        const ordersData = ordersRes.data || [];
 
         const totalLeads = allLeads.length;
         const totalCTVLeads = allLeads.filter(l => l.source === 'CTV').length;
