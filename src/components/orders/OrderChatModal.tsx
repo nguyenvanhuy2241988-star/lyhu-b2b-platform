@@ -76,7 +76,7 @@ export function OrderChatModal({ isOpen, onClose, orderId, orderReadableId, onMa
         }, session?.access_token);
 
         return () => unsubscribe();
-    }, [isOpen, orderId, session?.access_token, onMarkAsRead]);
+    }, [isOpen, orderId, session?.access_token]); // Removed onMarkAsRead to prevent infinite loop
 
     // Send text message
     const handleSend = async () => {

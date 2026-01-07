@@ -253,13 +253,13 @@ export default function TelesalesOrdersPage() {
                     onClose={() => setChatOrder(null)}
                     orderId={chatOrder.id}
                     orderReadableId={chatOrder.readableId}
-                    onMarkAsRead={() => {
+                    onMarkAsRead={useCallback(() => {
                         setUnreadOrders(prev => {
                             const next = new Set(prev);
                             next.delete(chatOrder.id);
                             return next;
                         });
-                    }}
+                    }, [chatOrder.id])}
                 />
             )}
         </div>
