@@ -27,7 +27,7 @@ export interface AdminLeadStats {
     totalOrders: number;
     totalEstimatedRevenue: number;
     totalOrderRevenue: number;
-    totalProfit: number; // New field
+    totalProfit: number; // New field Phase 3
     convertedLeads: number;
     latestLeads: AdminLead[];
 }
@@ -37,7 +37,7 @@ export interface TopProduct {
     sku: string;
     quantity: number;
     revenue: number;
-    profit: number; // New field
+    profit: number; // New field Phase 3
 }
 
 export interface FunnelStat {
@@ -76,8 +76,6 @@ export async function getAdminLeads(): Promise<AdminLead[]> {
 // Helper to get today's range if no date provided, or parse provided dates
 const getDateRange = (from?: string, to?: string) => {
     // Default to a wide range to simulate "All Time" but safer
-    // Or we should default to "This Month" for better UX? 
-    // Let's stick to "All Time" (2023 to now) to preserve existing behavior until UI adds filters.
     const start = from ? new Date(from) : new Date('2023-01-01'); // Project started ~2023
     const end = to ? new Date(to) : new Date();
     end.setHours(23, 59, 59, 999);
@@ -126,7 +124,7 @@ export async function getAdminLeadStats(token?: string, fromDate?: string, toDat
                 totalOrders: statsData.totalOrders || 0,
                 totalEstimatedRevenue: statsData.totalEstimatedRevenue || 0,
                 totalOrderRevenue: statsData.totalOrderRevenue || 0,
-                totalProfit: statsData.totalProfit || 0,
+                totalProfit: statsData.totalProfit || 0, // MAPPED
                 convertedLeads: statsData.convertedLeads || 0,
                 latestLeads: latestLeads
             };
@@ -134,14 +132,16 @@ export async function getAdminLeadStats(token?: string, fromDate?: string, toDat
 
         return {
             totalLeads: 0, totalCTVLeads: 0, totalSalesLeads: 0, totalOrders: 0,
-            totalEstimatedRevenue: 0, totalOrderRevenue: 0, convertedLeads: 0, latestLeads: []
+            totalEstimatedRevenue: 0, totalOrderRevenue: 0, totalProfit: 0,
+            convertedLeads: 0, latestLeads: []
         };
 
     } catch (err) {
         console.error("[getAdminLeadStats] Error:", err);
         return {
             totalLeads: 0, totalCTVLeads: 0, totalSalesLeads: 0, totalOrders: 0,
-            totalEstimatedRevenue: 0, totalOrderRevenue: 0, convertedLeads: 0, latestLeads: []
+            totalEstimatedRevenue: 0, totalOrderRevenue: 0, totalProfit: 0, // FIXED: Added missing field
+            convertedLeads: 0, latestLeads: []
         };
     }
 }
@@ -204,13 +204,15 @@ async function getAdminLeadStatsFallback(token?: string): Promise<AdminLeadStats
             totalOrders,
             totalEstimatedRevenue: 0,
             totalOrderRevenue,
+            totalProfit: 0, // Placeholder for fallback
             convertedLeads,
             latestLeads,
         };
     } catch (e) {
         return {
             totalLeads: 0, totalCTVLeads: 0, totalSalesLeads: 0, totalOrders: 0,
-            totalEstimatedRevenue: 0, totalOrderRevenue: 0, convertedLeads: 0, latestLeads: []
+            totalEstimatedRevenue: 0, totalOrderRevenue: 0, totalProfit: 0, // FIXED
+            convertedLeads: 0, latestLeads: []
         };
     }
 }
