@@ -121,6 +121,16 @@ export default function TelesalesOrdersPage() {
         return matchesSearch && matchesStatus;
     });
 
+    // Handle mark as read
+    const handleMarkAsRead = useCallback(() => {
+        if (!chatOrder?.id) return;
+        setUnreadOrders(prev => {
+            const next = new Set(prev);
+            next.delete(chatOrder.id);
+            return next;
+        });
+    }, [chatOrder?.id]);
+
     if (isLoading) return <div className="p-6">Đang tải đơn hàng...</div>;
 
     return (
@@ -253,13 +263,7 @@ export default function TelesalesOrdersPage() {
                     onClose={() => setChatOrder(null)}
                     orderId={chatOrder.id}
                     orderReadableId={chatOrder.readableId}
-                    onMarkAsRead={useCallback(() => {
-                        setUnreadOrders(prev => {
-                            const next = new Set(prev);
-                            next.delete(chatOrder.id);
-                            return next;
-                        });
-                    }, [chatOrder.id])}
+                    onMarkAsRead={handleMarkAsRead}
                 />
             )}
         </div>
