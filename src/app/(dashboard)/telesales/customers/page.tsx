@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus, MapPin, Phone, Mail, MoreHorizontal, Building, UserPlus, Loader2, X, Save } from "lucide-react";
+import { Search, Plus, MapPin, Phone, Mail, MoreHorizontal, Building, UserPlus, Loader2, X, Save, Filter } from "lucide-react";
 import { fetchCustomers, createCustomer, Customer } from "@/lib/crmDealsStore";
 import { useAuth } from "@/components/auth/AuthProvider";
+
+import { PROVINCES, fetchDistricts, fetchWards, LocationOption } from "@/lib/vn-locations";
 
 const CUSTOMER_TYPES = [
     { value: 'tap_hoa', label: 'Tạp hóa' },
@@ -23,6 +25,57 @@ export default function TelesalesCustomersPage() {
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
     const [customers, setCustomers] = useState<Customer[]>([]);
+
+    // Filter State
+    const [showFilters, setShowFilters] = useState(false);
+    const [selectedType, setSelectedType] = useState("");
+    const [selectedProvince, setSelectedProvince] = useState("");
+    const [selectedDistrict, setSelectedDistrict] = useState("");
+    const [selectedWard, setSelectedWard] = useState("");
+
+    // Location Data
+    const [districts, setDistricts] = useState<LocationOption[]>([]);
+    const [wards, setWards] = useState<LocationOption[]>([]);
+    const [loadingDistricts, setLoadingDistricts] = useState(false);
+    const [loadingWards, setLoadingWards] = useState(false);
+
+    // Location Effects
+    useEffect(() => {
+        if (selectedProvince) {
+            const p = PROVINCES.find(x => x.value === selectedProvince);
+            if (p) {
+                setLoadingDistricts(true);
+                fetchDistricts(p.code).then(d => { setDistricts(d); setLoadingDistricts(false); });
+            }
+        } else {
+            setDistricts([]);
+            setWards([]);
+        }
+        setSelectedDistrict("");
+        setSelectedWard("");
+    }, [selectedProvince]);
+
+    useEffect(() => {
+        if (selectedDistrict) {
+            const d = districts.find(x => x.value === selectedDistrict);
+            if (d) {
+                setLoadingWards(true);
+                fetchWards(d.code).then(w => { setWards(w); setLoadingWards(false); });
+            }
+        } else {
+            setWards([]);
+        }
+        setSelectedWard("");
+    }, [selectedDistrict, districts]);
+
+
+    const resetFilters = () => {
+        setSearchTerm("");
+        setSelectedType("");
+        setSelectedProvince("");
+        setSelectedDistrict("");
+        setSelectedWard("");
+    };
 
 
     const [isLoading, setIsLoading] = useState(true);
@@ -44,10 +97,16 @@ export default function TelesalesCustomersPage() {
     }, [user, session?.access_token, authIsLoading, loadData]);
 
     const filteredCustomers = customers.filter((customer) => {
-        return (
+        const searchMatch = !searchTerm ||
             customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            customer.phone.includes(searchTerm)
-        );
+            customer.phone.includes(searchTerm);
+
+        const typeMatch = !selectedType || customer.type === selectedType;
+        const pMatch = !selectedProvince || customer.province === selectedProvince;
+        const dMatch = !selectedDistrict || customer.district === selectedDistrict;
+        const wMatch = !selectedWard || customer.ward === selectedWard;
+
+        return searchMatch && typeMatch && pMatch && dMatch && wMatch;
     });
 
     const handleEditClick = (customer: Customer) => {
@@ -101,6 +160,81 @@ export default function TelesalesCustomersPage() {
                         <span className="hidden sm:inline">Thêm khách</span>
                     </button>
                 </div>
+            </div>
+
+            {/* Filter Toggle & Panel */}
+            <div className="space-y-3">
+                <div className="flex justify-end">
+                    <button
+                        onClick={() => setShowFilters(!showFilters)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${showFilters ? 'bg-indigo-50 text-indigo-600 border border-indigo-200' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    >
+                        <Filter className="w-4 h-4" />
+                        Bộ lọc nâng cao
+                        {(selectedType || selectedProvince) && <div className="w-2 h-2 rounded-full bg-red-500"></div>}
+                    </button>
+                </div>
+
+                {showFilters && (
+                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm animate-in slide-in-from-top-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">Loại hình</label>
+                                <select
+                                    value={selectedType}
+                                    onChange={e => setSelectedType(e.target.value)}
+                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20"
+                                >
+                                    <option value="">Tất cả</option>
+                                    {CUSTOMER_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">Tỉnh / Thành</label>
+                                <select
+                                    value={selectedProvince}
+                                    onChange={e => setSelectedProvince(e.target.value)}
+                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20"
+                                >
+                                    <option value="">Tất cả</option>
+                                    {PROVINCES.map(p => <option key={p.code} value={p.value}>{p.label}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1">Quận / Huyện</label>
+                                <select
+                                    value={selectedDistrict}
+                                    onChange={e => setSelectedDistrict(e.target.value)}
+                                    disabled={!selectedProvince}
+                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 disabled:bg-slate-50"
+                                >
+                                    <option value="">Tất cả</option>
+                                    {districts.map(d => <option key={d.code} value={d.value}>{d.label}</option>)}
+                                </select>
+                            </div>
+                            <div className="flex items-end gap-2">
+                                <div className="flex-1">
+                                    <label className="block text-xs font-medium text-slate-500 mb-1">Phường / Xã</label>
+                                    <select
+                                        value={selectedWard}
+                                        onChange={e => setSelectedWard(e.target.value)}
+                                        disabled={!selectedDistrict}
+                                        className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 disabled:bg-slate-50"
+                                    >
+                                        <option value="">Tất cả</option>
+                                        {wards.map(w => <option key={w.code} value={w.value}>{w.label}</option>)}
+                                    </select>
+                                </div>
+                                <button
+                                    onClick={resetFilters}
+                                    className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-xs font-medium border border-transparent hover:border-red-100 transition-colors"
+                                >
+                                    Xóa
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Stats */}

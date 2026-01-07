@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 
+import { PROVINCES, fetchDistricts, fetchWards, LocationOption } from "@/lib/vn-locations";
+
 const CUSTOMER_TYPES = ["Tất cả", "Tạp hóa", "Mini mart", "Đại lý", "NPP", "Siêu thị"] as const;
 
 const reverseTypeMap: Record<string, string> = {
@@ -38,9 +40,65 @@ export default function AdminCustomersPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
+    // Filter state
+    const [selectedProvince, setSelectedProvince] = useState<string>("");
+    const [selectedDistrict, setSelectedDistrict] = useState<string>("");
+    const [selectedWard, setSelectedWard] = useState<string>("");
+
+    // Location data state
+    const [districts, setDistricts] = useState<LocationOption[]>([]);
+    const [wards, setWards] = useState<LocationOption[]>([]);
+    const [loadingDistricts, setLoadingDistricts] = useState(false);
+    const [loadingWards, setLoadingWards] = useState(false);
+
     // Edit state
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
     const [editForm, setEditForm] = useState<Partial<Customer>>({});
+
+    // Load districts when province changes
+    useEffect(() => {
+        if (selectedProvince) {
+            const province = PROVINCES.find(p => p.value === selectedProvince);
+            if (province) {
+                setLoadingDistricts(true);
+                fetchDistricts(province.code).then(data => {
+                    setDistricts(data);
+                    setLoadingDistricts(false);
+                });
+            }
+        } else {
+            setDistricts([]);
+            setWards([]);
+        }
+        setSelectedDistrict("");
+        setSelectedWard("");
+    }, [selectedProvince]);
+
+    // Load wards when district changes
+    useEffect(() => {
+        if (selectedDistrict) {
+            const district = districts.find(d => d.value === selectedDistrict);
+            if (district) {
+                setLoadingWards(true);
+                fetchWards(district.code).then(data => {
+                    setWards(data);
+                    setLoadingWards(false);
+                });
+            }
+        } else {
+            setWards([]);
+        }
+        setSelectedWard("");
+    }, [selectedDistrict, districts]);
+
+    const resetFilters = () => {
+        setSelectedType("Tất cả");
+        setSelectedOwner("Tất cả");
+        setSearchQuery("");
+        setSelectedProvince("");
+        setSelectedDistrict("");
+        setSelectedWard("");
+    };
 
     const loadData = useCallback(async () => {
         setIsLoading(true);
@@ -68,10 +126,15 @@ export default function AdminCustomersPage() {
         return customers.filter((c) => {
             const typeMatch = selectedType === "Tất cả" || c.type === reverseTypeMap[selectedType] || c.type === selectedType;
             const ownerMatch = selectedOwner === "Tất cả" || c.owner_user_id === selectedOwner;
+            const provinceMatch = !selectedProvince || c.province === selectedProvince;
+            const districtMatch = !selectedDistrict || c.district === selectedDistrict;
+            const wardMatch = !selectedWard || c.ward === selectedWard;
+
             const searchMatch = !searchQuery ||
                 c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 (c.phone && c.phone.includes(searchQuery));
-            return typeMatch && ownerMatch && searchMatch;
+
+            return typeMatch && ownerMatch && provinceMatch && districtMatch && wardMatch && searchMatch;
         });
     }, [selectedType, selectedOwner, searchQuery, customers]);
 
@@ -148,6 +211,8 @@ export default function AdminCustomersPage() {
                         />
                     </div>
                 </div>
+
+                {/* Row 1: Type & Owner */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                         <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Loại hình</label>
@@ -172,9 +237,61 @@ export default function AdminCustomersPage() {
                             ))}
                         </select>
                     </div>
-                    <div className="flex items-end lg:col-start-4 justify-end">
-                        <span className="text-sm font-medium text-slate-600 bg-slate-100 px-3 py-1.5 rounded-lg">
-                            Khách hàng: {filteredCustomers.length}
+                </div>
+
+                {/* Row 2: Location Filters */}
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-2 border-t border-slate-100">
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Tỉnh / Thành phố</label>
+                        <select
+                            value={selectedProvince}
+                            onChange={(e) => setSelectedProvince(e.target.value)}
+                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        >
+                            <option value="">Tất cả khu vực</option>
+                            {PROVINCES.map(p => <option key={p.code} value={p.value}>{p.label}</option>)}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Quận / Huyện</label>
+                        <div className="relative">
+                            <select
+                                value={selectedDistrict}
+                                onChange={(e) => setSelectedDistrict(e.target.value)}
+                                disabled={!selectedProvince}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-slate-50 disabled:text-slate-400"
+                            >
+                                <option value="">Tất cả Quận/Huyện</option>
+                                {districts.map(d => <option key={d.code} value={d.value}>{d.label}</option>)}
+                            </select>
+                            {loadingDistricts && <Loader2 className="absolute right-3 top-2.5 w-4 h-4 animate-spin text-primary-500" />}
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Phường / Xã</label>
+                        <div className="relative">
+                            <select
+                                value={selectedWard}
+                                onChange={(e) => setSelectedWard(e.target.value)}
+                                disabled={!selectedDistrict}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-slate-50 disabled:text-slate-400"
+                            >
+                                <option value="">Tất cả Phường/Xã</option>
+                                {wards.map(w => <option key={w.code} value={w.value}>{w.label}</option>)}
+                            </select>
+                            {loadingWards && <Loader2 className="absolute right-3 top-2.5 w-4 h-4 animate-spin text-primary-500" />}
+                        </div>
+                    </div>
+
+                    <div className="flex items-end justify-between lg:justify-end gap-3">
+                        <button
+                            onClick={resetFilters}
+                            className="text-xs text-red-500 hover:text-red-700 font-medium px-3 py-2 bg-red-50 rounded-lg transition-colors"
+                        >
+                            Xóa bộ lọc
+                        </button>
+                        <span className="text-sm font-medium text-slate-600 bg-slate-100 px-3 py-2 rounded-lg">
+                            Kết quả: {filteredCustomers.length}
                         </span>
                     </div>
                 </div>
