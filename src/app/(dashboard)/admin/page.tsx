@@ -7,6 +7,7 @@ import { getRevenueByDate, getLowStockItems, RevenueDataPoint, LowStockItem } fr
 import RevenueChart from "@/components/dashboard/RevenueChart";
 import LowStockAlert from "@/components/dashboard/LowStockAlert";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { createClient } from "@/lib/supabaseClient";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -35,6 +36,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function AdminDashboard() {
     const { session } = useAuth();
+    const supabase = createClient();
 
     // Data State
     const [stats, setStats] = useState<AdminLeadStats | null>(null);
@@ -83,16 +85,52 @@ export default function AdminDashboard() {
         loadData();
         const handleUpdates = () => loadData();
         window.addEventListener("orders-updated", handleUpdates);
-        return () => window.removeEventListener("orders-updated", handleUpdates);
+
+        // Realtime Subscription (Phase 3)
+        const channel = supabase.channel('admin-dashboard-changes')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'crm_leads' },
+                (payload) => {
+                    console.log('Realtime Lead update:', payload);
+                    loadData();
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'orders' },
+                (payload) => {
+                    console.log('Realtime Order update:', payload);
+                    loadData();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            window.removeEventListener("orders-updated", handleUpdates);
+            supabase.removeChannel(channel);
+        };
     }, [loadData]);
+
+    // Calculate Profit Margin
+    const revenue = orderStats?.totalRevenue || 0;
+    const profit = stats?.totalProfit || 0;
+    const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
 
     const statsCards = [
         { label: "Tổng Leads", value: stats?.totalLeads, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
-        { label: "Leads CTV", value: stats?.totalCTVLeads, icon: ShoppingBag, color: "text-green-600", bg: "bg-green-50" },
-        { label: "Leads Sales", value: stats?.totalSalesLeads, icon: TrendingUp, color: "text-purple-600", bg: "bg-purple-50" },
-        { label: "Doanh thu dự kiến", value: formatPrice(stats?.totalEstimatedRevenue || 0), icon: DollarSign, color: "text-primary-600", bg: "bg-primary-50" },
+        {
+            label: "Lợi nhuận gộp",
+            value: formatPrice(profit),
+            icon: DollarSign,
+            color: "text-emerald-600",
+            bg: "bg-emerald-50",
+            change: `Tỷ suất ~${margin.toFixed(1)}%`
+        },
+        { label: "Doanh thu", value: formatPrice(revenue), icon: CreditCard, color: "text-teal-600", bg: "bg-teal-50" },
         { label: "Đơn hàng", value: orderStats?.totalOrders, icon: Package, color: "text-orange-600", bg: "bg-orange-50" },
-        { label: "Doanh thu", value: formatPrice(orderStats?.totalRevenue || 0), icon: CreditCard, color: "text-teal-600", bg: "bg-teal-50" },
+        { label: "Leads Sales", value: stats?.totalSalesLeads, icon: TrendingUp, color: "text-purple-600", bg: "bg-purple-50" },
+        { label: "Leads CTV", value: stats?.totalCTVLeads, icon: ShoppingBag, color: "text-green-600", bg: "bg-green-50" },
     ];
 
     return (
@@ -137,6 +175,7 @@ export default function AdminDashboard() {
                             </div>
                             <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{stat.label}</p>
                             <h3 className="text-lg font-bold text-slate-900 mt-1">{stat.value != null ? stat.value : "-"}</h3>
+                            {stat.change && <p className="text-xs text-slate-400 mt-1">{stat.change}</p>}
                         </div>
                     );
                 })}
@@ -242,7 +281,7 @@ export default function AdminDashboard() {
                                         </td>
                                         <td className="px-6 py-3">
                                             <span className={`px-2 py-1 rounded text-xs font-semibold ${lead.source === 'CTV' ? 'bg-green-100 text-green-700' :
-                                                lead.source === 'Sales' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
+                                                    lead.source === 'Sales' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
                                                 }`}>
                                                 {lead.source}
                                             </span>
