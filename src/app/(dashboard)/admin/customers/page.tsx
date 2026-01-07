@@ -112,7 +112,7 @@ export default function AdminCustomersPage() {
             loadData();
         }, 500);
         return () => clearTimeout(timer);
-    }, [searchQuery, selectedType, selectedOwner, selectedProvince, selectedDistrict, selectedWard]);
+    }, [loadData]);
 
     // Remove old loadData usage on mount because now we have the effect above handling it
     // But we need to handle "initial load" logic or just let the effect run.
