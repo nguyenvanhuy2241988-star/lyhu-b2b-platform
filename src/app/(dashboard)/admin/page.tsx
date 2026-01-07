@@ -173,6 +173,7 @@ export default function AdminDashboard() {
                                 </div>
                                 <div className="text-right">
                                     <p className="text-sm font-bold text-primary-600">{formatPrice(p.revenue)}</p>
+                                    <p className="text-xs text-green-600 font-medium" title="Lợi nhuận">+{formatPrice(p.profit)}</p>
                                 </div>
                             </div>
                         )) : (
@@ -241,7 +242,7 @@ export default function AdminDashboard() {
                                         </td>
                                         <td className="px-6 py-3">
                                             <span className={`px-2 py-1 rounded text-xs font-semibold ${lead.source === 'CTV' ? 'bg-green-100 text-green-700' :
-                                                    lead.source === 'Sales' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
+                                                lead.source === 'Sales' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
                                                 }`}>
                                                 {lead.source}
                                             </span>

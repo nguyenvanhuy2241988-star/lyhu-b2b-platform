@@ -27,6 +27,7 @@ export interface AdminLeadStats {
     totalOrders: number;
     totalEstimatedRevenue: number;
     totalOrderRevenue: number;
+    totalProfit: number; // New field
     convertedLeads: number;
     latestLeads: AdminLead[];
 }
@@ -36,6 +37,7 @@ export interface TopProduct {
     sku: string;
     quantity: number;
     revenue: number;
+    profit: number; // New field
 }
 
 export interface FunnelStat {
@@ -124,6 +126,7 @@ export async function getAdminLeadStats(token?: string, fromDate?: string, toDat
                 totalOrders: statsData.totalOrders || 0,
                 totalEstimatedRevenue: statsData.totalEstimatedRevenue || 0,
                 totalOrderRevenue: statsData.totalOrderRevenue || 0,
+                totalProfit: statsData.totalProfit || 0,
                 convertedLeads: statsData.convertedLeads || 0,
                 latestLeads: latestLeads
             };
@@ -156,7 +159,8 @@ export async function getAdvancedStats(fromDate?: string, toDate?: string): Prom
             productName: p.product_name,
             sku: p.sku,
             quantity: p.total_quantity,
-            revenue: p.total_revenue
+            revenue: p.total_revenue,
+            profit: p.total_profit || 0
         }));
 
         const funnel: FunnelStat[] = (funnelRes.data || []).map((f: any) => ({
