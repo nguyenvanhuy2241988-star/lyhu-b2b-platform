@@ -6,30 +6,36 @@ import { createClient } from "@/lib/supabaseClient";
 
 const supabase = createClient();
 
-export type AdminLeadSource = "CTV" | "Sales" | "Customer Order";
+export type AdminLeadSource = "CTV" | "Sales" | "Telesales" | "Customer Order"; // Added Telesales
 
-export interface AdminLead {
-    id: string;
-    source: AdminLeadSource;
-    name: string;
-    contactName?: string;
-    phone?: string;
-    area?: string;
-    status: string;
-    estimatedRevenue?: number;
-    createdAt: string;
-}
-
+// ... Interface
 export interface AdminLeadStats {
     totalLeads: number;
     totalCTVLeads: number;
     totalSalesLeads: number;
+    totalTelesalesLeads: number; // New field
     totalOrders: number;
     totalEstimatedRevenue: number;
     totalOrderRevenue: number;
-    totalProfit: number; // New field Phase 3
+    totalProfit: number;
     convertedLeads: number;
     latestLeads: AdminLead[];
+}
+
+// ... Mapping logic in getAdminLeadStats
+if (statsData) {
+    return {
+        totalLeads: statsData.totalLeads || 0,
+        totalCTVLeads: statsData.totalCTVLeads || 0,
+        totalSalesLeads: statsData.totalSalesLeads || 0,
+        totalTelesalesLeads: statsData.totalTelesalesLeads || 0, // Map it
+        totalOrders: statsData.totalOrders || 0,
+        totalEstimatedRevenue: statsData.totalEstimatedRevenue || 0,
+        totalOrderRevenue: statsData.totalOrderRevenue || 0,
+        totalProfit: statsData.totalProfit || 0,
+        convertedLeads: statsData.convertedLeads || 0,
+        latestLeads: latestLeads
+    };
 }
 
 export interface TopProduct {
@@ -106,7 +112,7 @@ export async function getAdminLeadStats(token?: string, fromDate?: string, toDat
         // Map latest leads
         const latestLeads: AdminLead[] = (leadsData || []).map((l: any) => ({
             id: l.id,
-            source: (l.source === 'CTV' ? 'CTV' : 'Sales') as AdminLeadSource,
+            source: (['CTV', 'Sales', 'Telesales'].includes(l.source) ? l.source : 'Sales') as AdminLeadSource,
             name: l.title || l.customer_name || "Khách hàng",
             contactName: l.customer_name,
             phone: l.phone,

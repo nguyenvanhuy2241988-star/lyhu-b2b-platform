@@ -129,6 +129,8 @@ export default function AdminDashboard() {
         },
         { label: "Doanh thu", value: formatPrice(revenue), icon: CreditCard, color: "text-teal-600", bg: "bg-teal-50" },
         { label: "Đơn hàng", value: orderStats?.totalOrders, icon: Package, color: "text-orange-600", bg: "bg-orange-50" },
+        // Leads Breakdown
+        { label: "Leads Telesales", value: stats?.totalTelesalesLeads, icon: Headset, color: "text-indigo-600", bg: "bg-indigo-50" },
         { label: "Leads Sales", value: stats?.totalSalesLeads, icon: TrendingUp, color: "text-purple-600", bg: "bg-purple-50" },
         { label: "Leads CTV", value: stats?.totalCTVLeads, icon: ShoppingBag, color: "text-green-600", bg: "bg-green-50" },
     ];
@@ -281,7 +283,8 @@ export default function AdminDashboard() {
                                         </td>
                                         <td className="px-6 py-3">
                                             <span className={`px-2 py-1 rounded text-xs font-semibold ${lead.source === 'CTV' ? 'bg-green-100 text-green-700' :
-                                                lead.source === 'Sales' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
+                                                    lead.source === 'Telesales' ? 'bg-indigo-100 text-indigo-700' :
+                                                        lead.source === 'Sales' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
                                                 }`}>
                                                 {lead.source}
                                             </span>
