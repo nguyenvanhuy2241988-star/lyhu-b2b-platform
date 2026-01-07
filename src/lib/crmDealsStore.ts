@@ -118,6 +118,9 @@ export interface Customer {
     created_at?: string;
     tax_code?: string;
     misa_code?: string;
+    contact_person?: string;
+    zalo?: string;
+    notes?: string;
 }
 
 export interface CRMDeal {
@@ -352,6 +355,10 @@ export async function createCustomer(customer: {
     district?: string;
     owner_user_id: string;
     status?: string;
+    contact_person?: string;
+    zalo?: string;
+    notes?: string;
+    tax_code?: string;
 }, token?: string): Promise<Customer> {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
