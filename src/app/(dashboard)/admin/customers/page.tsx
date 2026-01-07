@@ -106,19 +106,6 @@ export default function AdminCustomersPage() {
         setSortBy("newest");
     };
 
-    // Debounce search query
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            loadData();
-        }, 500);
-        return () => clearTimeout(timer);
-    }, [loadData]);
-
-    // Remove old loadData usage on mount because now we have the effect above handling it
-    // But we need to handle "initial load" logic or just let the effect run.
-    // The effect runs on mount if dependencies are set.
-    // However, we need to pass filters to loadData.
-
     // Updated loadData
     const loadData = useCallback(async () => {
         setIsLoading(true);
@@ -146,6 +133,14 @@ export default function AdminCustomersPage() {
             setIsLoading(false);
         }
     }, [session, selectedProvince, selectedDistrict, selectedWard, selectedType, selectedOwner, searchQuery, fromDate, toDate, sortBy]);
+
+    // Debounce search query
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            loadData();
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [loadData]);
 
     // Removed filteredCustomers useMemo, use customers directly (as it is now filtered from server)
     const filteredCustomers = customers;
