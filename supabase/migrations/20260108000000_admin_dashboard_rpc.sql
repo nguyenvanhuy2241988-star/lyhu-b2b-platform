@@ -23,8 +23,8 @@ BEGIN
     -- 1. Aggregating Leads Data
     SELECT 
         COUNT(*),
-        COUNT(*) FILTER (WHERE source = 'CTV'),
-        COUNT(*) FILTER (WHERE source = 'Sales'),
+        0, -- Placeholder for CTV leads (source column missing)
+        COUNT(*), -- Assume all current leads in table are Sales/System leads
         COUNT(*) FILTER (WHERE status = 'WON')
     INTO 
         v_total_leads,
