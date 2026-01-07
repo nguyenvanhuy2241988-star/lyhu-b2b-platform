@@ -62,7 +62,20 @@ export async function getAdminLeads(): Promise<AdminLead[]> {
     }
 }
 
-// Helper ... (getDateRange)
+// Helper to get today's range if no date provided, or parse provided dates
+const getDateRange = (from?: string, to?: string) => {
+    // Default to a wide range to simulate "All Time" but safer
+    // Or we should default to "This Month" for better UX? 
+    // Let's stick to "All Time" (2023 to now) to preserve existing behavior until UI adds filters.
+    const start = from ? new Date(from) : new Date('2023-01-01'); // Project started ~2023
+    const end = to ? new Date(to) : new Date();
+    end.setHours(23, 59, 59, 999);
+
+    return {
+        p_start_date: start.toISOString(),
+        p_end_date: end.toISOString()
+    };
+};
 
 export async function getAdminLeadStats(token?: string, fromDate?: string, toDate?: string): Promise<AdminLeadStats> {
     try {
