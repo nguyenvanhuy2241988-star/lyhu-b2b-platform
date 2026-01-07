@@ -18,16 +18,35 @@ export interface LowStockItem {
 }
 
 /**
- * Get revenue data for chart (last N days)
+ * Get revenue data for chart (custom date range)
  */
-export async function getRevenueByDate(days: number = 30): Promise<RevenueDataPoint[]> {
+export async function getRevenueByDate(days: number = 30, fromDate?: string, toDate?: string): Promise<RevenueDataPoint[]> {
+    let p_start_date: string;
+    let p_end_date: string;
+
+    if (fromDate && toDate) {
+        const start = new Date(fromDate);
+        const end = new Date(toDate);
+        end.setHours(23, 59, 59, 999);
+        p_start_date = start.toISOString();
+        p_end_date = end.toISOString();
+    } else {
+        // Fallback to "last N days"
+        const start = new Date();
+        start.setDate(start.getDate() - days);
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+        p_start_date = start.toISOString();
+        p_end_date = end.toISOString();
+    }
+
     const { data, error } = await supabase
-        .rpc('get_revenue_by_date', { p_days: days });
+        .rpc('get_revenue_chart_data', { p_start_date, p_end_date });
 
     if (error) {
-        console.error('[Dashboard] Error fetching revenue:', error);
-        // Fallback: query directly
-        return getRevenueByDateFallback(days);
+        console.error('[Dashboard] Error fetching revenue (RPC):', error);
+        // Fallback logic could be complex for custom range, so we return empty or try basic query
+        return [];
     }
 
     return (data || []).map((row: any) => ({

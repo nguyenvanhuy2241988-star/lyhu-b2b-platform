@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Users, ShoppingBag, DollarSign, TrendingUp, Package, CreditCard } from "lucide-react";
+import { Users, ShoppingBag, DollarSign, TrendingUp, Package, CreditCard, Filter, Loader2 } from "lucide-react";
 import { getAdminLeadStats, AdminLeadStats } from "@/lib/adminStats";
 import { getOrdersSummary } from "@/lib/ordersStore";
 import { getRevenueByDate, getLowStockItems, RevenueDataPoint, LowStockItem } from "@/lib/dashboardStore";
@@ -46,6 +46,10 @@ export default function AdminDashboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [isLoadingChart, setIsLoadingChart] = useState(true);
 
+    // Filters
+    const [fromDate, setFromDate] = useState("");
+    const [toDate, setToDate] = useState("");
+
     const loadData = useCallback(async () => {
         setIsLoading(true);
         setIsLoadingChart(true);
@@ -53,8 +57,8 @@ export default function AdminDashboard() {
             const token = session?.access_token;
             // Load stats and orders summary in parallel
             const [leadStats, revenue, lowStock] = await Promise.all([
-                getAdminLeadStats(token),
-                getRevenueByDate(30),
+                getAdminLeadStats(token, fromDate, toDate),
+                getRevenueByDate(30, fromDate, toDate),
                 getLowStockItems()
             ]);
 
@@ -71,7 +75,7 @@ export default function AdminDashboard() {
             setIsLoading(false);
             setIsLoadingChart(false);
         }
-    }, [session?.access_token]);
+    }, [session?.access_token, fromDate, toDate]);
 
     useEffect(() => {
         loadData();
