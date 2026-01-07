@@ -84,24 +84,24 @@ export async function getAdminLeadStats(token?: string, fromDate?: string, toDat
 
         if (statsError) throw statsError;
 
-        // 2. Fetch Latest Leads (Limit 10) - Separate fast query
+        // 2. Fetch Latest Leads (Limit 10) - Sort by Last Updated
         const { data: leadsData, error: leadsError } = await supabase
             .from('crm_leads') // Corrected table name
             .select('*')
-            .order('created_at', { ascending: false })
+            .order('updated_at', { ascending: false }) // Changed to updated_at
             .limit(10);
 
         // Map latest leads
         const latestLeads: AdminLead[] = (leadsData || []).map((l: any) => ({
             id: l.id,
-            source: 'Sales',
+            source: (l.source === 'CTV' ? 'CTV' : 'Sales') as AdminLeadSource, // Use real source
             name: l.title || l.customer_name || "Khách hàng",
             contactName: l.customer_name,
             phone: l.phone,
-            area: "-", // No address in simple schema
+            area: "-",
             status: l.stage || "new_data",
             estimatedRevenue: 0,
-            createdAt: l.created_at
+            createdAt: l.updated_at || l.created_at // Display updated time
         }));
 
         if (statsData) {

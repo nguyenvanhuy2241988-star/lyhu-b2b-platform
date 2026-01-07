@@ -125,15 +125,18 @@ async function getLowStockItemsFallback(): Promise<LowStockItem[]> {
             product_id,
             quantity_on_hand,
             min_stock_level,
-            product:products(name, sku),
+            product:products(name, sku, is_active),
             warehouse:warehouses(name)
         `);
 
     if (error || !data) return [];
 
-    // Filter low stock items (default min = 10)
+    // Filter low stock items (default min = 10) AND Active products
     return data
-        .filter((item: any) => item.quantity_on_hand < (item.min_stock_level || 10))
+        .filter((item: any) =>
+            item.quantity_on_hand < (item.min_stock_level || 10) &&
+            (item.product as any)?.is_active !== false // Ensure product is active
+        )
         .map((item: any) => ({
             productId: item.product_id,
             productName: (item.product as any)?.name || 'Unknown',
