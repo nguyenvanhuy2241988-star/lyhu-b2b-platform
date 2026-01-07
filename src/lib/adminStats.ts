@@ -76,10 +76,29 @@ export async function getAdminLeads(): Promise<AdminLead[]> {
 
 // Helper to get today's range if no date provided, or parse provided dates
 const getDateRange = (from?: string, to?: string) => {
-    // Default to a wide range to simulate "All Time" but safer
-    const start = from ? new Date(from) : new Date('2023-01-01'); // Project started ~2023
-    const end = to ? new Date(to) : new Date();
-    end.setHours(23, 59, 59, 999);
+    // Fix Timezone Issue: 
+    // "2026-01-08" -> new Date("2026-01-08") is UTC Midnight.
+    // For UTC+7 (VN), this is 7AM Local. We want 00:00 Local.
+    // Solution: Append T00:00:00 to force Local Time parsing.
+
+    let start, end;
+
+    if (from) {
+        // If YYYY-MM-DD, append T00:00:00 to treat as Local Midnight
+        const fromStr = from.includes('T') ? from : `${from}T00:00:00`;
+        start = new Date(fromStr);
+    } else {
+        start = new Date('2023-01-01T00:00:00'); // Project start
+    }
+
+    if (to) {
+        const toStr = to.includes('T') ? to : `${to}T00:00:00`;
+        end = new Date(toStr);
+        end.setHours(23, 59, 59, 999); // End of Local Day
+    } else {
+        end = new Date();
+        end.setHours(23, 59, 59, 999);
+    }
 
     return {
         p_start_date: start.toISOString(),
