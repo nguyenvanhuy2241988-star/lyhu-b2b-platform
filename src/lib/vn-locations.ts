@@ -74,31 +74,67 @@ export const PROVINCES: LocationOption[] = [
 
 // Hàm load data từ API công khai (để lấy Huyện/Xã động)
 // Sử dụng API: https://provinces.open-api.vn/
+// Có cơ chế Cache LocalStorage để tăng tốc độ.
+
+const getCache = (key: string) => {
+    if (typeof window === 'undefined') return null;
+    const cached = localStorage.getItem(`vn_loc_${key}`);
+    if (!cached) return null;
+    try {
+        const { data, expiry } = JSON.parse(cached);
+        if (Date.now() > expiry) {
+            localStorage.removeItem(`vn_loc_${key}`);
+            return null;
+        }
+        return data;
+    } catch {
+        return null;
+    }
+};
+
+const setCache = (key: string, data: any) => {
+    if (typeof window === 'undefined') return;
+    const expiry = Date.now() + 24 * 60 * 60 * 1000; // Cache 24h
+    localStorage.setItem(`vn_loc_${key}`, JSON.stringify({ data, expiry }));
+};
+
 export const fetchDistricts = async (provinceCode: string): Promise<LocationOption[]> => {
+    const cacheKey = `d_${provinceCode}`;
+    const cached = getCache(cacheKey);
+    if (cached) return cached;
+
     try {
         const res = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
         if (!res.ok) return [];
         const data = await res.json();
-        return data.districts.map((d: any) => ({
+        const mapped = data.districts.map((d: any) => ({
             value: d.name,
             code: d.code,
             label: d.name
         }));
+        setCache(cacheKey, mapped);
+        return mapped;
     } catch {
         return [];
     }
 }
 
 export const fetchWards = async (districtCode: string): Promise<LocationOption[]> => {
+    const cacheKey = `w_${districtCode}`;
+    const cached = getCache(cacheKey);
+    if (cached) return cached;
+
     try {
         const res = await fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
         if (!res.ok) return [];
         const data = await res.json();
-        return data.wards.map((w: any) => ({
+        const mapped = data.wards.map((w: any) => ({
             value: w.name,
             code: w.code,
             label: w.name
         }));
+        setCache(cacheKey, mapped);
+        return mapped;
     } catch {
         return [];
     }

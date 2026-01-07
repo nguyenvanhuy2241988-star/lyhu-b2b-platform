@@ -195,7 +195,18 @@ export function saveCRMColumns(cols: CRMColumn[]) {
 // CUSTOMER FUNCTIONS
 // =====================================================
 
-export async function fetchCustomers(ownerId?: string, token?: string): Promise<Customer[]> {
+// Updated fetchCustomers to support filtering
+export async function fetchCustomers(
+    ownerId?: string,
+    token?: string,
+    filters?: {
+        province?: string;
+        district?: string;
+        ward?: string;
+        type?: string;
+        search?: string;
+    }
+): Promise<Customer[]> {
     try {
         const headers = getHeaders(token);
 
@@ -203,13 +214,36 @@ export async function fetchCustomers(ownerId?: string, token?: string): Promise<
         let url = `${SUPABASE_URL}/rest/v1/customers?select=*`;
 
         // If ownerId provided, filter OR (owner_id.eq.ID,owner_id.is.null)
-        // PostgREST: or=(owner_user_id.eq.ID,owner_user_id.is.null)
         if (ownerId) {
             url += `&or=(owner_user_id.eq.${ownerId},owner_user_id.is.null)`;
         }
 
+        // Apply filters
+        if (filters) {
+            if (filters.province) url += `&province=eq.${encodeURIComponent(filters.province)}`;
+            if (filters.district) url += `&district=eq.${encodeURIComponent(filters.district)}`;
+            if (filters.ward) url += `&ward=eq.${encodeURIComponent(filters.ward)}`;
+            if (filters.type && filters.type !== 'Tất cả') {
+                // Map UI label to DB value if needed, handled by caller
+                url += `&type=eq.${filters.type}`;
+            }
+            if (filters.search) {
+                // Combine search with owner logic if both present is tricky with simple query params
+                // But here we append AND condition. 
+                // Note: PostgREST `or` param combines with AND.
+                // search: name or phone
+                url += `&or=(name.ilike.*${encodeURIComponent(filters.search)}*,phone.ilike.*${encodeURIComponent(filters.search)}*)`;
+            }
+        }
+
         // Order by name
         url += `&order=name.asc`;
+        // Limit to prevent huge payloads if no filters
+        if (!filters?.search && !filters?.province && !filters?.district) {
+            url += `&limit=100`; // Default limit if no specific filter to avoid 5MB JSON
+        } else {
+            url += `&limit=500`; // Higher limit when filtering
+        }
 
         const res = await fetch(url, { headers });
 

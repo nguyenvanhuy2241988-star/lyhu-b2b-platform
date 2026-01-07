@@ -100,11 +100,33 @@ export default function AdminCustomersPage() {
         setSelectedWard("");
     };
 
+    // Debounce search query
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            loadData();
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery, selectedType, selectedOwner, selectedProvince, selectedDistrict, selectedWard]);
+
+    // Remove old loadData usage on mount because now we have the effect above handling it
+    // But we need to handle "initial load" logic or just let the effect run.
+    // The effect runs on mount if dependencies are set.
+    // However, we need to pass filters to loadData.
+
+    // Updated loadData
     const loadData = useCallback(async () => {
         setIsLoading(true);
         try {
+            const filters = {
+                province: selectedProvince,
+                district: selectedDistrict,
+                ward: selectedWard,
+                type: selectedType,
+                search: searchQuery
+            };
+
             const [custData, userData] = await Promise.all([
-                fetchCustomers(undefined, session?.access_token),
+                fetchCustomers(selectedOwner === "Tất cả" ? undefined : selectedOwner, session?.access_token, filters),
                 fetchUsers(session?.access_token)
             ]);
             setCustomers(custData);
@@ -114,29 +136,10 @@ export default function AdminCustomersPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [session]);
+    }, [session, selectedProvince, selectedDistrict, selectedWard, selectedType, selectedOwner, searchQuery]);
 
-    useEffect(() => {
-        loadData();
-    }, [loadData]);
-
-
-    const filteredCustomers = useMemo(() => {
-        if (!customers) return [];
-        return customers.filter((c) => {
-            const typeMatch = selectedType === "Tất cả" || c.type === reverseTypeMap[selectedType] || c.type === selectedType;
-            const ownerMatch = selectedOwner === "Tất cả" || c.owner_user_id === selectedOwner;
-            const provinceMatch = !selectedProvince || c.province === selectedProvince;
-            const districtMatch = !selectedDistrict || c.district === selectedDistrict;
-            const wardMatch = !selectedWard || c.ward === selectedWard;
-
-            const searchMatch = !searchQuery ||
-                c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (c.phone && c.phone.includes(searchQuery));
-
-            return typeMatch && ownerMatch && provinceMatch && districtMatch && wardMatch && searchMatch;
-        });
-    }, [selectedType, selectedOwner, searchQuery, customers, selectedProvince, selectedDistrict, selectedWard]);
+    // Removed filteredCustomers useMemo, use customers directly (as it is now filtered from server)
+    const filteredCustomers = customers;
 
     const handleEditClick = (customer: Customer) => {
         setEditingCustomer(customer);

@@ -80,34 +80,41 @@ export default function TelesalesCustomersPage() {
 
     const [isLoading, setIsLoading] = useState(true);
 
+    // Updated loadData
     const loadData = useCallback(async () => {
         if (!user || !session?.access_token) return;
         setIsLoading(true);
-        const data = await fetchCustomers(user.id, session.access_token);
+
+        const filters = {
+            province: selectedProvince,
+            district: selectedDistrict,
+            ward: selectedWard,
+            type: selectedType,
+            search: searchTerm
+        };
+
+        const data = await fetchCustomers(user.id, session.access_token, filters);
         setCustomers(data);
         setIsLoading(false);
-    }, [user, session?.access_token]);
+    }, [user, session?.access_token, selectedProvince, selectedDistrict, selectedWard, selectedType, searchTerm]);
 
+    // Debounce effect
     useEffect(() => {
-        if (user && session?.access_token) {
+        if (!user || !session?.access_token) return;
+
+        const timer = setTimeout(() => {
             loadData();
-        } else if (!authIsLoading) {
-            setIsLoading(false);
-        }
-    }, [user, session?.access_token, authIsLoading, loadData]);
+        }, 500);
 
-    const filteredCustomers = customers.filter((customer) => {
-        const searchMatch = !searchTerm ||
-            customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            customer.phone.includes(searchTerm);
+        return () => clearTimeout(timer);
+    }, [loadData]); // loadData changes when filters change due to dependency array
 
-        const typeMatch = !selectedType || customer.type === selectedType;
-        const pMatch = !selectedProvince || customer.province === selectedProvince;
-        const dMatch = !selectedDistrict || customer.district === selectedDistrict;
-        const wMatch = !selectedWard || customer.ward === selectedWard;
+    // Initial load handled by effect above or explicit mounting if needed. 
+    // Actually the effect above depends on loadData which depends on all filters. 
+    // On mount, filters are empty, loadData is created, effect runs.
 
-        return searchMatch && typeMatch && pMatch && dMatch && wMatch;
-    });
+    // Removed client-side filtering
+    const filteredCustomers = customers;
 
     const handleEditClick = (customer: Customer) => {
         setEditingCustomer(customer);
