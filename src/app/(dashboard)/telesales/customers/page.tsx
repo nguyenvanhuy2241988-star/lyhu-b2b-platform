@@ -14,6 +14,8 @@ const CUSTOMER_TYPES = [
     { value: 'sieu_thi', label: 'Siêu thị' },
 ];
 
+import AddCustomerModal from "@/components/telesales/AddCustomerModal";
+
 export default function TelesalesCustomersPage() {
     const { user, session, isLoading: authIsLoading } = useAuth();
     const router = useRouter();
@@ -21,15 +23,9 @@ export default function TelesalesCustomersPage() {
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
     const [customers, setCustomers] = useState<Customer[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
 
-    // Form state
-    const [formName, setFormName] = useState("");
-    const [formPhone, setFormPhone] = useState("");
-    const [formType, setFormType] = useState("tap_hoa");
-    const [formAddress, setFormAddress] = useState("");
-    const [formEmail, setFormEmail] = useState("");
-    const [isSaving, setIsSaving] = useState(false);
+
+    const [isLoading, setIsLoading] = useState(true);
 
     const loadData = useCallback(async () => {
         if (!user || !session?.access_token) return;
@@ -54,84 +50,23 @@ export default function TelesalesCustomersPage() {
         );
     });
 
-    const handleCreateCustomer = async () => {
-        if (!formName.trim() || !formPhone.trim()) {
-            alert("Vui lòng nhập tên và số điện thoại");
-            return;
-        }
-
-        const userId = user?.id;
-        if (!userId) {
-            alert("Không tìm thấy thông tin người dùng. Vui lòng đăng nhập lại.");
-            return;
-        }
-
-        setIsSaving(true);
-        const { createCustomer } = await import("@/lib/crmDealsStore");
-        const newCustomer = await createCustomer({
-            name: formName.trim(),
-            phone: formPhone.trim(),
-            email: formEmail.trim() || undefined,
-            address: formAddress.trim() || undefined,
-            type: formType,
-            owner_user_id: userId,
-            status: 'active'
-        }, session?.access_token);
-
-        if (newCustomer) {
-            resetForm();
-            loadData();
-        } else {
-            alert("Không thể tạo khách hàng. Vui lòng thử lại.");
-        }
-        setIsSaving(false);
-    };
-
-    const handleEditCustomer = async () => {
-        if (!editingCustomer || !formName.trim() || !formPhone.trim()) return;
-
-        setIsSaving(true);
-        const { updateCustomer } = await import("@/lib/crmDealsStore");
-        const success = await updateCustomer(editingCustomer.id, {
-            name: formName.trim(),
-            phone: formPhone.trim(),
-            email: formEmail.trim() || undefined,
-            address: formAddress.trim() || undefined,
-            type: formType,
-        }, session?.access_token);
-
-        if (success) {
-            resetForm();
-            loadData();
-        } else {
-            alert("Không thể cập nhật thông tin. Vui lòng thử lại.");
-        }
-        setIsSaving(false);
-    };
-
-    const resetForm = () => {
-        setShowAddForm(false);
-        setEditingCustomer(null);
-        setFormName("");
-        setFormPhone("");
-        setFormType("tap_hoa");
-        setFormAddress("");
-        setFormEmail("");
-    };
-
     const handleEditClick = (customer: Customer) => {
         setEditingCustomer(customer);
-        setFormName(customer.name);
-        setFormPhone(customer.phone);
-        setFormType(customer.type || "tap_hoa");
-        setFormAddress(customer.address || "");
-        setFormEmail(customer.email || "");
         setShowAddForm(true);
     };
 
     const handleCreateDeal = (customer: Customer) => {
         // Navigate to CRM with customer selected
         router.push(`/telesales/crm?create_for=${customer.id}`);
+    };
+
+    const handleModalSuccess = () => {
+        loadData();
+    };
+
+    const handleCloseModal = () => {
+        setShowAddForm(false);
+        setEditingCustomer(null);
     };
 
     if (isLoading) {
@@ -283,91 +218,12 @@ export default function TelesalesCustomersPage() {
             </div>
 
             {/* Add Customer Modal */}
-            {showAddForm && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-                        <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-                            <h3 className="font-semibold text-slate-900">
-                                {editingCustomer ? "Chỉnh sửa khách hàng" : "Thêm khách hàng mới"}
-                            </h3>
-                            <button onClick={resetForm} className="text-slate-400 hover:text-slate-600">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <div className="p-4 space-y-4">
-                            <div className="space-y-1">
-                                <label className="text-sm font-medium text-slate-700">Tên cửa hàng *</label>
-                                <input
-                                    type="text"
-                                    value={formName}
-                                    onChange={(e) => setFormName(e.target.value)}
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none"
-                                    placeholder="Ví dụ: Tạp hóa Cô Ba"
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-slate-700">Số điện thoại *</label>
-                                    <input
-                                        type="tel"
-                                        value={formPhone}
-                                        onChange={(e) => setFormPhone(e.target.value)}
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none"
-                                    />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="text-sm font-medium text-slate-700">Loại hình</label>
-                                    <select
-                                        value={formType}
-                                        onChange={(e) => setFormType(e.target.value)}
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none"
-                                    >
-                                        {CUSTOMER_TYPES.map(t => (
-                                            <option key={t.value} value={t.value}>{t.label}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-medium text-slate-700">Email</label>
-                                <input
-                                    type="email"
-                                    value={formEmail}
-                                    onChange={(e) => setFormEmail(e.target.value)}
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none"
-                                    placeholder="email@example.com"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-medium text-slate-700">Địa chỉ</label>
-                                <input
-                                    type="text"
-                                    value={formAddress}
-                                    onChange={(e) => setFormAddress(e.target.value)}
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none"
-                                    placeholder="Số nhà, Tên đường..."
-                                />
-                            </div>
-                            <div className="pt-2 flex justify-end gap-3">
-                                <button
-                                    onClick={resetForm}
-                                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium"
-                                >
-                                    Hủy
-                                </button>
-                                <button
-                                    onClick={editingCustomer ? handleEditCustomer : handleCreateCustomer}
-                                    disabled={isSaving}
-                                    className="px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-lg text-sm font-medium flex items-center gap-2 disabled:opacity-50"
-                                >
-                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                    {editingCustomer ? "Cập nhật" : "Lưu khách hàng"}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <AddCustomerModal
+                isOpen={showAddForm}
+                onClose={handleCloseModal}
+                onSuccess={handleModalSuccess}
+                initialData={editingCustomer}
+            />
         </div>
     );
 }
