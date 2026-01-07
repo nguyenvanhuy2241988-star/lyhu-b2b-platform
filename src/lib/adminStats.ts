@@ -6,14 +6,25 @@ import { createClient } from "@/lib/supabaseClient";
 
 const supabase = createClient();
 
-export type AdminLeadSource = "CTV" | "Sales" | "Telesales" | "Customer Order"; // Added Telesales
+export type AdminLeadSource = "CTV" | "Sales" | "Telesales" | "Customer Order";
 
-// ... Interface
+export interface AdminLead {
+    id: string;
+    source: AdminLeadSource;
+    name: string;
+    contactName?: string;
+    phone?: string;
+    area?: string;
+    status: string;
+    estimatedRevenue?: number;
+    createdAt: string;
+}
+
 export interface AdminLeadStats {
     totalLeads: number;
     totalCTVLeads: number;
     totalSalesLeads: number;
-    totalTelesalesLeads: number; // New field
+    totalTelesalesLeads: number;
     totalOrders: number;
     totalEstimatedRevenue: number;
     totalOrderRevenue: number;
@@ -22,28 +33,12 @@ export interface AdminLeadStats {
     latestLeads: AdminLead[];
 }
 
-// ... Mapping logic in getAdminLeadStats
-if (statsData) {
-    return {
-        totalLeads: statsData.totalLeads || 0,
-        totalCTVLeads: statsData.totalCTVLeads || 0,
-        totalSalesLeads: statsData.totalSalesLeads || 0,
-        totalTelesalesLeads: statsData.totalTelesalesLeads || 0, // Map it
-        totalOrders: statsData.totalOrders || 0,
-        totalEstimatedRevenue: statsData.totalEstimatedRevenue || 0,
-        totalOrderRevenue: statsData.totalOrderRevenue || 0,
-        totalProfit: statsData.totalProfit || 0,
-        convertedLeads: statsData.convertedLeads || 0,
-        latestLeads: latestLeads
-    };
-}
-
 export interface TopProduct {
     productName: string;
     sku: string;
     quantity: number;
     revenue: number;
-    profit: number; // New field Phase 3
+    profit: number;
 }
 
 export interface FunnelStat {
@@ -62,7 +57,7 @@ export async function getAdminLeads(): Promise<AdminLead[]> {
 
         const allLeads: AdminLead[] = (data || []).map((l: any) => ({
             id: l.id,
-            source: (l.source === 'CTV' ? 'CTV' : 'Sales') as AdminLeadSource,
+            source: (['CTV', 'Sales', 'Telesales'].includes(l.source) ? l.source : 'Sales') as AdminLeadSource,
             name: l.title || l.customer_name || "Khách hàng",
             contactName: l.customer_name,
             phone: l.phone,
@@ -127,26 +122,27 @@ export async function getAdminLeadStats(token?: string, fromDate?: string, toDat
                 totalLeads: statsData.totalLeads || 0,
                 totalCTVLeads: statsData.totalCTVLeads || 0,
                 totalSalesLeads: statsData.totalSalesLeads || 0,
+                totalTelesalesLeads: statsData.totalTelesalesLeads || 0,
                 totalOrders: statsData.totalOrders || 0,
                 totalEstimatedRevenue: statsData.totalEstimatedRevenue || 0,
                 totalOrderRevenue: statsData.totalOrderRevenue || 0,
-                totalProfit: statsData.totalProfit || 0, // MAPPED
+                totalProfit: statsData.totalProfit || 0,
                 convertedLeads: statsData.convertedLeads || 0,
                 latestLeads: latestLeads
             };
         }
 
         return {
-            totalLeads: 0, totalCTVLeads: 0, totalSalesLeads: 0, totalOrders: 0,
-            totalEstimatedRevenue: 0, totalOrderRevenue: 0, totalProfit: 0,
+            totalLeads: 0, totalCTVLeads: 0, totalSalesLeads: 0, totalTelesalesLeads: 0,
+            totalOrders: 0, totalEstimatedRevenue: 0, totalOrderRevenue: 0, totalProfit: 0,
             convertedLeads: 0, latestLeads: []
         };
 
     } catch (err) {
         console.error("[getAdminLeadStats] Error:", err);
         return {
-            totalLeads: 0, totalCTVLeads: 0, totalSalesLeads: 0, totalOrders: 0,
-            totalEstimatedRevenue: 0, totalOrderRevenue: 0, totalProfit: 0, // FIXED: Added missing field
+            totalLeads: 0, totalCTVLeads: 0, totalSalesLeads: 0, totalTelesalesLeads: 0,
+            totalOrders: 0, totalEstimatedRevenue: 0, totalOrderRevenue: 0, totalProfit: 0,
             convertedLeads: 0, latestLeads: []
         };
     }
@@ -182,7 +178,7 @@ export async function getAdvancedStats(fromDate?: string, toDate?: string): Prom
     }
 }
 
-// Old method moved to fallback
+// Old method moved to fallback (Cleanup in future if unused)
 async function getAdminLeadStatsFallback(token?: string): Promise<AdminLeadStats> {
     try {
         const [allLeads, ordersRes] = await Promise.all([
@@ -207,17 +203,18 @@ async function getAdminLeadStatsFallback(token?: string): Promise<AdminLeadStats
             totalLeads,
             totalCTVLeads,
             totalSalesLeads,
+            totalTelesalesLeads: 0, // Fallback
             totalOrders,
             totalEstimatedRevenue: 0,
             totalOrderRevenue,
-            totalProfit: 0, // Placeholder for fallback
+            totalProfit: 0,
             convertedLeads,
             latestLeads,
         };
     } catch (e) {
         return {
-            totalLeads: 0, totalCTVLeads: 0, totalSalesLeads: 0, totalOrders: 0,
-            totalEstimatedRevenue: 0, totalOrderRevenue: 0, totalProfit: 0, // FIXED
+            totalLeads: 0, totalCTVLeads: 0, totalSalesLeads: 0, totalTelesalesLeads: 0,
+            totalOrders: 0, totalEstimatedRevenue: 0, totalOrderRevenue: 0, totalProfit: 0,
             convertedLeads: 0, latestLeads: []
         };
     }
