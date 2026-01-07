@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Users, ShoppingBag, DollarSign, TrendingUp, Package, CreditCard, Filter, Loader2, Trophy, ArrowRight } from "lucide-react";
+import { Users, ShoppingBag, DollarSign, TrendingUp, Package, CreditCard, Filter, Loader2, Trophy, ArrowRight, Headset } from "lucide-react";
 import { getAdminLeadStats, getAdvancedStats, AdminLeadStats, TopProduct, FunnelStat } from "@/lib/adminStats";
 import { getRevenueByDate, getLowStockItems, RevenueDataPoint, LowStockItem } from "@/lib/dashboardStore";
 import RevenueChart from "@/components/dashboard/RevenueChart";
@@ -283,8 +283,8 @@ export default function AdminDashboard() {
                                         </td>
                                         <td className="px-6 py-3">
                                             <span className={`px-2 py-1 rounded text-xs font-semibold ${lead.source === 'CTV' ? 'bg-green-100 text-green-700' :
-                                                    lead.source === 'Telesales' ? 'bg-indigo-100 text-indigo-700' :
-                                                        lead.source === 'Sales' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
+                                                lead.source === 'Telesales' ? 'bg-indigo-100 text-indigo-700' :
+                                                    lead.source === 'Sales' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700'
                                                 }`}>
                                                 {lead.source}
                                             </span>
