@@ -1,12 +1,20 @@
 import React from 'react';
 import { Order } from '@/lib/ordersStore';
-import { COMPANY_INFO } from '@/lib/companyConfig';
+import { COMPANY_INFO, CompanyInfo, BankAccount } from '@/lib/companyConfig';
 
 interface OrderPrintTemplateProps {
     order: Order & { note?: string; paymentStatus?: string };
+    settings?: {
+        company_info: CompanyInfo;
+        bank_info: BankAccount[];
+    };
 }
 
-export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order }) => {
+export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, settings }) => {
+    // Use dynamic settings if available, otherwise fallback to static config
+    const company = settings?.company_info || COMPANY_INFO;
+    const bankAccounts = settings?.bank_info || COMPANY_INFO.bankAccounts;
+
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat("vi-VN", {
             style: "currency",
@@ -29,10 +37,10 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order })
             {/* Header */}
             <div className="flex justify-between items-start mb-6 border-b border-gray-300 pb-6">
                 <div>
-                    <h1 className="text-xl font-bold uppercase mb-2 text-indigo-900">{COMPANY_INFO.name}</h1>
-                    <p className="text-sm">Địa chỉ: {COMPANY_INFO.address}</p>
-                    <p className="text-sm">Hotline: {COMPANY_INFO.hotline} - Email: {COMPANY_INFO.email}</p>
-                    <p className="text-sm">Website: {COMPANY_INFO.website}</p>
+                    <h1 className="text-xl font-bold uppercase mb-2 text-indigo-900">{company.name}</h1>
+                    <p className="text-sm">Địa chỉ: {company.address}</p>
+                    <p className="text-sm">Hotline: {company.hotline} - Email: {company.email}</p>
+                    <p className="text-sm">Website: {company.website}</p>
                 </div>
                 <div className="text-right">
                     <h2 className="text-2xl font-bold uppercase text-indigo-900">ĐƠN ĐẶT HÀNG</h2>
@@ -112,7 +120,7 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order })
                         <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-sm">
                             <h4 className="font-bold text-blue-800 mb-2 uppercase text-xs">Thông tin chuyển khoản</h4>
                             <div className="space-y-3">
-                                {COMPANY_INFO.bankAccounts.map((bank, idx) => (
+                                {bankAccounts.map((bank, idx) => (
                                     <div key={idx} className="bg-white p-2 rounded border border-blue-100">
                                         <p className="font-bold text-gray-800">{bank.bankName}</p>
                                         <p className="flex justify-between mt-1"><span className="text-gray-500">Số TK:</span> <span className="font-mono font-bold text-lg text-blue-700">{bank.accountNumber}</span></p>

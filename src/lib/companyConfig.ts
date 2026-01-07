@@ -1,4 +1,19 @@
-export const COMPANY_INFO = {
+export interface BankAccount {
+    bankName: string;
+    accountNumber: string;
+    accountName: string;
+    branch: string;
+}
+
+export interface CompanyInfo {
+    name: string;
+    address: string;
+    hotline: string;
+    email: string;
+    website: string;
+}
+
+export const COMPANY_INFO: CompanyInfo & { bankAccounts: BankAccount[] } = {
     name: "CÔNG TY TNHH LYHU",
     address: "Số 123, Đường ABC, Quận XYZ, TP.HCM",
     hotline: "1900 1234",

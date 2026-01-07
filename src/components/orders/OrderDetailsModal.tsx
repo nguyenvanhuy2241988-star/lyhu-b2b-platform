@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { X, Calendar, User, MapPin, ShoppingBag, CreditCard, Printer, Image as ImageIcon } from "lucide-react";
 import { Order } from "@/lib/ordersStore";
 import { OrderPrintTemplate } from "./OrderPrintTemplate";
@@ -11,6 +11,22 @@ interface OrderDetailsModalProps {
 }
 
 export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
+    const [settings, setSettings] = useState<any>(null);
+
+    useEffect(() => {
+        if (order) {
+            // Fetch settings for print/export
+            fetch('/api/admin/settings')
+                .then(res => res.json())
+                .then(data => {
+                    if (data && !data.error) {
+                        setSettings(data);
+                    }
+                })
+                .catch(err => console.error("Failed to fetch settings for print:", err));
+        }
+    }, [order]);
+
     if (!order) return null;
 
     const formatPrice = (price: number) => {
@@ -112,9 +128,9 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                                 <div className="flex flex-col items-end">
                                     <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-1">Trạng thái</p>
                                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${order.status === 'delivered' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                            order.status === 'cancelled' ? 'bg-red-50 text-red-700 border-red-200' :
-                                                order.status === 'processing' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                                    'bg-amber-50 text-amber-700 border-amber-200'
+                                        order.status === 'cancelled' ? 'bg-red-50 text-red-700 border-red-200' :
+                                            order.status === 'processing' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                'bg-amber-50 text-amber-700 border-amber-200'
                                         }`}>
                                         {order.status === 'pending' ? 'Chờ xác nhận' :
                                             order.status === 'processing' ? 'Đang xử lý' :
@@ -242,7 +258,7 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
 
             {/* Print Template (Hidden in screen, Visible in Print) */}
             <div className="hidden print:block">
-                <OrderPrintTemplate order={order} />
+                <OrderPrintTemplate order={order} settings={settings} />
             </div>
         </>
     );
