@@ -135,10 +135,10 @@ export function subscribeToOrderMessages(
     onNewMessage: (message: OrderMessage) => void,
     token?: string
 ) {
-    // Ensure socket is authenticated if token is provided
-    if (token) {
-        supabase.realtime.setAuth(token);
-    }
+    // Auto-auth is handled by createBrowserClient
+    // if (token) {
+    //    supabase.realtime.setAuth(token);
+    // }
     const channel = supabase
         .channel(`order_chat_${orderId}`)
         .on(
