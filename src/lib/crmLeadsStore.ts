@@ -54,6 +54,14 @@ export const DEFAULT_CRM_COLUMNS: CRMColumn[] = [
 ];
 
 const CRM_COLUMNS_KEY = 'lyhu:crm:columns:v1';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+const getHeaders = (token?: string) => ({
+    'Content-Type': 'application/json',
+    'apikey': SUPABASE_KEY || '',
+    'Authorization': `Bearer ${token || SUPABASE_KEY}`
+});
 
 export function loadCRMColumns(): CRMColumn[] {
     if (typeof window === 'undefined') return DEFAULT_CRM_COLUMNS;
@@ -85,7 +93,68 @@ export function saveCRMColumns(cols: CRMColumn[]) {
     if (typeof window === 'undefined') return;
     try {
         localStorage.setItem(CRM_COLUMNS_KEY, JSON.stringify(cols ?? DEFAULT_CRM_COLUMNS));
+        window.dispatchEvent(new Event("crm-leads-columns-updated"));
     } catch { }
+}
+
+export async function fetchCRMColumnsFromDB(token?: string): Promise<CRMColumn[] | null> {
+    if (!SUPABASE_URL || !SUPABASE_KEY) return null;
+
+    try {
+        const headers = getHeaders(token);
+        // Reuse the same app_settings table, focusing on 'crm_columns' 
+        // NOTE: If Leads needs SEPARATE columns, we should add 'leads_columns' to DB.
+        // Assuming for now we want to share OR user meant CRM Deals context.
+        // If this file is for LEADS, maybe it should use a different key?
+        // Checking user request: "Sync CRM Columns" usually implies the main Deals Board.
+        // But to be safe, if this is "Leads Store", we might want to keep using local or separate config.
+        // HOWEVER, user said "CRM ở admin" -> referring to Deals usually.
+        // I will implement pulling 'crm_columns' here BUT mapped to LeadStage if compatible,
+        // OR simply enable the mechanism. 
+        // Given Leads stages are DIFFERENT from Deal Stages (check types), shared config might break.
+        // Leads: new_data, npp, supermarket...
+        // Deals: new_data, npp, supermarket...
+        // They look IDENTICAL in the files I read!
+
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?select=crm_columns&limit=1`, { headers });
+        if (!res.ok) throw new Error('Failed to fetch settings');
+
+        const data = await res.json();
+        if (data && data.length > 0 && data[0].crm_columns) {
+            const cols = data[0].crm_columns;
+            saveCRMColumns(cols);
+            return cols;
+        }
+    } catch (err) {
+        console.error('fetchCRMColumnsFromDB (Leads) error:', err);
+    }
+    return loadCRMColumns();
+}
+
+export async function saveCRMColumnsToDB(cols: CRMColumn[], token?: string): Promise<boolean> {
+    // 1. Save local
+    saveCRMColumns(cols);
+
+    if (!SUPABASE_URL || !SUPABASE_KEY) return false;
+
+    try {
+        const headers = getHeaders(token);
+        const resId = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?select=id&limit=1`, { headers });
+        const dataId = await resId.json();
+
+        if (!dataId || dataId.length === 0) return false;
+        const id = dataId[0].id;
+
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?id=eq.${id}`, {
+            method: 'PATCH',
+            headers: { ...headers, 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ crm_columns: cols })
+        });
+        return res.ok;
+    } catch (err) {
+        console.error('saveCRMColumnsToDB (Leads) error:', err);
+        return false;
+    }
 }
 
 export type CRMLead = {

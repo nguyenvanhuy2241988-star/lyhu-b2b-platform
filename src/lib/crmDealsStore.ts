@@ -205,16 +205,19 @@ export async function saveCRMColumnsToDB(cols: CRMColumn[], token?: string): Pro
 
     try {
         const headers = getHeaders(token);
+        console.log('[CRM Debug] Saving columns to DB...', { count: cols.length, tokenPresent: !!token });
 
         // 2. We need the ID of the settings row. 
-        // For simplicity, we filter where true (limit 1) update.
-        // Or if we know there's only one row, update all? No, safer to update based on implicit single row policy?
-        // Let's first get ID.
         const resId = await fetch(`${supabaseUrl}/rest/v1/app_settings?select=id&limit=1`, { headers });
+        if (!resId.ok) {
+            console.error('[CRM Debug] Failed to fetch settings row ID:', resId.status, await resId.text());
+            return false;
+        }
+
         const dataId = await resId.json();
 
         if (!dataId || dataId.length === 0) {
-            // Create if not exists? Migration ensures it.
+            console.error('[CRM Debug] No settings row found in app_settings table. Did you run the migration?');
             return false;
         }
         const id = dataId[0].id;
@@ -225,7 +228,13 @@ export async function saveCRMColumnsToDB(cols: CRMColumn[], token?: string): Pro
             body: JSON.stringify({ crm_columns: cols })
         });
 
-        return res.ok;
+        if (!res.ok) {
+            console.error('[CRM Debug] Failed to PATCH columns:', res.status, await res.text());
+            return false;
+        }
+
+        console.log('[CRM Debug] Successfully saved columns to DB.');
+        return true;
     } catch (err) {
         console.error('saveCRMColumnsToDB error:', err);
         return false;
