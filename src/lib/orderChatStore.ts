@@ -153,7 +153,13 @@ export function subscribeToOrderMessages(
                 onNewMessage(mapMessage(payload.new));
             }
         )
-        .subscribe();
+        (payload: any) => {
+        onNewMessage(mapMessage(payload.new));
+    }
+        )
+        .subscribe((status) => {
+        console.log(`[OrderChat] Subscription status for ${orderId}:`, status);
+    });
 
     return () => {
         supabase.removeChannel(channel);

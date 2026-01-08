@@ -217,7 +217,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
         // Enable Realtime
         const token = await getRealtimeToken();
-        if (token) supabase.realtime.setAuth(token);
+        // if (token) supabase.realtime.setAuth(token); // Removed to prevent conflicts
 
         const channel = supabase.channel(`room-${conversationId}`)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'internal_messages' }, (payload: any) => {
