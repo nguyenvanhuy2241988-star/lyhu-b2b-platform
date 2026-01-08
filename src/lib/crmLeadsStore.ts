@@ -135,22 +135,20 @@ export async function saveCRMColumnsToDB(cols: CRMColumn[], token?: string): Pro
     // 1. Save local
     saveCRMColumns(cols);
 
-    if (!SUPABASE_URL || !SUPABASE_KEY) return false;
-
     try {
-        const headers = getHeaders(token);
-        const resId = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?select=id&limit=1`, { headers });
-        const dataId = await resId.json();
+        console.log('[CRM Debug] Saving leads columns via RPC...', { count: cols.length });
 
-        if (!dataId || dataId.length === 0) return false;
-        const id = dataId[0].id;
-
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/app_settings?id=eq.${id}`, {
-            method: 'PATCH',
-            headers: { ...headers, 'Prefer': 'return=minimal' },
-            body: JSON.stringify({ crm_columns: cols })
+        // Use the same shared RPC
+        const { error } = await supabase.rpc('update_crm_columns', {
+            new_columns: cols
         });
-        return res.ok;
+
+        if (error) {
+            console.error('[CRM Debug] RPC Error:', error);
+            return false;
+        }
+
+        return true;
     } catch (err) {
         console.error('saveCRMColumnsToDB (Leads) error:', err);
         return false;
