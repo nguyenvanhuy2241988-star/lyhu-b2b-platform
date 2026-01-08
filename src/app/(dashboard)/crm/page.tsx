@@ -41,6 +41,8 @@ import {
     createCustomer,
     loadCRMColumns,
     saveCRMColumns,
+    fetchCRMColumnsFromDB,
+    saveCRMColumnsToDB,
     CRMColumn,
     DEFAULT_CRM_COLUMNS,
     canEditDeal,
@@ -55,7 +57,10 @@ import { supabase } from "@/lib/supabaseClient";
 import { Skeleton, KanbanSkeleton, TableSkeleton } from "@/components/ui/SkeletonUI";
 
 // --- Local Column Management Functions ---
-const addColumn = () => {
+// --- Local Column Management Functions ---
+// Now wrapped to use DB sync if possible
+const addColumn = async () => {
+    // 1. Local update first
     const cols = loadCRMColumns();
     const newId = `col_${Date.now()}`;
     const newCol: CRMColumn = {
@@ -67,24 +72,31 @@ const addColumn = () => {
         isVisible: true
     };
     const newCols = [...cols, newCol];
-    saveCRMColumns(newCols);
+
+    // 2. Save both local and DB
+    saveCRMColumns(newCols); // Immediate local UI update
+    await saveCRMColumnsToDB(newCols); // Sync to server
+
     return newCols;
 };
 
-const deleteColumn = (id: string) => {
+const deleteColumn = async (id: string) => {
     const cols = loadCRMColumns().filter(c => c.id !== id);
     saveCRMColumns(cols);
+    await saveCRMColumnsToDB(cols);
     return cols;
 };
 
-const updateColumn = (id: string, patch: Partial<CRMColumn>) => {
+const updateColumn = async (id: string, patch: Partial<CRMColumn>) => {
     const cols = loadCRMColumns().map(c => c.id === id ? { ...c, ...patch } : c);
     saveCRMColumns(cols);
+    await saveCRMColumnsToDB(cols);
     return cols;
 };
 
-const resetColumns = () => {
+const resetColumns = async () => {
     saveCRMColumns(DEFAULT_CRM_COLUMNS);
+    await saveCRMColumnsToDB(DEFAULT_CRM_COLUMNS);
     return DEFAULT_CRM_COLUMNS;
 };
 
@@ -538,7 +550,8 @@ export default function CRMPage() {
         console.log('[CRM Realtime] Initializing subscription for user:', userInfo.id);
         let refreshTimeout: NodeJS.Timeout;
 
-        const channel = supabase
+        // Channel for Deals
+        const dealsChannel = supabase
             .channel(`crm-realtime-${userInfo.id}`)
             .on(
                 'postgres_changes',
@@ -560,10 +573,35 @@ export default function CRMPage() {
                 console.log('[CRM Realtime] Status:', status);
             });
 
+        // Channel for Column Config (Shared)
+        const settingsChannel = supabase
+            .channel(`crm-settings-realtime`)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'app_settings',
+                },
+                async (payload: any) => {
+                    // Check if crm_columns changed
+                    if (payload.new && payload.new.crm_columns) {
+                        console.log('[CRM Realtime] Columns updated via Realtime!');
+                        const newCols = payload.new.crm_columns as CRMColumn[];
+                        // Save to local
+                        saveCRMColumns(newCols);
+                        // Update state
+                        setColumns(newCols); // This will trigger re-render
+                    }
+                }
+            )
+            .subscribe();
+
         return () => {
             console.log('[CRM Realtime] Cleanup channel');
             clearTimeout(refreshTimeout);
-            supabase.removeChannel(channel);
+            supabase.removeChannel(dealsChannel);
+            supabase.removeChannel(settingsChannel);
         };
     }, [userInfo.id, refreshData, isMounted]);
 
@@ -580,6 +618,11 @@ export default function CRMPage() {
         if (user?.id) {
             console.log('[CRM Effect] Calling refreshData...');
             refreshData();
+
+            // Also fetch columns from DB
+            fetchCRMColumnsFromDB(session?.access_token).then(cols => {
+                if (cols && cols.length > 0) setColumns(cols);
+            });
         } else if (!authIsLoading) {
             // Stop spinner if auth finished but no user found
             setIsDataLoading(false);
@@ -791,9 +834,9 @@ export default function CRMPage() {
 
 
     // Column management
-    const handleAddColumn = () => {
-        addColumn();
-        setColumns(loadCRMColumns());
+    const handleAddColumn = async () => {
+        await addColumn();
+        // setColumnsUpdated triggered by saveCRMColumns -> window event
     };
 
     const deleteColumnHandler = (id: string, isDefault?: boolean) => {

@@ -172,6 +172,66 @@ export const DEFAULT_CRM_COLUMNS: CRMColumn[] = [
 
 const CRM_COLUMNS_KEY = 'lyhu:crm:columns:v2';
 
+export async function fetchCRMColumnsFromDB(token?: string): Promise<CRMColumn[]> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    try {
+        const headers = getHeaders(token);
+        // Get the first row (assuming single settings row)
+        const res = await fetch(`${supabaseUrl}/rest/v1/app_settings?select=crm_columns&limit=1`, { headers });
+        if (!res.ok) throw new Error('Failed to fetch settings');
+
+        const data = await res.json();
+        if (data && data.length > 0 && data[0].crm_columns) {
+            const cols = data[0].crm_columns;
+            // Update local cache
+            saveCRMColumns(cols);
+            return cols;
+        }
+    } catch (err) {
+        console.error('fetchCRMColumnsFromDB error:', err);
+    }
+    // Fallback to local
+    return loadCRMColumns();
+}
+
+export async function saveCRMColumnsToDB(cols: CRMColumn[], token?: string): Promise<boolean> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    // 1. Save local first for optimism
+    saveCRMColumns(cols);
+
+    try {
+        const headers = getHeaders(token);
+
+        // 2. We need the ID of the settings row. 
+        // For simplicity, we filter where true (limit 1) update.
+        // Or if we know there's only one row, update all? No, safer to update based on implicit single row policy?
+        // Let's first get ID.
+        const resId = await fetch(`${supabaseUrl}/rest/v1/app_settings?select=id&limit=1`, { headers });
+        const dataId = await resId.json();
+
+        if (!dataId || dataId.length === 0) {
+            // Create if not exists? Migration ensures it.
+            return false;
+        }
+        const id = dataId[0].id;
+
+        const res = await fetch(`${supabaseUrl}/rest/v1/app_settings?id=eq.${id}`, {
+            method: 'PATCH',
+            headers: { ...headers, 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ crm_columns: cols })
+        });
+
+        return res.ok;
+    } catch (err) {
+        console.error('saveCRMColumnsToDB error:', err);
+        return false;
+    }
+}
+
 export function loadCRMColumns(): CRMColumn[] {
     if (typeof window === 'undefined') return DEFAULT_CRM_COLUMNS;
     try {
@@ -188,6 +248,8 @@ export function saveCRMColumns(cols: CRMColumn[]) {
     if (typeof window === 'undefined') return;
     try {
         localStorage.setItem(CRM_COLUMNS_KEY, JSON.stringify(cols));
+        // Dispatch local event for other tabs/components
+        window.dispatchEvent(new Event("crm-columns-updated"));
     } catch { }
 }
 
@@ -615,6 +677,7 @@ export async function fetchDealsForUser(
     // Others (telesales, sales) see only their own
     return fetchDeals(userId, token);
 }
+
 
 /**
  * Fetches a paginated and filterable list of deals.
