@@ -153,7 +153,7 @@ export function subscribeToOrderMessages(
                 onNewMessage(mapMessage(payload.new));
             }
         )
-        .subscribe((status) => {
+        .subscribe((status: any) => {
             console.log(`[OrderChat] Subscription status for ${orderId}:`, status);
         });
 
