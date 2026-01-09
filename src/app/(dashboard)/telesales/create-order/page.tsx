@@ -6,7 +6,7 @@ import { Product } from "@/mocks/data";
 import { fetchCustomers, Customer, fetchDealItems } from "@/lib/crmDealsStore";
 import { loadProducts } from "@/lib/supabase/products";
 import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, User, ArrowLeft, Building, Gift, Tag, FileText, Percent } from "lucide-react";
-import { addOrderSupabase } from "@/lib/ordersStore";
+import { addOrderSupabase, updateOrderSupabase } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { createClient } from "@/lib/supabaseClient";
 import { reserveStock, getInventoryLevel, getDefaultWarehouseId } from "@/lib/inventoryStore";
@@ -38,6 +38,7 @@ function TelesalesCreateOrderContent() {
     // Get deal_id and customer_id from URL
     const dealIdFromUrl = searchParams.get('deal_id');
     const customerIdFromUrl = searchParams.get('customer_id');
+    const editOrderId = searchParams.get('edit');
 
     // Data State
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -118,6 +119,48 @@ function TelesalesCreateOrderContent() {
                     // Fetch deal title manually with fetch to be safe?
                     // const { data } = await supabase.from('crm_deals').select('id, title').eq('id', dealIdFromUrl).single();
                     // if (data) setDealInfo(data);
+                }
+
+                // Handle Edit Mode
+                if (editOrderId) {
+                    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/orders?select=*,items:order_items(*,product:products(*))&id=eq.${editOrderId}&limit=1`, {
+                        headers: {
+                            'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
+                            'Authorization': `Bearer ${session.access_token}`
+                        }
+                    });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && data.length > 0) {
+                            const order = data[0];
+                            // Set Customer
+                            const customerRes = await fetchCustomers(undefined, session.access_token);
+                            const customer = customerRes.find(c => c.id === order.customer_id);
+                            if (customer) {
+                                setSelectedCustomer(customer);
+                            }
+
+                            // Set Items
+                            const mappedItems: OrderItem[] = order.items.map((item: any) => ({
+                                product: item.product,
+                                quantity: item.quantity,
+                                discount: item.discount,
+                                discountType: item.discount_type,
+                                discountValue: item.discount, // Assuming simple case for now
+                                isGift: item.is_gift,
+                                price: item.price
+                            }));
+                            setOrderItems(mappedItems);
+
+                            // Set Other Info
+                            setVatRate(((order.vat || 0) / (order.total_amount - (order.vat || 0))) * 100 || 0); // Approx
+                            setOrderNote(order.note || "");
+                            setPaymentMethod(order.payment_method || "COD");
+
+                            setCurrentStep(3); // Jump to final step
+                        }
+                    }
                 }
             } catch (err) {
                 console.error("Error loading create-order data:", err);
@@ -296,47 +339,74 @@ function TelesalesCreateOrderContent() {
 
         const total = calculateTotal();
 
-        // 1. Create Order in Shared Store
-        const res = await addOrderSupabase({
-            customerId: selectedCustomer.id,
-            customerName: selectedCustomer.name,
-            source: "TELESALES",
-            telesalesUserId: userId,
-            items: orderItems.map((item) => ({
-                sku: item.product.sku || "N/A",
-                name: item.product.name,
-                brand: item.product.brand || "LHU",
-                quantity: item.quantity,
-                unit: item.product.unit || "Cái",
-                unitPrice: item.price, // Use edited price
-                subtotal: calculateItemSubtotal(item),
-                productId: item.product.id,
-                discount: item.discount,
-                discountType: item.discountType,
-                isGift: item.isGift
-            })),
-            totalAmount: total,
-            status: "pending",
-            notes: orderNote || (dealInfo ? `Đơn hàng từ cơ hội: ${dealInfo.title}` : "Đơn hàng tạo bởi Telesales"),
-            vat: calculateTotal() - orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0), // exact vat val
-            paymentMethod: paymentMethod
-        }, session?.access_token);
+        if (editOrderId) {
+            // UDPATE ORDER
+            const res = await updateOrderSupabase(editOrderId, {
+                customerName: selectedCustomer.name,
+                customer_id: selectedCustomer.id,
+                items: orderItems.map((item) => ({
+                    productId: item.product.id,
+                    quantity: item.quantity,
+                    unitPrice: item.price,
+                    discount: item.discount,
+                    discountType: item.discountType,
+                    isGift: item.isGift
+                })),
+                totalAmount: total,
+                vat: calculateTotal() - orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0),
+                notes: orderNote,
+                paymentMethod: paymentMethod
+            }, session?.access_token);
 
-        if (res?.success && res.data) {
-            const newOrder = res.data;
-            console.log("Created telesales order:", newOrder);
-
-            // 2. Success message
-            alert("✅ Tạo đơn hàng thành công & Đã giữ hàng!");
-
-            // 3. Reset and Redirect
-            setSelectedCustomer(null);
-            setOrderItems([]);
-            setCurrentStep(1);
-            router.push("/telesales/orders");
+            if (res?.success) {
+                alert("✅ Cập nhật đơn hàng thành công!");
+                router.push("/telesales/orders");
+            } else {
+                alert(`❌ Cập nhật thất bại: ${res?.error}`);
+            }
         } else {
-            console.error(res?.error);
-            alert(`❌ Tạo đơn hàng thất bại: ${res?.error || "Lỗi không xác định"}`);
+            // CREATE NEW ORDER
+            const res = await addOrderSupabase({
+                customerId: selectedCustomer.id,
+                customerName: selectedCustomer.name,
+                source: "TELESALES",
+                telesalesUserId: userId,
+                items: orderItems.map((item) => ({
+                    sku: item.product.sku || "N/A",
+                    name: item.product.name,
+                    brand: item.product.brand || "LHU",
+                    quantity: item.quantity,
+                    unit: item.product.unit || "Cái",
+                    unitPrice: item.price, // Use edited price
+                    subtotal: calculateItemSubtotal(item),
+                    productId: item.product.id,
+                    discount: item.discount,
+                    discountType: item.discountType,
+                    isGift: item.isGift
+                })),
+                totalAmount: total,
+                status: "pending",
+                notes: orderNote || (dealInfo ? `Đơn hàng từ cơ hội: ${dealInfo.title}` : "Đơn hàng tạo bởi Telesales"),
+                vat: calculateTotal() - orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0), // exact vat val
+                paymentMethod: paymentMethod
+            }, session?.access_token);
+
+            if (res?.success && res.data) {
+                const newOrder = res.data;
+                console.log("Created telesales order:", newOrder);
+
+                // 2. Success message
+                alert("✅ Tạo đơn hàng thành công & Đã giữ hàng!");
+
+                // 3. Reset and Redirect
+                setSelectedCustomer(null);
+                setOrderItems([]);
+                setCurrentStep(1);
+                router.push("/telesales/orders");
+            } else {
+                console.error(res?.error);
+                alert(`❌ Tạo đơn hàng thất bại: ${res?.error || "Lỗi không xác định"}`);
+            }
         }
     };
 
@@ -367,9 +437,9 @@ function TelesalesCreateOrderContent() {
         <div className="space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-2xl font-bold text-slate-900">Tạo đơn hàng mới</h1>
+                <h1 className="text-2xl font-bold text-slate-900">{editOrderId ? "Cập nhật đơn hàng" : "Tạo đơn hàng mới"}</h1>
                 <p className="text-sm text-slate-600 mt-1">
-                    Tạo đơn hàng cho khách hàng trong danh sách của bạn
+                    {editOrderId ? `Đang chỉnh sửa đơn hàng #${editOrderId.slice(0, 8)}...` : "Tạo đơn hàng cho khách hàng trong danh sách của bạn"}
                 </p>
             </div>
 
@@ -421,7 +491,7 @@ function TelesalesCreateOrderContent() {
                         </div>
                         <div>
                             <p className="font-medium text-slate-900">Xác nhận</p>
-                            <p className="text-xs text-slate-500">Tạo đơn hàng</p>
+                            <p className="text-xs text-slate-500">{editOrderId ? "Lưu thay đổi" : "Tạo đơn hàng"}</p>
                         </div>
                     </div>
                 </div>
@@ -694,8 +764,8 @@ function TelesalesCreateOrderContent() {
                                                     key={method.id}
                                                     onClick={() => setPaymentMethod(method.id)}
                                                     className={`py-2 px-3 text-sm rounded-lg border text-center transition-colors ${paymentMethod === method.id
-                                                            ? 'bg-indigo-50 border-indigo-500 text-indigo-700 font-medium'
-                                                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                                                        ? 'bg-indigo-50 border-indigo-500 text-indigo-700 font-medium'
+                                                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                                                         }`}
                                                 >
                                                     {method.label}
@@ -766,7 +836,7 @@ function TelesalesCreateOrderContent() {
                                         className="flex-1 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
                                     >
                                         <ShoppingCart className="w-5 h-5" />
-                                        Tạo đơn
+                                        {editOrderId ? "Cập nhật đơn" : "Tạo đơn"}
                                     </button>
                                 </div>
                             </div>

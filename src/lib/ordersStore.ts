@@ -502,3 +502,109 @@ export const addOrderSupabase = async (orderData: any, token?: string) => {
         return { success: false, error: e.message };
     }
 };
+
+export const updateOrderSupabase = async (orderId: string, updateData: any, token?: string) => {
+    const headers = getHeaders(token);
+    const warehouseId = await getDefaultWarehouseId(token);
+
+    try {
+        // 1. Fetch current order to check status and get old items
+        const currentOrderRes = await fetch(`${SUPABASE_URL}/rest/v1/orders?select=*,items:order_items(*)&id=eq.${orderId}&limit=1`, { headers });
+        if (!currentOrderRes.ok) return { success: false, error: "Order not found" };
+        const currentOrderData = await currentOrderRes.json();
+        const currentOrder = currentOrderData[0];
+
+        if (!currentOrder) return { success: false, error: "Order not found" };
+        if (currentOrder.status !== 'pending') return { success: false, error: "Only pending orders can be edited" };
+
+        const oldItems = currentOrder.items || [];
+
+        // 2. Revert Old Inventory
+        if (warehouseId && currentOrder.telesales_user_id) {
+            for (const item of oldItems) {
+                try {
+                    // Release reserved stock
+                    await releaseStock(
+                        warehouseId,
+                        item.product_id,
+                        item.quantity,
+                        orderId,
+                        currentOrder.telesales_user_id,
+                        token
+                    );
+                } catch (err) {
+                    console.error("[updateOrderSupabase] Failed to release old stock:", item.product_id, err);
+                }
+            }
+        }
+
+        // 3. Update Order Main Info
+        const orderPayload = {
+            total_amount: updateData.totalAmount,
+            vat: updateData.vat || 0,
+            note: updateData.notes || updateData.note || null,
+            payment_method: updateData.paymentMethod || 'COD',
+            receiver_name: updateData.customerName, // Keep name in sync if needed
+            customer_id: updateData.customer_id || updateData.customerId // Allow changing customer if really needed, though rare
+        };
+
+        const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify(orderPayload)
+        });
+
+        if (!updateRes.ok) {
+            return { success: false, error: "Failed to update order details" };
+        }
+
+        // 4. Delete Old Items
+        await fetch(`${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}`, {
+            method: 'DELETE',
+            headers
+        });
+
+        // 5. Insert New Items
+        if (updateData.items && updateData.items.length > 0) {
+            const itemsToInsert = updateData.items.map((item: any) => ({
+                order_id: orderId,
+                product_id: item.productId || item.product.id,
+                quantity: item.quantity,
+                price: item.unitPrice || item.price || 0,
+                discount: item.discount || 0,
+                discount_type: item.discountType || 'amount',
+                is_gift: item.isGift || false,
+            }));
+
+            await fetch(`${SUPABASE_URL}/rest/v1/order_items`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(itemsToInsert)
+            });
+
+            // 6. Reserve New Inventory
+            if (warehouseId && currentOrder.telesales_user_id) {
+                for (const item of updateData.items) {
+                    try {
+                        await reserveStock(
+                            warehouseId,
+                            item.productId || item.product.id,
+                            item.quantity,
+                            orderId,
+                            currentOrder.telesales_user_id,
+                            token
+                        );
+                    } catch (err) {
+                        console.error("[updateOrderSupabase] Failed to reserve new stock:", item.productId, err);
+                    }
+                }
+            }
+        }
+
+        return { success: true };
+
+    } catch (e: any) {
+        console.error("updateOrderSupabase Exception", e);
+        return { success: false, error: e.message };
+    }
+};

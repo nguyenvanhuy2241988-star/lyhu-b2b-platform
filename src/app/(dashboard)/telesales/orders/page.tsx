@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, Filter, Eye, FileText, MessageCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, Filter, Eye, FileText, MessageCircle, Pencil } from "lucide-react";
 import { fetchOrders } from "@/lib/ordersStore";
 import { supabase } from "@/lib/supabaseClient"
 import type { Order } from "@/lib/ordersStore";
@@ -27,6 +28,7 @@ const formatDate = (dateString: string) => {
 };
 
 export default function TelesalesOrdersPage() {
+    const router = useRouter();
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [orders, setOrders] = useState<Order[]>([]);
@@ -231,6 +233,15 @@ export default function TelesalesOrdersPage() {
                                             >
                                                 <Eye className="w-4 h-4" />
                                             </button>
+                                            {order.status === 'pending' && (
+                                                <button
+                                                    onClick={() => router.push(`/telesales/create-order?edit=${order.id}`)}
+                                                    className="text-slate-400 hover:text-blue-600 transition-colors bg-slate-50 hover:bg-blue-50 p-2 rounded-lg"
+                                                    title="Sửa đơn hàng"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
