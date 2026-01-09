@@ -370,27 +370,26 @@ export async function searchCustomers(query: string, ownerId?: string, token?: s
     if (!query || query.length < 2) return [];
 
     try {
-        const headers = getHeaders(token);
+        let authToken = token;
+        if (!authToken) {
+            const session = await getSessionSafe();
+            authToken = session?.access_token;
+        }
+
+        const headers = getHeaders(authToken);
+
         // ilike filter: name.ilike.%query%, phone.ilike.%query%
         // PostgREST or query needs to handle this carefully.
         // or=(name.ilike.*query*,phone.ilike.*query*)
 
-        // AND owner filter
-        // We can combine filters.
-
         let url = `${SUPABASE_URL}/rest/v1/customers?select=*&limit=20`;
 
-        const searchFilter = `or=(name.ilike.*${query}*,phone.ilike.*${query}*)`;
+        const encodedQuery = encodeURIComponent(query);
+        const searchFilter = `or=(name.ilike.*${encodedQuery}*,phone.ilike.*${encodedQuery}*)`;
 
         if (ownerId) {
             // We need (search) AND (owner)
-            // &and=(search,owner) ? No, we can just append.
-            // But Search is OR, Owner is OR. 
             // PostgREST combines top-level params with AND.
-            // url params: or=searchFilter & or=ownerFilter  <-- This might confuse PostgREST if multiple 'or' keys?
-            // Actually, multiple 'or' keys are treated as AND between the OR groups in newer PostgREST versions.
-            // or=(a,b) & or=(c,d) => (a or b) AND (c or d).
-
             url += `&${searchFilter}`;
             url += `&or=(owner_user_id.eq.${ownerId},owner_user_id.is.null)`;
         } else {
