@@ -544,7 +544,7 @@ export const updateOrderSupabase = async (orderId: string, updateData: any, toke
             vat: updateData.vat || 0,
             note: updateData.notes || updateData.note || null,
             payment_method: updateData.paymentMethod || 'COD',
-            receiver_name: updateData.customerName, // Keep name in sync if needed
+            customer_name: updateData.customerName, // Keep name in sync
             customer_id: updateData.customer_id || updateData.customerId // Allow changing customer if really needed, though rare
         };
 
