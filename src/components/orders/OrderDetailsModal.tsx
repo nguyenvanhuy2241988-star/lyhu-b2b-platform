@@ -179,24 +179,27 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">
-                                        {(order.items || []).map((item: any, idx: number) => (
-                                            <tr key={idx} className="hover:bg-slate-50/50">
-                                                <td className="px-4 py-3 font-medium text-slate-900">
-                                                    {item.isGift && <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 mr-2">QUÀ</span>}
-                                                    {item.product?.name || item.name || 'Sản phẩm'}
-                                                </td>
-                                                <td className="px-4 py-3 text-center">{item.quantity}</td>
-                                                <td className="px-4 py-3 text-right text-slate-600">
-                                                    {formatPrice(item.price || item.unitPrice || 0)}
-                                                </td>
-                                                <td className="px-4 py-3 text-right text-red-500 font-medium">
-                                                    {(item.discount || 0) > 0 ? `-${formatPrice(item.discount)}` : '-'}
-                                                </td>
-                                                <td className="px-4 py-3 text-right font-medium text-slate-900">
-                                                    {formatPrice((item.subtotal && item.subtotal > 0) ? item.subtotal : ((item.price || 0) * item.quantity) - (item.discount || 0))}
-                                                </td>
-                                            </tr>
-                                        ))}
+                                        {(order.items || []).map((item: any, idx: number) => {
+                                            const isGiftItem = item.isGift || item.is_gift;
+                                            return (
+                                                <tr key={idx} className="hover:bg-slate-50/50">
+                                                    <td className="px-4 py-3 font-medium text-slate-900">
+                                                        {isGiftItem && <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 mr-2">QUÀ</span>}
+                                                        {item.product?.name || item.name || 'Sản phẩm'}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-center">{item.quantity}</td>
+                                                    <td className="px-4 py-3 text-right text-slate-600">
+                                                        {formatPrice(item.price || item.unitPrice || 0)}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right text-red-500 font-medium">
+                                                        {(item.discount || 0) > 0 ? `-${formatPrice(item.discount)}` : '-'}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right font-medium text-slate-900">
+                                                        {isGiftItem ? '0 ₫' : formatPrice((item.subtotal && item.subtotal > 0) ? item.subtotal : ((item.price || 0) * item.quantity) - (item.discount || 0))}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                                     </tbody>
                                     <tfoot className="bg-slate-50 border-t border-slate-200">
                                         <tr>
@@ -211,12 +214,14 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                                                 -{formatPrice((order.items || []).reduce((sum: number, item: any) => sum + (item.discount || 0), 0))}
                                             </td>
                                         </tr>
-                                        <tr>
-                                            <td colSpan={4} className="px-4 py-2 text-right text-slate-500 text-xs uppercase tracking-wide">VAT</td>
-                                            <td className="px-4 py-2 text-right font-medium text-slate-600">
-                                                +{formatPrice(order.vat || 0)}
-                                            </td>
-                                        </tr>
+                                        {(order.vat || 0) > 0 && (
+                                            <tr>
+                                                <td colSpan={4} className="px-4 py-2 text-right text-slate-500 text-xs uppercase tracking-wide">VAT</td>
+                                                <td className="px-4 py-2 text-right font-medium text-slate-600">
+                                                    +{formatPrice(order.vat || 0)}
+                                                </td>
+                                            </tr>
+                                        )}
                                         <tr>
                                             <td colSpan={4} className="px-4 py-3 text-right font-bold text-slate-900">Tổng thanh toán</td>
                                             <td className="px-4 py-3 text-right font-bold text-indigo-600 text-lg">

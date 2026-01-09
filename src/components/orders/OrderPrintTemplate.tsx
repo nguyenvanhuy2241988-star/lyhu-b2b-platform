@@ -95,7 +95,7 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, s
                                 <td className="border border-gray-300 px-2 py-2 text-gray-600 font-mono text-xs">{item.product?.sku || item.sku || '---'}</td>
                                 <td className="border border-gray-300 px-2 py-2">
                                     <div className="font-medium">{item.name || 'Sản phẩm'}</div>
-                                    {item.isGift && <span className="inline-block bg-purple-100 text-purple-800 text-xs px-1 rounded mt-0.5">Quà tặng</span>}
+                                    {(item.isGift || item.is_gift) && <span className="inline-block bg-purple-100 text-purple-800 text-xs px-1 rounded mt-0.5">Quà tặng</span>}
                                 </td>
                                 <td className="border border-gray-300 px-2 py-2 text-center">{item.unit || 'Cái'}</td>
                                 <td className="border border-gray-300 px-2 py-2 text-center font-semibold">{item.quantity}</td>
@@ -104,7 +104,7 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, s
                                     {(item.discount || 0) > 0 ? `-${formatPrice(item.discount || 0)}` : '-'}
                                 </td>
                                 <td className="border border-gray-300 px-2 py-2 text-right font-bold">
-                                    {formatPrice(item.subtotal || ((item.price || 0) * item.quantity))}
+                                    {(item.isGift || item.is_gift) ? '0 ₫' : formatPrice(item.subtotal || ((item.price || 0) * item.quantity))}
                                 </td>
                             </tr>
                         ))}
