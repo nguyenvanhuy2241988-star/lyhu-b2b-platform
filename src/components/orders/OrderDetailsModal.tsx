@@ -193,7 +193,7 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                                                     {(item.discount || 0) > 0 ? `-${formatPrice(item.discount)}` : '-'}
                                                 </td>
                                                 <td className="px-4 py-3 text-right font-medium text-slate-900">
-                                                    {formatPrice(item.subtotal || ((item.price || 0) * item.quantity))}
+                                                    {formatPrice((item.subtotal && item.subtotal > 0) ? item.subtotal : ((item.price || 0) * item.quantity) - (item.discount || 0))}
                                                 </td>
                                             </tr>
                                         ))}

@@ -294,7 +294,7 @@ export const fetchOrders = async (token?: string, filters?: { userId?: string, s
     try {
         const headers = getHeaders(token);
         const params = new URLSearchParams({
-            select: '*,items:order_items(*,product:products(name,sku))',
+            select: '*,customer:customers(phone,address),items:order_items(*,product:products(name,sku))',
             order: 'created_at.desc'
         });
 
