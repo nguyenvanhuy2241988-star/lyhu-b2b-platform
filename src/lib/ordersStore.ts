@@ -341,7 +341,8 @@ export const fetchOrders = async (token?: string, filters?: { userId?: string, s
             telesalesUserId: o.telesales_user_id,
             items: o.items,
             customerId: o.customer_id,
-            leadId: o.lead_id
+            leadId: o.lead_id,
+            customer: o.customer // Map joined customer data
         }));
     } catch (err) {
         console.error("[fetchOrders] Exception:", err);
