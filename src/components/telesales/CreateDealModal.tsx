@@ -105,26 +105,27 @@ export const CreateDealModal = ({
     // ... (rest of existing code) ...
 
     // Reset create/edit form
+    // Reset create/edit form
     useEffect(() => {
         if (isOpen) {
-            setTitle(initialData.title || "");
-            setStage((initialData.stage as DealStage) || initialStage);
-            setPriority((initialData.priority as DealPriority) || "normal");
-            setExpectedValue(initialData.expected_value ? initialData.expected_value.toString() : "");
-            setNextActionAt(initialData.next_action_at?.split('T')[0] || "");
-            setNote(initialData.note || "");
+            setTitle(stableInitialData.title || "");
+            setStage((stableInitialData.stage as DealStage) || initialStage);
+            setPriority((stableInitialData.priority as DealPriority) || "normal");
+            setExpectedValue(stableInitialData.expected_value ? stableInitialData.expected_value.toString() : "");
+            setNextActionAt(stableInitialData.next_action_at?.split('T')[0] || "");
+            setNote(stableInitialData.note || "");
 
             // Init new fields
-            setSourceCategory(initialData.source_category || "COMPANY");
-            setSourceDetail(initialData.source_detail || "");
-            setPotentialLevel(initialData.potential_level || "WARM");
-            setDealCustomerType(initialData.customer_type || initialData.customer?.type || "tap_hoa");
+            setSourceCategory(stableInitialData.source_category || "COMPANY");
+            setSourceDetail(stableInitialData.source_detail || "");
+            setPotentialLevel(stableInitialData.potential_level || "WARM");
+            setDealCustomerType(stableInitialData.customer_type || stableInitialData.customer?.type || "tap_hoa");
 
-            if (initialData.customer) {
+            if (stableInitialData.customer) {
                 setActiveTab('existing');
-                setSelectedCustomer(initialData.customer);
+                setSelectedCustomer(stableInitialData.customer);
                 // Also init dealCustomerType from customer if editing
-                if (!initialData.id) setDealCustomerType(initialData.customer.type || "tap_hoa");
+                if (!stableInitialData.id) setDealCustomerType(stableInitialData.customer.type || "tap_hoa");
             } else {
                 setActiveTab('new');
                 setSelectedCustomer(null);
@@ -132,7 +133,7 @@ export const CreateDealModal = ({
 
             // ... (rest of reset logic) ...
         }
-    }, [isOpen, initialData, initialStage]);
+    }, [isOpen, stableInitialData, initialStage]);
 
     useEffect(() => {
         const timer = setTimeout(async () => {
