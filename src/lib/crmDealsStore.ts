@@ -1474,3 +1474,137 @@ export async function updateDealItem(id: string, updates: { quantity?: number, u
         return false;
     }
 }
+
+// =====================================================
+// KPI & REPORTING (Báo cáo thống kê)
+// =====================================================
+
+export interface KPISummary {
+    total_revenue: number;
+    total_deals_won: number;
+    total_deals_new: number;
+    total_calls: number;
+    avg_call_duration: number;
+}
+
+export interface FunnelStage {
+    stage: string;
+    total_count: number;
+    total_value: number;
+}
+
+export interface LostReasonStat {
+    lost_reason: string;
+    total_count: number;
+}
+
+export async function fetchKPIStats(startDate: Date, endDate: Date, userId?: string, token?: string): Promise<KPISummary | null> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+    try {
+        let authToken = token;
+        if (!authToken && typeof window !== 'undefined') {
+            authToken = localStorage.getItem('lyhu_access_token') || undefined;
+        }
+
+        const headers = getHeaders(authToken);
+
+        const res = await fetch(
+            `${supabaseUrl}/rest/v1/rpc/get_telesales_kpi_stats`,
+            {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    p_start_date: startDate.toISOString(),
+                    p_end_date: endDate.toISOString(),
+                    p_user_id: userId || null
+                })
+            }
+        );
+
+        if (!res.ok) {
+            console.error('fetchKPIStats error:', await res.text());
+            return null;
+        }
+
+        const data = await res.json();
+        return (data && data.length > 0) ? data[0] : null;
+    } catch (err) {
+        console.error('fetchKPIStats exception:', err);
+        return null;
+    }
+}
+
+export async function fetchSalesFunnel(startDate: Date, endDate: Date, userId?: string, token?: string): Promise<FunnelStage[]> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+    try {
+        let authToken = token;
+        if (!authToken && typeof window !== 'undefined') {
+            authToken = localStorage.getItem('lyhu_access_token') || undefined;
+        }
+
+        const headers = getHeaders(authToken);
+
+        const res = await fetch(
+            `${supabaseUrl}/rest/v1/rpc/get_sales_funnel`,
+            {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    p_start_date: startDate.toISOString(),
+                    p_end_date: endDate.toISOString(),
+                    p_user_id: userId || null
+                })
+            }
+        );
+
+        if (!res.ok) {
+            console.error('fetchSalesFunnel error:', await res.text());
+            return [];
+        }
+
+        const data = await res.json();
+        return data as FunnelStage[];
+    } catch (err) {
+        console.error('fetchSalesFunnel exception:', err);
+        return [];
+    }
+}
+
+export async function fetchLostReasons(startDate: Date, endDate: Date, userId?: string, token?: string): Promise<LostReasonStat[]> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+    try {
+        let authToken = token;
+        if (!authToken && typeof window !== 'undefined') {
+            authToken = localStorage.getItem('lyhu_access_token') || undefined;
+        }
+
+        const headers = getHeaders(authToken);
+
+        const res = await fetch(
+            `${supabaseUrl}/rest/v1/rpc/get_failed_reasons_stats`,
+            {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    p_start_date: startDate.toISOString(),
+                    p_end_date: endDate.toISOString(),
+                    p_user_id: userId || null
+                })
+            }
+        );
+
+        if (!res.ok) {
+            console.error('fetchLostReasons error:', await res.text());
+            return [];
+        }
+
+        const data = await res.json();
+        return data as LostReasonStat[];
+    } catch (err) {
+        console.error('fetchLostReasons exception:', err);
+        return [];
+    }
+}

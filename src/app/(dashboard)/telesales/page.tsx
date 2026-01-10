@@ -22,6 +22,8 @@ import {
 import { Award, Star, Trophy, PartyPopper, ChevronRight, Crown, Medal, Flame } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { StatsSkeleton, TableSkeleton } from "@/components/ui/SkeletonUI";
+import { fetchKPIStats, fetchSalesFunnel, KPISummary, FunnelStage } from "@/lib/crmDealsStore";
+import { SalesFunnelChart } from "@/components/telesales/dashboard/KPICharts";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -48,6 +50,10 @@ export default function TelesalesDashboard() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
+    // KPI State
+    const [kpiStats, setKpiStats] = useState<KPISummary | null>(null);
+    const [funnelData, setFunnelData] = useState<FunnelStage[]>([]);
+
     // Engagement state
     const [bondingFund, setBondingFund] = useState<BondingFund | null>(null);
     const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
@@ -64,16 +70,25 @@ export default function TelesalesDashboard() {
         if (!silent) setIsLoading(true);
         try {
             const token = session?.access_token;
+            // Get date range for this month
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
             // Load tasks, leads and orders in parallel
-            const [taskRows, leadRows, orderRows] = await Promise.all([
+            const [taskRows, leadRows, orderRows, kpiData, funnel] = await Promise.all([
                 getMyTasks(user?.id, token),
                 fetchSalesLeads(user?.id, token),
-                fetchOrders(token)
+                fetchOrders(token),
+                fetchKPIStats(startOfMonth, endOfMonth, user?.id, token),
+                fetchSalesFunnel(startOfMonth, endOfMonth, user?.id, token)
             ]);
 
             setTasks(Array.isArray(taskRows) ? taskRows : []);
             setLeads(Array.isArray(leadRows) ? leadRows : []);
             setOrders(Array.isArray(orderRows) ? orderRows : []);
+            setKpiStats(kpiData);
+            setFunnelData(funnel);
 
             // Load Engagement Data
             const [fundData, leaderboardData, achievementsData, roadmapData] = await Promise.all([
@@ -148,8 +163,7 @@ export default function TelesalesDashboard() {
         };
     }, [user?.id, session?.access_token]); // Fixed: Added session?.access_token
 
-    // --- KPI CALCULATIONS ---
-
+    // --- KPI CALCULATIONS (Using DB Stats if available, otherwise fallback to local) ---
     // Stop local loading if auth finished and no user found
     useEffect(() => {
         if (!authIsLoading && !user) {
@@ -157,79 +171,36 @@ export default function TelesalesDashboard() {
         }
     }, [authIsLoading, user]);
 
-    // 1. Leads to Call - count leads with status 'new' or 'contacted'
-    const leadsToCallCount = safeLeads.filter(l =>
-        l.status === 'NEW' || l.status === 'CONTACTED'
-    ).length;
-
-    // 2. Closed Today (Đã chốt hôm nay) - orders delivered today
-    const today = new Date();
-    const closedTodayCount = safeOrders.filter(o => {
-        if (o.status !== 'delivered') return false;
-        const dateStr = o.createdAt;
-        if (!dateStr) return false;
-        const date = new Date(dateStr);
-        return (
-            date.getDate() === today.getDate() &&
-            date.getMonth() === today.getMonth() &&
-            date.getFullYear() === today.getFullYear()
-        );
-    }).length;
-
-    // 3. Monthly Revenue (Doanh số tháng) - sum of delivered orders this month
-    const monthlyRevenue = safeOrders
-        .filter(o => {
-            if (o.status !== 'delivered') return false;
-            const dateStr = o.createdAt;
-            if (!dateStr) return false;
-            const date = new Date(dateStr);
-            return (
-                date.getMonth() === today.getMonth() &&
-                date.getFullYear() === today.getFullYear()
-            );
-        })
-        .reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-
-    // 4. Total Orders this month
-    const monthlyOrdersCount = safeOrders.filter(o => {
-        const dateStr = o.createdAt;
-        if (!dateStr) return false;
-        const date = new Date(dateStr);
-        return (
-            date.getMonth() === today.getMonth() &&
-            date.getFullYear() === today.getFullYear()
-        );
-    }).length;
-
+    // Construct Stats Cards
     const statsCards = [
         {
-            label: "Lead cần gọi",
-            value: leadsToCallCount.toString(),
-            change: "Mới + Đã liên hệ",
-            icon: Phone,
-            color: "text-blue-600",
-            bg: "bg-blue-50",
-        },
-        {
-            label: "Đã giao hôm nay",
-            value: closedTodayCount.toString() + " đơn",
-            change: "Hoàn thành",
-            icon: ShoppingBag,
-            color: "text-green-600",
-            bg: "bg-green-50",
-        },
-        {
             label: "Doanh số tháng",
-            value: formatPrice(monthlyRevenue),
-            change: "Từ đơn đã giao",
+            value: formatPrice(kpiStats?.total_revenue || 0),
+            change: "Doanh thu chốt được",
             icon: TrendingUp,
             color: "text-purple-600",
             bg: "bg-purple-50",
         },
         {
-            label: "Đơn hàng tháng",
-            value: monthlyOrdersCount.toString(),
-            change: "Đơn đã tạo",
+            label: "Deal thắng",
+            value: (kpiStats?.total_deals_won || 0).toString(),
+            change: "Đã chốt thành công",
+            icon: ShoppingBag,
+            color: "text-green-600",
+            bg: "bg-green-50",
+        },
+        {
+            label: "Cuộc gọi",
+            value: (kpiStats?.total_calls || 0).toString(),
+            change: "Trung bình " + Math.round(kpiStats?.avg_call_duration || 0) + "s/gọi",
+            icon: Phone,
+            color: "text-blue-600",
+            bg: "bg-blue-50",
+        },
+        {
+            label: "Deal mới",
+            value: (kpiStats?.total_deals_new || 0).toString(),
+            change: "Được phân bổ tháng này",
             icon: Users,
             color: "text-orange-600",
             bg: "bg-orange-50",
@@ -263,9 +234,11 @@ export default function TelesalesDashboard() {
     const dailyQuote = quotes[new Date().getDate() % quotes.length];
 
     // Dynamic Roadmap Logic
-    const currentCareerLevel = careerLevels.find(l => monthlyRevenue >= l.min_exp * 1000) || careerLevels[0];
-    const nextLevel = careerLevels.find(l => l.min_exp * 1000 > monthlyRevenue);
-    const progressToNext = nextLevel ? (monthlyRevenue / (nextLevel.min_exp * 1000)) * 100 : 100;
+    // Fix: use KPI Revenue for career level instead of local order sum if possible, or keep local for now if career logic uses delivered orders
+    const currentMonthlyRevenue = kpiStats?.total_revenue || 0;
+    const currentCareerLevel = careerLevels.find(l => currentMonthlyRevenue >= l.min_exp * 1000) || careerLevels[0];
+    const nextLevel = careerLevels.find(l => l.min_exp * 1000 > currentMonthlyRevenue);
+    const progressToNext = nextLevel ? (currentMonthlyRevenue / (nextLevel.min_exp * 1000)) * 100 : 100;
 
     return (
         <div className="space-y-6">
@@ -312,58 +285,39 @@ export default function TelesalesDashboard() {
                     <div className="flex-1 space-y-6">
                         <div>
                             <h3 className="text-lg font-semibold text-slate-900 mb-1">Thống kê nhanh</h3>
-                            <p className="text-sm text-slate-500">Tình hình hoạt động</p>
+                            <p className="text-sm text-slate-500">Tình hình hoạt động tháng này</p>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
-                                <p className="text-xs text-slate-500 uppercase font-medium mb-1">Tổng Lead</p>
+                                <p className="text-xs text-slate-500 uppercase font-medium mb-1">Deal Mới</p>
                                 <div className="flex items-end gap-2">
                                     <span className="text-2xl font-bold text-slate-900">
-                                        {safeLeads.length}
+                                        {kpiStats?.total_deals_new || 0}
                                     </span>
-                                    <span className="text-xs text-green-600 font-medium mb-1">lead</span>
+                                    <span className="text-xs text-green-600 font-medium mb-1">deal</span>
                                 </div>
                             </div>
                             <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
-                                <p className="text-xs text-slate-500 uppercase font-medium mb-1">Tổng Đơn</p>
+                                <p className="text-xs text-slate-500 uppercase font-medium mb-1">Tỉ lệ chốt</p>
                                 <div className="flex items-end gap-2">
                                     <span className="text-2xl font-bold text-slate-900">
-                                        {safeOrders.length}
+                                        {kpiStats?.total_deals_new ? Math.round((kpiStats.total_deals_won / kpiStats.total_deals_new) * 100) : 0}%
                                     </span>
-                                    <span className="text-xs text-slate-500 mb-1">đơn hàng</span>
+                                    <span className="text-xs text-slate-500 mb-1">thành công</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Order Status Chart */}
-                    <div className="flex-1 flex flex-col justify-end h-[200px]">
-                        <div className="flex items-end justify-between h-full gap-2 pt-6">
-                            {(() => {
-                                const statuses = ['pending', 'processing', 'delivered', 'cancelled'];
-                                const labels = ['Chờ', 'Xử lý', 'Giao', 'Hủy'];
-                                const colors = ['bg-yellow-500', 'bg-blue-500', 'bg-green-500', 'bg-red-400'];
-                                const counts = statuses.map(s => safeOrders.filter(o => o.status === s).length);
-                                const max = Math.max(...counts, 1);
-
-                                return counts.map((count, i) => (
-                                    <div key={i} className="flex flex-col items-center gap-2 flex-1 group cursor-pointer">
-                                        <div className="relative w-full bg-slate-100 rounded-t-md overflow-hidden flex items-end h-[150px]">
-                                            <div
-                                                className={`w-full ${colors[i]} hover:opacity-80 transition-all rounded-t-md relative`}
-                                                style={{ height: `${(count / max) * 100}%`, minHeight: count > 0 ? '20px' : '0' }}
-                                            >
-                                                <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs px-2 py-1 rounded pointer-events-none transition-opacity">
-                                                    {count}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <span className="text-xs font-medium text-slate-500">{labels[i]}</span>
-                                    </div>
-                                ));
-                            })()}
-                        </div>
+                    {/* Sales Funnel Chart */}
+                    <div className="flex-1 h-[300px]">
+                        <h4 className="text-sm font-semibold text-slate-800 mb-4">Phễu chuyển đổi (Sales Funnel)</h4>
+                        {funnelData.length > 0 ? (
+                            <SalesFunnelChart data={funnelData} />
+                        ) : (
+                            <div className="flex items-center justify-center h-full text-slate-400 text-sm">Chưa có dữ liệu phễu</div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -458,7 +412,7 @@ export default function TelesalesDashboard() {
                             </div>
                             {nextLevel && (
                                 <div className="flex justify-between mt-2 text-[10px] text-slate-400 font-medium italic">
-                                    <span>Còn {formatPrice((nextLevel.min_exp * 1000) - monthlyRevenue)} doanh số để lên {nextLevel.name}</span>
+                                    <span>Còn {formatPrice((nextLevel.min_exp * 1000) - currentMonthlyRevenue)} doanh số để lên {nextLevel.name}</span>
                                 </div>
                             )}
                         </div>
