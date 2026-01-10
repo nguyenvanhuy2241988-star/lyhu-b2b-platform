@@ -83,7 +83,7 @@ export const RevenueChart = ({ data }: { data: any[] }) => {
                     <XAxis dataKey="date" />
                     <YAxis />
                     <CartesianGrid strokeDasharray="3 3" />
-                    <Tooltip formatter={(value: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)} />
+                    <Tooltip formatter={(value: number | undefined) => (value !== undefined ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value) : '')} />
                     <Area type="monotone" dataKey="revenue" stroke="#8884d8" fillOpacity={1} fill="url(#colorRevenue)" />
                 </AreaChart>
             </ResponsiveContainer>
