@@ -747,28 +747,33 @@ export async function fetchPaginatedDeals(
     token?: string
 ): Promise<{ data: CRMDeal[]; count: number }> {
     const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     try {
-        let url = `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*),owner:profiles(full_name,avatar_url)`;
-
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
             'apikey': supabaseKey || '',
             'Authorization': `Bearer ${token || supabaseKey}`,
             'Prefer': 'count=exact'
-        }; // Closing the headers object here
+        };
 
-        if (searchTerm) { // Changed from search to searchTerm to match function signature
-            // Note: Search with join is tricky in simple strings, ensuring client side filter or specific search logic
-            // For now, relying on basic filter or client side if complex
-            url += `&or=(title.ilike.*${searchTerm}*,customer.name.ilike.*${searchTerm}*,customer.phone.ilike.*${searchTerm}*)`;
+        // 1. Fetch Deals (Without JOIN profiles)
+        let url = `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*)&order=created_at.desc`;
+
+        if (ownerId) {
+            url += `&owner_user_id=eq.${ownerId}`;
         }
 
-        // Pagination
-        const to = from + pageSize - 1; // Removed redeclaration of 'from'
+        if (stage && stage !== 'all') {
+            url += `&stage=eq.${stage}`;
+        }
+
+        if (searchTerm) {
+            url += `&or=(title.ilike.*${searchTerm}*,customer.name.ilike.*${searchTerm}*,customer.phone.ilike.*${searchTerm}*)`;
+        }
 
         const response = await fetch(url, {
             headers: { ...headers, 'Range': `${from}-${to}` }
@@ -786,10 +791,12 @@ export async function fetchPaginatedDeals(
         // 2. Manual Join Profiles
         let enrichedData = data;
         try {
+            // Fix Set usage for TypeScript: Array.from(new Set(...))
             const userIds = Array.from(new Set(data.map((d: any) => d.owner_user_id).filter(Boolean)));
+
             if (userIds.length > 0) {
                 const profilesRes = await fetch(
-                    `${SUPABASE_URL}/rest/v1/profiles?select=id,full_name,avatar_url&id=in.(${userIds.join(',')})`,
+                    `${supabaseUrl}/rest/v1/profiles?select=id,full_name,avatar_url&id=in.(${userIds.join(',')})`,
                     {
                         method: 'GET',
                         headers: { ...headers, 'Content-Type': 'application/json' }
@@ -814,6 +821,7 @@ export async function fetchPaginatedDeals(
         })) as CRMDeal[];
 
         return { data: formattedData, count };
+
 
     } catch (err) {
         console.error('[fetchPaginatedDeals] exception:', err);
