@@ -4,11 +4,17 @@ const supabase = createClient();
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-const getHeaders = (token?: string) => ({
-    'Content-Type': 'application/json',
-    'apikey': SUPABASE_KEY || '',
-    'Authorization': `Bearer ${token || SUPABASE_KEY}`
-});
+const getHeaders = (token?: string) => {
+    let authToken = token;
+    if (!authToken && typeof window !== 'undefined') {
+        authToken = localStorage.getItem('lyhu_access_token') || undefined;
+    }
+    return {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY || '',
+        'Authorization': `Bearer ${authToken || SUPABASE_KEY}`
+    };
+};
 
 // =====================================================
 // PERFORMANCE OPTIMIZATION (Cache & Deduplication)
@@ -101,7 +107,29 @@ export const DEAL_PRIORITY_LABELS: Record<DealPriority, string> = {
     low: 'Thấp',
     normal: 'Bình thường',
     high: 'Cao',
-    urgent: 'Khẩn',
+    urgent: 'Khẩn cấp',
+};
+
+export type ActivityType = 'call' | 'note' | 'email' | 'meeting' | 'task' | 'deadline';
+
+export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
+    call: 'Cuộc gọi',
+    meeting: 'Gặp mặt',
+    email: 'Email',
+    note: 'Ghi chú',
+    task: 'Nhiệm vụ',
+    deadline: 'Hạn chót',
+};
+
+export type CallResult = 'answered' | 'no_answer' | 'busy' | 'wrong_number' | 'callback_later' | 'voicemail';
+
+export const CALL_RESULT_LABELS: Record<CallResult, string> = {
+    answered: 'Nghe máy',
+    no_answer: 'Không nghe',
+    busy: 'Máy bận',
+    wrong_number: 'Sai số',
+    callback_later: 'Gọi lại sau',
+    voicemail: 'Hộp thư thoại'
 };
 
 export interface Customer {
@@ -122,6 +150,8 @@ export interface Customer {
     zalo?: string;
     ward?: string;
     notes?: string;
+    source_category?: string;
+    potential_level?: string;
 }
 
 export interface CRMDeal {
@@ -146,6 +176,37 @@ export interface CRMDeal {
     expected_value?: number | null;
     created_at: string;
     updated_at: string;
+    closed_at?: string;
+}
+
+export interface CRMActivity {
+    id: string;
+    deal_id: string;
+
+    type: ActivityType;
+    subject?: string;
+    description?: string;
+
+    user_id: string;
+    created_at?: string;
+
+    // Call specifics
+    call_duration_seconds?: number;
+    call_result?: CallResult;
+}
+
+export interface CRMDealItem {
+    id: string;
+    deal_id: string;
+    product_id: string;
+    product?: {
+        name: string;
+        sku: string;
+    };
+    quantity: number;
+    unit_price: number;
+    total_amount?: number;
+    created_at?: string;
 }
 
 // =====================================================
@@ -1136,54 +1197,8 @@ export async function checkOpenDeals(customerId: string, token?: string): Promis
 // CRM ACTIVITIES (Lịch sử cuộc gọi)
 // =====================================================
 
-export type ActivityType = 'call' | 'note' | 'email' | 'meeting' | 'task';
-export type CallResult = 'answered' | 'no_answer' | 'busy' | 'voicemail' | 'callback';
+// Types moved to top of file
 
-export interface CRMActivity {
-    id: string;
-    deal_id: string;
-    customer_id?: string;
-    type: ActivityType;
-    subject?: string;
-    description?: string;
-    call_duration_seconds?: number;
-    call_result?: CallResult;
-    user_id: string;
-    created_at: string;
-    updated_at: string;
-}
-
-export interface CRMDealItem {
-    id: string;
-    deal_id: string;
-    product_id: string;
-    product?: {
-        name: string;
-        sku: string;
-    };
-    quantity: number;
-    unit_price: number;
-    total_amount: number;
-    created_at: string;
-}
-
-
-
-export const CALL_RESULT_LABELS: Record<CallResult, string> = {
-    answered: 'Đã nghe máy',
-    no_answer: 'Không nghe máy',
-    busy: 'Máy bận',
-    voicemail: 'Hộp thư thoại',
-    callback: 'Hẹn gọi lại'
-};
-
-export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
-    call: 'Cuộc gọi',
-    note: 'Ghi chú',
-    email: 'Email',
-    meeting: 'Gặp mặt',
-    task: 'Công việc'
-};
 
 export async function fetchActivities(dealId: string, token?: string): Promise<CRMActivity[]> {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

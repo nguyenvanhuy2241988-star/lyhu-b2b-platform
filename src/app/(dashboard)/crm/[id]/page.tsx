@@ -39,7 +39,7 @@ export default function DealDetailPage() {
     const dealId = params.id as string;
 
     const router = useRouter();
-    const { user } = useAuth();
+    const { user, session } = useAuth(); // Destructure session
     const [deal, setDeal] = useState<CRMDeal | null>(null);
     const [activities, setActivities] = useState<CRMActivity[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -72,10 +72,12 @@ export default function DealDetailPage() {
             if (!dealId || !user) return; // Wait for user to be authenticated
             setIsLoading(true);
             try {
+                // Pass session token explicitly
+                const token = session?.access_token;
                 const [d, acts, items] = await Promise.all([
-                    fetchDeal(dealId),
-                    fetchActivities(dealId),
-                    fetchDealItems(dealId)
+                    fetchDeal(dealId, token),
+                    fetchActivities(dealId, token),
+                    fetchDealItems(dealId, token)
                 ]);
                 setDeal(d);
                 setActivities(acts);
@@ -87,7 +89,7 @@ export default function DealDetailPage() {
             }
         };
         loadData();
-    }, [dealId, user]);
+    }, [dealId, user, session]);
 
     const handleItemsChange = async () => {
         if (!deal) return;
