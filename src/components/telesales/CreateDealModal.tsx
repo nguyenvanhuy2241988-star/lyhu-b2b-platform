@@ -439,55 +439,58 @@ export const CreateDealModal = ({
                                     <option value="COLD">❄️ COLD (Chưa rõ)</option>
                                 </select>
                             </div>
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Loại khách (Deal)</label>
-                                <select value={dealCustomerType} onChange={(e) => setDealCustomerType(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                    {CUSTOMER_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Giai đoạn</label>
-                                <select value={stage} onChange={(e) => setStage(e.target.value as DealStage)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                    {Object.entries(DEAL_STAGE_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Độ ưu tiên</label>
-                                <select value={priority} onChange={(e) => setPriority(e.target.value as DealPriority)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
-                                    {Object.entries(DEAL_PRIORITY_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Giá trị (VNĐ)</label>
-                                <input type="text" value={expectedValue ? new Intl.NumberFormat('vi-VN').format(parseInt(expectedValue.replace(/\D/g, '') || '0')) : ''} onChange={(e) => setExpectedValue(e.target.value.replace(/\D/g, ''))} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="0" />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">Ngày nhắc việc</label>
-                                <input type="date" value={nextActionAt} onChange={(e) => setNextActionAt(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Ghi chú (Cơ hội)</label>
-                            <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none" placeholder="Ghi chú về cơ hội này..." />
+                            {activeTab === 'existing' && (
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Loại khách (Deal)</label>
+                                    <select value={dealCustomerType} onChange={(e) => setDealCustomerType(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                        {CUSTOMER_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                                    </select>
+                                </div>
+                            )}
                         </div>
                     </div>
-                </div>
 
-                <div className="p-4 bg-slate-50 border-t flex justify-between">
-                    <div>{isEditMode && onDelete && (<button onClick={onDelete} className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2"><Trash2 className="w-4 h-4" /> Xóa</button>)}</div>
-                    <div className="flex gap-3">
-                        <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-lg">Hủy</button>
-                        <button onClick={handleSave} className="px-6 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg flex items-center gap-2"><Save className="w-4 h-4" /> Lưu</button>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Giai đoạn</label>
+                            <select value={stage} onChange={(e) => setStage(e.target.value as DealStage)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                {Object.entries(DEAL_STAGE_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Độ ưu tiên</label>
+                            <select value={priority} onChange={(e) => setPriority(e.target.value as DealPriority)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                {Object.entries(DEAL_PRIORITY_LABELS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Giá trị (VNĐ)</label>
+                            <input type="text" value={expectedValue ? new Intl.NumberFormat('vi-VN').format(parseInt(expectedValue.replace(/\D/g, '') || '0')) : ''} onChange={(e) => setExpectedValue(e.target.value.replace(/\D/g, ''))} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="0" />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Ngày nhắc việc</label>
+                            <input type="date" value={nextActionAt} onChange={(e) => setNextActionAt(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-medium text-slate-600 mb-1">Ghi chú (Cơ hội)</label>
+                        <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none" placeholder="Ghi chú về cơ hội này..." />
                     </div>
                 </div>
             </div>
+
+            <div className="p-4 bg-slate-50 border-t flex justify-between">
+                <div>{isEditMode && onDelete && (<button onClick={onDelete} className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2"><Trash2 className="w-4 h-4" /> Xóa</button>)}</div>
+                <div className="flex gap-3">
+                    <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-lg">Hủy</button>
+                    <button onClick={handleSave} className="px-6 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg flex items-center gap-2"><Save className="w-4 h-4" /> Lưu</button>
+                </div>
+            </div>
         </div>
+        </div >
     );
 };

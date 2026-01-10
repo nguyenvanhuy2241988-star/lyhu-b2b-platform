@@ -877,10 +877,9 @@ export function canDeleteDeal(deal: CRMDeal, userId: string, userRole: string): 
 export async function fetchDeal(id: string, token?: string): Promise<CRMDeal | null> {
     try {
         const headers = getHeaders(token);
-        const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/crm_deals?select=*,customer:customers(*),owner:profiles(full_name,avatar_url)&id=eq.${id}&limit=1`,
-            { headers } // Remove strict object header to avoid 406 on no rows
-        );
+        const url = `${SUPABASE_URL}/rest/v1/crm_deals?select=*,customer:customers(*),owner:profiles(full_name,avatar_url)&id=eq.${id}&limit=1`;
+        console.log('[fetchDeal] Fetching:', url);
+        const res = await fetch(url, { headers });
 
         if (!res.ok) {
             console.error('fetchDeal error:', await res.text());
