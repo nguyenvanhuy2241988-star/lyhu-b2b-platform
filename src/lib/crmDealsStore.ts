@@ -129,11 +129,15 @@ export interface CRMDeal {
     title: string;
     customer_id: string;
     customer?: Customer; // Joined data
+    owner?: { full_name: string; avatar_url: string };
     stage: DealStage;
     priority: DealPriority;
     next_action_at?: string | null;
     note?: string | null;
-    source?: DealSource;
+    source?: DealSource; // Original source enum
+    source_category?: string; // New: SELF_FOUND | COMPANY
+    source_detail?: string;
+    potential_level?: string; // HOT | WARM | COLD
     tags?: string[];
     owner_user_id: string;
     status: DealStatus;
@@ -576,7 +580,7 @@ export async function fetchDeals(ownerId?: string, token?: string): Promise<CRMD
             console.log('[fetchDeals] START (pure fetch) for owner:', ownerId);
 
             const response = await fetch(
-                `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*)&owner_user_id=eq.${ownerId}&order=created_at.desc`,
+                `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*),owner:profiles(full_name,avatar_url)&owner_user_id=eq.${ownerId}&order=created_at.desc`,
                 {
                     method: 'GET',
                     headers: {
@@ -598,7 +602,8 @@ export async function fetchDeals(ownerId?: string, token?: string): Promise<CRMD
 
             return (data || []).map((d: any) => ({
                 ...d,
-                customer: Array.isArray(d.customer) ? d.customer[0] || null : (d.customer || null)
+                customer: Array.isArray(d.customer) ? d.customer[0] || null : (d.customer || null),
+                owner: Array.isArray(d.owner) ? d.owner[0] || null : (d.owner || null)
             })) as CRMDeal[];
         } catch (err) {
             console.error('[fetchDeals] exception:', err);
@@ -623,7 +628,7 @@ export async function fetchAllDeals(token?: string): Promise<CRMDeal[]> {
             console.log('[fetchAllDeals] START (pure fetch)');
 
             const response = await fetch(
-                `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*)&order=created_at.desc`,
+                `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*),owner:profiles(full_name,avatar_url)&order=created_at.desc`,
                 {
                     method: 'GET',
                     headers: {
@@ -645,7 +650,8 @@ export async function fetchAllDeals(token?: string): Promise<CRMDeal[]> {
 
             return (data || []).map((d: any) => ({
                 ...d,
-                customer: Array.isArray(d.customer) ? d.customer[0] || null : (d.customer || null)
+                customer: Array.isArray(d.customer) ? d.customer[0] || null : (d.customer || null),
+                owner: Array.isArray(d.owner) ? d.owner[0] || null : (d.owner || null)
             })) as CRMDeal[];
         } catch (err) {
             console.error('[fetchAllDeals] exception:', err);
@@ -687,7 +693,7 @@ export async function fetchPaginatedDeals(
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     try {
-        let url = `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*)`;
+        let url = `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*),owner:profiles(full_name,avatar_url)`;
 
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
@@ -731,7 +737,8 @@ export async function fetchPaginatedDeals(
 
         const formattedData = (data || []).map((d: any) => ({
             ...d,
-            customer: Array.isArray(d.customer) ? d.customer[0] || null : (d.customer || null)
+            customer: Array.isArray(d.customer) ? d.customer[0] || null : (d.customer || null),
+            owner: Array.isArray(d.owner) ? d.owner[0] || null : (d.owner || null)
         })) as CRMDeal[];
 
         return { data: formattedData, count };
@@ -789,7 +796,7 @@ export async function fetchDeal(id: string, token?: string): Promise<CRMDeal | n
     try {
         const headers = getHeaders(token);
         const res = await fetch(
-            `${SUPABASE_URL}/rest/v1/crm_deals?select=*,customer:customers(*)&id=eq.${id}&limit=1`,
+            `${SUPABASE_URL}/rest/v1/crm_deals?select=*,customer:customers(*),owner:profiles(full_name,avatar_url)&id=eq.${id}&limit=1`,
             { headers: { ...headers, 'Accept': 'application/vnd.pgrst.object+json' } } // Single object
         );
 

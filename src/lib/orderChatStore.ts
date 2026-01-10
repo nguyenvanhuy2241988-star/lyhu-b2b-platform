@@ -150,13 +150,10 @@ export function subscribeToOrderMessages(
                 filter: `order_id=eq.${orderId}`
             },
             (payload: any) => {
-                console.log('[OrderChat] Received realtime event:', payload);
                 onNewMessage(mapMessage(payload.new));
             }
         )
-        .subscribe((status: any) => {
-            console.log(`[OrderChat] Subscription status for ${orderId}:`, status);
-        });
+        .subscribe();
 
     return () => {
         supabase.removeChannel(channel);

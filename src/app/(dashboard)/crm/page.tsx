@@ -117,23 +117,53 @@ const PriorityBadge = ({ priority }: { priority: DealPriority }) => {
 };
 
 const CustomerTypeBadge = ({ type }: { type?: string }) => {
+    // Combine old snake_case and new UPPERCASE keys
     const colors: Record<string, string> = {
         tap_hoa: "bg-green-100 text-green-700",
+        RETAIL: "bg-green-100 text-green-700",
         mini_mart: "bg-purple-100 text-purple-700",
         dai_ly: "bg-blue-100 text-blue-700",
+        AGENCY: "bg-blue-100 text-blue-700",
         npp: "bg-orange-100 text-orange-700",
+        DISTRIBUTOR: "bg-orange-100 text-orange-700",
         sieu_thi: "bg-pink-100 text-pink-700",
+        CTV: "bg-indigo-100 text-indigo-700",
     };
     const labels: Record<string, string> = {
         tap_hoa: "Tạp hóa",
+        RETAIL: "Khách lẻ",
         mini_mart: "Mini mart",
         dai_ly: "Đại lý",
+        AGENCY: "Đại lý",
         npp: "NPP",
+        DISTRIBUTOR: "NPP",
         sieu_thi: "Siêu thị",
+        CTV: "CTV",
+    };
+    const key = type || 'tap_hoa';
+    return (
+        <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${colors[key] || colors.tap_hoa}`}>
+            {labels[key] || key}
+        </span>
+    );
+};
+
+const PotentialBadge = ({ level }: { level?: string }) => {
+    if (!level) return null;
+    const colors: Record<string, string> = {
+        HOT: "bg-red-500 text-white",
+        WARM: "bg-yellow-400 text-white",
+        COLD: "bg-blue-300 text-white",
+    };
+    const icons: Record<string, string> = {
+        HOT: "🔥",
+        WARM: "⭐️",
+        COLD: "❄️",
     };
     return (
-        <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${colors[type || 'tap_hoa'] || colors.tap_hoa}`}>
-            {labels[type || 'tap_hoa'] || type}
+        <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold ${colors[level] || 'bg-slate-200'} flex items-center gap-1`}>
+            <span>{icons[level]}</span>
+            <span>{level}</span>
         </span>
     );
 };
@@ -229,6 +259,18 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
                 {/* Deal Title */}
                 <h4 className="font-medium text-slate-800 text-sm mb-2 line-clamp-2">{deal.title}</h4>
 
+                {/* Badges Row */}
+                {(deal.potential_level || deal.source_category) && (
+                    <div className="flex gap-1 mb-2">
+                        <PotentialBadge level={deal.potential_level} />
+                        {deal.source_category && (
+                            <span className="px-1.5 py-0.5 rounded text-[9px] bg-slate-100 text-slate-600 border border-slate-200">
+                                {deal.source_category === 'SELF_FOUND' ? 'Tự tìm' : 'Cty cấp'}
+                            </span>
+                        )}
+                    </div>
+                )}
+
                 {/* Tags */}
                 {deal.tags && deal.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-2">
@@ -242,15 +284,30 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
 
                 {/* Footer */}
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs">
-                    <div className={`flex items-center gap-1 ${isOverdue ? 'text-red-600 font-medium' : 'text-slate-400'}`}>
-                        {deal.next_action_at ? (
-                            <>
-                                {isOverdue ? <AlertTriangle className="w-3 h-3" /> : <Calendar className="w-3 h-3" />}
-                                <span>{new Date(deal.next_action_at).toLocaleDateString('vi-VN')}</span>
-                            </>
-                        ) : (
-                            <PriorityBadge priority={deal.priority} />
+                    <div className="flex items-center gap-2">
+                        {/* Owner Avatar */}
+                        {deal.owner && (
+                            <div className="flex items-center gap-1 group/owner relative cursor-help" title={`Phụ trách: ${deal.owner.full_name}`}>
+                                {deal.owner.avatar_url ? (
+                                    <img src={deal.owner.avatar_url} alt={deal.owner.full_name} className="w-5 h-5 rounded-full object-cover border border-white shadow-sm" />
+                                ) : (
+                                    <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-[9px] border border-white shadow-sm">
+                                        {deal.owner.full_name?.charAt(0).toUpperCase()}
+                                    </div>
+                                )}
+                            </div>
                         )}
+
+                        <div className={`flex items-center gap-1 ${isOverdue ? 'text-red-600 font-medium' : 'text-slate-400'}`}>
+                            {deal.next_action_at ? (
+                                <>
+                                    {isOverdue ? <AlertTriangle className="w-3 h-3" /> : <Calendar className="w-3 h-3" />}
+                                    <span>{new Date(deal.next_action_at).toLocaleDateString('vi-VN')}</span>
+                                </>
+                            ) : (
+                                <PriorityBadge priority={deal.priority} />
+                            )}
+                        </div>
                     </div>
 
                     {/* Quick Actions */}
