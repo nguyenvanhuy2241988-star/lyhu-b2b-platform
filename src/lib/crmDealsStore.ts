@@ -577,10 +577,9 @@ export async function fetchDeals(ownerId?: string, token?: string): Promise<CRMD
     const cacheKey = `deals:${ownerId}`;
     return fetchWithCache(cacheKey, async () => {
         try {
-            console.log('[fetchDeals] START (pure fetch) for owner:', ownerId);
-
+            // 1. Fetch Deals (Without JOIN profiles to avoid 400 error if FK missing)
             const response = await fetch(
-                `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*),owner:profiles(full_name,avatar_url)&owner_user_id=eq.${ownerId}&order=created_at.desc`,
+                `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*)&owner_user_id=eq.${ownerId}&order=created_at.desc`,
                 {
                     method: 'GET',
                     headers: {
@@ -598,12 +597,41 @@ export async function fetchDeals(ownerId?: string, token?: string): Promise<CRMD
             }
 
             const data = await response.json();
-            console.log('[fetchDeals] SUCCESS, count:', data.length);
 
-            return (data || []).map((d: any) => ({
+            // 2. Manual Join Profiles (Robust Fallback)
+            let enrichedData = data;
+            try {
+                const userIds = Array.from(new Set(data.map((d: any) => d.owner_user_id).filter(Boolean)));
+                if (userIds.length > 0) {
+                    const profilesRes = await fetch(
+                        `${supabaseUrl}/rest/v1/profiles?select=id,full_name,avatar_url&id=in.(${userIds.join(',')})`,
+                        {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'apikey': supabaseKey,
+                                'Authorization': `Bearer ${token || supabaseKey}`
+                            }
+                        }
+                    );
+                    if (profilesRes.ok) {
+                        const profiles = await profilesRes.json();
+                        const profileMap = new Map(profiles.map((p: any) => [p.id, p]));
+                        enrichedData = data.map((d: any) => ({
+                            ...d,
+                            owner: d.owner_user_id ? profileMap.get(d.owner_user_id) : null
+                        }));
+                    }
+                }
+            } catch (err) {
+                console.warn('[fetchDeals] Failed to join profiles manually', err);
+            }
+
+            console.log('[fetchDeals] SUCCESS, count:', enrichedData.length);
+
+            return (enrichedData || []).map((d: any) => ({
                 ...d,
-                customer: Array.isArray(d.customer) ? d.customer[0] || null : (d.customer || null),
-                owner: Array.isArray(d.owner) ? d.owner[0] || null : (d.owner || null)
+                customer: Array.isArray(d.customer) ? d.customer[0] || null : (d.customer || null)
             })) as CRMDeal[];
         } catch (err) {
             console.error('[fetchDeals] exception:', err);
@@ -627,8 +655,9 @@ export async function fetchAllDeals(token?: string): Promise<CRMDeal[]> {
         try {
             console.log('[fetchAllDeals] START (pure fetch)');
 
+            // 1. Fetch All Deals (Without JOIN profiles)
             const response = await fetch(
-                `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*),owner:profiles(full_name,avatar_url)&order=created_at.desc`,
+                `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*)&order=created_at.desc`,
                 {
                     method: 'GET',
                     headers: {
@@ -641,17 +670,47 @@ export async function fetchAllDeals(token?: string): Promise<CRMDeal[]> {
 
             if (!response.ok) {
                 const errorText = await response.text();
+                // If 400, it might be due to bad params, but now we removed the complex join.
                 console.error('[fetchAllDeals] Error:', response.status, errorText);
                 return [];
             }
 
             const data = await response.json();
-            console.log('[fetchAllDeals] SUCCESS, count:', data.length);
 
-            return (data || []).map((d: any) => ({
+            // 2. Manual Join Profiles (Robust Fallback)
+            let enrichedData = data;
+            try {
+                const userIds = Array.from(new Set(data.map((d: any) => d.owner_user_id).filter(Boolean)));
+                if (userIds.length > 0) {
+                    const profilesRes = await fetch(
+                        `${supabaseUrl}/rest/v1/profiles?select=id,full_name,avatar_url&id=in.(${userIds.join(',')})`,
+                        {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'apikey': supabaseKey,
+                                'Authorization': `Bearer ${token || supabaseKey}`
+                            }
+                        }
+                    );
+                    if (profilesRes.ok) {
+                        const profiles = await profilesRes.json();
+                        const profileMap = new Map(profiles.map((p: any) => [p.id, p]));
+                        enrichedData = data.map((d: any) => ({
+                            ...d,
+                            owner: d.owner_user_id ? profileMap.get(d.owner_user_id) : null
+                        }));
+                    }
+                }
+            } catch (err) {
+                console.warn('[fetchAllDeals] Failed to join profiles manually', err);
+            }
+
+            console.log('[fetchAllDeals] SUCCESS, count:', enrichedData.length);
+
+            return (enrichedData || []).map((d: any) => ({
                 ...d,
-                customer: Array.isArray(d.customer) ? d.customer[0] || null : (d.customer || null),
-                owner: Array.isArray(d.owner) ? d.owner[0] || null : (d.owner || null)
+                customer: Array.isArray(d.customer) ? d.customer[0] || null : (d.customer || null)
             })) as CRMDeal[];
         } catch (err) {
             console.error('[fetchAllDeals] exception:', err);
