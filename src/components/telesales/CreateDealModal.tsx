@@ -201,7 +201,7 @@ export const CreateDealModal = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b bg-slate-50">
@@ -215,10 +215,10 @@ export const CreateDealModal = ({
 
                 {/* Tabs / Content ... (Keep existing Tabs) */}
                 <div className="flex border-b">
-                    <button className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'new' ? 'border-b-2 border-primary-500 text-primary-600 bg-primary-50/50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`} onClick={() => { setActiveTab('new'); setSelectedCustomer(null); }}>
+                    <button type="button" className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'new' ? 'border-b-2 border-primary-500 text-primary-600 bg-primary-50/50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`} onClick={() => { setActiveTab('new'); setSelectedCustomer(null); }}>
                         <Plus className="w-4 h-4 inline mr-1" /> Khách mới
                     </button>
-                    <button className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'existing' ? 'border-b-2 border-primary-500 text-primary-600 bg-primary-50/50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`} onClick={() => setActiveTab('existing')}>
+                    <button type="button" className={`flex-1 py-3 text-sm font-medium transition-colors ${activeTab === 'existing' ? 'border-b-2 border-primary-500 text-primary-600 bg-primary-50/50' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`} onClick={() => setActiveTab('existing')}>
                         <User className="w-4 h-4 inline mr-1" /> Khách cũ
                     </button>
                 </div>
