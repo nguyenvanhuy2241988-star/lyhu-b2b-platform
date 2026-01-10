@@ -759,36 +759,22 @@ export async function fetchPaginatedDeals(
             'apikey': supabaseKey || '',
             'Authorization': `Bearer ${token || supabaseKey}`,
             'Prefer': 'count=exact'
-    try {
-                const headers = getHeaders(token);
-
-                // 1. Fetch Deals (Without JOIN profiles)
-                let url = `${SUPABASE_URL}/rest/v1/crm_deals?select=*,customer:customers(*)&order=created_at.desc`;
-
-                if(ownerId) { // Changed from userId to ownerId to match function signature
-                    url += `&owner_user_id=eq.${ownerId}`;
-                }
-        
-        if(stage && stage !== 'all') {
-                url += `&stage=eq.${stage}`;
-    }
-
-        if (searchTerm) { // Changed from search to searchTerm to match function signature
-        // Note: Search with join is tricky in simple strings, ensuring client side filter or specific search logic
-        // For now, relying on basic filter or client side if complex
-        url += `&or=(title.ilike.*${searchTerm}*,customer.name.ilike.*${searchTerm}*,customer.phone.ilike.*${searchTerm}*)`;
-    }
+        if(searchTerm) { // Changed from search to searchTerm to match function signature
+                // Note: Search with join is tricky in simple strings, ensuring client side filter or specific search logic
+                // For now, relying on basic filter or client side if complex
+                url += `&or=(title.ilike.*${searchTerm}*,customer.name.ilike.*${searchTerm}*,customer.phone.ilike.*${searchTerm}*)`;
+            }
 
     // Pagination
     const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
+            const to = from + pageSize - 1;
 
-    const response = await fetch(url, {
-        headers: { ...headers, 'Range': `${from}-${to}` }
-    });
+            const response = await fetch(url, {
+                headers: { ...headers, 'Range': `${from}-${to}` }
+            });
 
-    if (!response.ok) {
-        console.error('[fetchPaginatedDeals] Error', response.status, await response.text());
+            if(!response.ok) {
+                console.error('[fetchPaginatedDeals] Error', response.status, await response.text());
         return { data: [], count: 0 };
     }
 
