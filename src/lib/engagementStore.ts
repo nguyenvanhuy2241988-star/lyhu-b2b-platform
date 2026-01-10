@@ -34,6 +34,7 @@ export interface LeaderboardEntry {
     total_orders: number;
     total_revenue: number;
     rank: number;
+    avatar_url?: string;
 }
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -148,59 +149,43 @@ export const fetchCareerLevels = async (token?: string) => {
 /**
  * Calculate Leaderboard based on actual orders
  */
+/**
+ * Calculate Leaderboard based on CRM Deals Revenue (Realtime RPC)
+ */
 export const getLeaderboard = async (period: 'this_month' | 'this_week' = 'this_month', token?: string): Promise<LeaderboardEntry[]> => {
-    const now = new Date();
-    const startOfPeriod = new Date(now.getFullYear(), now.getMonth(), 1);
-    if (period === 'this_week') {
-        const day = now.getDay();
-        const diff = now.getDate() - day + (day === 0 ? -6 : 1);
-        startOfPeriod.setDate(diff);
-    }
-
     try {
         const headers = getHeaders(token);
-        const params = new URLSearchParams({
-            created_at: `gte.${startOfPeriod.toISOString()}`,
-            status: 'neq.cancelled',
-            select: 'total_amount,telesales_user_id,profiles:profiles!orders_telesales_user_id_profiles_fkey(full_name,email)'
-        });
+        const now = new Date();
+        const month = now.getMonth() + 1;
+        const year = now.getFullYear();
 
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?${params.toString()}`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_realtime_leaderboard`, {
+            method: 'POST',
             headers,
+            body: JSON.stringify({ p_month: month, p_year: year }),
             cache: 'no-store',
             signal: getSignal(10000)
         });
 
-        if (!res.ok) return [];
+        if (!res.ok) {
+            console.error("Leaderboard RPC error:", await res.text());
+            return [];
+        }
 
         const data = await res.json();
-        const statsMap: Record<string, { name: string; orders: number; revenue: number }> = {};
 
-        (data || []).forEach((order: any) => {
-            const userId = order.telesales_user_id;
-            if (!userId) return;
-            const profile = order.profiles;
-            const userName = profile?.full_name || profile?.email || "Nhân viên ẩn danh";
+        // Map RPC result to LeaderboardEntry interface
+        return data.map((item: any) => ({
+            user_id: item.user_id,
+            user_name: item.full_name || 'Unknown',
+            avatar_url: item.avatar_url,
+            total_orders: item.total_deals, // Mapped to total_deals
+            total_revenue: item.total_revenue,
+            rank: item.rank
+        }));
 
-            if (!statsMap[userId]) {
-                statsMap[userId] = { name: userName, orders: 0, revenue: 0 };
-            }
-
-            statsMap[userId].orders += 1;
-            statsMap[userId].revenue += (Number(order.total_amount) || 0);
-        });
-
-        const result: LeaderboardEntry[] = Object.entries(statsMap).map(([userId, stats]) => ({
-            user_id: userId,
-            user_name: stats.name,
-            total_orders: stats.orders,
-            total_revenue: stats.revenue,
-            rank: 0
-        })).sort((a, b) => b.total_revenue - a.total_revenue);
-
-        return result.map((entry, index) => ({ ...entry, rank: index + 1 }));
     } catch (error) {
-        console.error("Error calculating leaderboard:", error);
+        console.error("Error fetching leaderboard:", error);
         return [];
     }
 };

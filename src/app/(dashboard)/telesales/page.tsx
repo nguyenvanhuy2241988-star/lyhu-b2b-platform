@@ -24,6 +24,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { StatsSkeleton, TableSkeleton } from "@/components/ui/SkeletonUI";
 import { fetchKPIStats, fetchSalesFunnel, KPISummary, FunnelStage } from "@/lib/crmDealsStore";
 import { SalesFunnelChart } from "@/components/telesales/dashboard/KPICharts";
+import LeaderboardWidget from "@/components/telesales/dashboard/LeaderboardWidget";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -326,46 +327,8 @@ export default function TelesalesDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                 {/* 1. Leaderboard (Bảng vàng Vinh danh) */}
-                <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-                    <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                        <h3 className="font-bold text-slate-900 flex items-center gap-2">
-                            <Trophy className="w-5 h-5 text-amber-500" />
-                            Bảng vàng Vinh danh tháng {new Date().getMonth() + 1}
-                        </h3>
-                        <div className="flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                            <Flame className="w-3 h-3 text-orange-500" />
-                            Đang đua top
-                        </div>
-                    </div>
-                    <div className="p-2 flex-1">
-                        <div className="space-y-1">
-                            {leaderboard.slice(0, 5).map((entry, idx) => (
-                                <div key={entry.user_id} className={`flex items-center justify-between p-3 rounded-xl transition-all ${idx === 0 ? 'bg-amber-50/50 border border-amber-100' : 'hover:bg-slate-50'}`}>
-                                    <div className="flex items-center gap-4">
-                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${idx === 0 ? 'bg-amber-500 text-white shadow-sm' :
-                                            idx === 1 ? 'bg-slate-300 text-slate-700' :
-                                                idx === 2 ? 'bg-orange-300 text-orange-900' : 'bg-slate-100 text-slate-500'
-                                            }`}>
-                                            {idx + 1}
-                                        </div>
-                                        <div>
-                                            <div className="font-bold text-sm text-slate-900">{entry.user_name}</div>
-                                            <div className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">{entry.total_orders} đơn hàng thành công</div>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="font-bold text-sm text-slate-900">{formatPrice(entry.total_revenue)}</div>
-                                        {idx === 0 && <div className="text-[10px] text-amber-600 font-bold uppercase tracking-widest">Quán quân</div>}
-                                    </div>
-                                </div>
-                            ))}
-                            {leaderboard.length === 0 && (
-                                <div className="p-8 text-center text-slate-400 text-sm italic">
-                                    Chưa có dữ liệu xếp hạng trong tháng này
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                <div className="lg:col-span-2 h-[500px]">
+                    <LeaderboardWidget leaderboard={leaderboard} isLoading={isLoading} />
                 </div>
 
                 {/* Right Column: Bonding & Roadmap */}
