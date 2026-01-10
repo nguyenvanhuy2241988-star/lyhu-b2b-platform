@@ -48,9 +48,9 @@ export default function CalendarView() {
     const calendarDays = eachDayOfInterval({ start: startDate, end: endDate });
 
     // Filter tasks for selected date
-    const selectedDateTasks = tasks.filter(task => isSameDay(new Date(task.next_action_at), selectedDate));
+    const selectedDateTasks = tasks.filter(task => isSameDay(new Date(task.due_date), selectedDate));
     // Sort by time
-    selectedDateTasks.sort((a, b) => new Date(a.next_action_at).getTime() - new Date(b.next_action_at).getTime());
+    selectedDateTasks.sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime());
 
     return (
         <div className="flex flex-col lg:flex-row h-full gap-6">
@@ -91,7 +91,7 @@ export default function CalendarView() {
                 {/* Days Grid */}
                 <div className="flex-1 grid grid-cols-7 auto-rows-fr bg-slate-200 gap-px border-b border-slate-200">
                     {calendarDays.map((day, idx) => {
-                        const dayTasks = tasks.filter(t => isSameDay(new Date(t.next_action_at), day));
+                        const dayTasks = tasks.filter(t => isSameDay(new Date(t.due_date), day));
                         const isSelected = isSameDay(day, selectedDate);
                         const isCurrentMonth = isSameMonth(day, monthStart);
                         const isTodayDate = isToday(day);
@@ -118,7 +118,7 @@ export default function CalendarView() {
                                             bg-blue-50 border-blue-100 text-blue-700
                                         ">
                                             <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-                                            {format(new Date(task.next_action_at), "HH:mm")} - {task.customer_name}
+                                            {format(new Date(task.due_date), "HH:mm")} - {task.customer_name}
                                         </div>
                                     ))}
                                     {dayTasks.length > 3 && (
@@ -150,7 +150,7 @@ export default function CalendarView() {
                                 <div className="flex items-start justify-between mb-2">
                                     <div className="flex items-center gap-1.5 text-xs font-semibold text-primary-700 bg-primary-50 px-2 py-1 rounded">
                                         <Clock className="w-3 h-3" />
-                                        {format(new Date(task.next_action_at), "HH:mm")}
+                                        {format(new Date(task.due_date), "HH:mm")}
                                     </div>
                                     <span className={`text-[10px] px-2 py-0.5 rounded-full border uppercase font-bold
                                         ${task.source_type === 'task' ? 'bg-purple-50 border-purple-100 text-purple-700' :
