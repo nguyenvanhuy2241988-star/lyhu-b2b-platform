@@ -741,7 +741,11 @@ export default function CRMPage() {
                     next_action_at: dealData.next_action_at,
                     note: dealData.note,
                     expected_value: dealData.expected_value,
-                    source: dealData.source
+                    source: dealData.source,
+                    source_category: dealData.source_category,
+                    source_detail: dealData.source_detail,
+                    potential_level: dealData.potential_level,
+                    customer_type: dealData.customer_type
                 }, session?.access_token);
             } else {
                 let customerId = dealData.customer_id;
@@ -752,7 +756,7 @@ export default function CRMPage() {
                         ...dealData.newCustomerData,
                         owner_user_id: userInfo.id
                     }, session?.access_token);
-                    // No need to check newCustomer is null here to alert, the function will throw.
+
                     if (newCustomer) {
                         customerId = newCustomer.id;
                     }
@@ -767,6 +771,9 @@ export default function CRMPage() {
                     note: dealData.note,
                     expected_value: dealData.expected_value,
                     source: dealData.source,
+                    source_category: dealData.source_category,
+                    source_detail: dealData.source_detail,
+                    potential_level: dealData.potential_level,
                     owner_user_id: userInfo.id
                 }, session?.access_token);
             }
@@ -776,7 +783,6 @@ export default function CRMPage() {
             setEditingDeal(null);
         } catch (error) {
             console.error("Failed to save deal", error);
-            // Show specific error message
             alert("Lỗi: " + (error instanceof Error ? error.message : "Đã có lỗi xảy ra. Vui lòng thử lại."));
         } finally {
             setIsDataLoading(false);

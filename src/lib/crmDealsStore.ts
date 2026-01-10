@@ -137,6 +137,7 @@ export interface CRMDeal {
     source?: DealSource; // Original source enum
     source_category?: string; // New: SELF_FOUND | COMPANY
     source_detail?: string;
+    customer_type?: string; // New: tap_hoa | nha_thuoc | dai_ly | spa | other
     potential_level?: string; // HOT | WARM | COLD
     tags?: string[];
     owner_user_id: string;
@@ -907,6 +908,10 @@ export async function createDeal(deal: {
     next_action_at?: string;
     note?: string;
     source?: DealSource;
+    source_category?: string;
+    source_detail?: string;
+    customer_type?: string;
+    potential_level?: string;
     tags?: string[];
     expected_value?: number;
     owner_user_id: string;
@@ -950,6 +955,10 @@ export async function createDeal(deal: {
                     next_action_at: deal.next_action_at,
                     note: deal.note,
                     source: deal.source || 'data_moi',
+                    source_category: deal.source_category || 'COMPANY',
+                    source_detail: deal.source_detail,
+                    customer_type: deal.customer_type,
+                    potential_level: deal.potential_level,
                     tags: deal.tags || [],
                     expected_value: deal.expected_value,
                     owner_user_id: deal.owner_user_id,
