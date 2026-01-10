@@ -155,6 +155,7 @@ export const NAV_ITEMS = {
     [ROLES.TELESALES]: [
         { label: "Tổng quan", href: "/telesales", icon: LayoutDashboard },
         { label: "CRM", href: PATH_LEADS, icon: TrendingUp },
+        { label: "Lịch làm việc", href: "/telesales/schedule", icon: Calendar },
         { label: "Việc cần làm", href: "/telesales/tasks", icon: ListTodo },
         { label: "Tạo đơn hàng", href: "/telesales/create-order", icon: ShoppingCart },
         { label: "Đơn hàng", href: PATH_ORDERS_TELESALES, icon: Package },

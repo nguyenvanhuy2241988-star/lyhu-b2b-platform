@@ -1608,3 +1608,50 @@ export async function fetchLostReasons(startDate: Date, endDate: Date, userId?: 
         return [];
     }
 }
+
+export interface ScheduledTask {
+    id: string;
+    name: string;
+    customer_name: string;
+    next_action_at: string;
+    status: string;
+    stage: string;
+    priority: string;
+}
+
+export async function fetchScheduledTasks(startDate: Date, endDate: Date, userId?: string, token?: string): Promise<ScheduledTask[]> {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
+    try {
+        let authToken = token;
+        if (!authToken && typeof window !== 'undefined') {
+            authToken = localStorage.getItem('lyhu_access_token') || undefined;
+        }
+
+        const headers = getHeaders(authToken);
+
+        const res = await fetch(
+            `${supabaseUrl}/rest/v1/rpc/get_scheduled_tasks`,
+            {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    p_start_date: startDate.toISOString(),
+                    p_end_date: endDate.toISOString(),
+                    p_user_id: userId || null
+                })
+            }
+        );
+
+        if (!res.ok) {
+            console.error('fetchScheduledTasks error:', await res.text());
+            return [];
+        }
+
+        const data = await res.json();
+        return data as ScheduledTask[];
+    } catch (err) {
+        console.error('fetchScheduledTasks exception:', err);
+        return [];
+    }
+}
