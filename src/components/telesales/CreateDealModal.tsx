@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { X, Save, Trash2, Search, User, Building, Phone, MapPin, Plus } from "lucide-react";
 import {
     DealStage,
@@ -53,10 +53,12 @@ export const CreateDealModal = ({
     onSave,
     onDelete,
     initialStage = "new_data",
-    initialData = {},
+    initialData,
     userId
 }: CreateDealModalProps) => {
-    const isEditMode = !!initialData.id;
+    // Memoize default empty object to prevent re-renders when initialData is undefined
+    const stableInitialData = useMemo(() => initialData || {}, [initialData]);
+    const isEditMode = !!stableInitialData.id;
 
     // Tab state
     const [activeTab, setActiveTab] = useState<'new' | 'existing'>('new');
@@ -65,21 +67,21 @@ export const CreateDealModal = ({
     const [searchResults, setSearchResults] = useState<Customer[]>([]);
 
     // Deal fields
-    const [title, setTitle] = useState(initialData.title || "");
-    const [stage, setStage] = useState<DealStage>((initialData.stage as DealStage) || initialStage);
-    const [priority, setPriority] = useState<DealPriority>((initialData.priority as DealPriority) || "normal");
-    const [expectedValue, setExpectedValue] = useState<string>(initialData.expected_value ? initialData.expected_value.toString() : "");
-    const [nextActionAt, setNextActionAt] = useState(initialData.next_action_at?.split('T')[0] || "");
-    const [note, setNote] = useState(initialData.note || "");
+    const [title, setTitle] = useState(stableInitialData.title || "");
+    const [stage, setStage] = useState<DealStage>((stableInitialData.stage as DealStage) || initialStage);
+    const [priority, setPriority] = useState<DealPriority>((stableInitialData.priority as DealPriority) || "normal");
+    const [expectedValue, setExpectedValue] = useState<string>(stableInitialData.expected_value ? stableInitialData.expected_value.toString() : "");
+    const [nextActionAt, setNextActionAt] = useState(stableInitialData.next_action_at?.split('T')[0] || "");
+    const [note, setNote] = useState(stableInitialData.note || "");
 
     // New Classification Fields
-    const [sourceCategory, setSourceCategory] = useState(initialData.source_category || "COMPANY");
-    const [sourceDetail, setSourceDetail] = useState(initialData.source_detail || "");
-    const [potentialLevel, setPotentialLevel] = useState(initialData.potential_level || "WARM");
+    const [sourceCategory, setSourceCategory] = useState(stableInitialData.source_category || "COMPANY");
+    const [sourceDetail, setSourceDetail] = useState(stableInitialData.source_detail || "");
+    const [potentialLevel, setPotentialLevel] = useState(stableInitialData.potential_level || "WARM");
     // customerType is already managed for new customers, but for existing deals/customers we might want to update it.
     // However, the requirement is to input these for the DEAL.
     // check schema: crm_deals has customer_type too.
-    const [dealCustomerType, setDealCustomerType] = useState(initialData.customer?.type || initialData.customer_type || "tap_hoa");
+    const [dealCustomerType, setDealCustomerType] = useState(stableInitialData.customer?.type || stableInitialData.customer_type || "tap_hoa");
 
     // New customer fields
     const [customerName, setCustomerName] = useState("");
