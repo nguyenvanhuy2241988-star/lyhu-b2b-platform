@@ -759,52 +759,79 @@ export async function fetchPaginatedDeals(
             'apikey': supabaseKey || '',
             'Authorization': `Bearer ${token || supabaseKey}`,
             'Prefer': 'count=exact'
-        };
+    try {
+                const headers = getHeaders(token);
 
-        const filters: string[] = [];
+                // 1. Fetch Deals (Without JOIN profiles)
+                let url = `${SUPABASE_URL}/rest/v1/crm_deals?select=*,customer:customers(*)&order=created_at.desc`;
 
-        if (stage !== 'all') {
-            filters.push(`stage=eq.${stage}`);
-        }
-
-        if (searchTerm) {
-            filters.push(`title=ilike.*${searchTerm}*`);
-        }
-
-        if (ownerId) {
-            filters.push(`owner_user_id=eq.${ownerId}`);
-        }
-
-        if (filters.length > 0) {
-            url += `&${filters.join('&')}`;
-        }
-
-        // Ordering and Range (PostgREST uses offset/limit)
-        url += `&order=updated_at.desc&offset=${from}&limit=${pageSize}`;
-
-        const response = await fetch(url, { method: 'GET', headers });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('[fetchPaginatedDeals] Error:', response.status, errorText);
-            throw new Error(`Failed to fetch paginated deals: ${errorText}`);
-        }
-
-        const countHeader = response.headers.get('Content-Range');
-        const count = countHeader ? parseInt(countHeader.split('/')[1]) : 0;
-        const data = await response.json();
-
-        const formattedData = (data || []).map((d: any) => ({
-            ...d,
-            customer: Array.isArray(d.customer) ? d.customer[0] || null : (d.customer || null),
-            owner: Array.isArray(d.owner) ? d.owner[0] || null : (d.owner || null)
-        })) as CRMDeal[];
-
-        return { data: formattedData, count };
-    } catch (err) {
-        console.error('[fetchPaginatedDeals] exception:', err);
-        throw err;
+                if(ownerId) { // Changed from userId to ownerId to match function signature
+                    url += `&owner_user_id=eq.${ownerId}`;
+                }
+        
+        if(stage && stage !== 'all') {
+                url += `&stage=eq.${stage}`;
     }
+
+        if (searchTerm) { // Changed from search to searchTerm to match function signature
+        // Note: Search with join is tricky in simple strings, ensuring client side filter or specific search logic
+        // For now, relying on basic filter or client side if complex
+        url += `&or=(title.ilike.*${searchTerm}*,customer.name.ilike.*${searchTerm}*,customer.phone.ilike.*${searchTerm}*)`;
+    }
+
+    // Pagination
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    const response = await fetch(url, {
+        headers: { ...headers, 'Range': `${from}-${to}` }
+    });
+
+    if (!response.ok) {
+        console.error('[fetchPaginatedDeals] Error', response.status, await response.text());
+        return { data: [], count: 0 };
+    }
+
+    const data = await response.json();
+    const countStr = response.headers.get('content-range');
+    const count = countStr ? parseInt(countStr.split('/')[1]) : (data.length || 0);
+
+    // 2. Manual Join Profiles
+    let enrichedData = data;
+    try {
+        const userIds = Array.from(new Set(data.map((d: any) => d.owner_user_id).filter(Boolean)));
+        if (userIds.length > 0) {
+            const profilesRes = await fetch(
+                `${SUPABASE_URL}/rest/v1/profiles?select=id,full_name,avatar_url&id=in.(${userIds.join(',')})`,
+                {
+                    method: 'GET',
+                    headers: { ...headers, 'Content-Type': 'application/json' }
+                }
+            );
+            if (profilesRes.ok) {
+                const profiles = await profilesRes.json();
+                const profileMap = new Map(profiles.map((p: any) => [p.id, p]));
+                enrichedData = data.map((d: any) => ({
+                    ...d,
+                    owner: d.owner_user_id ? profileMap.get(d.owner_user_id) : null
+                }));
+            }
+        }
+    } catch (e) {
+        console.warn('[fetchPaginatedDeals] manual join failed', e);
+    }
+
+    const formattedData = (enrichedData || []).map((d: any) => ({
+        ...d,
+        customer: Array.isArray(d.customer) ? d.customer[0] || null : (d.customer || null)
+    })) as CRMDeal[];
+
+    return { data: formattedData, count };
+
+} catch (err) {
+    console.error('[fetchPaginatedDeals] exception:', err);
+    throw err;
+}
 }
 
 /**
