@@ -60,6 +60,9 @@ export const CreateDealModal = ({
 
     // Tab state
     const [activeTab, setActiveTab] = useState<'new' | 'existing'>('new');
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [searchResults, setSearchResults] = useState<Customer[]>([]);
 
     // Deal fields
     const [title, setTitle] = useState(initialData.title || "");
@@ -87,6 +90,15 @@ export const CreateDealModal = ({
     const [customerAddress, setCustomerAddress] = useState("");
     const [customerProvince, setCustomerProvince] = useState("");
     const [customerDistrict, setCustomerDistrict] = useState("");
+
+    const districts = getDistricts(customerProvince);
+
+    const handleSelectCustomer = (customer: Customer) => {
+        setSelectedCustomer(customer);
+        setSearchQuery("");
+        setSearchResults([]);
+        if (customer.type) setDealCustomerType(customer.type);
+    };
 
     // ... (rest of existing code) ...
 
@@ -118,7 +130,19 @@ export const CreateDealModal = ({
 
             // ... (rest of reset logic) ...
         }
-    }, [isOpen, initialData, initialStage]); // simplified deps
+    }, [isOpen, initialData, initialStage]);
+
+    useEffect(() => {
+        const timer = setTimeout(async () => {
+            if (searchQuery.trim().length >= 2) {
+                const results = await searchCustomers(searchQuery);
+                setSearchResults(results);
+            } else {
+                setSearchResults([]);
+            }
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     // ... (rest of effects) ...
 
