@@ -1,5 +1,5 @@
 import { Menu, MessageCircle, LogOut, Settings, UserCircle, Bell, ChevronDown } from "lucide-react";
-import { NotificationCenter } from "../common/NotificationCenter";
+import NotificationBell from "../ui/NotificationBell";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useEffect, useState, useRef } from "react";
@@ -101,7 +101,7 @@ export default function Topbar({ onMenuClick, title = "Dashboard" }: TopbarProps
                     )}
                 </button>
 
-                <NotificationCenter />
+                <NotificationBell />
 
                 {/* Profile Dropdown */}
                 <div className="relative" ref={dropdownRef}>

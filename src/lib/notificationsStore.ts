@@ -1,110 +1,94 @@
-import { createClient } from "@/lib/supabaseClient";
-
-const supabase = createClient();
+import { create } from 'zustand';
+import { supabase } from '@/lib/supabaseClient';
 
 export interface Notification {
     id: string;
-    userId: string | null;
     title: string;
     message: string;
-    type: 'info' | 'success' | 'warning' | 'error' | 'order';
-    isRead: boolean;
+    type: 'info' | 'success' | 'warning' | 'error' | 'deal' | 'task';
     link?: string;
-    metadata?: Record<string, any>;
-    createdAt: string;
+    is_read: boolean;
+    created_at: string;
+    metadata?: any;
 }
 
-/**
- * Fetch notifications for current user
- */
-export async function fetchNotifications(limit: number = 20): Promise<Notification[]> {
-    const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(limit);
+interface NotificationsState {
+    notifications: Notification[];
+    unreadCount: number;
+    isLoading: boolean;
+    fetchNotifications: () => Promise<void>;
+    markAsRead: (id: string) => Promise<void>;
+    markAllAsRead: () => Promise<void>;
+    addNotification: (notification: Notification) => void;
+}
 
-    if (error) {
-        console.error('[Notifications] Error:', error);
-        return [];
+export const useNotificationsStore = create<NotificationsState>((set, get) => ({
+    notifications: [],
+    unreadCount: 0,
+    isLoading: false,
+
+    fetchNotifications: async () => {
+        set({ isLoading: true });
+        try {
+            const { data, error } = await supabase.rpc('get_notifications', { p_limit: 50 });
+
+            if (error) {
+                console.error('Error fetching notifications:', error);
+                return;
+            }
+
+            const notifs = data as Notification[];
+            const unreadCount = notifs.filter(n => !n.is_read).length;
+
+            set({ notifications: notifs, unreadCount, isLoading: false });
+        } catch (err) {
+            console.error('Exception fetching notifications:', err);
+            set({ isLoading: false });
+        }
+    },
+
+    markAsRead: async (id: string) => {
+        // Optimistic update
+        set(state => {
+            const newNotifs = state.notifications.map(n =>
+                n.id === id ? { ...n, is_read: true } : n
+            );
+            return {
+                notifications: newNotifs,
+                unreadCount: newNotifs.filter(n => !n.is_read).length
+            };
+        });
+
+        // Backend call
+        try {
+            await supabase.rpc('mark_notification_read', { p_notification_id: id });
+        } catch (err) {
+            console.error('Error marking notification as read:', err);
+            // Revert if needed (omitted for simplicity)
+        }
+    },
+
+    markAllAsRead: async () => {
+        // Optimistic update
+        set(state => ({
+            notifications: state.notifications.map(n => ({ ...n, is_read: true })),
+            unreadCount: 0
+        }));
+
+        try {
+            await supabase.rpc('mark_all_notifications_read');
+        } catch (err) {
+            console.error('Error marking all notifications as read:', err);
+        }
+    },
+
+    addNotification: (notification: Notification) => {
+        set(state => {
+            const newNotifs = [notification, ...state.notifications].slice(0, 50); // Keep max 50 recent
+            return {
+                notifications: newNotifs,
+                unreadCount: state.unreadCount + 1
+            };
+        });
     }
-
-    return (data || []).map((n: any) => ({
-        id: n.id,
-        userId: n.user_id,
-        title: n.title,
-        message: n.message,
-        type: n.type,
-        isRead: n.is_read,
-        link: n.link,
-        metadata: n.metadata,
-        createdAt: n.created_at
-    }));
-}
-
-/**
- * Mark notification as read
- */
-export async function markAsRead(notificationId: string): Promise<boolean> {
-    const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('id', notificationId);
-
-    return !error;
-}
-
-/**
- * Mark all notifications as read
- */
-export async function markAllAsRead(): Promise<boolean> {
-    const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('is_read', false);
-
-    return !error;
-}
-
-/**
- * Get unread count
- */
-export async function getUnreadCount(): Promise<number> {
-    const { count, error } = await supabase
-        .from('notifications')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_read', false);
-
-    if (error) return 0;
-    return count || 0;
-}
-
-/**
- * Add a new notification
- */
-export async function addNotification(userId: string, notification: {
-    title: string;
-    message: string;
-    type: Notification['type'];
-    link?: string;
-    metadata?: Record<string, any>;
-}): Promise<boolean> {
-    const { error } = await supabase
-        .from('notifications')
-        .insert([{
-            user_id: userId,
-            title: notification.title,
-            message: notification.message,
-            type: notification.type,
-            link: notification.link,
-            metadata: notification.metadata,
-            is_read: false
-        }]);
-
-    if (error) {
-        console.error('[Notifications] Error adding:', error);
-        return false;
-    }
-
-    return true;
-}
+}));
