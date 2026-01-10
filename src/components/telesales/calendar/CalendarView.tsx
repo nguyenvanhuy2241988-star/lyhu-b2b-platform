@@ -153,11 +153,12 @@ export default function CalendarView() {
                                         {format(new Date(task.next_action_at), "HH:mm")}
                                     </div>
                                     <span className={`text-[10px] px-2 py-0.5 rounded-full border uppercase font-bold
-                                        ${task.status === 'won' ? 'bg-green-50 border-green-100 text-green-700' :
-                                            task.status === 'lost' ? 'bg-red-50 border-red-100 text-red-700' :
-                                                'bg-blue-50 border-blue-100 text-blue-700'}
+                                        ${task.source_type === 'task' ? 'bg-purple-50 border-purple-100 text-purple-700' :
+                                            task.status === 'won' ? 'bg-green-50 border-green-100 text-green-700' :
+                                                task.status === 'lost' ? 'bg-red-50 border-red-100 text-red-700' :
+                                                    'bg-blue-50 border-blue-100 text-blue-700'}
                                     `}>
-                                        {task.status}
+                                        {task.source_type === 'task' ? (task.status === 'today' ? 'Hôm nay' : task.status === 'done' ? 'Xong' : task.status) : task.status}
                                     </span>
                                 </div>
                                 <h4 className="text-sm font-bold text-slate-900 mb-0.5 line-clamp-1">
@@ -165,15 +166,24 @@ export default function CalendarView() {
                                 </h4>
                                 <p className="text-xs text-slate-500 mb-2 flex items-center gap-1">
                                     <Phone className="w-3 h-3" />
-                                    {task.customer_name}
+                                    {task.customer_name || 'Khách lẻ'}
                                 </p>
                                 <div className="flex gap-2 mt-2 pt-2 border-t border-slate-100">
-                                    <Link
-                                        href={`/crm/${task.id}`}
-                                        className="flex-1 text-center text-xs bg-slate-900 text-white py-1.5 rounded hover:bg-slate-800 transition-colors"
-                                    >
-                                        Xem chi tiết
-                                    </Link>
+                                    {task.source_type === 'deal' ? (
+                                        <Link
+                                            href={`/crm/${task.id}`}
+                                            className="flex-1 text-center text-xs bg-slate-900 text-white py-1.5 rounded hover:bg-slate-800 transition-colors"
+                                        >
+                                            Xem Deal
+                                        </Link>
+                                    ) : (
+                                        <Link
+                                            href={`/telesales/tasks`}
+                                            className="flex-1 text-center text-xs bg-purple-600 text-white py-1.5 rounded hover:bg-purple-700 transition-colors"
+                                        >
+                                            Xem Task
+                                        </Link>
+                                    )}
                                     <button className="flex-1 text-center text-xs bg-white border border-slate-200 text-slate-600 py-1.5 rounded hover:bg-slate-50 font-medium">
                                         Gọi ngay
                                     </button>

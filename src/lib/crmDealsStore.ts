@@ -1611,12 +1611,17 @@ export async function fetchLostReasons(startDate: Date, endDate: Date, userId?: 
 
 export interface ScheduledTask {
     id: string;
-    name: string;
-    customer_name: string;
-    next_action_at: string;
+    source_type: 'deal' | 'task';
+    title: string;
+    customer_name?: string;
+    due_date: string;
     status: string;
-    stage: string;
+    stage?: string;
     priority: string;
+    is_overdue?: boolean;
+    // Legacy compat
+    next_action_at?: string;
+    name?: string;
 }
 
 export async function fetchScheduledTasks(startDate: Date, endDate: Date, userId?: string, token?: string): Promise<ScheduledTask[]> {
@@ -1631,7 +1636,7 @@ export async function fetchScheduledTasks(startDate: Date, endDate: Date, userId
         const headers = getHeaders(authToken);
 
         const res = await fetch(
-            `${supabaseUrl}/rest/v1/rpc/get_scheduled_tasks`,
+            `${supabaseUrl}/rest/v1/rpc/get_unified_tasks`,
             {
                 method: 'POST',
                 headers,
@@ -1644,14 +1649,20 @@ export async function fetchScheduledTasks(startDate: Date, endDate: Date, userId
         );
 
         if (!res.ok) {
-            console.error('fetchScheduledTasks error:', await res.text());
+            console.error('fetchUnifiedTasks error:', await res.text());
             return [];
         }
 
         const data = await res.json();
-        return data as ScheduledTask[];
+        // Map back to expected format if needed by component, or just use new format
+        return data.map((item: any) => ({
+            ...item,
+            // Mapping for component compatibility
+            name: item.title,
+            next_action_at: item.due_date
+        })) as ScheduledTask[];
     } catch (err) {
-        console.error('fetchScheduledTasks exception:', err);
+        console.error('fetchUnifiedTasks exception:', err);
         return [];
     }
 }
