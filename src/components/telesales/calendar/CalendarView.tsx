@@ -166,7 +166,8 @@ export default function CalendarView() {
                                 </h4>
                                 <p className="text-xs text-slate-500 mb-2 flex items-center gap-1">
                                     <Phone className="w-3 h-3" />
-                                    {task.customer_name || 'Khách lẻ'}
+                                    <span>{task.customer_name || 'Khách lẻ'}</span>
+                                    {task.phone && <span className="text-slate-400 font-normal border-l pl-1 ml-1">{task.phone}</span>}
                                 </p>
                                 <div className="flex gap-2 mt-2 pt-2 border-t border-slate-100">
                                     {task.source_type === 'deal' ? (

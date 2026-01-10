@@ -1,8 +1,12 @@
--- Migration: Unified Tasks & Realtime Leaderboard
+-- Migration: Unified Tasks & Realtime Leaderboard (Fix: DROP first to allow return type change)
 -- Date: 2026-01-13
--- Description: RPCs for merging Deal actions with Tasks, and getting live Leaderboard.
+-- Description: RPCs for merging Deal actions with Tasks.
+-- Fixes: Adds PHONE number and broadens Task permissions. Includes DROP to fix 42P13 error.
 
--- 1. Unified Tasks Function (Deals + Manual Tasks)
+-- 1. DROP old function first (required when changing return type)
+DROP FUNCTION IF EXISTS get_unified_tasks(TIMESTAMPTZ, TIMESTAMPTZ, UUID);
+
+-- 2. Unified Tasks Function (Deals + Manual Tasks)
 CREATE OR REPLACE FUNCTION get_unified_tasks(
     p_start_date TIMESTAMPTZ,
     p_end_date TIMESTAMPTZ,
@@ -13,6 +17,7 @@ RETURNS TABLE (
     source_type TEXT, -- 'deal' | 'task'
     title TEXT,
     customer_name TEXT,
+    phone TEXT, 
     due_date TIMESTAMPTZ,
     status TEXT,
     priority TEXT,
@@ -29,8 +34,9 @@ BEGIN
         'deal'::TEXT as source_type,
         d.title,
         c.name as customer_name,
+        c.phone, 
         d.next_action_at as due_date,
-        d.status, -- won/lost/etc mapped or raw
+        d.status,
         d.priority,
         (d.next_action_at < NOW() AND d.status NOT IN ('won', 'lost')) as is_overdue
     FROM crm_deals d
@@ -41,12 +47,13 @@ BEGIN
 
     UNION ALL
 
-    -- 2. From Manual Tasks
+    -- 2. From Manual Tasks (Broadened Permissions)
     SELECT 
         t.id,
         'task'::TEXT as source_type,
         t.title,
         t.customer_name,
+        t.phone, 
         t.due_date,
         t.status,
         t.priority,
@@ -54,13 +61,23 @@ BEGIN
     FROM telesales_tasks t
     WHERE t.due_date IS NOT NULL
     AND t.due_date BETWEEN p_start_date AND p_end_date
-    AND (p_user_id IS NULL OR t.user_id = p_user_id)
+    AND (
+        p_user_id IS NULL 
+        OR t.user_id = p_user_id -- Creator
+        OR t.assigned_to = p_user_id -- Legacy Assignee
+        OR t.leader_id = p_user_id -- Leader
+        OR EXISTS ( -- Check Array Assignees
+            SELECT 1 
+            FROM unnest(t.assignee_ids) as aid 
+            WHERE aid::text = p_user_id::text
+        )
+    )
     
     ORDER BY due_date ASC;
 END;
 $$;
 
--- 2. Realtime Leaderboard Function
+-- 2. Realtime Leaderboard Function (Unchanged)
 CREATE OR REPLACE FUNCTION get_realtime_leaderboard(
     p_month INT,
     p_year INT
@@ -98,7 +115,7 @@ BEGIN
         RANK() OVER (ORDER BY COALESCE(s.revenue, 0) DESC)::INT as rank
     FROM profiles p
     LEFT JOIN stats s ON p.id = s.owner_user_id
-    WHERE p.role IN ('telesales', 'sales', 'sale_admin') -- Filter pertinent roles
+    WHERE p.role IN ('telesales', 'sales', 'sale_admin')
     ORDER BY total_revenue DESC;
 END;
 $$;

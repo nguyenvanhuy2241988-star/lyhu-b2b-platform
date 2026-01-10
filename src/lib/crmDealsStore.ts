@@ -1614,6 +1614,7 @@ export interface ScheduledTask {
     source_type: 'deal' | 'task';
     title: string;
     customer_name?: string;
+    phone?: string;
     due_date: string;
     status: string;
     stage?: string;
