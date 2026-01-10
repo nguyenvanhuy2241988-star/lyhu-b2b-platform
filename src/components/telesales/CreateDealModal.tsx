@@ -105,9 +105,12 @@ export const CreateDealModal = ({
     // ... (rest of existing code) ...
 
     // Reset create/edit form
+    // Track previous open state to strict-run effect only on OPEN
+    const prevIsOpen = React.useRef(isOpen);
+
     // Reset create/edit form
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && !prevIsOpen.current) {
             setTitle(stableInitialData.title || "");
             setStage((stableInitialData.stage as DealStage) || initialStage);
             setPriority((stableInitialData.priority as DealPriority) || "normal");
@@ -130,9 +133,10 @@ export const CreateDealModal = ({
                 setActiveTab('new');
                 setSelectedCustomer(null);
             }
-
-            // ... (rest of reset logic) ...
         }
+
+        // Update ref
+        prevIsOpen.current = isOpen;
     }, [isOpen, stableInitialData, initialStage]);
 
     useEffect(() => {
