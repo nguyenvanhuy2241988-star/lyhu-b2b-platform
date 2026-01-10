@@ -11,10 +11,10 @@ import {
     DEAL_PRIORITY_LABELS,
     searchCustomers,
     createCustomer,
-    checkOpenDeals,
     checkDuplicatePhone
 } from "@/lib/crmDealsStore";
-import { PROVINCES, getDistricts } from "@/lib/locationData";
+import { PROVINCES, fetchDistricts, fetchWards, LocationOption } from "@/lib/vn-locations";
+import { Loader2 } from "lucide-react";
 
 interface CreateDealModalProps {
     isOpen: boolean;
@@ -86,20 +86,66 @@ export const CreateDealModal = ({
     // New customer fields
     const [customerName, setCustomerName] = useState("");
     const [customerPhone, setCustomerPhone] = useState("");
+
+    // Extended customer fields
+    const [customerTaxCode, setCustomerTaxCode] = useState("");
+    const [customerContactPerson, setCustomerContactPerson] = useState("");
+    const [customerEmail, setCustomerEmail] = useState("");
+    const [customerZalo, setCustomerZalo] = useState("");
+    const [customerNotes, setCustomerNotes] = useState("");
+
     // customerType state (lines 75) is for NEW customer creation.
     // For editing deal, we use dealCustomerType.
     const [customerType, setCustomerType] = useState("tap_hoa");
     const [customerAddress, setCustomerAddress] = useState("");
+    // Improved Location State
     const [customerProvince, setCustomerProvince] = useState("");
     const [customerDistrict, setCustomerDistrict] = useState("");
+    const [customerWard, setCustomerWard] = useState("");
 
-    const districts = getDistricts(customerProvince);
+    const [districts, setDistricts] = useState<LocationOption[]>([]);
+    const [wards, setWards] = useState<LocationOption[]>([]);
+    const [loadingDistricts, setLoadingDistricts] = useState(false);
+    const [loadingWards, setLoadingWards] = useState(false);
 
     const handleSelectCustomer = (customer: Customer) => {
         setSelectedCustomer(customer);
         setSearchQuery("");
         setSearchResults([]);
         if (customer.type) setDealCustomerType(customer.type);
+    };
+
+    const onProvinceChange = async (provinceCode: string, resetLower = true) => {
+        setCustomerProvince(provinceCode);
+        if (resetLower) {
+            setCustomerDistrict("");
+            setCustomerWard("");
+            setDistricts([]);
+            setWards([]);
+        }
+        if (provinceCode) {
+            setLoadingDistricts(true);
+            const data = await fetchDistricts(provinceCode);
+            setDistricts(data);
+            setLoadingDistricts(false);
+        }
+    };
+
+    const onDistrictChange = async (districtName: string, resetLower = true) => {
+        setCustomerDistrict(districtName);
+        if (resetLower) {
+            setCustomerWard("");
+            setWards([]);
+        }
+
+        // Find district code from name to fetch wards
+        const district = districts.find(d => d.value === districtName);
+        if (district) {
+            setLoadingWards(true);
+            const wData = await fetchWards(district.code);
+            setWards(wData);
+            setLoadingWards(false);
+        }
     };
 
     // ... (rest of existing code) ...
@@ -189,8 +235,16 @@ export const CreateDealModal = ({
                 phone: customerPhone.trim(),
                 type: customerType, // This goes to Customer table
                 address: customerAddress.trim() || undefined,
-                province: customerProvince ? PROVINCES.find(p => p.code === customerProvince)?.name : undefined,
-                district: customerDistrict ? districts.find(d => d.code === customerDistrict)?.name : undefined,
+                province: customerProvince ? PROVINCES.find(p => p.code === customerProvince)?.label : undefined,
+                district: customerDistrict ? districts.find(d => d.value === customerDistrict)?.label : undefined,
+                ward: customerWard ? wards.find(w => w.value === customerWard)?.label : undefined,
+
+                tax_code: customerTaxCode.trim() || undefined,
+                contact_person: customerContactPerson.trim() || undefined,
+                email: customerEmail.trim() || undefined,
+                zalo: customerZalo.trim() || undefined,
+                notes: customerNotes.trim() || undefined,
+
                 owner_user_id: userId
             } : undefined
         };
@@ -230,35 +284,91 @@ export const CreateDealModal = ({
                             {/* ... Keep New Customer Form ... */}
                             {/* Just ensure `setCustomerType` updates the new customer type logic handled in original code */}
                             <h4 className="text-sm font-medium text-blue-900 flex items-center gap-2"><User className="w-4 h-4" /> Thông tin khách hàng mới</h4>
+
                             <div className="grid grid-cols-2 gap-3">
-                                <div><label className="block text-xs font-medium text-slate-600 mb-1">Tên cửa hàng *</label><input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="VD: Tạp hóa Hương Mai" /></div>
-                                <div><label className="block text-xs font-medium text-slate-600 mb-1">SĐT *</label><input type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="0901234567" /></div>
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Tên cửa hàng *</label>
+                                    <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="VD: Tạp hóa Hương Mai" />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Mã số thuế</label>
+                                    <input type="text" value={customerTaxCode} onChange={(e) => setCustomerTaxCode(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Mã số thuế..." />
+                                </div>
                             </div>
-                            {/* ... (Province/District/Address) ... */}
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Người liên hệ</label>
+                                    <input type="text" value={customerContactPerson} onChange={(e) => setCustomerContactPerson(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Anh/Chị..." />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">SĐT *</label>
+                                    <input type="tel" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="0901234567" />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="relative">
+                                    <label className="block text-xs font-medium text-slate-600 mb-1 flex justify-between">
+                                        Zalo
+                                        <button type="button" onClick={() => customerPhone && setCustomerZalo(customerPhone)} className="text-primary-600 hover:underline text-[10px]">Copy SĐT</button>
+                                    </label>
+                                    <input type="text" value={customerZalo} onChange={(e) => setCustomerZalo(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Zalo..." />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Email</label>
+                                    <input type="email" value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="email@example.com" />
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-medium text-slate-600 mb-1">Tỉnh/Thành</label>
-                                    <select value={customerProvince} onChange={(e) => { setCustomerProvince(e.target.value); setCustomerDistrict(""); }} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                    <select value={customerProvince} onChange={(e) => onProvinceChange(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500">
                                         <option value="">-- Chọn Tỉnh --</option>
-                                        {PROVINCES.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
+                                        {PROVINCES.map(p => <option key={p.code} value={p.code}>{p.label}</option>)}
                                     </select>
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-slate-600 mb-1">Quận/Huyện</label>
-                                    <select value={customerDistrict} onChange={(e) => setCustomerDistrict(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" disabled={!customerProvince}>
-                                        <option value="">-- Chọn Quận --</option>
-                                        {districts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
-                                    </select>
+                                    <div className="relative">
+                                        <select value={customerDistrict} onChange={(e) => onDistrictChange(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-slate-100" disabled={!customerProvince || loadingDistricts}>
+                                            <option value="">-- Chọn Quận --</option>
+                                            {districts.map(d => <option key={d.code} value={d.value}>{d.label}</option>)}
+                                        </select>
+                                        {loadingDistricts && <Loader2 className="absolute right-8 top-2.5 w-4 h-4 animate-spin text-slate-400" />}
+                                    </div>
                                 </div>
                             </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Phường/Xã</label>
+                                    <div className="relative">
+                                        <select value={customerWard} onChange={(e) => setCustomerWard(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-slate-100" disabled={!customerDistrict || loadingWards}>
+                                            <option value="">-- Chọn Phường/Xã --</option>
+                                            {wards.map(w => <option key={w.code} value={w.value}>{w.label}</option>)}
+                                        </select>
+                                        {loadingWards && <Loader2 className="absolute right-8 top-2.5 w-4 h-4 animate-spin text-slate-400" />}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Địa chỉ (Số nhà/Đường)</label>
+                                    <input type="text" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Số 123..." />
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-xs font-medium text-slate-600 mb-1">Loại khách</label>
-                                    <select value={customerType} onChange={(e) => setCustomerType(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                    <select value={customerType} onChange={(e) => setCustomerType(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500">
                                         {CUSTOMER_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                                     </select>
                                 </div>
-                                <div><label className="block text-xs font-medium text-slate-600 mb-1">Địa chỉ</label><input type="text" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Số nhà, đường..." /></div>
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Ghi chú (Khách hàng)</label>
+                                    <input type="text" value={customerNotes} onChange={(e) => setCustomerNotes(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Ghi chú về khách..." />
+                                </div>
                             </div>
                         </div>
                     )}
