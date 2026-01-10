@@ -69,7 +69,7 @@ export default function DealDetailPage() {
     // Load deal and activities
     useEffect(() => {
         const loadData = async () => {
-            if (!dealId) return;
+            if (!dealId || !user) return; // Wait for user to be authenticated
             setIsLoading(true);
             try {
                 const [d, acts, items] = await Promise.all([
@@ -87,7 +87,7 @@ export default function DealDetailPage() {
             }
         };
         loadData();
-    }, [dealId]);
+    }, [dealId, user]);
 
     const handleItemsChange = async () => {
         if (!deal) return;
