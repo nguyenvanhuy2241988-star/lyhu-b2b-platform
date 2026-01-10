@@ -474,8 +474,8 @@ export const CreateDealModal = ({
                         </div>
 
                         <div>
-                            <label className="block text-xs font-medium text-slate-600 mb-1">Ghi chú</label>
-                            <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none" placeholder="Ghi chú thêm..." />
+                            <label className="block text-xs font-medium text-slate-600 mb-1">Ghi chú (Cơ hội)</label>
+                            <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none" placeholder="Ghi chú về cơ hội này..." />
                         </div>
                     </div>
                 </div>

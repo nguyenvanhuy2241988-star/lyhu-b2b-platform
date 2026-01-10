@@ -879,7 +879,7 @@ export async function fetchDeal(id: string, token?: string): Promise<CRMDeal | n
         const headers = getHeaders(token);
         const res = await fetch(
             `${SUPABASE_URL}/rest/v1/crm_deals?select=*,customer:customers(*),owner:profiles(full_name,avatar_url)&id=eq.${id}&limit=1`,
-            { headers: { ...headers, 'Accept': 'application/vnd.pgrst.object+json' } } // Single object
+            { headers } // Remove strict object header to avoid 406 on no rows
         );
 
         if (!res.ok) {
@@ -888,7 +888,9 @@ export async function fetchDeal(id: string, token?: string): Promise<CRMDeal | n
         }
 
         const data = await res.json();
-        const deal = data as any;
+        if (!data || data.length === 0) return null; // Handle empty array
+
+        const deal = data[0] as any;
         if (Array.isArray(deal.customer)) {
             deal.customer = deal.customer[0] || null;
         }
