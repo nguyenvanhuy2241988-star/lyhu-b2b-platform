@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Search, Megaphone, Calendar, Filter, X } from "lucide-react";
+import { Plus, Search, Megaphone, Calendar, Filter, X, Edit2, Trash2 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { fetchCampaigns, MarketingCampaign, createCampaign, deleteCampaign } from "@/lib/marketingStore";
+import { fetchCampaigns, MarketingCampaign, createCampaign, deleteCampaign, updateCampaign } from "@/lib/marketingStore";
 import { TableSkeleton } from "@/components/ui/SkeletonUI";
 import { toast } from "sonner";
 
@@ -14,8 +14,13 @@ export default function CampaignsPage() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // New Campaign Form State
-    const [newCampaign, setNewCampaign] = useState<Partial<MarketingCampaign>>({
+    // Search & Filter
+    const [searchTerm, setSearchTerm] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
+
+    // Form State
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [formData, setFormData] = useState<Partial<MarketingCampaign>>({
         title: "",
         status: "planning",
         channel: "",
@@ -33,19 +38,46 @@ export default function CampaignsPage() {
         if (user) loadCampaigns();
     }, [user]);
 
-    const handleCreate = async () => {
-        if (!newCampaign.title) {
+    const handleOpenCreate = () => {
+        setEditingId(null);
+        setFormData({ title: "", status: "planning", channel: "", budget: 0 });
+        setIsDialogOpen(true);
+    };
+
+    const handleOpenEdit = (campaign: MarketingCampaign) => {
+        setEditingId(campaign.id);
+        setFormData({
+            title: campaign.title,
+            status: campaign.status,
+            channel: campaign.channel || "",
+            budget: campaign.budget || 0
+        });
+        setIsDialogOpen(true);
+    };
+
+    const handleSubmit = async () => {
+        if (!formData.title) {
             toast.error("Vui lòng nhập tên chiến dịch");
             return;
         }
         setIsSubmitting(true);
-        const res = await createCampaign(newCampaign, session?.access_token);
+
+        let success = false;
+        if (editingId) {
+            success = await updateCampaign(editingId, formData, session?.access_token);
+        } else {
+            const res = await createCampaign(formData, session?.access_token);
+            success = !!res;
+        }
+
         setIsSubmitting(false);
-        // Note: Helper might return null on success due to response body settings, assuming success for now to refresh
-        toast.success("Đã xử lý yêu cầu");
-        setIsDialogOpen(false);
-        setNewCampaign({ title: "", status: "planning", channel: "", budget: 0 });
-        loadCampaigns();
+        if (success || !editingId) { // createCampaign helper might return null even on success if no return body
+            toast.success(editingId ? "Đã cập nhật chiến dịch" : "Đã tạo chiến dịch");
+            setIsDialogOpen(false);
+            loadCampaigns();
+        } else {
+            toast.error("Có lỗi xảy ra");
+        }
     };
 
     const handleDelete = async (id: string) => {
@@ -60,6 +92,13 @@ export default function CampaignsPage() {
         }
     };
 
+    // Filter Logic
+    const filteredCampaigns = campaigns.filter(c => {
+        const matchesSearch = c.title.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = statusFilter === 'all' || c.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -72,7 +111,7 @@ export default function CampaignsPage() {
                 </div>
 
                 <button
-                    onClick={() => setIsDialogOpen(true)}
+                    onClick={handleOpenCreate}
                     className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2 gap-2"
                 >
                     <Plus className="w-4 h-4" /> Tạo chiến dịch
@@ -84,18 +123,18 @@ export default function CampaignsPage() {
                 <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                         <div className="flex justify-between items-center p-6 border-b">
-                            <h3 className="text-lg font-semibold">Tạo chiến dịch mới</h3>
+                            <h3 className="text-lg font-semibold">{editingId ? "Cập nhật chiến dịch" : "Tạo chiến dịch mới"}</h3>
                             <button onClick={() => setIsDialogOpen(false)} className="text-slate-500 hover:text-slate-700">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
                         <div className="p-6 space-y-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Tên chiến dịch</label>
+                                <label className="text-sm font-medium leading-none">Tên chiến dịch</label>
                                 <input
-                                    className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    value={newCampaign.title}
-                                    onChange={(e) => setNewCampaign({ ...newCampaign, title: e.target.value })}
+                                    className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                                    value={formData.title}
+                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                     placeholder="VD: Khuyến mãi Tết 2026..."
                                 />
                             </div>
@@ -104,8 +143,8 @@ export default function CampaignsPage() {
                                     <label className="text-sm font-medium leading-none">Trạng thái</label>
                                     <select
                                         className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-                                        value={newCampaign.status}
-                                        onChange={(e) => setNewCampaign({ ...newCampaign, status: e.target.value as any })}
+                                        value={formData.status}
+                                        onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
                                     >
                                         <option value="planning">Lên kế hoạch</option>
                                         <option value="active">Đang chạy</option>
@@ -117,8 +156,8 @@ export default function CampaignsPage() {
                                     <label className="text-sm font-medium leading-none">Kênh triển khai</label>
                                     <input
                                         className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-                                        value={newCampaign.channel || ''}
-                                        onChange={(e) => setNewCampaign({ ...newCampaign, channel: e.target.value })}
+                                        value={formData.channel || ''}
+                                        onChange={(e) => setFormData({ ...formData, channel: e.target.value })}
                                         placeholder="Facebook, TikTok..."
                                     />
                                 </div>
@@ -128,8 +167,8 @@ export default function CampaignsPage() {
                                 <input
                                     type="number"
                                     className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
-                                    value={newCampaign.budget}
-                                    onChange={(e) => setNewCampaign({ ...newCampaign, budget: Number(e.target.value) })}
+                                    value={formData.budget}
+                                    onChange={(e) => setFormData({ ...formData, budget: Number(e.target.value) })}
                                 />
                             </div>
                         </div>
@@ -141,11 +180,11 @@ export default function CampaignsPage() {
                                 Hủy
                             </button>
                             <button
-                                onClick={handleCreate}
+                                onClick={handleSubmit}
                                 disabled={isSubmitting}
                                 className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2"
                             >
-                                {isSubmitting ? "Đang tạo..." : "Xác nhận tạo"}
+                                {isSubmitting ? "Đang xử lý..." : (editingId ? "Cập nhật" : "Tạo mới")}
                             </button>
                         </div>
                     </div>
@@ -158,11 +197,24 @@ export default function CampaignsPage() {
                     <input
                         className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 pl-9 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
                         placeholder="Tìm kiếm chiến dịch..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <button className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 h-10 px-4 py-2 gap-2 text-slate-600">
-                    <Filter className="w-4 h-4" /> Bộ lọc
-                </button>
+                <div className="flex items-center gap-2">
+                    <Filter className="w-4 h-4 text-slate-500" />
+                    <select
+                        className="h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                        <option value="all">Tất cả trạng thái</option>
+                        <option value="planning">Lên kế hoạch</option>
+                        <option value="active">Đang chạy</option>
+                        <option value="paused">Tạm dừng</option>
+                        <option value="completed">Đã kết thúc</option>
+                    </select>
+                </div>
             </div>
 
             {isLoading ? (
@@ -180,7 +232,7 @@ export default function CampaignsPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {campaigns.map((campaign) => (
+                            {filteredCampaigns.map((campaign) => (
                                 <tr key={campaign.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-4 font-medium text-slate-900">
                                         {campaign.title}
@@ -204,20 +256,26 @@ export default function CampaignsPage() {
                                     <td className="px-6 py-4 text-right font-medium text-slate-900">
                                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(campaign.budget || 0)}
                                     </td>
-                                    <td className="px-6 py-4 text-right">
+                                    <td className="px-6 py-4 text-right space-x-2">
                                         <button
-                                            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-slate-100 h-9 px-3 text-red-500 hover:text-red-700"
+                                            className="inline-flex items-center justify-center rounded-md p-2 hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors"
+                                            onClick={() => handleOpenEdit(campaign)}
+                                        >
+                                            <Edit2 className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            className="inline-flex items-center justify-center rounded-md p-2 hover:bg-slate-100 text-slate-500 hover:text-red-600 transition-colors"
                                             onClick={() => handleDelete(campaign.id)}
                                         >
-                                            Xóa
+                                            <Trash2 className="w-4 h-4" />
                                         </button>
                                     </td>
                                 </tr>
                             ))}
-                            {campaigns.length === 0 && (
+                            {filteredCampaigns.length === 0 && (
                                 <tr>
                                     <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
-                                        Chưa có chiến dịch nào
+                                        {searchTerm || statusFilter !== 'all' ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có chiến dịch nào'}
                                     </td>
                                 </tr>
                             )}
