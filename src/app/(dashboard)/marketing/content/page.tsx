@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Search, Calendar as CalendarIcon, List, FileText, MoreHorizontal, X, Edit2, Trash2 } from "lucide-react";
+import { Plus, Search, Calendar as CalendarIcon, List, FileText, MoreHorizontal, X, Edit2, Trash2, Filter, Megaphone } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { fetchMarketingPosts, MarketingPost, createMarketingPost, deleteMarketingPost, updateMarketingPost, fetchCampaigns, MarketingCampaign } from "@/lib/marketingStore";
 import { TableSkeleton } from "@/components/ui/SkeletonUI";
@@ -161,8 +161,8 @@ export default function ContentPage() {
                                             key={p.id}
                                             onClick={() => handleOpenEdit(p)}
                                             className={`text-[10px] px-1.5 py-1 rounded border truncate font-medium cursor-pointer ${p.platform === 'facebook' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                                    p.platform === 'tiktok' ? 'bg-slate-900 text-white border-slate-800' :
-                                                        'bg-orange-50 text-orange-700 border-orange-100'
+                                                p.platform === 'tiktok' ? 'bg-slate-900 text-white border-slate-800' :
+                                                    'bg-orange-50 text-orange-700 border-orange-100'
                                                 }`}
                                         >
                                             {p.title}
@@ -367,8 +367,8 @@ export default function ContentPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${post.platform === 'facebook' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                                post.platform === 'tiktok' ? 'bg-slate-800 text-slate-200 border-slate-700' :
-                                                    'bg-slate-100 text-slate-600 border-slate-200'
+                                            post.platform === 'tiktok' ? 'bg-slate-800 text-slate-200 border-slate-700' :
+                                                'bg-slate-100 text-slate-600 border-slate-200'
                                             }`}>
                                             {post.platform}
                                         </span>
@@ -378,8 +378,8 @@ export default function ContentPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${post.status === 'published' ? 'bg-green-100 text-green-800' :
-                                                post.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
-                                                    'bg-slate-100 text-slate-800'
+                                            post.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                                                'bg-slate-100 text-slate-800'
                                             }`}>
                                             {post.status === 'published' ? 'Đã đăng' :
                                                 post.status === 'scheduled' ? 'Đã lên lịch' : 'Bản nháp'}
