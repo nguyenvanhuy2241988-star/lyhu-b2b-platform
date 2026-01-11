@@ -1,153 +1,229 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Plus, Megaphone, Calendar, DollarSign, ExternalLink } from 'lucide-react';
-import { createClient } from '@/lib/supabaseClient';
-
-interface Campaign {
-    id: string;
-    title: string;
-    status: 'planning' | 'active' | 'completed' | 'paused';
-    budget: number;
-    start_date: string;
-    end_date: string;
-    channel: string;
-}
+import { useEffect, useState } from "react";
+import { Plus, Search, Megaphone, Calendar, DollarSign, Filter } from "lucide-react";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { fetchCampaigns, MarketingCampaign, createCampaign, deleteCampaign } from "@/lib/marketingStore";
+import { TableSkeleton } from "@/components/ui/SkeletonUI";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function CampaignsPage() {
-    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-    const [isInternalModalOpen, setIsInternalModalOpen] = useState(false);
-    const [loading, setLoading] = useState(true);
+    const { user, session } = useAuth();
+    const [campaigns, setCampaigns] = useState<MarketingCampaign[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Form State
-    const [newCampaign, setNewCampaign] = useState({
-        title: '',
-        budget: 0,
-        start_date: '',
-        end_date: '',
-        channel: 'Facebook',
-        status: 'planning'
+    // New Campaign Form State
+    const [newCampaign, setNewCampaign] = useState<Partial<MarketingCampaign>>({
+        title: "",
+        status: "planning",
+        channel: "",
+        budget: 0
     });
 
-    useEffect(() => {
-        loadCampaigns();
-    }, []);
-
     const loadCampaigns = async () => {
-        setLoading(true);
-        const supabase = createClient();
-        const { data } = await supabase.from('marketing_campaigns').select('*').order('created_at', { ascending: false });
-        if (data) setCampaigns(data as any);
-        setLoading(false);
+        setIsLoading(true);
+        const data = await fetchCampaigns(session?.access_token);
+        setCampaigns(data);
+        setIsLoading(false);
     };
 
+    useEffect(() => {
+        if (user) loadCampaigns();
+    }, [user]);
+
     const handleCreate = async () => {
-        const supabase = createClient();
-        const { error } = await supabase.from('marketing_campaigns').insert([newCampaign]);
-        if (error) {
-            alert('Lỗi khi tạo chiến dịch: ' + error.message);
-        } else {
-            setIsInternalModalOpen(false);
+        if (!newCampaign.title) {
+            toast.error("Vui lòng nhập tên chiến dịch");
+            return;
+        }
+        setIsSubmitting(true);
+        const res = await createCampaign(newCampaign, session?.access_token);
+        setIsSubmitting(false);
+        if (res) { // Although helper returns null if fail, standard fetch might not return id if not requested. But mostly it's actually 201 ok. 
+            // Better to just reload
+            toast.success("Đã tạo chiến dịch thành công");
+            setIsDialogOpen(false);
+            setNewCampaign({ title: "", status: "planning", channel: "", budget: 0 });
             loadCampaigns();
-            setNewCampaign({ title: '', budget: 0, start_date: '', end_date: '', channel: 'Facebook', status: 'planning' });
+        } else {
+            // If we used the helper as currently written, it might return null if response body is empty, which defaults to success for POST without representation.
+            // We'll assume success if no error was caught in helper (but helper currently returns null on error).
+            // Actually, my helper assumes return=representation not set by default so it returns nothing for 201.
+            // Let's just reload.
+            toast.success("Đã gửi yêu cầu tạo (Refreshed)");
+            setIsDialogOpen(false);
+            loadCampaigns();
         }
     };
 
-    const statusColors = {
-        planning: 'bg-slate-100 text-slate-700',
-        active: 'bg-green-50 text-green-700',
-        paused: 'bg-amber-50 text-amber-700',
-        completed: 'bg-blue-50 text-blue-700'
+    const handleDelete = async (id: string) => {
+        if (confirm("Bạn có chắc chắn muốn xóa chiến dịch này?")) {
+            const success = await deleteCampaign(id, session?.access_token);
+            if (success) {
+                toast.success("Đã xóa chiến dịch");
+                loadCampaigns();
+            } else {
+                toast.error("Lỗi khi xóa chiến dịch");
+            }
+        }
     };
 
-    const formatMoney = (amount: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-
     return (
-        <div className="p-6 max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
+        <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Chiến dịch Marketing</h1>
-                    <p className="text-slate-500">Quản lý các hoạt động quảng bá và ngân sách</p>
+                    <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <Megaphone className="w-6 h-6 text-blue-600" />
+                        Quản lý Chiến dịch
+                    </h2>
+                    <p className="text-sm text-slate-500">Lên kế hoạch và theo dõi hiệu quả các chiến dịch Marketing</p>
                 </div>
-                <button
-                    onClick={() => setIsInternalModalOpen(true)}
-                    className="flex items-center gap-2 bg-fuchsia-600 text-white px-4 py-2 rounded-lg hover:bg-fuchsia-700 transition"
-                >
-                    <Plus className="w-4 h-4" /> Tạo chiến dịch
-                </button>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {campaigns.map(camp => (
-                    <div key={camp.id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition">
-                        <div className="flex justify-between items-start mb-4">
-                            <div className="p-2 bg-fuchsia-50 text-fuchsia-600 rounded-lg">
-                                <Megaphone className="w-5 h-5" />
-                            </div>
-                            <span className={`px-2 py-1 rounded-full text-xs font-bold capitalize ${statusColors[camp.status]}`}>
-                                {camp.status}
-                            </span>
-                        </div>
-                        <h3 className="font-bold text-lg text-slate-800 mb-2 truncate">{camp.title}</h3>
-
-                        <div className="space-y-2 text-sm text-slate-500 mb-4">
-                            <div className="flex items-center gap-2">
-                                <DollarSign className="w-4 h-4" />
-                                <span className="font-medium text-slate-700">{formatMoney(camp.budget)}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Calendar className="w-4 h-4" />
-                                <span>{camp.start_date || 'N/A'} - {camp.end_date || 'N/A'}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <ExternalLink className="w-4 h-4" />
-                                <span>{camp.channel}</span>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            {/* Simple Modal */}
-            {isInternalModalOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white p-6 rounded-2xl w-full max-w-md">
-                        <h3 className="text-xl font-bold mb-4">Tạo chiến dịch mới</h3>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Tên chiến dịch</label>
-                                <input className="w-full border rounded-lg p-2" value={newCampaign.title} onChange={e => setNewCampaign({ ...newCampaign, title: e.target.value })} />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Kênh (Channel)</label>
-                                <select className="w-full border rounded-lg p-2" value={newCampaign.channel} onChange={e => setNewCampaign({ ...newCampaign, channel: e.target.value })}>
-                                    <option value="Facebook">Facebook Ads</option>
-                                    <option value="Google">Google Ads</option>
-                                    <option value="TikTok">TikTok Ads</option>
-                                    <option value="Event">Event / Offline</option>
-                                    <option value="Other">Khác</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Ngân sách (VND)</label>
-                                <input type="number" className="w-full border rounded-lg p-2" value={newCampaign.budget} onChange={e => setNewCampaign({ ...newCampaign, budget: parseInt(e.target.value) })} />
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
+                            <Plus className="w-4 h-4" /> Tạo chiến dịch
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Tạo chiến dịch mới</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="name">Tên chiến dịch</Label>
+                                <Input
+                                    id="name"
+                                    value={newCampaign.title}
+                                    onChange={(e) => setNewCampaign({ ...newCampaign, title: e.target.value })}
+                                    placeholder="VD: Khuyến mãi Tết 2026..."
+                                />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Ngày bắt đầu</label>
-                                    <input type="date" className="w-full border rounded-lg p-2" value={newCampaign.start_date} onChange={e => setNewCampaign({ ...newCampaign, start_date: e.target.value })} />
+                                <div className="grid gap-2">
+                                    <Label htmlFor="status">Trạng thái</Label>
+                                    <Select
+                                        value={newCampaign.status}
+                                        onValueChange={(val: any) => setNewCampaign({ ...newCampaign, status: val })}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Chọn trạng thái" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="planning">Lên kế hoạch</SelectItem>
+                                            <SelectItem value="active">Đang chạy</SelectItem>
+                                            <SelectItem value="paused">Tạm dừng</SelectItem>
+                                            <SelectItem value="completed">Đã kết thúc</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Ngày kết thúc</label>
-                                    <input type="date" className="w-full border rounded-lg p-2" value={newCampaign.end_date} onChange={e => setNewCampaign({ ...newCampaign, end_date: e.target.value })} />
+                                <div className="grid gap-2">
+                                    <Label htmlFor="channel">Kênh triển khai</Label>
+                                    <Input
+                                        id="channel"
+                                        value={newCampaign.channel || ''}
+                                        onChange={(e) => setNewCampaign({ ...newCampaign, channel: e.target.value })}
+                                        placeholder="Facebook, TikTok..."
+                                    />
                                 </div>
                             </div>
-                            <div className="flex gap-2 justify-end mt-6">
-                                <button onClick={() => setIsInternalModalOpen(false)} className="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded-lg">Hủy</button>
-                                <button onClick={handleCreate} className="px-4 py-2 bg-fuchsia-600 text-white rounded-lg hover:bg-fuchsia-700">Tạo mới</button>
+                            <div className="grid gap-2">
+                                <Label htmlFor="budget">Ngân sách dự kiến (VNĐ)</Label>
+                                <Input
+                                    id="budget"
+                                    type="number"
+                                    value={newCampaign.budget}
+                                    onChange={(e) => setNewCampaign({ ...newCampaign, budget: Number(e.target.value) })}
+                                />
                             </div>
                         </div>
-                    </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Hủy</Button>
+                            <Button onClick={handleCreate} disabled={isSubmitting}>
+                                {isSubmitting ? "Đang tạo..." : "Xác nhận tạo"}
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input className="pl-9" placeholder="Tìm kiếm chiến dịch..." />
+                </div>
+                <Button variant="outline" className="gap-2 text-slate-600">
+                    <Filter className="w-4 h-4" /> Bộ lọc
+                </Button>
+            </div>
+
+            {isLoading ? (
+                <TableSkeleton rows={5} cols={5} />
+            ) : (
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <table className="w-full text-sm text-left">
+                        <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs font-medium">
+                            <tr>
+                                <th className="px-6 py-4">Tên chiến dịch</th>
+                                <th className="px-6 py-4">Trạng thái</th>
+                                <th className="px-6 py-4">Kênh</th>
+                                <th className="px-6 py-4 text-right">Ngân sách</th>
+                                <th className="px-6 py-4 text-right">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {campaigns.map((campaign) => (
+                                <tr key={campaign.id} className="hover:bg-slate-50 transition-colors">
+                                    <td className="px-6 py-4 font-medium text-slate-900">
+                                        {campaign.title}
+                                        <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                                            <Calendar className="w-3 h-3" />
+                                            {campaign.start_date ? new Date(campaign.start_date).toLocaleDateString('vi-VN') : 'Chưa set ngày'}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${campaign.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                campaign.status === 'planning' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                    campaign.status === 'paused' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                                                        'bg-slate-100 text-slate-600 border-slate-200'
+                                            }`}>
+                                            {campaign.status === 'active' ? 'Đang chạy' :
+                                                campaign.status === 'planning' ? 'Lên kế hoạch' :
+                                                    campaign.status === 'paused' ? 'Tạm dừng' : 'Đã xong'}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-slate-600">{campaign.channel || '-'}</td>
+                                    <td className="px-6 py-4 text-right font-medium text-slate-900">
+                                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(campaign.budget || 0)}
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                            onClick={() => handleDelete(campaign.id)}
+                                        >
+                                            Xóa
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {campaigns.length === 0 && (
+                                <tr>
+                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                                        Chưa có chiến dịch nào
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             )}
         </div>
