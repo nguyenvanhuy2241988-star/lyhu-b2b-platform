@@ -91,6 +91,21 @@ export const createCampaign = async (campaign: Partial<MarketingCampaign>, token
     }
     return null; // Should not reach here
 };
+
+export const updateCampaign = async (id: string, updates: Partial<MarketingCampaign>, token?: string): Promise<boolean> => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/marketing_campaigns?id=eq.${id}`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify(updates)
+        });
+        return res.ok;
+    } catch (err) {
+        console.error("updateCampaign Exception:", err);
+        return false;
+    }
+};
 // Note: REST POST in Supabase returns 201 Created but doesn't return body by default unless Prefer: return=representation is set.
 // Standard fetch helper should handle this or we just assume success.
 // Better to use query param? or header 'Prefer': 'return=representation'
