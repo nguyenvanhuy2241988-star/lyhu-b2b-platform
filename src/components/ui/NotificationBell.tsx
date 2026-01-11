@@ -39,7 +39,7 @@ export default function NotificationBell() {
                     table: 'notifications',
                     filter: `user_id=eq.${user.id}`
                 },
-                (payload) => {
+                (payload: any) => {
                     addNotification(payload.new as Notification);
                     // Optional: Play sound or show toast
                 }
