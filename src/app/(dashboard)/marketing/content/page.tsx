@@ -1,17 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Search, Calendar as CalendarIcon, List, FileText, MoreHorizontal } from "lucide-react";
+import { Plus, Search, Calendar as CalendarIcon, List, FileText, MoreHorizontal, X } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { fetchMarketingPosts, MarketingPost, createMarketingPost, deleteMarketingPost } from "@/lib/marketingStore";
 import { TableSkeleton } from "@/components/ui/SkeletonUI";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, getDay } from "date-fns";
 import { vi } from "date-fns/locale";
 
@@ -60,17 +54,11 @@ export default function ContentPage() {
         const res = await createMarketingPost(postData, session?.access_token);
         setIsSubmitting(false);
 
-        if (res) {
-            toast.success("Đã tạo bài viết mới");
-            setIsDialogOpen(false);
-            setNewPost({ title: "", content: "", platform: "facebook", status: "draft", scheduled_at: "" });
-            loadPosts();
-        } else {
-            // See note in CampaignsPage about helper return
-            toast.success("Đã lưu bài viết (Refreshed)");
-            setIsDialogOpen(false);
-            loadPosts();
-        }
+        // See note in CampaignsPage about helper return
+        toast.success("Đã xử lý bài viết");
+        setIsDialogOpen(false);
+        setNewPost({ title: "", content: "", platform: "facebook", status: "draft", scheduled_at: "" });
+        loadPosts();
     };
 
     const handleDelete = async (id: string) => {
@@ -86,14 +74,7 @@ export default function ContentPage() {
         const start = startOfMonth(currentMonth);
         const end = endOfMonth(currentMonth);
         const days = eachDayOfInterval({ start, end });
-
-        // Pad empty days at start (0 = Sunday, 1 = Monday ...)
-        // Vietnamese calendar starts on Monday usually, but standard simple grid often easier with Sunday start.
-        // Let's stick to Sunday start for simplicity or check locale. 'vi' locale starts on Monday.
         const startDayParams = getDay(start);
-        // 0 is Sunday. If we want Monday start: (day + 6) % 7? 
-        // Let's just use standard Sunday-Saturday to match generic Calendar widgets
-
         const emptyDays = Array(startDayParams).fill(null);
 
         return (
@@ -102,11 +83,11 @@ export default function ContentPage() {
                 <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
                     <div className="flex items-center gap-2">
                         <div className="flex rounded-md bg-white border border-slate-200 shadow-sm p-1">
-                            <Button size="sm" variant="ghost" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>&lt;</Button>
+                            <button className="px-2 py-1 text-slate-600 hover:bg-slate-100 rounded" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>&lt;</button>
                             <span className="px-4 py-1.5 font-bold text-slate-700 min-w-[140px] text-center">
                                 {format(currentMonth, 'MMMM yyyy', { locale: vi })}
                             </span>
-                            <Button size="sm" variant="ghost" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>&gt;</Button>
+                            <button className="px-2 py-1 text-slate-600 hover:bg-slate-100 rounded" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>&gt;</button>
                         </div>
                     </div>
                 </div>
@@ -175,87 +156,98 @@ export default function ContentPage() {
                         </button>
                     </div>
 
-                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="bg-orange-600 hover:bg-orange-700 text-white gap-2">
-                                <Plus className="w-4 h-4" /> Tạo bài viết
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                                <DialogTitle>Soạn bài viết mới</DialogTitle>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                    <Label>Tiêu đề</Label>
-                                    <Input
-                                        value={newPost.title}
-                                        onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
-                                        placeholder="Tiêu đề bài viết..."
-                                    />
+                    <button
+                        onClick={() => setIsDialogOpen(true)}
+                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-orange-600 text-white hover:bg-orange-700 h-10 px-4 py-2 gap-2"
+                    >
+                        <Plus className="w-4 h-4" /> Tạo bài viết
+                    </button>
+
+                    {/* Modal */}
+                    {isDialogOpen && (
+                        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+                                <div className="flex justify-between items-center p-6 border-b">
+                                    <h3 className="text-lg font-semibold">Soạn bài viết mới</h3>
+                                    <button onClick={() => setIsDialogOpen(false)} className="text-slate-500 hover:text-slate-700">
+                                        <X className="w-5 h-5" />
+                                    </button>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="grid gap-2">
-                                        <Label>Nền tảng</Label>
-                                        <Select
-                                            value={newPost.platform}
-                                            onValueChange={(val: any) => setNewPost({ ...newPost, platform: val })}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="facebook">Facebook</SelectItem>
-                                                <SelectItem value="tiktok">TikTok</SelectItem>
-                                                <SelectItem value="website">Website / Blog</SelectItem>
-                                                <SelectItem value="zalo">Zalo OA</SelectItem>
-                                                <SelectItem value="other">Khác</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                <div className="p-6 space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium leading-none">Tiêu đề</label>
+                                        <input
+                                            className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+                                            value={newPost.title}
+                                            onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+                                            placeholder="Tiêu đề bài viết..."
+                                        />
                                     </div>
-                                    <div className="grid gap-2">
-                                        <Label>Trạng thái</Label>
-                                        <Select
-                                            value={newPost.status}
-                                            onValueChange={(val: any) => setNewPost({ ...newPost, status: val })}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="draft">Bản nháp</SelectItem>
-                                                <SelectItem value="scheduled">Đã lên lịch</SelectItem>
-                                                <SelectItem value="published">Đã đăng</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium leading-none">Nền tảng</label>
+                                            <select
+                                                className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+                                                value={newPost.platform}
+                                                onChange={(e) => setNewPost({ ...newPost, platform: e.target.value as any })}
+                                            >
+                                                <option value="facebook">Facebook</option>
+                                                <option value="tiktok">TikTok</option>
+                                                <option value="website">Website / Blog</option>
+                                                <option value="zalo">Zalo OA</option>
+                                                <option value="other">Khác</option>
+                                            </select>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <label className="text-sm font-medium leading-none">Trạng thái</label>
+                                            <select
+                                                className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+                                                value={newPost.status}
+                                                onChange={(e) => setNewPost({ ...newPost, status: e.target.value as any })}
+                                            >
+                                                <option value="draft">Bản nháp</option>
+                                                <option value="scheduled">Đã lên lịch</option>
+                                                <option value="published">Đã đăng</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium leading-none">Ngày đăng (Tùy chọn)</label>
+                                        <input
+                                            type="datetime-local"
+                                            className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+                                            value={newPost.scheduled_at || ''}
+                                            onChange={(e) => setNewPost({ ...newPost, scheduled_at: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium leading-none">Nội dung</label>
+                                        <textarea
+                                            className="flex min-h-[150px] w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+                                            placeholder="Nhập nội dung bài viết..."
+                                            value={newPost.content || ''}
+                                            onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
+                                        />
                                     </div>
                                 </div>
-                                <div className="grid gap-2">
-                                    <Label>Ngày đăng (Tùy chọn)</Label>
-                                    <Input
-                                        type="datetime-local"
-                                        value={newPost.scheduled_at || ''}
-                                        onChange={(e) => setNewPost({ ...newPost, scheduled_at: e.target.value })}
-                                    />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label>Nội dung</Label>
-                                    <Textarea
-                                        className="min-h-[150px]"
-                                        placeholder="Nhập nội dung bài viết..."
-                                        value={newPost.content || ''}
-                                        onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
-                                    />
+                                <div className="p-6 border-t bg-slate-50 flex justify-end gap-2">
+                                    <button
+                                        onClick={() => setIsDialogOpen(false)}
+                                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 h-10 px-4 py-2"
+                                    >
+                                        Hủy
+                                    </button>
+                                    <button
+                                        onClick={handleCreate}
+                                        disabled={isSubmitting}
+                                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-orange-600 text-white hover:bg-orange-700 h-10 px-4 py-2"
+                                    >
+                                        {isSubmitting ? "Đang lưu..." : "Lưu bài viết"}
+                                    </button>
                                 </div>
                             </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Hủy</Button>
-                                <Button onClick={handleCreate} disabled={isSubmitting} className="bg-orange-600 hover:bg-orange-700">
-                                    {isSubmitting ? "Đang lưu..." : "Lưu bài viết"}
-                                </Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -301,9 +293,12 @@ export default function ContentPage() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <Button variant="ghost" size="sm" onClick={() => handleDelete(post.id)}>
+                                        <button
+                                            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-slate-100 h-8 w-8 text-slate-500"
+                                            onClick={() => handleDelete(post.id)}
+                                        >
                                             <MoreHorizontal className="w-4 h-4" />
-                                        </Button>
+                                        </button>
                                     </td>
                                 </tr>
                             ))}

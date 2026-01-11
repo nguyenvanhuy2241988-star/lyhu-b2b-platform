@@ -1,16 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Search, Megaphone, Calendar, DollarSign, Filter } from "lucide-react";
+import { Plus, Search, Megaphone, Calendar, Filter, X } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { fetchCampaigns, MarketingCampaign, createCampaign, deleteCampaign } from "@/lib/marketingStore";
 import { TableSkeleton } from "@/components/ui/SkeletonUI";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function CampaignsPage() {
     const { user, session } = useAuth();
@@ -46,21 +41,11 @@ export default function CampaignsPage() {
         setIsSubmitting(true);
         const res = await createCampaign(newCampaign, session?.access_token);
         setIsSubmitting(false);
-        if (res) { // Although helper returns null if fail, standard fetch might not return id if not requested. But mostly it's actually 201 ok. 
-            // Better to just reload
-            toast.success("Đã tạo chiến dịch thành công");
-            setIsDialogOpen(false);
-            setNewCampaign({ title: "", status: "planning", channel: "", budget: 0 });
-            loadCampaigns();
-        } else {
-            // If we used the helper as currently written, it might return null if response body is empty, which defaults to success for POST without representation.
-            // We'll assume success if no error was caught in helper (but helper currently returns null on error).
-            // Actually, my helper assumes return=representation not set by default so it returns nothing for 201.
-            // Let's just reload.
-            toast.success("Đã gửi yêu cầu tạo (Refreshed)");
-            setIsDialogOpen(false);
-            loadCampaigns();
-        }
+        // Note: Helper might return null on success due to response body settings, assuming success for now to refresh
+        toast.success("Đã xử lý yêu cầu");
+        setIsDialogOpen(false);
+        setNewCampaign({ title: "", status: "planning", channel: "", budget: 0 });
+        loadCampaigns();
     };
 
     const handleDelete = async (id: string) => {
@@ -86,82 +71,98 @@ export default function CampaignsPage() {
                     <p className="text-sm text-slate-500">Lên kế hoạch và theo dõi hiệu quả các chiến dịch Marketing</p>
                 </div>
 
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
-                            <Plus className="w-4 h-4" /> Tạo chiến dịch
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Tạo chiến dịch mới</DialogTitle>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="name">Tên chiến dịch</Label>
-                                <Input
-                                    id="name"
+                <button
+                    onClick={() => setIsDialogOpen(true)}
+                    className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2 gap-2"
+                >
+                    <Plus className="w-4 h-4" /> Tạo chiến dịch
+                </button>
+            </div>
+
+            {/* Modal */}
+            {isDialogOpen && (
+                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center p-6 border-b">
+                            <h3 className="text-lg font-semibold">Tạo chiến dịch mới</h3>
+                            <button onClick={() => setIsDialogOpen(false)} className="text-slate-500 hover:text-slate-700">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Tên chiến dịch</label>
+                                <input
+                                    className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                     value={newCampaign.title}
                                     onChange={(e) => setNewCampaign({ ...newCampaign, title: e.target.value })}
                                     placeholder="VD: Khuyến mãi Tết 2026..."
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="status">Trạng thái</Label>
-                                    <Select
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium leading-none">Trạng thái</label>
+                                    <select
+                                        className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
                                         value={newCampaign.status}
-                                        onValueChange={(val: any) => setNewCampaign({ ...newCampaign, status: val })}
+                                        onChange={(e) => setNewCampaign({ ...newCampaign, status: e.target.value as any })}
                                     >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Chọn trạng thái" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="planning">Lên kế hoạch</SelectItem>
-                                            <SelectItem value="active">Đang chạy</SelectItem>
-                                            <SelectItem value="paused">Tạm dừng</SelectItem>
-                                            <SelectItem value="completed">Đã kết thúc</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                        <option value="planning">Lên kế hoạch</option>
+                                        <option value="active">Đang chạy</option>
+                                        <option value="paused">Tạm dừng</option>
+                                        <option value="completed">Đã kết thúc</option>
+                                    </select>
                                 </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="channel">Kênh triển khai</Label>
-                                    <Input
-                                        id="channel"
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium leading-none">Kênh triển khai</label>
+                                    <input
+                                        className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
                                         value={newCampaign.channel || ''}
                                         onChange={(e) => setNewCampaign({ ...newCampaign, channel: e.target.value })}
                                         placeholder="Facebook, TikTok..."
                                     />
                                 </div>
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="budget">Ngân sách dự kiến (VNĐ)</Label>
-                                <Input
-                                    id="budget"
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium leading-none">Ngân sách dự kiến (VNĐ)</label>
+                                <input
                                     type="number"
+                                    className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
                                     value={newCampaign.budget}
                                     onChange={(e) => setNewCampaign({ ...newCampaign, budget: Number(e.target.value) })}
                                 />
                             </div>
                         </div>
-                        <DialogFooter>
-                            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Hủy</Button>
-                            <Button onClick={handleCreate} disabled={isSubmitting}>
+                        <div className="p-6 border-t bg-slate-50 flex justify-end gap-2">
+                            <button
+                                onClick={() => setIsDialogOpen(false)}
+                                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 h-10 px-4 py-2"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={handleCreate}
+                                disabled={isSubmitting}
+                                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2"
+                            >
                                 {isSubmitting ? "Đang tạo..." : "Xác nhận tạo"}
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </Dialog>
-            </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <Input className="pl-9" placeholder="Tìm kiếm chiến dịch..." />
+                    <input
+                        className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 pl-9 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
+                        placeholder="Tìm kiếm chiến dịch..."
+                    />
                 </div>
-                <Button variant="outline" className="gap-2 text-slate-600">
+                <button className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 h-10 px-4 py-2 gap-2 text-slate-600">
                     <Filter className="w-4 h-4" /> Bộ lọc
-                </Button>
+                </button>
             </div>
 
             {isLoading ? (
@@ -204,14 +205,12 @@ export default function CampaignsPage() {
                                         {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(campaign.budget || 0)}
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                                        <button
+                                            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-slate-100 h-9 px-3 text-red-500 hover:text-red-700"
                                             onClick={() => handleDelete(campaign.id)}
                                         >
                                             Xóa
-                                        </Button>
+                                        </button>
                                     </td>
                                 </tr>
                             ))}

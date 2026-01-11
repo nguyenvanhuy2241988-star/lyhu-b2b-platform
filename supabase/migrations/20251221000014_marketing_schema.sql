@@ -23,7 +23,7 @@ end $$;
 -- Re-add constraint with 'marketing'
 alter table public.profiles
 add constraint profiles_role_check
-check (role in ('admin', 'customer', 'sales', 'ctv', 'telesales', 'recruiter', 'warehouse', 'marketing'));
+check (role in ('admin', 'customer', 'sales', 'ctv', 'telesales', 'recruiter', 'warehouse', 'marketing', 'ecommerce', 'rnd', 'shipper', 'accountant', 'sale_admin', 'livestream'));
 
 -- Create Marketing Campaigns Table
 create table if not exists public.marketing_campaigns (
