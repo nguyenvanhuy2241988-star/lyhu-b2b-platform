@@ -4,7 +4,7 @@ import { getCurrentCycle } from "./payoutCycles";
 import { getEligibleTotalForCycle } from "./payoutCycleEligibility";
 import { ROLES } from "./constants";
 import { recomputeWalletsFromSourceData } from "./walletStore";
-import { addNotification } from "./notificationsStore";
+import { useNotificationsStore } from "./notificationsStore";
 
 export type PayoutStatus = "DRAFT" | "REQUESTED" | "APPROVED" | "REJECTED" | "PAID";
 
@@ -144,7 +144,10 @@ export function approvePayoutRequest(id: string, approvedAmount?: number, note?:
     // Notify CTV
     const payout = payouts.find(p => p.id === id);
     if (payout) {
-        addNotification(payout.ctvId, {
+        useNotificationsStore.getState().addNotification({
+            id: crypto.randomUUID(),
+            created_at: new Date().toISOString(),
+            is_read: false,
             title: "Yêu cầu rút tiền được duyệt",
             message: `Yêu cầu rút ${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(approvedAmount ?? payout.requestedAmount)} đã được duyệt. Tiền sẽ sớm được chuyển.`,
             type: "success"
@@ -172,7 +175,10 @@ export function rejectPayoutRequest(id: string, note?: string): void {
     // Notify CTV
     const payout = payouts.find(p => p.id === id);
     if (payout) {
-        addNotification(payout.ctvId, {
+        useNotificationsStore.getState().addNotification({
+            id: crypto.randomUUID(),
+            created_at: new Date().toISOString(),
+            is_read: false,
             title: "Yêu cầu rút tiền bị từ chối",
             message: `Yêu cầu rút ${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(payout.requestedAmount)} bị từ chối. Lý do: ${note || "Không có"}`,
             type: "error"
@@ -241,7 +247,10 @@ export function markPaid(id: string, note?: string): void {
 
     // Notify CTV
     if (payout) {
-        addNotification(payout.ctvId, {
+        useNotificationsStore.getState().addNotification({
+            id: crypto.randomUUID(),
+            created_at: new Date().toISOString(),
+            is_read: false,
             title: "Thanh toán thành công",
             message: `Khoản thanh toán ${new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(payout.approvedAmount || payout.requestedAmount)} đã được chuyển thành công.`,
             type: "success"
