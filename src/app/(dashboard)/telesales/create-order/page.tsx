@@ -58,7 +58,7 @@ function TelesalesCreateOrderContent() {
             setIsLoading(true);
             try {
                 const [custs, prods, warehouseId] = await Promise.all([
-                    fetchCustomers(undefined, session.access_token), // Fetch ALL customers
+                    fetchCustomers(user?.id, session.access_token), // Fetch Customers filtered by User
                     loadProducts(session.access_token),
                     getDefaultWarehouseId(session.access_token)
                 ]);

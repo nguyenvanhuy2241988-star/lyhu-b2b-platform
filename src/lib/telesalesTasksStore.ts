@@ -247,6 +247,51 @@ export async function fetchTasks(userId?: string, token?: string, filters?: { st
     });
 };
 
+/**
+ * Fetches unified tasks (Deals + Manual Tasks) using RPC.
+ * This is the main source for the "Work Schedule" and "Tasks" pages.
+ */
+export async function fetchUnifiedTasks(input: {
+    userId?: string;
+    startDate: Date;
+    endDate: Date;
+}, token?: string): Promise<TelesalesTask[]> {
+    try {
+        const activeUserId = input.userId || await getUserIdSafe();
+        if (!activeUserId) return [];
+
+        const headers = await getAuthHeaders(token);
+        const { data, error } = await supabase.rpc('get_unified_tasks', {
+            p_start_date: input.startDate.toISOString(),
+            p_end_date: input.endDate.toISOString(),
+            p_user_id: activeUserId
+        });
+
+        if (error) {
+            console.error('[fetchUnifiedTasks] RPC error:', error);
+            return [];
+        }
+
+        // Map RPC result to TelesalesTask interface
+        return (data || []).map((t: any) => ({
+            id: t.id,
+            user_id: activeUserId, // RPC filters by user anyway
+            title: t.title,
+            customer_name: t.customer_name,
+            phone: t.phone,
+            due_date: t.due_date,
+            status: t.status === 'won' ? 'done' : (t.status === 'lost' ? 'done' : (t.status || 'inbox')), // Map deal status to task status roughly
+            priority: t.priority || 'normal',
+            type: t.source_type, // 'deal' or 'task'
+            is_overdue: t.is_overdue
+        })) as TelesalesTask[];
+
+    } catch (err) {
+        console.error('[fetchUnifiedTasks] exception:', err);
+        return [];
+    }
+}
+
 export async function createTaskSupabase(input: {
     title: string;
     customer_name?: string;

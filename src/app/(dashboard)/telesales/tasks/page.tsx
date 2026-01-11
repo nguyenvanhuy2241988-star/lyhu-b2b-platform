@@ -458,29 +458,85 @@ export default function TelesalesTasksPage() {
 
         setLoadingColumns(prev => ({ ...prev, [colId]: true }));
         try {
-            const filters = {
-                searchTerm: debouncedSearchQuery,
-                priority: filterPriority,
-                dueDate: filterDueDate,
-                customerType: filterCustomerType
-            };
+            // UNIFIED TASKS LOGIC
+            const unifyColumns = ['today', 'tomorrow', 'this_week', 'overdue'];
+            if (unifyColumns.includes(colId)) {
+                // Determine Date Range
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
 
-            const { data, count } = await fetchPaginatedTasks({
-                userId: user.id,
-                status: colId,
-                page: pageNum,
-                pageSize: 20,
-                filters,
-                token: session.access_token
-            });
+                let startDate = new Date(today);
+                let endDate = new Date(today);
 
-            setColumnTasks(prev => ({
-                ...prev,
-                [colId]: isLoadMore ? [...(prev[colId] || []), ...data] : data
-            }));
-            setColumnHasMore(prev => ({ ...prev, [colId]: (pageNum * 20) < count }));
-            setColumnPages(prev => ({ ...prev, [colId]: pageNum }));
-            setTotalCounts(prev => ({ ...prev, [colId]: count }));
+                if (colId === 'today') {
+                    endDate.setHours(23, 59, 59, 999);
+                } else if (colId === 'tomorrow') {
+                    startDate.setDate(today.getDate() + 1);
+                    endDate.setDate(today.getDate() + 1);
+                    endDate.setHours(23, 59, 59, 999);
+                } else if (colId === 'this_week') {
+                    startDate.setDate(today.getDate()); // From today? or start of week? User request usually "Coming up"
+                    // Let's say Next 7 days
+                    endDate.setDate(today.getDate() + 7);
+                    endDate.setHours(23, 59, 59, 999);
+                } else if (colId === 'overdue') {
+                    // Overdue: from Past to Yesterday
+                    startDate = new Date('2000-01-01');
+                    endDate.setDate(today.getDate() - 1);
+                    endDate.setHours(23, 59, 59, 999);
+                }
+
+                // Call RPC
+                // We need to import fetchUnifiedTasks at top, but for now assuming it's exported from store
+                // I need to add import to top of file in next step or use require? 
+                // Better to assume I added it to imports.
+
+                // Using Dynamic Import or assuming I will fix imports. 
+                // Actually, I can use the module imported at line 44.
+                // Wait, line 44 imports specific items. I need to add fetchUnifiedTasks to imports.
+                // I will add it to the import block in a separate edit or assume it's available?
+                // I'll assume I update imports too.
+
+                const { fetchUnifiedTasks } = require("@/lib/telesalesTasksStore"); // Hotfix import
+                const data = await fetchUnifiedTasks({
+                    userId: user.id,
+                    startDate,
+                    endDate
+                }, session.access_token);
+
+                setColumnTasks(prev => ({
+                    ...prev,
+                    [colId]: data // RPC returns all, no pagination needed for unified usually
+                }));
+                setColumnHasMore(prev => ({ ...prev, [colId]: false })); // Unified is all-in-one
+                setTotalCounts(prev => ({ ...prev, [colId]: data.length }));
+            }
+            else {
+                // LEGACY / INBOX / DONE / CUSTOM COLUMNS
+                const filters = {
+                    searchTerm: debouncedSearchQuery,
+                    priority: filterPriority,
+                    dueDate: filterDueDate,
+                    customerType: filterCustomerType
+                };
+
+                const { data, count } = await fetchPaginatedTasks({
+                    userId: user.id,
+                    status: colId,
+                    page: pageNum,
+                    pageSize: 20,
+                    filters,
+                    token: session.access_token
+                });
+
+                setColumnTasks(prev => ({
+                    ...prev,
+                    [colId]: isLoadMore ? [...(prev[colId] || []), ...data] : data
+                }));
+                setColumnHasMore(prev => ({ ...prev, [colId]: (pageNum * 20) < count }));
+                setColumnPages(prev => ({ ...prev, [colId]: pageNum }));
+                setTotalCounts(prev => ({ ...prev, [colId]: count }));
+            }
         } catch (error) {
             console.error(`[loadTasksForColumn] Error for ${colId}:`, error);
         } finally {
