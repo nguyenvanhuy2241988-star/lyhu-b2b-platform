@@ -1,4 +1,3 @@
-```typescript
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -108,7 +107,7 @@ export default function AutomationSettingsPage() {
                         </div>
                         <button
                             onClick={() => setAutoAssignEnabled(!autoAssignEnabled)}
-                            className={`flex items - center gap - 2 transition - colors ${ autoAssignEnabled ? 'text-primary-600' : 'text-slate-400' } `}
+                            className={`flex items-center gap-2 transition-colors ${autoAssignEnabled ? 'text-primary-600' : 'text-slate-400'}`}
                         >
                             {autoAssignEnabled ? (
                                 <ToggleRight className="w-10 h-10" />
@@ -135,7 +134,7 @@ export default function AutomationSettingsPage() {
                     <h2 className="font-semibold text-slate-800">Tự động hóa Email</h2>
                 </div>
                 <div className="p-6 space-y-6">
-                     <div className="flex items-start justify-between">
+                    <div className="flex items-start justify-between">
                         <div>
                             <h3 className="text-base font-medium text-slate-900">Gửi Email chào mừng (Welcome Email)</h3>
                             <p className="text-slate-500 text-sm mt-1 max-w-xl">
@@ -145,7 +144,7 @@ export default function AutomationSettingsPage() {
                         </div>
                         <button
                             onClick={() => setEmailAutomationEnabled(!emailAutomationEnabled)}
-                            className={`flex items - center gap - 2 transition - colors ${ emailAutomationEnabled ? 'text-primary-600' : 'text-slate-400' } `}
+                            className={`flex items-center gap-2 transition-colors ${emailAutomationEnabled ? 'text-primary-600' : 'text-slate-400'}`}
                         >
                             {emailAutomationEnabled ? (
                                 <ToggleRight className="w-10 h-10" />
@@ -181,7 +180,7 @@ export default function AutomationSettingsPage() {
                                                 <td className="p-3 font-medium text-slate-900">{log.recipient_email}</td>
                                                 <td className="p-3 text-slate-700">{log.subject}</td>
                                                 <td className="p-3">
-                                                    <span className={`px - 2 py - 0.5 rounded text - xs font - medium ${ log.status === 'sent' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' } `}>
+                                                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${log.status === 'sent' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                                         {log.status === 'sent' ? 'Đã gửi' : log.status}
                                                     </span>
                                                 </td>
@@ -197,4 +196,3 @@ export default function AutomationSettingsPage() {
         </div>
     );
 }
-```

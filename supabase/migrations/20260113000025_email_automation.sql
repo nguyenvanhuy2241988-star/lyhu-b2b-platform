@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS public.email_logs (
 ALTER TABLE public.email_logs ENABLE ROW LEVEL SECURITY;
 
 -- Policies: Admin/Marketing/Sales can view logs
+DROP POLICY IF EXISTS "Staff can view email logs" ON public.email_logs;
+
 CREATE POLICY "Staff can view email logs" ON public.email_logs
     FOR SELECT
     USING (
