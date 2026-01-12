@@ -33,7 +33,8 @@ export default function ContentPage() {
         platform: "facebook",
         status: "draft",
         scheduled_at: "",
-        campaign_id: ""
+        campaign_id: "",
+        tracking_url: ""
     });
 
     const loadData = async () => {
@@ -53,7 +54,7 @@ export default function ContentPage() {
 
     const handleOpenCreate = () => {
         setEditingId(null);
-        setFormData({ title: "", content: "", platform: "facebook", status: "draft", scheduled_at: "", campaign_id: "" });
+        setFormData({ title: "", content: "", platform: "facebook", status: "draft", scheduled_at: "", campaign_id: "", tracking_url: "" });
         setIsDialogOpen(true);
     };
 
@@ -65,7 +66,8 @@ export default function ContentPage() {
             platform: post.platform,
             status: post.status,
             scheduled_at: post.scheduled_at ? format(new Date(post.scheduled_at), "yyyy-MM-dd'T'HH:mm") : "",
-            campaign_id: post.campaign_id || ""
+            campaign_id: post.campaign_id || "",
+            tracking_url: post.tracking_url || ""
         });
         setIsDialogOpen(true);
     };
@@ -273,6 +275,15 @@ export default function ContentPage() {
                                         </select>
                                     </div>
                                     <div className="space-y-2">
+                                        <label className="text-sm font-medium leading-none">Link bài viết (Tracking)</label>
+                                        <input
+                                            className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
+                                            value={formData.tracking_url || ''}
+                                            onChange={(e) => setFormData({ ...formData, tracking_url: e.target.value })}
+                                            placeholder="https://facebook.com/..."
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
                                         <label className="text-sm font-medium leading-none">Ngày đăng (Tùy chọn)</label>
                                         <input
                                             type="datetime-local"
@@ -363,6 +374,11 @@ export default function ContentPage() {
                                             <div className="inline-flex items-center text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 mt-1">
                                                 <Megaphone className="w-3 h-3 mr-1" /> {post.campaign.title}
                                             </div>
+                                        )}
+                                        {post.tracking_url && (
+                                            <a href={post.tracking_url} target="_blank" rel="noopener noreferrer" className="ml-2 inline-flex items-center text-[10px] text-blue-600 hover:underline mt-1">
+                                                Link bài viết
+                                            </a>
                                         )}
                                     </td>
                                     <td className="px-6 py-4">

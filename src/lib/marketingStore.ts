@@ -42,6 +42,14 @@ export interface MarketingPost {
     scheduled_at?: string;
     campaign_id?: string;
     campaign?: MarketingCampaign;
+    tracking_url?: string;
+}
+
+export interface MarketingStats {
+    active_campaigns: number;
+    scheduled_posts: number;
+    total_posts: number;
+    budget_active: number;
 }
 
 // --- Campaigns ---
@@ -66,6 +74,36 @@ export const fetchCampaigns = async (token?: string): Promise<MarketingCampaign[
     } catch (err) {
         console.error("fetchCampaigns Exception:", err);
         return [];
+    }
+};
+
+export const fetchMarketingStats = async (token?: string): Promise<MarketingStats> => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_marketing_dashboard_stats`, {
+            method: 'POST',
+            headers
+        });
+
+        if (!res.ok) {
+            console.error("Error fetching stats:", await res.text());
+            return {
+                active_campaigns: 0,
+                scheduled_posts: 0,
+                total_posts: 0,
+                budget_active: 0
+            };
+        }
+
+        return await res.json();
+    } catch (err) {
+        console.error("fetchMarketingStats Exception:", err);
+        return {
+            active_campaigns: 0,
+            scheduled_posts: 0,
+            total_posts: 0,
+            budget_active: 0
+        };
     }
 };
 
