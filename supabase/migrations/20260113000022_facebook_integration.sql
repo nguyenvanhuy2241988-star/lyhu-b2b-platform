@@ -35,12 +35,15 @@ end $$;
 alter table public.facebook_pages enable row level security;
 
 -- 4. Policies for facebook_pages
+-- 4. Policies for facebook_pages
+drop policy if exists "Marketing can manage facebook pages" on public.facebook_pages;
+
 create policy "Marketing can manage facebook pages"
   on public.facebook_pages for all
   using (
     auth.uid() in (
       select id from public.profiles 
-      where role in ('admin', 'marketing')
+      where role in ('admin', 'marketing', 'sale_admin')
     )
   );
 

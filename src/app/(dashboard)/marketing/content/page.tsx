@@ -2,10 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { FacebookPage, fetchFacebookPages, saveFacebookPage, fetchMarketingPosts, createMarketingPost, MarketingPost, MarketingCampaign, fetchCampaigns } from "@/lib/marketingStore";
-import { Loader2, Plus, Facebook, Check, Trash2, Globe, Settings, Image as ImageIcon } from "lucide-react";
+import {
+    FacebookPage,
+    fetchFacebookPages,
+    saveFacebookPage,
+    fetchMarketingPosts,
+    createMarketingPost,
+    MarketingPost,
+    MarketingCampaign,
+    fetchCampaigns,
+    exchangeFacebookToken,
+    publishToFacebook
+} from "@/lib/marketingStore";
+import { Loader2, Plus, Facebook, Check, Trash2, Globe, Settings, Image as ImageIcon, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
-import Image from "next/image";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 
@@ -31,14 +41,11 @@ export default function MarketingContentPage() {
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Mock Connect Modal State
+    // Connect Modal State
     const [isConnectOpen, setIsConnectOpen] = useState(false);
-    const [connectForm, setConnectForm] = useState({
-        page_id: '',
-        name: '',
-        access_token: 'mock_token_' + Math.floor(Math.random() * 10000),
-        avatar_url: 'https://placehold.co/100x100?text=Page'
-    });
+    const [userToken, setUserToken] = useState("");
+    const [foundPages, setFoundPages] = useState<any[]>([]);
+    const [isConnecting, setIsConnecting] = useState(false);
 
     // Load initial data
     const loadData = async () => {
@@ -58,26 +65,42 @@ export default function MarketingContentPage() {
         if (session?.access_token) loadData();
     }, [session]);
 
-    const handleConnectMock = async () => {
-        if (!connectForm.page_id || !connectForm.name) {
-            toast.error("Vui lòng nhập ID và Tên Fanpage");
+    const handleExchangeToken = async () => {
+        if (!userToken) {
+            toast.error("Vui lòng nhập User Access Token");
             return;
         }
+        setIsConnecting(true);
+        try {
+            const pagesList = await exchangeFacebookToken(userToken);
+            setFoundPages(pagesList);
+            if (pagesList.length === 0) {
+                toast.warning("Không tìm thấy Fanpage nào (hoặc quyền chưa đủ)");
+            }
+        } catch (error: any) {
+            console.error(error);
+            toast.error("Lỗi kết nối: " + error.message);
+        } finally {
+            setIsConnecting(false);
+        }
+    };
 
+    const handleSavePage = async (page: any) => {
         const res = await saveFacebookPage({
-            ...connectForm,
-            is_connected: true,
-            category: 'Business',
-            avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(connectForm.name)}&background=1877F2&color=fff`
+            page_id: page.page_id,
+            name: page.name,
+            access_token: page.access_token,
+            category: page.category,
+            avatar_url: page.avatar_url,
+            is_connected: true
         }, session?.access_token);
 
         if (res) {
-            toast.success("Kết nối Fanpage thành công!");
-            setIsConnectOpen(false);
-            setConnectForm({ page_id: '', name: '', access_token: '', avatar_url: '' });
-            loadData();
+            toast.success(`Đã kết nối: ${page.name}`);
+            setFoundPages(prev => prev.filter(p => p.page_id !== page.page_id));
+            loadData(); // Reload list
         } else {
-            toast.error("Lỗi kết nối");
+            toast.error("Lỗi khi lưu Fanpage");
         }
     };
 
@@ -92,23 +115,59 @@ export default function MarketingContentPage() {
         }
 
         setIsSubmitting(true);
-        // Mock image if needed
-        const postToSave = {
-            ...newPost,
-            // If scheduled, status is scheduled
-            status: newPost.scheduled_at ? 'scheduled' : (newPost.status || 'draft')
-        };
 
-        const created = await createMarketingPost(postToSave, session?.access_token);
-        setIsSubmitting(false);
+        try {
+            let fbPostId = undefined;
+            let status = newPost.scheduled_at ? 'scheduled' : (newPost.status || 'draft');
 
-        if (created) {
-            toast.success(postToSave.status === 'scheduled' ? "Đã lên lịch bài đăng!" : "Đã tạo bài viết!");
-            setShowCreatePost(false);
-            setNewPost({ title: '', content: '', platform: 'facebook', status: 'draft', facebook_page_id: '', media_urls: [], campaign_id: '' });
-            loadData();
-        } else {
-            toast.error("Lỗi khi tạo bài viết");
+            // --- REAL PUBLISH LOGIC ---
+            // Only publish if status is NOT scheduled AND platform is Facebook
+            if (!newPost.scheduled_at && newPost.platform === 'facebook') {
+                const selectedPage = pages.find(p => p.id === newPost.facebook_page_id);
+                if (!selectedPage || !selectedPage.access_token) {
+                    toast.error("Fanpage không có Token hợp lệ. Vui lòng kết nối lại.");
+                    setIsSubmitting(false);
+                    return;
+                }
+
+                // Call API Publish
+                const result = await publishToFacebook(
+                    selectedPage.access_token,
+                    selectedPage.page_id,
+                    newPost.content!,
+                    newPost.media_urls?.[0]
+                );
+
+                fbPostId = result.id || result.post_id;
+                status = 'published';
+                toast.success("Đã đăng bài lên Facebook thành công!");
+            }
+
+            // Save to DB
+            const postToSave = {
+                ...newPost,
+                status: status as any,
+                fb_post_id: fbPostId
+            };
+
+            const created = await createMarketingPost(postToSave, session?.access_token);
+
+            if (created) {
+                if (status === 'scheduled') toast.success("Đã lên lịch bài đăng!");
+                else if (status === 'draft') toast.success("Đã lưu nháp!");
+
+                setShowCreatePost(false);
+                setNewPost({ title: '', content: '', platform: 'facebook', status: 'draft', facebook_page_id: '', media_urls: [], campaign_id: '' });
+                loadData();
+            } else {
+                toast.error("Lỗi khi lưu bài viết vào hệ thống");
+            }
+
+        } catch (error: any) {
+            console.error("Publish Error:", error);
+            toast.error("Lỗi đăng bài: " + error.message);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -190,8 +249,8 @@ export default function MarketingContentPage() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${post.status === 'published' ? 'bg-green-50 text-green-700 border-green-200' :
-                                                        post.status === 'scheduled' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                                                            'bg-slate-50 text-slate-600 border-slate-200'
+                                                    post.status === 'scheduled' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                                        'bg-slate-50 text-slate-600 border-slate-200'
                                                     }`}>
                                                     {post.status === 'published' ? 'Đã đăng' :
                                                         post.status === 'scheduled' ? 'Đã lên lịch' : 'Bản nháp'}
@@ -253,7 +312,7 @@ export default function MarketingContentPage() {
                                             <div className="font-semibold text-slate-900">{page.name}</div>
                                             <div className="text-xs text-slate-500 flex items-center gap-1">
                                                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                                Đang hoạt động
+                                                Đang hoạt động (Token OK)
                                             </div>
                                         </div>
                                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -269,38 +328,58 @@ export default function MarketingContentPage() {
                 </div>
             )}
 
-            {/* Mock Connect Modal */}
+            {/* Simple Connect Modal using User Token */}
             {isConnectOpen && (
                 <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden p-6 space-y-4">
-                        <h3 className="text-lg font-bold">Kết nối Fanpage (Giả lập)</h3>
-                        <div className="space-y-3">
-                            <div>
-                                <label className="text-sm font-medium">Page ID</label>
-                                <input
-                                    className="w-full border p-2 rounded text-sm"
-                                    placeholder="VD: 100088..."
-                                    value={connectForm.page_id}
-                                    onChange={e => setConnectForm({ ...connectForm, page_id: e.target.value })}
-                                />
+                        <h3 className="text-lg font-bold">Kết nối Facebook</h3>
+
+                        {!foundPages.length ? (
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="text-sm font-medium">User Access Token</label>
+                                    <p className="text-xs text-slate-500 mb-2">Lấy token từ <a href="https://developers.facebook.com/tools/explorer/" target="_blank" className="text-blue-600 underline">Graph API Explorer</a> (Quyền: pages_show_list, pages_manage_posts, pages_read_engagement)</p>
+                                    <textarea
+                                        className="w-full border p-2 rounded text-sm h-24"
+                                        placeholder="EAA..."
+                                        value={userToken}
+                                        onChange={e => setUserToken(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex justify-end gap-2 pt-2">
+                                    <button onClick={() => setIsConnectOpen(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded">Hủy</button>
+                                    <button
+                                        onClick={handleExchangeToken}
+                                        disabled={isConnecting}
+                                        className="px-4 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded disabled:opacity-50 flex items-center gap-2"
+                                    >
+                                        {isConnecting && <Loader2 className="w-4 h-4 animate-spin" />}
+                                        Lấy danh sách Page
+                                    </button>
+                                </div>
                             </div>
-                            <div>
-                                <label className="text-sm font-medium">Tên Fanpage</label>
-                                <input
-                                    className="w-full border p-2 rounded text-sm"
-                                    placeholder="VD: Lyhu Official..."
-                                    value={connectForm.name}
-                                    onChange={e => setConnectForm({ ...connectForm, name: e.target.value })}
-                                />
+                        ) : (
+                            <div className="space-y-3">
+                                <p className="text-sm font-medium text-slate-700">Tìm thấy {foundPages.length} Fanpage:</p>
+                                <div className="max-h-60 overflow-y-auto space-y-2">
+                                    {foundPages.map(page => (
+                                        <div key={page.page_id} className="flex items-center justify-between p-3 border rounded hover:bg-slate-50">
+                                            <div className="flex items-center gap-3">
+                                                <img src={page.avatar_url} className="w-8 h-8 rounded-full" alt="" />
+                                                <div className="font-medium text-sm">{page.name}</div>
+                                            </div>
+                                            <button
+                                                onClick={() => handleSavePage(page)}
+                                                className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded border border-green-200 hover:bg-green-100"
+                                            >
+                                                Kết nối
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                                <button onClick={() => setFoundPages([])} className="text-sm text-slate-500 w-full text-center hover:underline mt-2">Quay lại nhập Token</button>
                             </div>
-                            <div className="p-3 bg-blue-50 text-blue-700 text-xs rounded">
-                                * Lưu ý: Đây là giả lập vì chưa có App ID thật. Token sẽ được sinh ngẫu nhiên.
-                            </div>
-                        </div>
-                        <div className="flex justify-end gap-2 pt-4">
-                            <button onClick={() => setIsConnectOpen(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded">Hủy</button>
-                            <button onClick={handleConnectMock} className="px-4 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded">Kết nối ngay</button>
-                        </div>
+                        )}
                     </div>
                 </div>
             )}
@@ -347,7 +426,7 @@ export default function MarketingContentPage() {
                                 <label className="text-sm font-medium mb-1 block">Tiêu đề (Nội bộ)</label>
                                 <input
                                     className="w-full border border-slate-300 rounded-md p-2 text-sm"
-                                    placeholder="Nhập tiêu đề quản lý"
+                                    placeholder="Nhập tiêu đề quản lý..."
                                     value={newPost.title}
                                     onChange={e => setNewPost({ ...newPost, title: e.target.value })}
                                 />
@@ -365,15 +444,17 @@ export default function MarketingContentPage() {
 
                             {/* Image Placeholder */}
                             <div>
-                                <label className="text-sm font-medium mb-1 block">Hình ảnh / Video (Mock URL)</label>
+                                <label className="text-sm font-medium mb-1 block">Hình ảnh / Video (URL)</label>
                                 <input
                                     className="w-full border border-slate-300 rounded-md p-2 text-sm"
                                     placeholder="https://"
+                                    value={newPost.media_urls?.[0] || ''}
                                     onChange={e => {
-                                        if (e.target.value) setNewPost({ ...newPost, media_urls: [e.target.value] });
+                                        const val = e.target.value;
+                                        setNewPost({ ...newPost, media_urls: val ? [val] : [] });
                                     }}
                                 />
-                                <p className="text-xs text-slate-400 mt-1">* Phiên bản hiện tại hỗ trợ nhập URL ảnh</p>
+                                <p className="text-xs text-slate-400 mt-1">* Nhập URL ảnh public (VD: từ Imgur hoặc Supabase Storage)</p>
                             </div>
 
                             <div>
@@ -391,8 +472,9 @@ export default function MarketingContentPage() {
                             <button
                                 onClick={handleCreatePost}
                                 disabled={isSubmitting}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50"
+                                className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
                             >
+                                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                                 {isSubmitting ? "Đang xử lý..." : (newPost.scheduled_at ? "Lên lịch đăng" : "Đăng ngay")}
                             </button>
                         </div>

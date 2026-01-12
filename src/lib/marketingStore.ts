@@ -236,6 +236,45 @@ export const saveFacebookPage = async (page: Partial<FacebookPage>, token: strin
     }
 };
 
+// --- Real API Calls ---
+
+export const exchangeFacebookToken = async (shortToken: string) => {
+    try {
+        const res = await fetch('/api/facebook/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ short_token: shortToken })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        return data.pages; // List of pages with tokens
+    } catch (err) {
+        console.error("exchangeFacebookToken error:", err);
+        throw err;
+    }
+};
+
+export const publishToFacebook = async (pageToken: string, pageId: string, message: string, imageUrl?: string) => {
+    try {
+        const res = await fetch('/api/facebook/publish', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                page_token: pageToken,
+                page_id: pageId,
+                message,
+                image_url: imageUrl
+            })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        return data; // { id: "..." }
+    } catch (err) {
+        console.error("publishToFacebook error:", err);
+        throw err;
+    }
+};
+
 export const createCampaign = async (campaign: Partial<MarketingCampaign>, token?: string): Promise<MarketingCampaign | null> => {
     try {
         const headers = getHeaders(token);
