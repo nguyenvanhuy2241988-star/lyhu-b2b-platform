@@ -12,7 +12,8 @@ import {
     MarketingCampaign,
     fetchCampaigns,
     exchangeFacebookToken,
-    publishToFacebook
+    publishToFacebook,
+    updateMarketingPost
 } from "@/lib/marketingStore";
 import { Loader2, Plus, Facebook, Check, Trash2, Globe, Settings, Image as ImageIcon, Link as LinkIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -104,6 +105,16 @@ export default function MarketingContentPage() {
         }
     };
 
+    const handleEditPost = (post: MarketingPost) => {
+        setNewPost({
+            ...post,
+            facebook_page_id: post.facebook_page_id || '',
+            campaign_id: post.campaign_id || '',
+            media_urls: post.media_urls || []
+        });
+        setShowCreatePost(true);
+    };
+
     const handleCreatePost = async () => {
         if (!newPost.title || !newPost.content) {
             toast.error("Vui lòng nhập tiêu đề và nội dung");
@@ -150,17 +161,31 @@ export default function MarketingContentPage() {
                 fb_post_id: fbPostId
             };
 
-            const created = await createMarketingPost(postToSave, session?.access_token);
-
-            if (created) {
-                if (status === 'scheduled') toast.success("Đã lên lịch bài đăng!");
-                else if (status === 'draft') toast.success("Đã lưu nháp!");
-
-                setShowCreatePost(false);
-                setNewPost({ title: '', content: '', platform: 'facebook', status: 'draft', facebook_page_id: '', media_urls: [], campaign_id: '' });
-                loadData();
+            if (newPost.id) {
+                // Update
+                const updated = await updateMarketingPost(newPost.id, postToSave, session?.access_token);
+                if (updated) {
+                    if (status === 'scheduled') toast.success("Đã cập nhật lịch đăng!");
+                    else toast.success("Đã cập nhật bài viết!");
+                    setShowCreatePost(false);
+                    setNewPost({ title: '', content: '', platform: 'facebook', status: 'draft', facebook_page_id: '', media_urls: [], campaign_id: '' });
+                    loadData();
+                } else {
+                    toast.error("Lỗi khi cập nhật bài viết");
+                }
             } else {
-                toast.error("Lỗi khi lưu bài viết vào hệ thống");
+                // Create
+                const created = await createMarketingPost(postToSave, session?.access_token);
+                if (created) {
+                    if (status === 'scheduled') toast.success("Đã lên lịch bài đăng!");
+                    else if (status === 'draft') toast.success("Đã lưu nháp!");
+
+                    setShowCreatePost(false);
+                    setNewPost({ title: '', content: '', platform: 'facebook', status: 'draft', facebook_page_id: '', media_urls: [], campaign_id: '' });
+                    loadData();
+                } else {
+                    toast.error("Lỗi khi lưu bài viết vào hệ thống");
+                }
             }
 
         } catch (error: any) {
@@ -229,7 +254,11 @@ export default function MarketingContentPage() {
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {posts.map(post => (
-                                        <tr key={post.id} className="hover:bg-slate-50">
+                                        <tr
+                                            key={post.id}
+                                            className="hover:bg-slate-50 cursor-pointer"
+                                            onClick={() => handleEditPost(post)}
+                                        >
                                             <td className="px-6 py-4">
                                                 <div className="font-medium text-slate-900 line-clamp-1">{post.title}</div>
                                                 <div className="text-xs text-slate-500 mt-1 line-clamp-2">{post.content}</div>
@@ -389,7 +418,7 @@ export default function MarketingContentPage() {
                 <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
                         <div className="flex justify-between items-center p-6 border-b">
-                            <h3 className="text-lg font-semibold">Tạo bài viết mới</h3>
+                            <h3 className="text-lg font-semibold">{newPost.id ? 'Chỉnh sửa bài viết' : 'Tạo bài viết mới'}</h3>
                             <button onClick={() => setShowCreatePost(false)} className="text-slate-500 hover:text-slate-700">
                                 <Plus className="w-5 h-5 rotate-45" />
                             </button>
