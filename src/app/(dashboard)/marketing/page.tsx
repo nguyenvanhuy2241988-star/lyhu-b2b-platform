@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Megaphone, FileText, Calendar, TrendingUp } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { StatsSkeleton } from "@/components/ui/SkeletonUI";
-import { fetchMarketingStats } from "@/lib/marketingStore";
+import { fetchMarketingStats, fetchCampaignPerformance, CampaignPerformance } from "@/lib/marketingStore";
 
 export default function MarketingDashboard() {
     const { user, session, isLoading: authIsLoading } = useAuth();
@@ -14,6 +14,7 @@ export default function MarketingDashboard() {
         totalPosts: 0,
         budgetUsed: 0
     });
+    const [performance, setPerformance] = useState<CampaignPerformance[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -22,13 +23,19 @@ export default function MarketingDashboard() {
             setIsLoading(true);
             try {
                 // Fetch stats from Supabase
-                const data = await fetchMarketingStats(session.access_token);
+                const [statData, perfData] = await Promise.all([
+                    fetchMarketingStats(session.access_token),
+                    fetchCampaignPerformance(session.access_token)
+                ]);
+
                 setStats({
-                    activeCampaigns: data.active_campaigns,
-                    scheduledPosts: data.scheduled_posts,
-                    totalPosts: data.total_posts,
-                    budgetUsed: data.budget_active
+                    activeCampaigns: statData.active_campaigns,
+                    scheduledPosts: statData.scheduled_posts,
+                    totalPosts: statData.total_posts,
+                    budgetUsed: statData.budget_active
                 });
+                setPerformance(perfData);
+
             } catch (error) {
                 console.error("Error fetching marketing stats:", error);
             } finally {
@@ -111,15 +118,56 @@ export default function MarketingDashboard() {
                 })}
             </div>
 
-            <div className="bg-white p-8 rounded-xl border border-slate-200 text-center py-20">
-                <div className="mx-auto w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                    <Megaphone className="w-8 h-8 text-slate-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">Chào mừng đến với Marketing Dashboard</h3>
-                <p className="text-slate-500 max-w-md mx-auto">
-                    Bắt đầu bằng cách tạo Chiến dịch mới hoặc lên lịch đăng bài truyền thông.
-                </p>
-            </div>
         </div>
+
+            {/* Campaign Performance Report */ }
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+            <div>
+                <h3 className="text-lg font-bold text-slate-800">Hiệu quả Chiến dịch</h3>
+                <p className="text-sm text-slate-500">Top 10 chiến dịch mang về nhiều khách hàng nhất</p>
+            </div>
+            {/* Placeholder for future date filter */}
+        </div>
+        <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+                <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b">
+                    <tr>
+                        <th className="px-6 py-3 font-medium">Chiến dịch</th>
+                        <th className="px-6 py-3 font-medium text-center">Trạng thái</th>
+                        <th className="px-6 py-3 font-medium text-right">Số Lead</th>
+                        <th className="px-6 py-3 font-medium text-right">Doanh thu dự kiến</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                    {performance.length > 0 ? (
+                        performance.map((camp) => (
+                            <tr key={camp.campaign_id} className="hover:bg-slate-50 transition-colors">
+                                <td className="px-6 py-4 font-medium text-slate-900">{camp.title}</td>
+                                <td className="px-6 py-4 text-center">
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${camp.status === 'active' ? 'bg-green-100 text-green-800' :
+                                        camp.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'
+                                        }`}>
+                                        {camp.status === 'active' ? 'Đang chạy' : camp.status === 'completed' ? 'Hoàn thành' : camp.status}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 text-right font-semibold text-slate-900">{camp.lead_count}</td>
+                                <td className="px-6 py-4 text-right text-slate-600">
+                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(camp.revenue)}
+                                </td>
+                            </tr>
+                        ))
+                    ) : (
+                        <tr>
+                            <td colSpan={4} className="px-6 py-8 text-center text-slate-500 italic">
+                                Chưa có dữ liệu hiệu quả chiến dịch.
+                            </td>
+                        </tr>
+                    )}
+                </tbody>
+            </table>
+        </div>
+    </div>
+        </div >
     );
 }

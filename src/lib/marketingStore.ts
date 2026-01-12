@@ -107,6 +107,36 @@ export const fetchMarketingStats = async (token?: string): Promise<MarketingStat
     }
 };
 
+};
+
+export interface CampaignPerformance {
+    campaign_id: string;
+    title: string;
+    status: CampaignStatus;
+    lead_count: number;
+    revenue: number;
+}
+
+export const fetchCampaignPerformance = async (token?: string): Promise<CampaignPerformance[]> => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_campaign_performance_stats`, {
+            method: 'POST',
+            headers
+        });
+
+        if (!res.ok) {
+            console.error("Error fetching campaign performance:", await res.text());
+            return [];
+        }
+
+        return await res.json();
+    } catch (err) {
+        console.error("fetchCampaignPerformance Exception:", err);
+        return [];
+    }
+};
+
 export const createCampaign = async (campaign: Partial<MarketingCampaign>, token?: string): Promise<MarketingCampaign | null> => {
     try {
         const headers = getHeaders(token);
