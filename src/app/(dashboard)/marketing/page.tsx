@@ -23,7 +23,12 @@ export default function MarketingDashboard() {
             try {
                 // Fetch stats from Supabase
                 const data = await fetchMarketingStats(session.access_token);
-                setStats(data);
+                setStats({
+                    activeCampaigns: data.active_campaigns,
+                    scheduledPosts: data.scheduled_posts,
+                    totalPosts: data.total_posts,
+                    budgetUsed: data.budget_active
+                });
             } catch (error) {
                 console.error("Error fetching marketing stats:", error);
             } finally {
