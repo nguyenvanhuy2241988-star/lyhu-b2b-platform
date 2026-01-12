@@ -162,8 +162,8 @@ export const fetchCampaignLeads = async (token: string | undefined, campaignId: 
         // source_detail stores "campaign:UUID". We search for it.
         // We also join with crm_leads or deals. Assuming crm_deals based on previous context.
         // We select key fields + owner name if possible. Avoiding complex joins for now.
-
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/crm_deals?select=id,title,customer_name:customer(name),phone:customer(phone),stage,created_at,expected_value,owner:profiles(full_name)&source_detail=ilike.campaign:${campaignId}*&order=created_at.desc`, {
+        // FIX: relation is 'customers', aliased as 'customer'
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/crm_deals?select=id,title,customer:customers(name,phone),stage,created_at,expected_value,owner:profiles(full_name)&source_detail=ilike.campaign:${campaignId}*&order=created_at.desc`, {
             headers
         });
 
@@ -173,8 +173,8 @@ export const fetchCampaignLeads = async (token: string | undefined, campaignId: 
         return data.map((d: any) => ({
             id: d.id,
             title: d.title,
-            customer_name: d.customer_name?.name || 'Khách lẻ',
-            phone: d.phone?.phone || '',
+            customer_name: d.customer?.name || 'Khách lẻ',
+            phone: d.customer?.phone || '',
             stage: d.stage,
             created_at: d.created_at,
             owner_name: d.owner?.full_name,
