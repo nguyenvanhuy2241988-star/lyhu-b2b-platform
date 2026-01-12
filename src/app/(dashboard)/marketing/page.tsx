@@ -179,9 +179,9 @@ export default function MarketingDashboard() {
                                             <td className="px-6 py-4 font-medium text-slate-900">
                                                 {/* Drill-down Link */}
                                                 <Link
-                                                    href={`/telesales/customers?source=marketing&campaign=${encodeURIComponent(camp.title)}`}
+                                                    href={`/marketing/leads?campaign_id=${camp.campaign_id}&campaign_name=${encodeURIComponent(camp.title)}`}
                                                     className="text-blue-600 hover:underline hover:text-blue-800 cursor-pointer block"
-                                                    title="Xem danh sách khách hàng từ chiến dịch này"
+                                                    title="Xem toàn bộ khách hàng từ chiến dịch này"
                                                 >
                                                     {camp.title}
                                                 </Link>

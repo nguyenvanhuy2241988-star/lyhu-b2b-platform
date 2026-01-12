@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Search, Megaphone, Calendar, Filter, X, Edit2, Trash2 } from "lucide-react";
+import Link from 'next/link';
 import { useAuth } from "@/components/auth/AuthProvider";
 import { fetchCampaigns, MarketingCampaign, createCampaign, deleteCampaign, updateCampaign } from "@/lib/marketingStore";
 import { TableSkeleton } from "@/components/ui/SkeletonUI";
@@ -235,7 +236,13 @@ export default function CampaignsPage() {
                             {filteredCampaigns.map((campaign) => (
                                 <tr key={campaign.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-6 py-4 font-medium text-slate-900">
-                                        {campaign.title}
+                                        <Link
+                                            href={`/marketing/leads?campaign_id=${campaign.id}&campaign_name=${encodeURIComponent(campaign.title)}`}
+                                            className="hover:text-blue-600 hover:underline block"
+                                            title="Xem danh sách khách hàng"
+                                        >
+                                            {campaign.title}
+                                        </Link>
                                         <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
                                             <Calendar className="w-3 h-3" />
                                             {campaign.start_date ? new Date(campaign.start_date).toLocaleDateString('vi-VN') : 'Chưa set ngày'}
@@ -243,9 +250,9 @@ export default function CampaignsPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${campaign.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' :
-                                                campaign.status === 'planning' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                                    campaign.status === 'paused' ? 'bg-orange-50 text-orange-700 border-orange-200' :
-                                                        'bg-slate-100 text-slate-600 border-slate-200'
+                                            campaign.status === 'planning' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                                campaign.status === 'paused' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                                                    'bg-slate-100 text-slate-600 border-slate-200'
                                             }`}>
                                             {campaign.status === 'active' ? 'Đang chạy' :
                                                 campaign.status === 'planning' ? 'Lên kế hoạch' :

@@ -131,13 +131,57 @@ export const fetchCampaignPerformance = async (token?: string, startDate?: Date 
         });
 
         if (!res.ok) {
-            console.error("Error fetching campaign performance:", await res.text());
+            const txt = await res.text();
+            // Handle RPC overload error gracefully or parse error
+            console.error("fetchCampaignPerformance Error:", txt);
             return [];
         }
 
-        return await res.json();
+        const data = await res.json();
+        return data as CampaignPerformance[];
     } catch (err) {
         console.error("fetchCampaignPerformance Exception:", err);
+        return [];
+    }
+};
+
+export interface MarketingLead {
+    id: string;
+    title: string;
+    customer_name: string;
+    phone: string;
+    stage: string;
+    created_at: string;
+    owner_name?: string;
+    expected_value?: number;
+}
+
+export const fetchCampaignLeads = async (token: string | undefined, campaignId: string): Promise<MarketingLead[]> => {
+    try {
+        const headers = getHeaders(token);
+        // source_detail stores "campaign:UUID". We search for it.
+        // We also join with crm_leads or deals. Assuming crm_deals based on previous context.
+        // We select key fields + owner name if possible. Avoiding complex joins for now.
+
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/crm_deals?select=id,title,customer_name:customer(name),phone:customer(phone),stage,created_at,expected_value,owner:profiles(full_name)&source_detail=ilike.campaign:${campaignId}*&order=created_at.desc`, {
+            headers
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+
+        const data = await res.json();
+        return data.map((d: any) => ({
+            id: d.id,
+            title: d.title,
+            customer_name: d.customer_name?.name || 'Khách lẻ',
+            phone: d.phone?.phone || '',
+            stage: d.stage,
+            created_at: d.created_at,
+            owner_name: d.owner?.full_name,
+            expected_value: d.expected_value
+        }));
+    } catch (err) {
+        console.error("fetchCampaignLeads error:", err);
         return [];
     }
 };
