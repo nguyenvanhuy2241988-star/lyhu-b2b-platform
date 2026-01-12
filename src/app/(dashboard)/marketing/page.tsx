@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Megaphone, FileText, Calendar, TrendingUp } from "lucide-react";
+import Link from 'next/link';
 import { useAuth } from "@/components/auth/AuthProvider";
 import { StatsSkeleton } from "@/components/ui/SkeletonUI";
 import { fetchMarketingStats, fetchCampaignPerformance, CampaignPerformance } from "@/lib/marketingStore";
@@ -177,17 +178,17 @@ export default function MarketingDashboard() {
                                         <tr key={camp.campaign_id} className="hover:bg-slate-50 transition-colors">
                                             <td className="px-6 py-4 font-medium text-slate-900">
                                                 {/* Drill-down Link */}
-                                                <a
-                                                    href={`/telesales/customers?source=marketing&campaign=${camp.title}`}
-                                                    className="text-blue-600 hover:underline hover:text-blue-800"
+                                                <Link
+                                                    href={`/telesales/customers?source=marketing&campaign=${encodeURIComponent(camp.title)}`}
+                                                    className="text-blue-600 hover:underline hover:text-blue-800 cursor-pointer block"
                                                     title="Xem danh sách khách hàng từ chiến dịch này"
                                                 >
                                                     {camp.title}
-                                                </a>
+                                                </Link>
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${camp.status === 'active' ? 'bg-green-100 text-green-800' :
-                                                        camp.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'
+                                                    camp.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'
                                                     }`}>
                                                     {camp.status === 'active' ? 'Đang chạy' : camp.status === 'completed' ? 'Hoàn thành' : camp.status}
                                                 </span>
