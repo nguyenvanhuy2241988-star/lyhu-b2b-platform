@@ -43,6 +43,11 @@ export interface MarketingPost {
     campaign_id?: string;
     campaign?: MarketingCampaign;
     tracking_url?: string;
+    // New Facebook Fields
+    facebook_page_id?: string;
+    facebook_page?: { name: string; avatar_url: string; }; // Joined
+    media_urls?: string[];
+    fb_post_id?: string;
 }
 
 export interface MarketingStats {
@@ -290,9 +295,9 @@ export const deleteCampaign = async (id: string, token?: string): Promise<boolea
 export const fetchMarketingPosts = async (token?: string): Promise<MarketingPost[]> => {
     try {
         const headers = getHeaders(token);
-        // Join with campaigns to get campaign title if needed
+        // Join with campaigns AND facebook_pages
         const params = new URLSearchParams({
-            select: '*, campaign:marketing_campaigns(*)',
+            select: '*, campaign:marketing_campaigns(*), facebook_page:facebook_pages(name,avatar_url)',
             order: 'scheduled_at.asc'
         });
         const res = await fetch(`${SUPABASE_URL}/rest/v1/marketing_posts?${params.toString()}`, {
