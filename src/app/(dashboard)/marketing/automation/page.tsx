@@ -1,23 +1,28 @@
+```typescript
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { AppSettings, fetchAppSettings, updateAppSettings } from "@/lib/settingsStore";
+import { AppSettings, fetchAppSettings, updateAppSettings, fetchEmailLogs, EmailLog } from "@/lib/settingsStore";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { Loader2, Save, ToggleLeft, ToggleRight, Settings, Share2, Zap } from "lucide-react";
+import { Loader2, Save, ToggleLeft, ToggleRight, Settings, Share2, Zap, Mail, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { format } from "date-fns";
 
 export default function AutomationSettingsPage() {
     const { session } = useAuth();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [settings, setSettings] = useState<AppSettings | null>(null);
+    const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]);
 
     // Automation States
     const [autoAssignEnabled, setAutoAssignEnabled] = useState(false);
+    const [emailAutomationEnabled, setEmailAutomationEnabled] = useState(false);
 
     useEffect(() => {
         if (session?.access_token) {
             loadSettings();
+            loadEmailLogs();
         }
     }, [session]);
 
@@ -27,8 +32,14 @@ export default function AutomationSettingsPage() {
         if (data) {
             setSettings(data);
             setAutoAssignEnabled(data.automation_config?.auto_assign_leads || false);
+            setEmailAutomationEnabled(data.automation_config?.email_automation_enabled || false);
         }
         setLoading(false);
+    };
+
+    const loadEmailLogs = async () => {
+        const logs = await fetchEmailLogs(session?.access_token);
+        setEmailLogs(logs);
     };
 
     const handleSave = async () => {
@@ -37,7 +48,8 @@ export default function AutomationSettingsPage() {
 
         const updatedConfig = {
             ...settings.automation_config,
-            auto_assign_leads: autoAssignEnabled
+            auto_assign_leads: autoAssignEnabled,
+            email_automation_enabled: emailAutomationEnabled
         };
 
         const success = await updateAppSettings(settings.id, {
@@ -96,7 +108,7 @@ export default function AutomationSettingsPage() {
                         </div>
                         <button
                             onClick={() => setAutoAssignEnabled(!autoAssignEnabled)}
-                            className={`flex items-center gap-2 transition-colors ${autoAssignEnabled ? 'text-primary-600' : 'text-slate-400'}`}
+                            className={`flex items - center gap - 2 transition - colors ${ autoAssignEnabled ? 'text-primary-600' : 'text-slate-400' } `}
                         >
                             {autoAssignEnabled ? (
                                 <ToggleRight className="w-10 h-10" />
@@ -116,16 +128,73 @@ export default function AutomationSettingsPage() {
                 </div>
             </div>
 
-            {/* Email Automation Placeholder */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden opacity-60">
+            {/* Email Automation Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="p-4 border-b bg-slate-50 flex items-center gap-2">
-                    <Settings className="w-5 h-5 text-slate-600" />
-                    <h2 className="font-semibold text-slate-800">Tự động hóa Email (Sắp ra mắt)</h2>
+                    <Mail className="w-5 h-5 text-indigo-600" />
+                    <h2 className="font-semibold text-slate-800">Tự động hóa Email</h2>
                 </div>
-                <div className="p-6">
-                    <p className="text-slate-500 text-sm">Tính năng gửi email chào mừng và chăm sóc tự động đang được phát triển.</p>
+                <div className="p-6 space-y-6">
+                     <div className="flex items-start justify-between">
+                        <div>
+                            <h3 className="text-base font-medium text-slate-900">Gửi Email chào mừng (Welcome Email)</h3>
+                            <p className="text-slate-500 text-sm mt-1 max-w-xl">
+                                Tự động gửi email xác nhận ngay khi có Khách hàng/Lead mới được tạo.
+                                (Hiện tại đang chạy ở chế độ <b>Giả lập Log</b> để kiểm tra).
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setEmailAutomationEnabled(!emailAutomationEnabled)}
+                            className={`flex items - center gap - 2 transition - colors ${ emailAutomationEnabled ? 'text-primary-600' : 'text-slate-400' } `}
+                        >
+                            {emailAutomationEnabled ? (
+                                <ToggleRight className="w-10 h-10" />
+                            ) : (
+                                <ToggleLeft className="w-10 h-10" />
+                            )}
+                        </button>
+                    </div>
+
+                    {/* Logs Table */}
+                    {emailLogs.length > 0 && (
+                        <div className="mt-4">
+                            <div className="flex items-center justify-between mb-3 bg-slate-100 p-2 rounded">
+                                <h4 className="text-sm font-semibold text-slate-700">Lịch sử gửi gần đây (Logs)</h4>
+                                <button onClick={loadEmailLogs} className="p-1 hover:bg-slate-200 rounded text-slate-600"><RefreshCw className="w-4 h-4" /></button>
+                            </div>
+                            <div className="overflow-x-auto border rounded-lg">
+                                <table className="w-full text-left text-sm">
+                                    <thead className="bg-slate-50 border-b font-medium text-slate-600">
+                                        <tr>
+                                            <th className="p-3">Thời gian</th>
+                                            <th className="p-3">Người nhận</th>
+                                            <th className="p-3">Tiêu đề</th>
+                                            <th className="p-3">Trạng thái</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y">
+                                        {emailLogs.map((log) => (
+                                            <tr key={log.id} className="hover:bg-slate-50">
+                                                <td className="p-3 text-slate-500 whitespace-nowrap">
+                                                    {format(new Date(log.created_at), 'dd/MM HH:mm')}
+                                                </td>
+                                                <td className="p-3 font-medium text-slate-900">{log.recipient_email}</td>
+                                                <td className="p-3 text-slate-700">{log.subject}</td>
+                                                <td className="p-3">
+                                                    <span className={`px - 2 py - 0.5 rounded text - xs font - medium ${ log.status === 'sent' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' } `}>
+                                                        {log.status === 'sent' ? 'Đã gửi' : log.status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 }
+```

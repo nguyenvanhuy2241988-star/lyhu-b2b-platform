@@ -22,8 +22,19 @@ export interface AppSettings {
     bank_info: any[];
     automation_config: {
         auto_assign_leads: boolean;
+        email_automation_enabled: boolean;
         // Future: distribution_rules, excluded_sources, etc.
     };
+}
+
+export interface EmailLog {
+    id: string;
+    created_at: string;
+    recipient_email: string;
+    subject: string;
+    body_html: string;
+    status: string;
+    trigger_source: string;
 }
 
 export const fetchAppSettings = async (token?: string): Promise<AppSettings | null> => {
@@ -43,6 +54,17 @@ export const fetchAppSettings = async (token?: string): Promise<AppSettings | nu
         return null;
     }
 };
+
+export const fetchEmailLogs = async (token?: string): Promise<EmailLog[]> => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/email_logs?select=*&order=created_at.desc&limit=20`, { headers });
+        if (!res.ok) return [];
+        return await res.json();
+    } catch (err) {
+        return [];
+    }
+}
 
 export const updateAppSettings = async (id: string, updates: Partial<AppSettings>, token?: string): Promise<boolean> => {
     try {
