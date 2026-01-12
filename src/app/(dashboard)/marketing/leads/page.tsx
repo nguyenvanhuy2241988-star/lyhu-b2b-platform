@@ -21,6 +21,8 @@ export default function MarketingLeadsPage() {
 
     // Modals
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [leads, setLeads] = useState<MarketingLead[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const loadLeads = async () => {
