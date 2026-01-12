@@ -1,434 +1,191 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Search, Calendar as CalendarIcon, List, FileText, MoreHorizontal, X, Edit2, Trash2, Filter, Megaphone } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { fetchMarketingPosts, MarketingPost, createMarketingPost, deleteMarketingPost, updateMarketingPost, fetchCampaigns, MarketingCampaign } from "@/lib/marketingStore";
-import { TableSkeleton } from "@/components/ui/SkeletonUI";
+import { FacebookPage, fetchFacebookPages, saveFacebookPage } from "@/lib/marketingStore";
+import { Loader2, Plus, Facebook, Check, Trash2, Globe, Settings, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, getDay, parseISO } from "date-fns";
-import { vi } from "date-fns/locale";
+import Image from "next/image";
 
-export default function ContentPage() {
-    const { user, session } = useAuth();
-    const [posts, setPosts] = useState<MarketingPost[]>([]);
-    const [campaigns, setCampaigns] = useState<MarketingCampaign[]>([]);
+export default function MarketingContentPage() {
+    const { session } = useAuth();
+    const [activeTab, setActiveTab] = useState<'posts' | 'settings'>('posts');
+    const [pages, setPages] = useState<FacebookPage[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
-    // Calendar State
-    const [currentMonth, setCurrentMonth] = useState(new Date());
-
-    // Search & Filter
-    const [searchTerm, setSearchTerm] = useState("");
-    const [platformFilter, setPlatformFilter] = useState("all");
-
-    // Dialog State
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [formData, setFormData] = useState<Partial<MarketingPost>>({
-        title: "",
-        content: "",
-        platform: "facebook",
-        status: "draft",
-        scheduled_at: "",
-        campaign_id: "",
-        tracking_url: ""
+    // Mock Connect Modal State
+    const [isConnectOpen, setIsConnectOpen] = useState(false);
+    const [connectForm, setConnectForm] = useState({
+        page_id: '',
+        name: '',
+        access_token: 'mock_token_' + Math.floor(Math.random() * 10000),
+        avatar_url: 'https://placehold.co/100x100?text=Page'
     });
 
-    const loadData = async () => {
+    const loadPages = async () => {
         setIsLoading(true);
-        const [postsData, campaignsData] = await Promise.all([
-            fetchMarketingPosts(session?.access_token),
-            fetchCampaigns(session?.access_token)
-        ]);
-        setPosts(postsData);
-        setCampaigns(campaignsData);
+        const data = await fetchFacebookPages(session?.access_token);
+        setPages(data);
         setIsLoading(false);
     };
 
     useEffect(() => {
-        if (user) loadData();
-    }, [user]);
+        if (session?.access_token) loadPages();
+    }, [session]);
 
-    const handleOpenCreate = () => {
-        setEditingId(null);
-        setFormData({ title: "", content: "", platform: "facebook", status: "draft", scheduled_at: "", campaign_id: "", tracking_url: "" });
-        setIsDialogOpen(true);
-    };
-
-    const handleOpenEdit = (post: MarketingPost) => {
-        setEditingId(post.id);
-        setFormData({
-            title: post.title,
-            content: post.content || "",
-            platform: post.platform,
-            status: post.status,
-            scheduled_at: post.scheduled_at ? format(new Date(post.scheduled_at), "yyyy-MM-dd'T'HH:mm") : "",
-            campaign_id: post.campaign_id || "",
-            tracking_url: post.tracking_url || ""
-        });
-        setIsDialogOpen(true);
-    };
-
-    const handleSubmit = async () => {
-        if (!formData.title) {
-            toast.error("Vui lòng nhập tiêu đề bài viết");
+    const handleConnectMock = async () => {
+        if (!connectForm.page_id || !connectForm.name) {
+            toast.error("Vui lòng nhập ID và Tên Fanpage");
             return;
         }
-        setIsSubmitting(true);
 
-        // Ensure scheduled_at is formatted correctly or null if empty
-        const postData = { ...formData };
-        if (!postData.scheduled_at) delete postData.scheduled_at;
-        if (!postData.campaign_id) delete postData.campaign_id;
+        const res = await saveFacebookPage({
+            ...connectForm,
+            is_connected: true,
+            category: 'Business',
+            avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(connectForm.name)}&background=1877F2&color=fff`
+        }, session?.access_token);
 
-        let success = false;
-        if (editingId) {
-            success = await updateMarketingPost(editingId, postData, session?.access_token);
+        if (res) {
+            toast.success("Kết nối Fanpage thành công!");
+            setIsConnectOpen(false);
+            setConnectForm({ page_id: '', name: '', access_token: '', avatar_url: '' });
+            loadPages();
         } else {
-            const res = await createMarketingPost(postData, session?.access_token);
-            success = !!res;
+            toast.error("Lỗi kết nối");
         }
-
-        setIsSubmitting(false);
-        // Helper returns boolean for update, object for create
-        // We'll just refresh
-        toast.success(editingId ? "Đã cập nhật bài viết" : "Đã tạo bài viết");
-        setIsDialogOpen(false);
-        loadData();
-    };
-
-    const handleDelete = async (id: string) => {
-        if (confirm("Xóa bài viết này?")) {
-            await deleteMarketingPost(id, session?.access_token);
-            loadData();
-            toast.success("Đã xóa");
-        }
-    };
-
-    // Filter Logic
-    const filteredPosts = posts.filter(p => {
-        const matchesSearch = p.title.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesPlatform = platformFilter === 'all' || p.platform === platformFilter;
-        return matchesSearch && matchesPlatform;
-    });
-
-    // --- CALENDAR RENDER LOGIC ---
-    const renderCalendar = () => {
-        const start = startOfMonth(currentMonth);
-        const end = endOfMonth(currentMonth);
-        const days = eachDayOfInterval({ start, end });
-        const startDayParams = getDay(start);
-        const emptyDays = Array(startDayParams).fill(null);
-
-        return (
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                {/* Calendar Header */}
-                <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-                    <div className="flex items-center gap-2">
-                        <div className="flex rounded-md bg-white border border-slate-200 shadow-sm p-1">
-                            <button className="px-2 py-1 text-slate-600 hover:bg-slate-100 rounded" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>&lt;</button>
-                            <span className="px-4 py-1.5 font-bold text-slate-700 min-w-[140px] text-center">
-                                {format(currentMonth, 'MMMM yyyy', { locale: vi })}
-                            </span>
-                            <button className="px-2 py-1 text-slate-600 hover:bg-slate-100 rounded" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>&gt;</button>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Days Header */}
-                <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50">
-                    {['CN', 'Hai', 'Ba', 'Tư', 'Năm', 'Sáu', 'Bảy'].map(d => (
-                        <div key={d} className="py-2 text-center text-xs font-semibold text-slate-500 uppercase">{d}</div>
-                    ))}
-                </div>
-
-                {/* Days Grid */}
-                <div className="grid grid-cols-7 auto-rows-fr bg-slate-200 gap-px">
-                    {emptyDays.map((_, i) => (
-                        <div key={`empty-${i}`} className="bg-white min-h-[120px]" />
-                    ))}
-                    {days.map(day => {
-                        const dayPosts = filteredPosts.filter(p => p.scheduled_at && isSameDay(new Date(p.scheduled_at), day));
-                        return (
-                            <div key={day.toString()} className="bg-white min-h-[120px] p-2 hover:bg-slate-50 transition-colors">
-                                <div className={`text-right text-xs font-medium mb-1 ${isSameDay(day, new Date()) ? 'text-blue-600 font-bold' : 'text-slate-400'}`}>
-                                    {format(day, 'd')}
-                                </div>
-                                <div className="space-y-1">
-                                    {dayPosts.map(p => (
-                                        <div
-                                            key={p.id}
-                                            onClick={() => handleOpenEdit(p)}
-                                            className={`text-[10px] px-1.5 py-1 rounded border truncate font-medium cursor-pointer ${p.platform === 'facebook' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                                                p.platform === 'tiktok' ? 'bg-slate-900 text-white border-slate-800' :
-                                                    'bg-orange-50 text-orange-700 border-orange-100'
-                                                }`}
-                                        >
-                                            {p.title}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-        );
     };
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex justify-between items-center">
                 <div>
                     <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                        <FileText className="w-6 h-6 text-orange-600" />
-                        Quản lý Content
+                        <Globe className="w-6 h-6 text-blue-600" />
+                        Trung tâm Nội dung
                     </h2>
-                    <p className="text-sm text-slate-500">Lịch đăng bài và nội dung truyền thông</p>
+                    <p className="text-sm text-slate-500">Quản lý bài đăng và kết nối Fanpage</p>
                 </div>
+            </div>
 
-                <div className="flex items-center gap-2">
-                    <div className="bg-slate-100 p-1 rounded-lg flex text-sm font-medium">
-                        <button
-                            onClick={() => setViewMode('list')}
-                            className={`px-3 py-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
-                        >
-                            Danh sách
-                        </button>
-                        <button
-                            onClick={() => setViewMode('calendar')}
-                            className={`px-3 py-1.5 rounded-md transition-all ${viewMode === 'calendar' ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
-                        >
-                            Lịch
-                        </button>
+            {/* Tabs */}
+            <div className="flex border-b border-slate-200">
+                <button
+                    onClick={() => setActiveTab('posts')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'posts' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                >
+                    Bài đăng & Lịch
+                </button>
+                <button
+                    onClick={() => setActiveTab('settings')}
+                    className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'settings' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                >
+                    Cấu hình & Kết nối
+                </button>
+            </div>
+
+            {/* Content Area */}
+            {activeTab === 'settings' && (
+                <div className="space-y-6">
+                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <div className="flex justify-between items-start mb-6">
+                            <div>
+                                <h3 className="text-lg font-semibold text-slate-800">Tài khoản kết nối</h3>
+                                <p className="text-sm text-slate-500">Quản lý các Fanpage đã được cấp quyền</p>
+                            </div>
+                            <button
+                                onClick={() => setIsConnectOpen(true)}
+                                className="flex items-center gap-2 bg-[#1877F2] text-white px-4 py-2 rounded-md hover:bg-[#166fe5] transition-colors text-sm font-medium"
+                            >
+                                <Facebook className="w-4 h-4" />
+                                Thêm Fanpage
+                            </button>
+                        </div>
+
+                        {isLoading ? (
+                            <div className="text-center py-8">
+                                <Loader2 className="w-8 h-8 animate-spin mx-auto text-slate-400" />
+                            </div>
+                        ) : pages.length === 0 ? (
+                            <div className="text-center py-12 bg-slate-50 rounded-lg border border-dashed border-slate-300">
+                                <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <Facebook className="w-6 h-6 text-slate-400" />
+                                </div>
+                                <p className="text-slate-500 font-medium">Chưa có Fanpage nào được kết nối</p>
+                                <p className="text-sm text-slate-400 mt-1">Bấm nút "Thêm Fanpage" để bắt đầu</p>
+                            </div>
+                        ) : (
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {pages.map(page => (
+                                    <div key={page.id} className="flex items-center gap-4 p-4 border rounded-lg bg-white relative group">
+                                        <img
+                                            src={page.avatar_url || "https://placehold.co/50x50"}
+                                            alt={page.name}
+                                            className="w-12 h-12 rounded-full border border-slate-200"
+                                        />
+                                        <div>
+                                            <div className="font-semibold text-slate-900">{page.name}</div>
+                                            <div className="text-xs text-slate-500 flex items-center gap-1">
+                                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                                Đang hoạt động
+                                            </div>
+                                        </div>
+                                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button className="p-1 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
+                </div>
+            )}
 
-                    <button
-                        onClick={handleOpenCreate}
-                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-orange-600 text-white hover:bg-orange-700 h-10 px-4 py-2 gap-2"
-                    >
-                        <Plus className="w-4 h-4" /> Tạo bài viết
-                    </button>
+            {activeTab === 'posts' && (
+                <div className="text-center py-12 text-slate-500">
+                    <ImageIcon className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+                    <h3 className="text-lg font-medium text-slate-900">Quản lý bài đăng</h3>
+                    <p>Tính năng đang được phát triển...</p>
+                    <p className="text-sm mt-2">(Vui lòng kết nối Fanpage trước ở tab Cấu hình)</p>
+                </div>
+            )}
 
-                    {/* Modal */}
-                    {isDialogOpen && (
-                        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-                            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
-                                <div className="flex justify-between items-center p-6 border-b">
-                                    <h3 className="text-lg font-semibold">{editingId ? "Cập nhật bài viết" : "Soạn bài viết mới"}</h3>
-                                    <button onClick={() => setIsDialogOpen(false)} className="text-slate-500 hover:text-slate-700">
-                                        <X className="w-5 h-5" />
-                                    </button>
-                                </div>
-                                <div className="p-6 space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium leading-none">Tiêu đề</label>
-                                        <input
-                                            className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
-                                            value={formData.title}
-                                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                            placeholder="Tiêu đề bài viết..."
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <label className="text-sm font-medium leading-none">Nền tảng</label>
-                                            <select
-                                                className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
-                                                value={formData.platform}
-                                                onChange={(e) => setFormData({ ...formData, platform: e.target.value as any })}
-                                            >
-                                                <option value="facebook">Facebook</option>
-                                                <option value="tiktok">TikTok</option>
-                                                <option value="website">Website / Blog</option>
-                                                <option value="zalo">Zalo OA</option>
-                                                <option value="other">Khác</option>
-                                            </select>
-                                        </div>
-                                        <div className="grid gap-2">
-                                            <label className="text-sm font-medium leading-none">Trạng thái</label>
-                                            <select
-                                                className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
-                                                value={formData.status}
-                                                onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                                            >
-                                                <option value="draft">Bản nháp</option>
-                                                <option value="scheduled">Đã lên lịch</option>
-                                                <option value="published">Đã đăng</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium leading-none">Chiến dịch (Tùy chọn)</label>
-                                        <select
-                                            className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
-                                            value={formData.campaign_id || ""}
-                                            onChange={(e) => setFormData({ ...formData, campaign_id: e.target.value })}
-                                        >
-                                            <option value="">-- Không thuộc chiến dịch nào --</option>
-                                            {campaigns.map(c => (
-                                                <option key={c.id} value={c.id}>{c.title}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium leading-none">Link bài viết (Tracking)</label>
-                                        <input
-                                            className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
-                                            value={formData.tracking_url || ''}
-                                            onChange={(e) => setFormData({ ...formData, tracking_url: e.target.value })}
-                                            placeholder="https://facebook.com/..."
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium leading-none">Ngày đăng (Tùy chọn)</label>
-                                        <input
-                                            type="datetime-local"
-                                            className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
-                                            value={formData.scheduled_at || ''}
-                                            onChange={(e) => setFormData({ ...formData, scheduled_at: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium leading-none">Nội dung</label>
-                                        <textarea
-                                            className="flex min-h-[150px] w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
-                                            placeholder="Nhập nội dung bài viết..."
-                                            value={formData.content || ''}
-                                            onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-                                <div className="p-6 border-t bg-slate-50 flex justify-end gap-2">
-                                    <button
-                                        onClick={() => setIsDialogOpen(false)}
-                                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-slate-200 bg-white hover:bg-slate-100 hover:text-slate-900 h-10 px-4 py-2"
-                                    >
-                                        Hủy
-                                    </button>
-                                    <button
-                                        onClick={handleSubmit}
-                                        disabled={isSubmitting}
-                                        className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-orange-600 text-white hover:bg-orange-700 h-10 px-4 py-2"
-                                    >
-                                        {isSubmitting ? "Đang lưu..." : (editingId ? "Cập nhật" : "Lưu bài viết")}
-                                    </button>
-                                </div>
+            {/* Mock Connect Modal */}
+            {isConnectOpen && (
+                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden p-6 space-y-4">
+                        <h3 className="text-lg font-bold">Kết nối Fanpage (Giả lập)</h3>
+                        <div className="space-y-3">
+                            <div>
+                                <label className="text-sm font-medium">Page ID</label>
+                                <input
+                                    className="w-full border p-2 rounded text-sm"
+                                    placeholder="VD: 100088..."
+                                    value={connectForm.page_id}
+                                    onChange={e => setConnectForm({ ...connectForm, page_id: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium">Tên Fanpage</label>
+                                <input
+                                    className="w-full border p-2 rounded text-sm"
+                                    placeholder="VD: Lyhu Official..."
+                                    value={connectForm.name}
+                                    onChange={e => setConnectForm({ ...connectForm, name: e.target.value })}
+                                />
+                            </div>
+                            <div className="p-3 bg-blue-50 text-blue-700 text-xs rounded">
+                                * Lưu ý: Đây là giả lập vì chưa có App ID thật. Token sẽ được sinh ngẫu nhiên.
                             </div>
                         </div>
-                    )}
+                        <div className="flex justify-end gap-2 pt-4">
+                            <button onClick={() => setIsConnectOpen(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded">Hủy</button>
+                            <button onClick={handleConnectMock} className="px-4 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded">Kết nối ngay</button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-
-            {/* Controls Bar */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 mb-6">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                        className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 pl-9 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
-                        placeholder="Tìm kiếm bài viết..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-                <div className="flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-slate-500" />
-                    <select
-                        className="h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-600"
-                        value={platformFilter}
-                        onChange={(e) => setPlatformFilter(e.target.value)}
-                    >
-                        <option value="all">Tất cả nền tảng</option>
-                        <option value="facebook">Facebook</option>
-                        <option value="tiktok">TikTok</option>
-                        <option value="website">Website</option>
-                        <option value="zalo">Zalo</option>
-                    </select>
-                </div>
-            </div>
-
-            {isLoading ? (
-                <TableSkeleton rows={5} cols={5} />
-            ) : viewMode === 'list' ? (
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs font-medium">
-                            <tr>
-                                <th className="px-6 py-4">Tiêu đề</th>
-                                <th className="px-6 py-4">Nền tảng</th>
-                                <th className="px-6 py-4">Lịch đăng</th>
-                                <th className="px-6 py-4">Trạng thái</th>
-                                <th className="px-6 py-4 text-right">Hành động</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {filteredPosts.map((post) => (
-                                <tr key={post.id} className="hover:bg-slate-50 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="font-medium text-slate-900">{post.title}</div>
-                                        <div className="text-xs text-slate-500 truncate max-w-[200px]">{post.content}</div>
-                                        {post.campaign && (
-                                            <div className="inline-flex items-center text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 mt-1">
-                                                <Megaphone className="w-3 h-3 mr-1" /> {post.campaign.title}
-                                            </div>
-                                        )}
-                                        {post.tracking_url && (
-                                            <a href={post.tracking_url} target="_blank" rel="noopener noreferrer" className="ml-2 inline-flex items-center text-[10px] text-blue-600 hover:underline mt-1">
-                                                Link bài viết
-                                            </a>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${post.platform === 'facebook' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                            post.platform === 'tiktok' ? 'bg-slate-800 text-slate-200 border-slate-700' :
-                                                'bg-slate-100 text-slate-600 border-slate-200'
-                                            }`}>
-                                            {post.platform}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-slate-600">
-                                        {post.scheduled_at ? format(new Date(post.scheduled_at), 'dd/MM/yyyy HH:mm') : 'Chưa set'}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${post.status === 'published' ? 'bg-green-100 text-green-800' :
-                                            post.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
-                                                'bg-slate-100 text-slate-800'
-                                            }`}>
-                                            {post.status === 'published' ? 'Đã đăng' :
-                                                post.status === 'scheduled' ? 'Đã lên lịch' : 'Bản nháp'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right space-x-2">
-                                        <button
-                                            className="inline-flex items-center justify-center rounded-md p-2 hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors"
-                                            onClick={() => handleOpenEdit(post)}
-                                        >
-                                            <Edit2 className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            className="inline-flex items-center justify-center rounded-md p-2 hover:bg-slate-100 text-slate-500 hover:text-red-600 transition-colors"
-                                            onClick={() => handleDelete(post.id)}
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {filteredPosts.length === 0 && (
-                                <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
-                                        Không tìm thấy bài viết nào
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            ) : (
-                renderCalendar()
             )}
         </div>
     );

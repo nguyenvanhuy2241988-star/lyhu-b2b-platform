@@ -186,6 +186,51 @@ export const fetchCampaignLeads = async (token: string | undefined, campaignId: 
     }
 };
 
+// ==========================================
+// FACEBOOK INTEGRATION
+// ==========================================
+
+export interface FacebookPage {
+    id: string; // our DB UUID
+    page_id: string; // FB Page ID
+    name: string;
+    access_token?: string;
+    category?: string;
+    avatar_url?: string;
+    is_connected: boolean;
+    created_at: string;
+}
+
+export const fetchFacebookPages = async (token: string | undefined): Promise<FacebookPage[]> => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/facebook_pages?select=*&is_connected=eq.true`, { headers });
+        if (!res.ok) throw new Error(await res.text());
+        return await res.json() as FacebookPage[];
+    } catch (err) {
+        console.error("fetchFacebookPages error:", err);
+        return [];
+    }
+};
+
+export const saveFacebookPage = async (page: Partial<FacebookPage>, token: string | undefined) => {
+    try {
+        const headers = getHeaders(token);
+        // Upsert based on page_id to avoid duplicates if reconnecting
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/facebook_pages`, {
+            method: 'POST',
+            headers: { ...headers, 'Prefer': 'resolution=merge-duplicates,return=representation' },
+            body: JSON.stringify(page)
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+        return await res.json();
+    } catch (err) {
+        console.error("saveFacebookPage error:", err);
+        return null;
+    }
+};
+
 export const createCampaign = async (campaign: Partial<MarketingCampaign>, token?: string): Promise<MarketingCampaign | null> => {
     try {
         const headers = getHeaders(token);
