@@ -107,7 +107,7 @@ export const fetchMarketingStats = async (token?: string): Promise<MarketingStat
     }
 };
 
-};
+
 
 export interface CampaignPerformance {
     campaign_id: string;
