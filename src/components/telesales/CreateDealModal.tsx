@@ -268,9 +268,7 @@ export const CreateDealModal = ({
         onSave(dealData);
     };
 
-    if (!isOpen) {
-        return null;
-    }
+    if (!isOpen) return null;
 
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
@@ -525,7 +523,5 @@ export const CreateDealModal = ({
                 </div>
             </div>
         </div>
-        </div >
     );
 };
-// End of component
