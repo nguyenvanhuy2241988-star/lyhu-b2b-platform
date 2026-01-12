@@ -526,3 +526,4 @@ export const CreateDealModal = ({
         </div >
     );
 };
+// End of component
