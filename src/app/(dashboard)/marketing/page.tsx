@@ -7,7 +7,7 @@ import { StatsSkeleton } from "@/components/ui/SkeletonUI";
 import { fetchMarketingStats } from "@/lib/marketingStore";
 
 export default function MarketingDashboard() {
-    const { user, isLoading: authIsLoading } = useAuth();
+    const { user, session, isLoading: authIsLoading } = useAuth();
     const [stats, setStats] = useState({
         activeCampaigns: 0,
         scheduledPosts: 0,
@@ -18,17 +18,12 @@ export default function MarketingDashboard() {
 
     useEffect(() => {
         const fetchStats = async () => {
+            if (!session?.access_token) return;
             setIsLoading(true);
             try {
                 // Fetch stats from Supabase
-                const data = await fetchMarketingStats(user.id); // Token handling is inside store if needed, but wait, access_token needed?
-                // Actually fetchMarketingStats takes token. useAuth provides session.
-
-                // Let's fix line 20 to get session too
-                // For now, let's just assume fetchMarketingStats handles it or we pass it correctly below
-
-                // Oops, I need to pass session.access_token. 
-                // But wait, the hook returns session.
+                const data = await fetchMarketingStats(session.access_token);
+                setStats(data);
             } catch (error) {
                 console.error("Error fetching marketing stats:", error);
             } finally {
@@ -36,10 +31,10 @@ export default function MarketingDashboard() {
             }
         };
 
-        if (user) {
+        if (user && session) {
             fetchStats();
         }
-    }, [user]);
+    }, [user, session]);
 
 
     const statsCards = [
