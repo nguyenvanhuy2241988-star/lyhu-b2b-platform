@@ -118,56 +118,56 @@ export default function MarketingDashboard() {
                 })}
             </div>
 
-        </div>
 
-            {/* Campaign Performance Report */ }
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-            <div>
-                <h3 className="text-lg font-bold text-slate-800">Hiệu quả Chiến dịch</h3>
-                <p className="text-sm text-slate-500">Top 10 chiến dịch mang về nhiều khách hàng nhất</p>
-            </div>
-            {/* Placeholder for future date filter */}
-        </div>
-        <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-                <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b">
-                    <tr>
-                        <th className="px-6 py-3 font-medium">Chiến dịch</th>
-                        <th className="px-6 py-3 font-medium text-center">Trạng thái</th>
-                        <th className="px-6 py-3 font-medium text-right">Số Lead</th>
-                        <th className="px-6 py-3 font-medium text-right">Doanh thu dự kiến</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                    {performance.length > 0 ? (
-                        performance.map((camp) => (
-                            <tr key={camp.campaign_id} className="hover:bg-slate-50 transition-colors">
-                                <td className="px-6 py-4 font-medium text-slate-900">{camp.title}</td>
-                                <td className="px-6 py-4 text-center">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${camp.status === 'active' ? 'bg-green-100 text-green-800' :
-                                        camp.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'
-                                        }`}>
-                                        {camp.status === 'active' ? 'Đang chạy' : camp.status === 'completed' ? 'Hoàn thành' : camp.status}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-right font-semibold text-slate-900">{camp.lead_count}</td>
-                                <td className="px-6 py-4 text-right text-slate-600">
-                                    {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(camp.revenue)}
-                                </td>
+
+            {/* Campaign Performance Report */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+                    <div>
+                        <h3 className="text-lg font-bold text-slate-800">Hiệu quả Chiến dịch</h3>
+                        <p className="text-sm text-slate-500">Top 10 chiến dịch mang về nhiều khách hàng nhất</p>
+                    </div>
+                    {/* Placeholder for future date filter */}
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                        <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b">
+                            <tr>
+                                <th className="px-6 py-3 font-medium">Chiến dịch</th>
+                                <th className="px-6 py-3 font-medium text-center">Trạng thái</th>
+                                <th className="px-6 py-3 font-medium text-right">Số Lead</th>
+                                <th className="px-6 py-3 font-medium text-right">Doanh thu dự kiến</th>
                             </tr>
-                        ))
-                    ) : (
-                        <tr>
-                            <td colSpan={4} className="px-6 py-8 text-center text-slate-500 italic">
-                                Chưa có dữ liệu hiệu quả chiến dịch.
-                            </td>
-                        </tr>
-                    )}
-                </tbody>
-            </table>
-        </div>
-    </div>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {performance.length > 0 ? (
+                                performance.map((camp) => (
+                                    <tr key={camp.campaign_id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4 font-medium text-slate-900">{camp.title}</td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${camp.status === 'active' ? 'bg-green-100 text-green-800' :
+                                                camp.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'
+                                                }`}>
+                                                {camp.status === 'active' ? 'Đang chạy' : camp.status === 'completed' ? 'Hoàn thành' : camp.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right font-semibold text-slate-900">{camp.lead_count}</td>
+                                        <td className="px-6 py-4 text-right text-slate-600">
+                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(camp.revenue)}
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan={4} className="px-6 py-8 text-center text-slate-500 italic">
+                                        Chưa có dữ liệu hiệu quả chiến dịch.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div >
     );
 }
