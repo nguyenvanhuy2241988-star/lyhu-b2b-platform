@@ -117,12 +117,17 @@ export interface CampaignPerformance {
     revenue: number;
 }
 
-export const fetchCampaignPerformance = async (token?: string): Promise<CampaignPerformance[]> => {
+export const fetchCampaignPerformance = async (token?: string, startDate?: Date | null, endDate?: Date | null): Promise<CampaignPerformance[]> => {
     try {
         const headers = getHeaders(token);
+        const body: any = {};
+        if (startDate) body.start_date = startDate.toISOString();
+        if (endDate) body.end_date = endDate.toISOString();
+
         const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_campaign_performance_stats`, {
             method: 'POST',
-            headers
+            headers,
+            body: JSON.stringify(body)
         });
 
         if (!res.ok) {

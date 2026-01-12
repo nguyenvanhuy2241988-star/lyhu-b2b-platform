@@ -127,7 +127,33 @@ export default function MarketingDashboard() {
                         <h3 className="text-lg font-bold text-slate-800">Hiệu quả Chiến dịch</h3>
                         <p className="text-sm text-slate-500">Top 10 chiến dịch mang về nhiều khách hàng nhất</p>
                     </div>
-                    {/* Placeholder for future date filter */}
+                    {/* Date Filter - Simple Implementation */}
+                    <div className="flex gap-2">
+                        <select
+                            className="text-sm border-slate-200 rounded-lg"
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                const now = new Date();
+                                let start = null;
+                                if (val === 'this_month') {
+                                    start = new Date(now.getFullYear(), now.getMonth(), 1);
+                                } else if (val === 'last_month') {
+                                    start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                                }
+                                // Trigger refetch with start date
+                                const fetchPerfData = async () => { // Renamed to avoid conflict with useEffect's fetchStats
+                                    if (!session?.access_token) return;
+                                    const perfData = await fetchCampaignPerformance(session.access_token, start);
+                                    setPerformance(perfData);
+                                };
+                                fetchPerfData();
+                            }}
+                        >
+                            <option value="all">Tất cả thời gian</option>
+                            <option value="this_month">Tháng này</option>
+                            <option value="last_month">Tháng trước</option>
+                        </select>
+                    </div>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
@@ -136,30 +162,55 @@ export default function MarketingDashboard() {
                                 <th className="px-6 py-3 font-medium">Chiến dịch</th>
                                 <th className="px-6 py-3 font-medium text-center">Trạng thái</th>
                                 <th className="px-6 py-3 font-medium text-right">Số Lead</th>
+                                <th className="px-6 py-3 font-medium">Tỷ trọng (Lead)</th> {/* Bar Chart Column */}
                                 <th className="px-6 py-3 font-medium text-right">Doanh thu dự kiến</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {performance.length > 0 ? (
-                                performance.map((camp) => (
-                                    <tr key={camp.campaign_id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-6 py-4 font-medium text-slate-900">{camp.title}</td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${camp.status === 'active' ? 'bg-green-100 text-green-800' :
-                                                camp.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'
-                                                }`}>
-                                                {camp.status === 'active' ? 'Đang chạy' : camp.status === 'completed' ? 'Hoàn thành' : camp.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right font-semibold text-slate-900">{camp.lead_count}</td>
-                                        <td className="px-6 py-4 text-right text-slate-600">
-                                            {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(camp.revenue)}
-                                        </td>
-                                    </tr>
-                                ))
+                                performance.map((camp) => {
+                                    // Calculate max validation for bar chart scaling
+                                    const maxLeads = Math.max(...performance.map(p => p.lead_count));
+                                    const percentage = maxLeads > 0 ? (camp.lead_count / maxLeads) * 100 : 0;
+
+                                    return (
+                                        <tr key={camp.campaign_id} className="hover:bg-slate-50 transition-colors">
+                                            <td className="px-6 py-4 font-medium text-slate-900">
+                                                {/* Drill-down Link */}
+                                                <a
+                                                    href={`/telesales/customers?source=marketing&campaign=${camp.title}`}
+                                                    className="text-blue-600 hover:underline hover:text-blue-800"
+                                                    title="Xem danh sách khách hàng từ chiến dịch này"
+                                                >
+                                                    {camp.title}
+                                                </a>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${camp.status === 'active' ? 'bg-green-100 text-green-800' :
+                                                        camp.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'
+                                                    }`}>
+                                                    {camp.status === 'active' ? 'Đang chạy' : camp.status === 'completed' ? 'Hoàn thành' : camp.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right font-semibold text-slate-900">{camp.lead_count}</td>
+                                            <td className="px-6 py-4 w-48">
+                                                {/* Simple Bar Chart Visualization */}
+                                                <div className="w-full bg-slate-100 rounded-full h-2.5">
+                                                    <div
+                                                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-500"
+                                                        style={{ width: `${percentage}%` }}
+                                                    ></div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right text-slate-600">
+                                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(camp.revenue)}
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             ) : (
                                 <tr>
-                                    <td colSpan={4} className="px-6 py-8 text-center text-slate-500 italic">
+                                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500 italic">
                                         Chưa có dữ liệu hiệu quả chiến dịch.
                                     </td>
                                 </tr>
