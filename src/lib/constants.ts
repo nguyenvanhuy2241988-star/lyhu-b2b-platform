@@ -34,6 +34,7 @@ import {
     Video,         // Livestream
     ToggleLeft,     // Role Switch
     ArrowRightLeft, // Accountant Reconciliation
+    Zap,            // Automation
 } from "lucide-react";
 import { MODULES } from '@/modules/registry';
 
@@ -184,6 +185,7 @@ export const NAV_ITEMS = {
         { label: "Tổng quan Marketing", href: "/marketing", icon: LayoutDashboard },
         { label: "Chiến dịch", href: "/marketing/campaigns", icon: Megaphone },
         { label: "Content & Lịch", href: "/marketing/content", icon: Calendar },
+        { label: "Tự động hóa", href: "/marketing/automation", icon: Zap },
         { label: "Tài liệu", href: "/documents", icon: FileText },
         { label: "Việc cần làm", href: "/tasks", icon: ListTodo },
     ],
