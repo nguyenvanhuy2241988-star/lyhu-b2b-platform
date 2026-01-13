@@ -211,7 +211,7 @@ export async function fetchTasks(userId?: string, token?: string, filters?: { st
             console.log(`[Tasks Store] Fetching tasks for: ${activeUserId}`);
             const headers = await getAuthHeaders(token);
             const params = new URLSearchParams();
-            params.set('or', `(user_id.eq.${activeUserId},assigned_to.eq.${activeUserId},assignee_ids.cs.{${activeUserId}},leader_id.eq.${activeUserId})`);
+            params.set('or', `(user_id.eq.${activeUserId},owner_id.eq.${activeUserId},assigned_to.eq.${activeUserId},assignee_ids.cs.{${activeUserId}},leader_id.eq.${activeUserId})`);
             params.set('order', 'order.asc.nullsfirst,created_at.desc');
 
             if (filters?.startDate) {
@@ -342,6 +342,7 @@ export async function createTaskSupabase(input: {
     const headers = await getAuthHeaders(token);
     const payload = {
         user_id: activeUserId,
+        owner_id: activeUserId, // Explicitly set owner_id to ensure visibility logic matches
         title: input.title,
         customer_name: input.customer_name ?? null,
         phone: input.phone ?? null,
@@ -567,7 +568,7 @@ export async function fetchPaginatedTasks({
         const params = new URLSearchParams();
         params.set('select', '*');
         params.set('status', `eq.${status}`);
-        params.set('or', `(user_id.eq.${activeUserId},assigned_to.eq.${activeUserId},assignee_ids.cs.{${activeUserId}},leader_id.eq.${activeUserId})`);
+        params.set('or', `(user_id.eq.${activeUserId},owner_id.eq.${activeUserId},assigned_to.eq.${activeUserId},assignee_ids.cs.{${activeUserId}},leader_id.eq.${activeUserId})`);
         params.set('order', 'order.asc.nullsfirst,created_at.desc');
         params.set('offset', offset.toString());
         params.set('limit', pageSize.toString());
