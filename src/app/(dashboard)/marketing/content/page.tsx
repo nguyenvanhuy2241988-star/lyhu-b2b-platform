@@ -172,12 +172,16 @@ export default function MarketingContentPage() {
             }
 
             // Save to DB
-            // Sanitize: Remove joined objects (campaign, facebook_page) to avoid 400 error
-            const { campaign, facebook_page, ...restPost } = newPost as any;
-
+            // Explicitly select fields and convert empty strings to null for UUIDs
             const postToSave = {
-                ...restPost,
+                title: newPost.title,
+                content: newPost.content,
+                platform: newPost.platform,
                 status: status as any,
+                scheduled_at: newPost.scheduled_at || null,
+                campaign_id: newPost.campaign_id || null,
+                facebook_page_id: newPost.facebook_page_id || null,
+                media_urls: newPost.media_urls,
                 fb_post_id: fbPostId
             };
 
@@ -453,7 +457,7 @@ export default function MarketingContentPage() {
                                     <label className="text-sm font-medium mb-1 block">Fanpage đăng bài</label>
                                     <select
                                         className="w-full border border-slate-300 rounded-md p-2 text-sm"
-                                        value={newPost.facebook_page_id}
+                                        value={newPost.facebook_page_id || ''}
                                         onChange={e => setNewPost({ ...newPost, facebook_page_id: e.target.value })}
                                     >
                                         <option value="">-- Chọn Fanpage --</option>

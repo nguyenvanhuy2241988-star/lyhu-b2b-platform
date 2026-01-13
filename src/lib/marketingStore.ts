@@ -39,12 +39,12 @@ export interface MarketingPost {
     content?: string;
     platform: Platform;
     status: PostStatus;
-    scheduled_at?: string;
-    campaign_id?: string;
+    scheduled_at?: string | null;
+    campaign_id?: string | null;
     campaign?: MarketingCampaign;
     tracking_url?: string;
     // New Facebook Fields
-    facebook_page_id?: string;
+    facebook_page_id?: string | null;
     facebook_page?: { name: string; avatar_url: string; }; // Joined
     media_urls?: string[];
     fb_post_id?: string;
