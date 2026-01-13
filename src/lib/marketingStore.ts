@@ -222,7 +222,7 @@ export const saveFacebookPage = async (page: Partial<FacebookPage>, token: strin
     try {
         const headers = getHeaders(token);
         // Upsert based on page_id to avoid duplicates if reconnecting
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/facebook_pages`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/facebook_pages?on_conflict=page_id`, {
             method: 'POST',
             headers: { ...headers, 'Prefer': 'resolution=merge-duplicates,return=representation' },
             body: JSON.stringify(page)
