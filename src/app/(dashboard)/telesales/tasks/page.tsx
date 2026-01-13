@@ -475,8 +475,7 @@ export default function TelesalesTasksPage() {
                     endDate.setDate(today.getDate() + 1);
                     endDate.setHours(23, 59, 59, 999);
                 } else if (colId === 'this_week') {
-                    startDate.setDate(today.getDate()); // From today? or start of week? User request usually "Coming up"
-                    // Let's say Next 7 days
+                    startDate.setDate(today.getDate() + 2); // Skip Today (+0) and Tomorrow (+1)
                     endDate.setDate(today.getDate() + 7);
                     endDate.setHours(23, 59, 59, 999);
                 } else if (colId === 'overdue') {
