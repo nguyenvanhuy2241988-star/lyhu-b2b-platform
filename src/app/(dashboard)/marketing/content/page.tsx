@@ -110,7 +110,7 @@ export default function MarketingContentPage() {
 
         // Use upsert to set is_connected = false
         const res = await saveFacebookPage({
-            page_id: page.page_id,
+            ...page,
             is_connected: false
         }, session?.access_token);
 
