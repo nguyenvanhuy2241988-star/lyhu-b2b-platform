@@ -386,6 +386,8 @@ export default function CRMPage() {
     const [filterPriority, setFilterPriority] = useState<DealPriority | "all">("all");
     const [filterStatus, setFilterStatus] = useState<"all" | "open" | "won" | "lost">("open");
     const [filterCustomerType, setFilterCustomerType] = useState<string>("all");
+    const [filterUserId, setFilterUserId] = useState<string>("all");
+    const [userOptions, setUserOptions] = useState<{ id: string, full_name: string }[]>([]);
     const [sortBy, setSortBy] = useState<"newest" | "oldest" | "due_date">("newest");
 
     // Pagination & Stage Filter
@@ -527,6 +529,17 @@ export default function CRMPage() {
         }
     }, [userInfo.id, isAdminOrSaleAdmin, session?.access_token]);
 
+    // Fetch users for filter (Admin only)
+    useEffect(() => {
+        if (isAdminOrSaleAdmin && isMounted) {
+            const fetchUsers = async () => {
+                const { data } = await supabase.from('profiles').select('id, full_name').order('full_name');
+                if (data) setUserOptions(data);
+            };
+            fetchUsers();
+        }
+    }, [isAdminOrSaleAdmin, isMounted]);
+
     const loadDealsForStage = useCallback(async (stage: DealStage, pageNum: number = 1, append: boolean = false) => {
         if (!userInfo.id) return;
 
@@ -537,7 +550,7 @@ export default function CRMPage() {
                 pageSize,
                 stage,
                 debouncedSearchQuery,
-                isAdminOrSaleAdmin ? undefined : userInfo.id,
+                isAdminOrSaleAdmin ? (filterUserId === 'all' ? undefined : filterUserId) : userInfo.id,
                 session?.access_token
             );
 
@@ -561,7 +574,7 @@ export default function CRMPage() {
         } finally {
             setLoadingStages(prev => ({ ...prev, [stage]: false }));
         }
-    }, [userInfo.id, isAdminOrSaleAdmin, session?.access_token, pageSize, debouncedSearchQuery]);
+    }, [userInfo.id, isAdminOrSaleAdmin, session?.access_token, pageSize, debouncedSearchQuery, filterUserId]);
 
     const refreshData = useCallback(async (isManual = false) => {
         if (!userInfo.id) return;
@@ -580,7 +593,7 @@ export default function CRMPage() {
                     25,
                     stageFilter,
                     debouncedSearchQuery,
-                    isAdminOrSaleAdmin ? undefined : userInfo.id,
+                    isAdminOrSaleAdmin ? (filterUserId === 'all' ? undefined : filterUserId) : userInfo.id,
                     session?.access_token
                 );
                 setDeals(data);
@@ -598,7 +611,8 @@ export default function CRMPage() {
         // Removed refreshCounts and loadDealsForStage from deps as they depend on the same things 
         // as this function, and we want to avoid unnecessary recreations of this callback.
         // We use them inside, so we'll just keep the primary data deps.
-    }, [userInfo.id, isAdminOrSaleAdmin, session?.access_token, currentPage, stageFilter, debouncedSearchQuery, viewMode]);
+        // We use them inside, so we'll just keep the primary data deps.
+    }, [userInfo.id, isAdminOrSaleAdmin, session?.access_token, currentPage, stageFilter, debouncedSearchQuery, viewMode, filterUserId]);
 
     // Realtime Subscription
     useEffect(() => {
@@ -694,7 +708,7 @@ export default function CRMPage() {
     // Reset page on filter changes
     useEffect(() => {
         setCurrentPage(1);
-    }, [debouncedSearchQuery, stageFilter]);
+    }, [debouncedSearchQuery, stageFilter, filterUserId]);
 
     useEffect(() => {
         if (editingColumnId && editInputRef.current) {
@@ -1162,6 +1176,15 @@ export default function CRMPage() {
                             <option key={value} value={value}>{label}</option>
                         ))}
                     </select>
+
+                    {isAdminOrSaleAdmin && (
+                        <select value={filterUserId} onChange={(e) => setFilterUserId(e.target.value)} className="px-3 py-2 border rounded-lg text-sm max-w-[150px]">
+                            <option value="all">Tất cả nhân viên</option>
+                            {userOptions.map(u => (
+                                <option key={u.id} value={u.id}>{u.full_name || 'Unnamed'}</option>
+                            ))}
+                        </select>
+                    )}
 
                     <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value as any)} className="px-3 py-2 border rounded-lg text-sm">
                         <option value="all">Tất cả trạng thái</option>
