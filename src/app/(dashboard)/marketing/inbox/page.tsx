@@ -14,6 +14,7 @@ import {
 import { MessageSquare, Send, User, Search, RefreshCw, Loader2, DownloadCloud } from 'lucide-react';
 import { createClient } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
+import InboxCustomerSidebar from '@/components/marketing/InboxCustomerSidebar';
 
 export default function SocialInboxPage() {
     const { user, session } = useAuth();
@@ -147,14 +148,6 @@ export default function SocialInboxPage() {
     };
 
     const selectedConv = conversations.find(c => c.id === selectedConvId);
-
-    return (
-import InboxCustomerSidebar from '@/components/marketing/InboxCustomerSidebar';
-
-    // ... (existing imports, but make sure to include InboxCustomerSidebar if not handled by auto-import or manual separate import)
-
-    // Inside SocialInboxPage component (assuming imported)
-    // ...
 
     const handleUpdateConversation = (updates: Partial<SocialConversation>) => {
         if (!selectedConvId) return;
