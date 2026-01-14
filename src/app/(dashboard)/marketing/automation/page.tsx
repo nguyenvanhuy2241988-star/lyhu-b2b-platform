@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/components/auth-provider';
+import { useAuth } from '@/components/auth/AuthProvider';
 import {
     fetchChatbotRules,
     createChatbotRule,
