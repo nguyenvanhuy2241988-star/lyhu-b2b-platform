@@ -86,31 +86,33 @@ export async function POST(request: Request) {
                 if (messaging) {
                     for (const event of messaging) {
                         const senderId = event.sender.id;
-                        const message = event.message;
+                        let text = '';
+                        let mid = '';
 
-                        if (message && message.text) {
+                        if (event.message && event.message.text) {
+                            text = event.message.text;
+                            mid = event.message.mid;
+                        } else if (event.postback && event.postback.payload) {
+                            text = event.postback.payload;
+                            mid = `postback_${Date.now()}`;
+                        }
+
+                        if (text) {
                             // 1. Get Conversation or Create
-                            // We need to find or create conversation linked to this page and sender
                             const { data: conv, error: convError } = await supabase
                                 .from('social_conversations')
                                 .upsert({
                                     platform: 'facebook',
-                                    external_id: senderId, // This might be senderId for direct messages? Actually FB uses Thread ID (t_...) usually, but webhook gives sender.id. 
-                                    // For simplicity in MVP, we act as if Sender ID is Key. 
-                                    // Ideally we should use the Thread ID if available. 
-                                    // Webhook doesn't always send thread_id in entry.
-                                    // We will use senderId as external_id for now (User PSID).
-                                    page_id: null, // We need to find our internal page_id uuid. 
-                                    // For now, let's look it up.
-                                    customer_name: 'Facebook User', // We can fetch name later
-                                    snippet: message.text,
-                                    unread_count: 1, // Increment? Hard to do atomic increment in upsert without refined logic.
+                                    external_id: senderId,
+                                    page_id: null, // Will update below
+                                    customer_name: 'Facebook User',
+                                    snippet: text,
+                                    unread_count: 1,
                                     last_message_at: new Date().toISOString()
-                                }, { onConflict: 'platform, external_id' }) // Make sure this constraint matches
+                                }, { onConflict: 'platform, external_id' })
                                 .select()
                                 .single();
 
-                            // Update page_id if we have it
                             // Retrieve Page UUID
                             const { data: pageData } = await supabase
                                 .from('facebook_pages')
@@ -124,11 +126,11 @@ export async function POST(request: Request) {
                                     .update({ page_id: pageData.id })
                                     .eq('id', conv.id);
 
-                                // 2. Insert Message
+                                // 2. Insert Message (User's message/postback)
                                 await supabase.from('social_messages').insert({
                                     conversation_id: conv.id,
-                                    external_id: message.mid || `mid_${Date.now()}`,
-                                    content: message.text,
+                                    external_id: mid || `mid_${Date.now()}`,
+                                    content: text,
                                     sender_id: senderId,
                                     is_from_page: false,
                                     created_at: new Date().toISOString()
@@ -144,14 +146,23 @@ export async function POST(request: Request) {
 
                                     if (rules) {
                                         for (const rule of rules) {
-                                            const textLower = message.text.toLowerCase();
+                                            const textLower = text.toLowerCase();
                                             const keywordLower = rule.keyword.toLowerCase();
 
                                             // Simple 'Contains' Match
-                                            if (textLower.includes(keywordLower)) {
+                                            // Ensure exact match for Postback/Welcome usually?
+                                            // But configured per rule (match_type).
+                                            let isMatch = false;
+                                            if (rule.match_type === 'exact') {
+                                                isMatch = textLower === keywordLower;
+                                            } else {
+                                                isMatch = textLower.includes(keywordLower);
+                                            }
+
+                                            if (isMatch) {
                                                 await sendReply(senderId, rule, pageData.access_token);
 
-                                                // Save Bot Reply to DB
+                                                // Save Bot Reply
                                                 await supabase.from('social_messages').insert({
                                                     conversation_id: conv.id,
                                                     content: `[Bot]: ${rule.response_text || '[Image]'}`,
@@ -159,7 +170,7 @@ export async function POST(request: Request) {
                                                     is_from_page: true,
                                                     created_at: new Date().toISOString()
                                                 });
-                                                break; // Reply only once
+                                                break;
                                             }
                                         }
                                     }
