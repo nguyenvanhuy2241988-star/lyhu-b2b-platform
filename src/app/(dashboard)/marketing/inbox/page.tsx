@@ -15,7 +15,7 @@ import { MessageSquare, Send, User, Search, RefreshCw, Loader2 } from 'lucide-re
 import { createClient } from '@/lib/supabaseClient';
 
 export default function SocialInboxPage() {
-    const { user } = useAuth();
+    const { user, session } = useAuth();
     const [conversations, setConversations] = useState<SocialConversation[]>([]);
     const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
     const [messages, setMessages] = useState<SocialMessage[]>([]);
@@ -30,7 +30,7 @@ export default function SocialInboxPage() {
 
     const loadConversations = async () => {
         setIsLoading(true);
-        const data = await fetchConversations(undefined, filterPageId);
+        const data = await fetchConversations(session?.access_token, filterPageId);
         setConversations(data);
         setIsLoading(false);
     };
@@ -46,11 +46,11 @@ export default function SocialInboxPage() {
     };
 
     useEffect(() => {
-        if (user) {
+        if (session?.access_token) {
             loadConversations();
-            fetchFacebookPages(undefined).then(data => setPages(data));
+            fetchFacebookPages(session.access_token).then(data => setPages(data));
         }
-    }, [user, filterPageId]);
+    }, [session, filterPageId]);
 
     useEffect(() => {
         if (selectedConvId) {
