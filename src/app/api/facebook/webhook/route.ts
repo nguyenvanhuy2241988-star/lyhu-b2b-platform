@@ -2,16 +2,8 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 const VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN || 'lyhu_verify_token_123';
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-    auth: {
-        autoRefreshToken: false,
-        persistSession: false
-    }
-});
-
+// Helper to send reply to Facebook
 async function sendReply(recipientId: string, messageText: string, pageToken: string) {
     try {
         await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${pageToken}`, {
@@ -45,6 +37,16 @@ export async function POST(request: Request) {
         const body = await request.json();
 
         if (body.object === 'page') {
+            const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+            const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+            const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+                auth: {
+                    autoRefreshToken: false,
+                    persistSession: false
+                }
+            });
+
             for (const entry of body.entry) {
                 const pageId = entry.id; // Recipient (The Page)
                 const messaging = entry.messaging;
