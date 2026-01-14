@@ -49,29 +49,7 @@ async function sendReply(recipientId: string, rule: any, pageToken: string) {
     }
 }
 
-// ... inside POST ...
 
-if (rules) {
-    for (const rule of rules) {
-        const textLower = message.text.toLowerCase();
-        const keywordLower = rule.keyword.toLowerCase();
-
-        // Simple 'Contains' Match
-        if (textLower.includes(keywordLower)) {
-            await sendReply(senderId, rule, pageData.access_token);
-
-            // Save Bot Reply to DB
-            await supabase.from('social_messages').insert({
-                conversation_id: conv.id,
-                content: `[Bot]: ${rule.response_text}`, // Mark as bot
-                sender_id: pageId,
-                is_from_page: true,
-                created_at: new Date().toISOString()
-            });
-            break; // Reply only once
-        }
-    }
-}
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -171,12 +149,12 @@ export async function POST(request: Request) {
 
                                             // Simple 'Contains' Match
                                             if (textLower.includes(keywordLower)) {
-                                                await sendReply(senderId, rule.response_text, pageData.access_token);
+                                                await sendReply(senderId, rule, pageData.access_token);
 
                                                 // Save Bot Reply to DB
                                                 await supabase.from('social_messages').insert({
                                                     conversation_id: conv.id,
-                                                    content: rule.response_text,
+                                                    content: `[Bot]: ${rule.response_text || '[Image]'}`,
                                                     sender_id: pageId,
                                                     is_from_page: true,
                                                     created_at: new Date().toISOString()
