@@ -321,6 +321,24 @@ export default function SocialInboxPage() {
                     conversation={selectedConv}
                     onUpdate={handleUpdateConversation}
                     token={session?.access_token}
+                    onCreateDeal={() => setIsCreateDealOpen(true)}
+                />
+            )}
+
+            {selectedConv && (
+                <CreateDealModal
+                    isOpen={isCreateDealOpen}
+                    onClose={() => setIsCreateDealOpen(false)}
+                    onSave={handleCreateDealSave}
+                    userId={user?.id}
+                    initialData={{
+                        title: `Cơ hội từ FB: ${selectedConv.customer_name}`,
+                        source_category: 'MARKETING',
+                        source_detail: `Facebook Page: ${pages.find(p => p.is_connected)?.name || 'Unknown'}`
+                    }}
+                    defaultNewCustomer={{
+                        name: selectedConv?.customer_name || 'Khách hàng Facebook'
+                    }}
                 />
             )}
         </div>

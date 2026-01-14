@@ -39,6 +39,10 @@ interface CreateDealModalProps {
     initialStage?: DealStage;
     initialData?: Partial<CRMDeal>;
     userId?: string;
+    defaultNewCustomer?: {
+        name?: string;
+        phone?: string;
+    };
 }
 
 const CUSTOMER_TYPES = [
@@ -56,7 +60,8 @@ export const CreateDealModal = ({
     onDelete,
     initialStage = "new_data",
     initialData,
-    userId
+    userId,
+    defaultNewCustomer
 }: CreateDealModalProps) => {
     // Memoize default empty object to prevent re-renders when initialData is undefined
     const stableInitialData = useMemo(() => initialData || {}, [initialData]);
