@@ -13,7 +13,8 @@ import { Plus, Trash2, Edit, Zap, X, Save, Search, Bot } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AutomationPage() {
-    const { user, token } = useAuth();
+    const { user, session } = useAuth();
+    const token = session?.access_token;
     const [rules, setRules] = useState<ChatbotRule[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
