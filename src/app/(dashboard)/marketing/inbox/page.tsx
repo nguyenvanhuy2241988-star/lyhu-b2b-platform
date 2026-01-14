@@ -11,8 +11,9 @@ import {
     SocialMessage,
     FacebookPage
 } from '@/lib/marketingStore';
-import { MessageSquare, Send, User, Search, RefreshCw, Loader2 } from 'lucide-react';
+import { MessageSquare, Send, User, Search, RefreshCw, Loader2, DownloadCloud } from 'lucide-react';
 import { createClient } from '@/lib/supabaseClient';
+import { toast } from 'sonner';
 
 export default function SocialInboxPage() {
     const { user, session } = useAuth();
@@ -24,6 +25,7 @@ export default function SocialInboxPage() {
     const [isSending, setIsSending] = useState(false);
     const [pages, setPages] = useState<FacebookPage[]>([]);
     const [filterPageId, setFilterPageId] = useState<string>('');
+    const [isSyncing, setIsSyncing] = useState(false);
 
     // Auto-scroll ref
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -116,6 +118,34 @@ export default function SocialInboxPage() {
         }
     };
 
+    const handleSync = async () => {
+        if (!filterPageId) {
+            toast.error("Vui lòng chọn Fanpage cụ thể để đồng bộ tin nhắn cũ");
+            return;
+        }
+
+        setIsSyncing(true);
+        try {
+            const res = await fetch('/api/facebook/sync-conversations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ page_id: filterPageId })
+            });
+
+            const data = await res.json();
+
+            if (data.error) throw new Error(data.error);
+
+            toast.success(data.message || "Đồng bộ thành công!");
+            loadConversations();
+        } catch (error: any) {
+            console.error(error);
+            toast.error("Lỗi đồng bộ: " + error.message);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
     const selectedConv = conversations.find(c => c.id === selectedConvId);
 
     return (
@@ -124,9 +154,19 @@ export default function SocialInboxPage() {
             <div className="w-1/3 border-r bg-white flex flex-col">
                 <div className="p-4 border-b flex justify-between items-center">
                     <h2 className="font-bold text-lg">Hộp thư</h2>
-                    <button onClick={loadConversations} className="p-2 hover:bg-slate-100 rounded-full">
-                        <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                    </button>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={handleSync}
+                            disabled={isSyncing || !filterPageId}
+                            className="p-2 hover:bg-slate-100 rounded-full text-slate-500 disabled:opacity-30"
+                            title="Đồng bộ tin nhắn cũ từ Facebook"
+                        >
+                            <DownloadCloud className={`w-4 h-4 ${isSyncing ? 'animate-bounce' : ''}`} />
+                        </button>
+                        <button onClick={loadConversations} className="p-2 hover:bg-slate-100 rounded-full text-slate-500">
+                            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                        </button>
+                    </div>
                 </div>
                 <div className="p-2 space-y-2">
                     <select
