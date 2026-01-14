@@ -183,6 +183,7 @@ export const NAV_ITEMS = {
     ],
     [ROLES.MARKETING]: [
         { label: "Tổng quan Marketing", href: "/marketing", icon: LayoutDashboard },
+        { label: "Hộp thư (Inbox)", href: "/marketing/inbox", icon: MessageCircle },
         { label: "Chiến dịch", href: "/marketing/campaigns", icon: Megaphone },
         { label: "Leads", href: "/marketing/leads", icon: Users },
         { label: "Content & Lịch", href: "/marketing/content", icon: Calendar },
