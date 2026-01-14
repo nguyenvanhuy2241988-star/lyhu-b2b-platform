@@ -428,6 +428,11 @@ export interface SocialConversation {
     unread_count: number;
     last_message_at: string;
     updated_at: string;
+    tags?: string[];
+    notes?: string;
+    source_type?: 'ads' | 'post' | 'organic' | 'referral';
+    source_detail?: any;
+    customer_profile_url?: string;
 }
 
 export interface SocialMessage {
