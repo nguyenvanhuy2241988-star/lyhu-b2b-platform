@@ -559,3 +559,23 @@ export const deleteChatbotRule = async (id: string, token?: string): Promise<boo
         return false;
     }
 };
+
+// --- Profile Config ---
+export const updateMessengerProfile = async (pageId: string, pageToken: string, config: any) => {
+    try {
+        const res = await fetch('/api/facebook/profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                page_token: pageToken,
+                ...config
+            })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        return true;
+    } catch (err) {
+        console.error("updateMessengerProfile error:", err);
+        throw err;
+    }
+};
