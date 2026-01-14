@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from 'react';
-import { useAuth } from '@/lib/auth/AuthProvider';
+import { useAuth } from '@/components/auth/AuthProvider';
 import {
     fetchConversations,
     fetchMessages,
@@ -186,8 +186,8 @@ export default function SocialInboxPage() {
                             {messages.map(msg => (
                                 <div key={msg.id} className={`flex ${msg.is_from_page ? 'justify-end' : 'justify-start'}`}>
                                     <div className={`max-w-[70%] p-3 rounded-xl shadow-sm ${msg.is_from_page
-                                            ? 'bg-primary-600 text-white rounded-tr-none'
-                                            : 'bg-white text-slate-800 rounded-tl-none'
+                                        ? 'bg-primary-600 text-white rounded-tr-none'
+                                        : 'bg-white text-slate-800 rounded-tl-none'
                                         }`}>
                                         <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
                                         <div className={`text-[10px] mt-1 ${msg.is_from_page ? 'text-primary-100' : 'text-slate-400'}`}>
