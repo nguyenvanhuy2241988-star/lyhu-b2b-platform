@@ -409,3 +409,69 @@ export const deleteMarketingPost = async (id: string, token?: string): Promise<b
         return false;
     }
 };
+
+// ==========================================
+// SOCIAL CARE (INBOX)
+// ==========================================
+
+export interface SocialConversation {
+    id: string;
+    platform: 'facebook' | 'zalo' | 'tiktok';
+    external_id: string;
+    customer_name: string;
+    customer_avatar?: string;
+    snippet?: string;
+    unread_count: number;
+    last_message_at: string;
+    updated_at: string;
+}
+
+export interface SocialMessage {
+    id: string;
+    conversation_id: string;
+    content: string;
+    sender_id: string;
+    sender_name?: string;
+    is_from_page: boolean;
+    created_at: string;
+}
+
+export const fetchConversations = async (token?: string): Promise<SocialConversation[]> => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/social_conversations?select=*&order=last_message_at.desc`, { headers });
+        if (!res.ok) throw new Error(await res.text());
+        return await res.json();
+    } catch (err) {
+        console.error("fetchConversations error:", err);
+        return [];
+    }
+};
+
+export const fetchMessages = async (conversationId: string, token?: string): Promise<SocialMessage[]> => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/social_messages?conversation_id=eq.${conversationId}&order=created_at.asc`, { headers });
+        if (!res.ok) throw new Error(await res.text());
+        return await res.json();
+    } catch (err) {
+        console.error("fetchMessages error:", err);
+        return [];
+    }
+};
+
+export const sendSocialReply = async (recipientId: string, message: string, pageToken: string) => {
+    try {
+        const res = await fetch('/api/facebook/reply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ recipient_id: recipientId, message, page_token: pageToken })
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        return data;
+    } catch (err) {
+        console.error("sendSocialReply error:", err);
+        throw err;
+    }
+};
