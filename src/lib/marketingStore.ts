@@ -479,3 +479,80 @@ export const sendSocialReply = async (recipientId: string, message: string, page
         throw err;
     }
 };
+
+// ==========================================
+// CHATBOT AUTOMATION
+// ==========================================
+
+export interface ChatbotRule {
+    id: string;
+    page_id?: string | null;
+    keyword: string;
+    match_type: 'exact' | 'contains';
+    response_text: string;
+    is_active: boolean;
+    created_at: string;
+}
+
+export const fetchChatbotRules = async (token?: string, pageId?: string): Promise<ChatbotRule[]> => {
+    try {
+        const headers = getHeaders(token);
+        let url = `${SUPABASE_URL}/rest/v1/chatbot_rules?select=*&order=created_at.desc`;
+        if (pageId) {
+            url += `&page_id=eq.${pageId}`;
+        }
+        const res = await fetch(url, { headers });
+        if (!res.ok) throw new Error(await res.text());
+        return await res.json();
+    } catch (err) {
+        console.error("fetchChatbotRules error:", err);
+        return [];
+    }
+};
+
+export const createChatbotRule = async (rule: Partial<ChatbotRule>, token?: string): Promise<ChatbotRule | null> => {
+    try {
+        const headers = getHeaders(token);
+        headers['Prefer'] = 'return=representation'; // Get back the created object
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/chatbot_rules`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(rule)
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        return data?.[0] || null;
+    } catch (err) {
+        console.error("createChatbotRule error:", err);
+        return null;
+    }
+};
+
+export const updateChatbotRule = async (id: string, updates: Partial<ChatbotRule>, token?: string): Promise<boolean> => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/chatbot_rules?id=eq.${id}`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify(updates)
+        });
+        return res.ok;
+    } catch (err) {
+        console.error("updateChatbotRule error:", err);
+        return false;
+    }
+};
+
+export const deleteChatbotRule = async (id: string, token?: string): Promise<boolean> => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/chatbot_rules?id=eq.${id}`, {
+            method: 'DELETE',
+            headers
+        });
+        return res.ok;
+    } catch (err) {
+        console.error("deleteChatbotRule error:", err);
+        return false;
+    }
+};
