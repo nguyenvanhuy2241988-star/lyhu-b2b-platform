@@ -38,7 +38,7 @@ export default function SocialInboxPage() {
     };
 
     const loadMessages = async (convId: string) => {
-        const msgs = await fetchMessages(convId);
+        const msgs = await fetchMessages(convId, session?.access_token);
         setMessages(msgs);
         setTimeout(() => scrollToBottom(), 100);
     };
