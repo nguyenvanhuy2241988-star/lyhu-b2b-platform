@@ -149,9 +149,23 @@ export default function SocialInboxPage() {
     const selectedConv = conversations.find(c => c.id === selectedConvId);
 
     return (
+import InboxCustomerSidebar from '@/components/marketing/InboxCustomerSidebar';
+
+    // ... (existing imports, but make sure to include InboxCustomerSidebar if not handled by auto-import or manual separate import)
+
+    // Inside SocialInboxPage component (assuming imported)
+    // ...
+
+    const handleUpdateConversation = (updates: Partial<SocialConversation>) => {
+        if (!selectedConvId) return;
+        setConversations(prev => prev.map(c => c.id === selectedConvId ? { ...c, ...updates } : c));
+    };
+
+    return (
         <div className="flex h-[calc(100vh-64px)] bg-slate-50">
-            {/* Sidebar List */}
-            <div className="w-1/3 border-r bg-white flex flex-col">
+            {/* Sidebar List (Left) */}
+            <div className="w-1/4 border-r bg-white flex flex-col min-w-[300px]">
+                {/* ... existing List Code ... */}
                 <div className="p-4 border-b flex justify-between items-center">
                     <h2 className="font-bold text-lg">Hộp thư</h2>
                     <div className="flex items-center gap-1">
@@ -212,6 +226,15 @@ export default function SocialInboxPage() {
                                     <p className={`text-sm truncate ${conv.unread_count > 0 ? 'font-bold text-black' : 'text-slate-500'}`}>
                                         {conv.snippet || '...'}
                                     </p>
+                                    {/* Tags Mini Badge */}
+                                    {conv.tags && conv.tags.length > 0 && (
+                                        <div className="flex gap-1 mt-1">
+                                            {conv.tags.slice(0, 2).map(t => (
+                                                <span key={t} className="text-[10px] bg-slate-200 text-slate-600 px-1 rounded">{t}</span>
+                                            ))}
+                                            {conv.tags.length > 2 && <span className="text-[10px] text-slate-400">+{conv.tags.length - 2}</span>}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -219,8 +242,8 @@ export default function SocialInboxPage() {
                 </div>
             </div>
 
-            {/* Chat Area */}
-            <div className="flex-1 flex flex-col">
+            {/* Middle Chat Area */}
+            <div className="flex-1 flex flex-col border-r">
                 {selectedConv ? (
                     <>
                         {/* Header */}
@@ -229,7 +252,6 @@ export default function SocialInboxPage() {
                                 <div className="font-bold">{selectedConv.customer_name}</div>
                                 {selectedConv.platform === 'facebook' && <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded">Facebook</span>}
                             </div>
-                            {/* Actions */}
                         </div>
 
                         {/* Messages */}
@@ -277,6 +299,15 @@ export default function SocialInboxPage() {
                     </div>
                 )}
             </div>
+
+            {/* Right Customer Sidebar */}
+            {selectedConv && (
+                <InboxCustomerSidebar
+                    conversation={selectedConv}
+                    onUpdate={handleUpdateConversation}
+                    token={session?.access_token}
+                />
+            )}
         </div>
     );
 }

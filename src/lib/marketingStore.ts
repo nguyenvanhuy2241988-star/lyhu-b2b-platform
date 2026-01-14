@@ -456,6 +456,21 @@ export const fetchConversations = async (token?: string, pageId?: string): Promi
     }
 };
 
+export const updateConversationMetadata = async (id: string, updates: { tags?: string[], notes?: string }, token?: string) => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/social_conversations?id=eq.${id}`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify(updates)
+        });
+        return res.ok;
+    } catch (err) {
+        console.error("updateConversationMetadata error:", err);
+        return false;
+    }
+};
+
 export const fetchMessages = async (conversationId: string, token?: string): Promise<SocialMessage[]> => {
     try {
         const headers = getHeaders(token);
