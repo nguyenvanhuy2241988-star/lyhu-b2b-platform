@@ -436,10 +436,14 @@ export interface SocialMessage {
     created_at: string;
 }
 
-export const fetchConversations = async (token?: string): Promise<SocialConversation[]> => {
+export const fetchConversations = async (token?: string, pageId?: string): Promise<SocialConversation[]> => {
     try {
         const headers = getHeaders(token);
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/social_conversations?select=*&order=last_message_at.desc`, { headers });
+        let url = `${SUPABASE_URL}/rest/v1/social_conversations?select=*&order=last_message_at.desc`;
+        if (pageId) {
+            url += `&page_id=eq.${pageId}`;
+        }
+        const res = await fetch(url, { headers });
         if (!res.ok) throw new Error(await res.text());
         return await res.json();
     } catch (err) {

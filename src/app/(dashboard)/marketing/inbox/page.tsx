@@ -23,13 +23,14 @@ export default function SocialInboxPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [pages, setPages] = useState<FacebookPage[]>([]);
+    const [filterPageId, setFilterPageId] = useState<string>('');
 
     // Auto-scroll ref
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const loadConversations = async () => {
         setIsLoading(true);
-        const data = await fetchConversations();
+        const data = await fetchConversations(undefined, filterPageId);
         setConversations(data);
         setIsLoading(false);
     };
@@ -49,7 +50,7 @@ export default function SocialInboxPage() {
             loadConversations();
             fetchFacebookPages(undefined).then(data => setPages(data));
         }
-    }, [user]);
+    }, [user, filterPageId]);
 
     useEffect(() => {
         if (selectedConvId) {
@@ -127,7 +128,17 @@ export default function SocialInboxPage() {
                         <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
                     </button>
                 </div>
-                <div className="p-2">
+                <div className="p-2 space-y-2">
+                    <select
+                        className="w-full p-2 border rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        value={filterPageId}
+                        onChange={e => setFilterPageId(e.target.value)}
+                    >
+                        <option value="">Tất cả Fanpage</option>
+                        {pages.map(p => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                        ))}
+                    </select>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <input className="w-full pl-9 pr-4 py-2 bg-slate-100 rounded-lg text-sm outline-none" placeholder="Tìm kiếm..." />
