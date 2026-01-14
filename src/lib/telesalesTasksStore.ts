@@ -110,6 +110,7 @@ export const DEFAULT_COLUMNS: TelesalesColumn[] = [
     { id: 'tomorrow', label: 'Ngày mai', status: 'tomorrow', order: 30, isDefault: true, isVisible: true },
     { id: 'this_week', label: 'Tuần này', status: 'this_week', order: 40, isDefault: true, isVisible: true },
     { id: 'done', label: 'Đã xong', status: 'done', order: 50, isDefault: true, isVisible: true },
+    { id: 'overdue', label: 'Quá hạn', status: 'inbox', order: 5, isDefault: true, isVisible: true }, // Added Overdue
 ];
 
 const COLUMNS_KEY = 'lyhu:telesales:task_columns:v1';
@@ -349,7 +350,14 @@ export async function createTaskSupabase(input: {
         note: input.note ?? null,
         status: input.status ?? 'inbox',
         priority: input.priority ?? 'normal',
-        due_date: input.due_date ?? (input.status === 'today' ? new Date().toISOString() : (input.status === 'tomorrow' ? new Date(Date.now() + 86400000).toISOString() : null)),
+        due_date: input.due_date ?? (input.status === 'today' ? (() => {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        })() : (input.status === 'tomorrow' ? (() => {
+            const d = new Date();
+            d.setDate(d.getDate() + 1);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        })() : null)),
         type: input.type ?? 'task',
         assigned_to: input.assigned_to || null,
         assignee_ids: input.assignee_ids ?? [],
@@ -391,7 +399,14 @@ export async function updateTaskSupabase(taskId: string, patch: Partial<Telesale
         note: patch.note ?? null,
         status: patch.status,
         priority: patch.priority,
-        due_date: patch.due_date ?? (patch.status === 'today' && !patch.due_date ? new Date().toISOString() : (patch.status === 'tomorrow' && !patch.due_date ? new Date(Date.now() + 86400000).toISOString() : null)),
+        due_date: patch.due_date ?? (patch.status === 'today' && !patch.due_date ? (() => {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        })() : (patch.status === 'tomorrow' && !patch.due_date ? (() => {
+            const d = new Date();
+            d.setDate(d.getDate() + 1);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        })() : null)),
         completed_at: patch.completed_at ?? null,
         order: patch.order ?? undefined,
         type: patch.type,
