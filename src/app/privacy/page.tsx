@@ -37,7 +37,16 @@ export default function PrivacyPage() {
                 </section>
 
                 <section>
-                    <h2 className="text-xl font-semibold mb-2">5. Liên hệ</h2>
+                    <h2 className="text-xl font-semibold mb-2">5. Hướng dẫn xóa dữ liệu (User Data Deletion)</h2>
+                    <p>Theo chính sách Facebook, người dùng có quyền yêu cầu xóa dữ liệu của mình. Để thực hiện:</p>
+                    <ul className="list-disc pl-6 list-inside mt-2">
+                        <li>Gửi email đến <strong>admin@lyhu.com</strong> với tiêu đề "Yêu cầu xóa dữ liệu Facebook".</li>
+                        <li>Chúng tôi sẽ thực hiện xóa dữ liệu và phản hồi trong vòng 24h.</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 className="text-xl font-semibold mb-2">6. Liên hệ</h2>
                     <p>Nếu có thắc mắc, vui lòng liên hệ: admin@lyhu.com</p>
                 </section>
             </div>
