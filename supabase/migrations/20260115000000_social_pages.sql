@@ -20,8 +20,8 @@ CREATE POLICY "Enable read access for authenticated users" ON social_pages
 CREATE POLICY "Enable all access for admin/marketing users" ON social_pages
     FOR ALL USING (
         exists (
-            select 1 from user_roles
-            where user_id = auth.uid()
+            select 1 from profiles
+            where id = auth.uid()
             and role in ('admin', 'sale_admin', 'marketing')
         )
     );
