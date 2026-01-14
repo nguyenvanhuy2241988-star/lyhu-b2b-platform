@@ -6,10 +6,11 @@ import { toast } from 'sonner';
 interface InboxCustomerSidebarProps {
     conversation: SocialConversation;
     onUpdate: (updates: Partial<SocialConversation>) => void;
+    onCreateDeal?: () => void;
     token?: string;
 }
 
-export default function InboxCustomerSidebar({ conversation, onUpdate, token }: InboxCustomerSidebarProps) {
+export default function InboxCustomerSidebar({ conversation, onUpdate, onCreateDeal, token }: InboxCustomerSidebarProps) {
     const [notes, setNotes] = useState(conversation.notes || '');
     const [tags, setTags] = useState<string[]>(conversation.tags || []);
     const [newTag, setNewTag] = useState('');
@@ -72,8 +73,8 @@ export default function InboxCustomerSidebar({ conversation, onUpdate, token }: 
                     )}
                     {conversation.source_type && (
                         <span className={`text-xs px-2 py-1 rounded-full border ${conversation.source_type === 'ads' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                                conversation.source_type === 'post' ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                                    'bg-slate-50 text-slate-600 border-slate-200'
+                            conversation.source_type === 'post' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                'bg-slate-50 text-slate-600 border-slate-200'
                             }`}>
                             {conversation.source_type === 'ads' ? 'Từ Quảng Cáo' : conversation.source_type === 'post' ? 'Từ Bài viết' : 'Tự nhiên'}
                         </span>

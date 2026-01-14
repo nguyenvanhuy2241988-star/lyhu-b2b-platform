@@ -192,6 +192,10 @@ export const CreateDealModal = ({
             } else {
                 setActiveTab('new');
                 setSelectedCustomer(null);
+                if (defaultNewCustomer) {
+                    setCustomerName(defaultNewCustomer.name || "");
+                    setCustomerPhone(defaultNewCustomer.phone || "");
+                }
             }
         }
 

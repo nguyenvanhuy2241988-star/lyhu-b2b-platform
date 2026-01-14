@@ -15,6 +15,8 @@ import { MessageSquare, Send, User, Search, RefreshCw, Loader2, DownloadCloud } 
 import { createClient } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import InboxCustomerSidebar from '@/components/marketing/InboxCustomerSidebar';
+import { CreateDealModal } from '@/components/telesales/CreateDealModal';
+import { createDeal } from '@/lib/crmDealsStore';
 
 export default function SocialInboxPage() {
     const { user, session } = useAuth();
@@ -27,6 +29,9 @@ export default function SocialInboxPage() {
     const [pages, setPages] = useState<FacebookPage[]>([]);
     const [filterPageId, setFilterPageId] = useState<string>('');
     const [isSyncing, setIsSyncing] = useState(false);
+
+    // Create Deal Modal State
+    const [isCreateDealOpen, setIsCreateDealOpen] = useState(false);
 
     // Auto-scroll ref
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -152,6 +157,23 @@ export default function SocialInboxPage() {
     const handleUpdateConversation = (updates: Partial<SocialConversation>) => {
         if (!selectedConvId) return;
         setConversations(prev => prev.map(c => c.id === selectedConvId ? { ...c, ...updates } : c));
+    };
+
+    const handleCreateDealSave = async (dealData: any) => {
+        if (!selectedConvId) return;
+        setIsLoading(true); // Reuse loading or create new state? Reuse is fine but might flash list.
+        try {
+            await createDeal(dealData);
+            toast.success("Đã tạo cơ hội thành công!");
+            setIsCreateDealOpen(false);
+            // Optional: Link deal to conversation or add a note/tag automatically
+            handleUpdateConversation({ tags: [...(selectedConv?.tags || []), 'Có Deal'] });
+        } catch (error: any) {
+            console.error(error);
+            toast.error("Lỗi tạo cơ hội: " + error.message);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
