@@ -22,10 +22,12 @@ export default function AutomationPage() {
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingRule, setEditingRule] = useState<ChatbotRule | null>(null);
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<Partial<ChatbotRule>>({
         keyword: '',
         match_type: 'contains',
         response_text: '',
+        response_type: 'text',
+        media_url: '',
         is_active: true
     });
 
@@ -229,12 +231,44 @@ export default function AutomationPage() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-1">Câu trả lời (Response)</label>
+                                <label className="block text-sm font-medium mb-1">Loại tin nhắn (Response Type)</label>
+                                <select
+                                    className="w-full border rounded-lg p-2 outline-none"
+                                    value={formData.response_type || 'text'}
+                                    onChange={e => setFormData({ ...formData, response_type: e.target.value as any })}
+                                >
+                                    <option value="text">Văn bản (Text)</option>
+                                    <option value="image">Hình ảnh (Image)</option>
+                                </select>
+                            </div>
+
+                            {formData.response_type === 'image' && (
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Link Ảnh (Image URL)</label>
+                                    <input
+                                        type="text"
+                                        className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        placeholder="https://example.com/image.jpg"
+                                        value={formData.media_url || ''}
+                                        onChange={e => setFormData({ ...formData, media_url: e.target.value })}
+                                    />
+                                    {formData.media_url && (
+                                        <div className="mt-2 relative w-full h-32 rounded border overflow-hidden bg-slate-100">
+                                            <img src={formData.media_url} alt="Preview" className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1">
+                                    {formData.response_type === 'image' ? 'Chú thích (Caption)' : 'Câu trả lời (Response)'}
+                                </label>
                                 <textarea
-                                    required
+                                    required={formData.response_type === 'text'}
                                     rows={4}
                                     className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                    placeholder="Nhập nội dung tin nhắn bot sẽ trả lời..."
+                                    placeholder={formData.response_type === 'image' ? "Nhập chú thích ảnh..." : "Nhập nội dung tin nhắn..."}
                                     value={formData.response_text}
                                     onChange={e => setFormData({ ...formData, response_text: e.target.value })}
                                 />

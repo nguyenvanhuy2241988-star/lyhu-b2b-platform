@@ -4,18 +4,72 @@ import { createClient } from '@supabase/supabase-js';
 const VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN || 'lyhu_verify_token_123';
 
 // Helper to send reply to Facebook
-async function sendReply(recipientId: string, messageText: string, pageToken: string) {
+// Helper to send reply to Facebook
+async function sendReply(recipientId: string, rule: any, pageToken: string) {
     try {
+        let messagePayload: any = { text: rule.response_text };
+
+        // Handle Image
+        if (rule.response_type === 'image' && rule.media_url) {
+            messagePayload = {
+                attachment: {
+                    type: "image",
+                    payload: {
+                        url: rule.media_url,
+                        is_reusable: true
+                    }
+                }
+            };
+        }
+        // Handle Buttons (Quick Reply or Button Template)
+        // Note: For simplicity, using Button Template if buttons exist
+        else if (rule.buttons && rule.buttons.length > 0) {
+            messagePayload = {
+                attachment: {
+                    type: "template",
+                    payload: {
+                        template_type: "button",
+                        text: rule.response_text || "Vui lòng chọn:",
+                        buttons: rule.buttons
+                    }
+                }
+            };
+        }
+
         await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${pageToken}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 recipient: { id: recipientId },
-                message: { text: messageText }
+                message: messagePayload
             })
         });
     } catch (e) {
         console.error("Send Reply Error:", e);
+    }
+}
+
+// ... inside POST ...
+
+if (rules) {
+    for (const rule of rules) {
+        const textLower = message.text.toLowerCase();
+        const keywordLower = rule.keyword.toLowerCase();
+
+        // Simple 'Contains' Match
+        if (textLower.includes(keywordLower)) {
+            await sendReply(senderId, rule, pageData.access_token);
+
+            // Save Bot Reply to DB
+            await supabase.from('social_messages').insert({
+                conversation_id: conv.id,
+                content: `[Bot]: ${rule.response_text}`, // Mark as bot
+                sender_id: pageId,
+                is_from_page: true,
+                created_at: new Date().toISOString()
+            });
+            break; // Reply only once
+        }
     }
 }
 

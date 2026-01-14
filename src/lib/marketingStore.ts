@@ -490,6 +490,9 @@ export interface ChatbotRule {
     keyword: string;
     match_type: 'exact' | 'contains';
     response_text: string;
+    response_type: 'text' | 'image' | 'gallery';
+    media_url?: string;
+    buttons?: any[];
     is_active: boolean;
     created_at: string;
 }
