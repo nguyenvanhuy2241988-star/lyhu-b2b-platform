@@ -64,7 +64,7 @@ export default function SocialInboxPage() {
                     schema: 'public',
                     table: 'social_messages',
                     filter: `conversation_id=eq.${selectedConvId}`
-                }, (payload) => {
+                }, (payload: any) => {
                     const newMsg = payload.new as SocialMessage;
                     setMessages(prev => [...prev, newMsg]);
                     setTimeout(scrollToBottom, 100);
