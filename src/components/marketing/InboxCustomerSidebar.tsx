@@ -88,7 +88,7 @@ export default function InboxCustomerSidebar({ conversation, onUpdate, onCreateD
             {/* Actions */}
             <div className="p-4 grid grid-cols-2 gap-2 border-b">
                 <button
-                    onClick={() => toast.info('Tính năng đang phát triển: Tạo đơn Lead')}
+                    onClick={onCreateDeal}
                     className="flex flex-col items-center justify-center p-3 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition"
                 >
                     <ShoppingBag className="w-5 h-5 mb-1" />
