@@ -204,6 +204,10 @@ export interface FacebookPage {
     avatar_url?: string;
     is_connected: boolean;
     created_at: string;
+    chatbot_config?: {
+        greeting_text?: string;
+        auto_hide_phone?: boolean;
+    };
 }
 
 export const fetchFacebookPages = async (token: string | undefined): Promise<FacebookPage[]> => {
