@@ -26,6 +26,7 @@ export default function AutomationPage() {
 
     // Settings State
     const [greetingText, setGreetingText] = useState('');
+    const [autoHidePhone, setAutoHidePhone] = useState(false);
     const [isSavingSettings, setIsSavingSettings] = useState(false);
     const [pages, setPages] = useState<any[]>([]);
     const [selectedPageId, setSelectedPageId] = useState<string>('');
@@ -59,8 +60,25 @@ export default function AutomationPage() {
     const loadPages = async () => {
         const p = await fetchFacebookPages(token || undefined);
         setPages(p);
-        if (p.length > 0) setSelectedPageId(p[0].id);
+        if (p.length > 0) {
+            setSelectedPageId(p[0].id);
+            if (p[0].chatbot_config) {
+                setGreetingText(p[0].chatbot_config.greeting_text || '');
+                setAutoHidePhone(p[0].chatbot_config.auto_hide_phone || false);
+            }
+        }
     };
+
+    // When select changes, update local state
+    useEffect(() => {
+        if (selectedPageId && pages.length > 0) {
+            const p = pages.find(page => page.id === selectedPageId);
+            if (p) {
+                setGreetingText(p.chatbot_config?.greeting_text || '');
+                setAutoHidePhone(p.chatbot_config?.auto_hide_phone || false);
+            }
+        }
+    }, [selectedPageId]);
 
     const handleSaveSettings = async () => {
         if (!selectedPageId) return toast.error("Vui lòng chọn Fanpage");
@@ -71,9 +89,16 @@ export default function AutomationPage() {
             if (!page || !page.access_token) throw new Error("Page Token not found");
 
             await updateMessengerProfile(page.page_id, page.access_token, {
-                greeting_text: greetingText
+                greeting_text: greetingText,
+                auto_hide_phone: autoHidePhone
                 // Add persistent_menu logic here later
             });
+
+            // Optimistic update
+            setPages(prev => prev.map(p => p.id === selectedPageId ? {
+                ...p,
+                chatbot_config: { ...p.chatbot_config, greeting_text: greetingText, auto_hide_phone: autoHidePhone }
+            } : p));
             toast.success("Đã cập nhật cấu hình lên Facebook");
         } catch (error) {
             toast.error("Lỗi cập nhật configuration");

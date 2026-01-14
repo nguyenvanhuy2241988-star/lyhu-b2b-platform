@@ -567,6 +567,7 @@ export const updateMessengerProfile = async (pageId: string, pageToken: string, 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+                page_id: pageId,
                 page_token: pageToken,
                 ...config
             })

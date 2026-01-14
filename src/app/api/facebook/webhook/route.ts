@@ -180,12 +180,90 @@ export async function POST(request: Request) {
                     }
                 }
             }
-            return new NextResponse('EVENT_RECEIVED', { status: 200 });
-        } else {
-            return new NextResponse('Not Found', { status: 404 });
         }
-    } catch (error) {
-        console.error('Webhook Error:', error);
-        return new NextResponse('Internal Server Error', { status: 500 });
+
+        // --- Handle Feed (Comments) ---
+        if (entry.changes) {
+            for (const change of entry.changes) {
+                if (change.field === 'feed' && change.value.item === 'comment' && change.value.verb === 'add') {
+                    const { comment_id, message, post_id, sender_id, sender_name } = change.value;
+                    // Check if page itself commented? usually sender_id != page_id
+
+                    // 1. Fetch Page Config
+                    const { data: pageData } = await supabase
+                        .from('facebook_pages')
+                        .select('id, access_token, chatbot_config')
+                        .eq('page_id', pageId)
+                        .single();
+
+                    if (pageData && pageData.access_token && pageData.chatbot_config?.auto_hide_phone) {
+                        // 2. Check for Phone Number (VN Format)
+                        const phoneRegex = /(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/g;
+                        if (message && phoneRegex.test(message)) {
+                            console.log(`[Auto-Hide] Hiding comment ${comment_id} due to phone number.`);
+
+                            // 3. Call Graph API to Hide
+                            await fetch(`https://graph.facebook.com/v19.0/${comment_id}?access_token=${pageData.access_token}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ is_hidden: true })
+                            });
+
+                            // 4. Create "Social Message" entry to log it? Or just ignore.
+                            // Maybe log as a hidden comment if we track comments.
+                            // For now, minimal implementation.
+                        }
+                    }
+
+                    // Note: We should ideally also save the comment to `social_messages` for the Inbox, 
+                    // even if hidden. But that's part of the Inbox Flow.
+                    // Assuming Inbox Flow handles 'changes' as well? 
+                    // Current Webhook only handled 'messaging'. 
+                    // If we want Comments in Inbox, we must insert into `social_messages` here too.
+
+                    // Let's add basic Inbox INSERT for comments (Unified Inbox feature)
+                    if (message && pageData) {
+                        // Get/Create Conversation for this Post? Or User?
+                        // Comments usually grouped by Post or User? 
+                        // Facebook Graph API treats comments as edges on Post.
+                        // For Inbox, we usually treat a User as a conversation.
+
+                        // Find/Create Conversation with User
+                        const { data: conv } = await supabase
+                            .from('social_conversations')
+                            .upsert({
+                                platform: 'facebook',
+                                external_id: sender_id || `unknown_${Date.now()}`,
+                                page_id: pageData.id,
+                                customer_name: sender_name || 'Facebook User',
+                                snippet: message,
+                                unread_count: 1,
+                                last_message_at: new Date().toISOString()
+                            }, { onConflict: 'platform, external_id' })
+                            .select().single();
+
+                        if (conv) {
+                            await supabase.from('social_messages').insert({
+                                conversation_id: conv.id,
+                                external_id: comment_id,
+                                content: message,
+                                sender_id: sender_id || 'unknown',
+                                sender_name: sender_name,
+                                is_from_page: false, // User comment
+                                created_at: new Date().toISOString()
+                            });
+                        }
+                    }
+                }
+            }
+        }
     }
+            return new NextResponse('EVENT_RECEIVED', { status: 200 });
+} else {
+    return new NextResponse('Not Found', { status: 404 });
+}
+    } catch (error) {
+    console.error('Webhook Error:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
+}
 }
