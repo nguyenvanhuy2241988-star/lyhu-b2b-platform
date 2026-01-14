@@ -321,6 +321,24 @@ export default function AutomationPage() {
                             </div>
                         </div>
 
+                        <div className="pt-2">
+                            <div className="flex items-center gap-3 bg-red-50 p-4 rounded-lg border border-red-100">
+                                <input
+                                    type="checkbox"
+                                    id="autoHide"
+                                    className="w-5 h-5 text-red-600 rounded focus:ring-red-500"
+                                    checked={autoHidePhone}
+                                    onChange={e => setAutoHidePhone(e.target.checked)}
+                                />
+                                <div>
+                                    <label htmlFor="autoHide" className="font-medium text-slate-800 cursor-pointer select-none">
+                                        Ẩn bình luận chứa Số điện thoại
+                                    </label>
+                                    <p className="text-xs text-slate-500">Tự động ẩn comment có SĐT để tránh bị cướp khách.</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="pt-4">
                             <button
                                 onClick={handleSaveSettings}
