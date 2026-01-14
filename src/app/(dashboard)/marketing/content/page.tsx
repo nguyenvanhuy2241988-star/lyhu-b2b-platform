@@ -395,7 +395,7 @@ export default function MarketingContentPage() {
                             <div className="space-y-4">
                                 <div>
                                     <label className="text-sm font-medium">User Access Token</label>
-                                    <p className="text-xs text-slate-500 mb-2">Lấy token từ <a href="https://developers.facebook.com/tools/explorer/" target="_blank" className="text-blue-600 underline">Graph API Explorer</a> (Quyền: pages_show_list, pages_manage_posts, pages_read_engagement)</p>
+                                    <p className="text-xs text-slate-500 mb-2">Lấy token từ <a href="https://developers.facebook.com/tools/explorer/" target="_blank" className="text-blue-600 underline">Graph API Explorer</a> (Quyền: pages_show_list, pages_manage_posts, pages_read_engagement, pages_messaging)</p>
                                     <textarea
                                         className="w-full border p-2 rounded text-sm h-24"
                                         placeholder="EAA..."
