@@ -1177,17 +1177,18 @@ export default function TelesalesTasksPage() {
                                                 newDueDate = null;
                                                 newStatus = 'inbox';
                                             } else if (col.id === 'today') {
-                                                newDueDate = today.toISOString();
+                                                const d = new Date();
+                                                newDueDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                                                 newStatus = 'today';
                                             } else if (col.id === 'tomorrow') {
-                                                const tmr = new Date(today);
+                                                const tmr = new Date();
                                                 tmr.setDate(tmr.getDate() + 1);
-                                                newDueDate = tmr.toISOString();
-                                                newStatus = 'tomorrow'; // Logical status
+                                                newDueDate = `${tmr.getFullYear()}-${String(tmr.getMonth() + 1).padStart(2, '0')}-${String(tmr.getDate()).padStart(2, '0')}`;
+                                                newStatus = 'tomorrow';
                                             } else if (col.id === 'this_week') {
-                                                const next = new Date(today);
+                                                const next = new Date();
                                                 next.setDate(next.getDate() + 3); // Approx
-                                                newDueDate = next.toISOString();
+                                                newDueDate = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
                                                 newStatus = 'this_week';
                                             } else if (col.id === 'later') {
                                                 const later = new Date(today);
