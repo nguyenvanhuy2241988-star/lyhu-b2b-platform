@@ -64,7 +64,7 @@ export default function AutomationPage() {
 
     const handleSaveSettings = async () => {
         if (!selectedPageId) return toast.error("Vui lòng chọn Fanpage");
-        
+
         setIsSavingSettings(true);
         try {
             const page = pages.find(p => p.id === selectedPageId);
@@ -163,14 +163,14 @@ export default function AutomationPage() {
                 </div>
                 {/* Tabs */}
                 <div className="flex bg-slate-100 p-1 rounded-lg">
-                    <button 
+                    <button
                         onClick={() => setActiveTab('rules')}
                         className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === 'rules' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         Luật Từ khóa
                     </button>
-                    <button 
-                         onClick={() => setActiveTab('settings')}
+                    <button
+                        onClick={() => setActiveTab('settings')}
                         className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === 'settings' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         Cấu hình chung
@@ -260,11 +260,11 @@ export default function AutomationPage() {
                 </>
             ) : (
                 <div className="bg-white rounded-xl shadow border p-8">
-                     <h3 className="font-semibold text-lg mb-4">Cấu hình Messenger Profile</h3>
-                     
-                     <div className="mb-4">
+                    <h3 className="font-semibold text-lg mb-4">Cấu hình Messenger Profile</h3>
+
+                    <div className="mb-4">
                         <label className="block text-sm font-medium mb-1">Chọn Fanpage</label>
-                        <select 
+                        <select
                             className="w-full border rounded-lg p-2"
                             value={selectedPageId}
                             onChange={e => setSelectedPageId(e.target.value)}
@@ -273,13 +273,13 @@ export default function AutomationPage() {
                                 <option key={p.id} value={p.id}>{p.name}</option>
                             ))}
                         </select>
-                     </div>
+                    </div>
 
-                     <div className="space-y-4 max-w-2xl">
+                    <div className="space-y-4 max-w-2xl">
                         <div>
                             <label className="block text-sm font-medium mb-1">Lời chào (Greeting Text)</label>
                             <p className="text-xs text-slate-500 mb-2">Văn bản hiển thị khi khách hàng lần đầu mở chat (trước khi bấm Bắt đầu).</p>
-                             <textarea 
+                            <textarea
                                 rows={3}
                                 className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
                                 placeholder="Xin chào {{user_full_name}}! Chúng tôi có thể giúp gì cho bạn?"
@@ -297,7 +297,7 @@ export default function AutomationPage() {
                         </div>
 
                         <div className="pt-4">
-                             <button
+                            <button
                                 onClick={handleSaveSettings}
                                 disabled={isSavingSettings}
                                 className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
@@ -305,7 +305,7 @@ export default function AutomationPage() {
                                 {isSavingSettings ? 'Đang lưu...' : 'Lưu & Đẩy lên Facebook'}
                             </button>
                         </div>
-                     </div>
+                    </div>
                 </div>
             )}
 
@@ -400,11 +400,7 @@ export default function AutomationPage() {
                             </div>
 
                             <div className="pt-4 flex gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="flex-1 bg-slate-100 text-slate-700 py-2 rounded-lg hover:bg-slate-200 font-medium"
-                                </button>
+
                                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-100 text-slate-700 py-2 rounded-lg hover:bg-slate-200 font-medium">Hủy</button>
                                 <button
                                     type="submit"
