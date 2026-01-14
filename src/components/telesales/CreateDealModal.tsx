@@ -78,7 +78,7 @@ export const CreateDealModal = ({
     const [stage, setStage] = useState<DealStage>((stableInitialData.stage as DealStage) || initialStage);
     const [priority, setPriority] = useState<DealPriority>((stableInitialData.priority as DealPriority) || "normal");
     const [expectedValue, setExpectedValue] = useState<string>(stableInitialData.expected_value ? stableInitialData.expected_value.toString() : "");
-    const [nextActionAt, setNextActionAt] = useState(stableInitialData.next_action_at?.split('T')[0] || new Date().toISOString().split('T')[0]);
+    const [nextActionAt, setNextActionAt] = useState(stableInitialData.next_action_at?.split('T')[0] || new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]);
     const [note, setNote] = useState(stableInitialData.note || "");
 
     // New Classification Fields
