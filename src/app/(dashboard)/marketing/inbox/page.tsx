@@ -98,6 +98,7 @@ export default function SocialInboxPage() {
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
             {
+                accessToken: async () => session.access_token, // Explicitly provide token getter for Realtime
                 global: {
                     headers: {
                         Authorization: `Bearer ${session.access_token}`

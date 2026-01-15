@@ -125,10 +125,11 @@ export async function POST(request: Request) {
 
             for (const entry of body.entry) {
                 const pageId = entry.id; // Recipient (The Page)
-                const messaging = entry.messaging;
+                // Handle both messaging (primary) and standby (handover) events
+                const events = [...(entry.messaging || []), ...(entry.standby || [])];
 
-                if (messaging) {
-                    for (const event of messaging) {
+                if (events.length > 0) {
+                    for (const event of events) {
                         console.log("Webhook Event Received:", JSON.stringify(event, null, 2)); // DEBUG LOG
                         const senderId = event.sender.id;
                         let text = '';
