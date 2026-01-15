@@ -191,10 +191,7 @@ export default function AutomationPage() {
         }
     };
 
-    const filteredRules = rules.filter(r => {
-        const text = r.keyword + ' ' + (r.response_text || '');
-        return text.toLowerCase().includes(search.toLowerCase());
-    });
+
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -261,14 +258,14 @@ export default function AutomationPage() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredRules.length === 0 ? (
+                                    {rules.filter(r => (r.keyword + ' ' + (r.response_text || '')).toLowerCase().includes(search.toLowerCase())).length === 0 ? (
                                         <tr>
                                             <td colSpan={5} className="p-8 text-center text-slate-400">
                                                 <Bot className="w-12 h-12 mx-auto mb-2 opacity-20" />
                                                 Chưa có quy tắc nào
                                             </td>
                                         </tr>
-                                    ) : filteredRules.map(rule => (
+                                    ) : rules.filter(r => (r.keyword + ' ' + (r.response_text || '')).toLowerCase().includes(search.toLowerCase())).map(rule => (
                                         <tr key={rule.id} className="border-b last:border-0 hover:bg-slate-50">
                                             <td className="p-4 font-medium text-blue-700">"{rule.keyword}"</td>
                                             <td className="p-4 text-slate-700 truncate max-w-xs" title={rule.response_text}>
