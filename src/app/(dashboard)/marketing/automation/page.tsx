@@ -191,10 +191,10 @@ export default function AutomationPage() {
         }
     };
 
-    const filteredRules = rules.filter(r =>
-        r.keyword.toLowerCase().includes(search.toLowerCase()) ||
-        r.response_text.toLowerCase().includes(search.toLowerCase())
-    );
+    const filteredRules = rules.filter(r => {
+        const text = r.keyword + ' ' + (r.response_text || '');
+        return text.toLowerCase().includes(search.toLowerCase());
+    });
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">

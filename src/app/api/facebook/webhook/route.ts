@@ -47,224 +47,152 @@ async function sendReply(recipientId: string, rule: any, pageToken: string) {
     } catch (e) {
         console.error("Send Reply Error:", e);
     }
+}
+}
 
 
-    // Helper: Public Comment Reply
-    async function sendCommentReply(commentId: string, rule: any, pageToken: string) {
-        try {
-            let messageText = rule.response_text || "";
-            // If image, append URL (Comments support attachment_url but text is safer/simpler for now)
-            if (rule.response_type === 'image' && rule.media_url) {
-                // Use attachment_url if text is empty? Or both?
-                // FB API supports `message` OR `attachment_url` or `source`.
-                // Let's keep it simple: Text.
-                messageText += ` ${rule.media_url}`;
-            }
-
-            await fetch(`https://graph.facebook.com/v19.0/${commentId}/comments?access_token=${pageToken}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: messageText })
-            });
-        } catch (e) { console.error("Comment Reply Error", e); }
-    }
-
-    // Helper: Private Inbox Reply (from Comment)
-    async function sendPrivateReply(commentId: string, rule: any, pageToken: string) {
-        try {
-            // Same payload logic as sendReply
-            let messagePayload: any = { text: rule.response_text };
-            if (rule.response_type === 'image' && rule.media_url) {
-                messagePayload = {
-                    attachment: { type: "image", payload: { url: rule.media_url, is_reusable: true } }
-                };
-            }
-
-            await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${pageToken}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    recipient: { comment_id: commentId },
-                    message: messagePayload
-                })
-            });
-        } catch (e) { console.error("Private Reply Error", e); }
-    }
-
-
-
-    export async function GET(request: Request) {
-        const { searchParams } = new URL(request.url);
-        const mode = searchParams.get('hub.mode');
-        const token = searchParams.get('hub.verify_token');
-        const challenge = searchParams.get('hub.challenge');
-
-        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
-            return new NextResponse(challenge, { status: 200 });
-        } else {
-            return new NextResponse('Forbidden', { status: 403 });
+// Helper: Public Comment Reply
+async function sendCommentReply(commentId: string, rule: any, pageToken: string) {
+    try {
+        let messageText = rule.response_text || "";
+        // If image, append URL (Comments support attachment_url but text is safer/simpler for now)
+        if (rule.response_type === 'image' && rule.media_url) {
+            // Use attachment_url if text is empty? Or both?
+            // FB API supports `message` OR `attachment_url` or `source`.
+            // Let's keep it simple: Text.
+            messageText += ` ${rule.media_url}`;
         }
+
+        await fetch(`https://graph.facebook.com/v19.0/${commentId}/comments?access_token=${pageToken}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: messageText })
+        });
+    } catch (e) { console.error("Comment Reply Error", e); }
+}
+
+// Helper: Private Inbox Reply (from Comment)
+async function sendPrivateReply(commentId: string, rule: any, pageToken: string) {
+    try {
+        // Same payload logic as sendReply
+        let messagePayload: any = { text: rule.response_text };
+        if (rule.response_type === 'image' && rule.media_url) {
+            messagePayload = {
+                attachment: { type: "image", payload: { url: rule.media_url, is_reusable: true } }
+            };
+        }
+
+        await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${pageToken}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                recipient: { comment_id: commentId },
+                message: messagePayload
+            })
+        });
+    } catch (e) { console.error("Private Reply Error", e); }
+}
+
+
+
+export async function GET(request: Request) {
+    const { searchParams } = new URL(request.url);
+    const mode = searchParams.get('hub.mode');
+    const token = searchParams.get('hub.verify_token');
+    const challenge = searchParams.get('hub.challenge');
+
+    if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+        return new NextResponse(challenge, { status: 200 });
+    } else {
+        return new NextResponse('Forbidden', { status: 403 });
     }
+}
 
-    export async function POST(request: Request) {
-        try {
-            const body = await request.json();
+export async function POST(request: Request) {
+    try {
+        const body = await request.json();
 
-            if (body.object === 'page') {
-                const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-                const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+        if (body.object === 'page') {
+            const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+            const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-                const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-                    auth: {
-                        autoRefreshToken: false,
-                        persistSession: false
-                    }
-                });
+            const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+                auth: {
+                    autoRefreshToken: false,
+                    persistSession: false
+                }
+            });
 
-                for (const entry of body.entry) {
-                    const pageId = entry.id; // Recipient (The Page)
-                    const messaging = entry.messaging;
+            for (const entry of body.entry) {
+                const pageId = entry.id; // Recipient (The Page)
+                const messaging = entry.messaging;
 
-                    if (messaging) {
-                        for (const event of messaging) {
-                            const senderId = event.sender.id;
-                            let text = '';
-                            let mid = '';
+                if (messaging) {
+                    for (const event of messaging) {
+                        const senderId = event.sender.id;
+                        let text = '';
+                        let mid = '';
 
-                            if (event.message && event.message.text) {
-                                text = event.message.text;
-                                mid = event.message.mid;
-                            } else if (event.postback && event.postback.payload) {
-                                text = event.postback.payload;
-                                mid = `postback_${Date.now()}`;
-                            }
-
-                            if (text) {
-                                // 1. Get Conversation or Create
-                                const referral = (event.message && event.message.referral) || (event.postback && event.postback.referral);
-
-                                const upsertData: any = {
-                                    platform: 'facebook',
-                                    external_id: senderId,
-                                    page_id: null, // Will update below
-                                    customer_name: 'Facebook User',
-                                    snippet: text,
-                                    unread_count: 1,
-                                    last_message_at: new Date().toISOString()
-                                };
-
-                                if (referral) {
-                                    upsertData.referral_source = referral.source;
-                                    upsertData.ad_id = referral.ad_id;
-                                    upsertData.ref_parameter = referral.ref;
-                                    upsertData.ad_title = referral.ad_id ? `Ads ${referral.ad_id}` : null;
-                                }
-
-                                const { data: conv, error: convError } = await supabase
-                                    .from('social_conversations')
-                                    .upsert(upsertData, { onConflict: 'platform, external_id' })
-                                    .select()
-                                    .single();
-
-                                // Retrieve Page UUID
-                                const { data: pageData } = await supabase
-                                    .from('facebook_pages')
-                                    .select('id, access_token')
-                                    .eq('page_id', pageId)
-                                    .single();
-
-                                if (pageData && conv) {
-                                    await supabase
-                                        .from('social_conversations')
-                                        .update({ page_id: pageData.id })
-                                        .eq('id', conv.id);
-
-                                    // 2. Insert Message (User's message/postback)
-                                    await supabase.from('social_messages').insert({
-                                        conversation_id: conv.id,
-                                        external_id: mid || `mid_${Date.now()}`,
-                                        content: text,
-                                        sender_id: senderId,
-                                        is_from_page: false,
-                                        created_at: new Date().toISOString()
-                                    });
-
-                                    // 3. Chatbot Logic
-                                    if (pageData.access_token) {
-                                        const { data: rules } = await supabase
-                                            .from('chatbot_rules')
-                                            .select('*')
-                                            .eq('is_active', true)
-                                            .or(`page_id.is.null,page_id.eq.${pageData.id}`);
-
-                                        if (rules) {
-                                            for (const rule of rules) {
-                                                const textLower = text.toLowerCase();
-                                                const keywordLower = rule.keyword.toLowerCase();
-
-                                                // Simple 'Contains' Match
-                                                // Ensure exact match for Postback/Welcome usually?
-                                                // But configured per rule (match_type).
-                                                let isMatch = false;
-                                                if (rule.match_type === 'exact') {
-                                                    isMatch = textLower === keywordLower;
-                                                } else {
-                                                    isMatch = textLower.includes(keywordLower);
-                                                }
-
-                                                if (isMatch) {
-                                                    await sendReply(senderId, rule, pageData.access_token);
-
-                                                    // Save Bot Reply
-                                                    await supabase.from('social_messages').insert({
-                                                        conversation_id: conv.id,
-                                                        content: `[Bot]: ${rule.response_text || '[Image]'}`,
-                                                        sender_id: pageId,
-                                                        is_from_page: true,
-                                                        created_at: new Date().toISOString()
-                                                    });
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                        if (event.message && event.message.text) {
+                            text = event.message.text;
+                            mid = event.message.mid;
+                        } else if (event.postback && event.postback.payload) {
+                            text = event.postback.payload;
+                            mid = `postback_${Date.now()}`;
                         }
-                    }
 
-                    // --- Handle Feed (Comments) ---
-                    if (entry.changes) {
-                        for (const change of entry.changes) {
-                            if (change.field === 'feed' && change.value.item === 'comment' && change.value.verb === 'add') {
-                                const { comment_id, message, post_id, sender_id, sender_name } = change.value;
+                        if (text) {
+                            // 1. Get Conversation or Create
+                            const referral = (event.message && event.message.referral) || (event.postback && event.postback.referral);
 
-                                // 1. Fetch Page Config
-                                const { data: pageData } = await supabase
-                                    .from('facebook_pages')
-                                    .select('id, access_token, chatbot_config')
-                                    .eq('page_id', pageId)
-                                    .single();
+                            const upsertData: any = {
+                                platform: 'facebook',
+                                external_id: senderId,
+                                page_id: null, // Will update below
+                                customer_name: 'Facebook User',
+                                snippet: text,
+                                unread_count: 1,
+                                last_message_at: new Date().toISOString()
+                            };
 
-                                if (pageData && pageData.access_token && pageData.chatbot_config?.auto_hide_phone) {
-                                    // 2. Check for Phone Number (VN Format)
-                                    const phoneRegex = /(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/g;
-                                    if (message && phoneRegex.test(message)) {
-                                        console.log(`[Auto-Hide] Hiding comment ${comment_id} due to phone number.`);
+                            if (referral) {
+                                upsertData.referral_source = referral.source;
+                                upsertData.ad_id = referral.ad_id;
+                                upsertData.ref_parameter = referral.ref;
+                                upsertData.ad_title = referral.ad_id ? `Ads ${referral.ad_id}` : null;
+                            }
 
-                                        // 3. Call Graph API to Hide
-                                        await fetch(`https://graph.facebook.com/v19.0/${comment_id}?access_token=${pageData.access_token}`, {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ is_hidden: true })
-                                        });
-                                    }
-                                }
+                            const { data: conv, error: convError } = await supabase
+                                .from('social_conversations')
+                                .upsert(upsertData, { onConflict: 'platform, external_id' })
+                                .select()
+                                .single();
 
-                                // 2b. Chatbot Auto-Reply Logic (Comments)
-                                if (pageData && pageData.access_token && message) {
-                                    // Fetch Active Rules (Optimize: Cache or Fetch once)
-                                    // We fetch rules here.
+                            // Retrieve Page UUID
+                            const { data: pageData } = await supabase
+                                .from('facebook_pages')
+                                .select('id, access_token')
+                                .eq('page_id', pageId)
+                                .single();
+
+                            if (pageData && conv) {
+                                await supabase
+                                    .from('social_conversations')
+                                    .update({ page_id: pageData.id })
+                                    .eq('id', conv.id);
+
+                                // 2. Insert Message (User's message/postback)
+                                await supabase.from('social_messages').insert({
+                                    conversation_id: conv.id,
+                                    external_id: mid || `mid_${Date.now()}`,
+                                    content: text,
+                                    sender_id: senderId,
+                                    is_from_page: false,
+                                    created_at: new Date().toISOString()
+                                });
+
+                                // 3. Chatbot Logic
+                                if (pageData.access_token) {
                                     const { data: rules } = await supabase
                                         .from('chatbot_rules')
                                         .select('*')
@@ -273,69 +201,143 @@ async function sendReply(recipientId: string, rule: any, pageToken: string) {
 
                                     if (rules) {
                                         for (const rule of rules) {
-                                            const textLower = message.toLowerCase();
+                                            const textLower = text.toLowerCase();
                                             const keywordLower = rule.keyword.toLowerCase();
+
+                                            // Simple 'Contains' Match
+                                            // Ensure exact match for Postback/Welcome usually?
+                                            // But configured per rule (match_type).
                                             let isMatch = false;
-                                            if (rule.match_type === 'exact') isMatch = textLower === keywordLower;
-                                            else isMatch = textLower.includes(keywordLower);
+                                            if (rule.match_type === 'exact') {
+                                                isMatch = textLower === keywordLower;
+                                            } else {
+                                                isMatch = textLower.includes(keywordLower);
+                                            }
 
                                             if (isMatch) {
-                                                console.log(`[Auto-Reply] Comment Match: ${rule.keyword}`);
-                                                // Public Reply
-                                                await sendCommentReply(comment_id, rule, pageData.access_token);
+                                                await sendReply(senderId, rule, pageData.access_token);
 
-                                                // Private Reply (Optional - If configured later, but for now Auto-Reply usually means Public)
-                                                // If you want Private Auto-Reply, maybe check a flag in rule? 
-                                                // For now, let's assume Rules apply to Public Reply for comments.
-                                                // BUT if type is "Auto-Inbox", use private. 
-                                                // My rule schema doesn't have "reply_method".
-                                                // Adding "Auto-Inbox" Logic if implied?
-                                                // Let's do BOTH if Keyword matches? Or just Public?
-                                                // Standard is Public. Private is aggressive.
-                                                // I'll stick to Public for now.
+                                                // Save Bot Reply
+                                                await supabase.from('social_messages').insert({
+                                                    conversation_id: conv.id,
+                                                    content: `[Bot]: ${rule.response_text || '[Image]'}`,
+                                                    sender_id: pageId,
+                                                    is_from_page: true,
+                                                    created_at: new Date().toISOString()
+                                                });
                                                 break;
                                             }
                                         }
                                     }
                                 }
+                            }
+                        }
+                    }
+                }
 
-                                // Inbox Sync Logic
-                                if (message && pageData) {
-                                    const { data: conv } = await supabase
-                                        .from('social_conversations')
-                                        .upsert({
-                                            platform: 'facebook',
-                                            external_id: sender_id || `unknown_${Date.now()}`,
-                                            page_id: pageData.id,
-                                            customer_name: sender_name || 'Facebook User',
-                                            snippet: message,
-                                            unread_count: 1,
-                                            last_message_at: new Date().toISOString()
-                                        }, { onConflict: 'platform, external_id' })
-                                        .select().single();
+                // --- Handle Feed (Comments) ---
+                if (entry.changes) {
+                    for (const change of entry.changes) {
+                        if (change.field === 'feed' && change.value.item === 'comment' && change.value.verb === 'add') {
+                            const { comment_id, message, post_id, sender_id, sender_name } = change.value;
 
-                                    if (conv) {
-                                        await supabase.from('social_messages').insert({
-                                            conversation_id: conv.id,
-                                            external_id: comment_id,
-                                            content: message,
-                                            sender_id: sender_id || 'unknown',
-                                            sender_name: sender_name,
-                                            is_from_page: false,
-                                            created_at: new Date().toISOString()
-                                        });
+                            // 1. Fetch Page Config
+                            const { data: pageData } = await supabase
+                                .from('facebook_pages')
+                                .select('id, access_token, chatbot_config')
+                                .eq('page_id', pageId)
+                                .single();
+
+                            if (pageData && pageData.access_token && pageData.chatbot_config?.auto_hide_phone) {
+                                // 2. Check for Phone Number (VN Format)
+                                const phoneRegex = /(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/g;
+                                if (message && phoneRegex.test(message)) {
+                                    console.log(`[Auto-Hide] Hiding comment ${comment_id} due to phone number.`);
+
+                                    // 3. Call Graph API to Hide
+                                    await fetch(`https://graph.facebook.com/v19.0/${comment_id}?access_token=${pageData.access_token}`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ is_hidden: true })
+                                    });
+                                }
+                            }
+
+                            // 2b. Chatbot Auto-Reply Logic (Comments)
+                            if (pageData && pageData.access_token && message) {
+                                // Fetch Active Rules (Optimize: Cache or Fetch once)
+                                // We fetch rules here.
+                                const { data: rules } = await supabase
+                                    .from('chatbot_rules')
+                                    .select('*')
+                                    .eq('is_active', true)
+                                    .or(`page_id.is.null,page_id.eq.${pageData.id}`);
+
+                                if (rules) {
+                                    for (const rule of rules) {
+                                        const textLower = message.toLowerCase();
+                                        const keywordLower = rule.keyword.toLowerCase();
+                                        let isMatch = false;
+                                        if (rule.match_type === 'exact') isMatch = textLower === keywordLower;
+                                        else isMatch = textLower.includes(keywordLower);
+
+                                        if (isMatch) {
+                                            console.log(`[Auto-Reply] Comment Match: ${rule.keyword}`);
+                                            // Public Reply
+                                            await sendCommentReply(comment_id, rule, pageData.access_token);
+
+                                            // Private Reply (Optional - If configured later, but for now Auto-Reply usually means Public)
+                                            // If you want Private Auto-Reply, maybe check a flag in rule? 
+                                            // For now, let's assume Rules apply to Public Reply for comments.
+                                            // BUT if type is "Auto-Inbox", use private. 
+                                            // My rule schema doesn't have "reply_method".
+                                            // Adding "Auto-Inbox" Logic if implied?
+                                            // Let's do BOTH if Keyword matches? Or just Public?
+                                            // Standard is Public. Private is aggressive.
+                                            // I'll stick to Public for now.
+                                            break;
+                                        }
                                     }
+                                }
+                            }
+
+                            // Inbox Sync Logic
+                            if (message && pageData) {
+                                const { data: conv } = await supabase
+                                    .from('social_conversations')
+                                    .upsert({
+                                        platform: 'facebook',
+                                        external_id: sender_id || `unknown_${Date.now()}`,
+                                        page_id: pageData.id,
+                                        customer_name: sender_name || 'Facebook User',
+                                        snippet: message,
+                                        unread_count: 1,
+                                        last_message_at: new Date().toISOString()
+                                    }, { onConflict: 'platform, external_id' })
+                                    .select().single();
+
+                                if (conv) {
+                                    await supabase.from('social_messages').insert({
+                                        conversation_id: conv.id,
+                                        external_id: comment_id,
+                                        content: message,
+                                        sender_id: sender_id || 'unknown',
+                                        sender_name: sender_name,
+                                        is_from_page: false,
+                                        created_at: new Date().toISOString()
+                                    });
                                 }
                             }
                         }
                     }
-                } // End of entry loop
-                return new NextResponse('EVENT_RECEIVED', { status: 200 });
-            } else {
-                return new NextResponse('Not Found', { status: 404 });
-            }
-        } catch (error) {
-            console.error('Webhook Error:', error);
-            return new NextResponse('Internal Server Error', { status: 500 });
+                }
+            } // End of entry loop
+            return new NextResponse('EVENT_RECEIVED', { status: 200 });
+        } else {
+            return new NextResponse('Not Found', { status: 404 });
         }
+    } catch (error) {
+        console.error('Webhook Error:', error);
+        return new NextResponse('Internal Server Error', { status: 500 });
     }
+}
