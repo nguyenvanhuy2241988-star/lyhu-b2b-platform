@@ -112,6 +112,9 @@ export default function SocialInboxPage() {
             loadConversations();
             fetchFacebookPages(session.access_token).then(data => setPages(data));
 
+            // Explicitly set Auth token for Realtime WebSocket
+            supabaseClient.realtime.setAuth(session.access_token);
+
             const channel = supabaseClient
                 .channel('social-conversations-list-global')
                 .on('postgres_changes', {
