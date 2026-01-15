@@ -129,6 +129,7 @@ export async function POST(request: Request) {
 
                 if (messaging) {
                     for (const event of messaging) {
+                        console.log("Webhook Event Received:", JSON.stringify(event, null, 2)); // DEBUG LOG
                         const senderId = event.sender.id;
                         let text = '';
                         let mid = '';
@@ -144,6 +145,7 @@ export async function POST(request: Request) {
                         if (text) {
                             // 1. Get Conversation or Create
                             const referral = (event.message && event.message.referral) || (event.postback && event.postback.referral);
+                            console.log("Referral Data:", referral); // DEBUG LOG
 
                             const upsertData: any = {
                                 platform: 'facebook',

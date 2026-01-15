@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import {
     fetchConversations,
@@ -91,54 +91,50 @@ export default function SocialInboxPage() {
         }
     };
 
+    // Memoize the authenticated Supabase client to prevent multiple instances and socket disconnects
+    const supabaseClient = useMemo(() => {
+        if (!session?.access_token) return null;
+        return createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+                global: {
+                    headers: {
+                        Authorization: `Bearer ${session.access_token}`
+                    }
+                }
+            }
+        );
+    }, [session?.access_token]);
+
     useEffect(() => {
-        if (session?.access_token) {
+        if (session?.access_token && supabaseClient) {
             loadConversations();
             fetchFacebookPages(session.access_token).then(data => setPages(data));
 
-            const supabase = createClient(
-                process.env.NEXT_PUBLIC_SUPABASE_URL!,
-                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-                {
-                    global: {
-                        headers: {
-                            Authorization: `Bearer ${session?.access_token}`
-                        }
-                    }
-                }
-            );
-            const channel = supabase
+            const channel = supabaseClient
                 .channel('social-conversations-list-global')
                 .on('postgres_changes', {
                     event: '*',
                     schema: 'public',
                     table: 'social_conversations'
                 }, handleRealtimeConversation)
-                .subscribe();
+                .subscribe((status: any) => {
+                    console.log("Global Channel Status:", status);
+                });
 
             return () => {
-                supabase.removeChannel(channel);
+                supabaseClient.removeChannel(channel);
             };
         }
-    }, [session, filterPageId, filterUnread, filterDate]);
+    }, [session, filterPageId, filterUnread, filterDate, supabaseClient]);
 
     useEffect(() => {
-        if (selectedConvId) {
+        if (selectedConvId && supabaseClient) {
             loadMessages(selectedConvId);
 
             // Subscribe to new messages for this conversation
-            const supabase = createClient(
-                process.env.NEXT_PUBLIC_SUPABASE_URL!,
-                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-                {
-                    global: {
-                        headers: {
-                            Authorization: `Bearer ${session?.access_token}`
-                        }
-                    }
-                }
-            );
-            const channel = supabase
+            const channel = supabaseClient
                 .channel(`social-messages-${selectedConvId}`)
                 .on('postgres_changes', {
                     event: 'INSERT',
@@ -146,17 +142,20 @@ export default function SocialInboxPage() {
                     table: 'social_messages',
                     filter: `conversation_id=eq.${selectedConvId}`
                 }, (payload: any) => {
+                    console.log("Message Realtime:", payload);
                     const newMsg = payload.new as SocialMessage;
                     setMessages(prev => [...prev, newMsg]);
                     setTimeout(scrollToBottom, 100);
                 })
-                .subscribe();
+                .subscribe((status: any) => {
+                    console.log("Message Channel Status:", status);
+                });
 
             return () => {
-                supabase.removeChannel(channel);
+                supabaseClient.removeChannel(channel);
             };
         }
-    }, [selectedConvId]);
+    }, [selectedConvId, supabaseClient]);
 
     const handleSend = async () => {
         if (!replyText.trim() || !selectedConvId) return;
