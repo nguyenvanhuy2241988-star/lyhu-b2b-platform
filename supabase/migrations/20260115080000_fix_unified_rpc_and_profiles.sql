@@ -37,56 +37,57 @@ SECURITY DEFINER
 AS $$
 BEGIN
     RETURN QUERY
-    -- 1. From Deals
-    SELECT 
-        d.id,
-        'deal'::TEXT,
-        d.title,
-        c.name,
-        c.phone, 
-        d.next_action_at,
-        d.status,
-        d.priority,
-        (d.next_action_at < NOW() AND d.status NOT IN ('won', 'lost')),
-        NULL::UUID[],
-        NULL::UUID
-    FROM crm_deals d
-    LEFT JOIN customers c ON d.customer_id = c.id
-    WHERE d.next_action_at IS NOT NULL
-    AND d.next_action_at BETWEEN p_start_date AND p_end_date
-    AND (p_user_id IS NULL OR d.owner_user_id = p_user_id)
+    SELECT * FROM (
+        -- 1. From Deals
+        SELECT 
+            d.id,
+            'deal'::TEXT as source_type,
+            d.title,
+            c.name as customer_name,
+            c.phone, 
+            d.next_action_at as due_date,
+            d.status,
+            d.priority,
+            (d.next_action_at < NOW() AND d.status NOT IN ('won', 'lost')) as is_overdue,
+            NULL::UUID[] as assignee_ids,
+            NULL::UUID as leader_id
+        FROM crm_deals d
+        LEFT JOIN customers c ON d.customer_id = c.id
+        WHERE d.next_action_at IS NOT NULL
+        AND d.next_action_at BETWEEN p_start_date AND p_end_date
+        AND (p_user_id IS NULL OR d.owner_user_id = p_user_id)
 
-    UNION ALL
+        UNION ALL
 
-    -- 2. From Manual Tasks
-    SELECT 
-        t.id,
-        'task'::TEXT,
-        t.title,
-        t.customer_name,
-        t.phone, 
-        t.due_date,
-        t.status,
-        t.priority,
-        (t.due_date < NOW() AND t.status != 'done'),
-        t.assignee_ids,
-        t.leader_id
-    FROM telesales_tasks t
-    WHERE t.due_date IS NOT NULL
-    AND t.due_date BETWEEN p_start_date AND p_end_date
-    AND (
-        p_user_id IS NULL 
-        OR t.owner_id = p_user_id
-        OR t.user_id = p_user_id
-        OR t.assigned_to = p_user_id
-        OR t.leader_id = p_user_id
-        OR EXISTS (
-            SELECT 1 
-            FROM unnest(t.assignee_ids) as aid 
-            WHERE aid::text = p_user_id::text
+        -- 2. From Manual Tasks
+        SELECT 
+            t.id,
+            'task'::TEXT as source_type,
+            t.title,
+            t.customer_name,
+            t.phone, 
+            t.due_date,
+            t.status,
+            t.priority,
+            (t.due_date < NOW() AND t.status != 'done') as is_overdue,
+            t.assignee_ids,
+            t.leader_id
+        FROM telesales_tasks t
+        WHERE t.due_date IS NOT NULL
+        AND t.due_date BETWEEN p_start_date AND p_end_date
+        AND (
+            p_user_id IS NULL 
+            OR t.owner_id = p_user_id
+            OR t.user_id = p_user_id
+            OR t.assigned_to = p_user_id
+            OR t.leader_id = p_user_id
+            OR EXISTS (
+                SELECT 1 
+                FROM unnest(t.assignee_ids) as aid 
+                WHERE aid::text = p_user_id::text
+            )
         )
-    )
-    
-    ORDER BY due_date ASC;
+    ) AS sub
+    ORDER BY sub.due_date ASC;
 END;
 $$;
