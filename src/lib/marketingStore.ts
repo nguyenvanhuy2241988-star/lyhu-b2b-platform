@@ -431,8 +431,14 @@ export interface SocialConversation {
     tags?: string[];
     notes?: string;
     source_type?: 'ads' | 'post' | 'organic' | 'referral';
-    source_detail?: any;
+    source_detail?: any; // kept for legacy
+    referral_source?: string; // New
+    ad_id?: string;
+    ad_title?: string;
+    ref_parameter?: string;
     customer_profile_url?: string;
+    page_name?: string; // Joined field
+    page_avatar?: string; // Joined field
 }
 
 export interface SocialMessage {
@@ -457,6 +463,21 @@ export const fetchConversations = async (token?: string, pageId?: string): Promi
         return await res.json();
     } catch (err) {
         console.error("fetchConversations error:", err);
+        return [];
+    }
+};
+
+export const fetchInboxCounts = async (token?: string) => {
+    try {
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_inbox_counts`, {
+            method: 'POST',
+            headers
+        });
+        if (!res.ok) throw new Error(await res.text());
+        return await res.json() as { page_id: string, page_name: string, unread_conversations: number, total_conversations: number }[];
+    } catch (err) {
+        console.error("fetchInboxCounts error:", err);
         return [];
     }
 };

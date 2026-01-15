@@ -99,17 +99,28 @@ export async function POST(request: Request) {
 
                         if (text) {
                             // 1. Get Conversation or Create
+                            const referral = (event.message && event.message.referral) || (event.postback && event.postback.referral);
+
+                            const upsertData: any = {
+                                platform: 'facebook',
+                                external_id: senderId,
+                                page_id: null, // Will update below
+                                customer_name: 'Facebook User',
+                                snippet: text,
+                                unread_count: 1,
+                                last_message_at: new Date().toISOString()
+                            };
+
+                            if (referral) {
+                                upsertData.referral_source = referral.source;
+                                upsertData.ad_id = referral.ad_id;
+                                upsertData.ref_parameter = referral.ref;
+                                upsertData.ad_title = referral.ad_id ? `Ads ${referral.ad_id}` : null;
+                            }
+
                             const { data: conv, error: convError } = await supabase
                                 .from('social_conversations')
-                                .upsert({
-                                    platform: 'facebook',
-                                    external_id: senderId,
-                                    page_id: null, // Will update below
-                                    customer_name: 'Facebook User',
-                                    snippet: text,
-                                    unread_count: 1,
-                                    last_message_at: new Date().toISOString()
-                                }, { onConflict: 'platform, external_id' })
+                                .upsert(upsertData, { onConflict: 'platform, external_id' })
                                 .select()
                                 .single();
 

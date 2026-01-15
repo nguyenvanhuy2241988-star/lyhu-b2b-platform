@@ -9,7 +9,8 @@ import {
     fetchFacebookPages,
     SocialConversation,
     SocialMessage,
-    FacebookPage
+    FacebookPage,
+    fetchInboxCounts
 } from '@/lib/marketingStore';
 import { MessageSquare, Send, User, Search, RefreshCw, Loader2, DownloadCloud } from 'lucide-react';
 import { createClient } from '@/lib/supabaseClient';
@@ -27,6 +28,7 @@ export default function SocialInboxPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [pages, setPages] = useState<FacebookPage[]>([]);
+    const [pageCounts, setPageCounts] = useState<Record<string, number>>({});
     const [filterPageId, setFilterPageId] = useState<string>('');
     const [isSyncing, setIsSyncing] = useState(false);
 
@@ -41,6 +43,12 @@ export default function SocialInboxPage() {
         const data = await fetchConversations(session?.access_token, filterPageId);
         setConversations(data);
         setIsLoading(false);
+        // Load counts
+        fetchInboxCounts(session?.access_token).then(counts => {
+            const map: Record<string, number> = {};
+            counts.forEach(c => map[c.page_id] = c.unread_conversations);
+            setPageCounts(map);
+        });
     };
 
     const loadMessages = async (convId: string) => {
@@ -203,9 +211,9 @@ export default function SocialInboxPage() {
                         value={filterPageId}
                         onChange={e => setFilterPageId(e.target.value)}
                     >
-                        <option value="">Tất cả Fanpage</option>
+                        <option value="">Tất cả Fanpage ({Object.values(pageCounts).reduce((a, b) => a + b, 0)})</option>
                         {pages.map(p => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
+                            <option key={p.id} value={p.id}>{p.name} {pageCounts[p.id] ? `(${pageCounts[p.id]})` : ''}</option>
                         ))}
                     </select>
                     <div className="relative">
@@ -233,14 +241,31 @@ export default function SocialInboxPage() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex justify-between items-start">
-                                        <h3 className="font-semibold text-sm truncate">{conv.customer_name || 'Khách hàng'}</h3>
+                                        <div className="flex items-center gap-1 min-w-0">
+                                            <h3 className="font-semibold text-sm truncate">{conv.customer_name || 'Khách hàng'}</h3>
+                                            {/* Page Icon */}
+                                            {(() => {
+                                                const page = pages.find(p => p.id === conv.page_id);
+                                                return page ? (
+                                                    <img src={page.avatar_url || "https://placehold.co/20x20"} className="w-4 h-4 rounded-full border border-slate-200" title={page.name} />
+                                                ) : null;
+                                            })()}
+                                        </div>
                                         <span className="text-xs text-slate-400 whitespace-nowrap">
+                                            {new Date(conv.last_message_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })}
+                                            <span className="mx-1"> </span>
                                             {new Date(conv.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                     </div>
                                     <p className={`text-sm truncate ${conv.unread_count > 0 ? 'font-bold text-black' : 'text-slate-500'}`}>
-                                        {conv.snippet || '...'}
                                     </p>
+                                    {/* Source Badges */}
+                                    {(conv.referral_source === 'ADS' || conv.ad_id) && (
+                                        <div className="mt-1 inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] px-1.5 py-0.5 rounded border border-blue-100">
+                                            <span>QC</span>
+                                            {conv.ad_id && <span className="max-w-[80px] truncate">#{conv.ad_id}</span>}
+                                        </div>
+                                    )}
                                     {/* Tags Mini Badge */}
                                     {conv.tags && conv.tags.length > 0 && (
                                         <div className="flex gap-1 mt-1">
