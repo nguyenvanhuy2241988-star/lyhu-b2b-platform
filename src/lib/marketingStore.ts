@@ -207,6 +207,7 @@ export interface FacebookPage {
     chatbot_config?: {
         greeting_text?: string;
         auto_hide_phone?: boolean;
+        persistent_menu?: any[];
     };
 }
 
