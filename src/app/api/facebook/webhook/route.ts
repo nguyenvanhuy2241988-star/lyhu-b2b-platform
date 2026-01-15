@@ -47,6 +47,51 @@ async function sendReply(recipientId: string, rule: any, pageToken: string) {
     } catch (e) {
         console.error("Send Reply Error:", e);
     }
+} catch (e) {
+    console.error("Send Reply Error:", e);
+}
+}
+
+// Helper: Public Comment Reply
+async function sendCommentReply(commentId: string, rule: any, pageToken: string) {
+    try {
+        let messageText = rule.response_text || "";
+        // If image, append URL (Comments support attachment_url but text is safer/simpler for now)
+        if (rule.response_type === 'image' && rule.media_url) {
+            // Use attachment_url if text is empty? Or both?
+            // FB API supports `message` OR `attachment_url` or `source`.
+            // Let's keep it simple: Text.
+            messageText += ` ${rule.media_url}`;
+        }
+
+        await fetch(`https://graph.facebook.com/v19.0/${commentId}/comments?access_token=${pageToken}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: messageText })
+        });
+    } catch (e) { console.error("Comment Reply Error", e); }
+}
+
+// Helper: Private Inbox Reply (from Comment)
+async function sendPrivateReply(commentId: string, rule: any, pageToken: string) {
+    try {
+        // Same payload logic as sendReply
+        let messagePayload: any = { text: rule.response_text };
+        if (rule.response_type === 'image' && rule.media_url) {
+            messagePayload = {
+                attachment: { type: "image", payload: { url: rule.media_url, is_reusable: true } }
+            };
+        }
+
+        await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${pageToken}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                recipient: { comment_id: commentId },
+                message: messagePayload
+            })
+        });
+    } catch (e) { console.error("Private Reply Error", e); }
 }
 
 
@@ -216,6 +261,44 @@ export async function POST(request: Request) {
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ is_hidden: true })
                                     });
+                                }
+                            }
+
+                            // 2b. Chatbot Auto-Reply Logic (Comments)
+                            if (pageData && pageData.access_token && message) {
+                                // Fetch Active Rules (Optimize: Cache or Fetch once)
+                                // We fetch rules here.
+                                const { data: rules } = await supabase
+                                    .from('chatbot_rules')
+                                    .select('*')
+                                    .eq('is_active', true)
+                                    .or(`page_id.is.null,page_id.eq.${pageData.id}`);
+
+                                if (rules) {
+                                    for (const rule of rules) {
+                                        const textLower = message.toLowerCase();
+                                        const keywordLower = rule.keyword.toLowerCase();
+                                        let isMatch = false;
+                                        if (rule.match_type === 'exact') isMatch = textLower === keywordLower;
+                                        else isMatch = textLower.includes(keywordLower);
+
+                                        if (isMatch) {
+                                            console.log(`[Auto-Reply] Comment Match: ${rule.keyword}`);
+                                            // Public Reply
+                                            await sendCommentReply(comment_id, rule, pageData.access_token);
+
+                                            // Private Reply (Optional - If configured later, but for now Auto-Reply usually means Public)
+                                            // If you want Private Auto-Reply, maybe check a flag in rule? 
+                                            // For now, let's assume Rules apply to Public Reply for comments.
+                                            // BUT if type is "Auto-Inbox", use private. 
+                                            // My rule schema doesn't have "reply_method".
+                                            // Adding "Auto-Inbox" Logic if implied?
+                                            // Let's do BOTH if Keyword matches? Or just Public?
+                                            // Standard is Public. Private is aggressive.
+                                            // I'll stick to Public for now.
+                                            break;
+                                        }
+                                    }
                                 }
                             }
 

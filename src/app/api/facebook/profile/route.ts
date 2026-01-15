@@ -61,20 +61,28 @@ export async function POST(request: Request) {
                 auth: { persistSession: false }
             });
 
-            // Fetch current config to merge or just overwrite specific keys
-            // Simple approach: Construct new config object
+            // 1. Fetch current config
+            const { data: currentData } = await supabase
+                .from('facebook_pages')
+                .select('chatbot_config')
+                .eq('page_id', page_id)
+                .single();
+
+            const existingConfig = currentData?.chatbot_config || {};
+
+            // 2. Merge
             const newConfig = {
-                greeting_text: greeting_text,
-                auto_hide_phone: auto_hide_phone,
+                ...existingConfig,
+                greeting_text: greeting_text !== undefined ? greeting_text : existingConfig.greeting_text,
+                auto_hide_phone: auto_hide_phone !== undefined ? auto_hide_phone : existingConfig.auto_hide_phone,
+                persistent_menu: persistent_menu !== undefined ? persistent_menu : existingConfig.persistent_menu,
+                get_started_payload: get_started_payload !== undefined ? get_started_payload : existingConfig.get_started_payload,
                 updated_at: new Date().toISOString()
             };
 
             await supabase
                 .from('facebook_pages')
-                .update({ chatbot_config: newConfig }) // Note: This overwrites specific keys if we used jsonb_set, but here we replace. 
-                // For MVP, assuming we only manage these 2 things.
-                // Better: merge in DB or fetch-merge-save. 
-                // Let's rely on simple update for now as we control the config structure.
+                .update({ chatbot_config: newConfig })
                 .eq('page_id', page_id);
         }
 

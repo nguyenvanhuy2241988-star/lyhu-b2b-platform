@@ -1,147 +1,98 @@
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
-export async function POST(req: Request) {
-    const cookieStore = cookies();
-
-    const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-            cookies: {
-                get(name: string) {
-                    return cookieStore.get(name)?.value;
-                },
-                set(name: string, value: string, options: any) {
-                    try {
-                        cookieStore.set({ name, value, ...options })
-                    } catch (error) {
-                        // Handle non-Server Action context
-                    }
-                },
-                remove(name: string, options: any) {
-                    try {
-                        cookieStore.set({ name, value: '', ...options })
-                    } catch (error) {
-                        // Handle non-Server Action context
-                    }
-                },
-            },
-        }
-    );
-
-    // 1. Check Auth
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+export async function POST(request: Request) {
     try {
-        const { page_id, limit = 20 } = await req.json();
+        const { page_id, limit = 50 } = await request.json();
 
         if (!page_id) {
-            return NextResponse.json({ error: 'Missing page_id' }, { status: 400 });
+            return NextResponse.json({ error: 'Page ID is required' }, { status: 400 });
         }
 
-        // 2. Get Page Token
-        const { data: page, error: pageError } = await supabase
+        const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+            auth: { persistSession: false }
+        });
+
+        // 1. Get Page Access Token
+        const { data: pageData } = await supabase
             .from('facebook_pages')
-            .select('access_token, page_id') // page_id column is the FB ID
-            .eq('id', page_id) // Match ID (UUID) or page_id (FB ID)? 
-            // Input page_id is likely UUID from our DB if selected from dropdown. 
-            // Dropdown in Inbox sends: p.id (UUID).
+            .select('access_token, id')
+            .eq('page_id', page_id)
             .single();
 
-        if (pageError || !page || !page.access_token) {
-            return NextResponse.json({ error: 'Page not connected or invalid' }, { status: 404 });
+        if (!pageData || !pageData.access_token) {
+            return NextResponse.json({ error: 'Page not found or no access token' }, { status: 404 });
         }
 
-        const fbPageId = page.page_id;
-        const accessToken = page.access_token;
+        // 2. Fetch Conversations from Facebook
+        const fields = 'id,updated_time,messages{message,created_time,from,to},senders,snippet_is_read_only,unread_count,snippet,link';
+        const response = await fetch(`https://graph.facebook.com/v19.0/me/conversations?fields=${fields}&limit=${limit}&access_token=${pageData.access_token}`);
+        const data = await response.json();
 
-        // 3. Fetch Conversations from Facebook
-        // Fields: id, updated_time, snippet, unread_count, participants
-        // Expand messages: messages.limit(20){id,message,created_time,from,attachments}
-        const fields = 'id,updated_time,snippet,unread_count,participants,messages.limit(20){id,message,created_time,from,attachments}';
-        const fbUrl = `https://graph.facebook.com/v19.0/${fbPageId}/conversations?fields=${fields}&limit=${limit}&access_token=${accessToken}`;
-
-        const fbRes = await fetch(fbUrl);
-        const fbData = await fbRes.json();
-
-        if (fbData.error) {
-            console.error("FB Sync Error:", fbData.error);
-            return NextResponse.json({ error: fbData.error.message }, { status: 400 });
+        if (data.error) {
+            return NextResponse.json({ error: data.error.message }, { status: 400 });
         }
 
-        const conversations = fbData.data || [];
-        let newConvCount = 0;
-        let newMsgCount = 0;
+        const conversations = data.data || [];
+        let count = 0;
 
+        // 3. Sync to Database
         for (const conv of conversations) {
-            // 4. Upsert Conversation
-            const participant = conv.participants?.data?.[0]; // Usually the customer
-            const customerName = participant?.name || 'Facebook User';
-            const customerId = participant?.id; // PSID
+            // Extract customer info
+            // Facebook API 'senders' usually contains the customer user.
+            const customer = conv.senders?.data[0];
+            const customerName = customer?.name || 'Facebook User';
+            const customerId = customer?.id || conv.id; // Use conv ID if sender ID missing? No, sender ID is user ID.
 
-            // Note: external_id matches Thread ID (conv.id)
-            const { data: savedConv, error: saveConvError } = await supabase
+            // Note: Scoped ID for user.
+            // External ID for conversation is conv.id (t_...)
+
+            const { data: insertedConv, error: insertError } = await supabase
                 .from('social_conversations')
                 .upsert({
                     platform: 'facebook',
-                    external_id: conv.id,
-                    page_id: page_id, // Our DB UUID
+                    external_id: conv.id, // Conversation ID (t_123...)
+                    page_id: pageData.id,
                     customer_name: customerName,
+                    customer_avatar: `https://graph.facebook.com/${customer?.id}/picture?type=normal`, // Need scoped ID
                     snippet: conv.snippet,
-                    unread_count: conv.unread_count || 0,
-                    updated_at: conv.updated_time,
-                    last_message_at: conv.updated_time
+                    unread_count: conv.unread_count,
+                    last_message_at: conv.updated_time,
+                    // TODO: updated_at, etc.
                 }, { onConflict: 'platform, external_id' })
                 .select()
                 .single();
 
-            if (saveConvError) {
-                console.error("Save Conv Error:", saveConvError);
-                continue;
-            }
+            if (insertedConv) {
+                count++;
+                // Sync Messages? Maybe separate process or only last message?
+                // For Deep Sync, we might want messages.
+                // But fields=messages only gives simplified list.
+                // Let's rely on webhook for new messages, and just sync conversation metadata here.
+                // Or loop `conv.messages.data` if available.
+                if (conv.messages && conv.messages.data) {
+                    const messages = conv.messages.data.map((m: any) => ({
+                        conversation_id: insertedConv.id,
+                        external_id: m.id,
+                        content: m.message,
+                        sender_id: m.from?.id,
+                        sender_name: m.from?.name,
+                        created_at: m.created_time,
+                        is_from_page: m.from?.id === page_id // Check if sender is page
+                    }));
 
-            if (savedConv) {
-                newConvCount++;
-                const convId = savedConv.id;
-
-                // 5. Insert Messages
-                const messages = conv.messages?.data || [];
-                const messagesToInsert = messages.map((msg: any) => ({
-                    conversation_id: convId,
-                    external_id: msg.id,
-                    content: msg.message || '',
-                    sender_id: msg.from?.id,
-                    sender_name: msg.from?.name,
-                    is_from_page: msg.from?.id === fbPageId, // If sender is Page
-                    created_at: msg.created_time,
-                    attachments: msg.attachments?.data || null
-                }));
-
-                if (messagesToInsert.length > 0) {
-                    // Use upsert or insert with ignore
-                    const { error: msgError } = await supabase
-                        .from('social_messages')
-                        .upsert(messagesToInsert, { onConflict: 'external_id', ignoreDuplicates: true });
-
-                    if (!msgError) newMsgCount += messagesToInsert.length;
-                    else console.error("Save Msg Error:", msgError);
+                    if (messages.length > 0) {
+                        await supabase.from('social_messages').upsert(messages, { onConflict: 'external_id' });
+                    }
                 }
             }
         }
 
-        return NextResponse.json({
-            success: true,
-            message: `Synced ${newConvCount} conversations and ${newMsgCount} messages`,
-            stats: { conversations: newConvCount, messages: newMsgCount }
-        });
-
+        return NextResponse.json({ success: true, count });
     } catch (error: any) {
-        console.error("Sync Exception:", error);
+        console.error("Sync API Error:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

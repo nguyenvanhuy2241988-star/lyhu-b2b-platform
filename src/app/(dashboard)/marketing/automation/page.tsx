@@ -27,6 +27,7 @@ export default function AutomationPage() {
     // Settings State
     const [greetingText, setGreetingText] = useState('');
     const [autoHidePhone, setAutoHidePhone] = useState(false);
+    const [persistentMenu, setPersistentMenu] = useState<any[]>([]);
     const [isSavingSettings, setIsSavingSettings] = useState(false);
     const [pages, setPages] = useState<any[]>([]);
     const [selectedPageId, setSelectedPageId] = useState<string>('');
@@ -65,6 +66,7 @@ export default function AutomationPage() {
             if (p[0].chatbot_config) {
                 setGreetingText(p[0].chatbot_config.greeting_text || '');
                 setAutoHidePhone(p[0].chatbot_config.auto_hide_phone || false);
+                setPersistentMenu(p[0].chatbot_config.persistent_menu || []);
             }
         }
     };
@@ -76,9 +78,25 @@ export default function AutomationPage() {
             if (p) {
                 setGreetingText(p.chatbot_config?.greeting_text || '');
                 setAutoHidePhone(p.chatbot_config?.auto_hide_phone || false);
+                setPersistentMenu(p.chatbot_config?.persistent_menu || []);
             }
         }
     }, [selectedPageId]);
+
+    const addMenuItem = () => {
+        if (persistentMenu.length >= 3) return;
+        setPersistentMenu([...persistentMenu, { type: 'web_url', title: '', url: '' }]);
+    };
+
+    const updateMenuItem = (index: number, updates: any) => {
+        const newMenu = [...persistentMenu];
+        newMenu[index] = { ...newMenu[index], ...updates };
+        setPersistentMenu(newMenu);
+    };
+
+    const removeMenuItem = (index: number) => {
+        setPersistentMenu(persistentMenu.filter((_, i) => i !== index));
+    };
 
     const handleSaveSettings = async () => {
         if (!selectedPageId) return toast.error("Vui lòng chọn Fanpage");
@@ -90,14 +108,15 @@ export default function AutomationPage() {
 
             await updateMessengerProfile(page.page_id, page.access_token, {
                 greeting_text: greetingText,
-                auto_hide_phone: autoHidePhone
+                auto_hide_phone: autoHidePhone,
+                persistent_menu: persistentMenu,
                 // Add persistent_menu logic here later
             });
 
             // Optimistic update
             setPages(prev => prev.map(p => p.id === selectedPageId ? {
                 ...p,
-                chatbot_config: { ...p.chatbot_config, greeting_text: greetingText, auto_hide_phone: autoHidePhone }
+                chatbot_config: { ...p.chatbot_config, greeting_text: greetingText, auto_hide_phone: autoHidePhone, persistent_menu: persistentMenu }
             } : p));
             toast.success("Đã cập nhật cấu hình lên Facebook");
         } catch (error) {
@@ -313,150 +332,202 @@ export default function AutomationPage() {
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Menu Chính (Persistent Menu)</label>
-                            <p className="text-xs text-slate-500 mb-2">Hiện tại hỗ trợ cấu hình qua API. Sẽ cập nhật UI sau.</p>
-                            <div className="bg-slate-50 p-4 rounded border text-sm text-slate-600">
-                                <p>Để cài đặt Menu, vui lòng liên hệ Admin hoặc sử dụng API trực tiếp.</p>
-                            </div>
-                        </div>
+                        <label className="block text-sm font-medium mb-1">Menu Chính (Persistent Menu)</label>
+                        <p className="text-xs text-slate-500 mb-2">Menu cố định ở góc dưới khung chat. Tối đa 3 nút.</p>
 
-                        <div className="pt-2">
-                            <div className="flex items-center gap-3 bg-red-50 p-4 rounded-lg border border-red-100">
-                                <input
-                                    type="checkbox"
-                                    id="autoHide"
-                                    className="w-5 h-5 text-red-600 rounded focus:ring-red-500"
-                                    checked={autoHidePhone}
-                                    onChange={e => setAutoHidePhone(e.target.checked)}
-                                />
-                                <div>
-                                    <label htmlFor="autoHide" className="font-medium text-slate-800 cursor-pointer select-none">
-                                        Ẩn bình luận chứa Số điện thoại
-                                    </label>
-                                    <p className="text-xs text-slate-500">Tự động ẩn comment có SĐT để tránh bị cướp khách.</p>
+                        <div className="space-y-2">
+                            {persistentMenu.map((item, index) => (
+                                <div key={index} className="flex gap-2 items-start bg-slate-50 p-2 rounded border">
+                                    <div className="flex-1 space-y-2">
+                                        <input
+                                            placeholder="Tên nút (VD: Website)"
+                                            className="w-full text-sm border rounded px-2 py-1"
+                                            value={item.title}
+                                            onChange={e => updateMenuItem(index, { title: e.target.value })}
+                                        />
+                                        <div className="flex gap-2">
+                                            <select
+                                                className="text-sm border rounded px-2 py-1"
+                                                value={item.type}
+                                                onChange={e => updateMenuItem(index, { type: e.target.value as any })}
+                                            >
+                                                <option value="web_url">Mở Link (Web URL)</option>
+                                                <option value="postback">Nút bấm (Postback)</option>
+                                            </select>
+                                            {item.type === 'web_url' ? (
+                                                <input
+                                                    placeholder="https://..."
+                                                    className="flex-1 text-sm border rounded px-2 py-1"
+                                                    value={item.url || ''}
+                                                    onChange={e => updateMenuItem(index, { url: e.target.value })}
+                                                />
+                                            ) : (
+                                                <input
+                                                    placeholder="Payload (VD: CARE_HELP)"
+                                                    className="flex-1 text-sm border rounded px-2 py-1"
+                                                    value={item.payload || ''}
+                                                    onChange={e => updateMenuItem(index, { payload: e.target.value })}
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                    <button onClick={() => removeMenuItem(index)} className="text-slate-400 hover:text-red-500 p-1">
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
                                 </div>
-                            </div>
-                        </div>
+                            ))}
 
-                        <div className="pt-4">
-                            <button
-                                onClick={handleSaveSettings}
-                                disabled={isSavingSettings}
-                                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-                            >
-                                {isSavingSettings ? 'Đang lưu...' : 'Lưu & Đẩy lên Facebook'}
-                            </button>
+                            {persistentMenu.length < 3 && (
+                                <button
+                                    onClick={addMenuItem}
+                                    className="w-full py-2 border-2 border-dashed border-slate-200 rounded-lg text-slate-500 hover:border-blue-300 hover:text-blue-600 flex items-center justify-center gap-2 text-sm font-medium transition"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Thêm nút Menu
+                                </button>
+                            )}
                         </div>
                     </div>
-                </div>
-            )}
 
-            {/* Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden">
-                        <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
-                            <h3 className="font-semibold text-lg">{editingRule ? 'Sửa quy tắc' : 'Thêm quy tắc mới'}</h3>
-                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                                <X className="w-5 h-5" />
-                            </button>
+                    <div className="pt-2">
+                        <div className="flex items-center gap-3 bg-red-50 p-4 rounded-lg border border-red-100">
+                            <input
+                                type="checkbox"
+                                id="autoHide"
+                                className="w-5 h-5 text-red-600 rounded focus:ring-red-500"
+                                checked={autoHidePhone}
+                                onChange={e => setAutoHidePhone(e.target.checked)}
+                            />
+                            <div>
+                                <label htmlFor="autoHide" className="font-medium text-slate-800 cursor-pointer select-none">
+                                    Ẩn bình luận chứa Số điện thoại
+                                </label>
+                                <p className="text-xs text-slate-500">Tự động ẩn comment có SĐT để tránh bị cướp khách.</p>
+                            </div>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Từ khóa (Key)</label>
-                                <input
-                                    required
-                                    type="text"
-                                    className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                    placeholder="Ví dụ: giá, bao nhiêu, địa chỉ..."
-                                    value={formData.keyword}
-                                    onChange={e => setFormData({ ...formData, keyword: e.target.value })}
-                                />
-                            </div>
+                    </div>
 
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Loại khớp (Match Type)</label>
-                                <select
-                                    className="w-full border rounded-lg p-2 outline-none"
-                                    value={formData.match_type}
-                                    onChange={e => setFormData({ ...formData, match_type: e.target.value as any })}
-                                >
-                                    <option value="contains">Chứa từ khóa (Contains)</option>
-                                    <option value="exact">Khớp chính xác (Exact)</option>
-                                </select>
-                            </div>
+                    <div className="pt-4">
+                        <button
+                            onClick={handleSaveSettings}
+                            disabled={isSavingSettings}
+                            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                        >
+                            {isSavingSettings ? 'Đang lưu...' : 'Lưu & Đẩy lên Facebook'}
+                        </button>
+                    </div>
+                </div>
+                </div>
+    )
+}
 
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Loại tin nhắn (Response Type)</label>
-                                <select
-                                    className="w-full border rounded-lg p-2 outline-none"
-                                    value={formData.response_type || 'text'}
-                                    onChange={e => setFormData({ ...formData, response_type: e.target.value as any })}
-                                >
-                                    <option value="text">Văn bản (Text)</option>
-                                    <option value="image">Hình ảnh (Image)</option>
-                                </select>
-                            </div>
+{/* Modal */ }
+{
+    isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden">
+                <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
+                    <h3 className="font-semibold text-lg">{editingRule ? 'Sửa quy tắc' : 'Thêm quy tắc mới'}</h3>
+                    <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Từ khóa (Key)</label>
+                        <input
+                            required
+                            type="text"
+                            className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder="Ví dụ: giá, bao nhiêu, địa chỉ..."
+                            value={formData.keyword}
+                            onChange={e => setFormData({ ...formData, keyword: e.target.value })}
+                        />
+                    </div>
 
-                            {formData.response_type === 'image' && (
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Link Ảnh (Image URL)</label>
-                                    <input
-                                        type="text"
-                                        className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                        placeholder="https://example.com/image.jpg"
-                                        value={formData.media_url || ''}
-                                        onChange={e => setFormData({ ...formData, media_url: e.target.value })}
-                                    />
-                                    {formData.media_url && (
-                                        <div className="mt-2 relative w-full h-32 rounded border overflow-hidden bg-slate-100">
-                                            <img src={formData.media_url} alt="Preview" className="w-full h-full object-cover" />
-                                        </div>
-                                    )}
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Loại khớp (Match Type)</label>
+                        <select
+                            className="w-full border rounded-lg p-2 outline-none"
+                            value={formData.match_type}
+                            onChange={e => setFormData({ ...formData, match_type: e.target.value as any })}
+                        >
+                            <option value="contains">Chứa từ khóa (Contains)</option>
+                            <option value="exact">Khớp chính xác (Exact)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Loại tin nhắn (Response Type)</label>
+                        <select
+                            className="w-full border rounded-lg p-2 outline-none"
+                            value={formData.response_type || 'text'}
+                            onChange={e => setFormData({ ...formData, response_type: e.target.value as any })}
+                        >
+                            <option value="text">Văn bản (Text)</option>
+                            <option value="image">Hình ảnh (Image)</option>
+                        </select>
+                    </div>
+
+                    {formData.response_type === 'image' && (
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Link Ảnh (Image URL)</label>
+                            <input
+                                type="text"
+                                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                placeholder="https://example.com/image.jpg"
+                                value={formData.media_url || ''}
+                                onChange={e => setFormData({ ...formData, media_url: e.target.value })}
+                            />
+                            {formData.media_url && (
+                                <div className="mt-2 relative w-full h-32 rounded border overflow-hidden bg-slate-100">
+                                    <img src={formData.media_url} alt="Preview" className="w-full h-full object-cover" />
                                 </div>
                             )}
+                        </div>
+                    )}
 
-                            <div>
-                                <label className="block text-sm font-medium mb-1">
-                                    {formData.response_type === 'image' ? 'Chú thích (Caption)' : 'Câu trả lời (Response)'}
-                                </label>
-                                <textarea
-                                    required={formData.response_type === 'text'}
-                                    rows={4}
-                                    className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                    placeholder={formData.response_type === 'image' ? "Nhập chú thích ảnh..." : "Nhập nội dung tin nhắn..."}
-                                    value={formData.response_text}
-                                    onChange={e => setFormData({ ...formData, response_text: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="activeCheck"
-                                    checked={formData.is_active}
-                                    onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
-                                    className="w-4 h-4 text-blue-600"
-                                />
-                                <label htmlFor="activeCheck" className="text-sm cursor-pointer select-none">Kích hoạt quy tắc nảy ngay</label>
-                            </div>
-
-                            <div className="pt-4 flex gap-3">
-
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-100 text-slate-700 py-2 rounded-lg hover:bg-slate-200 font-medium">Hủy</button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-medium flex justify-center items-center gap-2"
-                                >
-                                    <Save className="w-4 h-4" />
-                                    Lưu quy tắc
-                                </button>
-                            </div>
-                        </form>
+                    <div>
+                        <label className="block text-sm font-medium mb-1">
+                            {formData.response_type === 'image' ? 'Chú thích (Caption)' : 'Câu trả lời (Response)'}
+                        </label>
+                        <textarea
+                            required={formData.response_type === 'text'}
+                            rows={4}
+                            className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                            placeholder={formData.response_type === 'image' ? "Nhập chú thích ảnh..." : "Nhập nội dung tin nhắn..."}
+                            value={formData.response_text}
+                            onChange={e => setFormData({ ...formData, response_text: e.target.value })}
+                        />
                     </div>
-                </div>
-            )}
+
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="checkbox"
+                            id="activeCheck"
+                            checked={formData.is_active}
+                            onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
+                            className="w-4 h-4 text-blue-600"
+                        />
+                        <label htmlFor="activeCheck" className="text-sm cursor-pointer select-none">Kích hoạt quy tắc nảy ngay</label>
+                    </div>
+
+                    <div className="pt-4 flex gap-3">
+
+                        <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-100 text-slate-700 py-2 rounded-lg hover:bg-slate-200 font-medium">Hủy</button>
+                        <button
+                            type="submit"
+                            className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-medium flex justify-center items-center gap-2"
+                        >
+                            <Save className="w-4 h-4" />
+                            Lưu quy tắc
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
+    )
+}
+        </div >
     );
 }
