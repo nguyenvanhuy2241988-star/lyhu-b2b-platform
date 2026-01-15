@@ -114,7 +114,7 @@ export default function AdminCustomersPage() {
                 province: selectedProvince,
                 district: selectedDistrict,
                 ward: selectedWard,
-                type: selectedType,
+                type: selectedType === "Tất cả" ? "Tất cả" : reverseTypeMap[selectedType] || selectedType,
                 search: searchQuery,
                 fromDate,
                 toDate,

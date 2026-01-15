@@ -284,7 +284,9 @@ export async function fetchUnifiedTasks(input: {
             status: t.status === 'won' ? 'done' : (t.status === 'lost' ? 'done' : (t.status || 'inbox')), // Map deal status to task status roughly
             priority: t.priority || 'normal',
             type: t.source_type, // 'deal' or 'task'
-            is_overdue: t.is_overdue
+            is_overdue: t.is_overdue,
+            assignee_ids: t.assignee_ids, // NEW
+            leader_id: t.leader_id      // NEW
         })) as TelesalesTask[];
 
     } catch (err) {
