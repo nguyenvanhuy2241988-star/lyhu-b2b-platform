@@ -197,23 +197,68 @@ export default function ProductsPage() {
         const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
         try {
+            // 1. Separate stock from the main product details
+            const { stock, ...productData } = formData;
+
             const url = editingProduct
                 ? `${SUPABASE_URL}/rest/v1/products?id=eq.${editingProduct.id}`
                 : `${SUPABASE_URL}/rest/v1/products`;
             const method = editingProduct ? "PATCH" : "POST";
-            const payload = { ...formData, is_active: true, updated_at: new Date().toISOString() };
+
+            // If creating, we want the new ID back
+            const headers = getHeaders();
+            const fetchHeaders = !editingProduct
+                ? { ...headers, 'Prefer': 'return=representation' }
+                : { ...headers, 'Prefer': 'return=minimal' };
+
+            const payload = { ...productData, is_active: true, updated_at: new Date().toISOString() };
 
             const res = await fetch(url, {
                 method,
-                headers: { ...getHeaders(), 'Prefer': 'return=minimal' },
+                headers: fetchHeaders,
                 body: JSON.stringify(payload)
             });
 
-            if (!res.ok) throw new Error((await res.json()).message || "Lỗi khi lưu");
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.message || "Lỗi khi lưu sản phẩm");
+            }
+
+            let finalProductId = editingProduct?.id;
+            if (!editingProduct) {
+                const created = await res.json();
+                finalProductId = created?.[0]?.id;
+            }
+
+            // 2. Handle Stock / Inventory Levels
+            if (finalProductId) {
+                // Find a warehouse
+                const whRes = await fetch(`${SUPABASE_URL}/rest/v1/warehouses?select=id&limit=1`, { headers });
+                const whs = await whRes.json();
+                const warehouseId = whs?.[0]?.id;
+
+                if (warehouseId) {
+                    // UPSERT into inventory_levels
+                    // PostgREST upsert: POST with resolution=merge-duplicates (if unique constraint exists)
+                    // or just use RPC if we want history. For now, matching the simpler logic.
+                    await fetch(`${SUPABASE_URL}/rest/v1/inventory_levels`, {
+                        method: 'POST',
+                        headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' },
+                        body: JSON.stringify({
+                            warehouse_id: warehouseId,
+                            product_id: finalProductId,
+                            quantity_on_hand: stock,
+                            updated_at: new Date().toISOString()
+                        })
+                    });
+                }
+            }
+
             toast.success(editingProduct ? "Cập nhật thành công!" : "Thêm mới thành công!");
             setIsModalOpen(false);
             fetchProducts(true);
         } catch (error: any) {
+            console.error("Submit Error:", error);
             toast.error("Lỗi: " + error.message);
         } finally {
             setIsSubmitting(false);
