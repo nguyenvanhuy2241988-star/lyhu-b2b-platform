@@ -422,6 +422,7 @@ export interface SocialConversation {
     id: string;
     platform: 'facebook' | 'zalo' | 'tiktok';
     external_id: string;
+    page_id?: string; // Add this
     customer_name: string;
     customer_avatar?: string;
     snippet?: string;
