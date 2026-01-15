@@ -73,6 +73,7 @@ export default function SocialInboxPage() {
     };
 
     const handleRealtimeConversation = (payload: any) => {
+        console.log("Realtime Event:", payload);
         if (payload.eventType === 'INSERT') {
             const newConv = payload.new as SocialConversation;
             setConversations(prev => [newConv, ...prev]);
@@ -357,21 +358,27 @@ export default function SocialInboxPage() {
                                         </div>
                                     )}
                                     {/* Source Badges */}
-                                    {(conv.referral_source === 'ADS' || conv.ad_id) && (
-                                        <div className="mt-1 inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] px-1.5 py-0.5 rounded border border-blue-100">
-                                            <span>QC</span>
-                                            {conv.ad_id && <span className="max-w-[80px] truncate">#{conv.ad_id}</span>}
-                                        </div>
-                                    )}
-                                    {/* Tags Mini Badge */}
-                                    {conv.tags && conv.tags.length > 0 && (
-                                        <div className="flex gap-1 mt-1">
-                                            {conv.tags.slice(0, 2).map(t => (
-                                                <span key={t} className="text-[10px] bg-slate-200 text-slate-600 px-1 rounded">{t}</span>
-                                            ))}
-                                            {conv.tags.length > 2 && <span className="text-[10px] text-slate-400">+{conv.tags.length - 2}</span>}
-                                        </div>
-                                    )}
+                                    <div className="mt-1 flex flex-wrap gap-1">
+                                        {(conv.referral_source === 'ADS' || conv.ad_id) ? (
+                                            <div className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] px-1.5 py-0.5 rounded border border-blue-100">
+                                                <span>QC</span>
+                                                {conv.ad_id && <span className="max-w-[80px] truncate">#{conv.ad_id}</span>}
+                                            </div>
+                                        ) : (
+                                            <div className="inline-flex items-center gap-1 bg-slate-100 text-slate-500 text-[10px] px-1.5 py-0.5 rounded border border-slate-200">
+                                                <span>Tự nhiên</span>
+                                            </div>
+                                        )}
+                                        {/* Tags */}
+                                        {conv.tags && conv.tags.length > 0 && (
+                                            <>
+                                                {conv.tags.slice(0, 2).map(t => (
+                                                    <span key={t} className="text-[10px] bg-slate-200 text-slate-600 px-1 rounded">{t}</span>
+                                                ))}
+                                                {conv.tags.length > 2 && <span className="text-[10px] text-slate-400">+{conv.tags.length - 2}</span>}
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
