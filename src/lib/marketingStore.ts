@@ -455,12 +455,22 @@ export interface SocialMessage {
     created_at: string;
 }
 
-export const fetchConversations = async (token?: string, pageId?: string): Promise<SocialConversation[]> => {
+export const fetchConversations = async (token?: string, pageId?: string, filters?: { unread?: boolean, startDate?: Date, endDate?: Date }): Promise<SocialConversation[]> => {
     try {
         const headers = getHeaders(token);
         let url = `${SUPABASE_URL}/rest/v1/social_conversations?select=*&order=last_message_at.desc`;
         if (pageId) {
             url += `&page_id=eq.${pageId}`;
+        }
+        if (filters?.unread) {
+            url += `&unread_count=gt.0`;
+        }
+        if (filters?.startDate) {
+            url += `&last_message_at=gte.${filters.startDate.toISOString()}`;
+        }
+        if (filters?.endDate) {
+            // endDate should be end of day essentially, or next day
+            url += `&last_message_at=lte.${filters.endDate.toISOString()}`;
         }
         const res = await fetch(url, { headers });
         if (!res.ok) throw new Error(await res.text());

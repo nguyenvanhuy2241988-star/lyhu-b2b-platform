@@ -12,7 +12,7 @@ import {
     FacebookPage,
     fetchInboxCounts
 } from '@/lib/marketingStore';
-import { MessageSquare, Send, User, Search, RefreshCw, Loader2, DownloadCloud } from 'lucide-react';
+import { MessageSquare, Send, User, Search, RefreshCw, Loader2, DownloadCloud, Filter, Calendar, X } from 'lucide-react';
 import { createClient } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import InboxCustomerSidebar from '@/components/marketing/InboxCustomerSidebar';
@@ -31,6 +31,8 @@ export default function SocialInboxPage() {
     const [pageCounts, setPageCounts] = useState<Record<string, number>>({});
     const [filterPageId, setFilterPageId] = useState<string>('');
     const [isSyncing, setIsSyncing] = useState(false);
+    const [filterUnread, setFilterUnread] = useState(false);
+    const [filterDate, setFilterDate] = useState<string>(''); // YYYY-MM-DD
 
     // Create Deal Modal State
     const [isCreateDealOpen, setIsCreateDealOpen] = useState(false);
@@ -40,7 +42,16 @@ export default function SocialInboxPage() {
 
     const loadConversations = async () => {
         setIsLoading(true);
-        const data = await fetchConversations(session?.access_token, filterPageId);
+        const filters: any = {};
+        if (filterUnread) filters.unread = true;
+        if (filterDate) {
+            filters.startDate = new Date(filterDate);
+            const end = new Date(filterDate);
+            end.setDate(end.getDate() + 1);
+            filters.endDate = end;
+        }
+
+        const data = await fetchConversations(session?.access_token, filterPageId, filters);
         setConversations(data);
         setIsLoading(false);
         // Load counts
@@ -84,7 +95,17 @@ export default function SocialInboxPage() {
             loadConversations();
             fetchFacebookPages(session.access_token).then(data => setPages(data));
 
-            const supabase = createClient();
+            const supabase = createClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                {
+                    global: {
+                        headers: {
+                            Authorization: `Bearer ${session?.access_token}`
+                        }
+                    }
+                }
+            );
             const channel = supabase
                 .channel('social-conversations-list-global')
                 .on('postgres_changes', {
@@ -98,7 +119,7 @@ export default function SocialInboxPage() {
                 supabase.removeChannel(channel);
             };
         }
-    }, [session, filterPageId]);
+    }, [session, filterPageId, filterUnread, filterDate]);
 
     useEffect(() => {
         if (selectedConvId) {
@@ -251,6 +272,33 @@ export default function SocialInboxPage() {
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <input className="w-full pl-9 pr-4 py-2 bg-slate-100 rounded-lg text-sm outline-none" placeholder="Tìm kiếm..." />
+                    </div>
+                </div>
+
+                {/* Filters */}
+                <div className="px-4 pb-2 flex gap-2 overflow-x-auto no-scrollbar">
+                    <button
+                        onClick={() => setFilterUnread(!filterUnread)}
+                        className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs whitespace-nowrap border transition-colors ${filterUnread ? 'bg-blue-50 border-blue-200 text-blue-700 font-medium' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                    >
+                        <Filter className="w-3 h-3" />
+                        {filterUnread ? 'Đang lọc: Chưa đọc' : 'Chưa đọc'}
+                    </button>
+                    <div className="relative flex items-center">
+                        <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs whitespace-nowrap border transition-colors ${filterDate ? 'bg-blue-50 border-blue-200 text-blue-700 font-medium' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+                            <Calendar className="w-3 h-3" />
+                            <input
+                                type="date"
+                                className="bg-transparent border-none outline-none w-[85px] p-0 text-xs"
+                                value={filterDate}
+                                onChange={e => setFilterDate(e.target.value)}
+                            />
+                            {filterDate && (
+                                <button onClick={() => setFilterDate('')} className="ml-1 hover:text-red-500">
+                                    <X className="w-3 h-3" />
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
                 <div className="flex-1 overflow-y-auto">
