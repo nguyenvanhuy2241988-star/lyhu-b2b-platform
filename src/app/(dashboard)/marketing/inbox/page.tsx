@@ -13,7 +13,7 @@ import {
     fetchInboxCounts
 } from '@/lib/marketingStore';
 import { MessageSquare, Send, User, Search, RefreshCw, Loader2, DownloadCloud, Filter, Calendar, X } from 'lucide-react';
-import { createClient } from '@/lib/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import InboxCustomerSidebar from '@/components/marketing/InboxCustomerSidebar';
 import { CreateDealModal } from '@/components/telesales/CreateDealModal';
