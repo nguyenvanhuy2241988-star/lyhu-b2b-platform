@@ -200,7 +200,7 @@ export default function SocialInboxPage() {
     };
 
     const handleSync = async () => {
-        if (!filterPageId) {
+        if (!filterPageId || filterPageId === 'all') {
             toast.error("Vui lòng chọn Fanpage cụ thể để đồng bộ tin nhắn cũ");
             return;
         }

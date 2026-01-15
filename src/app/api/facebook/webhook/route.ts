@@ -144,14 +144,41 @@ export async function POST(request: Request) {
                         }
 
                         if (text) {
+                            // Retrieve Page Data early (needed for fallback fetch)
+                            const { data: pageData } = await supabase
+                                .from('facebook_pages')
+                                .select('id, access_token')
+                                .eq('page_id', pageId)
+                                .single();
+
+                            if (!pageData) {
+                                console.error("Page not found:", pageId);
+                                continue;
+                            }
+
                             // 1. Get Conversation or Create
-                            const referral = (event.message && event.message.referral) || (event.postback && event.postback.referral);
+                            let referral = (event.message && event.message.referral) || (event.postback && event.postback.referral);
+
+                            // FALLBACK: If no referral in payload, try fetching message from Graph API
+                            if (!referral && mid && !mid.startsWith('postback_') && pageData.access_token) {
+                                try {
+                                    const msgRes = await fetch(`https://graph.facebook.com/v19.0/${mid}?fields=referral&access_token=${pageData.access_token}`);
+                                    const msgData = await msgRes.json();
+                                    if (msgData.referral) {
+                                        console.log("Found Referral via Graph API:", msgData.referral);
+                                        referral = msgData.referral;
+                                    }
+                                } catch (e) {
+                                    console.error("Failed to fetch message details:", e);
+                                }
+                            }
+
                             console.log("Referral Data:", referral); // DEBUG LOG
 
                             const upsertData: any = {
                                 platform: 'facebook',
                                 external_id: senderId,
-                                page_id: null, // Will update below
+                                page_id: pageData.id,
                                 customer_name: 'Facebook User',
                                 snippet: text,
                                 unread_count: 1,
@@ -171,18 +198,10 @@ export async function POST(request: Request) {
                                 .select()
                                 .single();
 
-                            // Retrieve Page UUID
-                            const { data: pageData } = await supabase
-                                .from('facebook_pages')
-                                .select('id, access_token')
-                                .eq('page_id', pageId)
-                                .single();
-
-                            if (pageData && conv) {
-                                await supabase
-                                    .from('social_conversations')
-                                    .update({ page_id: pageData.id })
-                                    .eq('id', conv.id);
+                            if (conv) {
+                                // Update page_id just in case
+                                // Already done in upsert if new, but if old, upsert updates it.
+                                // Logic simplified.
 
                                 // 2. Insert Message (User's message/postback)
                                 await supabase.from('social_messages').insert({
