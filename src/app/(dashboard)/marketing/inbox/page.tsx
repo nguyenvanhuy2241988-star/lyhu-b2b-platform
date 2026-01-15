@@ -126,7 +126,17 @@ export default function SocialInboxPage() {
             loadMessages(selectedConvId);
 
             // Subscribe to new messages for this conversation
-            const supabase = createClient();
+            const supabase = createClient(
+                process.env.NEXT_PUBLIC_SUPABASE_URL!,
+                process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+                {
+                    global: {
+                        headers: {
+                            Authorization: `Bearer ${session?.access_token}`
+                        }
+                    }
+                }
+            );
             const channel = supabase
                 .channel(`social-messages-${selectedConvId}`)
                 .on('postgres_changes', {
