@@ -61,10 +61,42 @@ export default function SocialInboxPage() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    const handleRealtimeConversation = (payload: any) => {
+        if (payload.eventType === 'INSERT') {
+            const newConv = payload.new as SocialConversation;
+            setConversations(prev => [newConv, ...prev]);
+        } else if (payload.eventType === 'UPDATE') {
+            const updated = payload.new as SocialConversation;
+            setConversations(prev => {
+                const exists = prev.find(c => c.id === updated.id);
+                if (exists) {
+                    // Update and Move to top if new message
+                    const others = prev.filter(c => c.id !== updated.id);
+                    return [updated, ...others];
+                }
+                return [updated, ...prev];
+            });
+        }
+    };
+
     useEffect(() => {
         if (session?.access_token) {
             loadConversations();
             fetchFacebookPages(session.access_token).then(data => setPages(data));
+
+            const supabase = createClient();
+            const channel = supabase
+                .channel('social-conversations-list-global')
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'social_conversations'
+                }, handleRealtimeConversation)
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(channel);
+            };
         }
     }, [session, filterPageId]);
 
@@ -229,7 +261,7 @@ export default function SocialInboxPage() {
                         <div
                             key={conv.id}
                             onClick={() => setSelectedConvId(conv.id)}
-                            className={`p-4 border-b cursor-pointer hover:bg-slate-50 transition-colors ${selectedConvId === conv.id ? 'bg-primary-50 border-primary-100' : ''}`}
+                            className={`relative p-4 border-b cursor-pointer hover:bg-slate-50 transition-colors ${selectedConvId === conv.id ? 'bg-primary-50 border-primary-100' : ''}`}
                         >
                             <div className="flex items-start gap-3">
                                 <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden">
@@ -258,7 +290,14 @@ export default function SocialInboxPage() {
                                         </span>
                                     </div>
                                     <p className={`text-sm truncate ${conv.unread_count > 0 ? 'font-bold text-black' : 'text-slate-500'}`}>
+                                        {conv.snippet || 'Hình ảnh / Tệp tin'}
                                     </p>
+                                    {/* Unread Badge */}
+                                    {conv.unread_count > 0 && (
+                                        <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold">
+                                            {conv.unread_count > 9 ? '9+' : conv.unread_count}
+                                        </div>
+                                    )}
                                     {/* Source Badges */}
                                     {(conv.referral_source === 'ADS' || conv.ad_id) && (
                                         <div className="mt-1 inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-[10px] px-1.5 py-0.5 rounded border border-blue-100">

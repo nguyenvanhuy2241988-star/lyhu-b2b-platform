@@ -441,6 +441,8 @@ export interface SocialConversation {
     customer_profile_url?: string;
     page_name?: string; // Joined field
     page_avatar?: string; // Joined field
+    post_id?: string;
+    post_url?: string;
 }
 
 export interface SocialMessage {
