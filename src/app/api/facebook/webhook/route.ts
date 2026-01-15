@@ -162,7 +162,8 @@ export async function POST(request: Request) {
                             // FALLBACK: If no referral in payload, try fetching message from Graph API
                             if (!referral && mid && !mid.startsWith('postback_') && pageData.access_token) {
                                 try {
-                                    const msgRes = await fetch(`https://graph.facebook.com/v19.0/${mid}?fields=referral&access_token=${pageData.access_token}`);
+                                    // Use v21.0 and fetch broader fields if needed
+                                    const msgRes = await fetch(`https://graph.facebook.com/v21.0/${mid}?fields=referral,from,message,tags&access_token=${pageData.access_token}`);
                                     const msgData = await msgRes.json();
                                     if (msgData.referral) {
                                         console.log("Found Referral via Graph API:", msgData.referral);
@@ -173,7 +174,7 @@ export async function POST(request: Request) {
                                 }
                             }
 
-                            console.log("Referral Data:", referral); // DEBUG LOG
+                            console.log("Referral Data:", referral);
 
                             const upsertData: any = {
                                 platform: 'facebook',
@@ -186,10 +187,14 @@ export async function POST(request: Request) {
                             };
 
                             if (referral) {
-                                upsertData.referral_source = referral.source;
+                                // Map referral source to referral_source column
+                                upsertData.referral_source = referral.source || 'ADS';
                                 upsertData.ad_id = referral.ad_id;
                                 upsertData.ref_parameter = referral.ref;
-                                upsertData.ad_title = referral.ad_id ? `Ads ${referral.ad_id}` : null;
+                                // If ad_id exists, explicitly set ad_title as a fallback
+                                if (referral.ad_id) {
+                                    upsertData.ad_title = `QC #${referral.ad_id}`;
+                                }
                             }
 
                             const { data: conv, error: convError } = await supabase

@@ -47,26 +47,27 @@ export async function POST(request: Request) {
         // 3. Sync to Database
         for (const conv of conversations) {
             // Extract customer info
-            // Facebook API 'senders' usually contains the customer user.
-            const customer = conv.senders?.data[0];
+            // Facebook API 'senders' contains the scoped user ID (PSID).
+            const customer = conv.senders?.data?.[0];
             const customerName = customer?.name || 'Facebook User';
-            const customerId = customer?.id || conv.id; // Use conv ID if sender ID missing? No, sender ID is user ID.
+            const customerId = customer?.id;
 
-            // Note: Scoped ID for user.
-            // External ID for conversation is conv.id (t_...)
+            if (!customerId) {
+                console.warn("Skipping conversation without sender ID:", conv.id);
+                continue;
+            }
 
             const { data: insertedConv, error: insertError } = await supabase
                 .from('social_conversations')
                 .upsert({
                     platform: 'facebook',
-                    external_id: conv.id, // Conversation ID (t_123...)
+                    external_id: customerId, // Use PSID as external_id to match Webhook
                     page_id: pageData.id,
                     customer_name: customerName,
-                    customer_avatar: `https://graph.facebook.com/${customer?.id}/picture?type=normal`, // Need scoped ID
+                    customer_avatar: `https://graph.facebook.com/${customerId}/picture?type=normal`,
                     snippet: conv.snippet,
                     unread_count: conv.unread_count,
                     last_message_at: conv.updated_time,
-                    // TODO: updated_at, etc.
                 }, { onConflict: 'platform, external_id' })
                 .select()
                 .single();
