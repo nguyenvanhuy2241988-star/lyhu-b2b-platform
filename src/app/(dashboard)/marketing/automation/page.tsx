@@ -191,10 +191,8 @@ export default function AutomationPage() {
         }
     };
 
-
-
-    return <div className="p-6 max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
+    return (
+        <div className="p-6 max-w-7xl mx-auto space-y-6">
             <div>
                 <h1 className="text-2xl font-bold flex items-center gap-2">
                     <Zap className="w-6 h-6 text-yellow-500" />
@@ -218,7 +216,8 @@ export default function AutomationPage() {
             </div>
         </div>
 
-        {activeTab === 'rules' ? (
+        {
+        activeTab === 'rules' ? (
             <>
                 <div className="flex justify-between items-center">
                     <p className="text-slate-500 text-sm">Quản lý các quy tắc trả lời tự động theo từ khóa</p>
@@ -413,116 +412,117 @@ export default function AutomationPage() {
                     </button>
                 </div>
             </div>
-                </div>
+                </div >
     )
-}
+    }
 
-{/* Modal */ }
-{
-    isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden">
-                <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
-                    <h3 className="font-semibold text-lg">{editingRule ? 'Sửa quy tắc' : 'Thêm quy tắc mới'}</h3>
-                    <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Từ khóa (Key)</label>
-                        <input
-                            required
-                            type="text"
-                            className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="Ví dụ: giá, bao nhiêu, địa chỉ..."
-                            value={formData.keyword}
-                            onChange={e => setFormData({ ...formData, keyword: e.target.value })}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Loại khớp (Match Type)</label>
-                        <select
-                            className="w-full border rounded-lg p-2 outline-none"
-                            value={formData.match_type}
-                            onChange={e => setFormData({ ...formData, match_type: e.target.value as any })}
-                        >
-                            <option value="contains">Chứa từ khóa (Contains)</option>
-                            <option value="exact">Khớp chính xác (Exact)</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Loại tin nhắn (Response Type)</label>
-                        <select
-                            className="w-full border rounded-lg p-2 outline-none"
-                            value={formData.response_type || 'text'}
-                            onChange={e => setFormData({ ...formData, response_type: e.target.value as any })}
-                        >
-                            <option value="text">Văn bản (Text)</option>
-                            <option value="image">Hình ảnh (Image)</option>
-                        </select>
-                    </div>
-
-                    {formData.response_type === 'image' && (
-                        <div>
-                            <label className="block text-sm font-medium mb-1">Link Ảnh (Image URL)</label>
-                            <input
-                                type="text"
-                                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder="https://example.com/image.jpg"
-                                value={formData.media_url || ''}
-                                onChange={e => setFormData({ ...formData, media_url: e.target.value })}
-                            />
-                            {formData.media_url && (
-                                <div className="mt-2 relative w-full h-32 rounded border overflow-hidden bg-slate-100">
-                                    <img src={formData.media_url} alt="Preview" className="w-full h-full object-cover" />
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1">
-                            {formData.response_type === 'image' ? 'Chú thích (Caption)' : 'Câu trả lời (Response)'}
-                        </label>
-                        <textarea
-                            required={formData.response_type === 'text'}
-                            rows={4}
-                            className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder={formData.response_type === 'image' ? "Nhập chú thích ảnh..." : "Nhập nội dung tin nhắn..."}
-                            value={formData.response_text}
-                            onChange={e => setFormData({ ...formData, response_text: e.target.value })}
-                        />
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <input
-                            type="checkbox"
-                            id="activeCheck"
-                            checked={formData.is_active}
-                            onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
-                            className="w-4 h-4 text-blue-600"
-                        />
-                        <label htmlFor="activeCheck" className="text-sm cursor-pointer select-none">Kích hoạt quy tắc nảy ngay</label>
-                    </div>
-
-                    <div className="pt-4 flex gap-3">
-
-                        <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-100 text-slate-700 py-2 rounded-lg hover:bg-slate-200 font-medium">Hủy</button>
-                        <button
-                            type="submit"
-                            className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-medium flex justify-center items-center gap-2"
-                        >
-                            <Save className="w-4 h-4" />
-                            Lưu quy tắc
+    {/* Modal */ }
+    {
+        isModalOpen && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden">
+                    <div className="px-6 py-4 border-b flex justify-between items-center bg-slate-50">
+                        <h3 className="font-semibold text-lg">{editingRule ? 'Sửa quy tắc' : 'Thêm quy tắc mới'}</h3>
+                        <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                            <X className="w-5 h-5" />
                         </button>
                     </div>
-                </form>
+                    <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Từ khóa (Key)</label>
+                            <input
+                                required
+                                type="text"
+                                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                placeholder="Ví dụ: giá, bao nhiêu, địa chỉ..."
+                                value={formData.keyword}
+                                onChange={e => setFormData({ ...formData, keyword: e.target.value })}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Loại khớp (Match Type)</label>
+                            <select
+                                className="w-full border rounded-lg p-2 outline-none"
+                                value={formData.match_type}
+                                onChange={e => setFormData({ ...formData, match_type: e.target.value as any })}
+                            >
+                                <option value="contains">Chứa từ khóa (Contains)</option>
+                                <option value="exact">Khớp chính xác (Exact)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Loại tin nhắn (Response Type)</label>
+                            <select
+                                className="w-full border rounded-lg p-2 outline-none"
+                                value={formData.response_type || 'text'}
+                                onChange={e => setFormData({ ...formData, response_type: e.target.value as any })}
+                            >
+                                <option value="text">Văn bản (Text)</option>
+                                <option value="image">Hình ảnh (Image)</option>
+                            </select>
+                        </div>
+
+                        {formData.response_type === 'image' && (
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Link Ảnh (Image URL)</label>
+                                <input
+                                    type="text"
+                                    className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    placeholder="https://example.com/image.jpg"
+                                    value={formData.media_url || ''}
+                                    onChange={e => setFormData({ ...formData, media_url: e.target.value })}
+                                />
+                                {formData.media_url && (
+                                    <div className="mt-2 relative w-full h-32 rounded border overflow-hidden bg-slate-100">
+                                        <img src={formData.media_url} alt="Preview" className="w-full h-full object-cover" />
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        <div>
+                            <label className="block text-sm font-medium mb-1">
+                                {formData.response_type === 'image' ? 'Chú thích (Caption)' : 'Câu trả lời (Response)'}
+                            </label>
+                            <textarea
+                                required={formData.response_type === 'text'}
+                                rows={4}
+                                className="w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                placeholder={formData.response_type === 'image' ? "Nhập chú thích ảnh..." : "Nhập nội dung tin nhắn..."}
+                                value={formData.response_text}
+                                onChange={e => setFormData({ ...formData, response_text: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="activeCheck"
+                                checked={formData.is_active}
+                                onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
+                                className="w-4 h-4 text-blue-600"
+                            />
+                            <label htmlFor="activeCheck" className="text-sm cursor-pointer select-none">Kích hoạt quy tắc nảy ngay</label>
+                        </div>
+
+                        <div className="pt-4 flex gap-3">
+
+                            <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 bg-slate-100 text-slate-700 py-2 rounded-lg hover:bg-slate-200 font-medium">Hủy</button>
+                            <button
+                                type="submit"
+                                className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 font-medium flex justify-center items-center gap-2"
+                            >
+                                <Save className="w-4 h-4" />
+                                Lưu quy tắc
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
-        </div>
-    )
-}
-    </div >;
+        )
+    }
+    </div >
+    );
 }
