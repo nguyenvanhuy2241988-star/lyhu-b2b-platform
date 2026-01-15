@@ -74,17 +74,20 @@ export default function SocialInboxPage() {
 
     const handleRealtimeConversation = (payload: any) => {
         console.log("Realtime Event:", payload);
-        if (payload.eventType === 'INSERT') {
-            const newConv = payload.new as SocialConversation;
-            setConversations(prev => [newConv, ...prev]);
-        } else if (payload.eventType === 'UPDATE') {
+        if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const updated = payload.new as SocialConversation;
             setConversations(prev => {
-                const exists = prev.find(c => c.id === updated.id);
-                if (exists) {
-                    // Update and Move to top if new message
-                    const others = prev.filter(c => c.id !== updated.id);
-                    return [updated, ...others];
+                const index = prev.findIndex(c => c.id === updated.id);
+                if (index !== -1) {
+                    // Update existing and move to top
+                    const newArr = [...prev];
+                    newArr[index] = { ...newArr[index], ...updated };
+                    // If it's a new message update (e.g. last_message_at changed), move to top
+                    if (payload.eventType === 'UPDATE') {
+                        const [item] = newArr.splice(index, 1);
+                        return [item, ...newArr];
+                    }
+                    return newArr;
                 }
                 return [updated, ...prev];
             });
@@ -125,6 +128,9 @@ export default function SocialInboxPage() {
                 }, handleRealtimeConversation)
                 .subscribe((status: any) => {
                     console.log("Global Channel Status:", status);
+                    if (status === 'SUBSCRIBED') {
+                        console.log("Successfully subscribed to conversations list");
+                    }
                 });
 
             return () => {

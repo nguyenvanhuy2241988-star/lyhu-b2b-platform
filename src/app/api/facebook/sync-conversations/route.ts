@@ -16,11 +16,17 @@ export async function POST(request: Request) {
         });
 
         // 1. Get Page Access Token
-        const { data: pageData } = await supabase
-            .from('facebook_pages')
-            .select('access_token, id')
-            .eq('page_id', page_id)
-            .single();
+        // Support searching by internal UUID (pageData.id) or Facebook Page ID (pageData.page_id)
+        let query = supabase.from('facebook_pages').select('access_token, id, page_id');
+
+        // Simple regex/length check: FB IDs are numeric strings (usually 10+ digits), UUIDs contain dashes
+        if (page_id.includes('-')) {
+            query = query.eq('id', page_id);
+        } else {
+            query = query.eq('page_id', page_id);
+        }
+
+        const { data: pageData } = await query.single();
 
         if (!pageData || !pageData.access_token) {
             return NextResponse.json({ error: 'Page not found or no access token' }, { status: 404 });
