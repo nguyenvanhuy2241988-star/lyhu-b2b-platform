@@ -14,18 +14,10 @@ import {
     listFiles,
     uploadFiles
 } from '@/lib/documentsStore';
-import {
-    FolderTree
-} from '@/components/documents/FolderTree';
-import {
-    FilesGrid
-} from '@/components/documents/FilesGrid';
-import {
-    DocDetailsPanel
-} from '@/components/documents/DocDetailsPanel';
-import {
-    FolderInspector
-} from '@/components/documents/FolderInspector';
+import { FolderTree } from '@/components/documents/FolderTree';
+import { FilesGrid } from '@/components/documents/FilesGrid';
+import { DocDetailsPanel } from '@/components/documents/DocDetailsPanel';
+import { FolderInspector } from '@/components/documents/FolderInspector';
 import {
     Search,
     Upload,
@@ -38,7 +30,10 @@ function DocumentsPageContent() {
     console.log('[DocumentsPageContent] Rendering');
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { session } = useAuth();
+
+    // Permission
+    const { user, session } = useAuth();
+    const isAdmin = user?.role === 'admin';
 
     // Data State
     const [folders, setFolders] = useState<DocumentFolder[]>([]);
@@ -128,14 +123,9 @@ function DocumentsPageContent() {
     useEffect(() => {
         if (!session?.access_token) return;
 
-        // If switching folders, usually we want to clear selection. 
-        // But if just changing filter/search, maybe keep it? For simplicity, we can deselect if folder changes.
-        // Here we just trigger loadFiles.
-
         loadFiles(selectedFolderId || null);
 
         // Realtime for Files 
-        // (Note: Realtime for global search is tricky, we might need a broader subscription or just subscribe to the specific folder if not global)
         let fileChannel: any = null;
         if (selectedFolderId && !isGlobalSearch) {
             fileChannel = supabase
@@ -147,7 +137,7 @@ function DocumentsPageContent() {
         return () => {
             if (fileChannel) supabase.removeChannel(fileChannel);
         };
-    }, [selectedFolderId, session?.access_token, loadFiles, isGlobalSearch]); // loadFiles already depends on search/filter
+    }, [selectedFolderId, session?.access_token, loadFiles, isGlobalSearch]);
 
     // Actions
     const handleSelectFolder = (id: string) => {
@@ -192,8 +182,6 @@ function DocumentsPageContent() {
         }
     };
 
-    const [isDragging, setIsDragging] = useState(false);
-
     const handleUploadFiles = async (fileList: File[]) => {
         if (!selectedFolderId) {
             alert("Vui lòng chọn thư mục để tải lên");
@@ -217,6 +205,8 @@ function DocumentsPageContent() {
         if (!e.target.files) return;
         handleUploadFiles(Array.from(e.target.files));
     };
+
+    const [isDragging, setIsDragging] = useState(false);
 
     // Derived Selection
     const selectedFolder = folders.find(f => f.id === selectedFolderId);
@@ -244,6 +234,7 @@ function DocumentsPageContent() {
                     <FolderTree
                         folders={folders}
                         selectedFolderId={selectedFolderId}
+                        readOnly={!isAdmin}
                         onSelectFolder={handleSelectFolder}
                         onCreateFolder={handleCreateFolder}
                         onRenameFolder={handleRenameFolder}
@@ -390,6 +381,7 @@ function DocumentsPageContent() {
             {selectedFile ? (
                 <DocDetailsPanel
                     file={selectedFile}
+                    isAdmin={isAdmin}
                     onClose={() => setSelectedFile(null)}
                     onUpdate={() => selectedFolderId && loadFiles(selectedFolderId)}
                 />
@@ -397,13 +389,9 @@ function DocumentsPageContent() {
                 <FolderInspector
                     folder={selectedFolder}
                     onUpdate={(updated) => {
-                        // Update local list
                         setFolders(prev => prev.map(f => f.id === updated.id ? updated : f));
                     }}
-                    onClose={() => {
-                        // Optional: Allow "closing" the right panel to go full width?
-                        // For now, keep it open Odoo-style
-                    }}
+                    onClose={() => { }}
                 />
             ) : null}
         </div>
