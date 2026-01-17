@@ -31,9 +31,9 @@ function DocumentsPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // Permission
-    const { user, session } = useAuth();
-    const isAdmin = user?.role === 'admin';
+    // Permission: Use 'role' from useAuth which is the authoritative source from profiles table
+    const { user, session, role } = useAuth();
+    const isAdmin = role === 'admin';
 
     // Data State
     const [folders, setFolders] = useState<DocumentFolder[]>([]);
@@ -388,6 +388,7 @@ function DocumentsPageContent() {
             ) : selectedFolder ? (
                 <FolderInspector
                     folder={selectedFolder}
+                    readOnly={!isAdmin}
                     onUpdate={(updated) => {
                         setFolders(prev => prev.map(f => f.id === updated.id ? updated : f));
                     }}
