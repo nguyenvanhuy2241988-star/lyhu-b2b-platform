@@ -2,6 +2,6 @@
 
 import ProductList from "@/components/products/ProductList";
 
-export default function ProductsPage() {
+export default function AccountantProductsPage() {
     return <ProductList readOnly={false} />;
 }

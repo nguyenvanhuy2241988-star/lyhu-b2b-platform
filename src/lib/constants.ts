@@ -79,6 +79,7 @@ export const NAV_ITEMS = {
         { label: "Quản lý Đơn hàng", href: "/sale-admin/orders", icon: ClipboardCheck },
         { label: "Báo giá & Hợp đồng", href: "/sale-admin/quotes", icon: FileText },
         { label: "Hỗ trợ Sales", href: "/sale-admin/support", icon: Users },
+        { label: "Sản phẩm", href: "/sale-admin/products", icon: Package },
         { label: "Tài liệu", href: "/documents", icon: Book },
     ],
     [ROLES.ACCOUNTANT]: [
@@ -91,6 +92,7 @@ export const NAV_ITEMS = {
         { label: "Lương & Hoa hồng", href: "/accountant/payroll", icon: DollarSign },
         { label: "Quản lý Công nợ", href: "/accountant/debts", icon: Wallet },
         { label: "Danh mục MISA", href: "/accountant/master-data", icon: Book },
+        { label: "Sản phẩm", href: "/accountant/products", icon: Package },
         { label: "Tài liệu", href: "/documents", icon: FileText },
     ],
     [ROLES.SHIPPER]: [
@@ -178,6 +180,7 @@ export const NAV_ITEMS = {
         { label: "Xử lý Đơn hàng", href: "/warehouse/fulfillment", icon: ClipboardCheck },
         { label: "Quản lý tồn kho", href: "/warehouse/inventory", icon: Archive },
         { label: "Kiểm kê Kho", href: "/warehouse/audit", icon: Archive },
+        { label: "Sản phẩm", href: "/warehouse/products", icon: Package },
         { label: "Tài liệu", href: "/documents", icon: FileText },
         { label: "Việc cần làm", href: "/tasks", icon: ListTodo },
     ],
