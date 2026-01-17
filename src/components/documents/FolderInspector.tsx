@@ -16,11 +16,12 @@ import { vi } from 'date-fns/locale';
 
 interface FolderInspectorProps {
     folder: DocumentFolder;
+    readOnly?: boolean;
     onUpdate: (updatedFolder: DocumentFolder) => void;
     onClose?: () => void;
 }
 
-export function FolderInspector({ folder, onUpdate, onClose }: FolderInspectorProps) {
+export function FolderInspector({ folder, readOnly = false, onUpdate, onClose }: FolderInspectorProps) {
     const [editing, setEditing] = useState(false);
     const [guidance, setGuidance] = useState('');
     const [saving, setSaving] = useState(false);
@@ -89,7 +90,7 @@ export function FolderInspector({ folder, onUpdate, onClose }: FolderInspectorPr
                             <Info className="w-4 h-4 text-blue-500" />
                             Hướng dẫn & Quy định
                         </h4>
-                        {!editing && (
+                        {!editing && !readOnly && (
                             <button
                                 onClick={() => setEditing(true)}
                                 className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium px-2 py-1 hover:bg-blue-50 rounded"
