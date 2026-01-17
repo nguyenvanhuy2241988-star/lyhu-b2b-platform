@@ -50,6 +50,10 @@ function DocumentsPageContent() {
     const [uploading, setUploading] = useState(false);
     const [showSidebar, setShowSidebar] = useState(true);
 
+    // Search Filters
+    const [isGlobalSearch, setIsGlobalSearch] = useState(false);
+    const [filterType, setFilterType] = useState<'all' | 'image' | 'pdf' | 'office'>('all');
+
     // Selection State
     const selectedFolderId = searchParams?.get('folder');
     const [selectedFile, setSelectedFile] = useState<DocumentFile | null>(null);
@@ -73,17 +77,26 @@ function DocumentsPageContent() {
         }
     }, []);
 
-    const loadFiles = useCallback(async (folderId: string, silent = false) => {
+    const loadFiles = useCallback(async (folderId: string | null, silent = false) => {
         if (!silent) setLoadingFiles(true);
         try {
-            const data = await listFiles(folderId, search);
+            // If global search is on, pass null as folderId. Otherwise pass the selected folderId.
+            const targetFolderId = isGlobalSearch ? null : folderId;
+
+            // If not global search and no folder selected, don't load anything (or load root if logic dictates)
+            if (!isGlobalSearch && !targetFolderId) {
+                setFiles([]);
+                return;
+            }
+
+            const data = await listFiles(targetFolderId, search, filterType);
             setFiles(data);
         } catch (error) {
             console.error(error);
         } finally {
             if (!silent) setLoadingFiles(false);
         }
-    }, [search]);
+    }, [search, isGlobalSearch, filterType]);
 
     // 1. Initial Load of Folders
     useEffect(() => {
@@ -111,38 +124,35 @@ function DocumentsPageContent() {
         };
     }, [session?.access_token, loadFolders, replaceFolderUrl, selectedFolderId]);
 
-    // 2. Load Files when folder changes
+    // 2. Load Files when params change
     useEffect(() => {
         if (!session?.access_token) return;
 
-        if (selectedFolderId) {
-            loadFiles(selectedFolderId);
-            setSelectedFile(null); // Deselect file when switching folder
-        } else {
-            setFiles([]);
-        }
+        // If switching folders, usually we want to clear selection. 
+        // But if just changing filter/search, maybe keep it? For simplicity, we can deselect if folder changes.
+        // Here we just trigger loadFiles.
 
-        // Realtime for Files in this folder
+        loadFiles(selectedFolderId || null);
+
+        // Realtime for Files 
+        // (Note: Realtime for global search is tricky, we might need a broader subscription or just subscribe to the specific folder if not global)
         let fileChannel: any = null;
-        if (selectedFolderId) {
+        if (selectedFolderId && !isGlobalSearch) {
             fileChannel = supabase
                 .channel(`docs_files_${selectedFolderId}`)
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'documents_files', filter: `folder_id=eq.${selectedFolderId}` }, () => loadFiles(selectedFolderId, true))
-                .subscribe((status: any) => {
-                    if (status === 'SUBSCRIBED') loadFiles(selectedFolderId, true);
-                });
+                .subscribe();
         }
 
         return () => {
             if (fileChannel) supabase.removeChannel(fileChannel);
         };
-    }, [selectedFolderId, session?.access_token, loadFiles]);
+    }, [selectedFolderId, session?.access_token, loadFiles, isGlobalSearch]); // loadFiles already depends on search/filter
 
     // Actions
     const handleSelectFolder = (id: string) => {
         replaceFolderUrl(id);
-        // On mobile, auto close sidebar after selection? 
-        // For now keep desktop behavior
+        setIsGlobalSearch(false); // Switch back to folder view when a folder is clicked
     };
 
     const handleCreateFolder = async (parentId: string | null) => {
@@ -185,11 +195,15 @@ function DocumentsPageContent() {
     const [isDragging, setIsDragging] = useState(false);
 
     const handleUploadFiles = async (fileList: File[]) => {
-        if (!selectedFolderId) return;
+        if (!selectedFolderId) {
+            alert("Vui lòng chọn thư mục để tải lên");
+            return;
+        }
         setUploading(true);
         try {
             await uploadFiles(selectedFolderId, fileList);
-            await loadFiles(selectedFolderId);
+            // Reload files
+            loadFiles(selectedFolderId);
         } catch (error: any) {
             console.error(error);
             alert("Lỗi tải file: " + (error?.message || "Unknown error"));
@@ -241,35 +255,59 @@ function DocumentsPageContent() {
             {/* Center: Main Content (Files Grid) */}
             <div className="flex-1 flex flex-col min-w-0 bg-white relative">
                 {/* Topbar */}
-                <div className="h-16 border-b border-slate-200 flex items-center justify-between px-6 shrink-0 bg-white z-10 transition-all">
-                    <div className="flex items-center gap-4 flex-1">
+                <div className="h-auto border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between p-4 gap-4 shrink-0 bg-white z-10 transition-all">
 
+                    <div className="flex items-center gap-4 flex-1 w-full">
                         {!showSidebar && (
                             <button
                                 onClick={() => setShowSidebar(true)}
-                                className="mr-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg p-2 transition-colors"
+                                className="mr-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg p-2 transition-colors shrink-0"
                                 title="Mở danh sách thư mục"
                             >
                                 <Menu className="w-5 h-5" />
                             </button>
                         )}
 
-                        <div className="relative flex-1 max-w-md">
-                            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-                            <input
-                                type="text"
-                                placeholder="Tìm kiếm tài liệu..."
-                                className="w-full pl-9 pr-4 py-2 bg-slate-100 border-transparent rounded-lg focus:bg-white focus:border-blue-500 transition text-sm"
-                                value={search}
-                                onChange={e => {
-                                    setSearch(e.target.value);
-                                    if (selectedFolderId) loadFiles(selectedFolderId);
-                                }}
-                            />
+                        <div className="flex flex-col sm:flex-row gap-2 flex-1">
+                            {/* Search Input */}
+                            <div className="relative flex-1">
+                                <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder={isGlobalSearch ? "Tìm kiếm trong toàn bộ kho..." : "Tìm kiếm trong thư mục hiện tại..."}
+                                    className="w-full pl-9 pr-4 py-2 bg-slate-100 border-transparent rounded-lg focus:bg-white focus:border-blue-500 transition text-sm"
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                />
+                            </div>
+
+                            {/* Filters */}
+                            <select
+                                className="px-3 py-2 bg-slate-100 border-transparent rounded-lg focus:bg-white focus:border-blue-500 transition text-sm text-slate-700 outline-none cursor-pointer"
+                                value={filterType}
+                                onChange={(e) => setFilterType(e.target.value as any)}
+                            >
+                                <option value="all">Tất cả định dạng</option>
+                                <option value="image">Hình ảnh</option>
+                                <option value="pdf">PDF</option>
+                                <option value="office">Word / Excel</option>
+                            </select>
+
+                            {/* Global Toggle */}
+                            <button
+                                onClick={() => setIsGlobalSearch(!isGlobalSearch)}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap
+                                    ${isGlobalSearch
+                                        ? 'bg-blue-100 text-blue-700 border border-blue-200'
+                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                    }`}
+                            >
+                                {isGlobalSearch ? '🌐 Tìm tất cả' : '📁 Thư mục này'}
+                            </button>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 shrink-0">
                         <input
                             type="file"
                             multiple
@@ -280,7 +318,7 @@ function DocumentsPageContent() {
                         <button
                             disabled={!selectedFolderId || uploading}
                             onClick={() => fileInputRef.current?.click()}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 text-sm font-medium shadow-sm"
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 text-sm font-medium shadow-sm w-full md:w-auto justify-center"
                         >
                             {uploading ? (
                                 <span className="animate-spin mr-1">↻</span>
