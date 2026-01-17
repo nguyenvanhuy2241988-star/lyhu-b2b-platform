@@ -113,8 +113,8 @@ export function DocDetailsPanel({ file, onClose, onUpdate }: DocDetailsPanelProp
                         </div>
                     </div>
 
-                    {/* Metadata */} // ... (metadata section kept same)
-                    <div className="space-y-4"> // ...
+                    {/* Metadata */}
+                    <div className="space-y-4">
                         <div className="group">
                             <label className="text-xs font-semibold text-slate-500 uppercase">Tên file</label>
                             {renaming ? (
@@ -179,7 +179,7 @@ export function DocDetailsPanel({ file, onClose, onUpdate }: DocDetailsPanelProp
                         </div>
                     </div>
 
-                    {/* Activity Log */} // ...
+                    {/* Activity Log */}
                     <div className="border-t border-slate-100 pt-4">
                         <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
                             <Clock className="w-4 h-4" /> Lịch sử hoạt động
