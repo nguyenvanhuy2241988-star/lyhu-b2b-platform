@@ -137,16 +137,35 @@ export async function deleteFolder(id: string): Promise<void> {
 
 // ---------- FILES ----------
 
-export async function listFiles(folderId: string, search?: string): Promise<DocumentFile[]> {
+export async function listFiles(
+    folderId: string | null,
+    search?: string,
+    filterType?: 'all' | 'image' | 'pdf' | 'office'
+): Promise<DocumentFile[]> {
     let q = supabase
         .from(FILES_TABLE)
         .select('*')
-        .eq('folder_id', folderId)
         .eq('is_deleted', false)
         .order('created_at', { ascending: false });
 
+    // Only filter by folder if folderId is provided
+    if (folderId) {
+        q = q.eq('folder_id', folderId);
+    }
+
     if (search) {
         q = q.ilike('title', `%${search}%`);
+    }
+
+    if (filterType && filterType !== 'all') {
+        if (filterType === 'image') {
+            q = q.like('mime_type', 'image/%');
+        } else if (filterType === 'pdf') {
+            q = q.ilike('mime_type', '%pdf%');
+        } else if (filterType === 'office') {
+            // Match word, excel, powerpoint, and openxml formats
+            q = q.or('mime_type.ilike.%word%,mime_type.ilike.%excel%,mime_type.ilike.%sheet%,mime_type.ilike.%presentation%,mime_type.ilike.%openxmlformats%');
+        }
     }
 
     const { data, error } = await q;
