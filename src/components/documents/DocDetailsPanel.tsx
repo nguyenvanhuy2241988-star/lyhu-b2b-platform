@@ -1,3 +1,5 @@
+import React, { useEffect, useState } from 'react';
+import { DocumentFile, DocumentActivity, listActivity, getFileSignedUrl, renameFile, moveFile, deleteFile } from '@/lib/documentsStore';
 import {
     X,
     Download,
