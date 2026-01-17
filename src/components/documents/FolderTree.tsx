@@ -164,6 +164,7 @@ export function FolderTree({
                         allFolders={folders}
                         depth={0}
                         selectedFolderId={selectedFolderId}
+                        readOnly={readOnly}
                         onSelectFolder={onSelectFolder}
                         onCreateFolder={onCreateFolder}
                         onRenameFolder={onRenameFolder}
