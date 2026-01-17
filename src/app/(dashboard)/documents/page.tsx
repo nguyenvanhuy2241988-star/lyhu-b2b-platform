@@ -48,6 +48,7 @@ function DocumentsPageContent() {
     const [loadingFiles, setLoadingFiles] = useState(false);
     const [search, setSearch] = useState('');
     const [uploading, setUploading] = useState(false);
+    const [showSidebar, setShowSidebar] = useState(true);
 
     // Selection State
     const selectedFolderId = searchParams?.get('folder');
@@ -140,6 +141,8 @@ function DocumentsPageContent() {
     // Actions
     const handleSelectFolder = (id: string) => {
         replaceFolderUrl(id);
+        // On mobile, auto close sidebar after selection? 
+        // For now keep desktop behavior
     };
 
     const handleCreateFolder = async (parentId: string | null) => {
@@ -207,12 +210,23 @@ function DocumentsPageContent() {
     return (
         <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-slate-50">
             {/* Left: Folder Tree */}
-            <div className={`w-64 bg-white border-r border-slate-200 flex flex-col shrink-0 transition-all ${selectedFolder ? 'block' : 'hidden md:flex'}`}>
-                <div className="p-4 border-b border-slate-100 flex items-center gap-2">
-                    <Menu className="w-5 h-5 text-slate-400" />
-                    <h2 className="font-bold text-slate-800">Tài liệu</h2>
+            <div
+                className={`flex-col shrink-0 transition-all duration-300 ease-in-out border-r border-slate-200 bg-white
+                ${showSidebar ? 'w-64 translate-x-0' : 'w-0 -translate-x-full opacity-0 overflow-hidden border-none'}`}
+            >
+                <div className="p-4 border-b border-slate-100 flex items-center justify-between gap-2 h-16 box-border">
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setShowSidebar(false)}
+                            className="text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded p-1 transition-colors"
+                            title="Đóng danh sách"
+                        >
+                            <Menu className="w-5 h-5" />
+                        </button>
+                        <h2 className="font-bold text-slate-800 whitespace-nowrap">Tài liệu</h2>
+                    </div>
                 </div>
-                <div className="flex-1 overflow-y-auto p-2 scrollbar-thin">
+                <div className="flex-1 overflow-y-auto p-2 scrollbar-thin w-64">
                     <FolderTree
                         folders={folders}
                         selectedFolderId={selectedFolderId}
@@ -227,8 +241,19 @@ function DocumentsPageContent() {
             {/* Center: Main Content (Files Grid) */}
             <div className="flex-1 flex flex-col min-w-0 bg-white relative">
                 {/* Topbar */}
-                <div className="h-16 border-b border-slate-200 flex items-center justify-between px-6 shrink-0 bg-white z-10">
+                <div className="h-16 border-b border-slate-200 flex items-center justify-between px-6 shrink-0 bg-white z-10 transition-all">
                     <div className="flex items-center gap-4 flex-1">
+
+                        {!showSidebar && (
+                            <button
+                                onClick={() => setShowSidebar(true)}
+                                className="mr-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg p-2 transition-colors"
+                                title="Mở danh sách thư mục"
+                            >
+                                <Menu className="w-5 h-5" />
+                            </button>
+                        )}
+
                         <div className="relative flex-1 max-w-md">
                             <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
                             <input
