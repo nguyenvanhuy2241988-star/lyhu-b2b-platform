@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Download, ExternalLink, Loader2 } from 'lucide-react';
-import { Dialog, DialogContent } from "@/components/ui/dialog"; // Assuming you have shadcn dialog or similar
+
 import { DocumentFile, getFileSignedUrl } from '@/lib/documentsStore';
 
 interface FilePreviewModalProps {
