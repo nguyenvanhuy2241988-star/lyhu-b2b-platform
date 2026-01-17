@@ -241,16 +241,23 @@ export default function ProductsPage() {
                     // UPSERT into inventory_levels
                     // PostgREST upsert: POST with resolution=merge-duplicates (if unique constraint exists)
                     // or just use RPC if we want history. For now, matching the simpler logic.
-                    await fetch(`${SUPABASE_URL}/rest/v1/inventory_levels`, {
+                    // Use RPC fn_adjust_stock to handle updates and audit logging safely
+                    const adjustRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/fn_adjust_stock`, {
                         method: 'POST',
-                        headers: { ...headers, 'Prefer': 'resolution=merge-duplicates' },
+                        headers: headers,
                         body: JSON.stringify({
-                            warehouse_id: warehouseId,
-                            product_id: finalProductId,
-                            quantity_on_hand: stock,
-                            updated_at: new Date().toISOString()
+                            p_warehouse_id: warehouseId,
+                            p_product_id: finalProductId,
+                            p_new_quantity: stock,
+                            p_user_id: session?.user?.id,
+                            p_note: editingProduct ? "Cập nhật từ Admin" : "Tạo mới từ Admin"
                         })
                     });
+
+                    if (!adjustRes.ok) {
+                        console.error("Stock update failed", await adjustRes.text());
+                        toast.error("Lỗi cập nhật kho (nhưng đã lưu SP)");
+                    }
                 }
             }
 
