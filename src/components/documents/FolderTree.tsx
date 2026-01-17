@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils';
 interface FolderTreeProps {
     folders: DocumentFolder[];
     selectedFolderId: string | null;
+    readOnly?: boolean;
     onSelectFolder: (id: string) => void;
     onCreateFolder: (parentId: string | null) => void;
     onRenameFolder: (folder: DocumentFolder) => void;
@@ -28,6 +29,7 @@ function FolderNode({
     allFolders,
     depth = 0,
     selectedFolderId,
+    readOnly = false,
     onSelectFolder,
     onCreateFolder,
     onRenameFolder,
@@ -37,6 +39,7 @@ function FolderNode({
     allFolders: DocumentFolder[],
     depth: number,
     selectedFolderId: string | null,
+    readOnly?: boolean,
     onSelectFolder: (id: string) => void,
     onCreateFolder: (parentId: string | null) => void,
     onRenameFolder: (folder: DocumentFolder) => void,
@@ -76,29 +79,31 @@ function FolderNode({
                 <span className="truncate flex-1 text-sm">{folder.name}</span>
 
                 {/* Actions */}
-                <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
-                    <button
-                        title="Đổi tên"
-                        onClick={(e) => { e.stopPropagation(); onRenameFolder(folder); }}
-                        className="p-1 hover:bg-slate-200 text-slate-400 hover:text-blue-500 rounded"
-                    >
-                        <Edit2 className="w-3 h-3" />
-                    </button>
-                    <button
-                        title="Tạo thư mục con"
-                        onClick={(e) => { e.stopPropagation(); onCreateFolder(folder.id); }}
-                        className="p-1 hover:bg-slate-200 text-slate-400 hover:text-green-500 rounded"
-                    >
-                        <Plus className="w-3 h-3" />
-                    </button>
-                    <button
-                        title="Xóa"
-                        onClick={(e) => { e.stopPropagation(); onDeleteFolder(folder); }}
-                        className="p-1 hover:bg-slate-200 text-slate-400 hover:text-red-500 rounded"
-                    >
-                        <Trash2 className="w-3 h-3" />
-                    </button>
-                </div>
+                {!readOnly && (
+                    <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1">
+                        <button
+                            title="Đổi tên"
+                            onClick={(e) => { e.stopPropagation(); onRenameFolder(folder); }}
+                            className="p-1 hover:bg-slate-200 text-slate-400 hover:text-blue-500 rounded"
+                        >
+                            <Edit2 className="w-3 h-3" />
+                        </button>
+                        <button
+                            title="Tạo thư mục con"
+                            onClick={(e) => { e.stopPropagation(); onCreateFolder(folder.id); }}
+                            className="p-1 hover:bg-slate-200 text-slate-400 hover:text-green-500 rounded"
+                        >
+                            <Plus className="w-3 h-3" />
+                        </button>
+                        <button
+                            title="Xóa"
+                            onClick={(e) => { e.stopPropagation(); onDeleteFolder(folder); }}
+                            className="p-1 hover:bg-slate-200 text-slate-400 hover:text-red-500 rounded"
+                        >
+                            <Trash2 className="w-3 h-3" />
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Recursion */}
@@ -111,6 +116,7 @@ function FolderNode({
                             allFolders={allFolders}
                             depth={depth + 1}
                             selectedFolderId={selectedFolderId}
+                            readOnly={readOnly}
                             onSelectFolder={onSelectFolder}
                             onCreateFolder={onCreateFolder}
                             onRenameFolder={onRenameFolder}
@@ -126,6 +132,7 @@ function FolderNode({
 export function FolderTree({
     folders,
     selectedFolderId,
+    readOnly = false,
     onSelectFolder,
     onCreateFolder,
     onRenameFolder,
@@ -137,13 +144,15 @@ export function FolderTree({
         <div className="space-y-1">
             <div className="flex items-center justify-between px-2 mb-2">
                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Thư mục</span>
-                <button
-                    onClick={() => onCreateFolder(null)}
-                    className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded"
-                    title="Tạo thư mục gốc mới"
-                >
-                    <Plus className="w-4 h-4" />
-                </button>
+                {!readOnly && (
+                    <button
+                        onClick={() => onCreateFolder(null)}
+                        className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                        title="Tạo thư mục gốc mới"
+                    >
+                        <Plus className="w-4 h-4" />
+                    </button>
+                )}
             </div>
             {rootFolders.length === 0 ? (
                 <div className="text-sm text-slate-400 px-2 italic">Chưa có thư mục</div>
