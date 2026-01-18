@@ -26,7 +26,10 @@ export default function CandidatesPage() {
         email: '',
         phone: '',
         status: 'new',
-        job_id: ''
+        job_id: '',
+        cv_url: '',
+        notes: '',
+        source: 'Referral' as any // Temporary cast until store type is updated
     });
 
     useEffect(() => {
@@ -153,50 +156,93 @@ export default function CandidatesPage() {
             {/* Modal */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-xl">
+                    <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-xl max-h-[90vh] overflow-y-auto">
                         <h2 className="text-xl font-bold mb-4">Thêm ứng viên mới</h2>
                         <form onSubmit={handleCreate} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium mb-1">Họ tên</label>
+                                <label className="block text-sm font-medium mb-1">Họ tên <span className="text-red-500">*</span></label>
                                 <input
-                                    className="w-full border rounded-lg px-3 py-2" required
+                                    className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" required
                                     value={newCandidate.full_name}
                                     onChange={e => setNewCandidate({ ...newCandidate, full_name: e.target.value })}
+                                    placeholder="Nguyễn Văn A"
                                 />
                             </div>
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Email</label>
                                     <input
-                                        className="w-full border rounded-lg px-3 py-2"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
                                         value={newCandidate.email}
                                         onChange={e => setNewCandidate({ ...newCandidate, email: e.target.value })}
+                                        placeholder="email@example.com"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Số điện thoại</label>
                                     <input
-                                        className="w-full border rounded-lg px-3 py-2"
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
                                         value={newCandidate.phone}
                                         onChange={e => setNewCandidate({ ...newCandidate, phone: e.target.value })}
+                                        placeholder="0912..."
                                     />
                                 </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Vị trí ứng tuyển</label>
-                                <select
-                                    className="w-full border rounded-lg px-3 py-2"
-                                    value={newCandidate.job_id}
-                                    onChange={e => setNewCandidate({ ...newCandidate, job_id: e.target.value })}
-                                >
-                                    {jobs.map(j => (
-                                        <option key={j.id} value={j.id}>{j.title}</option>
-                                    ))}
-                                </select>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Vị trí ứng tuyển</label>
+                                    <select
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={newCandidate.job_id}
+                                        onChange={e => setNewCandidate({ ...newCandidate, job_id: e.target.value })}
+                                    >
+                                        {jobs.map(j => (
+                                            <option key={j.id} value={j.id}>{j.title}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Nguồn</label>
+                                    <select
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={(newCandidate as any).source || 'Referral'}
+                                        onChange={e => setNewCandidate({ ...newCandidate, source: e.target.value } as any)}
+                                    >
+                                        <option value="Facebook">Facebook</option>
+                                        <option value="LinkedIn">LinkedIn</option>
+                                        <option value="TopCV">TopCV</option>
+                                        <option value="Referral">Giới thiệu</option>
+                                        <option value="Direct">Trực tiếp</option>
+                                        <option value="Other">Khác</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div className="flex justify-end gap-3 mt-6">
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Link CV (Drive/PDF)</label>
+                                <input
+                                    className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    value={newCandidate.cv_url || ''}
+                                    onChange={e => setNewCandidate({ ...newCandidate, cv_url: e.target.value })}
+                                    placeholder="https://drive.google.com/..."
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Ghi chú thêm</label>
+                                <textarea
+                                    className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none h-20"
+                                    value={newCandidate.notes || ''}
+                                    onChange={e => setNewCandidate({ ...newCandidate, notes: e.target.value })}
+                                    placeholder="Ghi chú về ứng viên này..."
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
                                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">Hủy</button>
-                                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Lưu</button>
+                                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">Lưu ứng viên</button>
                             </div>
                         </form>
                     </div>
