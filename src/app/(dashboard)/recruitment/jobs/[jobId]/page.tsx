@@ -63,6 +63,26 @@ export default function JobDetailPage() {
         alert(`Đã sao chép Link!\n\n${link}`); // Replace with toast if available
     };
 
+    const forceDownload = async (url: string, filename: string) => {
+        try {
+            toast.info("Đang tải xuống...");
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error("Download failed:", error);
+            window.open(url, '_blank'); // Fallback
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="flex h-screen items-center justify-center">
@@ -179,7 +199,6 @@ export default function JobDetailPage() {
                                                 </td>
                                                 <td className="px-6 py-3">
                                                     <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800">
-                                                        {/* This assumes source exists in type, if not we need update store type, assuming backend has it */}
                                                         {(c as any).source || 'Direct'}
                                                     </span>
                                                 </td>
@@ -188,15 +207,12 @@ export default function JobDetailPage() {
                                                 </td>
                                                 <td className="px-6 py-3">
                                                     {c.cv_url ? (
-                                                        <a
-                                                            href={c.cv_url}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            download
-                                                            className="text-blue-600 hover:underline truncate max-w-[150px] block"
+                                                        <button
+                                                            onClick={() => forceDownload(c.cv_url!, `CV_${c.full_name.replace(/\s+/g, '_')}`)}
+                                                            className="text-blue-600 hover:underline hover:text-blue-800 truncate max-w-[150px] block font-medium"
                                                         >
-                                                            Xem CV
-                                                        </a>
+                                                            Tải CV
+                                                        </button>
                                                     ) : (
                                                         <span className="text-slate-300">-</span>
                                                     )}
