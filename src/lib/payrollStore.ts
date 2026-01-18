@@ -129,23 +129,28 @@ export const addFinancialTransaction = async (transaction: Partial<FinancialTran
     try {
         const headers = getHeaders(token);
         const payload = {
-            user_id: transaction.userId,
-            type: transaction.type,
-            category: transaction.category,
-            amount: transaction.amount,
-            status: transaction.status || 'estimated',
-            reference_id: transaction.referenceId,
-            note: transaction.note,
-            metadata: transaction.metadata || {}
+            p_user_id: transaction.userId,
+            p_type: transaction.type,
+            p_category: transaction.category,
+            p_amount: transaction.amount,
+            p_status: transaction.status || 'estimated',
+            p_reference_id: transaction.referenceId || null,
+            p_note: transaction.note || null,
+            p_metadata: transaction.metadata || {}
         };
 
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/financial_transactions`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/create_financial_transaction_v2`, {
             method: 'POST',
             headers,
             body: JSON.stringify(payload)
         });
 
-        return res.ok;
+        if (!res.ok) {
+            console.error("RPC create_financial_transaction_v2 failed", await res.text());
+            return false;
+        }
+
+        return await res.json();
     } catch {
         return false;
     }
