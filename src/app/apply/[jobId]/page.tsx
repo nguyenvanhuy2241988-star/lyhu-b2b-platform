@@ -402,7 +402,7 @@ export default function ApplyPage() {
                                             type="file"
                                             accept=".pdf,.doc,.docx,.jpg,.png"
                                             onChange={handleFileChange}
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50"
                                         />
 
                                         {selectedFile ? (
