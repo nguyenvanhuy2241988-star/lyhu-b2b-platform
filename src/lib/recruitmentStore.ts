@@ -160,13 +160,14 @@ export const getInterviews = async () => {
     return data as unknown as RecruitmentInterview[]; // Casting due to join complexity
 };
 
-const { data, error } = await supabase
-    .from('recruitment_interviews')
-    .insert([interview])
-    .select()
-    .single();
-if (error) throw error;
-return data as RecruitmentInterview;
+export const scheduleInterview = async (interview: Partial<RecruitmentInterview>) => {
+    const { data, error } = await supabase
+        .from('recruitment_interviews')
+        .insert([interview])
+        .select()
+        .single();
+    if (error) throw error;
+    return data as RecruitmentInterview;
 };
 
 export const updateInterview = async (id: string, updates: Partial<RecruitmentInterview>) => {
