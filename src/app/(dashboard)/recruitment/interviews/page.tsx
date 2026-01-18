@@ -84,6 +84,20 @@ export default function InterviewsPage() {
                 return;
             }
 
+            // CHECK DUPLICATE: Prevent scheduling if candidate already has a 'scheduled' interview
+            // Exception: If we are editing the same interview (selectedId matches), it's allowed.
+            const duplicate = interviews.find(i =>
+                i.candidate_id === formData.candidate_id &&
+                i.status === 'scheduled' &&
+                i.id !== selectedId
+            );
+
+            if (duplicate) {
+                const duplicateDate = format(new Date(duplicate.scheduled_at), 'HH:mm dd/MM/yyyy');
+                toast.error(`Ứng viên này đã có lịch phỏng vấn lúc ${duplicateDate}. Vui lòng kiểm tra lại!`);
+                return;
+            }
+
             const payload: any = {
                 candidate_id: formData.candidate_id,
                 scheduled_at: new Date(formData.scheduled_at).toISOString(),

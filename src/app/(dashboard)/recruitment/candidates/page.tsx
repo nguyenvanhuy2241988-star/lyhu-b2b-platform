@@ -64,6 +64,8 @@ export default function CandidatesPage() {
         }
     };
 
+    const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+
     const handleStatusChange = async (id: string, newStatus: string) => {
         try {
             await updateCandidateStatus(id, newStatus as CandidateStatus);
@@ -76,6 +78,9 @@ export default function CandidatesPage() {
 
     const getCandidatesByStatus = (status: string) => candidates.filter(c => c.status === status);
 
+    const getStatusLabel = (status: string) => STATUS_COLS.find(s => s.id === status)?.label || status;
+    const getStatusColor = (status: string) => STATUS_COLS.find(s => s.id === status)?.color || 'text-gray-500';
+
     return (
         <div className="h-full flex flex-col p-6 overflow-hidden">
             {/* Header */}
@@ -84,19 +89,38 @@ export default function CandidatesPage() {
                     <h1 className="text-2xl font-bold text-slate-900">Ứng viên</h1>
                     <p className="text-slate-500">Quản lý hồ sơ theo quy trình</p>
                 </div>
-                <button
-                    onClick={() => setShowModal(true)}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-                >
-                    <Plus className="w-4 h-4" />
-                    Thêm ứng viên
-                </button>
+                <div className="flex items-center gap-3">
+                    <div className="bg-white border p-1 rounded-lg flex text-sm font-medium">
+                        <button
+                            onClick={() => setViewMode('kanban')}
+                            className={`p-2 rounded-md transition ${viewMode === 'kanban' ? 'bg-blue-50 text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            title="Xem dạng thẻ (Kanban)"
+                        >
+                            <MoreHorizontal className="w-5 h-5 rotate-90" /> {/* LayoutGrid fallback */}
+                        </button>
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`p-2 rounded-md transition ${viewMode === 'list' ? 'bg-blue-50 text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            title="Xem dạng danh sách"
+                        >
+                            <User className="w-5 h-5" /> {/* List fallback */}
+                        </button>
+                    </div>
+                    <button
+                        onClick={() => setShowModal(true)}
+                        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Thêm ứng viên
+                    </button>
+                </div>
             </div>
 
-            {/* Kanban Board */}
+            {/* Content */}
             {loading ? (
                 <div>Đang tải...</div>
-            ) : (
+            ) : viewMode === 'kanban' ? (
+                // KANBAN VIEW
                 <div className="flex-1 overflow-x-auto overflow-y-hidden">
                     <div className="flex gap-6 h-full min-w-[1200px]">
                         {STATUS_COLS.map(col => (
@@ -112,9 +136,6 @@ export default function CandidatesPage() {
                                         <div key={cand.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-100 hover:shadow-md transition group">
                                             <div className="flex justify-between items-start mb-2">
                                                 <h4 className="font-semibold text-slate-800">{cand.full_name}</h4>
-                                                {/* <button className="text-slate-400 hover:text-slate-600">
-                                                    <MoreHorizontal className="w-4 h-4" />
-                                                </button> */}
                                             </div>
                                             <div className="text-xs text-slate-500 mb-3 space-y-1">
                                                 <div className="flex items-center gap-2">
@@ -162,6 +183,53 @@ export default function CandidatesPage() {
                             </div>
                         ))}
                     </div>
+                </div>
+            ) : (
+                // LIST VIEW
+                <div className="flex-1 overflow-auto bg-white rounded-xl shadow-sm border border-slate-200">
+                    <table className="w-full text-left text-sm text-slate-600">
+                        <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 sticky top-0 z-10">
+                            <tr>
+                                <th className="px-6 py-4">Ứng viên</th>
+                                <th className="px-6 py-4">Vị trí</th>
+                                <th className="px-6 py-4">Liên hệ</th>
+                                <th className="px-6 py-4">Nguồn</th>
+                                <th className="px-6 py-4">Ngày nộp</th>
+                                <th className="px-6 py-4">Trạng thái</th>
+                                <th className="px-6 py-4 text-right">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {candidates.map(cand => (
+                                <tr key={cand.id} className="hover:bg-slate-50 transition">
+                                    <td className="px-6 py-4 font-medium text-slate-900">{cand.full_name}</td>
+                                    <td className="px-6 py-4">{cand.job?.title || '-'}</td>
+                                    <td className="px-6 py-4 space-y-1">
+                                        <div className="flex items-center gap-1.5"><Mail className="w-3 h-3" /> {cand.email}</div>
+                                        <div className="flex items-center gap-1.5"><Phone className="w-3 h-3" /> {cand.phone}</div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {cand.source ? <span className="px-2 py-1 bg-slate-100 rounded text-xs font-medium">{cand.source}</span> : '-'}
+                                    </td>
+                                    <td className="px-6 py-4">{format(new Date(cand.created_at), 'dd/MM/yyyy')}</td>
+                                    <td className="px-6 py-4">
+                                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${getStatusColor(cand.status)}`}>
+                                            {getStatusLabel(cand.status)}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-right">
+                                        <Link
+                                            href={`/recruitment/interviews?candidateId=${cand.id}`}
+                                            className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium text-xs px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition"
+                                        >
+                                            <Calendar className="w-3 h-3" />
+                                            Đặt lịch
+                                        </Link>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             )}
 
@@ -230,16 +298,6 @@ export default function CandidatesPage() {
                                         <option value="Other">Khác</option>
                                     </select>
                                 </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Link CV (Drive/PDF)</label>
-                                <input
-                                    className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                    value={newCandidate.cv_url || ''}
-                                    onChange={e => setNewCandidate({ ...newCandidate, cv_url: e.target.value })}
-                                    placeholder="https://drive.google.com/..."
-                                />
                             </div>
 
                             <div>
