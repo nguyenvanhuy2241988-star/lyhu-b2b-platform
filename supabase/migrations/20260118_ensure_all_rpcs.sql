@@ -276,12 +276,34 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
+-------------------------------------------------------------------------------
+-- 6. UPDATE ORDER STATUS (Lightweight)
+-------------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.update_order_status(
+    p_order_id uuid,
+    p_status text
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth, extensions
+AS $$
+BEGIN
+    UPDATE public.orders
+    SET status = p_status
+    WHERE id = p_order_id;
+    
+    RETURN FOUND;
+END;
+$$;
+
 -- GRANT EXECUTE PERMISSIONS
 GRANT EXECUTE ON FUNCTION public.get_orders_v2 TO authenticated, anon, service_role;
 GRANT EXECUTE ON FUNCTION public.create_order_v2 TO authenticated, anon, service_role;
 GRANT EXECUTE ON FUNCTION public.update_order_v2 TO authenticated, anon, service_role;
 GRANT EXECUTE ON FUNCTION public.has_prior_orders TO authenticated, anon, service_role;
 GRANT EXECUTE ON FUNCTION public.create_financial_transaction_v2 TO authenticated, anon, service_role;
+GRANT EXECUTE ON FUNCTION public.update_order_status TO authenticated, anon, service_role;
 
 COMMIT;
 
