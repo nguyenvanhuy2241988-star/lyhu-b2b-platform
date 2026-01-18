@@ -45,16 +45,29 @@ export default function InterviewsPage() {
     }, []);
 
     const loadData = async () => {
+        setIsLoading(true);
         try {
-            const [interviewsData, candidatesData] = await Promise.all([
-                getInterviews(),
-                getCandidates()
-            ]);
-            setInterviews(interviewsData);
-            setCandidates(candidatesData.filter(c => c.status !== 'rejected')); // Only active candidates
+            // Fetch Candidates
+            const { data: candidatesData, error: candError } = await getCandidates().then(data => ({ data, error: null })).catch(error => ({ data: [], error }));
+            if (candError) {
+                console.error("Error fetching candidates:", candError);
+                toast.error("Lỗi tải danh sách ứng viên");
+            } else {
+                setCandidates(candidatesData.filter(c => c.status !== 'rejected'));
+            }
+
+            // Fetch Interviews
+            try {
+                const interviewsData = await getInterviews();
+                setInterviews(interviewsData);
+            } catch (error) {
+                console.error("Error fetching interviews:", error);
+                // Likely table doesn't exist yet
+                toast.error("Chưa kết nối được dữ liệu Lịch phỏng vấn (Có thể do chưa chạy SQL)");
+            }
+
         } catch (error) {
-            console.error(error);
-            toast.error("Lỗi tải dữ liệu");
+            console.error("Critical error:", error);
         } finally {
             setIsLoading(false);
         }
