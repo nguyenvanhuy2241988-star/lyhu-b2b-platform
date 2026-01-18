@@ -151,7 +151,9 @@ export const updateCandidateStatus = async (id: string, status: CandidateStatus)
 export const getInterviews = async () => {
     const { data, error } = await supabase
         .from('recruitment_interviews')
-        .select('*, candidate:recruitment_candidates(full_name), interviewer:profiles(full_name)')
+        // Explicitly specifying the foreign key constraint to resolve ambiguity
+        // Constraint name is typically: table_column_fkey
+        .select('*, candidate:recruitment_candidates(full_name), interviewer:profiles!recruitment_interviews_interviewer_id_fkey(full_name)')
         .order('scheduled_at', { ascending: true });
 
     if (error) throw error;
