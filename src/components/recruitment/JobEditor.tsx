@@ -148,7 +148,6 @@ export default function JobEditor({ jobId }: JobEditorProps) {
                         <p className="text-slate-500 text-sm">Điền đầy đủ thông tin để thu hút ứng viên</p>
                     </div>
                 </div>
-                </div>
                 <div className="flex items-center gap-3">
                     {/* Delete Button (Edit Mode Only) */}
                     {isEditMode && jobId && (
