@@ -64,6 +64,17 @@ export const getJobs = async () => {
     return data as RecruitmentJob[];
 };
 
+export const getJob = async (id: string) => {
+    const { data, error } = await supabase
+        .from('recruitment_jobs')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (error) throw error;
+    return data as RecruitmentJob;
+};
+
 export const createJob = async (job: Partial<RecruitmentJob>) => {
     const { data, error } = await supabase
         .from('recruitment_jobs')

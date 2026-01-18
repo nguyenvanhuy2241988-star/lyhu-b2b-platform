@@ -1,0 +1,222 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { RecruitmentJob, RecruitmentCandidate, getJob, getCandidates, updateJob } from "@/lib/recruitmentStore";
+import { Loader2, Share2, Copy, ArrowLeft, Users, Briefcase, MapPin, DollarSign, Edit } from "lucide-react";
+import { format } from "date-fns";
+import Link from "next/link";
+import { toast } from "sonner"; // Assuming sonner or use standard toast
+
+// Candidate Status Badge Helper
+const StatusBadge = ({ status }: { status: string }) => {
+    const colors: Record<string, string> = {
+        new: "bg-blue-100 text-blue-700",
+        screening: "bg-purple-100 text-purple-700",
+        interview: "bg-yellow-100 text-yellow-700",
+        offer: "bg-orange-100 text-orange-700",
+        hired: "bg-green-100 text-green-700",
+        rejected: "bg-red-100 text-red-700",
+    };
+    return (
+        <span className={`px-2 py-0.5 rounded text-xs font-medium uppercase ${colors[status] || "bg-slate-100 text-slate-700"}`}>
+            {status}
+        </span>
+    );
+};
+
+export default function JobDetailPage() {
+    const { jobId } = useParams();
+    const router = useRouter();
+    const [job, setJob] = useState<RecruitmentJob | null>(null);
+    const [candidates, setCandidates] = useState<RecruitmentCandidate[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [source, setSource] = useState("FacebookGroup");
+
+    useEffect(() => {
+        loadData();
+    }, [jobId]);
+
+    const loadData = async () => {
+        if (!jobId) return;
+        try {
+            const [jobData, candidateData] = await Promise.all([
+                getJob(jobId as string),
+                getCandidates(jobId as string)
+            ]);
+            setJob(jobData);
+            setCandidates(candidateData);
+        } catch (error) {
+            console.error(error);
+            // toast.error("Không thể tải thông tin công việc");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const copyApplyLink = () => {
+        if (!job) return;
+        // Construct public apply link
+        const host = window.location.origin;
+        const link = `${host}/apply/${job.id}?source=${source}`;
+        navigator.clipboard.writeText(link);
+        alert(`Đã sao chép Link!\n\n${link}`); // Replace with toast if available
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex h-screen items-center justify-center">
+                <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
+            </div>
+        );
+    }
+
+    if (!job) {
+        return (
+            <div className="p-8 text-center">
+                <h2 className="text-xl font-bold text-slate-700">Công việc không tồn tại</h2>
+                <Link href="/recruitment/jobs" className="text-blue-600 hover:underline mt-2 inline-block">
+                    Quay lại danh sách
+                </Link>
+            </div>
+        );
+    }
+
+    return (
+        <div className="p-6 max-w-7xl mx-auto space-y-6">
+            {/* Header */}
+            <div>
+                <Link href="/recruitment/jobs" className="flex items-center gap-2 text-slate-500 hover:text-slate-900 mb-4 transition">
+                    <ArrowLeft className="w-4 h-4" />
+                    Quay lại danh sách
+                </Link>
+
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div>
+                        <div className="flex items-center gap-3 mb-2">
+                            <h1 className="text-3xl font-bold text-slate-900">{job.title}</h1>
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${job.status === 'open' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}`}>
+                                {job.status === 'open' ? 'Đang tuyển' : 'Đã đóng'}
+                            </span>
+                        </div>
+                        <div className="flex flex-wrap gap-4 text-slate-600">
+                            <div className="flex items-center gap-1"><Briefcase className="w-4 h-4" /> {job.department}</div>
+                            <div className="flex items-center gap-1"><MapPin className="w-4 h-4" /> {job.location}</div>
+                            <div className="flex items-center gap-1"><DollarSign className="w-4 h-4" /> {job.salary_range || "Thỏa thuận"}</div>
+                        </div>
+                    </div>
+
+                    {/* Share / Tracking Box */}
+                    <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl max-w-md w-full">
+                        <h3 className="text-sm font-bold text-blue-800 mb-2 flex items-center gap-2">
+                            <Share2 className="w-4 h-4" />
+                            Lấy Link đi rải (Tracking)
+                        </h3>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                className="flex-1 text-sm border-blue-200 rounded px-2 py-1 outline-none text-slate-700"
+                                placeholder="Nguồn (vd: Group_A)..."
+                                value={source}
+                                onChange={e => setSource(e.target.value)}
+                            />
+                            <button
+                                onClick={copyApplyLink}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium transition flex items-center gap-1"
+                            >
+                                <Copy className="w-3 h-3" />
+                                Copy Link
+                            </button>
+                        </div>
+                        <p className="text-xs text-blue-600 mt-2">
+                            Link này dùng để đăng lên Facebook, Zalo. Ứng viên điền form sẽ được gắn tag nguồn này.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left: Job Info */}
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Candidates Table */}
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+                            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                                <Users className="w-5 h-5 text-slate-500" />
+                                Ứng viên ({candidates.length})
+                            </h3>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead className="bg-slate-50 text-slate-600 font-medium border-b border-slate-200">
+                                    <tr>
+                                        <th className="px-6 py-3">Tên & Liên hệ</th>
+                                        <th className="px-6 py-3">Trạng thái</th>
+                                        <th className="px-6 py-3">Nguồn</th>
+                                        <th className="px-6 py-3">Ngày nộp</th>
+                                        <th className="px-6 py-3">Link CV</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {candidates.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={5} className="px-6 py-8 text-center text-slate-400">
+                                                Chưa có ứng viên nào nộp đơn.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        candidates.map(c => (
+                                            <tr key={c.id} className="hover:bg-slate-50 transition">
+                                                <td className="px-6 py-3">
+                                                    <div className="font-medium text-slate-900">{c.full_name}</div>
+                                                    <div className="text-xs text-slate-500">{c.phone} • {c.email}</div>
+                                                </td>
+                                                <td className="px-6 py-3">
+                                                    <StatusBadge status={c.status} />
+                                                </td>
+                                                <td className="px-6 py-3">
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800">
+                                                        {/* This assumes source exists in type, if not we need update store type, assuming backend has it */}
+                                                        {(c as any).source || 'Direct'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-3 text-slate-500">
+                                                    {format(new Date(c.created_at), 'dd/MM/yyyy')}
+                                                </td>
+                                                <td className="px-6 py-3">
+                                                    {c.cv_url ? (
+                                                        <a href={c.cv_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline truncate max-w-[150px] block">
+                                                            Xem CV
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-slate-300">-</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right: Description & Requirements (Read only for now) */}
+                <div className="space-y-6">
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h3 className="font-bold text-slate-800 mb-4">Mô tả công việc</h3>
+                        <div className="text-sm text-slate-600 whitespace-pre-wrap">
+                            {job.description || "Chưa có mô tả."}
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h3 className="font-bold text-slate-800 mb-4">Yêu cầu</h3>
+                        <div className="text-sm text-slate-600 whitespace-pre-wrap">
+                            {job.requirements || "Chưa có yêu cầu."}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}

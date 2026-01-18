@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Search, MapPin, DollarSign, Users, Briefcase } from 'lucide-react';
 import { getJobs, createJob, RecruitmentJob } from '@/lib/recruitmentStore';
+import Link from 'next/link';
 import { format } from 'date-fns';
 
 export default function JobsPage() {
@@ -76,7 +77,7 @@ export default function JobsPage() {
                                     <Briefcase className="w-6 h-6" />
                                 </div>
                                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${job.status === 'open' ? 'bg-green-100 text-green-700' :
-                                        job.status === 'draft' ? 'bg-slate-100 text-slate-700' : 'bg-red-50 text-red-600'
+                                    job.status === 'draft' ? 'bg-slate-100 text-slate-700' : 'bg-red-50 text-red-600'
                                     }`}>
                                     {job.status === 'open' ? 'Đang tuyển' : job.status === 'draft' ? 'Nháp' : 'Đã đóng'}
                                 </span>
@@ -98,7 +99,13 @@ export default function JobsPage() {
 
                             <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500">
                                 <span>{format(new Date(job.created_at), 'dd/MM/yyyy')}</span>
-                                <span className="text-blue-600 font-medium group-hover:underline">Chi tiết →</span>
+                                <Link
+                                    href={`/recruitment/jobs/${job.id}`}
+                                    className="text-blue-600 font-medium group-hover:underline flex items-center gap-1 hover:gap-2 transition-all"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    Chi tiết →
+                                </Link>
                             </div>
                         </div>
                     ))}
