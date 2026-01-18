@@ -78,8 +78,8 @@ export default function ApplyPage() {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
             // Simple validation
-            if (file.size > 5 * 1024 * 1024) { // 5MB
-                alert("File quá lớn! Vui lòng chọn file dưới 5MB.");
+            if (file.size > 15 * 1024 * 1024) { // 15MB
+                alert("File quá lớn! Vui lòng chọn file dưới 15MB.");
                 return;
             }
             setSelectedFile(file);
@@ -419,7 +419,7 @@ export default function ApplyPage() {
                                                     <Upload className="w-5 h-5" />
                                                 </div>
                                                 <p className="text-sm font-medium text-slate-600">Chạm để tải file</p>
-                                                <p className="text-xs text-slate-400 mt-1">PDF, DOC, Ảnh (Max 5MB)</p>
+                                                <p className="text-xs text-slate-400 mt-1">PDF, DOC, Ảnh (Max 15MB)</p>
                                             </div>
                                         )}
                                     </div>
