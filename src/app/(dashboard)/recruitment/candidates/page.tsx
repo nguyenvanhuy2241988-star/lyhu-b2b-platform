@@ -303,25 +303,7 @@ export default function CandidatesPage() {
                                 </div>
                             </div>
 
-                            {/* Note: I am NOT replacing the whole form here, just the wrapper logic. Use strict target content. */}
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Candidate Detail Drawer */}
-            {selectedCandidate && (
-                <CandidateDetailDrawer
-                    isOpen={drawerOpen}
-                    onClose={() => setDrawerOpen(false)}
-                    candidate={selectedCandidate}
-                    interviews={candidateInterviews}
-                    onEdit={() => alert("Tính năng chỉnh sửa chi tiết đang được cập nhật")}
-                />
-            )}
-        </div>
-    );
-}
+                            {/* Job & Source */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Vị trí ứng tuyển</label>
@@ -352,6 +334,7 @@ export default function CandidatesPage() {
                                 </div>
                             </div>
 
+                            {/* Details */}
                             <div className="grid grid-cols-3 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Kinh nghiệm</label>
@@ -382,6 +365,7 @@ export default function CandidatesPage() {
                                 </div>
                             </div>
 
+                            {/* Notes */}
                             <div>
                                 <label className="block text-sm font-medium mb-1">Ghi chú thêm</label>
                                 <textarea
@@ -396,11 +380,22 @@ export default function CandidatesPage() {
                                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">Hủy</button>
                                 <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">Lưu ứng viên</button>
                             </div>
-                        </form >
-                    </div >
-                </div >
+                        </form>
+                    </div>
+                </div>
             )}
-        </div >
+
+            {/* Candidate Detail Drawer */}
+            {selectedCandidate && (
+                <CandidateDetailDrawer
+                    isOpen={drawerOpen}
+                    onClose={() => setDrawerOpen(false)}
+                    candidate={selectedCandidate}
+                    interviews={candidateInterviews}
+                    onEdit={() => alert("Tính năng chỉnh sửa chi tiết đang được cập nhật")}
+                />
+            )}
+        </div>
     );
 }
 
