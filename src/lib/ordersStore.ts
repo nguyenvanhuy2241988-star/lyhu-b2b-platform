@@ -461,17 +461,23 @@ export const addOrderSupabase = async (orderData: any, token?: string) => {
         if (orderData.source === 'TELESALES' && orderData.telesalesUserId && order) {
             try {
                 // Check if this is the first order for this customer
-                // (This check might still fail if RLS blocks reading ORDERS)
-                // BUT: fetchOrders RPC exists now. We should use it? 
-                // Or try direct fetch first. If fails, ignore bonus for now to avoid blocking UI.
-                // We'll keep existing logic but wrapped in try-catch (already is).
+                // Use RPC to bypass permissions
 
-                const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/orders?customer_id=eq.${order.customer_id}&id=neq.${order.id}&limit=1`, { headers });
-                // If permission denied here (very likely), we interpret as "Cannot verify" -> skip bonus or assume not first?
-                // Safest to SKIP bonus if we can't verify, to avoid abusing system.
+                const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/has_prior_orders`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        p_customer_id: order.customer_id,
+                        p_exclude_order_id: order.id
+                    })
+                });
 
+                // RPC returns true if prior orders exist, false if none.
+                // We want isFirstOrder = !hasPrior
+                let isFirstOrder = false;
                 if (checkRes.ok) {
-                    const isFirstOrder = (await checkRes.json()).length === 0;
+                    const hasPrior = await checkRes.json();
+                    isFirstOrder = !hasPrior;
 
                     if (isFirstOrder) {
                         const payrollConfig = await fetchPayrollConfig('telesales_parttime', token);
