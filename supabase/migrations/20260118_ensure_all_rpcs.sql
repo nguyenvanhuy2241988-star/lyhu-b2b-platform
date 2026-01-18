@@ -4,6 +4,10 @@
 
 BEGIN;
 
+-- CLEANUP: Drop potential ambiguous overrides
+DROP FUNCTION IF EXISTS public.get_orders_v2(uuid, text, date, date); 
+DROP FUNCTION IF EXISTS public.get_orders_v2(uuid, text, date, date, uuid);
+
 -------------------------------------------------------------------------------
 -- 1. GET ORDERS V2 (Reading)
 -------------------------------------------------------------------------------
