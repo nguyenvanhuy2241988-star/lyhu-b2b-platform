@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Search, MapPin, DollarSign, Users, Briefcase } from 'lucide-react';
+import { Plus, Search, MapPin, DollarSign, Users, Briefcase, Edit } from 'lucide-react';
 import { getJobs, createJob, RecruitmentJob } from '@/lib/recruitmentStore';
 import Link from 'next/link';
 import { format } from 'date-fns';
@@ -56,13 +56,13 @@ export default function JobsPage() {
                     <h1 className="text-2xl font-bold text-slate-900">Tin tuyển dụng</h1>
                     <p className="text-slate-500">Quản lý các vị trí đang mở</p>
                 </div>
-                <button
-                    onClick={() => setShowCreateModal(true)}
+                <Link
+                    href="/recruitment/jobs/new"
                     className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
                 >
                     <Plus className="w-4 h-4" />
                     Tạo tin mới
-                </button>
+                </Link>
             </div>
 
             {/* Content */}
