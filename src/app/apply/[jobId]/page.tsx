@@ -6,10 +6,15 @@ import { createClient } from "@/lib/supabaseClient";
 import { Loader2, CheckCircle, Send, MapPin, Briefcase, FileUp, X, Upload } from "lucide-react";
 import Link from "next/link";
 
-description ?: string;
-requirements ?: string;
-benefits ?: string;
-banner_url ?: string;
+type PublicJob = {
+    id: string;
+    title: string;
+    location: string;
+    status: string;
+    description?: string;
+    requirements?: string;
+    benefits?: string;
+    banner_url?: string;
 };
 
 type CompanySettings = {
