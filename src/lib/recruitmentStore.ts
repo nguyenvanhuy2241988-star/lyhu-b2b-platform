@@ -30,6 +30,13 @@ export interface RecruitmentCandidate {
     source?: string;
     cv_url?: string;
     notes?: string;
+    // New detailed fields
+    experience_years?: string;
+    expected_salary?: string;
+    current_company?: string;
+    skills?: string;
+    availability_date?: string;
+    rating?: number;
     job?: {
         title: string;
     };

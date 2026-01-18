@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Mail, Phone, MoreHorizontal, User, Calendar } from 'lucide-react';
-import { getCandidates, getJobs, createCandidate, updateCandidateStatus, RecruitmentCandidate, RecruitmentJob, CandidateStatus } from '@/lib/recruitmentStore';
+import { Plus, Search, Mail, Phone, MoreHorizontal, User, Calendar, Briefcase } from 'lucide-react';
+import { getCandidates, getJobs, createCandidate, updateCandidateStatus, getInterviewsByCandidate, RecruitmentCandidate, RecruitmentJob, RecruitmentInterview, CandidateStatus } from '@/lib/recruitmentStore';
+import CandidateDetailDrawer from './CandidateDetailDrawer';
 import { format } from 'date-fns';
 
 const STATUS_COLS: { id: CandidateStatus; label: string; color: string }[] = [
@@ -21,6 +22,11 @@ export default function CandidatesPage() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
 
+    // Detail Drawer State
+    const [selectedCandidate, setSelectedCandidate] = useState<RecruitmentCandidate | null>(null);
+    const [candidateInterviews, setCandidateInterviews] = useState<RecruitmentInterview[]>([]);
+    const [drawerOpen, setDrawerOpen] = useState(false);
+
     // Form
     const [newCandidate, setNewCandidate] = useState<Partial<RecruitmentCandidate>>({
         full_name: '',
@@ -30,7 +36,10 @@ export default function CandidatesPage() {
         job_id: '',
         cv_url: '',
         notes: '',
-        source: 'Referral'
+        source: 'Referral',
+        experience_years: '',
+        expected_salary: '',
+        skills: ''
     });
 
     useEffect(() => {
@@ -73,6 +82,19 @@ export default function CandidatesPage() {
             loadData();
         } catch (error) {
             console.error(error);
+        }
+    };
+
+    const handleViewCandidate = async (candidate: RecruitmentCandidate) => {
+        setSelectedCandidate(candidate);
+        setDrawerOpen(true);
+        // Reset interviews while fetching
+        setCandidateInterviews([]);
+        try {
+            const interviews = await getInterviewsByCandidate(candidate.id);
+            setCandidateInterviews(interviews);
+        } catch (error) {
+            console.error("Failed to load interviews", error);
         }
     };
 
@@ -135,7 +157,12 @@ export default function CandidatesPage() {
                                     {getCandidatesByStatus(col.id).map(cand => (
                                         <div key={cand.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-100 hover:shadow-md transition group">
                                             <div className="flex justify-between items-start mb-2">
-                                                <h4 className="font-semibold text-slate-800">{cand.full_name}</h4>
+                                                <h4
+                                                    className="font-semibold text-slate-800 cursor-pointer hover:text-blue-600"
+                                                    onClick={() => handleViewCandidate(cand)}
+                                                >
+                                                    {cand.full_name}
+                                                </h4>
                                             </div>
                                             <div className="text-xs text-slate-500 mb-3 space-y-1">
                                                 <div className="flex items-center gap-2">
@@ -202,7 +229,12 @@ export default function CandidatesPage() {
                         <tbody className="divide-y divide-slate-100">
                             {candidates.map(cand => (
                                 <tr key={cand.id} className="hover:bg-slate-50 transition">
-                                    <td className="px-6 py-4 font-medium text-slate-900">{cand.full_name}</td>
+                                    <td
+                                        className="px-6 py-4 font-medium text-slate-900 cursor-pointer hover:text-blue-600"
+                                        onClick={() => handleViewCandidate(cand)}
+                                    >
+                                        {cand.full_name}
+                                    </td>
                                     <td className="px-6 py-4">{cand.job?.title || '-'}</td>
                                     <td className="px-6 py-4 space-y-1">
                                         <div className="flex items-center gap-1.5"><Mail className="w-3 h-3" /> {cand.email}</div>
@@ -239,6 +271,7 @@ export default function CandidatesPage() {
                     <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-xl max-h-[90vh] overflow-y-auto">
                         <h2 className="text-xl font-bold mb-4">Thêm ứng viên mới</h2>
                         <form onSubmit={handleCreate} className="space-y-4">
+                            {/* ... (rest of form) ... */}
                             <div>
                                 <label className="block text-sm font-medium mb-1">Họ tên <span className="text-red-500">*</span></label>
                                 <input
@@ -270,6 +303,25 @@ export default function CandidatesPage() {
                                 </div>
                             </div>
 
+                            {/* Note: I am NOT replacing the whole form here, just the wrapper logic. Use strict target content. */}
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Candidate Detail Drawer */}
+            {selectedCandidate && (
+                <CandidateDetailDrawer
+                    isOpen={drawerOpen}
+                    onClose={() => setDrawerOpen(false)}
+                    candidate={selectedCandidate}
+                    interviews={candidateInterviews}
+                    onEdit={() => alert("Tính năng chỉnh sửa chi tiết đang được cập nhật")}
+                />
+            )}
+        </div>
+    );
+}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Vị trí ứng tuyển</label>
@@ -300,6 +352,36 @@ export default function CandidatesPage() {
                                 </div>
                             </div>
 
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Kinh nghiệm</label>
+                                    <input
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={newCandidate.experience_years || ''}
+                                        onChange={e => setNewCandidate({ ...newCandidate, experience_years: e.target.value })}
+                                        placeholder="VD: 2 năm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Lương (Mong đợi)</label>
+                                    <input
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={newCandidate.expected_salary || ''}
+                                        onChange={e => setNewCandidate({ ...newCandidate, expected_salary: e.target.value })}
+                                        placeholder="VD: 15-20M"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Kỹ năng</label>
+                                    <input
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={newCandidate.skills || ''}
+                                        onChange={e => setNewCandidate({ ...newCandidate, skills: e.target.value })}
+                                        placeholder="React, Node..."
+                                    />
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="block text-sm font-medium mb-1">Ghi chú thêm</label>
                                 <textarea
@@ -314,11 +396,11 @@ export default function CandidatesPage() {
                                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">Hủy</button>
                                 <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">Lưu ứng viên</button>
                             </div>
-                        </form>
-                    </div>
-                </div>
+                        </form >
+                    </div >
+                </div >
             )}
-        </div>
+        </div >
     );
 }
 
