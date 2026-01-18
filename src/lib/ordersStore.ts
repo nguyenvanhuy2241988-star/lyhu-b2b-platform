@@ -210,25 +210,32 @@ async function shipOrderInventory(orderId: string, userId: string, token?: strin
         return;
     }
 
-    // Fetch order items using FETCH
+    // Fetch order items using RPC (Reusing get_orders_v2 to bypass RLS)
     const headers = getHeaders(token);
-    const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/order_items?select=product_id,quantity&order_id=eq.${orderId}`,
-        { headers }
-    );
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_orders_v2`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ p_id: orderId })
+    });
 
     if (!res.ok) {
-        const err = await res.text();
-        console.error("[shipOrderInventory] Failed to fetch items:", err);
+        console.error("[shipOrderInventory] Failed to fetch order items (RPC):", await res.text());
         return;
     }
 
-    const items = await res.json();
+    const data = await res.json();
+    if (!data || data.length === 0) return;
+
+    const items = data[0].items || [];
 
     // Ship each item
     for (const item of items) {
         try {
-            await shipStock(warehouseId, item.product_id, item.quantity, orderId, userId, token);
+            // Check if item has product_id (RPC maps it as product_id in json)
+            const pid = item.product_id;
+            if (pid) {
+                await shipStock(warehouseId, pid, item.quantity, orderId, userId, token);
+            }
         } catch (err) {
             console.error("[shipOrderInventory] Failed to ship:", item.product_id, err);
         }
@@ -243,25 +250,31 @@ async function releaseOrderInventory(orderId: string, userId: string, token?: st
         return;
     }
 
-    // Fetch order items using FETCH
+    // Fetch order items using RPC (Reusing get_orders_v2)
     const headers = getHeaders(token);
-    const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/order_items?select=product_id,quantity&order_id=eq.${orderId}`,
-        { headers }
-    );
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_orders_v2`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ p_id: orderId })
+    });
 
     if (!res.ok) {
-        const err = await res.text();
-        console.error("[releaseOrderInventory] Failed to fetch items:", err);
+        console.error("[releaseOrderInventory] Failed to fetch order items (RPC):", await res.text());
         return;
     }
 
-    const items = await res.json();
+    const data = await res.json();
+    if (!data || data.length === 0) return;
+
+    const items = data[0].items || [];
 
     // Release each item
     for (const item of items) {
         try {
-            await releaseStock(warehouseId, item.product_id, item.quantity, orderId, userId, token);
+            const pid = item.product_id;
+            if (pid) {
+                await releaseStock(warehouseId, pid, item.quantity, orderId, userId, token);
+            }
         } catch (err) {
             console.error("[releaseOrderInventory] Failed to release:", item.product_id, err);
         }
