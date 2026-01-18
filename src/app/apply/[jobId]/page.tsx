@@ -21,6 +21,7 @@ type CompanySettings = {
     company_name: string;
     logo_url: string;
     description: string;
+    culture_description?: string;
     culture_images: string[];
 };
 
@@ -59,7 +60,7 @@ export default function ApplyPage() {
             // 2. Fetch Company Settings
             const settingsReq = supabase
                 .from('recruitment_settings')
-                .select('company_name, logo_url, description, culture_images')
+                .select('company_name, logo_url, description, culture_description, culture_images')
                 .maybeSingle();
 
             const [jobRes, settingsRes] = await Promise.all([jobReq, settingsReq]);
@@ -276,6 +277,45 @@ export default function ApplyPage() {
                             <div className="text-center py-4">Đang tải...</div>
                         )}
                     </div>
+
+                    {/* COMPANY INFO SECTION */}
+                    {company && (
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8 space-y-6">
+                            <h2 className="text-2xl font-bold text-slate-900 border-b border-slate-100 pb-4">
+                                Về {company.company_name}
+                            </h2>
+
+                            {company.description && (
+                                <div className="prose prose-slate max-w-none">
+                                    <h3 className="text-lg font-bold text-slate-900 mb-2">Giới thiệu chung</h3>
+                                    <p className="text-slate-600 whitespace-pre-wrap leading-relaxed">{company.description}</p>
+                                </div>
+                            )}
+
+                            {(company.culture_description || (company.culture_images && company.culture_images.length > 0)) && (
+                                <div className="prose prose-slate max-w-none pt-4">
+                                    <h3 className="text-lg font-bold text-slate-900 mb-2">Văn hóa doanh nghiệp</h3>
+                                    {company.culture_description && (
+                                        <p className="text-slate-600 whitespace-pre-wrap leading-relaxed mb-6">{company.culture_description}</p>
+                                    )}
+
+                                    {company.culture_images && company.culture_images.length > 0 && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 not-prose">
+                                            {company.culture_images.map((img, idx) => (
+                                                <div key={idx} className="rounded-lg overflow-hidden border border-slate-100 shadow-sm aspect-video group">
+                                                    <img
+                                                        src={img}
+                                                        alt={`Culture ${idx + 1}`}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* RIGHT: APPLICATION FORM (STICKY) */}
