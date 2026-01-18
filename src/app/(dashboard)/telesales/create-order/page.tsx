@@ -139,10 +139,29 @@ function TelesalesCreateOrderContent() {
                         if (data && data.length > 0) {
                             const order = data[0];
                             // Set Customer
+                            // 1. Try to find in the fetched list (best for fresh consistency)
                             const customerRes = await fetchCustomers(undefined, session.access_token);
-                            const customer = customerRes.find(c => c.id === order.customer_id);
+                            let customer = customerRes.find(c => c.id === order.customer_id);
+
+                            // 2. Fallback: Use the customer data returned directly by RPC (safe against RLS filtering)
+                            if (!customer && order.customer) {
+                                customer = {
+                                    id: order.customer.id || order.customer_id,
+                                    name: order.customer.name || order.customer_name,
+                                    phone: order.customer.phone || "",
+                                    address: order.customer.address || "",
+                                    source_category: order.customer.source || "TELESALES",
+                                    type: order.customer.type || "individual",
+                                    province: order.customer.province,
+                                    district: order.customer.district,
+                                    ward: order.customer.ward
+                                } as Customer;
+                            }
+
                             if (customer) {
                                 setSelectedCustomer(customer);
+                            } else {
+                                alert("⚠️ Cảnh báo: Không tìm thấy thông tin khách hàng của đơn này.");
                             }
 
                             // Set Items

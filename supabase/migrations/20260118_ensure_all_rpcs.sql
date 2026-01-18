@@ -56,8 +56,15 @@ BEGIN
             'customer_name', o.customer_name,
             'customer', (
                 SELECT jsonb_build_object(
+                    'id', c.id,
+                    'name', c.name,
                     'phone', c.phone,
-                    'address', c.address
+                    'address', c.address,
+                    'source', c.source,
+                    'type', c.type,
+                    'province', c.province,
+                    'district', c.district,
+                    'ward', c.ward
                 )
                 FROM public.customers c 
                 WHERE c.id = o.customer_id
