@@ -225,6 +225,8 @@ export default function ApplyPage() {
                 </div>
             </div>
 
+            {renderHeader()}
+
             <main className="max-w-4xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
 
                 {/* LEFT: JOB DETAILS (RICH CONTENT) */}
