@@ -4,9 +4,16 @@
 
 BEGIN;
 
--- CLEANUP: Drop potential ambiguous overrides
-DROP FUNCTION IF EXISTS public.get_orders_v2(uuid, text, date, date); 
-DROP FUNCTION IF EXISTS public.get_orders_v2(uuid, text, date, date, uuid);
+-- CLEANUP: Dynamic Drop of ALL versions of get_orders_v2 to handle any signature mismatch
+DO $$ 
+DECLARE 
+    r RECORD; 
+BEGIN 
+    FOR r IN SELECT oid::regprocedure AS func_signature FROM pg_proc WHERE proname = 'get_orders_v2' 
+    LOOP 
+        EXECUTE 'DROP FUNCTION ' || r.func_signature || ' CASCADE'; 
+    END LOOP; 
+END $$;
 
 -------------------------------------------------------------------------------
 -- 1. GET ORDERS V2 (Reading)
