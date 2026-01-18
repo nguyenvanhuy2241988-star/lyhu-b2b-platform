@@ -29,7 +29,8 @@ export default function RecruitmentSettingsPage() {
         const { data, error } = await supabase
             .from('recruitment_settings')
             .select('*')
-            .single();
+            .select('*')
+            .maybeSingle();
 
         if (data) {
             setSettings({

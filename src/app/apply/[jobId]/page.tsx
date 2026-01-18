@@ -60,7 +60,7 @@ export default function ApplyPage() {
             const settingsReq = supabase
                 .from('recruitment_settings')
                 .select('company_name, logo_url, description, culture_images')
-                .single();
+                .maybeSingle();
 
             const [jobRes, settingsRes] = await Promise.all([jobReq, settingsReq]);
 
