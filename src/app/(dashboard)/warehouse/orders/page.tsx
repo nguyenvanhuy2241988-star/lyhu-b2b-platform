@@ -2,12 +2,12 @@
 
 import OrderList from "@/components/orders/OrderList";
 
-export default function SaleAdminOrdersPage() {
+export default function WarehouseOrdersPage() {
     return (
         <OrderList
             readOnly={true}
             maskSensitiveData={true}
-            hideRevenue={false}
+            hideRevenue={true}
         />
     );
 }

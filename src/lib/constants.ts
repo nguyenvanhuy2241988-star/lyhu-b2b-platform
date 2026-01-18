@@ -85,6 +85,7 @@ export const NAV_ITEMS = {
     [ROLES.ACCOUNTANT]: [
         { label: "Tổng quan Kế toán", href: "/accountant", icon: LayoutDashboard },
         { label: "Việc cần làm", href: "/accountant/tasks", icon: ListTodo },
+        { label: "Quản lý Đơn hàng", href: "/accountant/orders", icon: FileText },
         { label: "Quản lý Doanh thu", href: "/accountant/revenue", icon: TrendingUp },
         { label: "Quản lý Chi phí", href: "/accountant/expenses", icon: CreditCard },
         { label: "Quản lý Nhập hàng", href: "/accountant/purchases", icon: ShoppingCart },
@@ -93,7 +94,7 @@ export const NAV_ITEMS = {
         { label: "Quản lý Công nợ", href: "/accountant/debts", icon: Wallet },
         { label: "Danh mục MISA", href: "/accountant/master-data", icon: Book },
         { label: "Sản phẩm", href: "/accountant/products", icon: Package },
-        { label: "Tài liệu", href: "/documents", icon: FileText },
+        { label: "Tài liệu", href: "/documents", icon: Book },
     ],
     [ROLES.SHIPPER]: [
         { label: "Tổng quan Vận chuyển", href: "/shipper", icon: LayoutDashboard },
@@ -177,6 +178,7 @@ export const NAV_ITEMS = {
     ],
     [ROLES.WAREHOUSE]: [
         { label: "Tổng quan Kho", href: "/warehouse", icon: LayoutDashboard },
+        { label: "Quản lý Đơn hàng", href: "/warehouse/orders", icon: ClipboardCheck },
         { label: "Xử lý Đơn hàng", href: "/warehouse/fulfillment", icon: ClipboardCheck },
         { label: "Quản lý tồn kho", href: "/warehouse/inventory", icon: Archive },
         { label: "Kiểm kê Kho", href: "/warehouse/audit", icon: Archive },
