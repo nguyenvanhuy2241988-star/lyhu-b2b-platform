@@ -4,9 +4,16 @@
 
 BEGIN;
 
--- 1. Enable Realtime for orders table
--- (Safe to run multiple times, strict idempotency is harder but this usually works or throws harmless warning)
-ALTER PUBLICATION supabase_realtime ADD TABLE orders;
+-- 1. Enable Realtime for orders table (Safe Idempotent Check)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables 
+    WHERE pubname = 'supabase_realtime' AND tablename = 'orders'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE orders;
+  END IF;
+END $$;
 
 -- 2. Fix RLS Policy for SELECT (Used by Realtime)
 DROP POLICY IF EXISTS "orders_select_policy" ON orders;
