@@ -43,6 +43,7 @@ export interface RecruitmentInterview {
     type: InterviewType;
     status: InterviewStatus;
     meeting_link: string;
+    location?: string;
     feedback: string;
     candidate?: {
         full_name: string;
