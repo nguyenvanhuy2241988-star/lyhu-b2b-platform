@@ -24,6 +24,9 @@ export default function InterviewsPage() {
     const [filter, setFilter] = useState<'upcoming' | 'all'>('upcoming');
 
     // Form State
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+
+    // Form State
     const [formData, setFormData] = useState({
         candidate_id: "",
         scheduled_at: "",
@@ -37,6 +40,7 @@ export default function InterviewsPage() {
         if (preSelectedCandidateId) {
             setFormData(prev => ({ ...prev, candidate_id: preSelectedCandidateId }));
             setShowModal(true);
+            setSelectedId(null);
         }
     }, [preSelectedCandidateId]);
 
@@ -62,8 +66,7 @@ export default function InterviewsPage() {
                 setInterviews(interviewsData);
             } catch (error) {
                 console.error("Error fetching interviews:", error);
-                // Likely table doesn't exist yet
-                toast.error("Chưa kết nối được dữ liệu Lịch phỏng vấn (Có thể do chưa chạy SQL)");
+                toast.error("Chưa kết nối được dữ liệu Lịch phỏng vấn");
             }
 
         } catch (error) {
@@ -73,7 +76,7 @@ export default function InterviewsPage() {
         }
     };
 
-    const handleCreate = async (e: React.FormEvent) => {
+    const handleCreateOrUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             if (!formData.candidate_id || !formData.scheduled_at) {
@@ -81,33 +84,71 @@ export default function InterviewsPage() {
                 return;
             }
 
-            await scheduleInterview({
+            const payload: any = {
                 candidate_id: formData.candidate_id,
                 scheduled_at: new Date(formData.scheduled_at).toISOString(),
                 type: formData.type as any,
                 location: formData.location,
                 meeting_link: formData.meeting_link,
-                // notes: formData.notes // Notes usually go to feedback or separate field? Store type doesn't have notes for interview creation yet, using feedback or adding notes col later.
-                // For now, let's skip notes or put it in meeting_link/location if needed, or update store.
-                // Re-checking store: It has feedback. Let's assume this is separate from 'notes' given during scheduling.
-            });
+            };
 
-            toast.success("Đã lên lịch phỏng vấn");
+            if (selectedId) {
+                // UPDATE
+                await import("@/lib/recruitmentStore").then(mod => mod.updateInterview(selectedId, payload));
+                toast.success("Đã cập nhật lịch phỏng vấn");
+            } else {
+                // CREATE
+                await scheduleInterview(payload);
+                toast.success("Đã lên lịch phỏng vấn");
+            }
+
             setShowModal(false);
-            setFormData({
-                candidate_id: "",
-                scheduled_at: "",
-                type: "online",
-                location: "",
-                meeting_link: "",
-                notes: ""
-            });
+            resetForm();
             loadData();
         } catch (error) {
             console.error(error);
-            toast.error("Lỗi tạo lịch phỏng vấn");
+            toast.error("Lỗi lưu thông tin");
         }
     };
+
+    const handleDelete = async () => {
+        if (!selectedId || !confirm("Bạn có chắc chắn muốn hủy lịch phỏng vấn này?")) return;
+        try {
+            await import("@/lib/recruitmentStore").then(mod => mod.deleteInterview(selectedId));
+            toast.success("Đã hủy lịch phỏng vấn");
+            setShowModal(false);
+            resetForm();
+            loadData();
+        } catch (error) {
+            console.error(error);
+            toast.error("Lỗi hủy lịch");
+        }
+    };
+
+    const openEdit = (interview: RecruitmentInterview) => {
+        setSelectedId(interview.id);
+        setFormData({
+            candidate_id: interview.candidate_id,
+            scheduled_at: format(new Date(interview.scheduled_at), "yyyy-MM-dd'T'HH:mm"),
+            type: interview.type,
+            location: interview.location || "",
+            meeting_link: interview.meeting_link || "",
+            notes: ""
+        });
+        setShowModal(true);
+    };
+
+    const resetForm = () => {
+        setFormData({
+            candidate_id: "",
+            scheduled_at: "",
+            type: "online",
+            location: "",
+            meeting_link: "",
+            notes: ""
+        });
+        setSelectedId(null);
+    }
 
     // Filter Logic
     const filteredInterviews = interviews.filter(i => {
@@ -161,7 +202,7 @@ export default function InterviewsPage() {
                         </button>
                     </div>
                     <button
-                        onClick={() => setShowModal(true)}
+                        onClick={() => { resetForm(); setShowModal(true); }}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
@@ -180,7 +221,7 @@ export default function InterviewsPage() {
                         <h3 className="text-lg font-medium text-slate-900">Chưa có lịch phỏng vấn</h3>
                         <p className="text-slate-500 mt-1">Hãy đặt lịch phỏng vấn đầu tiên với ứng viên tiềm năng.</p>
                         <button
-                            onClick={() => setShowModal(true)}
+                            onClick={() => { resetForm(); setShowModal(true); }}
                             className="text-blue-600 font-medium mt-4 hover:underline"
                         >
                             + Đặt lịch ngay
@@ -227,8 +268,12 @@ export default function InterviewsPage() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-medium hover:bg-white hover:border-slate-300">Chi tiết</button>
-                                        {/* Create feedback button later */}
+                                        <button
+                                            onClick={() => openEdit(interview)}
+                                            className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-medium hover:bg-white hover:border-slate-300 transition"
+                                        >
+                                            Chi tiết
+                                        </button>
                                     </div>
                                 </div>
                             );
@@ -237,18 +282,20 @@ export default function InterviewsPage() {
                 )}
             </div>
 
-            {/* Modal Create */}
+            {/* Modal Create/Edit */}
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 transition-all backdrop-blur-sm">
                     <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl scale-100 transition-transform">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-bold text-slate-900">Đặt lịch phỏng vấn mới</h2>
+                            <h2 className="text-xl font-bold text-slate-900">
+                                {selectedId ? "Cập nhật lịch phỏng vấn" : "Đặt lịch phỏng vấn mới"}
+                            </h2>
                             <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600">
                                 <XCircle className="w-6 h-6" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleCreate} className="space-y-5">
+                        <form onSubmit={handleCreateOrUpdate} className="space-y-5">
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Ứng viên <span className="text-red-500">*</span></label>
                                 <select
@@ -326,23 +373,22 @@ export default function InterviewsPage() {
                                 </div>
                             )}
 
-                            {/* Divider */}
-                            {/* <div className="border-t border-slate-100 pt-2">
-                                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Ghi chú (Tùy chọn)</label>
-                                <textarea 
-                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none h-20"
-                                    placeholder="Ghi chú nội bộ cho người phỏng vấn..."
-                                    value={formData.notes}
-                                    onChange={e => setFormData({...formData, notes: e.target.value})}
-                                />
-                            </div> */}
-
                             <button
                                 type="submit"
                                 className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-600/20 transition active:scale-[0.98] mt-4"
                             >
-                                Xác nhận đặt lịch
+                                {selectedId ? "Lưu thay đổi" : "Xác nhận đặt lịch"}
                             </button>
+
+                            {selectedId && (
+                                <button
+                                    type="button"
+                                    onClick={handleDelete}
+                                    className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-3 rounded-xl transition active:scale-[0.98]"
+                                >
+                                    Hủy lịch phỏng vấn
+                                </button>
+                            )}
                         </form>
                     </div>
                 </div>
