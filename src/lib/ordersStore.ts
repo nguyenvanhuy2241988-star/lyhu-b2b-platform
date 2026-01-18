@@ -160,13 +160,16 @@ export const updateOrderStatus = async (
             if (data && data.length > 0) oldStatus = data[0].status;
         }
 
-        // Update status in DB (using FETCH)
+        // Update status in DB (using RPC to bypass RLS)
         const updateRes = await fetch(
-            `${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}`,
+            `${SUPABASE_URL}/rest/v1/rpc/update_order_status`,
             {
-                method: 'PATCH',
+                method: 'POST',
                 headers,
-                body: JSON.stringify({ status: newStatus }),
+                body: JSON.stringify({
+                    p_order_id: orderId,
+                    p_status: newStatus
+                }),
                 cache: 'no-store',
                 signal: controller.signal
             }
@@ -176,7 +179,7 @@ export const updateOrderStatus = async (
 
         if (!updateRes.ok) {
             const errText = await updateRes.text();
-            console.error("[updateOrderStatus] Supabase update failed:", errText);
+            console.error("[updateOrderStatus] RPC failed:", errText);
             return false;
         }
 
