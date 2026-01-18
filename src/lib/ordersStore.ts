@@ -526,8 +526,14 @@ export const updateOrderSupabase = async (orderId: string, updateData: any, toke
 
     try {
         // 1. Fetch current order to check status and get old items
-        const currentOrderRes = await fetch(`${SUPABASE_URL}/rest/v1/orders?select=*,items:order_items(*)&id=eq.${orderId}&limit=1`, { headers });
-        if (!currentOrderRes.ok) return { success: false, error: "Order not found" };
+        // Use RPC to bypass permissions
+        const currentOrderRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_orders_v2`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ p_id: orderId })
+        });
+
+        if (!currentOrderRes.ok) return { success: false, error: "Order not found (RPC)" };
         const currentOrderData = await currentOrderRes.json();
         const currentOrder = currentOrderData[0];
 
@@ -540,10 +546,9 @@ export const updateOrderSupabase = async (orderId: string, updateData: any, toke
         if (warehouseId && currentOrder.telesales_user_id) {
             for (const item of oldItems) {
                 try {
-                    // Release reserved stock
                     await releaseStock(
                         warehouseId,
-                        item.product_id,
+                        item.product_id || item.product?.id, // Handle different item shapes
                         item.quantity,
                         orderId,
                         currentOrder.telesales_user_id,
@@ -555,65 +560,56 @@ export const updateOrderSupabase = async (orderId: string, updateData: any, toke
             }
         }
 
-        // 3. Update Order Main Info
-        const orderPayload = {
+        // 3. Update Order Main Info & Items via RPC
+        const updatePayload = {
             total_amount: updateData.totalAmount,
             vat: updateData.vat || 0,
             note: updateData.notes || updateData.note || null,
             payment_method: updateData.paymentMethod || 'COD',
-            customer_name: updateData.customerName, // Keep name in sync
-            customer_id: updateData.customer_id || updateData.customerId // Allow changing customer if really needed, though rare
+            customer_name: updateData.customerName,
+            customer_id: updateData.customer_id || updateData.customerId,
+            status: 'pending' // Force keep pending or use status? usually edit keeps it pending.
         };
 
-        const updateRes = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}`, {
-            method: 'PATCH',
+        const itemsToInsert = (updateData.items || []).map((item: any) => ({
+            product_id: item.productId || item.product.id,
+            quantity: item.quantity,
+            price: item.unitPrice || item.price || 0,
+            discount: item.discount || 0,
+            discount_type: item.discountType || 'amount',
+            is_gift: item.isGift || false,
+        }));
+
+        const rpcRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/update_order_v2`, {
+            method: 'POST',
             headers,
-            body: JSON.stringify(orderPayload)
+            body: JSON.stringify({
+                p_order_id: orderId,
+                p_update_data: updatePayload,
+                p_items: itemsToInsert
+            })
         });
 
-        if (!updateRes.ok) {
-            return { success: false, error: "Failed to update order details" };
+        if (!rpcRes.ok) {
+            const err = await rpcRes.text();
+            console.error("RPC update_order_v2 failed:", err);
+            return { success: false, error: "Failed to update order details: " + err };
         }
 
-        // 4. Delete Old Items
-        await fetch(`${SUPABASE_URL}/rest/v1/order_items?order_id=eq.${orderId}`, {
-            method: 'DELETE',
-            headers
-        });
-
-        // 5. Insert New Items
-        if (updateData.items && updateData.items.length > 0) {
-            const itemsToInsert = updateData.items.map((item: any) => ({
-                order_id: orderId,
-                product_id: item.productId || item.product.id,
-                quantity: item.quantity,
-                price: item.unitPrice || item.price || 0,
-                discount: item.discount || 0,
-                discount_type: item.discountType || 'amount',
-                is_gift: item.isGift || false,
-            }));
-
-            await fetch(`${SUPABASE_URL}/rest/v1/order_items`, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(itemsToInsert)
-            });
-
-            // 6. Reserve New Inventory
-            if (warehouseId && currentOrder.telesales_user_id) {
-                for (const item of updateData.items) {
-                    try {
-                        await reserveStock(
-                            warehouseId,
-                            item.productId || item.product.id,
-                            item.quantity,
-                            orderId,
-                            currentOrder.telesales_user_id,
-                            token
-                        );
-                    } catch (err) {
-                        console.error("[updateOrderSupabase] Failed to reserve new stock:", item.productId, err);
-                    }
+        // 4. Reserve New Inventory
+        if (warehouseId && currentOrder.telesales_user_id) {
+            for (const item of updateData.items) {
+                try {
+                    await reserveStock(
+                        warehouseId,
+                        item.productId || item.product.id,
+                        item.quantity,
+                        orderId,
+                        currentOrder.telesales_user_id,
+                        token
+                    );
+                } catch (err) {
+                    console.error("[updateOrderSupabase] Failed to reserve new stock:", item.productId, err);
                 }
             }
         }
