@@ -10,7 +10,13 @@ import {
 import { getInterviews, getCandidates, scheduleInterview, RecruitmentInterview, RecruitmentCandidate } from "@/lib/recruitmentStore";
 import { toast } from "sonner"; // Assuming sonner is used, or replace with alert/custom toast
 
+import { useSearchParams } from "next/navigation";
+// ... imports
+
 export default function InterviewsPage() {
+    const searchParams = useSearchParams();
+    const preSelectedCandidateId = searchParams.get("candidateId");
+
     const [interviews, setInterviews] = useState<RecruitmentInterview[]>([]);
     const [candidates, setCandidates] = useState<RecruitmentCandidate[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -26,6 +32,13 @@ export default function InterviewsPage() {
         meeting_link: "",
         notes: ""
     });
+
+    useEffect(() => {
+        if (preSelectedCandidateId) {
+            setFormData(prev => ({ ...prev, candidate_id: preSelectedCandidateId }));
+            setShowModal(true);
+        }
+    }, [preSelectedCandidateId]);
 
     useEffect(() => {
         loadData();

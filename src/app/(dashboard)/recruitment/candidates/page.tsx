@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Search, Mail, Phone, MoreHorizontal, User } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, Search, Mail, Phone, MoreHorizontal, User, Calendar } from 'lucide-react';
 import { getCandidates, getJobs, createCandidate, updateCandidateStatus, RecruitmentCandidate, RecruitmentJob, CandidateStatus } from '@/lib/recruitmentStore';
 import { format } from 'date-fns';
 
@@ -144,6 +145,17 @@ export default function CandidatesPage() {
                                                     <option key={s.id} value={s.id}>{s.label}</option>
                                                 ))}
                                             </select>
+
+                                            <div className="mt-2 pt-2 border-t border-slate-100 flex justify-end">
+                                                <Link
+                                                    href={`/recruitment/interviews?candidateId=${cand.id}`}
+                                                    className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium px-2 py-1 hover:bg-blue-50 rounded transition"
+                                                    title="Đặt lịch phỏng vấn"
+                                                >
+                                                    <Calendar className="w-3 h-3" />
+                                                    Đặt lịch
+                                                </Link>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
