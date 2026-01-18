@@ -60,7 +60,7 @@ BEGIN
                     'name', c.name,
                     'phone', c.phone,
                     'address', c.address,
-                    'source', c.source,
+                    'source', c.source_category, -- FIX: Column is source_category
                     'type', c.type,
                     'province', c.province,
                     'district', c.district,
