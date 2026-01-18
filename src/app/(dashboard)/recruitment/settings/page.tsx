@@ -179,8 +179,8 @@ export default function RecruitmentSettingsPage() {
                                 ) : (
                                     <span className="text-slate-400 text-xs text-center px-2">Upload Logo</span>
                                 )}
-                                <input type="file" accept="image/*" onChange={handleLogoUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                                <input type="file" accept="image/*" onChange={handleLogoUpload} className="absolute inset-0 opacity-0 cursor-pointer z-50" />
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition pointer-events-none">
                                     <Upload className="w-6 h-6 text-white" />
                                 </div>
                             </div>

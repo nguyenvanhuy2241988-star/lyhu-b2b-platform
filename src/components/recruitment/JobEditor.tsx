@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabaseClient";
-import { ArrowLeft, Save, Loader2, Calendar, Briefcase, MapPin, DollarSign, Building } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Calendar, Briefcase, MapPin, DollarSign, Building, Trash2 } from "lucide-react";
 import { toast } from "sonner"; // Or usage of alert() if toast not set up extensively
 
 interface JobEditorProps {
@@ -148,7 +148,33 @@ export default function JobEditor({ jobId }: JobEditorProps) {
                         <p className="text-slate-500 text-sm">Điền đầy đủ thông tin để thu hút ứng viên</p>
                     </div>
                 </div>
+                </div>
                 <div className="flex items-center gap-3">
+                    {/* Delete Button (Edit Mode Only) */}
+                    {isEditMode && jobId && (
+                        <button
+                            onClick={async () => {
+                                if (confirm("Bạn có chắc chắn muốn xóa tin này không? Hành động này không thể hoàn tác.")) {
+                                    try {
+                                        setIsSaving(true);
+                                        const { deleteJob } = await import('@/lib/recruitmentStore');
+                                        await deleteJob(jobId);
+                                        router.push('/recruitment/jobs');
+                                        router.refresh();
+                                    } catch (e) {
+                                        console.error(e);
+                                        alert("Xóa thất bại!");
+                                        setIsSaving(false);
+                                    }
+                                }
+                            }}
+                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                            title="Xóa tin tuyển dụng"
+                        >
+                            <Trash2 className="w-5 h-5" />
+                        </button>
+                    )}
+
                     <button
                         onClick={() => router.back()}
                         className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium"
@@ -310,6 +336,6 @@ export default function JobEditor({ jobId }: JobEditorProps) {
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
