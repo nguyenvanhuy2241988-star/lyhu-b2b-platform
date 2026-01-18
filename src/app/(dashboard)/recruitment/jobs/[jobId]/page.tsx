@@ -188,7 +188,13 @@ export default function JobDetailPage() {
                                                 </td>
                                                 <td className="px-6 py-3">
                                                     {c.cv_url ? (
-                                                        <a href={c.cv_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline truncate max-w-[150px] block">
+                                                        <a
+                                                            href={c.cv_url}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            download
+                                                            className="text-blue-600 hover:underline truncate max-w-[150px] block"
+                                                        >
                                                             Xem CV
                                                         </a>
                                                     ) : (
