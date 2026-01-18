@@ -6,14 +6,17 @@ import { createClient } from "@/lib/supabaseClient";
 import { Loader2, CheckCircle, Send, MapPin, Briefcase, FileUp, X, Upload } from "lucide-react";
 import Link from "next/link";
 
-type PublicJob = {
-    id: string;
-    title: string;
-    location: string;
-    status: string;
-    description?: string;
-    requirements?: string;
-    benefits?: string; // New field
+description ?: string;
+requirements ?: string;
+benefits ?: string;
+banner_url ?: string;
+};
+
+type CompanySettings = {
+    company_name: string;
+    logo_url: string;
+    description: string;
+    culture_images: string[];
 };
 
 export default function ApplyPage() {
@@ -23,6 +26,7 @@ export default function ApplyPage() {
     const source = searchParams.get("source") || "Direct Link";
 
     const [job, setJob] = useState<PublicJob | null>(null);
+    const [company, setCompany] = useState<CompanySettings | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
@@ -36,25 +40,65 @@ export default function ApplyPage() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     useEffect(() => {
-        const fetchJob = async () => {
+        const loadData = async () => {
             if (!jobId) return;
             const supabase = createClient();
-            
-            const { data, error } = await supabase
+
+            // 1. Fetch Job
+            const jobReq = supabase
                 .from('recruitment_jobs')
-                .select('id, title, location, status, description, requirements, benefits')
+                .select('id, title, location, status, description, requirements, benefits, banner_url')
                 .eq('id', jobId)
                 .single();
 
-            if (data) {
-                setJob(data);
-            } else {
-                console.warn("Could not fetch job:", error);
-            }
+            // 2. Fetch Company Settings
+            const settingsReq = supabase
+                .from('recruitment_settings')
+                .select('company_name, logo_url, description, culture_images')
+                .single();
+
+            const [jobRes, settingsRes] = await Promise.all([jobReq, settingsReq]);
+
+            if (jobRes.data) setJob(jobRes.data);
+            if (settingsRes.data) setCompany(settingsRes.data);
+
             setIsLoading(false);
         };
-        fetchJob();
+        loadData();
     }, [jobId]);
+
+    // ... handleFileChange, uploadCV, handleSubmit unchanged ...
+
+    // Render Helpers
+    const renderHeader = () => {
+        if (!job) return null;
+        const banner = job.banner_url || "https://images.unsplash.com/photo-1497215728101-856f4ea42174?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80"; // Default banner
+
+        return (
+            <div className="relative h-[250px] md:h-[350px] w-full bg-slate-900">
+                <img src={banner} alt="Banner" className="w-full h-full object-cover opacity-60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex flex-col justify-end p-6 md:p-12">
+                    <div className="max-w-5xl mx-auto w-full">
+                        <div className="flex items-center gap-4 mb-4">
+                            {company?.logo_url && (
+                                <img src={company.logo_url} alt="Logo" className="w-16 h-16 bg-white rounded-lg p-2 object-contain shadow-lg" />
+                            )}
+                            <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight">{job.title}</h1>
+                        </div>
+                        <div className="flex flex-wrap gap-4 text-white/90 text-sm md:text-base">
+                            <span className="flex items-center gap-2"><Briefcase className="w-4 h-4" /> {company?.company_name || "LYHU Careers"}</span>
+                            <span className="flex items-center gap-2">•</span>
+                            <span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> {job.location}</span>
+                            {source !== "Direct Link" && (
+                                <span className="bg-white/20 px-2 py-0.5 rounded text-xs ml-2">Ref: {source}</span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -101,7 +145,7 @@ export default function ApplyPage() {
 
         try {
             let cvUrl = "";
-            
+
             // 1. Upload CV if exists
             if (selectedFile) {
                 const url = await uploadCV(selectedFile);
@@ -113,7 +157,7 @@ export default function ApplyPage() {
             }
 
             const supabase = createClient();
-            
+
             // 2. Submit Application
             const { error: rpcError } = await supabase.rpc('submit_application', {
                 p_job_id: jobId,
@@ -177,7 +221,7 @@ export default function ApplyPage() {
             </div>
 
             <main className="max-w-4xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-                
+
                 {/* LEFT: JOB DETAILS (RICH CONTENT) */}
                 <div className="lg:col-span-2 space-y-6">
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-8">
@@ -234,7 +278,7 @@ export default function ApplyPage() {
                             <h2 className="text-lg font-bold text-white">Ứng tuyển ngay</h2>
                             <p className="text-sm text-primary-100 opacity-90">Điền thông tin bên dưới để nộp hồ sơ</p>
                         </div>
-                        
+
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             {/* Name */}
                             <div>
@@ -279,8 +323,8 @@ export default function ApplyPage() {
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">CV / Hồ sơ (PDF, Ảnh)</label>
                                 <div className="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center hover:bg-slate-50 transition-colors relative">
-                                    <input 
-                                        type="file" 
+                                    <input
+                                        type="file"
                                         accept=".pdf,.doc,.docx,.jpg,.png"
                                         onChange={handleFileChange}
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -289,7 +333,7 @@ export default function ApplyPage() {
                                         <div className="flex items-center justify-center gap-2 text-primary-700 font-medium">
                                             <CheckCircle className="w-5 h-5" />
                                             <span className="truncate max-w-[150px]">{selectedFile.name}</span>
-                                            <button 
+                                            <button
                                                 type="button"
                                                 onClick={(e) => {
                                                     e.preventDefault();

@@ -24,6 +24,7 @@ export default function JobEditor({ jobId }: JobEditorProps) {
         salary_range: "",
         employment_type: "Toàn thời gian",
         deadline: "",
+        banner_url: "",
         status: "open",
         description: "",
         requirements: "",
@@ -52,6 +53,7 @@ export default function JobEditor({ jobId }: JobEditorProps) {
                 salary_range: data.salary_range || "",
                 employment_type: data.employment_type || "Toàn thời gian",
                 deadline: data.deadline ? data.deadline.split('T')[0] : "", // Format YYYY-MM-DD
+                banner_url: data.banner_url || "",
                 status: data.status || "open",
                 description: data.description || "",
                 requirements: data.requirements || "",
@@ -60,6 +62,32 @@ export default function JobEditor({ jobId }: JobEditorProps) {
         }
         setIsLoading(false);
     };
+
+    const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            try {
+                const supabase = createClient();
+                const fileExt = file.name.split('.').pop();
+                const fileName = `banner_${Date.now()}.${fileExt}`;
+                const { error: uploadError } = await supabase.storage
+                    .from('recruitment_assets')
+                    .upload(fileName, file);
+
+                if (uploadError) throw uploadError;
+
+                const { data } = supabase.storage
+                    .from('recruitment_assets')
+                    .getPublicUrl(fileName);
+
+                setFormData({ ...formData, banner_url: data.publicUrl });
+            } catch (err) {
+                console.error("Banner upload failed", err);
+                alert("Upload Banner thất bại");
+            }
+        }
+    };
+
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -141,6 +169,19 @@ export default function JobEditor({ jobId }: JobEditorProps) {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column: Basic Info */}
                 <div className="space-y-6">
+                    {/* Banner Card */}
+                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <label className="block text-sm font-medium text-slate-700 mb-2">Ảnh bìa (Public Banner)</label>
+                        <div className="relative aspect-video bg-slate-100 rounded-lg overflow-hidden border-2 border-dashed border-slate-300 flex items-center justify-center group hover:border-blue-400 transition">
+                            {formData.banner_url ? (
+                                <img src={formData.banner_url} alt="Banner" className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="text-slate-400 text-xs">Upload Banner (1200x630)</span>
+                            )}
+                            <input type="file" accept="image/*" onChange={handleBannerUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
+                        </div>
+                    </div>
+
                     <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
                         <h3 className="font-semibold text-slate-800 border-b border-slate-100 pb-2 mb-2">Thông tin chung</h3>
 
