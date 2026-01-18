@@ -23,7 +23,8 @@ CREATE OR REPLACE FUNCTION public.get_orders_v2(
     p_role text DEFAULT NULL,
     p_start_date date DEFAULT NULL,
     p_end_date date DEFAULT NULL,
-    p_id uuid DEFAULT NULL -- Added p_id support for fetching single order
+    p_id uuid DEFAULT NULL,
+    p_limit int DEFAULT 200 -- MATCHING FRONTEND SIGNATURE
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -41,7 +42,6 @@ BEGIN
     IF p_role IS NOT NULL THEN
         _current_role := p_role;
     ELSE
-        -- Explicit qualification to avoid ambiguity with output columns
         SELECT profiles.role INTO _current_role 
         FROM public.profiles 
         WHERE profiles.id = _current_uid;
@@ -95,18 +95,21 @@ BEGIN
             )
         )
     ) INTO _result
-    FROM public.orders o
-    WHERE 
-        -- Role-based Filtering
-        CASE 
-            WHEN _current_role IN ('admin', 'accountant', 'sale_admin', 'warehouse') THEN TRUE
-            WHEN _current_role = 'telesales' THEN o.telesales_user_id = _current_uid
-            ELSE FALSE
-        END
-        AND (p_user_id IS NULL OR o.telesales_user_id = p_user_id)
-        AND (p_start_date IS NULL OR o.created_at::date >= p_start_date)
-        AND (p_end_date IS NULL OR o.created_at::date <= p_end_date)
-        AND (p_id IS NULL OR o.id = p_id); -- Filter by ID if provided
+    FROM (
+        SELECT * FROM public.orders o
+        WHERE 
+            CASE 
+                WHEN _current_role IN ('admin', 'accountant', 'sale_admin', 'warehouse') THEN TRUE
+                WHEN _current_role = 'telesales' THEN o.telesales_user_id = _current_uid
+                ELSE FALSE
+            END
+            AND (p_user_id IS NULL OR o.telesales_user_id = p_user_id)
+            AND (p_start_date IS NULL OR o.created_at::date >= p_start_date)
+            AND (p_end_date IS NULL OR o.created_at::date <= p_end_date)
+            AND (p_id IS NULL OR o.id = p_id)
+        ORDER BY o.created_at DESC
+        LIMIT p_limit 
+    ) o;
 
     RETURN COALESCE(_result, '[]'::jsonb);
 END;
