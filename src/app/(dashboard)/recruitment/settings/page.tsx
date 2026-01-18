@@ -80,7 +80,7 @@ export default function RecruitmentSettingsPage() {
 
     const handleCultureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            const newUrls = [];
+            const newUrls: string[] = [];
             for (let i = 0; i < e.target.files.length; i++) {
                 const url = await uploadAsset(e.target.files[i]);
                 if (url) newUrls.push(url);
