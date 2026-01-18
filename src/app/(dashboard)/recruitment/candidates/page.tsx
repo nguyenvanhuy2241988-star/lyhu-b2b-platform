@@ -29,7 +29,7 @@ export default function CandidatesPage() {
         job_id: '',
         cv_url: '',
         notes: '',
-        source: 'Referral' as any // Temporary cast until store type is updated
+        source: 'Referral'
     });
 
     useEffect(() => {
@@ -207,8 +207,8 @@ export default function CandidatesPage() {
                                     <label className="block text-sm font-medium mb-1">Nguồn</label>
                                     <select
                                         className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                        value={(newCandidate as any).source || 'Referral'}
-                                        onChange={e => setNewCandidate({ ...newCandidate, source: e.target.value } as any)}
+                                        value={newCandidate.source || 'Referral'}
+                                        onChange={e => setNewCandidate({ ...newCandidate, source: e.target.value })}
                                     >
                                         <option value="Facebook">Facebook</option>
                                         <option value="LinkedIn">LinkedIn</option>

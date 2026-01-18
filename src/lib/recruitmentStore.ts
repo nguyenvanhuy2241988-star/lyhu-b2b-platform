@@ -25,10 +25,11 @@ export interface RecruitmentCandidate {
     full_name: string;
     email: string;
     phone: string;
-    cv_url: string;
     status: CandidateStatus;
-    notes: string;
     created_at: string;
+    source?: string;
+    cv_url?: string;
+    notes?: string;
     job?: {
         title: string;
     };
