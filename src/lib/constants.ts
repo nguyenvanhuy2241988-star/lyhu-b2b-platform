@@ -174,6 +174,7 @@ export const NAV_ITEMS = {
         { label: "Lịch phỏng vấn", href: "/recruitment/interviews", icon: Calendar },
         { label: "Tin tuyển dụng", href: "/recruitment/jobs", icon: Briefcase },
         { label: "Việc cần làm", href: "/tasks", icon: ListTodo },
+        { label: "Hồ sơ công ty", href: "/recruitment/settings", icon: Settings },
         { label: "Tài liệu", href: "/documents", icon: FileText },
     ],
     [ROLES.WAREHOUSE]: [

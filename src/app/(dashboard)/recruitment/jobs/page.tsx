@@ -9,17 +9,6 @@ import { format } from 'date-fns';
 export default function JobsPage() {
     const [jobs, setJobs] = useState<RecruitmentJob[]>([]);
     const [loading, setLoading] = useState(true);
-    const [showCreateModal, setShowCreateModal] = useState(false);
-
-    // Form State
-    const [newJob, setNewJob] = useState<Partial<RecruitmentJob>>({
-        title: '',
-        department: '',
-        location: 'Hồ Chí Minh',
-        salary_range: '',
-        status: 'open',
-        description: ''
-    });
 
     useEffect(() => {
         loadData();
@@ -36,17 +25,7 @@ export default function JobsPage() {
         }
     };
 
-    const handleCreate = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await createJob(newJob);
-            setShowCreateModal(false);
-            loadData();
-            setNewJob({ title: '', department: '', location: 'HCM', salary_range: '', status: 'open' });
-        } catch (error) {
-            alert('Lỗi tạo tin tuyển dụng');
-        }
-    };
+
 
     return (
         <div className="p-6 max-w-7xl mx-auto">
@@ -73,18 +52,27 @@ export default function JobsPage() {
                     {jobs.map(job => (
                         <div key={job.id} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition group cursor-pointer relative">
                             <div className="flex justify-between items-start mb-4">
-                                <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-                                    <Briefcase className="w-6 h-6" />
-                                </div>
-                                <span className={`px-3 py-1 rounded-full text-xs font-medium ${job.status === 'open' ? 'bg-green-100 text-green-700' :
-                                    job.status === 'draft' ? 'bg-slate-100 text-slate-700' : 'bg-red-50 text-red-600'
-                                    }`}>
-                                    {job.status === 'open' ? 'Đang tuyển' : job.status === 'draft' ? 'Nháp' : 'Đã đóng'}
-                                </span>
-                            </div>
+                                <Link href={`/recruitment/jobs/${job.id}`} className="block flex-1 group-hover:text-blue-600">
+                                    <h3 className="text-lg font-bold text-slate-800 mb-1 line-clamp-1">{job.title}</h3>
+                                    <p className="text-slate-500 text-sm">{job.department}</p>
+                                </Link>
 
-                            <h3 className="text-lg font-bold text-slate-800 mb-1">{job.title}</h3>
-                            <p className="text-slate-500 text-sm mb-4">{job.department}</p>
+                                <div className="flex items-center gap-2 pl-2">
+                                    <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase ${job.status === 'open' ? 'bg-green-100 text-green-700' :
+                                        job.status === 'draft' ? 'bg-slate-100 text-slate-700' : 'bg-red-50 text-red-600'
+                                        }`}>
+                                        {job.status}
+                                    </span>
+                                    <Link
+                                        href={`/recruitment/jobs/${job.id}/edit`}
+                                        onClick={e => e.stopPropagation()} // Prevent card click
+                                        className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-blue-600 transition"
+                                        title="Chỉnh sửa"
+                                    >
+                                        <Edit className="w-4 h-4" />
+                                    </Link>
+                                </div>
+                            </div>
 
                             <div className="space-y-2 mb-6">
                                 <div className="flex items-center gap-2 text-sm text-slate-600">
@@ -112,59 +100,7 @@ export default function JobsPage() {
                 </div>
             )}
 
-            {/* Simple Modal */}
-            {showCreateModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-xl animate-in fade-in zoom-in duration-200">
-                        <h2 className="text-xl font-bold mb-4">Tạo tin tuyển dụng mới</h2>
-                        <form onSubmit={handleCreate} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Vị trí</label>
-                                <input
-                                    className="w-full border rounded-lg px-3 py-2"
-                                    required
-                                    value={newJob.title}
-                                    onChange={e => setNewJob({ ...newJob, title: e.target.value })}
-                                />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Phòng ban</label>
-                                    <input
-                                        className="w-full border rounded-lg px-3 py-2"
-                                        value={newJob.department}
-                                        onChange={e => setNewJob({ ...newJob, department: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Mức lương</label>
-                                    <input
-                                        className="w-full border rounded-lg px-3 py-2"
-                                        value={newJob.salary_range}
-                                        placeholder="VD: 10 - 15 triệu"
-                                        onChange={e => setNewJob({ ...newJob, salary_range: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-                            <div className="flex justify-end gap-3 mt-6">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowCreateModal(false)}
-                                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg"
-                                >
-                                    Hủy
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                                >
-                                    Tạo mới
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+
         </div>
     );
 }

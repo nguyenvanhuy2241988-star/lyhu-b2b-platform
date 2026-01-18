@@ -98,6 +98,9 @@ export default function JobDetailPage() {
                             <span className={`px-3 py-1 rounded-full text-sm font-medium ${job.status === 'open' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-700'}`}>
                                 {job.status === 'open' ? 'Đang tuyển' : 'Đã đóng'}
                             </span>
+                            <Link href={`/recruitment/jobs/${job.id}/edit`} className="ml-2 bg-slate-100 p-2 rounded-full hover:bg-slate-200 transition text-slate-600">
+                                <Edit className="w-4 h-4" />
+                            </Link>
                         </div>
                         <div className="flex flex-wrap gap-4 text-slate-600">
                             <div className="flex items-center gap-1"><Briefcase className="w-4 h-4" /> {job.department}</div>
