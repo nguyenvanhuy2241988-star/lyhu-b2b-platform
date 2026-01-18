@@ -123,11 +123,15 @@ function TelesalesCreateOrderContent() {
 
                 // Handle Edit Mode
                 if (editOrderId) {
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/orders?select=*,items:order_items(*,product:products(*))&id=eq.${editOrderId}&limit=1`, {
+                    // Use RPC to bypass RLS permissions
+                    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/get_orders_v2`, {
+                        method: 'POST',
                         headers: {
                             'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-                            'Authorization': `Bearer ${session.access_token}`
-                        }
+                            'Authorization': `Bearer ${session.access_token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ p_id: editOrderId })
                     });
 
                     if (res.ok) {
@@ -142,7 +146,8 @@ function TelesalesCreateOrderContent() {
                             }
 
                             // Set Items
-                            const mappedItems: OrderItem[] = order.items.map((item: any) => ({
+                            // RPC returns items in 'items' field, ensuring structure matches
+                            const mappedItems: OrderItem[] = (order.items || []).map((item: any) => ({
                                 product: item.product,
                                 quantity: item.quantity,
                                 discount: item.discount,
@@ -160,6 +165,8 @@ function TelesalesCreateOrderContent() {
 
                             setCurrentStep(3); // Jump to final step
                         }
+                    } else {
+                        console.error("Failed to fetch order for edit:", await res.text());
                     }
                 }
             } catch (err) {
