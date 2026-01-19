@@ -167,6 +167,17 @@ export const getInterviews = async () => {
     return data as unknown as RecruitmentInterview[]; // Casting due to join complexity
 };
 
+export const getInterviewsByCandidate = async (candidateId: string) => {
+    const { data, error } = await supabase
+        .from('recruitment_interviews')
+        .select('*')
+        .eq('candidate_id', candidateId)
+        .order('scheduled_at', { ascending: false });
+
+    if (error) throw error;
+    return data as RecruitmentInterview[];
+};
+
 export const scheduleInterview = async (interview: Partial<RecruitmentInterview>) => {
     const { data, error } = await supabase
         .from('recruitment_interviews')
