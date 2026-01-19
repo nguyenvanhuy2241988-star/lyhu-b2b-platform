@@ -26,9 +26,7 @@ RETURNS TABLE (
     -- NEW COLUMNS
     payment_method text,
     vat numeric,
-    note text,
-    receiver_phone text,
-    receiver_address text
+    note text
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -85,9 +83,7 @@ BEGIN
         -- SELECT NEW COLUMNS
         o.payment_method,
         o.vat,
-        o.note,
-        o.receiver_phone,
-        o.receiver_address
+        o.note
     FROM orders o
     LEFT JOIN customers c ON o.customer_id = c.id
     WHERE 
