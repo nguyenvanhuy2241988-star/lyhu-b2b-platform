@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Search, Mail, Phone, MoreHorizontal, User, Calendar, Briefcase } from 'lucide-react';
-import { getCandidates, getJobs, createCandidate, updateCandidateStatus, getInterviewsByCandidate, RecruitmentCandidate, RecruitmentJob, RecruitmentInterview, CandidateStatus } from '@/lib/recruitmentStore';
+import { getCandidates, getJobs, createCandidate, updateCandidate, updateCandidateStatus, getInterviewsByCandidate, RecruitmentCandidate, RecruitmentJob, RecruitmentInterview, CandidateStatus } from '@/lib/recruitmentStore';
 import CandidateDetailDrawer from './CandidateDetailDrawer';
 import { format } from 'date-fns';
 
@@ -61,16 +61,42 @@ export default function CandidatesPage() {
         }
     };
 
-    const handleCreate = async (e: React.FormEvent) => {
+    const handleCreateOrUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await createCandidate(newCandidate);
+            if (newCandidate.id) {
+                // Update mode
+                await updateCandidate(newCandidate.id, newCandidate);
+            } else {
+                // Create mode
+                await createCandidate(newCandidate);
+            }
             setShowModal(false);
             loadData();
-            setNewCandidate({ full_name: '', email: '', phone: '', status: 'new', job_id: jobs[0]?.id || '' });
+            // Reset form
+            setNewCandidate({ full_name: '', email: '', phone: '', status: 'new', job_id: jobs[0]?.id || '', source: 'Referral' });
         } catch (error) {
-            alert('Lỗi thêm ứng viên');
+            console.error(error);
+            alert('Lỗi lưu thông tin ứng viên');
         }
+    };
+
+    const handleEditClick = () => {
+        if (!selectedCandidate) return;
+        setNewCandidate({
+            ...selectedCandidate,
+            // Ensure nulls are empty strings for inputs
+            experience_years: selectedCandidate.experience_years || '',
+            expected_salary: selectedCandidate.expected_salary || '',
+            skills: selectedCandidate.skills || '',
+            notes: selectedCandidate.notes || '',
+            cv_url: selectedCandidate.cv_url || ''
+        });
+        setShowModal(true);
+        // We can close the drawer or keep it open.
+        // If we keep it open, we should probably close it to avoid clutter or re-fetch after update.
+        // Let's keep it open, but we need to refresh selectedCandidate after update.
+        // For simplicity, let's close drawer to force re-open with fresh data, OR just reload data.
     };
 
     const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
@@ -129,7 +155,13 @@ export default function CandidatesPage() {
                         </button>
                     </div>
                     <button
-                        onClick={() => setShowModal(true)}
+                        onClick={() => {
+                            setNewCandidate({
+                                full_name: '', email: '', phone: '', status: 'new', job_id: jobs[0]?.id || '', source: 'Referral',
+                                experience_years: '', expected_salary: '', skills: '', notes: ''
+                            });
+                            setShowModal(true);
+                        }}
                         className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
                     >
                         <Plus className="w-4 h-4" />
@@ -269,8 +301,8 @@ export default function CandidatesPage() {
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
                     <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-                        <h2 className="text-xl font-bold mb-4">Thêm ứng viên mới</h2>
-                        <form onSubmit={handleCreate} className="space-y-4">
+                        <h2 className="text-xl font-bold mb-4">{newCandidate.id ? 'Cập nhật ứng viên' : 'Thêm ứng viên mới'}</h2>
+                        <form onSubmit={handleCreateOrUpdate} className="space-y-4">
                             {/* ... (rest of form) ... */}
                             <div>
                                 <label className="block text-sm font-medium mb-1">Họ tên <span className="text-red-500">*</span></label>
@@ -392,7 +424,7 @@ export default function CandidatesPage() {
                     onClose={() => setDrawerOpen(false)}
                     candidate={selectedCandidate}
                     interviews={candidateInterviews}
-                    onEdit={() => alert("Tính năng chỉnh sửa chi tiết đang được cập nhật")}
+                    onEdit={handleEditClick}
                 />
             )}
         </div>

@@ -139,6 +139,19 @@ export const createCandidate = async (candidate: Partial<RecruitmentCandidate>) 
         .single();
 
     if (error) throw error;
+    if (error) throw error;
+    return data as RecruitmentCandidate;
+};
+
+export const updateCandidate = async (id: string, updates: Partial<RecruitmentCandidate>) => {
+    const { data, error } = await supabase
+        .from('recruitment_candidates')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
     return data as RecruitmentCandidate;
 };
 
