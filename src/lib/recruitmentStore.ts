@@ -37,6 +37,12 @@ export interface RecruitmentCandidate {
     skills?: string;
     availability_date?: string;
     rating?: number;
+    // Personal Info
+    education?: string;
+    hometown?: string;
+    address?: string;
+    id_card_front?: string;
+    id_card_back?: string;
     job?: {
         title: string;
     };
@@ -144,9 +150,12 @@ export const createCandidate = async (candidate: Partial<RecruitmentCandidate>) 
 };
 
 export const updateCandidate = async (id: string, updates: Partial<RecruitmentCandidate>) => {
+    // Remove nested relations that shouldn't be sent to update
+    const { job, ...validUpdates } = updates;
+
     const { data, error } = await supabase
         .from('recruitment_candidates')
-        .update(updates)
+        .update(validUpdates)
         .eq('id', id)
         .select()
         .single();

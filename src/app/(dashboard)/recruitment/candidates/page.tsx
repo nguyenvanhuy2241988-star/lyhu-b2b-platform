@@ -397,6 +397,59 @@ export default function CandidatesPage() {
                                 </div>
                             </div>
 
+                            {/* Personal Info */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Học vấn</label>
+                                    <input
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={newCandidate.education || ''}
+                                        onChange={e => setNewCandidate({ ...newCandidate, education: e.target.value })}
+                                        placeholder="Đại học ABC..."
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Quê quán</label>
+                                    <input
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={newCandidate.hometown || ''}
+                                        onChange={e => setNewCandidate({ ...newCandidate, hometown: e.target.value })}
+                                        placeholder="Hà Nội..."
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Địa chỉ thường trú</label>
+                                <input
+                                    className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    value={newCandidate.address || ''}
+                                    onChange={e => setNewCandidate({ ...newCandidate, address: e.target.value })}
+                                    placeholder="Số 1, Đường X, Phường Y..."
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Ảnh CCCD (Mặt trước)</label>
+                                    <input
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={newCandidate.id_card_front || ''}
+                                        onChange={e => setNewCandidate({ ...newCandidate, id_card_front: e.target.value })}
+                                        placeholder="URL ảnh..."
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Ảnh CCCD (Mặt sau)</label>
+                                    <input
+                                        className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={newCandidate.id_card_back || ''}
+                                        onChange={e => setNewCandidate({ ...newCandidate, id_card_back: e.target.value })}
+                                        placeholder="URL ảnh..."
+                                    />
+                                </div>
+                            </div>
+
                             {/* Notes */}
                             <div>
                                 <label className="block text-sm font-medium mb-1">Ghi chú thêm</label>

@@ -1,4 +1,4 @@
-import { X, Calendar, Mail, Phone, Building, DollarSign, Star, Briefcase, Clock, Link as LinkIcon, Edit } from 'lucide-react';
+import { X, Calendar, Mail, Phone, Building, DollarSign, Star, Briefcase, Clock, Link as LinkIcon, Edit, MapPin, GraduationCap, CreditCard, User } from 'lucide-react';
 import { RecruitmentCandidate, RecruitmentInterview } from '@/lib/recruitmentStore';
 import { format } from 'date-fns';
 
@@ -85,6 +85,59 @@ export default function CandidateDetailDrawer({ candidate, isOpen, onClose, onEd
                         </div>
                     </div>
 
+                    {/* Personal Info & Documents */}
+                    <div>
+                        <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
+                            <User className="w-5 h-5 text-purple-600" />
+                            Thông tin cá nhân & Giấy tờ
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div className="flex items-center gap-3 text-slate-700">
+                                <GraduationCap className="w-4 h-4 text-slate-400" />
+                                <span>{candidate.education || 'Chưa cập nhật học vấn'}</span>
+                            </div>
+                            <div className="flex items-center gap-3 text-slate-700">
+                                <MapPin className="w-4 h-4 text-slate-400" />
+                                <span>{candidate.hometown || 'Chưa cập nhật quê quán'}</span>
+                            </div>
+                            <div className="col-span-2 flex items-center gap-3 text-slate-700">
+                                <Building className="w-4 h-4 text-slate-400" />
+                                <span>{candidate.address || 'Chưa cập nhật địa chỉ thường trú'}</span>
+                            </div>
+                        </div>
+                        {/* ID Cards */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="border rounded-lg p-2 bg-slate-50">
+                                <p className="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1">
+                                    <CreditCard className="w-3 h-3" /> CCCD Mặt trước
+                                </p>
+                                {candidate.id_card_front ? (
+                                    <a href={candidate.id_card_front} target="_blank" rel="noreferrer" className="block relative aspect-video bg-slate-200 rounded overflow-hidden hover:opacity-90 transition">
+                                        <img src={candidate.id_card_front} alt="CCCD Front" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/400x250?text=Invalid+Image' }} />
+                                    </a>
+                                ) : (
+                                    <div className="aspect-video bg-slate-100 rounded flex items-center justify-center text-slate-400 text-xs text-center px-4">
+                                        Chưa có ảnh
+                                    </div>
+                                )}
+                            </div>
+                            <div className="border rounded-lg p-2 bg-slate-50">
+                                <p className="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-1">
+                                    <CreditCard className="w-3 h-3" /> CCCD Mặt sau
+                                </p>
+                                {candidate.id_card_back ? (
+                                    <a href={candidate.id_card_back} target="_blank" rel="noreferrer" className="block relative aspect-video bg-slate-200 rounded overflow-hidden hover:opacity-90 transition">
+                                        <img src={candidate.id_card_back} alt="CCCD Back" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/400x250?text=Invalid+Image' }} />
+                                    </a>
+                                ) : (
+                                    <div className="aspect-video bg-slate-100 rounded flex items-center justify-center text-slate-400 text-xs text-center px-4">
+                                        Chưa có ảnh
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
                     {/* 2. Professional Details */}
                     <div>
                         <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
@@ -159,7 +212,7 @@ export default function CandidateDetailDrawer({ candidate, isOpen, onClose, onEd
                                             <div className="flex justify-between">
                                                 <h4 className="font-medium text-slate-900">Phỏng vấn {interview.type === 'online' ? 'Online' : 'Trực tiếp'}</h4>
                                                 <span className={`text-xs px-2 py-0.5 rounded ${interview.status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
-                                                        interview.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'
+                                                    interview.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'
                                                     }`}>
                                                     {interview.status === 'scheduled' ? 'Sắp tới' : interview.status === 'completed' ? 'Hoàn thành' : interview.status}
                                                 </span>
