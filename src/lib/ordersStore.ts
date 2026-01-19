@@ -210,9 +210,9 @@ async function shipOrderInventory(orderId: string, userId: string, token?: strin
         return;
     }
 
-    // Fetch order items using RPC (Reusing get_orders_v2 to bypass RLS)
+    // Fetch order items using RPC (Reusing get_orders_v3 to bypass RLS)
     const headers = getHeaders(token);
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_orders_v2`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_orders_v3`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ p_id: orderId })
@@ -250,9 +250,9 @@ async function releaseOrderInventory(orderId: string, userId: string, token?: st
         return;
     }
 
-    // Fetch order items using RPC (Reusing get_orders_v2)
+    // Fetch order items using RPC (Reusing get_orders_v3)
     const headers = getHeaders(token);
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_orders_v2`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_orders_v3`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ p_id: orderId })
@@ -323,7 +323,7 @@ export const fetchOrders = async (token?: string, filters?: { userId?: string, s
         const timeoutId = setTimeout(() => controller.abort(), 15000);
 
         const response = await fetch(
-            `${SUPABASE_URL}/rest/v1/rpc/get_orders_v2`,
+            `${SUPABASE_URL}/rest/v1/rpc/get_orders_v3`,
             {
                 method: 'POST',
                 headers,
@@ -543,7 +543,7 @@ export const updateOrderSupabase = async (orderId: string, updateData: any, toke
     try {
         // 1. Fetch current order to check status and get old items
         // Use RPC to bypass permissions
-        const currentOrderRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_orders_v2`, {
+        const currentOrderRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_orders_v3`, {
             method: 'POST',
             headers,
             body: JSON.stringify({ p_id: orderId })
