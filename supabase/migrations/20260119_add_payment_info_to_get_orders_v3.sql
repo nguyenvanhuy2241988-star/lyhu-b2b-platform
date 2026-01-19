@@ -1,4 +1,7 @@
 -- Update get_orders_v3 to include missing payment and receiver info columns
+-- Drop first because return return type signature changed
+DROP FUNCTION IF EXISTS public.get_orders_v3(uuid, uuid, text, timestamptz, timestamptz, int);
+
 CREATE OR REPLACE FUNCTION public.get_orders_v3(
     p_id uuid DEFAULT NULL,
     p_user_id uuid DEFAULT NULL,
