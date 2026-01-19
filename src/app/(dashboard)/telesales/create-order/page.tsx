@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Product } from "@/mocks/data";
 import { fetchCustomers, Customer, fetchDealItems } from "@/lib/crmDealsStore";
 import { loadProducts } from "@/lib/supabase/products";
-import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, User, ArrowLeft, Building, Gift, Tag, FileText, Percent } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, User, ArrowLeft, Building, Gift, Tag, FileText, Percent, Search } from "lucide-react";
 import { addOrderSupabase, updateOrderSupabase } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { createClient } from "@/lib/supabaseClient";
