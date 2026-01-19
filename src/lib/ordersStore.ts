@@ -307,13 +307,14 @@ export const getOrdersByCustomer = (customerId: string): Order[] => {
 // --- ASYNC ---
 // --- ASYNC (PURE FETCH) ---
 // --- ASYNC (PURE FETCH via RPC) ---
-export const fetchOrders = async (token?: string, filters?: { userId?: string, startDate?: string, endDate?: string }): Promise<Order[]> => {
+export const fetchOrders = async (token?: string, filters?: { userId?: string, startDate?: string, endDate?: string, role?: string }): Promise<Order[]> => {
     try {
         const headers = getHeaders(token);
 
         // Use RPC to bypass potential permission issues with table joins
         const rpcBody = {
             p_user_id: filters?.userId || null,
+            p_role: filters?.role || null, // Explicitly pass role if known
             p_start_date: filters?.startDate || null,
             p_end_date: filters?.endDate || null,
             p_limit: 200 // Reasonable limit

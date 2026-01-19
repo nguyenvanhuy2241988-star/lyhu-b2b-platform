@@ -19,6 +19,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { exportOrdersToCSV } from "@/lib/exportCSV";
 import { notifyNewOrder } from "@/hooks/useNotification";
 import { OrderChatModal } from "@/components/orders/OrderChatModal";
+import { OrderDetailsModal } from "@/components/orders/OrderDetailsModal"; // Added import
 import { getOrdersWithUnreadMessages } from "@/lib/orderChatStore";
 
 const formatPrice = (price: number) => {
@@ -27,54 +28,10 @@ const formatPrice = (price: number) => {
         currency: "VND",
     }).format(price);
 };
-
-const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("vi-VN");
-};
-
-const STATUS_CONFIG = {
-    pending: {
-        label: "Chờ xác nhận",
-        icon: Clock,
-        color: "bg-yellow-100 text-yellow-700",
-    },
-    processing: {
-        label: "Đang xử lý",
-        icon: Package,
-        color: "bg-blue-100 text-blue-700",
-    },
-    delivered: {
-        label: "Đã giao",
-        icon: CheckCircle,
-        color: "bg-green-100 text-green-700",
-    },
-    cancelled: {
-        label: "Đã hủy",
-        icon: XCircle,
-        color: "bg-red-100 text-red-700",
-    },
-};
-
-const maskPhone = (phone?: string) => {
-    if (!phone || phone.length < 7) return '***';
-    return `${phone.slice(0, 3)}***${phone.slice(-3)}`;
-};
-
-const maskAddress = (address?: string) => {
-    if (!address) return '---';
-    // Try to keep city/district if possible, otherwise simple mask
-    return "Thông tin bị ẩn";
-};
-
-interface OrderListProps {
-    readOnly?: boolean;
-    maskSensitiveData?: boolean;
-    hideRevenue?: boolean;
-}
+// ... (lines 31-75 unchanged)
 
 export default function OrderList({ readOnly = false, maskSensitiveData = false, hideRevenue = false }: OrderListProps) {
-    const { user, session } = useAuth();
+    const { user, session, role } = useAuth();
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
@@ -82,6 +39,7 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
     const [chatOrder, setChatOrder] = useState<{ id: string; readableId: string } | null>(null);
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null); // Added state
     const [unreadOrders, setUnreadOrders] = useState<Set<string>>(new Set());
 
     // Stats calculated from REAL data
@@ -98,7 +56,8 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
     const loadData = useCallback(async (silent = false) => {
         try {
             if (!silent) setIsLoading(true);
-            const data = await fetchOrders(session?.access_token);
+            // Pass role explicit to RPC to avoid permission lookup failures
+            const data = await fetchOrders(session?.access_token, { role: role || undefined });
             setOrders(data);
 
             if (data.length > 0) {
@@ -110,7 +69,7 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
         } finally {
             if (!silent) setIsLoading(false);
         }
-    }, [session?.access_token]);
+    }, [session?.access_token, role]);
 
     useEffect(() => {
         try {
@@ -427,6 +386,15 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                                                             <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
                                                         )}
                                                     </button>
+
+                                                    <button
+                                                        onClick={() => setSelectedOrder(order)}
+                                                        className="p-2 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                        title="Xem chi tiết"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+
                                                     {readOnly ? (
                                                         <div className="px-2 py-1 bg-slate-100 text-slate-400 text-xs rounded">
                                                             Chỉ xem
@@ -454,6 +422,13 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                     </table>
                 </div>
             </div>
+
+            {/* Order Details Modal */}
+            <OrderDetailsModal
+                isOpen={!!selectedOrder}
+                order={selectedOrder}
+                onClose={() => setSelectedOrder(null)}
+            />
 
             {/* Chat Modal */}
             {chatOrder && (
