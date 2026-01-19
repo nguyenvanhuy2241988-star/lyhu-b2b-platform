@@ -94,7 +94,7 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, s
                                 <td className="border border-gray-300 px-2 py-2 text-center">{index + 1}</td>
                                 <td className="border border-gray-300 px-2 py-2 text-gray-600 font-mono text-xs">{item.product?.sku || item.sku || '---'}</td>
                                 <td className="border border-gray-300 px-2 py-2">
-                                    <div className="font-medium">{item.name || 'Sản phẩm'}</div>
+                                    <div className="font-medium">{item.product?.name || item.name || 'Sản phẩm'}</div>
                                     {(item.isGift || item.is_gift) && <span className="inline-block bg-purple-100 text-purple-800 text-xs px-1 rounded mt-0.5">Quà tặng</span>}
                                 </td>
                                 <td className="border border-gray-300 px-2 py-2 text-center">{item.unit || 'Cái'}</td>

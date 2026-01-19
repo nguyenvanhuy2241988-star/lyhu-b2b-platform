@@ -359,7 +359,12 @@ export const fetchOrders = async (token?: string, filters?: { userId?: string, s
             items: o.items,
             customerId: o.customer_id,
             leadId: o.lead_id,
-            customer: o.customer // Map joined customer data
+            customer: o.customer, // Map joined customer data
+            paymentMethod: o.payment_method,
+            notes: o.note,
+            vat: o.vat,
+            receiverPhone: o.receiver_phone || o.customer?.phone,
+            receiverAddress: o.receiver_address || o.customer?.address
         }));
     } catch (err) {
         console.error("[fetchOrders] Exception:", err);
