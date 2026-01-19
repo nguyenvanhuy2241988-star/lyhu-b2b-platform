@@ -211,6 +211,8 @@ function TelesalesCreateOrderContent() {
 
     // UI state
     const [currentStep, setCurrentStep] = useState(1);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [productQuantities, setProductQuantities] = useState<Record<string, number>>({});
 
     const handleSelectCustomer = (customerId: string) => {
         const customer = customers.find((c) => c.id === customerId);
@@ -220,37 +222,33 @@ function TelesalesCreateOrderContent() {
         }
     };
 
-    const handleAddProduct = (product: Product) => {
+    const handleAddProduct = (product: Product, quantityToAdd: number = 1) => {
         // Smart Gift Logic:
         // Find if there is an existing item that is NOT a gift.
         // If found -> Increment.
         // If not found (even if there is a Gift item) -> Add new line.
         const existingItemIndex = orderItems.findIndex((item) => item.product.id === product.id && !item.isGift);
 
+        // Check total quantity in cart + adding
+        const currentQtyInOrder = orderItems.reduce((sum, item) => item.product.id === product.id ? sum + item.quantity : sum, 0);
+        const available = inventory[product.id] ?? 0;
+
+        if (currentQtyInOrder + quantityToAdd > available) {
+            alert(`Kho chỉ còn ${available} sản phẩm! (Đã chọn: ${currentQtyInOrder})`);
+            return;
+        }
+
         if (existingItemIndex !== -1) {
             const existingItem = orderItems[existingItemIndex];
-            const available = inventory[product.id] ?? 0;
-            if (existingItem.quantity + 1 > available) {
-                alert(`Chỉ còn ${available} sản phẩm trong kho!`);
-                return;
-            }
-
             const newItems = [...orderItems];
-            newItems[existingItemIndex] = { ...existingItem, quantity: existingItem.quantity + 1 };
+            newItems[existingItemIndex] = { ...existingItem, quantity: existingItem.quantity + quantityToAdd };
             setOrderItems(newItems);
         } else {
-            // Check inventory for new item
-            const available = inventory[product.id] ?? 0;
-            if (available <= 0) {
-                alert(`Sản phẩm này đã hết hàng!`);
-                return;
-            }
-
             setOrderItems((prev) => [
                 ...prev,
                 {
                     product,
-                    quantity: 1,
+                    quantity: quantityToAdd,
                     price: product.wholesalePrice || 0, // Initialize with default list price
                     discount: 0,
                     discountType: 'amount',
@@ -259,6 +257,9 @@ function TelesalesCreateOrderContent() {
                 }
             ]);
         }
+
+        // Reset quantity input for this product to 1
+        setProductQuantities(prev => ({ ...prev, [product.id]: 1 }));
     };
 
     const handleUpdateQuantity = (index: number, delta: number) => {
@@ -526,31 +527,56 @@ function TelesalesCreateOrderContent() {
             {/* Step 1: Select Customer */}
             {currentStep === 1 && (
                 <div className="bg-white p-6 rounded-xl border border-slate-200">
-                    <h3 className="font-semibold text-slate-900 mb-4">Chọn khách hàng</h3>
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold text-slate-900">Chọn khách hàng</h3>
+                        {/* Search Input */}
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input
+                                type="text"
+                                placeholder="Tìm tên hoặc SĐT..."
+                                className="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-64"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {customers.map((customer) => (
-                            <button
-                                key={customer.id}
-                                onClick={() => handleSelectCustomer(customer.id)}
-                                className="p-4 border border-slate-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-all text-left group"
-                            >
-                                <div className="flex items-start gap-3">
-                                    <div className="p-2 bg-slate-100 group-hover:bg-indigo-100 rounded-lg transition-colors">
-                                        <User className="w-5 h-5 text-slate-600 group-hover:text-indigo-600" />
+                        {customers
+                            .filter(customer => {
+                                const term = searchTerm.toLowerCase();
+                                return (
+                                    customer.name.toLowerCase().includes(term) ||
+                                    (customer.phone && customer.phone.includes(term))
+                                );
+                            })
+                            .map((customer) => (
+                                <button
+                                    key={customer.id}
+                                    onClick={() => handleSelectCustomer(customer.id)}
+                                    className="p-4 border border-slate-200 rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-all text-left group"
+                                >
+                                    <div className="flex items-start gap-3">
+                                        <div className="p-2 bg-slate-100 group-hover:bg-indigo-100 rounded-lg transition-colors">
+                                            <User className="w-5 h-5 text-slate-600 group-hover:text-indigo-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="font-medium text-slate-900 mb-1 truncate">
+                                                {customer.name}
+                                            </h4>
+                                            <p className="text-xs text-slate-500">
+                                                {customer.address}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h4 className="font-medium text-slate-900 mb-1 truncate">
-                                            {customer.name}
-                                        </h4>
-                                        <p className="text-xs text-slate-500">
-                                            {customer.address}
-                                        </p>
-                                    </div>
-                                </div>
-                            </button>
-                        ))}
+                                </button>
+                            ))}
                         {customers.length === 0 && (
                             <p className="text-slate-500 col-span-3 text-center py-4">Chưa có khách hàng nào.</p>
+                        )}
+                        {customers.length > 0 && customers.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()) || (c.phone && c.phone.includes(searchTerm))).length === 0 && (
+                            <p className="text-slate-500 col-span-3 text-center py-4">Không tìm thấy khách hàng phù hợp.</p>
                         )}
                     </div>
                 </div>
@@ -593,6 +619,7 @@ function TelesalesCreateOrderContent() {
                                     LYHU: "bg-indigo-500",
                                 };
                                 const brandColor = brandColors[product.brand || "LHU"] || "bg-indigo-500";
+                                const inputValue = productQuantities[product.id] || 1;
 
                                 return (
                                     <div
@@ -616,8 +643,39 @@ function TelesalesCreateOrderContent() {
                                                 ? `Sẵn hàng: ${inventory[product.id]}`
                                                 : 'Hết hàng'}
                                         </p>
+
+                                        {/* Quantity Input on Card */}
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <span className="text-xs text-slate-500">SL:</span>
+                                            <div className="flex items-center border border-slate-200 rounded bg-white w-full">
+                                                <button
+                                                    onClick={() => setProductQuantities(prev => ({ ...prev, [product.id]: Math.max(1, (prev[product.id] || 1) - 1) }))}
+                                                    className="px-2 py-1 hover:bg-slate-100 transition-colors border-r border-slate-200"
+                                                >
+                                                    <Minus className="w-3 h-3 text-slate-500" />
+                                                </button>
+                                                <input
+                                                    type="number"
+                                                    className="w-full text-center text-sm font-medium py-1 focus:outline-none"
+                                                    value={inputValue}
+                                                    onChange={(e) => {
+                                                        const val = parseInt(e.target.value) || 0;
+                                                        // Allow 0 temporarily while typing, but logical min is 1
+                                                        setProductQuantities(prev => ({ ...prev, [product.id]: Math.max(1, val) }));
+                                                    }}
+                                                    min="1"
+                                                />
+                                                <button
+                                                    onClick={() => setProductQuantities(prev => ({ ...prev, [product.id]: (prev[product.id] || 1) + 1 }))}
+                                                    className="px-2 py-1 hover:bg-slate-100 transition-colors border-l border-slate-200"
+                                                >
+                                                    <Plus className="w-3 h-3 text-slate-500" />
+                                                </button>
+                                            </div>
+                                        </div>
+
                                         <button
-                                            onClick={() => handleAddProduct(product)}
+                                            onClick={() => handleAddProduct(product, inputValue)}
                                             disabled={(inventory[product.id] ?? 0) <= 0}
                                             className={`w-full py-2 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors ${(inventory[product.id] ?? 0) <= 0
                                                 ? "bg-slate-100 text-slate-400 cursor-not-allowed" // Disabled style
@@ -627,7 +685,7 @@ function TelesalesCreateOrderContent() {
                                                 }`}
                                         >
                                             <Plus className="w-4 h-4" />
-                                            {inOrderCount > 0 ? `Thêm nữa (${inOrderCount})` : "Thêm vào đơn"}
+                                            {inOrderCount > 0 ? `Thêm nữa (${inputValue})` : "Thêm vào đơn"}
                                         </button>
                                     </div>
                                 );
