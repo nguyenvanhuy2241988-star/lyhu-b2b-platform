@@ -34,6 +34,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, auth, extensions
 AS $$
+#variable_conflict use_column
 DECLARE
     _current_uid uuid;
     _current_role text;
