@@ -30,6 +30,18 @@ const formatPrice = (price: number) => {
 };
 // ... (lines 31-75 unchanged)
 
+const maskAddress = (address?: string) => {
+    if (!address) return '---';
+    // Try to keep city/district if possible, otherwise simple mask
+    return "Thông tin bị ẩn";
+};
+
+interface OrderListProps {
+    readOnly?: boolean;
+    maskSensitiveData?: boolean;
+    hideRevenue?: boolean;
+}
+
 export default function OrderList({ readOnly = false, maskSensitiveData = false, hideRevenue = false }: OrderListProps) {
     const { user, session, role } = useAuth();
     const [orders, setOrders] = useState<Order[]>([]);
