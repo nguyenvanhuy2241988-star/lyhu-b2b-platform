@@ -212,6 +212,7 @@ function TelesalesCreateOrderContent() {
     // UI state
     const [currentStep, setCurrentStep] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
+    const [productSearchTerm, setProductSearchTerm] = useState("");
     const [productQuantities, setProductQuantities] = useState<Record<string, number>>({});
 
     const handleSelectCustomer = (customerId: string) => {
@@ -606,90 +607,109 @@ function TelesalesCreateOrderContent() {
 
                     {/* Product Selection */}
                     <div className="bg-white p-6 rounded-xl border border-slate-200">
-                        <h3 className="font-semibold text-slate-900 mb-4">Chọn sản phẩm</h3>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-semibold text-slate-900">Chọn sản phẩm</h3>
+                            {/* Product Search Input */}
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Tìm tên hoặc SKU..."
+                                    className="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-64"
+                                    value={productSearchTerm}
+                                    onChange={(e) => setProductSearchTerm(e.target.value)}
+                                />
+                            </div>
+                        </div>
+
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {products.map((product) => {
-                                // Simple check: is there any item of this product?
-                                const inOrderCount = orderItems.reduce((sum, item) => item.product.id === product.id ? sum + item.quantity : sum, 0);
+                            {products
+                                .filter(p => {
+                                    const term = productSearchTerm.toLowerCase();
+                                    return p.name.toLowerCase().includes(term) || (p.sku && p.sku.toLowerCase().includes(term));
+                                })
+                                .map((product) => {
+                                    // Simple check: is there any item of this product?
+                                    const inOrderCount = orderItems.reduce((sum, item) => item.product.id === product.id ? sum + item.quantity : sum, 0);
 
-                                const brandColors: Record<string, string> = {
-                                    UHI: "bg-orange-500",
-                                    BOYO: "bg-purple-500",
-                                    CVT: "bg-blue-500",
-                                    LYHU: "bg-indigo-500",
-                                };
-                                const brandColor = brandColors[product.brand || "LHU"] || "bg-indigo-500";
-                                const inputValue = productQuantities[product.id] || 1;
+                                    const brandColors: Record<string, string> = {
+                                        UHI: "bg-orange-500",
+                                        BOYO: "bg-purple-500",
+                                        CVT: "bg-blue-500",
+                                        LYHU: "bg-indigo-500",
+                                    };
+                                    const brandColor = brandColors[product.brand || "LHU"] || "bg-indigo-500";
+                                    const inputValue = productQuantities[product.id] || 1;
 
-                                return (
-                                    <div
-                                        key={product.id}
-                                        className={`p-4 border rounded-lg ${inOrderCount > 0 ? "border-indigo-500 bg-indigo-50" : "border-slate-200"
-                                            }`}
-                                    >
-                                        <span className={`inline-block ${brandColor} text-white text-xs font-semibold px-2 py-1 rounded mb-2`}>
-                                            {product.brand || "LHU"}
-                                        </span>
-                                        <h4 className="font-medium text-slate-900 text-sm mb-2 line-clamp-2 min-h-[2.5rem]">
-                                            {product.name}
-                                        </h4>
-                                        <p className="text-xs text-slate-500 mb-2">SKU: {product.sku}</p>
-                                        <p className="text-lg font-bold text-slate-900 mb-1">
-                                            {formatPrice(product.wholesalePrice || 0)}
-                                        </p>
-                                        <p className={`text-xs font-semibold mb-3 ${(inventory[product.id] ?? 0) > 0 ? 'text-green-600' : 'text-red-600'
-                                            }`}>
-                                            {(inventory[product.id] ?? 0) > 0
-                                                ? `Sẵn hàng: ${inventory[product.id]}`
-                                                : 'Hết hàng'}
-                                        </p>
-
-                                        {/* Quantity Input on Card */}
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <span className="text-xs text-slate-500">SL:</span>
-                                            <div className="flex items-center border border-slate-200 rounded bg-white w-full">
-                                                <button
-                                                    onClick={() => setProductQuantities(prev => ({ ...prev, [product.id]: Math.max(1, (prev[product.id] || 1) - 1) }))}
-                                                    className="px-2 py-1 hover:bg-slate-100 transition-colors border-r border-slate-200"
-                                                >
-                                                    <Minus className="w-3 h-3 text-slate-500" />
-                                                </button>
-                                                <input
-                                                    type="number"
-                                                    className="w-full text-center text-sm font-medium py-1 focus:outline-none"
-                                                    value={inputValue}
-                                                    onChange={(e) => {
-                                                        const val = parseInt(e.target.value) || 0;
-                                                        // Allow 0 temporarily while typing, but logical min is 1
-                                                        setProductQuantities(prev => ({ ...prev, [product.id]: Math.max(1, val) }));
-                                                    }}
-                                                    min="1"
-                                                />
-                                                <button
-                                                    onClick={() => setProductQuantities(prev => ({ ...prev, [product.id]: (prev[product.id] || 1) + 1 }))}
-                                                    className="px-2 py-1 hover:bg-slate-100 transition-colors border-l border-slate-200"
-                                                >
-                                                    <Plus className="w-3 h-3 text-slate-500" />
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <button
-                                            onClick={() => handleAddProduct(product, inputValue)}
-                                            disabled={(inventory[product.id] ?? 0) <= 0}
-                                            className={`w-full py-2 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors ${(inventory[product.id] ?? 0) <= 0
-                                                ? "bg-slate-100 text-slate-400 cursor-not-allowed" // Disabled style
-                                                : inOrderCount > 0
-                                                    ? "bg-indigo-600 text-white hover:bg-indigo-700"
-                                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                    return (
+                                        <div
+                                            key={product.id}
+                                            className={`p-4 border rounded-lg ${inOrderCount > 0 ? "border-indigo-500 bg-indigo-50" : "border-slate-200"
                                                 }`}
                                         >
-                                            <Plus className="w-4 h-4" />
-                                            {inOrderCount > 0 ? `Thêm nữa (${inputValue})` : "Thêm vào đơn"}
-                                        </button>
-                                    </div>
-                                );
-                            })}
+                                            <span className={`inline-block ${brandColor} text-white text-xs font-semibold px-2 py-1 rounded mb-2`}>
+                                                {product.brand || "LHU"}
+                                            </span>
+                                            <h4 className="font-medium text-slate-900 text-sm mb-2 line-clamp-2 min-h-[2.5rem]">
+                                                {product.name}
+                                            </h4>
+                                            <p className="text-xs text-slate-500 mb-2">SKU: {product.sku}</p>
+                                            <p className="text-lg font-bold text-slate-900 mb-1">
+                                                {formatPrice(product.wholesalePrice || 0)}
+                                            </p>
+                                            <p className={`text-xs font-semibold mb-3 ${(inventory[product.id] ?? 0) > 0 ? 'text-green-600' : 'text-red-600'
+                                                }`}>
+                                                {(inventory[product.id] ?? 0) > 0
+                                                    ? `Sẵn hàng: ${inventory[product.id]}`
+                                                    : 'Hết hàng'}
+                                            </p>
+
+                                            {/* Quantity Input on Card */}
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <span className="text-xs text-slate-500">SL:</span>
+                                                <div className="flex items-center border border-slate-200 rounded bg-white w-full">
+                                                    <button
+                                                        onClick={() => setProductQuantities(prev => ({ ...prev, [product.id]: Math.max(1, (prev[product.id] || 1) - 1) }))}
+                                                        className="px-2 py-1 hover:bg-slate-100 transition-colors border-r border-slate-200"
+                                                    >
+                                                        <Minus className="w-3 h-3 text-slate-500" />
+                                                    </button>
+                                                    <input
+                                                        type="number"
+                                                        className="w-full text-center text-sm font-medium py-1 focus:outline-none"
+                                                        value={inputValue}
+                                                        onChange={(e) => {
+                                                            const val = parseInt(e.target.value) || 0;
+                                                            // Allow 0 temporarily while typing, but logical min is 1
+                                                            setProductQuantities(prev => ({ ...prev, [product.id]: Math.max(1, val) }));
+                                                        }}
+                                                        min="1"
+                                                    />
+                                                    <button
+                                                        onClick={() => setProductQuantities(prev => ({ ...prev, [product.id]: (prev[product.id] || 1) + 1 }))}
+                                                        className="px-2 py-1 hover:bg-slate-100 transition-colors border-l border-slate-200"
+                                                    >
+                                                        <Plus className="w-3 h-3 text-slate-500" />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                onClick={() => handleAddProduct(product, inputValue)}
+                                                disabled={(inventory[product.id] ?? 0) <= 0}
+                                                className={`w-full py-2 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors ${(inventory[product.id] ?? 0) <= 0
+                                                    ? "bg-slate-100 text-slate-400 cursor-not-allowed" // Disabled style
+                                                    : inOrderCount > 0
+                                                        ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                                                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                                    }`}
+                                            >
+                                                <Plus className="w-4 h-4" />
+                                                {inOrderCount > 0 ? `Thêm nữa (${inputValue})` : "Thêm vào đơn"}
+                                            </button>
+                                        </div>
+                                    );
+                                })}
                         </div>
                     </div>
 
