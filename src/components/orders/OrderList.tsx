@@ -28,7 +28,39 @@ const formatPrice = (price: number) => {
         currency: "VND",
     }).format(price);
 };
-// ... (lines 31-75 unchanged)
+
+const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("vi-VN");
+};
+
+const STATUS_CONFIG = {
+    pending: {
+        label: "Chờ xác nhận",
+        icon: Clock,
+        color: "bg-yellow-100 text-yellow-700",
+    },
+    processing: {
+        label: "Đang xử lý",
+        icon: Package,
+        color: "bg-blue-100 text-blue-700",
+    },
+    delivered: {
+        label: "Đã giao",
+        icon: CheckCircle,
+        color: "bg-green-100 text-green-700",
+    },
+    cancelled: {
+        label: "Đã hủy",
+        icon: XCircle,
+        color: "bg-red-100 text-red-700",
+    },
+};
+
+const maskPhone = (phone?: string) => {
+    if (!phone || phone.length < 7) return '***';
+    return `${phone.slice(0, 3)}***${phone.slice(-3)}`;
+};
 
 const maskAddress = (address?: string) => {
     if (!address) return '---';
