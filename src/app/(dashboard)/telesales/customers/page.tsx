@@ -40,6 +40,10 @@ export default function TelesalesCustomersPage() {
     }, []);
 
 
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+    const [customers, setCustomers] = useState<Customer[]>([]);
+
     // Filter State
     const [selectedType, setSelectedType] = useState("");
     const [selectedProvince, setSelectedProvince] = useState("");
