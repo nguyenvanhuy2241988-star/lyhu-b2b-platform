@@ -71,6 +71,7 @@ export interface Order {
         phone?: string;
         address?: string;
     };
+    creatorName?: string;
 }
 
 export type FulfillmentMode = 'SELF_SHIP' | 'LYHU_SHIP';
@@ -364,7 +365,8 @@ export const fetchOrders = async (token?: string, filters?: { userId?: string, s
             notes: o.note,
             vat: o.vat,
             receiverPhone: o.receiver_phone || o.customer?.phone,
-            receiverAddress: o.receiver_address || o.customer?.address
+            receiverAddress: o.receiver_address || o.customer?.address,
+            creatorName: o.creator_name
         }));
     } catch (err) {
         console.error("[fetchOrders] Exception:", err);

@@ -405,6 +405,11 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                                                     }`}>
                                                     {order.source}
                                                 </span>
+                                                {order.creatorName && (
+                                                    <div className="text-xs text-slate-500 mt-1 font-medium">
+                                                        {order.creatorName}
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 text-slate-600">{formatDate(order.createdAt)}</td>
                                             {!hideRevenue && (

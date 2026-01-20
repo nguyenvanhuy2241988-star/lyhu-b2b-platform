@@ -46,6 +46,7 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, s
                     <h2 className="text-2xl font-bold uppercase text-indigo-900">ĐƠN ĐẶT HÀNG</h2>
                     <p className="text-base font-bold text-gray-800 mt-1">Mã đơn: {order.readableId || order.id}</p>
                     <p className="text-sm text-gray-600">Ngày tạo: {formatDate(order.createdAt)}</p>
+                    {order.creatorName && <p className="text-sm text-gray-600">Người tạo: <span className="font-semibold">{order.creatorName}</span></p>}
                     <div className="mt-2 inline-block px-3 py-1 border border-gray-300 rounded text-sm font-semibold">
                         {order.status === 'delivered' ? 'Đã giao hàng' :
                             order.status === 'cancelled' ? 'Đã hủy' : 'Đơn hàng mới'}
@@ -178,25 +179,37 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, s
 
             <style jsx global>{`
                 @media print {
-                    @page { margin: 0.5cm; size: A4; }
-                    body { -webkit-print-color-adjust: exact; }
-                    body * {
-                        visibility: hidden;
-                    }
-                    .print-container, .print-container * {
-                        visibility: visible;
-                    }
-                    .print-container {
-                        position: fixed;
-                        top: 0;
-                        left: 0;
-                        width: 100%;
-                        height: 100%;
-                        z-index: 9999;
+                    @page { margin: 1cm; size: A4; }
+                    body { 
+                        -webkit-print-color-adjust: exact; 
                         background: white;
-                        margin: 0;
-                        padding: 1cm;
                     }
+                    /* Hide everything by default */
+                    body > * {
+                        display: none;
+                    }
+                    /* Show print container and make it the only visible root element */
+                    /* adjusting hierarchy to ensure Next.js root doesn't interfere */
+                    #order-print-template {
+                        display: block !important;
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                        margin: 0;
+                        padding: 0;
+                        background: white;
+                        z-index: 9999;
+                    }
+
+                    /* Ensure tables break correctly */
+                    table { page-break-inside: auto; }
+                    tr { page-break-inside: avoid; page-break-after: auto; }
+                    thead { display: table-header-group; }
+                    tfoot { display: table-footer-group; }
+
+                    /* Hide scrollbars */
+                    ::-webkit-scrollbar { display: none; }
                 }
             `}</style>
         </div>
