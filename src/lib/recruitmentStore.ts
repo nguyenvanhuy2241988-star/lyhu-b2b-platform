@@ -176,6 +176,14 @@ export const updateCandidateStatus = async (id: string, status: CandidateStatus)
     return data as RecruitmentCandidate;
 };
 
+export const deleteCandidate = async (id: string) => {
+    const { error } = await supabase
+        .from('recruitment_candidates')
+        .delete()
+        .eq('id', id);
+    if (error) throw error;
+};
+
 // INTERVIEWS
 export const getInterviews = async () => {
     const { data, error } = await supabase
