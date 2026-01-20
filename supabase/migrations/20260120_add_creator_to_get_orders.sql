@@ -23,8 +23,6 @@ RETURNS TABLE (
     customer_name text,
     customer jsonb,
     items jsonb,
-    receiver_phone text,
-    receiver_address text,
     payment_method text,
     note text,
     vat numeric,
@@ -81,8 +79,6 @@ BEGIN
             ), 
             '[]'::jsonb
         ) as items,
-        o.receiver_phone,
-        o.receiver_address,
         o.payment_method,
         o.note,
         o.vat,
