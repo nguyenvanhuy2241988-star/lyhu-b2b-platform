@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Plus, MapPin, Phone, Mail, MoreHorizontal, Building, UserPlus, Loader2, X, Save, Filter } from "lucide-react";
 import { fetchCustomers, createCustomer, deleteCustomer, Customer } from "@/lib/crmDealsStore";
+import { createClient } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 import { PROVINCES, fetchDistricts, fetchWards, LocationOption } from "@/lib/vn-locations";
@@ -138,6 +139,36 @@ export default function TelesalesCustomersPage() {
 
         return () => clearTimeout(timer);
     }, [loadData]); // loadData changes when filters change due to dependency array
+
+    // Realtime subscription
+    useEffect(() => {
+        const supabase = createClient();
+        console.log("Setting up realtime subscription for customers...");
+
+        const channel = supabase
+            .channel('telesales-customers-changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'customers'
+                },
+                (payload) => {
+                    console.log('Realtime update received:', payload);
+                    // Invalidate simple cache if exists (optional, but good practice)
+                    // Then reload data
+                    loadData();
+                }
+            )
+            .subscribe((status) => {
+                console.log("Realtime subscription status:", status);
+            });
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [loadData]);
 
     // Initial load handled by effect above or explicit mounting if needed. 
     // Actually the effect above depends on loadData which depends on all filters. 
