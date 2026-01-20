@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Mail, Phone, MoreHorizontal, User, Calendar, Briefcase } from 'lucide-react';
-import { getCandidates, getJobs, createCandidate, updateCandidate, updateCandidateStatus, getInterviewsByCandidate, RecruitmentCandidate, RecruitmentJob, RecruitmentInterview, CandidateStatus } from '@/lib/recruitmentStore';
+import { Plus, Search, Mail, Phone, MoreHorizontal, User, Calendar, Briefcase, Trash2 } from 'lucide-react';
+import { getCandidates, getJobs, createCandidate, updateCandidate, updateCandidateStatus, deleteCandidate, getInterviewsByCandidate, RecruitmentCandidate, RecruitmentJob, RecruitmentInterview, CandidateStatus } from '@/lib/recruitmentStore';
 import CandidateDetailDrawer from './CandidateDetailDrawer';
 import { format } from 'date-fns';
 
@@ -124,6 +124,18 @@ export default function CandidatesPage() {
         }
     };
 
+    const handleDelete = async (id: string) => {
+        if (confirm('Bạn có chắc chắn muốn xóa ứng viên này không? Hành động này không thể hoàn tác.')) {
+            try {
+                await deleteCandidate(id);
+                setCandidates(prev => prev.filter(c => c.id !== id));
+            } catch (error) {
+                console.error("Failed to delete candidate", error);
+                alert("Không thể xóa ứng viên. Vui lòng thử lại.");
+            }
+        }
+    };
+
     const getCandidatesByStatus = (status: string) => candidates.filter(c => c.status === status);
 
     const getStatusLabel = (status: string) => STATUS_COLS.find(s => s.id === status)?.label || status;
@@ -226,7 +238,14 @@ export default function CandidatesPage() {
                                                 ))}
                                             </select>
 
-                                            <div className="mt-2 pt-2 border-t border-slate-100 flex justify-end">
+                                            <div className="mt-2 pt-2 border-t border-slate-100 flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => handleDelete(cand.id)}
+                                                    className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition"
+                                                    title="Xóa ứng viên"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
                                                 <Link
                                                     href={`/recruitment/interviews?candidateId=${cand.id}`}
                                                     className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium px-2 py-1 hover:bg-blue-50 rounded transition"
@@ -282,13 +301,22 @@ export default function CandidatesPage() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
-                                        <Link
-                                            href={`/recruitment/interviews?candidateId=${cand.id}`}
-                                            className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium text-xs px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition"
-                                        >
-                                            <Calendar className="w-3 h-3" />
-                                            Đặt lịch
-                                        </Link>
+                                        <div className="flex items-center justify-end gap-2">
+                                            <button
+                                                onClick={() => handleDelete(cand.id)}
+                                                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                                                title="Xóa ứng viên"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                            <Link
+                                                href={`/recruitment/interviews?candidateId=${cand.id}`}
+                                                className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium text-xs px-3 py-1.5 bg-blue-50 hover:bg-blue-100 rounded-lg transition"
+                                            >
+                                                <Calendar className="w-3 h-3" />
+                                                Đặt lịch
+                                            </Link>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
