@@ -317,7 +317,7 @@ export default function TelesalesCustomersPage() {
             </div>
 
             {/* Customers Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
@@ -393,22 +393,26 @@ export default function TelesalesCustomersPage() {
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
+                                                        console.log("Toggle menu for:", customer.id);
                                                         setOpenMenuId(openMenuId === customer.id ? null : customer.id);
                                                     }}
-                                                    className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors"
+                                                    className="cursor-pointer text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors"
                                                 >
-                                                    <MoreHorizontal className="w-4 h-4" />
+                                                    <MoreHorizontal className="w-5 h-5" />
                                                 </button>
 
                                                 {/* Dropdown Menu */}
                                                 {openMenuId === customer.id && (
-                                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+                                                    <div
+                                                        className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-[100]"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 router.push(`/telesales/create-order?customerId=${customer.id}`);
                                                             }}
-                                                            className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary-600 flex items-center gap-2"
+                                                            className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary-600 flex items-center gap-2"
                                                         >
                                                             <Plus className="w-4 h-4" />
                                                             Tạo đơn hàng
@@ -417,11 +421,10 @@ export default function TelesalesCustomersPage() {
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 if (window.confirm('Bạn có chắc chắn muốn xóa khách hàng này?')) {
-                                                                    // TODO: Implement delete logic
                                                                     alert('Chức năng đang phát triển');
                                                                 }
                                                             }}
-                                                            className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-slate-50"
+                                                            className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-slate-50"
                                                         >
                                                             <X className="w-4 h-4" />
                                                             Xóa khách hàng
