@@ -27,7 +27,10 @@ export default function TelesalesCustomersPage() {
 
     // Close menu on click outside or scroll/resize
     useEffect(() => {
-        const handleClose = () => setOpenMenuId(null);
+        const handleClose = () => {
+            console.log("Closing menu (clicked outside or scroll)");
+            setOpenMenuId(null);
+        };
         document.addEventListener('click', handleClose);
         window.addEventListener('scroll', handleClose, true); // Capture phase for all scrollables
         window.addEventListener('resize', handleClose);
@@ -403,9 +406,11 @@ export default function TelesalesCustomersPage() {
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
+                                                        e.nativeEvent.stopImmediatePropagation(); // Prevent document listener from firing
                                                         e.preventDefault();
                                                         console.log("Opening menu for:", customer.id);
                                                         const rect = e.currentTarget.getBoundingClientRect();
+                                                        console.log("Button rect:", rect);
                                                         setMenuPos({
                                                             top: rect.bottom + 4,
                                                             right: window.innerWidth - rect.right
@@ -436,7 +441,7 @@ export default function TelesalesCustomersPage() {
             </div>
 
             {/* Global Dropdown Menu */}
-            {openMenuId && (
+            {openMenuId && (console.log("Rendering menu at:", menuPos),
                 <div
                     className="fixed bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-[9999] w-48 animate-in fade-in zoom-in-95 duration-100"
                     style={{
