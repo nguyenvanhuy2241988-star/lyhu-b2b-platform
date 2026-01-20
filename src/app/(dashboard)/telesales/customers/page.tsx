@@ -400,25 +400,24 @@ export default function TelesalesCustomersPage() {
                                                 Sửa
                                             </button>
                                             <div className="relative">
-                                                <div className="relative">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            e.preventDefault();
-                                                            console.log("Opening menu for:", customer.id);
-                                                            const rect = e.currentTarget.getBoundingClientRect();
-                                                            setMenuPos({
-                                                                top: rect.bottom + 4,
-                                                                right: window.innerWidth - rect.right
-                                                            });
-                                                            setOpenMenuId(openMenuId === customer.id ? null : customer.id);
-                                                        }}
-                                                        className={`cursor-pointer p-1.5 rounded-full transition-colors ${openMenuId === customer.id ? 'bg-slate-100 text-slate-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
-                                                    >
-                                                        <MoreHorizontal className="w-5 h-5" />
-                                                    </button>
-                                                </div>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        e.preventDefault();
+                                                        console.log("Opening menu for:", customer.id);
+                                                        const rect = e.currentTarget.getBoundingClientRect();
+                                                        setMenuPos({
+                                                            top: rect.bottom + 4,
+                                                            right: window.innerWidth - rect.right
+                                                        });
+                                                        setOpenMenuId(openMenuId === customer.id ? null : customer.id);
+                                                    }}
+                                                    className={`cursor-pointer p-1.5 rounded-full transition-colors ${openMenuId === customer.id ? 'bg-slate-100 text-slate-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}
+                                                >
+                                                    <MoreHorizontal className="w-5 h-5" />
+                                                </button>
                                             </div>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
