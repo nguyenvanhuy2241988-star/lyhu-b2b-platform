@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Search, Plus, MapPin, Phone, Mail, MoreHorizontal, Building, UserPlus, Loader2, X, Save, Filter } from "lucide-react";
-import { fetchCustomers, createCustomer, Customer } from "@/lib/crmDealsStore";
+import { fetchCustomers, createCustomer, deleteCustomer, Customer } from "@/lib/crmDealsStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 import { PROVINCES, fetchDistricts, fetchWards, LocationOption } from "@/lib/vn-locations";
@@ -461,10 +461,21 @@ export default function TelesalesCustomersPage() {
                         Tạo đơn hàng
                     </button>
                     <button
-                        onClick={(e) => {
+                        onClick={async (e) => {
                             e.stopPropagation();
                             if (window.confirm('Bạn có chắc chắn muốn xóa khách hàng này?')) {
-                                alert('Chức năng đang phát triển');
+                                try {
+                                    const success = await deleteCustomer(openMenuId, session?.access_token);
+                                    if (success) {
+                                        setOpenMenuId(null);
+                                        loadData(); // Refresh list
+                                    } else {
+                                        alert('Không thể xóa khách hàng này. Vui lòng thử lại.');
+                                    }
+                                } catch (err) {
+                                    console.error('Delete error:', err);
+                                    alert('Đã có lỗi xảy ra.');
+                                }
                             }
                         }}
                         className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-slate-50"
