@@ -180,18 +180,16 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, s
             <style jsx global>{`
                 @media print {
                     @page { margin: 1cm; size: A4; }
+                    
+                    /* Hide everything in body */
                     body { 
-                        -webkit-print-color-adjust: exact; 
-                        background: white;
+                        visibility: hidden;
+                        overflow: hidden; /* Prevent scrolling */
                     }
-                    /* Hide everything by default */
-                    body > * {
-                        display: none;
-                    }
-                    /* Show print container and make it the only visible root element */
-                    /* adjusting hierarchy to ensure Next.js root doesn't interfere */
+                    
+                    /* Make the print template visible and overlay everything */
                     #order-print-template {
-                        display: block !important;
+                        visibility: visible;
                         position: absolute;
                         left: 0;
                         top: 0;
@@ -199,7 +197,12 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, s
                         margin: 0;
                         padding: 0;
                         background: white;
-                        z-index: 9999;
+                        z-index: 99999; /* Max z-index */
+                    }
+
+                    /* Ensure children of template are also visible */
+                    #order-print-template * {
+                        visibility: visible;
                     }
 
                     /* Ensure tables break correctly */
