@@ -15,23 +15,23 @@ export interface CompanyInfo {
 
 export const COMPANY_INFO: CompanyInfo & { bankAccounts: BankAccount[] } = {
     name: "CÔNG TY TNHH LYHU",
-    address: "Số 123, Đường ABC, Quận XYZ, TP.HCM",
-    hotline: "1900 1234",
-    email: "contact@lyhu.vn",
+    address: "Số 11 - Liền kề 9 - Khu đô thị mới Phú Lương - Phường Phú La - Quận Hà Đông - TP Hà Nội",
+    hotline: "0969 069 298",
+    email: "lyhu.vn@gmail.com",
     website: "www.lyhu.vn",
     // Bank info for payment method = BANKING
     bankAccounts: [
         {
-            bankName: "Ngân hàng Á Châu (ACB)",
-            accountNumber: "12345678",
+            bankName: "Ngân hàng Techcombank",
+            accountNumber: "25811998",
             accountName: "CÔNG TY TNHH LYHU",
-            branch: "PGD ABC"
+            branch: "Chi nhánh Hà Tây"
         },
         {
-            bankName: "Ngân hàng Quân Đội (MB Bank)",
-            accountNumber: "88888888",
-            accountName: "CÔNG TY TNHH LYHU",
-            branch: "CN XYZ"
+            bankName: "Ngân hàng TP Bank",
+            accountNumber: "00368866368",
+            accountName: "NGUYỄN VĂN HUY",
+            branch: "Chi nhánh Hà Nội"
         }
     ]
 };
