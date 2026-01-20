@@ -27,13 +27,15 @@ BEGIN
     END IF;
 
     -- PERMISSION LOGIC
-    IF v_role IN ('admin', 'accountant') THEN
-        -- Admin and Accountant can delete ANY order
+    IF v_role = 'warehouse' THEN
+        RAISE EXCEPTION 'Permission denied: Warehouse cannot delete orders';
+    END IF;
+
+    IF v_role IN ('admin', 'accountant', 'sale_admin') THEN
+        -- Admin, Accountant, Sales Admin can delete ANY order
         NULL; 
     ELSIF v_order_owner = v_uid THEN
-        -- Owner can delete their own order
-        -- Optional: Restrict deletion if order is already delivered? 
-        -- For now, allowing deletion as per user request "User có quyền xóa đơn của mình"
+        -- Owner (Telesales, Sales, CTV) can delete their own order
         NULL;
     ELSE
         RAISE EXCEPTION 'Permission denied: You can only delete your own orders';
