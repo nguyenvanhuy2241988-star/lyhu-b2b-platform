@@ -349,7 +349,7 @@ export const fetchOrders = async (token?: string, filters?: { userId?: string, s
         const data = await response.json();
 
         return (data || []).map((o: any) => ({
-            id: o.id,
+            id: o.order_id || o.id,
             readableId: o.readable_id,
             customerName: o.customer_name || "Khách hàng",
             totalAmount: o.total_amount,

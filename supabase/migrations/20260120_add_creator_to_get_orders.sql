@@ -11,7 +11,7 @@ CREATE OR REPLACE FUNCTION public.get_orders_v3(
     p_limit int DEFAULT 100
 )
 RETURNS TABLE (
-    id uuid,
+    order_id uuid, -- Renamed to avoid 'ambiguous column' error
     readable_id int,
     status text,
     total_amount numeric,
@@ -26,7 +26,7 @@ RETURNS TABLE (
     payment_method text,
     note text,
     vat numeric,
-    creator_name text -- NEW COLUMN
+    creator_name text
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -50,7 +50,7 @@ BEGIN
 
     RETURN QUERY
     SELECT 
-        o.id,
+        o.id as order_id, -- Alias to match return table
         o.readable_id,
         o.status,
         o.total_amount,
@@ -82,7 +82,7 @@ BEGIN
         o.payment_method,
         o.note,
         o.vat,
-        creator.full_name as creator_name -- Joined Column
+        creator.full_name as creator_name
     FROM orders o
     LEFT JOIN customers c ON o.customer_id = c.id
     LEFT JOIN profiles creator ON o.telesales_user_id = creator.id
