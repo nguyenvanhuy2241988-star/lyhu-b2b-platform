@@ -154,7 +154,7 @@ export default function TelesalesCustomersPage() {
                     schema: 'public',
                     table: 'customers'
                 },
-                (payload) => {
+                (payload: any) => {
                     console.log('Realtime update received:', payload);
                     // Invalidate simple cache if exists (optional, but good practice)
                     // Then reload data
