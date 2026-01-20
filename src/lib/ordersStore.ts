@@ -645,3 +645,15 @@ export const updateOrderSupabase = async (orderId: string, updateData: any, toke
         return { success: false, error: e.message };
     }
 };
+
+export const deleteOrder = async (orderId: string) => {
+    try {
+        const { error } = await supabase.rpc('delete_order', { p_order_id: orderId });
+        if (error) throw error;
+        return true;
+    } catch (err: any) {
+        console.error("Delete order error:", err);
+        alert("Lỗi xóa đơn hàng: " + (err.message || JSON.stringify(err)));
+        return false;
+    }
+};

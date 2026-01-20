@@ -13,7 +13,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { scanOrdersForFraud } from "@/lib/fraudScan";
 import {
     Package, Clock, CheckCircle, XCircle, Search, Calendar,
-    AlertTriangle, ShieldAlert, ArrowUpDown, Filter, Download, MessageCircle, Eye
+    AlertTriangle, ShieldAlert, ArrowUpDown, Filter, Download, MessageCircle, Eye, Trash2
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { exportOrdersToCSV } from "@/lib/exportCSV";
@@ -461,6 +461,23 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                                                             <option value="cancelled">Hủy đơn</option>
                                                         </select>
                                                     )}
+
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (window.confirm("Bạn có chắc chắn muốn xóa đơn hàng này không? Hành động này không thể hoàn tác.")) {
+                                                                const { deleteOrder } = await import("@/lib/ordersStore");
+                                                                const success = await deleteOrder(order.id);
+                                                                if (success) {
+                                                                    // Realtime subscription should handle removal, or we can manually trigger reload
+                                                                    loadData(true);
+                                                                }
+                                                            }
+                                                        }}
+                                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Xóa đơn hàng"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
