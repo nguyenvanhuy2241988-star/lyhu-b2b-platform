@@ -45,6 +45,7 @@ export default function TelesalesCustomersPage() {
     const [customers, setCustomers] = useState<Customer[]>([]);
 
     // Filter State
+    const [showFilters, setShowFilters] = useState(false);
     const [selectedType, setSelectedType] = useState("");
     const [selectedProvince, setSelectedProvince] = useState("");
     const [selectedDistrict, setSelectedDistrict] = useState("");
