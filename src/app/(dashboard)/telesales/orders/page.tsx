@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Filter, Eye, FileText, MessageCircle, Pencil } from "lucide-react";
+import { Search, Filter, Eye, FileText, MessageCircle, Pencil, Trash2 } from "lucide-react";
 import { fetchOrders } from "@/lib/ordersStore";
 import { supabase } from "@/lib/supabaseClient"
 import type { Order } from "@/lib/ordersStore";
@@ -242,6 +242,19 @@ export default function TelesalesOrdersPage() {
                                                     <Pencil className="w-4 h-4" />
                                                 </button>
                                             )}
+                                            <button
+                                                onClick={async () => {
+                                                    if (window.confirm("Bạn có chắc chắn muốn xóa đơn hàng này không?")) {
+                                                        const { deleteOrder } = await import("@/lib/ordersStore");
+                                                        const success = await deleteOrder(order.id);
+                                                        // Realtime will auto-update the list
+                                                    }
+                                                }}
+                                                className="text-slate-400 hover:text-red-600 transition-colors bg-slate-50 hover:bg-red-50 p-2 rounded-lg"
+                                                title="Xóa đơn hàng"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
