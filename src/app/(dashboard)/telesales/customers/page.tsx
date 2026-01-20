@@ -161,7 +161,7 @@ export default function TelesalesCustomersPage() {
                     loadData();
                 }
             )
-            .subscribe((status) => {
+            .subscribe((status: any) => {
                 console.log("Realtime subscription status:", status);
             });
 
