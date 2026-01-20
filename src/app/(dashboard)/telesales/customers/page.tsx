@@ -25,6 +25,14 @@ export default function TelesalesCustomersPage() {
     const [showAddForm, setShowAddForm] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
     const [customers, setCustomers] = useState<Customer[]>([]);
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+    // Click outside to close menu
+    useEffect(() => {
+        const handleClickOutside = () => setOpenMenuId(null);
+        document.addEventListener('click', handleClickOutside);
+        return () => document.removeEventListener('click', handleClickOutside);
+    }, []);
 
     // Filter State
     const [showFilters, setShowFilters] = useState(false);
@@ -381,9 +389,46 @@ export default function TelesalesCustomersPage() {
                                             >
                                                 Sửa
                                             </button>
-                                            <button className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100">
-                                                <MoreHorizontal className="w-4 h-4" />
-                                            </button>
+                                            <div className="relative">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setOpenMenuId(openMenuId === customer.id ? null : customer.id);
+                                                    }}
+                                                    className="text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors"
+                                                >
+                                                    <MoreHorizontal className="w-4 h-4" />
+                                                </button>
+
+                                                {/* Dropdown Menu */}
+                                                {openMenuId === customer.id && (
+                                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-100">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                router.push(`/telesales/create-order?customerId=${customer.id}`);
+                                                            }}
+                                                            className="w-full text-left px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-primary-600 flex items-center gap-2"
+                                                        >
+                                                            <Plus className="w-4 h-4" />
+                                                            Tạo đơn hàng
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                if (window.confirm('Bạn có chắc chắn muốn xóa khách hàng này?')) {
+                                                                    // TODO: Implement delete logic
+                                                                    alert('Chức năng đang phát triển');
+                                                                }
+                                                            }}
+                                                            className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-slate-50"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                            Xóa khách hàng
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
