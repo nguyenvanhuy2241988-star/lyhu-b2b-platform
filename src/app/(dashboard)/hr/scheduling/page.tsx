@@ -100,20 +100,25 @@ export default function HRSchedulingPage() {
         }
     };
 
+    // Initial Data Load
     useEffect(() => {
         loadData();
+    }, []);
 
-        // Realtime Subscription
+    // Realtime Subscription (Data Refresh)
+    useEffect(() => {
         const channel = supabase
             .channel('hr_scheduling_changes')
             .on('postgres_changes', {
                 event: '*',
                 schema: 'public',
-                table: 'shift_registrations' // Listen to registrations changes
+                table: 'shift_registrations'
             }, () => {
-                // Refresh data on any change
-                // Optimize: only refresh registrations if schedule selected
-                if (selectedSchedule) {
+                // If a schedule is selected, refresh its registrations
+                // Use functional update or ref if needed, but here simple refetch is fine
+                // We access selectedSchedule from closure. Logic warning: closure staleness.
+                // Better approach: just re-fetch registrations for currently selected ID if valid.
+                if (selectedSchedule?.id) {
                     getShiftRegistrations(selectedSchedule.id).then(setRegistrations);
                 }
             })
@@ -123,14 +128,19 @@ export default function HRSchedulingPage() {
                 table: 'weekly_schedules'
             }, () => {
                 // Refresh schedules list
-                loadData();
+                // We should call a lighter version of loadData or just refetch schedules
+                getWeeklySchedules().then(setSchedules);
             })
             .subscribe();
 
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [selectedSchedule]); // Re-subscribe if selectedSchedule changes (to simplify closure capture, though slight overkill)
+    }, [selectedSchedule?.id]); // Only re-sub if ID changes to keep closure fresh? 
+    // Actually, re-subbing on every selection change is safe but potential flicker.
+    // Better: use a Ref for selectedScheduleId to avoid re-sub, or just accept the re-sub.
+    // Given the traffic, re-sub on schedule change is acceptable to ensure fresh closure.
+
 
 
     if (loading) return <div className="p-6 flex justify-center"><Loader2 className="animate-spin text-blue-500" /></div>;
