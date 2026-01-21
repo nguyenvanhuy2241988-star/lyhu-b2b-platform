@@ -1,12 +1,12 @@
--- Migration: Recruitment KPI Reporting RPC (Fix 42804 Type Mismatch)
--- Purpose: Aggregate Traffic vs Results with Strict Type Casting
+-- Migration: Recruitment KPI Reporting RPC (Fix Numeric vs BigInt Mismatch)
+-- Purpose: Aggregate Traffic vs Results with Strict Type Casting for ALL columns
 
 BEGIN;
 
 -- 1. Drop old function if exists
 DROP FUNCTION IF EXISTS public.get_recruitment_kpi_report(text, text);
 
--- 2. Create NEW Report Function (Strict Types)
+-- 2. Create NEW Report Function (Strict Types & BigInt Casts)
 CREATE OR REPLACE FUNCTION public.get_recruitment_kpi_report(
     p_start_date text DEFAULT NULL,
     p_end_date text DEFAULT NULL
@@ -44,7 +44,7 @@ BEGIN
         SELECT 
             t.creator_id,
             COUNT(t.code) as link_count,
-            COALESCE(SUM(t.clicks_count), 0) as click_count
+            COALESCE(SUM(t.clicks_count), 0) as click_count -- Returns NUMERIC by default
         FROM public.tracking_shortlinks t
         WHERE (v_start IS NULL OR t.created_at >= v_start)
           AND (v_end IS NULL OR t.created_at <= v_end)
@@ -62,12 +62,15 @@ BEGIN
     )
     SELECT 
         p.id as recruiter_id,
-        COALESCE(p.full_name, 'Unknown')::text as recruiter_name, -- Explicit Cast to text
-        COALESCE(u.email, 'No Email')::text as recruiter_email,   -- Explicit Cast to text
-        p.avatar_url::text as recruiter_avatar,                   -- Explicit Cast to text
-        COALESCE(ls.link_count, 0) as total_links,
-        COALESCE(ls.click_count, 0) as total_clicks,
-        COALESCE(lds.lead_count, 0) as total_leads,
+        COALESCE(p.full_name, 'Unknown')::text as recruiter_name,
+        COALESCE(u.email, 'No Email')::text as recruiter_email,
+        p.avatar_url::text as recruiter_avatar,
+        
+        -- Explicit Casts to BigInt to match RETURNS TABLE signature
+        COALESCE(ls.link_count, 0)::bigint as total_links,
+        COALESCE(ls.click_count, 0)::bigint as total_clicks, -- Fixes "numeric vs bigint" error
+        COALESCE(lds.lead_count, 0)::bigint as total_leads,
+        
         CASE 
             WHEN COALESCE(ls.click_count, 0) = 0 THEN 0 
             ELSE ROUND((COALESCE(lds.lead_count, 0)::numeric / ls.click_count::numeric) * 100, 2)
