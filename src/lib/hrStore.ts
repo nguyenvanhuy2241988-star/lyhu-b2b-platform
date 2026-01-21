@@ -279,7 +279,7 @@ export const getFundBalance = async () => {
 
     if (error) throw error;
 
-    const balance = (data || []).reduce((acc, curr) => {
+    const balance = (data || []).reduce((acc: number, curr: any) => {
         return curr.type === 'income' ? acc + Number(curr.amount) : acc - Number(curr.amount);
     }, 0);
 
