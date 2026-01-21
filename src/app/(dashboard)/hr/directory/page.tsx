@@ -44,7 +44,7 @@ export default function HRDirectoryPage() {
     };
 
     const filteredProfiles = profiles.filter(p => {
-        const matchSearch = p.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        const matchSearch = p.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             p.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             p.phone?.includes(searchTerm);
         const matchDept = selectedDept === 'all' || p.department_id === selectedDept;
@@ -105,7 +105,7 @@ export default function HRDirectoryPage() {
                                                 {profile.avatar_url ? (
                                                     <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full rounded-full object-cover" />
                                                 ) : (
-                                                    profile.full_name.charAt(0)
+                                                    profile.full_name?.charAt(0) || '?'
                                                 )}
                                             </div>
                                             <div>
@@ -142,7 +142,7 @@ export default function HRDirectoryPage() {
                                         )}
                                         <div className="flex items-center gap-2">
                                             <Briefcase className="w-4 h-4 text-slate-400" />
-                                            {profile.work_type === 'parttime' ? 'Part-time' : 'Full-time'}
+                                            {profile.work_type === 'parttime' ? 'Part-time' : (profile.work_type === 'intern' ? 'Thực tập sinh' : 'Full-time')}
                                         </div>
                                     </div>
                                 </div>
@@ -150,77 +150,78 @@ export default function HRDirectoryPage() {
                         ))}
                     </div>
                 )}
+            </div>
 
-                {/* Edit Modal */}
-                {editingProfile && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-2xl w-full max-w-md p-6">
-                            <h2 className="text-xl font-bold mb-4">Cập nhật hồ sơ: {editingProfile.full_name}</h2>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Phòng ban</label>
-                                    <select
-                                        className="w-full border rounded-lg px-3 py-2 outline-none"
-                                        value={editingProfile.department_id || ''}
-                                        onChange={e => setEditingProfile({ ...editingProfile, department_id: e.target.value })}
-                                    >
-                                        <option value="">-- Chọn phòng ban --</option>
-                                        {departments.map(d => (
-                                            <option key={d.id} value={d.id}>{d.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Vị trí / Chức danh</label>
-                                    <input
-                                        className="w-full border rounded-lg px-3 py-2 outline-none"
-                                        value={editingProfile.position || ''}
-                                        onChange={e => setEditingProfile({ ...editingProfile, position: e.target.value })}
-                                        placeholder="VD: Telesales Part-time"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Loại hình làm việc</label>
-                                    <select
-                                        className="w-full border rounded-lg px-3 py-2 outline-none"
-                                        value={editingProfile.work_type || 'fulltime'}
-                                        onChange={e => setEditingProfile({ ...editingProfile, work_type: e.target.value as any })}
-                                    >
-                                        <option value="fulltime">Full-time</option>
-                                        <option value="parttime">Part-time (Sinh viên)</option>
-                                        <option value="intern">Thực tập sinh</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Ngày sinh</label>
-                                    <input
-                                        type="date"
-                                        className="w-full border rounded-lg px-3 py-2 outline-none"
-                                        value={editingProfile.dob || ''}
-                                        onChange={e => setEditingProfile({ ...editingProfile, dob: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Số điện thoại</label>
-                                    <input
-                                        className="w-full border rounded-lg px-3 py-2 outline-none"
-                                        value={editingProfile.phone || ''}
-                                        onChange={e => setEditingProfile({ ...editingProfile, phone: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-                            <div className="mt-6 flex justify-end gap-3">
-                                <button onClick={() => setEditingProfile(null)} className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded">Hủy</button>
-                                <button
-                                    onClick={() => handleUpdateProfile(editingProfile)}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            {/* Edit Modal */}
+            {editingProfile && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-md p-6">
+                        <h2 className="text-xl font-bold mb-4">Cập nhật hồ sơ: {editingProfile.full_name}</h2>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Phòng ban</label>
+                                <select
+                                    className="w-full border rounded-lg px-3 py-2 outline-none"
+                                    value={editingProfile.department_id || ''}
+                                    onChange={e => setEditingProfile({ ...editingProfile, department_id: e.target.value })}
                                 >
-                                    Lưu thay đổi
-                                </button>
+                                    <option value="">-- Chọn phòng ban --</option>
+                                    {departments.map(d => (
+                                        <option key={d.id} value={d.id}>{d.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Vị trí / Chức danh</label>
+                                <input
+                                    className="w-full border rounded-lg px-3 py-2 outline-none"
+                                    value={editingProfile.position || ''}
+                                    onChange={e => setEditingProfile({ ...editingProfile, position: e.target.value })}
+                                    placeholder="VD: Telesales Part-time"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Loại hình làm việc</label>
+                                <select
+                                    className="w-full border rounded-lg px-3 py-2 outline-none"
+                                    value={editingProfile.work_type || 'fulltime'}
+                                    onChange={e => setEditingProfile({ ...editingProfile, work_type: e.target.value as any })}
+                                >
+                                    <option value="fulltime">Full-time</option>
+                                    <option value="parttime">Part-time (Sinh viên)</option>
+                                    <option value="intern">Thực tập sinh</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Ngày sinh</label>
+                                <input
+                                    type="date"
+                                    className="w-full border rounded-lg px-3 py-2 outline-none"
+                                    value={editingProfile.dob || ''}
+                                    onChange={e => setEditingProfile({ ...editingProfile, dob: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Số điện thoại</label>
+                                <input
+                                    className="w-full border rounded-lg px-3 py-2 outline-none"
+                                    value={editingProfile.phone || ''}
+                                    onChange={e => setEditingProfile({ ...editingProfile, phone: e.target.value })}
+                                />
                             </div>
                         </div>
+                        <div className="mt-6 flex justify-end gap-3">
+                            <button onClick={() => setEditingProfile(null)} className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded">Hủy</button>
+                            <button
+                                onClick={() => handleUpdateProfile(editingProfile)}
+                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                            >
+                                Lưu thay đổi
+                            </button>
+                        </div>
                     </div>
-                )}
-            </div>
-            );
+                </div>
+            )}
+        </div>
+    );
 }
