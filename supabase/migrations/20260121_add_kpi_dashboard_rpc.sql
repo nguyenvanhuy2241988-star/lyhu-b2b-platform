@@ -1,15 +1,14 @@
--- Migration: Recruitment KPI Reporting RPC (Fix 400 Error)
--- Purpose: Aggregate Traffic (Clicks) vs Results (Leads) for Dashboard
--- Changes: Renamed function, removed complex aggregations, safe parameter handling
+-- Migration: Recruitment KPI Reporting RPC (Fix 42804 Type Mismatch)
+-- Purpose: Aggregate Traffic vs Results with Strict Type Casting
 
 BEGIN;
 
--- 1. Drop old function if exists (Clean up)
-DROP FUNCTION IF EXISTS public.get_recruitment_kpi_stats(timestamptz, timestamptz);
+-- 1. Drop old function if exists
+DROP FUNCTION IF EXISTS public.get_recruitment_kpi_report(text, text);
 
--- 2. Create NEW Report Function (Safe Mode)
+-- 2. Create NEW Report Function (Strict Types)
 CREATE OR REPLACE FUNCTION public.get_recruitment_kpi_report(
-    p_start_date text DEFAULT NULL, -- Receive as text to avoid JS Date issues
+    p_start_date text DEFAULT NULL,
     p_end_date text DEFAULT NULL
 )
 RETURNS TABLE (
@@ -42,19 +41,16 @@ BEGIN
 
     RETURN QUERY
     WITH link_stats AS (
-        -- Aggregate stats per recruiter from tracking links
         SELECT 
             t.creator_id,
             COUNT(t.code) as link_count,
             COALESCE(SUM(t.clicks_count), 0) as click_count
-            -- Removed mode() to prevent potential 400 errors
         FROM public.tracking_shortlinks t
         WHERE (v_start IS NULL OR t.created_at >= v_start)
           AND (v_end IS NULL OR t.created_at <= v_end)
         GROUP BY t.creator_id
     ),
     lead_stats AS (
-        -- Aggregate leads count per recruiter (via tracking code)
         SELECT 
             t.creator_id,
             COUNT(c.id) as lead_count
@@ -66,9 +62,9 @@ BEGIN
     )
     SELECT 
         p.id as recruiter_id,
-        COALESCE(p.full_name, 'Unknown') as recruiter_name,
-        COALESCE(u.email, 'No Email') as recruiter_email,
-        p.avatar_url as recruiter_avatar,
+        COALESCE(p.full_name, 'Unknown')::text as recruiter_name, -- Explicit Cast to text
+        COALESCE(u.email, 'No Email')::text as recruiter_email,   -- Explicit Cast to text
+        p.avatar_url::text as recruiter_avatar,                   -- Explicit Cast to text
         COALESCE(ls.link_count, 0) as total_links,
         COALESCE(ls.click_count, 0) as total_clicks,
         COALESCE(lds.lead_count, 0) as total_leads,
@@ -76,7 +72,7 @@ BEGIN
             WHEN COALESCE(ls.click_count, 0) = 0 THEN 0 
             ELSE ROUND((COALESCE(lds.lead_count, 0)::numeric / ls.click_count::numeric) * 100, 2)
         END as conversion_rate,
-        'N/A'::text as top_source -- Placeholder for now
+        'N/A'::text as top_source
     FROM public.profiles p
     LEFT JOIN auth.users u ON p.id = u.id
     LEFT JOIN link_stats ls ON p.id = ls.creator_id
