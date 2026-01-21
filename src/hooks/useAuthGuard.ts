@@ -9,6 +9,15 @@ const ROLE_PATHS = {
     [ROLES.CTV]: "/ctv",
     [ROLES.CUSTOMER]: "/customer",
     [ROLES.TELESALES]: "/telesales",
+    [ROLES.RECRUITER]: "/recruitment",
+    [ROLES.WAREHOUSE]: "/warehouse",
+    [ROLES.MARKETING]: "/marketing",
+    [ROLES.ECOMMERCE]: "/ecommerce",
+    [ROLES.RND]: "/rnd",
+    [ROLES.SHIPPER]: "/shipper",
+    [ROLES.ACCOUNTANT]: "/accountant",
+    [ROLES.SALE_ADMIN]: "/sale-admin",
+    [ROLES.LIVESTREAM]: "/livestream",
 };
 
 export type UserRole = keyof typeof ROLE_PATHS;
