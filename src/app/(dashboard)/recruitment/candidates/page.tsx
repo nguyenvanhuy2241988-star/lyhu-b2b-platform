@@ -272,6 +272,7 @@ export default function CandidatesPage() {
                                 <th className="px-6 py-4">Vị trí</th>
                                 <th className="px-6 py-4">Liên hệ</th>
                                 <th className="px-6 py-4">Nguồn</th>
+                                <th className="px-6 py-4">Tracking</th>
                                 <th className="px-6 py-4">Ngày nộp</th>
                                 <th className="px-6 py-4">Trạng thái</th>
                                 <th className="px-6 py-4 text-right">Hành động</th>
@@ -293,6 +294,13 @@ export default function CandidatesPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         {cand.source ? <span className="px-2 py-1 bg-slate-100 rounded text-xs font-medium">{cand.source}</span> : '-'}
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        {cand.tracking_code ? (
+                                            <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-mono font-medium">#{cand.tracking_code}</span>
+                                        ) : (
+                                            <span className="text-slate-400 text-xs">-</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4">{format(new Date(cand.created_at), 'dd/MM/yyyy')}</td>
                                     <td className="px-6 py-4">

@@ -28,6 +28,7 @@ export interface RecruitmentCandidate {
     status: CandidateStatus;
     created_at: string;
     source?: string;
+    tracking_code?: string;
     cv_url?: string;
     notes?: string;
     // New detailed fields
