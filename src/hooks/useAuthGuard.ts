@@ -22,7 +22,7 @@ const ROLE_PATHS = {
 
 export type UserRole = keyof typeof ROLE_PATHS;
 
-export function useAuthGuard(expectedRole: UserRole) {
+export function useAuthGuard(expectedRole?: UserRole) {
     const { user, role, isLoading } = useAuth();
     const router = useRouter();
 
@@ -41,7 +41,8 @@ export function useAuthGuard(expectedRole: UserRole) {
             return;
         }
 
-        if (role && role !== expectedRole) {
+        // If expectedRole is provided, enforce it
+        if (expectedRole && role && role !== expectedRole) {
             // 🚀 Special case: Admins are always allowed to access other role pages
             if (role === ROLES.ADMIN) {
                 console.log(`[useAuthGuard] Admin accessing ${expectedRole} page. Permitted.`);
@@ -54,5 +55,5 @@ export function useAuthGuard(expectedRole: UserRole) {
         }
     }, [user, role, isLoading, expectedRole, router]);
 
-    return !isLoading && user && role === expectedRole;
+    return !isLoading && user && (!expectedRole || role === expectedRole);
 }
