@@ -82,7 +82,7 @@ function ShiftApprovalsModal({
                                             <div className="text-sm font-medium text-slate-900">{reg.user?.full_name || "Unknown"}</div>
                                             <div className={`text - [10px] uppercase font - bold ${
     reg.status === 'approved' ? 'text-green-600' :
-    reg.status === 'rejected' ? 'text-red-500' : 'text-yellow-600'
+        reg.status === 'rejected' ? 'text-red-500' : 'text-yellow-600'
 } `}>
                                                 {reg.status === 'pending' ? 'Chờ duyệt' :
                                                     reg.status === 'approved' ? 'Đã duyệt' : 'Đã từ chối'}
@@ -394,8 +394,8 @@ export default function HRSchedulingPage() {
                             onClick={() => handleSelectSchedule(sch)}
                             className={`flex - shrink - 0 px - 4 py - 2 rounded - lg border text - sm font - medium transition ${
     selectedSchedule?.id === sch.id
-    ? "bg-white border-blue-500 text-blue-700 shadow-sm ring-1 ring-blue-100"
-    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+        ? "bg-white border-blue-500 text-blue-700 shadow-sm ring-1 ring-blue-100"
+        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
 } `}
                         >
                             Tuần {sch.week_number} ({sch.year})
@@ -477,8 +477,8 @@ export default function HRSchedulingPage() {
                                                                 {myReg ? (
                                                                     <div className={`p - 2 rounded border text - xs font - medium flex justify - between items - center ${
     myReg.status === 'approved'
-    ? 'bg-green-50 border-green-200 text-green-700'
-    : 'bg-yellow-50 border-yellow-200 text-yellow-700'
+        ? 'bg-green-50 border-green-200 text-green-700'
+        : 'bg-yellow-50 border-yellow-200 text-yellow-700'
 } `}>
                                                                         <span>{myReg.status === 'pending' ? 'Đang chờ' : 'Đã duyệt'}</span>
                                                                         {myReg.status === 'pending' && (
@@ -547,12 +547,5 @@ export default function HRSchedulingPage() {
     );
 }
 
-// Modal Component defined outside or above
-// (I will add imports at top manually in next step if missed, but assume I can prepend)
-// Actually I need to define ShiftApprovalsModal BEFORE generic export or at top file.
-// Since I can't easily prepend with this tool without overwriting imports, I'll use multi-replace or just ensure it's placed well.
-// Wait, I am replacing the End of file. I need to make sure ShiftApprovalsModal is defined.
-// Current strategy: Replacing from line 138 (getDaysInWeek) to end.
-// And I need to insert ShiftApprovalsModal definition BEFORE `export default `... which is Line 18.
-// I will use `replace_file_content` targeting the top imports to add the Component there.
+
 
