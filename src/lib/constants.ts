@@ -151,6 +151,7 @@ export const NAV_ITEMS = {
         { label: "CRM", href: PATH_LEADS, icon: TrendingUp },
         { label: "Khách hàng", href: "/sales/customers", icon: Users },
         { label: "Đơn hàng", href: PATH_ORDERS_SALES, icon: ShoppingCart },
+        { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
         { label: "Tài liệu", href: "/documents", icon: FileText },
     ],
     [ROLES.CTV]: [
@@ -161,6 +162,7 @@ export const NAV_ITEMS = {
         { label: "Lead & Tiềm năng", href: "/ctv/leads", icon: UserPlus },
         { label: "Việc cần làm", href: "/ctv/tasks", icon: ListTodo },
         { label: "Hoa hồng & Ví", href: "/ctv/wallet", icon: DollarSign },
+        { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
         { label: "Tài liệu", href: "/documents", icon: FileText },
     ],
     [ROLES.TELESALES]: [
@@ -173,6 +175,7 @@ export const NAV_ITEMS = {
         { label: "Khách hàng", href: "/telesales/customers", icon: Users },
         { label: "Thu nhập & KPI", href: "/telesales/earnings", icon: DollarSign },
         { label: "Quy định & Chính sách", href: "/telesales/rules", icon: Book },
+        { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
         { label: "Tài liệu", href: "/documents", icon: FileText },
     ],
     [ROLES.RECRUITER]: [
@@ -193,6 +196,7 @@ export const NAV_ITEMS = {
         { label: "Quản lý tồn kho", href: "/warehouse/inventory", icon: Archive },
         { label: "Kiểm kê Kho", href: "/warehouse/audit", icon: Archive },
         { label: "Sản phẩm", href: "/warehouse/products", icon: Package },
+        { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
         { label: "Tài liệu", href: "/documents", icon: FileText },
         { label: "Việc cần làm", href: "/tasks", icon: ListTodo },
     ],
@@ -203,6 +207,7 @@ export const NAV_ITEMS = {
         { label: "Leads", href: "/marketing/leads", icon: Users },
         { label: "Content & Lịch", href: "/marketing/content", icon: Calendar },
         { label: "Tự động hóa", href: "/marketing/automation", icon: Zap },
+        { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
         { label: "Tài liệu", href: "/documents", icon: FileText },
         { label: "Việc cần làm", href: "/tasks", icon: ListTodo },
     ],

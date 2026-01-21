@@ -11,6 +11,9 @@ import {
 import { format, startOfWeek, addDays, getISOWeek, getYear } from "date-fns";
 import { vi } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Plus, Loader2 } from "lucide-react";
+import { createClient } from "@/lib/supabaseClient"; // Ensure this path is correct or import from hrStore if exposed
+
+const supabase = createClient();
 
 export default function HRSchedulingPage() {
     const { user, role } = useAuth();
@@ -99,7 +102,36 @@ export default function HRSchedulingPage() {
 
     useEffect(() => {
         loadData();
-    }, []);
+
+        // Realtime Subscription
+        const channel = supabase
+            .channel('hr_scheduling_changes')
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'shift_registrations' // Listen to registrations changes
+            }, () => {
+                // Refresh data on any change
+                // Optimize: only refresh registrations if schedule selected
+                if (selectedSchedule) {
+                    getShiftRegistrations(selectedSchedule.id).then(setRegistrations);
+                }
+            })
+            .on('postgres_changes', {
+                event: '*',
+                schema: 'public',
+                table: 'weekly_schedules'
+            }, () => {
+                // Refresh schedules list
+                loadData();
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [selectedSchedule]); // Re-subscribe if selectedSchedule changes (to simplify closure capture, though slight overkill)
+
 
     if (loading) return <div className="p-6 flex justify-center"><Loader2 className="animate-spin text-blue-500" /></div>;
 
