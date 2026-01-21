@@ -12,8 +12,8 @@ export default function HRLayout({
 }: {
     children: React.ReactNode;
 }) {
-    // HR is accessible by Admin, Recruiter, and maybe others. For now allow Recruiter.
-    useAuthGuard([ROLES.ADMIN, ROLES.RECRUITER] as any);
+    // HR is accessible by Admin, Recruiter. useAuthGuard handles Admin bypass automatically.
+    useAuthGuard(ROLES.RECRUITER);
     const pathname = usePathname();
 
     const HR_NAV = [
@@ -37,8 +37,8 @@ export default function HRLayout({
                                         key={item.href}
                                         href={item.href}
                                         className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition ${isActive
-                                                ? "bg-blue-50 text-blue-700"
-                                                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                                            ? "bg-blue-50 text-blue-700"
+                                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                                             }`}
                                     >
                                         <div className="flex items-center gap-3">
