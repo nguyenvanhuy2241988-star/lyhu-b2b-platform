@@ -131,6 +131,7 @@ export const NAV_ITEMS = {
         { label: "Hiệu quả Tuyển dụng", href: "/recruitment/performance", icon: Trophy },
         { label: "------------", href: "#", icon: List }, // Separator
         { label: "Hồ sơ Nhân sự", href: "/hr/directory", icon: Users },
+        { label: "Sự kiện (Coming)", href: "#", icon: Calendar },
         { label: "Xếp lịch (Coming)", href: "#", icon: Calendar },
         { label: "Văn hóa & Quỹ", href: "#", icon: Gift },
         { label: "------------", href: "#", icon: List }, // Separator
