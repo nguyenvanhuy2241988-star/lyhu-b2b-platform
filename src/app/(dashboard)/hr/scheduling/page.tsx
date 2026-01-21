@@ -104,7 +104,7 @@ export default function HRSchedulingPage() {
     if (loading) return <div className="p-6 flex justify-center"><Loader2 className="animate-spin text-blue-500" /></div>;
 
     // Helper to generate days of the selected week
-    const getDays InWeek = (week: number, year: number) => {
+    const getDaysInWeek = (week: number, year: number) => {
         // Calculate start date of ISO week
         // This is complex in JS native. date-fns simplified:
         // But getISOWeek is read-only. We need to construct date from week/year.
@@ -199,8 +199,8 @@ export default function HRSchedulingPage() {
                             key={sch.id}
                             onClick={() => handleSelectSchedule(sch)}
                             className={`flex-shrink-0 px-4 py-2 rounded-lg border text-sm font-medium transition ${selectedSchedule?.id === sch.id
-                                    ? "bg-white border-blue-500 text-blue-700 shadow-sm ring-1 ring-blue-100"
-                                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                                ? "bg-white border-blue-500 text-blue-700 shadow-sm ring-1 ring-blue-100"
+                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                                 }`}
                         >
                             Tuần {sch.week_number} ({sch.year})
@@ -257,8 +257,8 @@ export default function HRSchedulingPage() {
                                                     <td key={dayIdx} className="px-4 py-3 border-l border-slate-50">
                                                         {myReg ? (
                                                             <div className={`p-2 rounded border text-xs font-medium flex justify-between items-center ${myReg.status === 'approved'
-                                                                    ? 'bg-green-50 border-green-200 text-green-700'
-                                                                    : 'bg-yellow-50 border-yellow-200 text-yellow-700'
+                                                                ? 'bg-green-50 border-green-200 text-green-700'
+                                                                : 'bg-yellow-50 border-yellow-200 text-yellow-700'
                                                                 }`}>
                                                                 <span>{myReg.status === 'pending' ? 'Đang chờ' : 'Đã duyệt'}</span>
                                                                 {myReg.status === 'pending' && (
