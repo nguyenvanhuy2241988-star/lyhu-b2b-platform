@@ -26,7 +26,7 @@ export default function HRLayout({
     ];
 
     return (
-        <DashboardShell role={role || ROLES.RECRUITER} title="Quản trị Nhân sự (HRM)">
+        <DashboardShell role={(role as any) || ROLES.RECRUITER} title="Quản trị Nhân sự (HRM)">
             <div className="flex flex-col lg:flex-row gap-6 p-6 h-full overflow-hidden">
                 {/* Local Sidebar (Modules) */}
                 <div className="w-full lg:w-64 flex-shrink-0 space-y-4">
