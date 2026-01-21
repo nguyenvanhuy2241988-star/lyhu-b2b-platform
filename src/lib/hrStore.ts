@@ -225,3 +225,63 @@ export const updateRegistrationStatus = async (id: string, status: 'approved' | 
     if (error) throw error;
     return data;
 };
+
+// -- CULTURE & FUND --
+
+export interface CultureEvent {
+    id: string;
+    title: string;
+    description?: string;
+    start_time: string;
+    end_time?: string;
+    type: 'event' | 'meeting' | 'holiday' | 'party';
+    created_at: string;
+}
+
+export interface FundTransaction {
+    id: string;
+    amount: number;
+    type: 'income' | 'expense';
+    description: string;
+    category?: string;
+    created_at: string;
+}
+
+export const getCultureEvents = async () => {
+    const { data, error } = await supabase
+        .from('culture_events')
+        .select('*')
+        .order('start_time', { ascending: true })
+        .gte('start_time', new Date().toISOString()); // Only upcoming
+
+    if (error) throw error;
+    return data as CultureEvent[];
+};
+
+export const getFundTransactions = async () => {
+    const { data, error } = await supabase
+        .from('fund_transactions')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20); // Last 20 transactions
+
+    if (error) throw error;
+    return data as FundTransaction[];
+};
+
+export const getFundBalance = async () => {
+    // Simple calculation from recent history or creating a separate RPC/View is better for real apps
+    // For MVP/Demo: Fetch all and sum (warning: performance heavy later)
+    // Optimization: We will just fetch all for now as dataset is small.
+    const { data, error } = await supabase
+        .from('fund_transactions')
+        .select('amount, type');
+
+    if (error) throw error;
+
+    const balance = (data || []).reduce((acc, curr) => {
+        return curr.type === 'income' ? acc + Number(curr.amount) : acc - Number(curr.amount);
+    }, 0);
+
+    return balance;
+};
