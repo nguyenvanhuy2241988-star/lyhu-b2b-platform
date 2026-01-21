@@ -50,7 +50,6 @@ export default function HRLayout({
                                             {item.label}
                                         </div>
                                         {isActive && <ChevronRight className="w-4 h-4 text-blue-500" />}
-                                        {item.comingSoon && <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">Sớm ra mắt</span>}
                                     </Link>
                                 );
                             })}
