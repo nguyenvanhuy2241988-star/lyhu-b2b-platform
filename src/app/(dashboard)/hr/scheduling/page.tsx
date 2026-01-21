@@ -14,6 +14,7 @@ import { ChevronLeft, ChevronRight, Plus, Loader2 } from "lucide-react";
 // ... existing imports
 import { X, Check, User as UserIcon } from "lucide-react";
 import { updateRegistrationStatus } from "@/lib/hrStore";
+import { supabase } from "@/lib/supabaseClient";
 
 // Modal Component for Admin Approvals
 function ShiftApprovalsModal({
@@ -80,7 +81,7 @@ function ShiftApprovalsModal({
                                         <div>
                                             <div className="text-sm font-medium text-slate-900">{reg.user?.full_name || "Unknown"}</div>
                                             <div className={`text-[10px] uppercase font-bold ${reg.status === 'approved' ? 'text-green-600' :
-                                                    reg.status === 'rejected' ? 'text-red-500' : 'text-yellow-600'
+                                                reg.status === 'rejected' ? 'text-red-500' : 'text-yellow-600'
                                                 }`}>
                                                 {reg.status === 'pending' ? 'Chờ duyệt' :
                                                     reg.status === 'approved' ? 'Đã duyệt' : 'Đã từ chối'}
@@ -316,8 +317,8 @@ export default function HRSchedulingPage() {
                             key={sch.id}
                             onClick={() => handleSelectSchedule(sch)}
                             className={`flex-shrink-0 px-4 py-2 rounded-lg border text-sm font-medium transition ${selectedSchedule?.id === sch.id
-                                    ? "bg-white border-blue-500 text-blue-700 shadow-sm ring-1 ring-blue-100"
-                                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                                ? "bg-white border-blue-500 text-blue-700 shadow-sm ring-1 ring-blue-100"
+                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
                                 }`}
                         >
                             Tuần {sch.week_number} ({sch.year})
@@ -396,8 +397,8 @@ export default function HRSchedulingPage() {
                                                             <>
                                                                 {myReg ? (
                                                                     <div className={`p-2 rounded border text-xs font-medium flex justify-between items-center ${myReg.status === 'approved'
-                                                                            ? 'bg-green-50 border-green-200 text-green-700'
-                                                                            : 'bg-yellow-50 border-yellow-200 text-yellow-700'
+                                                                        ? 'bg-green-50 border-green-200 text-green-700'
+                                                                        : 'bg-yellow-50 border-yellow-200 text-yellow-700'
                                                                         }`}>
                                                                         <span>{myReg.status === 'pending' ? 'Đang chờ' : 'Đã duyệt'}</span>
                                                                         {myReg.status === 'pending' && (
