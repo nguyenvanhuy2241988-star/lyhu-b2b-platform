@@ -1,4 +1,3 @@
-```
 "use client";
 
 import { useEffect, useState } from "react";
@@ -80,10 +79,9 @@ function ShiftApprovalsModal({
                                         </div>
                                         <div>
                                             <div className="text-sm font-medium text-slate-900">{reg.user?.full_name || "Unknown"}</div>
-                                            <div className={`text - [10px] uppercase font - bold ${
-    reg.status === 'approved' ? 'text-green-600' :
-        reg.status === 'rejected' ? 'text-red-500' : 'text-yellow-600'
-} `}>
+                                            <div className={`text-[10px] uppercase font-bold ${reg.status === 'approved' ? 'text-green-600' :
+                                                    reg.status === 'rejected' ? 'text-red-500' : 'text-yellow-600'
+                                                }`}>
                                                 {reg.status === 'pending' ? 'Chờ duyệt' :
                                                     reg.status === 'approved' ? 'Đã duyệt' : 'Đã từ chối'}
                                             </div>
@@ -135,73 +133,6 @@ export default function HRSchedulingPage() {
     // Modal State
     const [modalOpen, setModalOpen] = useState(false);
     const [modalData, setModalData] = useState<{ shift: WorkShift, date: Date, regs: ShiftRegistration[] } | null>(null);
-
-    // Setup for current week view or creating new
-    const today = new Date();
-    const currentWeekInfo = { week: getISOWeek(today), year: getYear(today) };
-
-    // ... (keep logic: loadData, handleSelectSchedule,handleCreateWeek, handleRegister, handleCancel, useEffects) ...
-    // Note: I will reuse the existing logic, just patching the UI rendering below.
-    // For brevity in replacement, I assume the tool keeps context if I target carefully, 
-    // but here I am replacing the end of the file, so I need to be careful to include the functions if I overwrite them.
-    // Wait, replacing from line 206 (Return statement) is safer.
-
-    const loadData = async () => { /* ... existing ... */
-        setLoading(true);
-        try {
-            const [schedulesData, shiftsData] = await Promise.all([
-                getWeeklySchedules(),
-                getWorkShifts()
-            ]);
-            setSchedules(schedulesData);
-            setShifts(shiftsData);
-            if (schedulesData.length > 0) handleSelectSchedule(schedulesData[0]);
-        } catch (error) { console.error(error); } finally { setLoading(false); }
-    };
-
-    const handleSelectSchedule = async (schedule: WeeklySchedule) => {
-        setSelectedSchedule(schedule);
-        try {
-            const regs = await getShiftRegistrations(schedule.id);
-            setRegistrations(regs);
-        } catch (err) { console.error(err); }
-    };
-
-    // ... Re-declaring simple handlers to ensure they exist in scope if I overwrite ...
-    // Actually, to minimize risk, I will ONLY replace the JSX part and the Modal state part.
-
-    const handleCreateWeek = async () => { /* ... existing logic ... */
-        // ... (abbreviated for tool input limits, assuming I don't overwrite logic lines if I start replacement late)
-        // Wait, multi repalce is better.
-    };
-
-    // ...
-
-    // Let's use the tool properly: I will insert the Modal definition BEFORE the default export, 
-    // and then REPLACE the return statement and state definitions inside the component.
-
-    // STOP. The user wants the answer "Where?".
-    // I should construct the UI first.
-
-    const openModal = (shift: WorkShift, date: Date, regs: ShiftRegistration[]) => {
-        setModalData({ shift, date, regs });
-        setModalOpen(true);
-    };
-
-    const refreshData = () => {
-        if (selectedSchedule) handleSelectSchedule(selectedSchedule);
-    };
-
-    // ... (rest of logic) ...
-
-    const { user, role } = useAuth();
-    const isAdmin = role === ROLES.ADMIN;
-
-    const [loading, setLoading] = useState(true);
-    const [schedules, setSchedules] = useState<WeeklySchedule[]>([]);
-    const [selectedSchedule, setSelectedSchedule] = useState<WeeklySchedule | null>(null);
-    const [shifts, setShifts] = useState<WorkShift[]>([]);
-    const [registrations, setRegistrations] = useState<ShiftRegistration[]>([]);
 
     // Setup for current week view or creating new
     const today = new Date();
@@ -314,17 +245,9 @@ export default function HRSchedulingPage() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [selectedSchedule?.id]); // Only re-sub if ID changes to keep closure fresh? 
-    // Actually, re-subbing on every selection change is safe but potential flicker.
-    // Better: use a Ref for selectedScheduleId to avoid re-sub, or just accept the re-sub.
-    // Given the traffic, re-sub on schedule change is acceptable to ensure fresh closure.
-
-
+    }, [selectedSchedule?.id]);
 
     if (loading) return <div className="p-6 flex justify-center"><Loader2 className="animate-spin text-blue-500" /></div>;
-
-    const [modalOpen, setModalOpen] = useState(false);
-    const [modalData, setModalData] = useState<{ shift: WorkShift, date: Date, regs: ShiftRegistration[] } | null>(null);
 
     const openAdminModal = (shift: WorkShift, date: Date) => {
         if (!isAdmin) return;
@@ -392,16 +315,14 @@ export default function HRSchedulingPage() {
                         <button
                             key={sch.id}
                             onClick={() => handleSelectSchedule(sch)}
-                            className={`flex - shrink - 0 px - 4 py - 2 rounded - lg border text - sm font - medium transition ${
-    selectedSchedule?.id === sch.id
-        ? "bg-white border-blue-500 text-blue-700 shadow-sm ring-1 ring-blue-100"
-        : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-} `}
+                            className={`flex-shrink-0 px-4 py-2 rounded-lg border text-sm font-medium transition ${selectedSchedule?.id === sch.id
+                                    ? "bg-white border-blue-500 text-blue-700 shadow-sm ring-1 ring-blue-100"
+                                    : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                                }`}
                         >
                             Tuần {sch.week_number} ({sch.year})
-                            <span className={`ml - 2 text - [10px] uppercase px - 1.5 py - 0.5 rounded ${
-    sch.status === 'open' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500 frame'
-} `}>
+                            <span className={`ml-2 text-[10px] uppercase px-1.5 py-0.5 rounded ${sch.status === 'open' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500 frame'
+                                }`}>
                                 {sch.status}
                             </span>
                         </button>
@@ -457,9 +378,8 @@ export default function HRSchedulingPage() {
                                                             // ADMIN VIEW: Show Count & Click to Open Modal
                                                             <button
                                                                 onClick={() => openAdminModal(shift, date)}
-                                                                className={`w - full h - full min - h - [40px] rounded flex flex - col items - center justify - center gap - 1 transition - colors ${
-    cellRegs.length > 0 ? "bg-blue-50 hover:bg-blue-100 text-blue-700" : "hover:bg-slate-100 text-slate-300"
-} `}
+                                                                className={`w-full h-full min-h-[40px] rounded flex flex-col items-center justify-center gap-1 transition-colors ${cellRegs.length > 0 ? "bg-blue-50 hover:bg-blue-100 text-blue-700" : "hover:bg-slate-100 text-slate-300"
+                                                                    }`}
                                                             >
                                                                 {cellRegs.length > 0 ? (
                                                                     <>
@@ -475,11 +395,10 @@ export default function HRSchedulingPage() {
                                                             // EMPLOYEE VIEW: Show My Status or Register Button
                                                             <>
                                                                 {myReg ? (
-                                                                    <div className={`p - 2 rounded border text - xs font - medium flex justify - between items - center ${
-    myReg.status === 'approved'
-        ? 'bg-green-50 border-green-200 text-green-700'
-        : 'bg-yellow-50 border-yellow-200 text-yellow-700'
-} `}>
+                                                                    <div className={`p-2 rounded border text-xs font-medium flex justify-between items-center ${myReg.status === 'approved'
+                                                                            ? 'bg-green-50 border-green-200 text-green-700'
+                                                                            : 'bg-yellow-50 border-yellow-200 text-yellow-700'
+                                                                        }`}>
                                                                         <span>{myReg.status === 'pending' ? 'Đang chờ' : 'Đã duyệt'}</span>
                                                                         {myReg.status === 'pending' && (
                                                                             <button
@@ -528,11 +447,7 @@ export default function HRSchedulingPage() {
                         if (selectedSchedule) {
                             getShiftRegistrations(selectedSchedule.id).then((regs) => {
                                 setRegistrations(regs);
-                                // Update modal data locally to reflect change immediately if needed, 
-                                // but better to re-filter from new 'regs' prop if component re-renders.
-                                // Actually, we need to update the `modalData.regs` too to see the checkmark.
-                                // Refetching registrations updates 'registrations' state, which re-renders parent.
-                                // However, modalData is stateful. We should sync it.
+                                // Sync modal data
                                 const dateStr = format(modalData.date, 'yyyy-MM-dd');
                                 const updatedCellRegs = regs.filter(r =>
                                     r.shift_id === modalData.shift.id && r.date === dateStr
@@ -546,6 +461,3 @@ export default function HRSchedulingPage() {
         </div>
     );
 }
-
-
-
