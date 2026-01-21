@@ -7,6 +7,8 @@ import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { ROLES } from "@/lib/constants";
 import { Users, Calendar, Gift, ChevronRight } from "lucide-react";
 
+import { useAuth } from "@/components/auth/AuthProvider";
+
 export default function HRLayout({
     children,
 }: {
@@ -14,6 +16,7 @@ export default function HRLayout({
 }) {
     // HR is accessible by Admin, Recruiter. useAuthGuard handles Admin bypass automatically.
     useAuthGuard(ROLES.RECRUITER);
+    const { role } = useAuth();
     const pathname = usePathname();
 
     const HR_NAV = [
@@ -23,7 +26,7 @@ export default function HRLayout({
     ];
 
     return (
-        <DashboardShell role={ROLES.RECRUITER} title="Quản trị Nhân sự (HRM)">
+        <DashboardShell role={role || ROLES.RECRUITER} title="Quản trị Nhân sự (HRM)">
             <div className="flex flex-col lg:flex-row gap-6 p-6 h-full overflow-hidden">
                 {/* Local Sidebar (Modules) */}
                 <div className="w-full lg:w-64 flex-shrink-0 space-y-4">
