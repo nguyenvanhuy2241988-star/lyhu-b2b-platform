@@ -41,7 +41,7 @@ export default function RecruitmentPerformancePage() {
                 startDate = subDays(new Date(), 7).toISOString();
             }
 
-            const { data, error } = await supabase.rpc('get_recruitment_kpi_stats', {
+            const { data, error } = await supabase.rpc('get_recruitment_kpi_report', {
                 p_start_date: startDate,
                 p_end_date: endDate
             });
