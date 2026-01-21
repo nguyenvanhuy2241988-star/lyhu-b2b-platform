@@ -14,15 +14,16 @@ export default function HRLayout({
 }: {
     children: React.ReactNode;
 }) {
-    // HR is accessible by Admin, Recruiter. useAuthGuard handles Admin bypass automatically.
-    useAuthGuard(ROLES.RECRUITER);
+    // HR is accessible by all authenticated users now (for Scheduling/Culture)
+    // Specific pages like Directory will need their own guards if restricted.
+    useAuthGuard(); // Standard check for login
     const { role } = useAuth();
     const pathname = usePathname();
 
     const HR_NAV = [
         { label: "Hồ sơ Nhân sự", href: "/hr/directory", icon: Users },
-        { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar, comingSoon: true },
-        { label: "Văn hóa & Quỹ", href: "/hr/culture", icon: Gift, comingSoon: true },
+        { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
+        { label: "Văn hóa & Quỹ", href: "/hr/culture", icon: Gift },
     ];
 
     return (
