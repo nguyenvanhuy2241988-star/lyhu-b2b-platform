@@ -53,7 +53,7 @@ export const getHRProfiles = async (departmentId?: string) => {
         .from('profiles')
         .select(`
             *,
-            department:departments(name)
+            department:departments!profiles_department_id_fkey(name)
         `)
         .order('full_name');
 
