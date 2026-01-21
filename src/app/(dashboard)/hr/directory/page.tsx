@@ -52,173 +52,175 @@ export default function HRDirectoryPage() {
     });
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
+        <div className="h-full flex flex-col">
+            {/* Header / Toolbar */}
+            <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Danh bạ Nhân sự</h1>
-                    <p className="text-slate-500">Thông tin liên hệ và hồ sơ nhân viên</p>
+                    <h1 className="text-xl font-bold text-slate-800">Danh bạ Nhân sự</h1>
+                    <p className="text-sm text-slate-500">Quản lý hồ sơ và thông tin liên hệ</p>
                 </div>
                 <div className="flex gap-2">
                     {/* Add Employee Button could go here */}
                 </div>
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-col md:flex-row gap-4 mb-6 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-                <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                    <input
-                        type="text"
-                        placeholder="Tìm theo tên, email, sđt..."
-                        className="w-full pl-9 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                    />
-                </div>
-                <div className="w-full md:w-64">
-                    <select
-                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                        value={selectedDept}
-                        onChange={e => setSelectedDept(e.target.value)}
-                    >
-                        <option value="all">Tất cả phòng ban</option>
-                        {departments.map(d => (
-                            <option key={d.id} value={d.id}>{d.name}</option>
-                        ))}
-                    </select>
-                </div>
-            </div>
-
-            {/* Grid */}
-            {loading ? (
-                <div>Đang tải...</div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredProfiles.map(profile => (
-                        <div key={profile.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition">
-                            <div className="p-6">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
-                                            {profile.avatar_url ? (
-                                                <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full rounded-full object-cover" />
-                                            ) : (
-                                                profile.full_name.charAt(0)
-                                            )}
-                                        </div>
-                                        <div>
-                                            <h3 className="font-semibold text-slate-900">{profile.full_name}</h3>
-                                            <p className="text-sm text-slate-500">{profile.position || 'Nhân viên'} &bull; {profile.department?.name || 'Chưa phân phòng'}</p>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() => setEditingProfile(profile)}
-                                        className="text-xs text-blue-600 hover:bg-blue-50 px-2 py-1 rounded"
-                                    >
-                                        Sửa
-                                    </button>
-                                </div>
-
-                                <div className="mt-4 space-y-2 text-sm text-slate-600">
-                                    {profile.email && (
-                                        <div className="flex items-center gap-2">
-                                            <Mail className="w-4 h-4 text-slate-400" />
-                                            {profile.email}
-                                        </div>
-                                    )}
-                                    {profile.phone && (
-                                        <div className="flex items-center gap-2">
-                                            <Phone className="w-4 h-4 text-slate-400" />
-                                            {profile.phone}
-                                        </div>
-                                    )}
-                                    {profile.dob && (
-                                        <div className="flex items-center gap-2">
-                                            <Calendar className="w-4 h-4 text-slate-400" />
-                                            Sinh nhật: {format(new Date(profile.dob), 'dd/MM')}
-                                        </div>
-                                    )}
-                                    <div className="flex items-center gap-2">
-                                        <Briefcase className="w-4 h-4 text-slate-400" />
-                                        {profile.work_type === 'parttime' ? 'Part-time' : 'Full-time'}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* Edit Modal */}
-            {editingProfile && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-md p-6">
-                        <h2 className="text-xl font-bold mb-4">Cập nhật hồ sơ: {editingProfile.full_name}</h2>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Phòng ban</label>
-                                <select
-                                    className="w-full border rounded-lg px-3 py-2 outline-none"
-                                    value={editingProfile.department_id || ''}
-                                    onChange={e => setEditingProfile({ ...editingProfile, department_id: e.target.value })}
-                                >
-                                    <option value="">-- Chọn phòng ban --</option>
-                                    {departments.map(d => (
-                                        <option key={d.id} value={d.id}>{d.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Vị trí / Chức danh</label>
-                                <input
-                                    className="w-full border rounded-lg px-3 py-2 outline-none"
-                                    value={editingProfile.position || ''}
-                                    onChange={e => setEditingProfile({ ...editingProfile, position: e.target.value })}
-                                    placeholder="VD: Telesales Part-time"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Loại hình làm việc</label>
-                                <select
-                                    className="w-full border rounded-lg px-3 py-2 outline-none"
-                                    value={editingProfile.work_type || 'fulltime'}
-                                    onChange={e => setEditingProfile({ ...editingProfile, work_type: e.target.value as any })}
-                                >
-                                    <option value="fulltime">Full-time</option>
-                                    <option value="parttime">Part-time (Sinh viên)</option>
-                                    <option value="intern">Thực tập sinh</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Ngày sinh</label>
-                                <input
-                                    type="date"
-                                    className="w-full border rounded-lg px-3 py-2 outline-none"
-                                    value={editingProfile.dob || ''}
-                                    onChange={e => setEditingProfile({ ...editingProfile, dob: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Số điện thoại</label>
-                                <input
-                                    className="w-full border rounded-lg px-3 py-2 outline-none"
-                                    value={editingProfile.phone || ''}
-                                    onChange={e => setEditingProfile({ ...editingProfile, phone: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                        <div className="mt-6 flex justify-end gap-3">
-                            <button onClick={() => setEditingProfile(null)} className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded">Hủy</button>
-                            <button
-                                onClick={() => handleUpdateProfile(editingProfile)}
-                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                            >
-                                Lưu thay đổi
-                            </button>
-                        </div>
+            <div className="flex-1 overflow-y-auto p-6">
+                {/* Filters */}
+                <div className="flex flex-col md:flex-row gap-4 mb-6">
+                    <div className="flex-1 relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                        <input
+                            type="text"
+                            placeholder="Tìm theo tên, email, sđt..."
+                            className="w-full pl-9 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <div className="w-full md:w-64">
+                        <select
+                            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                            value={selectedDept}
+                            onChange={e => setSelectedDept(e.target.value)}
+                        >
+                            <option value="all">Tất cả phòng ban</option>
+                            {departments.map(d => (
+                                <option key={d.id} value={d.id}>{d.name}</option>
+                            ))}
+                        </select>
                     </div>
                 </div>
-            )}
-        </div>
-    );
+
+                {/* Grid */}
+                {loading ? (
+                    <div>Đang tải...</div>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredProfiles.map(profile => (
+                            <div key={profile.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition">
+                                <div className="p-6">
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+                                                {profile.avatar_url ? (
+                                                    <img src={profile.avatar_url} alt={profile.full_name} className="w-full h-full rounded-full object-cover" />
+                                                ) : (
+                                                    profile.full_name.charAt(0)
+                                                )}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-semibold text-slate-900">{profile.full_name}</h3>
+                                                <p className="text-sm text-slate-500">{profile.position || 'Nhân viên'} &bull; {profile.department?.name || 'Chưa phân phòng'}</p>
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => setEditingProfile(profile)}
+                                            className="text-xs text-blue-600 hover:bg-blue-50 px-2 py-1 rounded"
+                                        >
+                                            Sửa
+                                        </button>
+                                    </div>
+
+                                    <div className="mt-4 space-y-2 text-sm text-slate-600">
+                                        {profile.email && (
+                                            <div className="flex items-center gap-2">
+                                                <Mail className="w-4 h-4 text-slate-400" />
+                                                {profile.email}
+                                            </div>
+                                        )}
+                                        {profile.phone && (
+                                            <div className="flex items-center gap-2">
+                                                <Phone className="w-4 h-4 text-slate-400" />
+                                                {profile.phone}
+                                            </div>
+                                        )}
+                                        {profile.dob && (
+                                            <div className="flex items-center gap-2">
+                                                <Calendar className="w-4 h-4 text-slate-400" />
+                                                Sinh nhật: {format(new Date(profile.dob), 'dd/MM')}
+                                            </div>
+                                        )}
+                                        <div className="flex items-center gap-2">
+                                            <Briefcase className="w-4 h-4 text-slate-400" />
+                                            {profile.work_type === 'parttime' ? 'Part-time' : 'Full-time'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Edit Modal */}
+                {editingProfile && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white rounded-2xl w-full max-w-md p-6">
+                            <h2 className="text-xl font-bold mb-4">Cập nhật hồ sơ: {editingProfile.full_name}</h2>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Phòng ban</label>
+                                    <select
+                                        className="w-full border rounded-lg px-3 py-2 outline-none"
+                                        value={editingProfile.department_id || ''}
+                                        onChange={e => setEditingProfile({ ...editingProfile, department_id: e.target.value })}
+                                    >
+                                        <option value="">-- Chọn phòng ban --</option>
+                                        {departments.map(d => (
+                                            <option key={d.id} value={d.id}>{d.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Vị trí / Chức danh</label>
+                                    <input
+                                        className="w-full border rounded-lg px-3 py-2 outline-none"
+                                        value={editingProfile.position || ''}
+                                        onChange={e => setEditingProfile({ ...editingProfile, position: e.target.value })}
+                                        placeholder="VD: Telesales Part-time"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Loại hình làm việc</label>
+                                    <select
+                                        className="w-full border rounded-lg px-3 py-2 outline-none"
+                                        value={editingProfile.work_type || 'fulltime'}
+                                        onChange={e => setEditingProfile({ ...editingProfile, work_type: e.target.value as any })}
+                                    >
+                                        <option value="fulltime">Full-time</option>
+                                        <option value="parttime">Part-time (Sinh viên)</option>
+                                        <option value="intern">Thực tập sinh</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Ngày sinh</label>
+                                    <input
+                                        type="date"
+                                        className="w-full border rounded-lg px-3 py-2 outline-none"
+                                        value={editingProfile.dob || ''}
+                                        onChange={e => setEditingProfile({ ...editingProfile, dob: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Số điện thoại</label>
+                                    <input
+                                        className="w-full border rounded-lg px-3 py-2 outline-none"
+                                        value={editingProfile.phone || ''}
+                                        onChange={e => setEditingProfile({ ...editingProfile, phone: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                            <div className="mt-6 flex justify-end gap-3">
+                                <button onClick={() => setEditingProfile(null)} className="px-4 py-2 text-slate-600 hover:bg-slate-50 rounded">Hủy</button>
+                                <button
+                                    onClick={() => handleUpdateProfile(editingProfile)}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                >
+                                    Lưu thay đổi
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+            );
 }

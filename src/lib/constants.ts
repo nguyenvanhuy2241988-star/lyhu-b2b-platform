@@ -129,7 +129,11 @@ export const NAV_ITEMS = {
         { label: "Sản phẩm", href: "/admin/products", icon: Package },
         { label: "Hiệu suất CTV", href: "/admin/ctv", icon: TrendingUp },
         { label: "Hiệu quả Tuyển dụng", href: "/recruitment/performance", icon: Trophy },
-        { label: "Quản lý Nhân sự", href: "/hr/directory", icon: Users },
+        { label: "------------", href: "#", icon: List }, // Separator
+        { label: "Hồ sơ Nhân sự", href: "/hr/directory", icon: Users },
+        { label: "Xếp lịch (Coming)", href: "#", icon: Calendar },
+        { label: "Văn hóa & Quỹ", href: "#", icon: Gift },
+        { label: "------------", href: "#", icon: List }, // Separator
         { label: "Lương & Thưởng", href: "/admin/payroll", icon: DollarSign },
         { label: "Cài đặt", href: "/admin/settings", icon: Settings },
         { label: "Tài liệu", href: "/documents", icon: FileText },
