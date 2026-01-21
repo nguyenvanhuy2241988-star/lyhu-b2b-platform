@@ -1,5 +1,6 @@
 -- Migration: HR Scheduling (Smart Scheduling)
 -- Purpose: Manage work shifts, weekly schedules, and employee registrations
+-- Includes DROP POLICY IF EXISTS to allow re-running
 
 BEGIN;
 
@@ -42,38 +43,42 @@ ALTER TABLE public.shift_registrations ENABLE ROW LEVEL SECURITY;
 
 -- 5. Policies
 
--- Work Shifts: Everyone can view active shifts, Only Admin can manage
+-- Work Shifts
+DROP POLICY IF EXISTS "Everyone view active shifts" ON public.work_shifts;
 CREATE POLICY "Everyone view active shifts" ON public.work_shifts FOR SELECT USING (is_active = true);
+
+DROP POLICY IF EXISTS "Admins manage shifts" ON public.work_shifts;
 CREATE POLICY "Admins manage shifts" ON public.work_shifts USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
--- Weekly Schedules: Everyone view
+-- Weekly Schedules
+DROP POLICY IF EXISTS "Everyone view schedules" ON public.weekly_schedules;
 CREATE POLICY "Everyone view schedules" ON public.weekly_schedules FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Admins manage schedules" ON public.weekly_schedules;
 CREATE POLICY "Admins manage schedules" ON public.weekly_schedules USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
--- Registrations: 
--- Users can view their own, Admins can view all
+-- Shift Registrations
+DROP POLICY IF EXISTS "View own registrations or Admin" ON public.shift_registrations;
 CREATE POLICY "View own registrations or Admin" ON public.shift_registrations FOR SELECT USING (
     auth.uid() = user_id OR 
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
--- Users can insert their own (if Schedule is Open)
+DROP POLICY IF EXISTS "Users register own shifts" ON public.shift_registrations;
 CREATE POLICY "Users register own shifts" ON public.shift_registrations FOR INSERT WITH CHECK (
     auth.uid() = user_id
-    -- AND EXISTS (SELECT 1 FROM public.weekly_schedules WHERE id = schedule_id AND status = 'open') 
-    -- (Logic check usually better in app/RPC, but RLS prevents unauthorized user IDs)
 );
 
--- Users can delete their own (if pending)
+DROP POLICY IF EXISTS "Users delete own pending" ON public.shift_registrations;
 CREATE POLICY "Users delete own pending" ON public.shift_registrations FOR DELETE USING (
     auth.uid() = user_id AND status = 'pending'
 );
 
--- Admins can update status (Approve/Reject)
+DROP POLICY IF EXISTS "Admins update registrations" ON public.shift_registrations;
 CREATE POLICY "Admins update registrations" ON public.shift_registrations FOR UPDATE USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );

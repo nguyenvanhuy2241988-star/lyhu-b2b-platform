@@ -112,3 +112,116 @@ export const getUpcomingBirthdays = async () => {
     // Sort by day
     return birthdays.sort((a, b) => (a!.day - b!.day)) as (HRProfile & { day: number, month: number })[];
 };
+
+// -- SCHEDULING & SHIFTS --
+
+export interface WorkShift {
+    id: string;
+    name: string;
+    start_time: string;
+    end_time: string;
+    is_active: boolean;
+}
+
+export interface WeeklySchedule {
+    id: string;
+    week_number: number;
+    year: number;
+    status: 'draft' | 'open' | 'closed' | 'published';
+    created_at: string;
+}
+
+export interface ShiftRegistration {
+    id: string;
+    schedule_id: string;
+    user_id: string;
+    shift_id: string;
+    date: string;
+    status: 'pending' | 'approved' | 'rejected';
+    user?: {
+        full_name: string;
+        email: string;
+    };
+    shift?: WorkShift;
+}
+
+export const getWorkShifts = async () => {
+    const { data, error } = await supabase
+        .from('work_shifts')
+        .select('*')
+        .eq('is_active', true)
+        .order('start_time');
+
+    if (error) throw error;
+    return data as WorkShift[];
+};
+
+export const getWeeklySchedules = async () => {
+    const { data, error } = await supabase
+        .from('weekly_schedules')
+        .select('*')
+        .order('year', { ascending: false })
+        .order('week_number', { ascending: false });
+
+    if (error) throw error;
+    return data as WeeklySchedule[];
+};
+
+export const createWeeklySchedule = async (week: number, year: number) => {
+    const { data, error } = await supabase
+        .from('weekly_schedules')
+        .insert([{ week_number: week, year, status: 'open' }])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data as WeeklySchedule;
+};
+
+export const getShiftRegistrations = async (scheduleId: string) => {
+    const { data, error } = await supabase
+        .from('shift_registrations')
+        .select(`
+            *,
+            user:profiles(full_name, email),
+            shift:work_shifts(*)
+        `)
+        .eq('schedule_id', scheduleId);
+
+    if (error) throw error;
+    return data as ShiftRegistration[];
+};
+
+export const registerShift = async (userId: string, scheduleId: string, shiftId: string, date: string) => {
+    const { data, error } = await supabase
+        .from('shift_registrations')
+        .insert([{ user_id: userId, schedule_id: scheduleId, shift_id: shiftId, date, status: 'pending' }])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const deleteRegistration = async (id: string, userId: string) => {
+    // RLS policy ensures user can only delete own pending
+    // But we pass UserId just to be explicit if needed, though ID is unique
+    const { error } = await supabase
+        .from('shift_registrations')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+};
+
+export const updateRegistrationStatus = async (id: string, status: 'approved' | 'rejected') => {
+    const { data, error } = await supabase
+        .from('shift_registrations')
+        .update({ status })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
