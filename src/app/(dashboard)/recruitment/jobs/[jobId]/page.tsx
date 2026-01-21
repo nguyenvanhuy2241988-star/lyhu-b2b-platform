@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { RecruitmentJob, RecruitmentCandidate, getJob, getCandidates, updateJob } from "@/lib/recruitmentStore";
-import { Loader2, Share2, Copy, ArrowLeft, Users, Briefcase, MapPin, DollarSign, Edit } from "lucide-react";
+import { Loader2, Share2, Copy, ArrowLeft, Users, Briefcase, MapPin, DollarSign, Edit, Zap, TrendingUp } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
-import { toast } from "sonner"; // Assuming sonner or use standard toast
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabaseClient";
 
 // Candidate Status Badge Helper
 const StatusBadge = ({ status }: { status: string }) => {
@@ -32,6 +33,44 @@ export default function JobDetailPage() {
     const [candidates, setCandidates] = useState<RecruitmentCandidate[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [source, setSource] = useState("FacebookGroup");
+
+    // Tracking Link State
+    const [generatedLink, setGeneratedLink] = useState("");
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    const generateTrackingLink = async () => {
+        if (!job) return;
+        setIsGenerating(true);
+        try {
+            // 1. Generate short code (6 chars)
+            const code = Math.random().toString(36).substring(2, 8);
+
+            // 2. Construct Original URL
+            const host = window.location.origin;
+            const originalUrl = `${host}/apply/${job.id}?source=${source}`;
+
+            // 3. Insert into Supabase
+            const { error } = await supabase
+                .from('tracking_shortlinks')
+                .insert([{
+                    code,
+                    original_url: originalUrl,
+                    campaign_source: source
+                    // creator_id is auto handled by Default/RLS
+                }]);
+
+            if (error) throw error;
+
+            // 4. Set Result
+            setGeneratedLink(`${host}/go/${code}`);
+            toast.success("Tạo link thành công!");
+        } catch (err) {
+            console.error(err);
+            toast.error("Lỗi khi tạo link tracking");
+        } finally {
+            setIsGenerating(false);
+        }
+    };
 
     useEffect(() => {
         loadData();
@@ -133,27 +172,58 @@ export default function JobDetailPage() {
                     <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl max-w-md w-full">
                         <h3 className="text-sm font-bold text-blue-800 mb-2 flex items-center gap-2">
                             <Share2 className="w-4 h-4" />
-                            Lấy Link đi rải (Tracking)
+                            Lấy Link Tracking (KPI Traffic)
                         </h3>
-                        <div className="flex gap-2">
-                            <input
-                                type="text"
-                                className="flex-1 text-sm border-blue-200 rounded px-2 py-1 outline-none text-slate-700"
-                                placeholder="Nguồn (vd: Group_A)..."
-                                value={source}
-                                onChange={e => setSource(e.target.value)}
-                            />
-                            <button
-                                onClick={copyApplyLink}
-                                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium transition flex items-center gap-1"
-                            >
-                                <Copy className="w-3 h-3" />
-                                Copy Link
-                            </button>
+
+                        <div className="space-y-3">
+                            <div className="flex gap-2">
+                                <select
+                                    className="text-sm border-blue-200 rounded px-2 py-1 outline-none text-slate-700 bg-white"
+                                    value={source}
+                                    onChange={e => setSource(e.target.value)}
+                                >
+                                    <option value="FacebookGroup">Facebook Group</option>
+                                    <option value="Threads">Threads</option>
+                                    <option value="TikTok">TikTok</option>
+                                    <option value="Instagram">Instagram</option>
+                                    <option value="Zalo">Zalo</option>
+                                    <option value="Direct">Direct/Inbox</option>
+                                </select>
+                                <button
+                                    onClick={generateTrackingLink}
+                                    disabled={isGenerating}
+                                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium transition flex items-center justify-center gap-1 disabled:opacity-50"
+                                >
+                                    {isGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Zap className="w-3 h-3" />}
+                                    Tạo Link
+                                </button>
+                            </div>
+
+                            {generatedLink && (
+                                <div className="bg-white p-2 rounded border border-blue-100 animate-in fade-in slide-in-from-top-2">
+                                    <div className="text-[10px] text-slate-400 mb-1 uppercase tracking-wider font-bold">Smart Link của bạn</div>
+                                    <div className="flex items-center gap-2">
+                                        <code className="flex-1 text-xs bg-slate-50 text-slate-600 p-1.5 rounded font-mono border border-slate-200 truncate">
+                                            {generatedLink}
+                                        </code>
+                                        <button
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(generatedLink);
+                                                toast.success("Đã copy link tracking!");
+                                            }}
+                                            className="p-1.5 hover:bg-slate-100 rounded text-slate-600"
+                                            title="Copy"
+                                        >
+                                            <Copy className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                    <div className="text-[10px] text-green-600 mt-1 flex items-center gap-1">
+                                        <TrendingUp className="w-3 h-3" />
+                                        Hệ thống sẽ đếm CLICK khi bạn dùng link này.
+                                    </div>
+                                </div>
+                            )}
                         </div>
-                        <p className="text-xs text-blue-600 mt-2">
-                            Link này dùng để đăng lên Facebook, Zalo. Ứng viên điền form sẽ được gắn tag nguồn này.
-                        </p>
                     </div>
                 </div>
             </div>
