@@ -47,7 +47,7 @@ export default function JobDetailPage() {
 
             // 2. Construct Original URL
             const host = window.location.origin;
-            const originalUrl = `${host}/apply/${job.id}?source=${source}`;
+            const originalUrl = `${host}/apply/${job.id}?source=${source}&tracking_code=${code}`;
 
             // 3. Insert into Supabase
             const { error } = await supabase

@@ -30,6 +30,7 @@ export default function ApplyPage() {
     const searchParams = useSearchParams();
     const jobId = params.jobId as string;
     const source = searchParams.get("source") || "Direct Link";
+    const trackingCode = searchParams.get("tracking_code") || null;
 
     const [job, setJob] = useState<PublicJob | null>(null);
     const [company, setCompany] = useState<CompanySettings | null>(null);
@@ -139,7 +140,8 @@ export default function ApplyPage() {
                 p_email: formData.email,
                 p_phone: formData.phone,
                 p_cv_url: cvUrl,
-                p_source: source
+                p_source: source,
+                p_tracking_code: trackingCode
             });
 
             if (rpcError) throw rpcError;
