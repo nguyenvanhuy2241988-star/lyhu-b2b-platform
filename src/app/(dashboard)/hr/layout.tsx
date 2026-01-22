@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import DashboardShell from "@/components/layout/DashboardShell";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
