@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getDepartments, getHRProfiles, Department, HRProfile, updateHRProfile } from '@/lib/hrStore';
-import { Search, MapPin, Calendar, Briefcase, Mail, Phone, Filter, GraduationCap, Heart, Facebook, FileText, User as UserIcon } from 'lucide-react';
+import { Search, MapPin, Calendar, Briefcase, Mail, Phone, Filter, GraduationCap, Heart, Facebook, FileText, User as UserIcon, X } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function HRDirectoryPage() {
@@ -12,8 +12,9 @@ export default function HRDirectoryPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDept, setSelectedDept] = useState<string>('all');
 
-    // Edit Modal
+    // Modals
     const [editingProfile, setEditingProfile] = useState<HRProfile | null>(null);
+    const [viewingProfile, setViewingProfile] = useState<HRProfile | null>(null);
 
     useEffect(() => {
         loadData();
@@ -97,7 +98,11 @@ export default function HRDirectoryPage() {
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredProfiles.map(profile => (
-                            <div key={profile.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition">
+                            <div
+                                key={profile.id}
+                                className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition cursor-pointer"
+                                onClick={() => setViewingProfile(profile)}
+                            >
                                 <div className="p-6">
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-4">
@@ -114,7 +119,10 @@ export default function HRDirectoryPage() {
                                             </div>
                                         </div>
                                         <button
-                                            onClick={() => setEditingProfile(profile)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setEditingProfile(profile);
+                                            }}
                                             className="text-xs text-blue-600 hover:bg-blue-50 px-2 py-1 rounded"
                                         >
                                             Sửa
@@ -181,6 +189,141 @@ export default function HRDirectoryPage() {
                     </div>
                 )}
             </div>
+
+
+            {/* View Modal */}
+            {viewingProfile && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl w-full max-w-md p-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-2xl">
+                                    {viewingProfile.avatar_url ? (
+                                        <img src={viewingProfile.avatar_url} alt={viewingProfile.full_name} className="w-full h-full rounded-full object-cover" />
+                                    ) : (
+                                        viewingProfile.full_name?.charAt(0) || '?'
+                                    )}
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-bold text-slate-900">{viewingProfile.full_name}</h2>
+                                    <p className="text-slate-500">{viewingProfile.position || 'Nhân viên'} &bull; {viewingProfile.department?.name}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setViewingProfile(null)}
+                                className="text-slate-400 hover:text-slate-600 p-1"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div className="space-y-6">
+                            {/* Contact Info */}
+                            <div className="space-y-3">
+                                <h3 className="font-semibold text-slate-900 border-b pb-2 flex items-center gap-2">
+                                    <UserIcon className="w-4 h-4 text-blue-500" /> Thông tin liên hệ
+                                </h3>
+                                <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                                    <div className="col-span-2 sm:col-span-1">
+                                        <p className="text-slate-500 text-xs">Email</p>
+                                        <p className="font-medium truncate">{viewingProfile.email || 'N/A'}</p>
+                                    </div>
+                                    <div className="col-span-2 sm:col-span-1">
+                                        <p className="text-slate-500 text-xs">Số điện thoại</p>
+                                        <p className="font-medium">{viewingProfile.phone || 'N/A'}</p>
+                                    </div>
+                                    <div className="col-span-2 sm:col-span-1">
+                                        <p className="text-slate-500 text-xs">Ngày sinh</p>
+                                        <p className="font-medium">{viewingProfile.dob ? format(new Date(viewingProfile.dob), 'dd/MM/yyyy') : 'N/A'}</p>
+                                    </div>
+                                    <div className="col-span-2 sm:col-span-1">
+                                        <p className="text-slate-500 text-xs">Quê quán</p>
+                                        <p className="font-medium">{viewingProfile.place_of_origin || 'N/A'}</p>
+                                    </div>
+                                    {viewingProfile.social_facebook && (
+                                        <div className="col-span-2">
+                                            <p className="text-slate-500 text-xs">Mạng xã hội</p>
+                                            <a href={viewingProfile.social_facebook} target="_blank" className="text-blue-600 hover:underline flex items-center gap-1">
+                                                <Facebook className="w-3 h-3" /> Facebook
+                                            </a>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Job Info */}
+                            <div className="space-y-3">
+                                <h3 className="font-semibold text-slate-900 border-b pb-2 flex items-center gap-2">
+                                    <Briefcase className="w-4 h-4 text-green-500" /> Công việc
+                                </h3>
+                                <div className="grid grid-cols-2 gap-y-3 gap-x-4 text-sm">
+                                    <div>
+                                        <p className="text-slate-500 text-xs">Phòng ban</p>
+                                        <p className="font-medium">{viewingProfile.department?.name || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-slate-500 text-xs">Loại hình</p>
+                                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${viewingProfile.work_type === 'fulltime' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
+                                            }`}>
+                                            {viewingProfile.work_type === 'parttime' ? 'Part-time' : (viewingProfile.work_type === 'intern' ? 'Thực tập' : 'Full-time')}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <p className="text-slate-500 text-xs">Ngày vào làm</p>
+                                        <p className="font-medium">{viewingProfile.start_date ? format(new Date(viewingProfile.start_date), 'dd/MM/yyyy') : '---'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-slate-500 text-xs">Mã nhân viên</p>
+                                        <p className="font-medium">{viewingProfile.employee_code || '---'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Education & Interests */}
+                            <div className="space-y-3">
+                                <h3 className="font-semibold text-slate-900 border-b pb-2 flex items-center gap-2">
+                                    <GraduationCap className="w-4 h-4 text-purple-500" /> Học vấn & Sở thích
+                                </h3>
+                                <div className="space-y-3 text-sm">
+                                    <div>
+                                        <p className="text-slate-500 text-xs">Trường / Chuyên ngành</p>
+                                        <p className="font-medium">
+                                            {viewingProfile.education_school || '---'}
+                                            {viewingProfile.education_major && ` - ${viewingProfile.education_major}`}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-slate-500 text-xs">Sở thích</p>
+                                        <div className="flex flex-wrap gap-2 mt-1">
+                                            {viewingProfile.interests ? (
+                                                viewingProfile.interests.split(',').map((tag, i) => (
+                                                    <span key={i} className="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs">
+                                                        {tag.trim()}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className="text-slate-400 italic">Chưa cập nhật</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 flex justify-end gap-3 pt-4 border-t border-slate-100">
+                            <button
+                                onClick={() => {
+                                    setEditingProfile(viewingProfile);
+                                    setViewingProfile(null);
+                                }}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm flex items-center gap-2"
+                            >
+                                <FileText className="w-4 h-4" /> Chỉnh sửa hồ sơ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Edit Modal */}
             {editingProfile && (
