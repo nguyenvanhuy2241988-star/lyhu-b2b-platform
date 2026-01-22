@@ -371,6 +371,8 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
 
 // --- Main Page ---
 
+import CRMBanner from "@/components/crm/CRMBanner";
+
 export default function CRMPage() {
     const { user, session, role: authRole, isLoading: authIsLoading } = useAuth();
     const router = useRouter();
@@ -380,7 +382,8 @@ export default function CRMPage() {
     const [isDataLoading, setIsDataLoading] = useState(true);
     const [isMounted, setIsMounted] = useState(false); // For hydration fix
 
-    // Filters
+    // ... (rest of the state hooks)
+
     const [searchQuery, setSearchQuery] = useState("");
     const [debouncedSearchQuery] = useDebounce(searchQuery, 150);
     const [filterPriority, setFilterPriority] = useState<DealPriority | "all">("all");

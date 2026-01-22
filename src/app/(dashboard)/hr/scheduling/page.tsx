@@ -304,8 +304,8 @@ export default function HRSchedulingPage() {
                                 key={sch.id}
                                 onClick={() => handleSelectSchedule(sch)}
                                 className={`px-3 py-1 text-xs border rounded transition whitespace-nowrap font-medium ${selectedSchedule?.id === sch.id
-                                        ? "text-white border-transparent shadow-sm"
-                                        : "bg-white text-slate-600 border-slate-300 hover:bg-slate-100"
+                                    ? "text-white border-transparent shadow-sm"
+                                    : "bg-white text-slate-600 border-slate-300 hover:bg-slate-100"
                                     }`}
                                 style={selectedSchedule?.id === sch.id ? { backgroundColor: sch.theme_color || '#0d9488' } : {}}
                             >
@@ -485,7 +485,7 @@ export default function HRSchedulingPage() {
                                                                 {reg.note && <MessageSquare className="w-2.5 h-2.5 opacity-60 ml-1 shrink-0" />}
                                                             </div>
                                                             {reg.note && (
-                                                                <div className="text-[9px] opacity-75 truncate mt-0.5">{reg.note}</div>
+                                                                <div className="text-xs font-bold mt-0.5 break-words leading-tight text-slate-900">{reg.note}</div>
                                                             )}
                                                         </div>
                                                     ) : (<div className="w-full h-full"></div>)}
