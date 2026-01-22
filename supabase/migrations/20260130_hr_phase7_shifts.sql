@@ -1,9 +1,9 @@
--- Migration: Phase 7 (Shifts & CRM Banner)
--- Date: 2026-01-30 (Part 3)
+-- Migration: Phase 7 (Shifts & CRM Banner) - FIXED IDEMPOTENCY
+-- Date: 2026-01-30
 
 BEGIN;
 
--- 1. Create crm_settings table
+-- 1. Create crm_settings table (Safe if exists)
 CREATE TABLE IF NOT EXISTS public.crm_settings (
     id int PRIMARY KEY DEFAULT 1,
     banner_url text,
@@ -11,24 +11,24 @@ CREATE TABLE IF NOT EXISTS public.crm_settings (
     CONSTRAINT single_row CHECK (id = 1)
 );
 
--- RLS for crm_settings
+-- Enable RLS (Safe to re-run)
 ALTER TABLE public.crm_settings ENABLE ROW LEVEL SECURITY;
 
--- Allow read for authenticated users
+-- 2. Drop existing policies to avoid conflicts
+DROP POLICY IF EXISTS "Authenticated users can view crm_settings" ON public.crm_settings;
+DROP POLICY IF EXISTS "Admins can update crm_settings" ON public.crm_settings;
+
+-- 3. Re-create Policies
 CREATE POLICY "Authenticated users can view crm_settings" ON public.crm_settings
     FOR SELECT TO authenticated USING (true);
 
--- Allow update for Admins only
 CREATE POLICY "Admins can update crm_settings" ON public.crm_settings
     FOR UPDATE TO authenticated
     USING (
         EXISTS (
             SELECT 1 FROM public.profiles
             WHERE profiles.id = auth.uid()
-            AND profiles.role IN ('ADMIN', 'RECRUITER') -- Assuming Recruiter can also edit? Or just Admin? User said Admin. Let's stick to user request strictly if possible, or allow both management roles.
-            -- User said: "Admin là người chỉnh sửa, các role khác chỉ có quyền xem"
-            -- So let's check profile role.
-            -- Note: Using auth.uid() check against public.profiles is standard.
+            AND profiles.role = 'ADMIN'
         )
     )
     WITH CHECK (
@@ -38,18 +38,11 @@ CREATE POLICY "Admins can update crm_settings" ON public.crm_settings
             AND profiles.role = 'ADMIN'
         )
     );
--- Insert default row if not exists
+
+-- 4. Insert default row (Safe)
 INSERT INTO public.crm_settings (id, banner_url) VALUES (1, NULL) ON CONFLICT (id) DO NOTHING;
 
-
--- 2. Upsert Shifts
--- We use start_time as key or name? Name is better key here.
--- Upsert Logic:
--- Ca Sáng : 8h - 12h
--- Ca chiều : 13h30 - 17h30
--- Ca tối : 17h30 - 21h30
--- Cả ngày : 8h - 17h30
-
+-- 5. Upsert Shifts (Safe)
 INSERT INTO public.work_shifts (name, start_time, end_time, is_active)
 VALUES 
     ('Ca Sáng', '08:00:00', '12:00:00', true),
