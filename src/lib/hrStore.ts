@@ -74,15 +74,26 @@ export const getHRProfiles = async (departmentId?: string) => {
 };
 
 export const updateHRProfile = async (id: string, updates: Partial<HRProfile>) => {
-    // Filter out nested objects
+    // Filter out restricted fields
     const { department, email, role, ...cleanUpdates } = updates as any;
 
-    const { data, error } = await supabase
-        .from('profiles')
-        .update(cleanUpdates)
-        .eq('id', id)
-        .select()
-        .single();
+    const { data, error } = await supabase.rpc('update_hr_profile_rpc', {
+        p_id: id,
+        p_full_name: cleanUpdates.full_name,
+        p_phone: cleanUpdates.phone,
+        p_dob: cleanUpdates.dob || null,
+        p_place_of_origin: cleanUpdates.place_of_origin,
+        p_identity_card: cleanUpdates.identity_card,
+        p_education_school: cleanUpdates.education_school,
+        p_education_major: cleanUpdates.education_major,
+        p_interests: cleanUpdates.interests,
+        p_social_facebook: cleanUpdates.social_facebook,
+        p_department_id: cleanUpdates.department_id || null,
+        p_position: cleanUpdates.position,
+        p_work_type: cleanUpdates.work_type,
+        p_start_date: cleanUpdates.start_date || null,
+        p_employee_code: cleanUpdates.employee_code
+    });
 
     if (error) throw error;
     return data;
