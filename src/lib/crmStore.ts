@@ -35,11 +35,11 @@ export const uploadCRMAsset = async (file: File) => {
     const filePath = `${fileName}`;
 
     const { error: uploadError } = await supabase.storage
-        .from('hr_assets') // Reusing HR bucket
+        .from('hr-assets') // Reusing HR bucket
         .upload(filePath, file);
 
     if (uploadError) throw uploadError;
 
-    const { data } = supabase.storage.from('hr_assets').getPublicUrl(filePath);
+    const { data } = supabase.storage.from('hr-assets').getPublicUrl(filePath);
     return data.publicUrl;
 };
