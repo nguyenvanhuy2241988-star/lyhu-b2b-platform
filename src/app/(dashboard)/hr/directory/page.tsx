@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getDepartments, getHRProfiles, Department, HRProfile, updateHRProfile } from '@/lib/hrStore';
-import { Search, MapPin, Calendar, Briefcase, Mail, Phone, Filter, GraduationCap, Heart, Facebook, FileText } from 'lucide-react';
+import { Search, MapPin, Calendar, Briefcase, Mail, Phone, Filter, GraduationCap, Heart, Facebook, FileText, User as UserIcon } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function HRDirectoryPage() {
