@@ -22,7 +22,7 @@ export default function HRSchedulingPage() {
     const isHR = isAdmin;
 
     // Context
-    const { setPosterUrl, setThemeColor } = useHRLayout();
+    const { setPosters, setThemeColor } = useHRLayout();
 
     const [loading, setLoading] = useState(true);
     const [profiles, setProfiles] = useState<HRProfile[]>([]);
@@ -32,7 +32,9 @@ export default function HRSchedulingPage() {
     const [registrations, setRegistrations] = useState<ShiftRegistration[]>([]);
 
     const [uploadingBanner, setUploadingBanner] = useState(false);
-    const [uploadingPoster, setUploadingPoster] = useState(false);
+    // Poster management state
+    const [showPosterModal, setShowPosterModal] = useState(false);
+
     const [createDate, setCreateDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [isCreating, setIsCreating] = useState(false);
 
@@ -40,7 +42,9 @@ export default function HRSchedulingPage() {
     const [noteValue, setNoteValue] = useState("");
 
     const bannerInputRef = useRef<HTMLInputElement>(null);
-    const posterInputRef = useRef<HTMLInputElement>(null);
+    const poster1InputRef = useRef<HTMLInputElement>(null);
+    const poster2InputRef = useRef<HTMLInputElement>(null);
+    const poster3InputRef = useRef<HTMLInputElement>(null);
 
     const loadData = async () => {
         setLoading(true);
@@ -52,7 +56,7 @@ export default function HRSchedulingPage() {
             ]);
             setProfiles(profilesData);
 
-            // Sort schedules: Year Asc, Week Asc (Timeline)
+            // Sort schedules: Year Asc, Week Asc
             const sortedSchedules = schedulesData.sort((a, b) => {
                 if (a.year !== b.year) return a.year - b.year;
                 return a.week_number - b.week_number;
@@ -72,8 +76,9 @@ export default function HRSchedulingPage() {
 
     const handleSelectSchedule = async (schedule: WeeklySchedule) => {
         setSelectedSchedule(schedule);
-        // Sync to context
-        setPosterUrl(schedule.poster_url || null);
+        // Sync to context (Array of 3)
+        setPosters([schedule.poster_url || null, schedule.poster_url_2 || null, schedule.poster_url_3 || null]);
+
         if (schedule.theme_color) setThemeColor(schedule.theme_color);
         else setThemeColor("#0d9488");
 
@@ -134,36 +139,55 @@ export default function HRSchedulingPage() {
         } catch (err) { console.error(err); }
     };
 
-    const handleAssetUpload = async (file: File, type: 'banner' | 'poster') => {
+    const handleAssetUpload = async (file: File, type: 'banner' | 'poster' | 'poster2' | 'poster3') => {
         if (!selectedSchedule) return;
-        const setUploading = type === 'banner' ? setUploadingBanner : setUploadingPoster;
-        setUploading(true);
+        if (type === 'banner') setUploadingBanner(true);
         try {
             const publicUrl = await uploadHRAsset(file);
-            const updates = type === 'banner' ? { banner_url: publicUrl } : { poster_url: publicUrl };
+            let updates: any = {};
+            if (type === 'banner') updates = { banner_url: publicUrl };
+            if (type === 'poster') updates = { poster_url: publicUrl };
+            if (type === 'poster2') updates = { poster_url_2: publicUrl };
+            if (type === 'poster3') updates = { poster_url_3: publicUrl };
+
             await updateWeeklySchedule(selectedSchedule.id, updates);
 
             const updatedSch = { ...selectedSchedule, ...updates };
             setSelectedSchedule(updatedSch);
             setSchedules(prev => prev.map(s => s.id === selectedSchedule.id ? updatedSch : s));
 
-            // Sync context if poster
-            if (type === 'poster') setPosterUrl(publicUrl);
+            // Sync context
+            if (type !== 'banner') {
+                const p1 = type === 'poster' ? publicUrl : (updatedSch.poster_url || null);
+                const p2 = type === 'poster2' ? publicUrl : (updatedSch.poster_url_2 || null);
+                const p3 = type === 'poster3' ? publicUrl : (updatedSch.poster_url_3 || null);
+                setPosters([p1, p2, p3]);
+            }
 
         } catch (err) { alert("Upload failed"); }
-        finally { setUploading(false); }
+        finally { setUploadingBanner(false); }
     };
 
-    const handleDeleteAsset = async (type: 'banner' | 'poster') => {
+    const handleDeleteAsset = async (type: 'banner' | 'poster' | 'poster2' | 'poster3') => {
         if (!selectedSchedule || !confirm("Bạn có chắc muốn xóa ảnh này?")) return;
-        const updates: any = type === 'banner' ? { banner_url: null } : { poster_url: null };
+        let updates: any = {};
+        if (type === 'banner') updates = { banner_url: null };
+        if (type === 'poster') updates = { poster_url: null };
+        if (type === 'poster2') updates = { poster_url_2: null };
+        if (type === 'poster3') updates = { poster_url_3: null };
+
         try {
             await updateWeeklySchedule(selectedSchedule.id, updates);
             const updatedSch = { ...selectedSchedule, ...updates };
             setSelectedSchedule(updatedSch);
             setSchedules(prev => prev.map(s => s.id === selectedSchedule.id ? updatedSch : s));
-            // Sync context if poster
-            if (type === 'poster') setPosterUrl(null);
+            // Sync context
+            if (type !== 'banner') {
+                const p1 = type === 'poster' ? null : (updatedSch.poster_url || null);
+                const p2 = type === 'poster2' ? null : (updatedSch.poster_url_2 || null);
+                const p3 = type === 'poster3' ? null : (updatedSch.poster_url_3 || null);
+                setPosters([p1, p2, p3]);
+            }
         } catch (err) { console.error(err); }
     };
 
@@ -176,16 +200,15 @@ export default function HRSchedulingPage() {
     };
 
     useEffect(() => {
-        // Sync context when selectedSchedule changes (also handles null)
         if (selectedSchedule) {
-            setPosterUrl(selectedSchedule.poster_url || null);
+            setPosters([selectedSchedule.poster_url || null, selectedSchedule.poster_url_2 || null, selectedSchedule.poster_url_3 || null]);
             setThemeColor(selectedSchedule.theme_color || '#0d9488');
         }
     }, [selectedSchedule]);
 
     useEffect(() => {
         if (!selectedSchedule?.id) return;
-        const channel = supabase.channel('hr_phase5_view')
+        const channel = supabase.channel('hr_phase6_view')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'shift_registrations', filter: `schedule_id=eq.${selectedSchedule.id}` },
                 () => getShiftRegistrations(selectedSchedule.id).then(setRegistrations))
             .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_schedules', filter: `id=eq.${selectedSchedule.id}` },
@@ -193,9 +216,8 @@ export default function HRSchedulingPage() {
                     const newSch = payload.new as WeeklySchedule;
                     setSelectedSchedule(prev => prev?.id === newSch.id ? newSch : prev);
                     setSchedules(prev => prev.map(s => s.id === newSch.id ? newSch : s));
-                    // Sync context if updated
                     if (newSch.id === selectedSchedule.id) {
-                        setPosterUrl(newSch.poster_url || null);
+                        setPosters([newSch.poster_url || null, newSch.poster_url_2 || null, newSch.poster_url_3 || null]);
                         if (newSch.theme_color) setThemeColor(newSch.theme_color);
                     }
                 })
@@ -243,7 +265,7 @@ export default function HRSchedulingPage() {
 
     return (
         <div className="h-full flex flex-col bg-white">
-            {/* 1. Banner Area (Full Width) */}
+            {/* 1. Banner Area */}
             <div className="shrink-0 relative group bg-slate-50 border-b border-slate-200 w-full">
                 {selectedSchedule && (
                     <>
@@ -294,22 +316,75 @@ export default function HRSchedulingPage() {
                 </div>
 
                 <div className="flex items-center gap-3 self-end md:self-auto">
-                    {/* Poster Management (Hidden upload, triggered by button) */}
+                    {/* Poster Management Modal Trigger */}
                     {isHR && selectedSchedule && (
-                        <>
-                            <input type="file" ref={posterInputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleAssetUpload(e.target.files[0], 'poster')} />
-                            <div className="flex items-center bg-white border border-slate-300 rounded overflow-hidden h-7">
-                                <button onClick={() => posterInputRef.current?.click()} className="px-2 h-full hover:bg-slate-50 text-xs text-slate-600 flex items-center gap-1 border-r border-slate-200">
-                                    <ImageIcon className="w-3.5 h-3.5" />
-                                    {selectedSchedule.poster_url ? 'Đổi Poster' : 'Up Poster'}
-                                </button>
-                                {selectedSchedule.poster_url && (
-                                    <button onClick={() => handleDeleteAsset('poster')} className="px-2 h-full hover:bg-red-50 text-red-500" title="Xóa Poster">
-                                        <X className="w-3.5 h-3.5" />
-                                    </button>
-                                )}
-                            </div>
-                        </>
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowPosterModal(!showPosterModal)}
+                                className="flex items-center gap-1 text-xs bg-white border border-slate-300 text-slate-600 px-3 py-1.5 rounded shadow-sm hover:bg-slate-50"
+                            >
+                                <ImageIcon className="w-3.5 h-3.5" /> Quản lý Poster ({[selectedSchedule.poster_url, selectedSchedule.poster_url_2, selectedSchedule.poster_url_3].filter(Boolean).length}/3)
+                            </button>
+
+                            {/* Modal/Popover for 3 Posters */}
+                            {showPosterModal && (
+                                <div className="absolute top-full right-0 mt-2 w-80 bg-white border border-slate-200 shadow-xl rounded-lg p-4 z-50 animate-in fade-in zoom-in-95 duration-100">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <h3 className="text-sm font-bold text-slate-700">Quản lý Poster (Sidebar)</h3>
+                                        <button onClick={() => setShowPosterModal(false)}><X className="w-4 h-4 text-slate-400" /></button>
+                                    </div>
+                                    <div className="space-y-4">
+                                        {/* Slot 1 */}
+                                        <div>
+                                            <p className="text-xs font-semibold text-slate-500 mb-1">Poster 1</p>
+                                            {selectedSchedule.poster_url ? (
+                                                <div className="relative group rounded border border-slate-200 overflow-hidden">
+                                                    <img src={selectedSchedule.poster_url} className="w-full h-24 object-contain bg-slate-50" />
+                                                    <div className="absolute top-1 right-1 flex gap-1">
+                                                        <button onClick={() => handleDeleteAsset('poster')} className="bg-white/80 p-1 text-red-600 rounded shadow"><Trash2 className="w-3 h-3" /></button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <button onClick={() => poster1InputRef.current?.click()} className="w-full h-20 border-2 border-dashed border-slate-200 rounded flex items-center justify-center text-slate-400 hover:bg-slate-50">Upload Poster 1</button>
+                                            )}
+                                        </div>
+                                        {/* Slot 2 */}
+                                        <div>
+                                            <p className="text-xs font-semibold text-slate-500 mb-1">Poster 2</p>
+                                            {selectedSchedule.poster_url_2 ? (
+                                                <div className="relative group rounded border border-slate-200 overflow-hidden">
+                                                    <img src={selectedSchedule.poster_url_2} className="w-full h-24 object-contain bg-slate-50" />
+                                                    <div className="absolute top-1 right-1 flex gap-1">
+                                                        <button onClick={() => handleDeleteAsset('poster2')} className="bg-white/80 p-1 text-red-600 rounded shadow"><Trash2 className="w-3 h-3" /></button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <button onClick={() => poster2InputRef.current?.click()} className="w-full h-20 border-2 border-dashed border-slate-200 rounded flex items-center justify-center text-slate-400 hover:bg-slate-50">Upload Poster 2</button>
+                                            )}
+                                        </div>
+                                        {/* Slot 3 */}
+                                        <div>
+                                            <p className="text-xs font-semibold text-slate-500 mb-1">Poster 3</p>
+                                            {selectedSchedule.poster_url_3 ? (
+                                                <div className="relative group rounded border border-slate-200 overflow-hidden">
+                                                    <img src={selectedSchedule.poster_url_3} className="w-full h-24 object-contain bg-slate-50" />
+                                                    <div className="absolute top-1 right-1 flex gap-1">
+                                                        <button onClick={() => handleDeleteAsset('poster3')} className="bg-white/80 p-1 text-red-600 rounded shadow"><Trash2 className="w-3 h-3" /></button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <button onClick={() => poster3InputRef.current?.click()} className="w-full h-20 border-2 border-dashed border-slate-200 rounded flex items-center justify-center text-slate-400 hover:bg-slate-50">Upload Poster 3</button>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* HIDDEN INPUTS */}
+                                    <input type="file" ref={poster1InputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleAssetUpload(e.target.files[0], 'poster')} />
+                                    <input type="file" ref={poster2InputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleAssetUpload(e.target.files[0], 'poster2')} />
+                                    <input type="file" ref={poster3InputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleAssetUpload(e.target.files[0], 'poster3')} />
+                                </div>
+                            )}
+                        </div>
                     )}
 
                     {/* Color Picker */}
@@ -450,6 +525,7 @@ export default function HRSchedulingPage() {
                                                                         onChange={(e) => setNoteValue(e.target.value)}
                                                                         onKeyDown={(e) => {
                                                                             if (e.key === 'Enter' && reg) handleRegister(reg.shift_id, dateStr, profile.id, noteValue);
+                                                                            // If no Reg, user can't save note yet.
                                                                         }}
                                                                     />
                                                                     <div className="flex justify-between items-center gap-2">
@@ -460,16 +536,17 @@ export default function HRSchedulingPage() {
                                                                             >
                                                                                 <Trash2 className="w-3 h-3" /> Hủy
                                                                             </button>
-                                                                        ) : (<div className="flex-1"></div>)}
+                                                                        ) : (<div className="flex-1 py-1.5"></div>)}
 
-                                                                        {reg && (
-                                                                            <button
-                                                                                onClick={() => handleRegister(reg.shift_id, dateStr, profile.id, noteValue)}
-                                                                                className="flex-1 py-1.5 text-[10px] bg-teal-600 text-white hover:bg-teal-700 rounded flex items-center justify-center gap-1 font-medium"
-                                                                            >
-                                                                                <Check className="w-3 h-3" /> Lưu
-                                                                            </button>
-                                                                        )}
+                                                                        <button
+                                                                            onClick={() => {
+                                                                                if (reg) handleRegister(reg.shift_id, dateStr, profile.id, noteValue);
+                                                                                else alert("Vui lòng chọn Ca làm việc trước khi lưu ghi chú!");
+                                                                            }}
+                                                                            className="flex-1 py-1.5 text-[10px] bg-teal-600 text-white hover:bg-teal-700 rounded flex items-center justify-center gap-1 font-medium"
+                                                                        >
+                                                                            <Check className="w-3 h-3" /> Lưu
+                                                                        </button>
                                                                     </div>
                                                                 </div>
                                                             </div>

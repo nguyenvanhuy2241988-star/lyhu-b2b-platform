@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import DashboardShell from "@/components/layout/DashboardShell";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { ROLES } from "@/lib/constants";
-import { Users, Calendar, Gift, ChevronRight, ImageIcon } from "lucide-react";
+import { Users, Calendar, Gift, ChevronRight } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { HRLayoutProvider, useHRLayout } from "@/components/hr/HRLayoutContext";
 
@@ -13,13 +13,15 @@ function HRLayoutContent({ children }: { children: React.ReactNode }) {
     useAuthGuard();
     const { role } = useAuth();
     const pathname = usePathname();
-    const { posterUrl, themeColor } = useHRLayout();
+    const { posters, themeColor } = useHRLayout();
 
     const HR_NAV = [
         { label: "Hồ sơ Nhân sự", href: "/hr/directory", icon: Users },
         { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
         { label: "Văn hóa & Quỹ", href: "/hr/culture", icon: Gift },
     ];
+
+    const hasPosters = posters.some(p => !!p);
 
     return (
         <DashboardShell role={(role as any) || ROLES.RECRUITER} title="Quản trị Nhân sự (HRM)">
@@ -67,20 +69,18 @@ function HRLayoutContent({ children }: { children: React.ReactNode }) {
                         </div>
                     </div>
 
-                    {/* Dynamic Poster Area */}
-                    {posterUrl && (
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden group relative">
-                            <div className="p-3 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
-                                <ImageIcon className="w-4 h-4 text-slate-400" />
-                                <span className="text-xs font-semibold text-slate-600">Thông báo / Poster</span>
-                            </div>
-                            <div className="p-2 sm:p-0">
-                                <img
-                                    src={posterUrl}
-                                    alt="Poster"
-                                    className="w-full h-auto object-contain max-h-[400px] rounded-lg sm:rounded-none"
-                                />
-                            </div>
+                    {/* Dynamic Poster Area (3 Slots) */}
+                    {hasPosters && (
+                        <div className="space-y-3">
+                            {posters.map((url, idx) => url && (
+                                <div key={idx} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                                    <img
+                                        src={url}
+                                        alt={`Poster ${idx + 1}`}
+                                        className="w-full h-auto object-contain max-h-[400px]"
+                                    />
+                                </div>
+                            ))}
                         </div>
                     )}
                 </div>

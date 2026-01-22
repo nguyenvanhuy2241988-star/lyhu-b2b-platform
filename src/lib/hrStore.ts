@@ -147,8 +147,10 @@ export interface WeeklySchedule {
     year: number;
     status: 'draft' | 'open' | 'closed' | 'published';
     banner_url?: string;
-    poster_url?: string; // New
-    theme_color?: string; // New
+    poster_url?: string;
+    poster_url_2?: string; // New
+    poster_url_3?: string; // New
+    theme_color?: string;
     created_at: string;
 }
 
