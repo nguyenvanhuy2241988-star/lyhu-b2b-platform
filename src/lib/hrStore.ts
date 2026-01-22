@@ -146,6 +146,7 @@ export interface WeeklySchedule {
     week_number: number;
     year: number;
     status: 'draft' | 'open' | 'closed' | 'published';
+    banner_url?: string;
     created_at: string;
 }
 
@@ -159,8 +160,17 @@ export interface ShiftRegistration {
     user?: {
         full_name: string;
         email: string;
+        avatar_url?: string;
     };
     shift?: WorkShift;
+}
+
+export interface WeeklyUserNote {
+    id: string;
+    schedule_id: string;
+    user_id: string;
+    note: string;
+    created_at: string;
 }
 
 export const getWorkShifts = async () => {
@@ -196,12 +206,24 @@ export const createWeeklySchedule = async (week: number, year: number) => {
     return data as WeeklySchedule;
 };
 
+export const updateWeeklySchedule = async (id: string, updates: Partial<WeeklySchedule>) => {
+    const { data, error } = await supabase
+        .from('weekly_schedules')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data as WeeklySchedule;
+};
+
 export const getShiftRegistrations = async (scheduleId: string) => {
     const { data, error } = await supabase
         .from('shift_registrations')
         .select(`
             *,
-            user:profiles(full_name, email),
+            user:profiles(full_name, email, avatar_url),
             shift:work_shifts(*)
         `)
         .eq('schedule_id', scheduleId);
@@ -242,6 +264,51 @@ export const updateRegistrationStatus = async (id: string, status: 'approved' | 
 
     if (error) throw error;
     return data;
+};
+
+// -- USER NOTES --
+
+export const getWeeklyUserNotes = async (scheduleId: string) => {
+    const { data, error } = await supabase
+        .from('weekly_schedule_user_notes')
+        .select('*')
+        .eq('schedule_id', scheduleId);
+
+    if (error) throw error;
+    return data as WeeklyUserNote[];
+};
+
+export const upsertWeeklyUserNote = async (scheduleId: string, userId: string, note: string) => {
+    const { data, error } = await supabase
+        .from('weekly_schedule_user_notes')
+        .upsert({ schedule_id: scheduleId, user_id: userId, note }, { onConflict: 'schedule_id, user_id' })
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data as WeeklyUserNote;
+};
+
+// -- ASSETS --
+
+export const uploadHRAsset = async (file: File) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}.${fileExt}`;
+    const filePath = `${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from('hr-assets')
+        .upload(filePath, file);
+
+    if (uploadError) {
+        throw uploadError;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+        .from('hr-assets')
+        .getPublicUrl(filePath);
+
+    return publicUrl;
 };
 
 // -- CULTURE & FUND --

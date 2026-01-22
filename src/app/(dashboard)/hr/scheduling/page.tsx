@@ -1,139 +1,38 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { ROLES } from "@/lib/constants";
 import {
-    WeeklySchedule, WorkShift, ShiftRegistration,
-    getWeeklySchedules, getWorkShifts, getShiftRegistrations,
-    createWeeklySchedule, registerShift, deleteRegistration
+    WeeklySchedule, WorkShift, ShiftRegistration, WeeklyUserNote, HRProfile,
+    getWeeklySchedules, getWorkShifts, getShiftRegistrations, getHRProfiles,
+    createWeeklySchedule, updateWeeklySchedule, registerShift, deleteRegistration,
+    updateRegistrationStatus, getWeeklyUserNotes, upsertWeeklyUserNote, uploadHRAsset
 } from "@/lib/hrStore";
-import { format, startOfWeek, addDays, getISOWeek, getYear } from "date-fns";
+import { format, getISOWeek, getYear, isSameDay } from "date-fns";
 import { vi } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, Plus, Loader2 } from "lucide-react";
-// ... existing imports
-import { X, Check, User as UserIcon } from "lucide-react";
-import { updateRegistrationStatus } from "@/lib/hrStore";
+import {
+    ChevronLeft, ChevronRight, Plus, Loader2, Upload, AlertCircle,
+    User as UserIcon, Calendar, Check, X, Edit3, Trash2
+} from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
-
-// Modal Component for Admin Approvals
-function ShiftApprovalsModal({
-    isOpen, onClose, shift, date, registrations, onUpdate
-}: {
-    isOpen: boolean;
-    onClose: () => void;
-    shift: WorkShift | null;
-    date: Date | null;
-    registrations: ShiftRegistration[];
-    onUpdate: () => void;
-}) {
-    if (!isOpen || !shift || !date) return null;
-
-    const dateStr = format(date, 'dd/MM/yyyy');
-
-    const handleApprove = async (regId: string) => {
-        try {
-            await updateRegistrationStatus(regId, 'approved');
-            onUpdate();
-        } catch (e) {
-            console.error(e);
-            alert("Lỗi khi duyệt");
-        }
-    };
-
-    const handleReject = async (regId: string) => {
-        if (!confirm("Từ chối nhân sự này?")) return;
-        try {
-            await updateRegistrationStatus(regId, 'rejected'); // Or delete
-            onUpdate();
-        } catch (e) {
-            console.error(e);
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                    <div>
-                        <h3 className="font-bold text-slate-800">{shift.name}</h3>
-                        <p className="text-xs text-slate-500">{dateStr} • {shift.start_time.slice(0, 5)} - {shift.end_time.slice(0, 5)}</p>
-                    </div>
-                    <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded-full transition">
-                        <X className="w-5 h-5 text-slate-500" />
-                    </button>
-                </div>
-                <div className="p-0 max-h-[60vh] overflow-y-auto">
-                    {registrations.length === 0 ? (
-                        <div className="p-8 text-center text-slate-500 text-sm">
-                            Chưa có nhân sự nào đăng ký ca này.
-                        </div>
-                    ) : (
-                        <div className="divide-y divide-slate-100">
-                            {registrations.map(reg => (
-                                <div key={reg.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
-                                            <span className="text-blue-600 font-bold text-xs">
-                                                {reg.user?.full_name?.charAt(0) || "U"}
-                                            </span>
-                                        </div>
-                                        <div>
-                                            <div className="text-sm font-medium text-slate-900">{reg.user?.full_name || "Unknown"}</div>
-                                            <div className={`text-[10px] uppercase font-bold ${reg.status === 'approved' ? 'text-green-600' :
-                                                reg.status === 'rejected' ? 'text-red-500' : 'text-yellow-600'
-                                                }`}>
-                                                {reg.status === 'pending' ? 'Chờ duyệt' :
-                                                    reg.status === 'approved' ? 'Đã duyệt' : 'Đã từ chối'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        {reg.status === 'pending' && (
-                                            <>
-                                                <button
-                                                    onClick={() => handleApprove(reg.id)}
-                                                    className="p-1.5 rounded-full bg-green-50 text-green-600 hover:bg-green-100 border border-green-200 transition"
-                                                    title="Duyệt"
-                                                >
-                                                    <Check className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleReject(reg.id)}
-                                                    className="p-1.5 rounded-full bg-red-50 text-red-500 hover:bg-red-100 border border-red-200 transition"
-                                                    title="Từ chối"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </button>
-                                            </>
-                                        )}
-                                        {reg.status === 'approved' && (
-                                            <span className="text-green-500"><Check className="w-5 h-5" /></span>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-}
 
 export default function HRSchedulingPage() {
     const { user, role } = useAuth();
-    const isAdmin = role === ROLES.ADMIN || role === ROLES.RECRUITER; // Allow HR/Recruiter too
+    const isAdmin = role === ROLES.ADMIN || role === ROLES.RECRUITER;
+    const isHR = isAdmin; // Alias for clarity
 
     const [loading, setLoading] = useState(true);
+    const [profiles, setProfiles] = useState<HRProfile[]>([]);
     const [schedules, setSchedules] = useState<WeeklySchedule[]>([]);
     const [selectedSchedule, setSelectedSchedule] = useState<WeeklySchedule | null>(null);
     const [shifts, setShifts] = useState<WorkShift[]>([]);
     const [registrations, setRegistrations] = useState<ShiftRegistration[]>([]);
+    const [userNotes, setUserNotes] = useState<WeeklyUserNote[]>([]);
 
-    // Modal State
-    const [modalOpen, setModalOpen] = useState(false);
-    const [modalData, setModalData] = useState<{ shift: WorkShift, date: Date, regs: ShiftRegistration[] } | null>(null);
+    // Banner Upload State
+    const [uploadingBanner, setUploadingBanner] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Setup for current week view or creating new
     const today = new Date();
@@ -142,16 +41,17 @@ export default function HRSchedulingPage() {
     const loadData = async () => {
         setLoading(true);
         try {
-            const [schedulesData, shiftsData] = await Promise.all([
+            const [profilesData, schedulesData, shiftsData] = await Promise.all([
+                getHRProfiles(),
                 getWeeklySchedules(),
                 getWorkShifts()
             ]);
+            setProfiles(profilesData);
             setSchedules(schedulesData);
-            setShifts(shiftsData);
+            setShifts(shiftsData); // Now sorted by start time
 
             // Auto select latest open schedule or create simple view
             if (schedulesData.length > 0) {
-                // If we have schedules, pick the first one (most recent)
                 handleSelectSchedule(schedulesData[0]);
             }
         } catch (error) {
@@ -163,19 +63,21 @@ export default function HRSchedulingPage() {
 
     const handleSelectSchedule = async (schedule: WeeklySchedule) => {
         setSelectedSchedule(schedule);
-        // Load registrations for this schedule
+        // Load registrations and notes for this schedule
         try {
-            const regs = await getShiftRegistrations(schedule.id);
+            const [regs, notes] = await Promise.all([
+                getShiftRegistrations(schedule.id),
+                getWeeklyUserNotes(schedule.id)
+            ]);
             setRegistrations(regs);
+            setUserNotes(notes);
         } catch (err) {
-            console.error("Failed to load registrations", err);
+            console.error("Failed to load schedule details", err);
         }
     };
 
     const handleCreateWeek = async () => {
-        // Create schedule for next week (or current if missing)
-        // Simplification: asking user or just default to next week
-        // For Demo: Use current week + 1
+        if (!isHR) return;
         const targetWeek = currentWeekInfo.week + 1;
         const targetYear = currentWeekInfo.year;
 
@@ -188,12 +90,19 @@ export default function HRSchedulingPage() {
         }
     };
 
-    const handleRegister = async (shiftId: string, dateStr: string) => {
-        if (!selectedSchedule || !user) return;
+    // --- REGISTRATION LOGIC ---
+
+    const handleRegister = async (shiftId: string, dateStr: string, targetUserId: string) => {
+        if (!selectedSchedule) return;
+
+        // Only allow if own user OR admin
+        if (user?.id !== targetUserId && !isHR) return;
+
         try {
-            await registerShift(user.id, selectedSchedule.id, shiftId, dateStr);
-            // Refresh
-            handleSelectSchedule(selectedSchedule);
+            await registerShift(targetUserId, selectedSchedule.id, shiftId, dateStr);
+            // Optimistic update or refresh
+            const updatedRegs = await getShiftRegistrations(selectedSchedule.id);
+            setRegistrations(updatedRegs);
         } catch (err) {
             console.error("Register failed", err);
             alert("Đăng ký không thành công.");
@@ -201,79 +110,85 @@ export default function HRSchedulingPage() {
     };
 
     const handleCancel = async (regId: string) => {
-        if (!selectedSchedule || !user) return;
+        if (!selectedSchedule) return;
         try {
-            await deleteRegistration(regId, user.id);
-            handleSelectSchedule(selectedSchedule);
+            await deleteRegistration(regId, user?.id || "");
+            // Refresh
+            const updatedRegs = await getShiftRegistrations(selectedSchedule.id);
+            setRegistrations(updatedRegs);
         } catch (err) {
             console.error("Delete failed", err);
         }
     };
 
-    // Initial Data Load
+    // --- NOTES LOGIC ---
+
+    const handleUpdateNote = async (userId: string, currentNote: string) => {
+        if (!selectedSchedule) return;
+        const note = prompt("Nhập ghi chú (VD: Xin nghỉ phép, Đổi ca):", currentNote);
+        if (note === null) return; // Cancelled
+
+        try {
+            await upsertWeeklyUserNote(selectedSchedule.id, userId, note);
+            // Refresh notes
+            const updatedNotes = await getWeeklyUserNotes(selectedSchedule.id);
+            setUserNotes(updatedNotes);
+        } catch (err) {
+            console.error("Update note failed", err);
+            alert("Lỗi khi lưu ghi chú");
+        }
+    };
+
+    // --- BANNER LOGIC ---
+
+    const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0 || !selectedSchedule) return;
+        const file = e.target.files[0];
+
+        setUploadingBanner(true);
+        try {
+            const publicUrl = await uploadHRAsset(file);
+            await updateWeeklySchedule(selectedSchedule.id, { banner_url: publicUrl });
+
+            // Update local state
+            setSelectedSchedule({ ...selectedSchedule, banner_url: publicUrl });
+            // Also update entry in list
+            setSchedules(prev => prev.map(s => s.id === selectedSchedule.id ? { ...s, banner_url: publicUrl } : s));
+        } catch (err) {
+            console.error("Upload failed", err);
+            alert("Upload thất bại");
+        } finally {
+            setUploadingBanner(false);
+        }
+    };
+
+    // --- REALTIME ---
+    useEffect(() => {
+        if (!selectedSchedule?.id) return;
+
+        const channel = supabase
+            .channel('hr_scheduling_pivot')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'shift_registrations', filter: `schedule_id=eq.${selectedSchedule.id}` },
+                () => getShiftRegistrations(selectedSchedule.id).then(setRegistrations))
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_schedule_user_notes', filter: `schedule_id=eq.${selectedSchedule.id}` },
+                () => getWeeklyUserNotes(selectedSchedule.id).then(setUserNotes))
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [selectedSchedule?.id]);
+
     useEffect(() => {
         loadData();
     }, []);
 
-    // Realtime Subscription (Data Refresh)
-    useEffect(() => {
-        const channel = supabase
-            .channel('hr_scheduling_changes')
-            .on('postgres_changes', {
-                event: '*',
-                schema: 'public',
-                table: 'shift_registrations'
-            }, () => {
-                // If a schedule is selected, refresh its registrations
-                // Use functional update or ref if needed, but here simple refetch is fine
-                // We access selectedSchedule from closure. Logic warning: closure staleness.
-                // Better approach: just re-fetch registrations for currently selected ID if valid.
-                if (selectedSchedule?.id) {
-                    getShiftRegistrations(selectedSchedule.id).then(setRegistrations);
-                }
-            })
-            .on('postgres_changes', {
-                event: '*',
-                schema: 'public',
-                table: 'weekly_schedules'
-            }, () => {
-                // Refresh schedules list
-                // We should call a lighter version of loadData or just refetch schedules
-                getWeeklySchedules().then(setSchedules);
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [selectedSchedule?.id]);
-
-    if (loading) return <div className="p-6 flex justify-center"><Loader2 className="animate-spin text-blue-500" /></div>;
-
-    const openAdminModal = (shift: WorkShift, date: Date) => {
-        if (!isAdmin) return;
-        const dateStr = format(date, 'yyyy-MM-dd');
-        // Filter registrations for this specific cell
-        const cellRegs = registrations.filter(r =>
-            r.shift_id === shift.id && r.date === dateStr
-        );
-        setModalData({ shift, date, regs: cellRegs });
-        setModalOpen(true);
-    };
-
-    // Helper to generate days of the selected week
-    const getDaysInWeek = (week: number, year: number) => {
-        return Array.from({ length: 7 }, (_, i) => i);
-    };
+    // --- HELPER RENDERING ---
 
     const getWeekDays = (week: number, year: number) => {
         const simple = new Date(year, 0, 1 + (week - 1) * 7);
         const dayOfWeek = simple.getDay();
         const ISOweekStart = simple;
-        if (dayOfWeek <= 4)
-            ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
-        else
-            ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+        if (dayOfWeek <= 4) ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+        else ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
 
         const days = [];
         for (let i = 0; i < 7; i++) {
@@ -285,211 +200,225 @@ export default function HRSchedulingPage() {
     };
 
     const weekDays = selectedSchedule ? getWeekDays(selectedSchedule.week_number, selectedSchedule.year) : [];
-    const DAY_NAMES = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"];
+    const DAY_NAMES = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "CN"];
+
+    const getShiftColor = (name: string) => {
+        // Updated colors for Teal/Green theme compatibility
+        if (name.includes("Sáng")) return "bg-teal-50 text-teal-700 border-teal-200";
+        if (name.includes("Chiều")) return "bg-orange-50 text-orange-700 border-orange-200";
+        if (name.includes("Tối")) return "bg-indigo-50 text-indigo-700 border-indigo-200";
+        return "bg-slate-50 text-slate-700 border-slate-200";
+    };
+
+    if (loading) return <div className="h-full flex items-center justify-center bg-slate-50"><Loader2 className="w-8 h-8 animate-spin text-teal-600" /></div>;
 
     return (
-        <div className="h-full flex flex-col">
-            {/* Header */}
-            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
-                <div>
-                    <h1 className="text-xl font-bold text-slate-800">Xếp lịch làm việc</h1>
-                    <p className="text-sm text-slate-500">Đăng ký ca làm việc theo tuần</p>
-                </div>
-                {isAdmin && (
-                    <div className="flex gap-2">
+        <div className="h-full flex flex-col bg-slate-50/50">
+            {/* --- TOP BAR --- */}
+            <div className="px-6 py-4 bg-white border-b border-slate-200 flex flex-col gap-4 shadow-sm z-10">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-2xl font-bold text-teal-900">Lịch làm việc</h1>
+                        <p className="text-slate-500 text-sm">Quản lý ca làm việc toàn hệ thống</p>
+                    </div>
+                    {isHR && (
                         <button
                             onClick={handleCreateWeek}
-                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm shadow-blue-200"
+                            className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition flex items-center gap-2"
                         >
                             <Plus className="w-4 h-4" />
-                            Mở đăng ký tuần tới
+                            Tạo tuần mới
                         </button>
-                    </div>
-                )}
-            </div>
+                    )}
+                </div>
 
-            {/* Content */}
-            <div className="flex-1 overflow-auto p-6 bg-slate-50">
-                {/* Schedule Selector */}
-                <div className="flex gap-2 overflow-x-auto pb-4 mb-2">
+                {/* Week Selector */}
+                <div className="flex gap-2 overflow-x-auto pb-1 chrome-scrollbar-hidden">
                     {schedules.map(sch => (
                         <button
                             key={sch.id}
                             onClick={() => handleSelectSchedule(sch)}
-                            className={`flex-shrink-0 px-4 py-2 rounded-lg border text-sm font-medium transition ${selectedSchedule?.id === sch.id
-                                ? "bg-white border-blue-500 text-blue-700 shadow-sm ring-1 ring-blue-100"
-                                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                            className={`flex flex-col items-start min-w-[140px] px-4 py-2 rounded-lg border transition ${selectedSchedule?.id === sch.id
+                                    ? "bg-teal-50 border-teal-500 ring-1 ring-teal-500/20"
+                                    : "bg-white border-slate-200 hover:border-teal-300"
                                 }`}
                         >
-                            Tuần {sch.week_number} ({sch.year})
-                            <span className={`ml-2 text-[10px] uppercase px-1.5 py-0.5 rounded ${sch.status === 'open' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500 frame'
-                                }`}>
-                                {sch.status}
+                            <span className={`text-xs font-bold uppercase tracking-wider ${selectedSchedule?.id === sch.id ? "text-teal-700" : "text-slate-500"}`}>
+                                Tuần {sch.week_number}
                             </span>
+                            <span className="text-[10px] text-slate-400">Năm {sch.year}</span>
+                            {sch.status === 'open' && <span className="mt-1 text-[9px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-bold">Mở</span>}
                         </button>
                     ))}
-                    {schedules.length === 0 && (
-                        <div className="text-slate-500 text-sm italic py-2">Chưa có đợt đăng ký nào. Admin hãy tạo mới!</div>
+                </div>
+            </div>
+
+            {/* --- BANNER AREA --- */}
+            {selectedSchedule && (
+                <div className="relative w-full bg-slate-100 border-b border-slate-200 group">
+                    {selectedSchedule.banner_url ? (
+                        <div className="w-full h-48 md:h-64 relative overflow-hidden">
+                            <img
+                                src={selectedSchedule.banner_url}
+                                alt="Schedule Banner"
+                                className="w-full h-full object-cover"
+                            />
+                            {/* Overlay gradient for text readability if needed */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+                        </div>
+                    ) : (
+                        isHR && (
+                            <div className="w-full h-24 flex flex-col items-center justify-center text-slate-400 border-dashed border-2 border-slate-300 m-4 rounded-xl mx-auto w-[calc(100%-2rem)]">
+                                <Upload className="w-5 h-5 mb-1" />
+                                <span className="text-xs">Chưa có banner. Upload ngay để trang trí!</span>
+                            </div>
+                        )
+                    )}
+
+                    {/* Admin Upload Button */}
+                    {isHR && (
+                        <div className={`absolute top-4 right-4 ${selectedSchedule.banner_url ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'} transition-opacity`}>
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleBannerUpload}
+                            />
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={uploadingBanner}
+                                className="bg-white/90 backdrop-blur text-slate-700 hover:text-teal-600 px-3 py-2 rounded-lg shadow-sm border border-slate-200 text-xs font-medium flex items-center gap-2"
+                            >
+                                {uploadingBanner ? <Loader2 className="w-4 h-4 animate-spin" /> : <Edit3 className="w-4 h-4" />}
+                                {selectedSchedule.banner_url ? "Thay Banner" : "Upload Banner"}
+                            </button>
+                        </div>
                     )}
                 </div>
+            )}
 
-                {selectedSchedule && (
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
-                                    <tr>
-                                        <th className="px-4 py-3 min-w-[100px]">Ca làm việc</th>
-                                        {weekDays.map((date, idx) => (
-                                            <th key={idx} className="px-4 py-3 min-w-[140px]">
-                                                <div className="flex flex-col">
-                                                    <span className="font-bold text-slate-700">{DAY_NAMES[idx]}</span>
-                                                    <span className="text-xs font-normal">{format(date, 'dd/MM')}</span>
-                                                </div>
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {shifts.map(shift => (
-                                        <tr key={shift.id} className="hover:bg-slate-50/50">
-                                            <td className="px-4 py-3 font-medium text-slate-700 bg-slate-50/30">
-                                                <div>{shift.name}</div>
-                                                <div className="text-xs text-slate-400 font-normal">
-                                                    {shift.start_time.slice(0, 5)} - {shift.end_time.slice(0, 5)}
+            {/* --- MAIN CONTENT: PIVOT TABLE --- */}
+            <div className="flex-1 overflow-auto p-4 md:p-6 bg-slate-50/50">
+                {selectedSchedule ? (
+                    <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden min-w-[1000px]">
+                        <table className="w-full text-sm">
+                            <thead className="bg-[#009688] text-white">
+                                <tr>
+                                    <th className="py-3 px-4 text-left font-medium w-64 uppercase text-xs tracking-wider sticky left-0 z-20 bg-[#009688]">Nhân viên</th>
+                                    <th className="py-3 px-4 text-left font-medium w-48 uppercase text-xs tracking-wider">Ghi chú</th>
+                                    {weekDays.map((date, idx) => (
+                                        <th key={idx} className="py-3 px-2 text-center font-medium min-w-[120px]">
+                                            <div className="flex flex-col items-center">
+                                                <span className="uppercase text-[10px] opacity-80">{DAY_NAMES[idx]}</span>
+                                                <span className="text-lg font-bold leading-none">{format(date, 'dd/MM')}</span>
+                                            </div>
+                                        </th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {profiles.map((profile) => {
+                                    const userNote = userNotes.find(n => n.user_id === profile.id);
+                                    const canEditNote = isHR || user?.id === profile.id;
+
+                                    return (
+                                        <tr key={profile.id} className="hover:bg-slate-50 group transition-colors">
+                                            {/* Employee Col */}
+                                            <td className="py-3 px-4 sticky left-0 bg-white group-hover:bg-slate-50 z-10 border-r border-slate-100">
+                                                <div className="flex items-center gap-3">
+                                                    {profile.avatar_url ? (
+                                                        <img src={profile.avatar_url} className="w-9 h-9 rounded-full object-cover border border-slate-200" />
+                                                    ) : (
+                                                        <div className="w-9 h-9 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-xs border border-teal-200">
+                                                            {profile.full_name?.charAt(0)}
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <div className="font-semibold text-slate-800">{profile.full_name}</div>
+                                                        <div className="text-[11px] text-slate-400 capitalize">{profile.role}</div>
+                                                    </div>
                                                 </div>
                                             </td>
-                                            {weekDays.map((date, dayIdx) => {
+
+                                            {/* Note Col */}
+                                            <td className="py-3 px-4 border-r border-slate-100 relative">
+                                                <div
+                                                    onClick={() => canEditNote && handleUpdateNote(profile.id, userNote?.note || "")}
+                                                    className={`min-h-[2rem] rounded px-2 py-1.5 text-xs transition-colors cursor-pointer ${userNote?.note
+                                                            ? "bg-yellow-50 text-yellow-800 border border-yellow-200"
+                                                            : canEditNote ? "hover:bg-slate-100 text-slate-400 italic border border-transparent hover:border-slate-200" : "text-transparent"
+                                                        }`}
+                                                >
+                                                    <div className="flex justify-between items-center group/note">
+                                                        <span className="truncate max-w-[10rem]">{userNote?.note || (canEditNote ? "Thêm ghi chú..." : "")}</span>
+                                                        {canEditNote && <Edit3 className="w-3 h-3 opacity-0 group-hover/note:opacity-50" />}
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            {/* Days Cols */}
+                                            {weekDays.map((date, idx) => {
                                                 const dateStr = format(date, 'yyyy-MM-dd');
-                                                // Check registrations for this cell
-                                                const cellRegs = registrations.filter(r =>
-                                                    r.shift_id === shift.id && r.date === dateStr
-                                                );
-
-                                                // My registration
-                                                const myReg = cellRegs.find(r => r.user_id === user?.id);
-
-                                                // Approval metrics (Admin)
-                                                const pendingCount = cellRegs.filter(r => r.status === 'pending').length;
-                                                const approvedCount = cellRegs.filter(r => r.status === 'approved').length;
+                                                // Find registration for this user on this day
+                                                const reg = registrations.find(r => r.user_id === profile.id && r.date === dateStr);
+                                                const canAction = isHR || (user?.id === profile.id && selectedSchedule.status === 'open');
 
                                                 return (
-                                                    <td key={dayIdx} className="px-4 py-3 border-l border-slate-50 relative group h-14">
-                                                        {isAdmin ? (
-                                                            // ADMIN VIEW: Show Count & Click to Open Modal, BUT also allow self-register
-                                                            <div className="w-full h-full flex flex-col gap-1">
-                                                                {/* Admin Stats Button */}
-                                                                <button
-                                                                    onClick={() => openAdminModal(shift, date)}
-                                                                    className={`flex-1 w-full rounded flex items-center justify-center gap-1 transition-colors text-[10px] ${cellRegs.length > 0 ? "bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold" : "bg-slate-50 hover:bg-slate-100 text-slate-400"
-                                                                        }`}
-                                                                >
-                                                                    {cellRegs.length > 0 ? (
-                                                                        <>
-                                                                            <span>{cellRegs.length} NS</span>
-                                                                            {pendingCount > 0 && <span className="bg-yellow-200 text-yellow-800 px-1 rounded-full">{pendingCount}</span>}
-                                                                        </>
-                                                                    ) : (
-                                                                        <span>Xem</span>
-                                                                    )}
-                                                                </button>
-
-                                                                {myReg ? (
-                                                                    <div className={`text-[10px] text-center px-1 rounded border flex items-center justify-between ${myReg.status === 'approved' ? 'bg-green-100 border-green-200 text-green-700' : 'bg-yellow-50 border-yellow-200 text-yellow-700'}`}>
-                                                                        <span className="truncate">Bạn: {myReg.status === 'approved' ? 'Đã duyệt' : 'Chờ'}</span>
-                                                                        {myReg.status === 'pending' && (
-                                                                            <button
-                                                                                onClick={(e) => {
-                                                                                    e.stopPropagation();
-                                                                                    handleCancel(myReg.id);
-                                                                                }}
-                                                                                className="ml-1 p-0.5 hover:bg-red-100 hover:text-red-500 rounded text-slate-400"
-                                                                            >
-                                                                                <X className="w-3 h-3" />
-                                                                            </button>
-                                                                        )}
-                                                                    </div>
-                                                                ) : (
-                                                                    selectedSchedule.status === 'open' && (
+                                                    <td key={idx} className="py-2 px-2 border-r border-slate-50 text-center relative h-16">
+                                                        {reg ? (
+                                                            // Registered
+                                                            <div className="flex flex-col h-full gap-1">
+                                                                <div className={`flex-1 rounded-md border flex items-center justify-center text-xs font-bold shadow-sm ${getShiftColor(reg.shift?.name || "")} relative group/cell`}>
+                                                                    {reg.shift?.name}
+                                                                    {/* Delete/Cancel Button */}
+                                                                    {canAction && (
                                                                         <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleRegister(shift.id, dateStr);
-                                                                            }}
-                                                                            className="h-6 w-full border border-dashed border-blue-300 rounded text-blue-600 bg-blue-50/50 text-[10px] hover:bg-blue-100 font-medium transition flex items-center justify-center"
+                                                                            onClick={() => handleCancel(reg.id)}
+                                                                            className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover/cell:opacity-100 shadow-sm transition-opacity z-20"
+                                                                            title="Hủy đăng ký"
                                                                         >
-                                                                            + Đăng ký
+                                                                            <X className="w-3 h-3" />
                                                                         </button>
-                                                                    )
-                                                                )}
+                                                                    )}
+                                                                </div>
+                                                                <div className={`text-[9px] font-bold uppercase ${reg.status === 'approved' ? 'text-green-600' : 'text-yellow-600'}`}>
+                                                                    {reg.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}
+                                                                </div>
                                                             </div>
                                                         ) : (
-                                                            // EMPLOYEE VIEW: Show My Status or Register Button
-                                                            <>
-                                                                {myReg ? (
-                                                                    <div className={`p-2 rounded border text-xs font-medium flex justify-between items-center ${myReg.status === 'approved'
-                                                                        ? 'bg-green-50 border-green-200 text-green-700'
-                                                                        : 'bg-yellow-50 border-yellow-200 text-yellow-700'
-                                                                        }`}>
-                                                                        <span>{myReg.status === 'pending' ? 'Đang chờ' : 'Đã duyệt'}</span>
-                                                                        {myReg.status === 'pending' && (
-                                                                            <button
-                                                                                onClick={() => handleCancel(myReg.id)}
-                                                                                className="text-slate-400 hover:text-red-500 ml-2"
-                                                                            >
-                                                                                ×
-                                                                            </button>
-                                                                        )}
-                                                                    </div>
-                                                                ) : (
-                                                                    selectedSchedule.status === 'open' ? (
+                                                            // Empty Slot
+                                                            canAction ? (
+                                                                <div className="grid grid-cols-1 gap-1 h-full opacity-0 hover:opacity-100 transition-opacity duration-200">
+                                                                    {shifts.map(shift => (
                                                                         <button
-                                                                            onClick={() => handleRegister(shift.id, dateStr)}
-                                                                            className="w-full py-1.5 border border-dashed border-slate-300 rounded text-slate-400 text-xs hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition"
+                                                                            key={shift.id}
+                                                                            onClick={() => handleRegister(shift.id, dateStr, profile.id)}
+                                                                            className="rounded bg-teal-50 hover:bg-teal-100 text-teal-700 text-[9px] border border-teal-200 py-0.5"
                                                                         >
-                                                                            + Đăng ký
+                                                                            {shift.name} ({shift.start_time.slice(0, 5)})
                                                                         </button>
-                                                                    ) : (
-                                                                        <span className="text-slate-300 text-xs">-</span>
-                                                                    )
-                                                                )}
-                                                            </>
+                                                                    ))}
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-slate-200 text-lg select-none">•</span>
+                                                            )
                                                         )}
                                                     </td>
                                                 );
                                             })}
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <div className="flex items-center justify-center h-64 text-slate-400">
+                        Chọn một tuần để xem lịch
                     </div>
                 )}
             </div>
-
-            {/* Admin Approval Modal */}
-            {modalOpen && modalData && (
-                <ShiftApprovalsModal
-                    isOpen={modalOpen}
-                    onClose={() => setModalOpen(false)}
-                    shift={modalData.shift}
-                    date={modalData.date}
-                    registrations={modalData.regs}
-                    onUpdate={() => {
-                        if (selectedSchedule) {
-                            getShiftRegistrations(selectedSchedule.id).then((regs) => {
-                                setRegistrations(regs);
-                                // Sync modal data
-                                const dateStr = format(modalData.date, 'yyyy-MM-dd');
-                                const updatedCellRegs = regs.filter(r =>
-                                    r.shift_id === modalData.shift.id && r.date === dateStr
-                                );
-                                setModalData(prev => prev ? ({ ...prev, regs: updatedCellRegs }) : null);
-                            });
-                        }
-                    }}
-                />
-            )}
         </div>
     );
 }
