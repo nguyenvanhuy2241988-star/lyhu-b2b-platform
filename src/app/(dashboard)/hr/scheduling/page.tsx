@@ -163,7 +163,7 @@ export default function HRSchedulingPage() {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'shift_registrations', filter: `schedule_id=eq.${selectedSchedule.id}` },
                 () => getShiftRegistrations(selectedSchedule.id).then(setRegistrations))
             .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_schedules', filter: `id=eq.${selectedSchedule.id}` },
-                (payload) => {
+                (payload: any) => {
                     const newSch = payload.new as WeeklySchedule;
                     setSelectedSchedule(prev => prev?.id === newSch.id ? newSch : prev);
                     setSchedules(prev => prev.map(s => s.id === newSch.id ? newSch : s));
@@ -265,8 +265,8 @@ export default function HRSchedulingPage() {
                                 key={sch.id}
                                 onClick={() => handleSelectSchedule(sch)}
                                 className={`px-3 py-1 text-xs border rounded transition whitespace-nowrap font-medium ${selectedSchedule?.id === sch.id
-                                        ? "text-white border-transparent"
-                                        : "bg-white text-slate-600 border-slate-300 hover:bg-slate-100"
+                                    ? "text-white border-transparent"
+                                    : "bg-white text-slate-600 border-slate-300 hover:bg-slate-100"
                                     }`}
                                 style={selectedSchedule?.id === sch.id ? { backgroundColor: sch.theme_color || '#0d9488' } : {}}
                             >
