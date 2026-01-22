@@ -292,3 +292,14 @@ export const getFundBalance = async () => {
 
     return balance;
 };
+
+export const addFundTransaction = async (transaction: Omit<FundTransaction, 'id' | 'created_at'>) => {
+    const { data, error } = await supabase
+        .from('fund_transactions')
+        .insert([transaction])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
