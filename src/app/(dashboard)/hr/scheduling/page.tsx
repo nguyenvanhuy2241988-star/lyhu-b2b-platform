@@ -394,32 +394,33 @@ export default function HRSchedulingPage() {
                                                                     )}
                                                                 </button>
 
-                                                                <div className={`text-[10px] text-center px-1 rounded border flex items-center justify-between ${myReg.status === 'approved' ? 'bg-green-100 border-green-200 text-green-700' : 'bg-yellow-50 border-yellow-200 text-yellow-700'}`}>
-                                                                    <span className="truncate">Bạn: {myReg.status === 'approved' ? 'Đã duyệt' : 'Chờ'}</span>
-                                                                    {myReg.status === 'pending' && (
+                                                                {myReg ? (
+                                                                    <div className={`text-[10px] text-center px-1 rounded border flex items-center justify-between ${myReg.status === 'approved' ? 'bg-green-100 border-green-200 text-green-700' : 'bg-yellow-50 border-yellow-200 text-yellow-700'}`}>
+                                                                        <span className="truncate">Bạn: {myReg.status === 'approved' ? 'Đã duyệt' : 'Chờ'}</span>
+                                                                        {myReg.status === 'pending' && (
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    handleCancel(myReg.id);
+                                                                                }}
+                                                                                className="ml-1 p-0.5 hover:bg-red-100 hover:text-red-500 rounded text-slate-400"
+                                                                            >
+                                                                                <X className="w-3 h-3" />
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+                                                                ) : (
+                                                                    selectedSchedule.status === 'open' && (
                                                                         <button
                                                                             onClick={(e) => {
                                                                                 e.stopPropagation();
-                                                                                handleCancel(myReg.id);
+                                                                                handleRegister(shift.id, dateStr);
                                                                             }}
-                                                                            className="ml-1 p-0.5 hover:bg-red-100 hover:text-red-500 rounded text-slate-400"
+                                                                            className="h-6 w-full border border-dashed border-blue-300 rounded text-blue-600 bg-blue-50/50 text-[10px] hover:bg-blue-100 font-medium transition flex items-center justify-center"
                                                                         >
-                                                                            <X className="w-3 h-3" />
+                                                                            + Đăng ký
                                                                         </button>
-                                                                    )}
-                                                                </div>
-                                                                ) : (
-                                                                selectedSchedule.status === 'open' && (
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleRegister(shift.id, dateStr);
-                                                                    }}
-                                                                    className="h-6 w-full border border-dashed border-blue-300 rounded text-blue-600 bg-blue-50/50 text-[10px] hover:bg-blue-100 font-medium transition flex items-center justify-center"
-                                                                >
-                                                                    + Đăng ký
-                                                                </button>
-                                                                )
+                                                                    )
                                                                 )}
                                                             </div>
                                                         ) : (
