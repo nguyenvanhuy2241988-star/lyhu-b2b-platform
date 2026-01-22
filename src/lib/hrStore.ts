@@ -104,7 +104,7 @@ export const getUpcomingBirthdays = async () => {
     // Current logic: Fetch all and filter in JS (simpler for small teams than complex SQL date math)
     const { data, error } = await supabase
         .from('profiles')
-        .select('id, full_name, avatar_url, dob, department:departments(name)')
+        .select('id, full_name, avatar_url, dob, department:departments!profiles_department_id_fkey(name)')
         .not('dob', 'is', null);
 
     if (error) throw error;
