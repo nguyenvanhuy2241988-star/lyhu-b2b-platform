@@ -53,7 +53,7 @@ export default function CRMBanner() {
                 <img
                     src={bannerUrl}
                     alt="CRM Banner"
-                    className="w-full h-auto object-cover max-h-64 md:max-h-80"
+                    className="w-full h-auto rounded-xl shadow-sm"
                 />
             ) : (
                 <div className="h-40 flex flex-col items-center justify-center bg-slate-50 text-slate-400 gap-2">
