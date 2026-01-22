@@ -834,7 +834,30 @@ export async function fetchPaginatedDeals(
         }
 
         if (searchTerm) {
-            url += `&or=(title.ilike.*${searchTerm}*,customer.name.ilike.*${searchTerm}*,customer.phone.ilike.*${searchTerm}*)`;
+            // Fix: PostgREST cannot filter joined tables (customer.name) in a top-level OR.
+            // Workaround: 1. Find matching customers. 2. Filter deals by Title OR CustomerIDs.
+
+            // 1. Find matching customers (lightweight)
+            const custRes = await fetch(
+                `${supabaseUrl}/rest/v1/customers?select=id&or=(name.ilike.*${searchTerm}*,phone.ilike.*${searchTerm}*)&limit=50`,
+                { headers }
+            );
+            let custIds: string[] = [];
+            if (custRes.ok) {
+                const custData = await custRes.json();
+                custIds = custData.map((c: any) => c.id);
+            }
+
+            // 2. Build OR filter
+            let orParts = [`title.ilike.*${searchTerm}*`];
+            if (custIds.length > 0) {
+                // Determine if we have too many IDs for URL
+                if (custIds.length < 100) {
+                    orParts.push(`customer_id.in.(${custIds.join(',')})`);
+                }
+            }
+
+            url += `&or=(${orParts.join(',')})`;
         }
 
         const response = await fetch(url, {
