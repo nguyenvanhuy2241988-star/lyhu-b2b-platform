@@ -119,9 +119,8 @@ export const getUpcomingBirthdays = async () => {
         const day = dob.getDate();
         const month = dob.getMonth();
 
-        // Check if in current month or next month
-        // Simple logic: Just return if it's this month for now
-        if (month === currentMonth && day >= currentDay) {
+        // Check if in current month
+        if (month === currentMonth) {
             return { ...p, day, month };
         }
         return null;

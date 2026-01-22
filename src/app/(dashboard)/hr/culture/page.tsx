@@ -11,6 +11,8 @@ import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Gift, Calendar, TrendingUp, TrendingDown, DollarSign, X } from "lucide-react";
 
+import { supabase } from "@/lib/supabaseClient";
+
 export default function HRCulturePage() {
     const { role } = useAuth();
     const isAdmin = role === ROLES.ADMIN;
@@ -27,7 +29,7 @@ export default function HRCulturePage() {
 
     useEffect(() => {
         const loadData = async () => {
-            setLoading(true);
+            // setLoading(true); // Don't full spinner on refresh
             try {
                 const [eventsData, transData, balanceData, birthdaysData] = await Promise.all([
                     getCultureEvents(),
@@ -46,6 +48,23 @@ export default function HRCulturePage() {
             }
         };
         loadData();
+
+        // Realtime Subscription for Birthdays (Profiles)
+        const channel = supabase
+            .channel('hr-culture-realtime')
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'profiles' },
+                () => {
+                    console.log('Profiles changed, refreshing birthdays...');
+                    getUpcomingBirthdays().then(setBirthdays);
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, []);
 
     const handleAddTransaction = async () => {
@@ -131,13 +150,13 @@ export default function HRCulturePage() {
                         )}
                     </div>
 
-                    {/* BIRTHDAYS WIDGET (Static Placeholder for now or connect to hrStore if implementing) */}
-                    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-lg p-6 text-white relative overflow-hidden">
+                    {/* BIRTHDAYS WIDGET (Realtime) */}
+                    <div className="bg-gradient-to-r from-teal-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white relative overflow-hidden">
                         <div className="absolute top-0 right-0 opacity-10 transform translate-x-4 -translate-y-4">
                             <Gift size={120} />
                         </div>
                         <h3 className="font-bold text-lg mb-1">Sinh nhật tháng này 🎂</h3>
-                        <p className="text-indigo-100 text-sm mb-4">Gửi lời chúc mừng đến các thành viên có sinh nhật trong tháng!</p>
+                        <p className="text-teal-50 text-sm mb-4">Gửi lời chúc mừng đến các thành viên có sinh nhật trong tháng!</p>
 
                         {birthdays.length === 0 ? (
                             <p className="text-sm opacity-80 italic">Không có sinh nhật nào trong tháng này.</p>
@@ -145,10 +164,10 @@ export default function HRCulturePage() {
                             <div className="flex flex-wrap gap-2">
                                 {birthdays.map((b, idx) => (
                                     <div key={b.id} className="relative group cursor-pointer">
-                                        <div className="w-10 h-10 rounded-full border-2 border-white bg-blue-200 flex items-center justify-center overflow-hidden">
-                                            {b.avatar_url ? <img src={b.avatar_url} className="w-full h-full object-cover" /> : <span className="text-blue-700 font-bold text-xs">{b.full_name?.charAt(0)}</span>}
+                                        <div className="w-10 h-10 rounded-full border-2 border-white bg-white/20 flex items-center justify-center overflow-hidden">
+                                            {b.avatar_url ? <img src={b.avatar_url} className="w-full h-full object-cover" /> : <span className="text-white font-bold text-xs">{b.full_name?.charAt(0)}</span>}
                                         </div>
-                                        <div className="absolute bottom-[-24px] left-1/2 -translate-x-1/2 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-10">
+                                        <div className="absolute bottom-[-30px] left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap z-10 pointer-events-none">
                                             {b.day}/{b.month + 1} - {b.full_name}
                                         </div>
                                     </div>
