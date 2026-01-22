@@ -20,8 +20,8 @@ export default function DashboardShell({ children, role, allowedRoles, title }: 
     const router = useRouter();
 
     // Determine the role to display in Sidebar
-    // Priority: Prop role > Context role > User object role > Default 'admin'
-    const sidebarRole = (role || userRole || user?.role || 'admin') as UserRole;
+    // Priority: If user is ADMIN, always show Admin sidebar. Otherwise respect prop role (layout) > Context > User object
+    const sidebarRole = (userRole === 'admin' ? 'admin' : (role || userRole || user?.role || 'admin')) as UserRole;
 
     if (isLoading && !user) {
         return (
