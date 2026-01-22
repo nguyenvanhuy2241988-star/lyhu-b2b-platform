@@ -39,6 +39,16 @@ CREATE POLICY "Admins can update crm_settings" ON public.crm_settings
         )
     );
 
+CREATE POLICY "Admins can insert crm_settings" ON public.crm_settings
+    FOR INSERT TO authenticated
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.profiles 
+            WHERE profiles.id = auth.uid() 
+            AND profiles.role = 'ADMIN'
+        )
+    );
+
 -- 4. Insert default row (Safe)
 INSERT INTO public.crm_settings (id, banner_url) VALUES (1, NULL) ON CONFLICT (id) DO NOTHING;
 
