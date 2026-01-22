@@ -1056,6 +1056,7 @@ export default function CRMPage() {
 
     return (
         <div className="p-4 sm:p-6 space-y-6 h-full flex flex-col relative" onClick={() => setIsSettingsOpen(false)}>
+            <CRMBanner />
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-[60] relative">
                 <div>

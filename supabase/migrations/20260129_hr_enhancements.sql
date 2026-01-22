@@ -60,6 +60,7 @@ CREATE POLICY "Users manage own notes" ON public.weekly_schedule_user_notes
 -- 4. Update Shift Registrations Policies for Public Visibility
 -- Everyone can VIEW all registrations (to see who is working when)
 DROP POLICY IF EXISTS "View own registrations or Admin" ON public.shift_registrations;
+DROP POLICY IF EXISTS "Everyone view all registrations" ON public.shift_registrations;
 CREATE POLICY "Everyone view all registrations" ON public.shift_registrations
     FOR SELECT USING (true);
 

@@ -105,7 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         .eq("id", currentSession.user.id)
                         .maybeSingle();
 
-                    const fetchedRole = profile?.role ?? "customer";
+                    const fetchedRole = (profile?.role ?? "customer").toLowerCase();
                     setRole(fetchedRole);
 
                     // FIXED: Update localStorage with the fetched role so next time we can restore it from cache
@@ -190,7 +190,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
                     if (response.ok) {
                         const data = await response.json();
-                        fetchedRole = data?.[0]?.role ?? null;
+                        fetchedRole = (data?.[0]?.role ?? null)?.toLowerCase() ?? null;
                     } else {
                         console.error("Profile fetch failed:", response.status, response.statusText);
                     }
@@ -245,7 +245,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         filter: `id=eq.${user.id}`,
                     },
                     (payload: any) => {
-                        const newSyncRole = payload.new.role;
+                        const newSyncRole = payload.new.role?.toLowerCase();
                         setRole(prev => {
                             if (newSyncRole && newSyncRole !== prev) {
                                 const updatedUser = { ...user, role: newSyncRole };

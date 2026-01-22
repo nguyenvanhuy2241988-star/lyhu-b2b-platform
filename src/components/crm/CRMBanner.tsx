@@ -8,7 +8,10 @@ import { Edit3, Trash2, Camera, User } from "lucide-react";
 
 export default function CRMBanner() {
     const { role } = useAuth();
-    const isAdmin = role === ROLES.ADMIN;
+    // Normalize role check to be case-insensitive to handle 'ADMIN' vs 'admin'
+    const isAdmin = role?.toLowerCase() === ROLES.ADMIN.toLowerCase();
+
+    console.log('[CRMBanner] Debug - role:', role, 'isAdmin:', isAdmin);
 
     const [bannerUrl, setBannerUrl] = useState<string | null>(null);
     const [uploading, setUploading] = useState(false);

@@ -481,7 +481,7 @@ export default function HRSchedulingPage() {
                                                     {reg ? (
                                                         <div className={`w-full h-full rounded px-2 py-1 flex flex-col justify-center shadow-sm relative overflow-hidden ${getShiftColor(reg.shift?.name || "")}`}>
                                                             <div className="flex justify-between items-start">
-                                                                <div className="text-[11px] font-bold leading-tight">{reg.shift?.name}</div>
+                                                                <div className="text-[10px] font-normal opacity-75 leading-tight">{reg.shift?.name}</div>
                                                                 {reg.note && <MessageSquare className="w-2.5 h-2.5 opacity-60 ml-1 shrink-0" />}
                                                             </div>
                                                             {reg.note && (
