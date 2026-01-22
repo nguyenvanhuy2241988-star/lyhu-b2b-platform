@@ -147,6 +147,8 @@ export interface WeeklySchedule {
     year: number;
     status: 'draft' | 'open' | 'closed' | 'published';
     banner_url?: string;
+    poster_url?: string; // New
+    theme_color?: string; // New
     created_at: string;
 }
 
@@ -156,6 +158,7 @@ export interface ShiftRegistration {
     user_id: string;
     shift_id: string;
     date: string;
+    note?: string; // New
     status: 'pending' | 'approved' | 'rejected';
     user?: {
         full_name: string;
@@ -165,13 +168,7 @@ export interface ShiftRegistration {
     shift?: WorkShift;
 }
 
-export interface WeeklyUserNote {
-    id: string;
-    schedule_id: string;
-    user_id: string;
-    note: string;
-    created_at: string;
-}
+// Removed WeeklyUserNote interface
 
 export const getWorkShifts = async () => {
     const { data, error } = await supabase
@@ -232,10 +229,10 @@ export const getShiftRegistrations = async (scheduleId: string) => {
     return data as ShiftRegistration[];
 };
 
-export const registerShift = async (userId: string, scheduleId: string, shiftId: string, date: string) => {
+export const registerShift = async (userId: string, scheduleId: string, shiftId: string, date: string, note?: string) => {
     const { data, error } = await supabase
         .from('shift_registrations')
-        .insert([{ user_id: userId, schedule_id: scheduleId, shift_id: shiftId, date, status: 'pending' }])
+        .insert([{ user_id: userId, schedule_id: scheduleId, shift_id: shiftId, date, status: 'pending', note }])
         .select()
         .single();
 
@@ -244,8 +241,6 @@ export const registerShift = async (userId: string, scheduleId: string, shiftId:
 };
 
 export const deleteRegistration = async (id: string, userId: string) => {
-    // RLS policy ensures user can only delete own pending
-    // But we pass UserId just to be explicit if needed, though ID is unique
     const { error } = await supabase
         .from('shift_registrations')
         .delete()
@@ -266,28 +261,7 @@ export const updateRegistrationStatus = async (id: string, status: 'approved' | 
     return data;
 };
 
-// -- USER NOTES --
-
-export const getWeeklyUserNotes = async (scheduleId: string) => {
-    const { data, error } = await supabase
-        .from('weekly_schedule_user_notes')
-        .select('*')
-        .eq('schedule_id', scheduleId);
-
-    if (error) throw error;
-    return data as WeeklyUserNote[];
-};
-
-export const upsertWeeklyUserNote = async (scheduleId: string, userId: string, note: string) => {
-    const { data, error } = await supabase
-        .from('weekly_schedule_user_notes')
-        .upsert({ schedule_id: scheduleId, user_id: userId, note }, { onConflict: 'schedule_id, user_id' })
-        .select()
-        .single();
-
-    if (error) throw error;
-    return data as WeeklyUserNote;
-};
+// Removed WeeklyUserNote functions
 
 // -- ASSETS --
 
