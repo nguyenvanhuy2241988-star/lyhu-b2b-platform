@@ -29,9 +29,9 @@ BEGIN
   -- 1. Check Permissions
   SELECT role INTO v_current_user_role FROM public.profiles WHERE id = auth.uid();
   
-  -- Allow if Admin OR updating own profile
-  IF v_current_user_role <> 'admin' AND auth.uid() <> p_id THEN
-    RAISE EXCEPTION 'Permission Denied: Only Admins can update other profiles.';
+  -- Allow if Admin OR Recruiter OR updating own profile
+  IF v_current_user_role NOT IN ('admin', 'recruiter') AND auth.uid() <> p_id THEN
+    RAISE EXCEPTION 'Permission Denied: Only Admins or Recruiters can update other profiles.';
   END IF;
 
   -- 2. Perform Update
