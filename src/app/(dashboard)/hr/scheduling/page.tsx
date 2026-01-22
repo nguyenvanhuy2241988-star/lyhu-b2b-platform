@@ -374,24 +374,54 @@ export default function HRSchedulingPage() {
                                                 const approvedCount = cellRegs.filter(r => r.status === 'approved').length;
 
                                                 return (
-                                                    <td key={dayIdx} className="px-4 py-3 border-l border-slate-50 relative group">
+                                                    <td key={dayIdx} className="px-4 py-3 border-l border-slate-50 relative group h-14">
                                                         {isAdmin ? (
-                                                            // ADMIN VIEW: Show Count & Click to Open Modal
-                                                            <button
-                                                                onClick={() => openAdminModal(shift, date)}
-                                                                className={`w-full h-full min-h-[40px] rounded flex flex-col items-center justify-center gap-1 transition-colors ${cellRegs.length > 0 ? "bg-blue-50 hover:bg-blue-100 text-blue-700" : "hover:bg-slate-100 text-slate-300"
-                                                                    }`}
-                                                            >
-                                                                {cellRegs.length > 0 ? (
-                                                                    <>
-                                                                        <div className="font-bold">{cellRegs.length} nhân sự</div>
-                                                                        {pendingCount > 0 && <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1 rounded">Chờ: {pendingCount}</span>}
-                                                                        {approvedCount > 0 && <span className="text-[10px] bg-green-100 text-green-700 px-1 rounded">Duyệt: {approvedCount}</span>}
-                                                                    </>
+                                                            // ADMIN VIEW: Show Count & Click to Open Modal, BUT also allow self-register
+                                                            <div className="w-full h-full flex flex-col gap-1">
+                                                                {/* Admin Stats Button */}
+                                                                <button
+                                                                    onClick={() => openAdminModal(shift, date)}
+                                                                    className={`flex-1 w-full rounded flex items-center justify-center gap-1 transition-colors text-[10px] ${cellRegs.length > 0 ? "bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold" : "bg-slate-50 hover:bg-slate-100 text-slate-400"
+                                                                        }`}
+                                                                >
+                                                                    {cellRegs.length > 0 ? (
+                                                                        <>
+                                                                            <span>{cellRegs.length} NS</span>
+                                                                            {pendingCount > 0 && <span className="bg-yellow-200 text-yellow-800 px-1 rounded-full">{pendingCount}</span>}
+                                                                        </>
+                                                                    ) : (
+                                                                        <span>Xem</span>
+                                                                    )}
+                                                                </button>
+
+                                                                <div className={`text-[10px] text-center px-1 rounded border flex items-center justify-between ${myReg.status === 'approved' ? 'bg-green-100 border-green-200 text-green-700' : 'bg-yellow-50 border-yellow-200 text-yellow-700'}`}>
+                                                                    <span className="truncate">Bạn: {myReg.status === 'approved' ? 'Đã duyệt' : 'Chờ'}</span>
+                                                                    {myReg.status === 'pending' && (
+                                                                        <button
+                                                                            onClick={(e) => {
+                                                                                e.stopPropagation();
+                                                                                handleCancel(myReg.id);
+                                                                            }}
+                                                                            className="ml-1 p-0.5 hover:bg-red-100 hover:text-red-500 rounded text-slate-400"
+                                                                        >
+                                                                            <X className="w-3 h-3" />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                                 ) : (
-                                                                    <span className="text-xs opacity-50">-</span>
+                                                                selectedSchedule.status === 'open' && (
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleRegister(shift.id, dateStr);
+                                                                    }}
+                                                                    className="h-6 w-full border border-dashed border-blue-300 rounded text-blue-600 bg-blue-50/50 text-[10px] hover:bg-blue-100 font-medium transition flex items-center justify-center"
+                                                                >
+                                                                    + Đăng ký
+                                                                </button>
+                                                                )
                                                                 )}
-                                                            </button>
+                                                            </div>
                                                         ) : (
                                                             // EMPLOYEE VIEW: Show My Status or Register Button
                                                             <>
