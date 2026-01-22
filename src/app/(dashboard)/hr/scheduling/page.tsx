@@ -11,14 +11,18 @@ import {
 } from "@/lib/hrStore";
 import { format, getISOWeek, getYear } from "date-fns";
 import {
-    Plus, Loader2, Upload, Edit3, MessageSquare, X, Palette, Trash2
+    Plus, Loader2, Upload, Edit3, MessageSquare, X, Palette, Trash2, Check, ExternalLink, Image as ImageIcon
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import { useHRLayout } from "@/components/hr/HRLayoutContext";
 
 export default function HRSchedulingPage() {
     const { user, role } = useAuth();
     const isAdmin = role === ROLES.ADMIN || role === ROLES.RECRUITER;
     const isHR = isAdmin;
+
+    // Context
+    const { setPosterUrl, setThemeColor } = useHRLayout();
 
     const [loading, setLoading] = useState(true);
     const [profiles, setProfiles] = useState<HRProfile[]>([]);
@@ -31,9 +35,7 @@ export default function HRSchedulingPage() {
     const [uploadingPoster, setUploadingPoster] = useState(false);
     const [createDate, setCreateDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [isCreating, setIsCreating] = useState(false);
-    const [showColorPicker, setShowColorPicker] = useState(false);
 
-    // { userId, date }
     const [openDropdown, setOpenDropdown] = useState<{ userId: string, date: string } | null>(null);
     const [noteValue, setNoteValue] = useState("");
 
@@ -50,25 +52,15 @@ export default function HRSchedulingPage() {
             ]);
             setProfiles(profilesData);
 
-            // Sort schedules: Oldest to Newest (1 -> 52)? Or Newest to Oldest?
-            // User requested "Week 5 before Week 4" -> Descending (Newest First) which is current.
-            // Wait, User said "Tuần 5 xếp trước tuần 4" -> This implies 5 is appearing *before* 4 in the list (Left to Right).
-            // Currently my code: order('year', desc).order('week', desc).
-            // This means [Week 5, Week 4, Week 3].
-            // If user COMPLAINED about this, they might want [Week 3, Week 4, Week 5] (Ascending).
-            // Let's sort ASCENDING for the buttons list so it reads naturally like a timeline.
-            // Sort in JS to be safe.
+            // Sort schedules: Year Asc, Week Asc (Timeline)
             const sortedSchedules = schedulesData.sort((a, b) => {
                 if (a.year !== b.year) return a.year - b.year;
                 return a.week_number - b.week_number;
             });
-
             setSchedules(sortedSchedules);
             setShifts(shiftsData);
 
-            // Auto select latest
             if (sortedSchedules.length > 0) {
-                // Select the last one (latest week) by default
                 handleSelectSchedule(sortedSchedules[sortedSchedules.length - 1]);
             }
         } catch (error) {
@@ -80,6 +72,11 @@ export default function HRSchedulingPage() {
 
     const handleSelectSchedule = async (schedule: WeeklySchedule) => {
         setSelectedSchedule(schedule);
+        // Sync to context
+        setPosterUrl(schedule.poster_url || null);
+        if (schedule.theme_color) setThemeColor(schedule.theme_color);
+        else setThemeColor("#0d9488");
+
         try {
             const regs = await getShiftRegistrations(schedule.id);
             setRegistrations(regs);
@@ -102,7 +99,6 @@ export default function HRSchedulingPage() {
 
         try {
             const newSchedule = await createWeeklySchedule(targetWeek, targetYear);
-            // Add and Resort
             const newReqs = [...schedules, newSchedule].sort((a, b) => {
                 if (a.year !== b.year) return a.year - b.year;
                 return a.week_number - b.week_number;
@@ -146,9 +142,14 @@ export default function HRSchedulingPage() {
             const publicUrl = await uploadHRAsset(file);
             const updates = type === 'banner' ? { banner_url: publicUrl } : { poster_url: publicUrl };
             await updateWeeklySchedule(selectedSchedule.id, updates);
+
             const updatedSch = { ...selectedSchedule, ...updates };
             setSelectedSchedule(updatedSch);
             setSchedules(prev => prev.map(s => s.id === selectedSchedule.id ? updatedSch : s));
+
+            // Sync context if poster
+            if (type === 'poster') setPosterUrl(publicUrl);
+
         } catch (err) { alert("Upload failed"); }
         finally { setUploading(false); }
     };
@@ -161,6 +162,8 @@ export default function HRSchedulingPage() {
             const updatedSch = { ...selectedSchedule, ...updates };
             setSelectedSchedule(updatedSch);
             setSchedules(prev => prev.map(s => s.id === selectedSchedule.id ? updatedSch : s));
+            // Sync context if poster
+            if (type === 'poster') setPosterUrl(null);
         } catch (err) { console.error(err); }
     };
 
@@ -169,12 +172,20 @@ export default function HRSchedulingPage() {
         await updateWeeklySchedule(selectedSchedule.id, { theme_color: color });
         setSelectedSchedule({ ...selectedSchedule, theme_color: color });
         setSchedules(prev => prev.map(s => s.id === selectedSchedule.id ? { ...s, theme_color: color } : s));
-        setShowColorPicker(false);
+        setThemeColor(color);
     };
 
     useEffect(() => {
+        // Sync context when selectedSchedule changes (also handles null)
+        if (selectedSchedule) {
+            setPosterUrl(selectedSchedule.poster_url || null);
+            setThemeColor(selectedSchedule.theme_color || '#0d9488');
+        }
+    }, [selectedSchedule]);
+
+    useEffect(() => {
         if (!selectedSchedule?.id) return;
-        const channel = supabase.channel('hr_phase4_view')
+        const channel = supabase.channel('hr_phase5_view')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'shift_registrations', filter: `schedule_id=eq.${selectedSchedule.id}` },
                 () => getShiftRegistrations(selectedSchedule.id).then(setRegistrations))
             .on('postgres_changes', { event: '*', schema: 'public', table: 'weekly_schedules', filter: `id=eq.${selectedSchedule.id}` },
@@ -182,6 +193,11 @@ export default function HRSchedulingPage() {
                     const newSch = payload.new as WeeklySchedule;
                     setSelectedSchedule(prev => prev?.id === newSch.id ? newSch : prev);
                     setSchedules(prev => prev.map(s => s.id === newSch.id ? newSch : s));
+                    // Sync context if updated
+                    if (newSch.id === selectedSchedule.id) {
+                        setPosterUrl(newSch.poster_url || null);
+                        if (newSch.theme_color) setThemeColor(newSch.theme_color);
+                    }
                 })
             .subscribe();
         return () => { supabase.removeChannel(channel); };
@@ -192,7 +208,6 @@ export default function HRSchedulingPage() {
     // Helpers
     const getWeekDays = (week: number, year: number) => {
         const simple = new Date(year, 0, 1 + (week - 1) * 7);
-        // Adjust to Monday
         const dayOfWeek = simple.getDay();
         const ISOweekStart = simple;
         if (dayOfWeek <= 4) ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
@@ -217,13 +232,9 @@ export default function HRSchedulingPage() {
         return "bg-slate-50 text-slate-800 border-slate-200";
     };
 
+    // Close on click outside (but component handles stopPropagation)
     useEffect(() => {
-        const handleClickOutside = () => {
-            // Only close if we are not interacting with input? 
-            // Actually, if we click outside the dropdown, close it.
-            // Inside component we use stopPropagation so this is fine.
-            setOpenDropdown(null);
-        };
+        const handleClickOutside = () => setOpenDropdown(null);
         if (openDropdown) document.addEventListener('click', handleClickOutside);
         return () => document.removeEventListener('click', handleClickOutside);
     }, [openDropdown]);
@@ -232,63 +243,40 @@ export default function HRSchedulingPage() {
 
     return (
         <div className="h-full flex flex-col bg-white">
-            {/* 1. Assets Area (Full Width, Auto Height) */}
-            <div className="shrink-0 flex flex-col md:flex-row border-b border-slate-200">
+            {/* 1. Banner Area (Full Width) */}
+            <div className="shrink-0 relative group bg-slate-50 border-b border-slate-200 w-full">
                 {selectedSchedule && (
-                    <div className="flex-1 relative group bg-slate-50">
+                    <>
                         {selectedSchedule.banner_url ? (
-                            <img src={selectedSchedule.banner_url} className="w-full h-auto object-contain" style={{ maxHeight: '400px' }} />
+                            <img src={selectedSchedule.banner_url} className="w-full h-auto object-cover md:object-contain bg-white" style={{ maxHeight: '450px' }} />
                         ) : (
-                            <div className="w-full h-32 flex items-center justify-center text-slate-400 text-xs">Chưa có Banner (tỷ lệ 3:1 hoặc 4:1)</div>
+                            <div className="w-full h-32 flex items-center justify-center text-slate-400 text-xs">Chưa có Banner (Full Width)</div>
                         )}
 
                         {isHR && (
-                            <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 p-1 rounded backdrop-blur-sm">
                                 <input type="file" ref={bannerInputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleAssetUpload(e.target.files[0], 'banner')} />
-                                <button onClick={() => bannerInputRef.current?.click()} className="bg-white/90 p-1.5 rounded shadow hover:text-teal-600" title="Đổi Banner">
+                                <button onClick={() => bannerInputRef.current?.click()} className="bg-white p-1.5 rounded shadow hover:text-teal-600" title="Đổi Banner">
                                     <Edit3 className="w-4 h-4" />
                                 </button>
                                 {selectedSchedule.banner_url && (
-                                    <button onClick={() => handleDeleteAsset('banner')} className="bg-white/90 p-1.5 rounded shadow hover:text-red-600" title="Xóa Banner">
+                                    <button onClick={() => handleDeleteAsset('banner')} className="bg-white p-1.5 rounded shadow hover:text-red-600" title="Xóa Banner">
                                         <Trash2 className="w-4 h-4" />
                                     </button>
                                 )}
                             </div>
                         )}
-                    </div>
-                )}
-                {/* Poster Side Area */}
-                {selectedSchedule && (selectedSchedule.poster_url || isHR) && (
-                    <div className="w-full md:w-80 border-t md:border-t-0 md:border-l border-slate-200 relative group flex items-start justify-center bg-slate-50">
-                        {selectedSchedule.poster_url ? (
-                            <img src={selectedSchedule.poster_url} className="w-full h-auto object-contain" style={{ maxHeight: '400px' }} />
-                        ) : (
-                            <div className="h-32 flex items-center justify-center text-slate-400 text-xs text-center px-4">Poster/Thông báo</div>
-                        )}
-                        {isHR && (
-                            <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <input type="file" ref={posterInputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleAssetUpload(e.target.files[0], 'poster')} />
-                                <button onClick={() => posterInputRef.current?.click()} className="bg-white/90 p-1.5 rounded shadow hover:text-teal-600" title="Đổi Poster">
-                                    <Upload className="w-4 h-4" />
-                                </button>
-                                {selectedSchedule.poster_url && (
-                                    <button onClick={() => handleDeleteAsset('poster')} className="bg-white/90 p-1.5 rounded shadow hover:text-red-600" title="Xóa Poster">
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                    </>
                 )}
             </div>
 
             {/* 2. Toolbar */}
-            <div className="px-4 py-2 border-b border-slate-300 flex items-center justify-between bg-slate-50 shrink-0">
-                <div className="flex items-center gap-4">
-                    <h1 className="text-lg font-bold" style={{ color: themeColor }}>Lịch làm việc</h1>
+            <div className="px-4 py-2 border-b border-slate-300 flex flex-col md:flex-row md:items-center justify-between bg-slate-50 shrink-0 gap-2">
+                <div className="flex items-center gap-4 overflow-x-auto chrome-scrollbar-hidden py-1">
+                    <h1 className="text-lg font-bold whitespace-nowrap" style={{ color: themeColor }}>Lịch làm việc</h1>
 
-                    {/* Week Buttons Sorted ASC */}
-                    <div className="flex gap-1 overflow-x-auto max-w-[50vw] chrome-scrollbar-hidden">
+                    {/* Week Buttons */}
+                    <div className="flex gap-1">
                         {schedules.map(sch => (
                             <button
                                 key={sch.id}
@@ -305,27 +293,42 @@ export default function HRSchedulingPage() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    {/* Custom Color Picker */}
+                <div className="flex items-center gap-3 self-end md:self-auto">
+                    {/* Poster Management (Hidden upload, triggered by button) */}
                     {isHR && selectedSchedule && (
-                        <div className="relative flex items-center gap-2">
-                            <div className="h-6 w-6 rounded-full overflow-hidden border border-slate-300 cursor-pointer relative shadow-sm hover:ring-2 hover:ring-offset-1 hover:ring-slate-300">
-                                <input
-                                    type="color"
-                                    value={selectedSchedule.theme_color || '#0d9488'}
-                                    onChange={(e) => handleUpdateTheme(e.target.value)}
-                                    className="absolute inset-0 w-full h-full p-0 border-none opacity-0 cursor-pointer"
-                                    title="Chọn màu chủ đạo"
-                                />
-                                <div className="w-full h-full" style={{ backgroundColor: selectedSchedule.theme_color || '#0d9488' }} />
+                        <>
+                            <input type="file" ref={posterInputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleAssetUpload(e.target.files[0], 'poster')} />
+                            <div className="flex items-center bg-white border border-slate-300 rounded overflow-hidden h-7">
+                                <button onClick={() => posterInputRef.current?.click()} className="px-2 h-full hover:bg-slate-50 text-xs text-slate-600 flex items-center gap-1 border-r border-slate-200">
+                                    <ImageIcon className="w-3.5 h-3.5" />
+                                    {selectedSchedule.poster_url ? 'Đổi Poster' : 'Up Poster'}
+                                </button>
+                                {selectedSchedule.poster_url && (
+                                    <button onClick={() => handleDeleteAsset('poster')} className="px-2 h-full hover:bg-red-50 text-red-500" title="Xóa Poster">
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                )}
                             </div>
+                        </>
+                    )}
+
+                    {/* Color Picker */}
+                    {isHR && selectedSchedule && (
+                        <div className="h-7 w-7 rounded-full overflow-hidden border border-slate-300 cursor-pointer relative shadow-sm hover:scale-105 transition-transform">
+                            <input
+                                type="color"
+                                value={selectedSchedule.theme_color || '#0d9488'}
+                                onChange={(e) => handleUpdateTheme(e.target.value)}
+                                className="absolute inset-0 w-[150%] h-[150%] -top-[25%] -left-[25%] p-0 border-none opacity-0 cursor-pointer"
+                            />
+                            <div className="w-full h-full pointer-events-none" style={{ backgroundColor: selectedSchedule.theme_color || '#0d9488' }} />
                         </div>
                     )}
 
                     {/* New Week */}
                     {isHR && (
                         <div className="relative">
-                            <button onClick={() => setIsCreating(!isCreating)} className="flex items-center gap-1 text-xs text-white px-3 py-1.5 rounded shadow-sm hover:opacity-90" style={{ backgroundColor: themeColor }}>
+                            <button onClick={() => setIsCreating(!isCreating)} className="flex items-center gap-1 text-xs text-white px-3 py-1.5 rounded shadow-sm hover:opacity-90 h-7" style={{ backgroundColor: themeColor }}>
                                 <Plus className="w-3 h-3" /> Tuần mới
                             </button>
                             {isCreating && (
@@ -339,9 +342,6 @@ export default function HRSchedulingPage() {
                                             onChange={(e) => setCreateDate(e.target.value)}
                                             className="w-full text-xs border border-slate-300 rounded px-2 py-1.5"
                                         />
-                                        <p className="text-[10px] text-slate-400 mt-1 italic">
-                                            Hệ thống sẽ tạo Tuần {createDate ? getISOWeek(new Date(createDate)) : '...'} - Năm {createDate ? getYear(new Date(createDate)) : '...'}
-                                        </p>
                                     </div>
                                     <div className="flex justify-end gap-2">
                                         <button onClick={() => setIsCreating(false)} className="px-3 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 rounded">Hủy</button>
@@ -371,9 +371,7 @@ export default function HRSchedulingPage() {
                         </thead>
                         <tbody>
                             {profiles.map((profile, rowIdx) => {
-                                // Striped rows for better readability
                                 const rowBg = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50';
-
                                 return (
                                     <tr key={profile.id} className={`${rowBg} hover:bg-slate-50`}>
                                         <td className={`sticky left-0 z-20 ${rowBg} border border-slate-300 px-3 py-1 h-12 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}>
@@ -406,8 +404,7 @@ export default function HRSchedulingPage() {
                                                     }}
                                                 >
                                                     {reg ? (
-                                                        <div className={`w-full h-full rounded px-2 py-1 flex flex-col justify-center shadow-sm relative overflow-hidden group/cell ${getShiftColor(reg.shift?.name || "")}`}>
-                                                            {/* Only show '...' if there's a note but space is tight? No, show icon */}
+                                                        <div className={`w-full h-full rounded px-2 py-1 flex flex-col justify-center shadow-sm relative overflow-hidden ${getShiftColor(reg.shift?.name || "")}`}>
                                                             <div className="flex justify-between items-start">
                                                                 <div className="text-[11px] font-bold leading-tight">{reg.shift?.name}</div>
                                                                 {reg.note && <MessageSquare className="w-2.5 h-2.5 opacity-60 ml-1 shrink-0" />}
@@ -421,7 +418,7 @@ export default function HRSchedulingPage() {
                                                     {/* Dropdown Popup */}
                                                     {isDropdownOpen && (
                                                         <div
-                                                            className="absolute top-full left-0 z-50 w-56 bg-white border border-slate-200 shadow-2xl rounded-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+                                                            className="absolute top-full left-0 z-50 w-64 bg-white border border-slate-200 shadow-2xl rounded-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150"
                                                             onClick={e => e.stopPropagation()}
                                                         >
                                                             <div className="px-3 py-2 text-[10px] bg-slate-50 border-b border-slate-100 font-semibold text-slate-500 flex justify-between items-center">
@@ -429,41 +426,51 @@ export default function HRSchedulingPage() {
                                                                 <button onClick={() => setOpenDropdown(null)} className="hover:bg-slate-200 p-1 rounded-full"><X className="w-3 h-3 hover:text-red-500" /></button>
                                                             </div>
 
-                                                            <div className="p-1.5 space-y-1 max-h-40 overflow-y-auto">
+                                                            <div className="p-1.5 grid grid-cols-1 gap-1 max-h-40 overflow-y-auto">
                                                                 {shifts.map(shift => (
                                                                     <button
                                                                         key={shift.id}
                                                                         className={`w-full text-left px-3 py-2 text-xs rounded hover:bg-teal-50 hover:text-teal-700 flex items-center justify-between transition-colors ${reg?.shift_id === shift.id ? 'bg-teal-50 text-teal-700 font-bold' : 'text-slate-700'}`}
                                                                         onClick={() => handleRegister(shift.id, dateStr, profile.id, noteValue)}
                                                                     >
-                                                                        <span>{shift.name}</span>
+                                                                        <span className="font-medium">{shift.name}</span>
                                                                         <span className="text-[10px] text-slate-400 font-normal">{shift.start_time.slice(0, 5)}</span>
                                                                     </button>
                                                                 ))}
                                                             </div>
 
                                                             <div className="p-2 border-t border-slate-100 bg-slate-50">
-                                                                <input
-                                                                    autoFocus
-                                                                    type="text"
-                                                                    placeholder="Ghi chú (nhập rồi Enter)..."
-                                                                    className="w-full text-xs border border-slate-200 rounded px-2 py-1.5 focus:ring-1 focus:ring-teal-500 focus:border-teal-500 outline-none mb-2 bg-white"
-                                                                    value={noteValue}
-                                                                    onChange={(e) => setNoteValue(e.target.value)}
-                                                                    onKeyDown={(e) => {
-                                                                        if (e.key === 'Enter') {
-                                                                            if (reg) handleRegister(reg.shift_id, dateStr, profile.id, noteValue);
-                                                                            // If no reg, user needs to pick shift first, but typically they might pick shift then type note.
-                                                                        }
-                                                                    }}
-                                                                />
-                                                                <div className="flex justify-between items-center">
-                                                                    {reg ? (
-                                                                        <button onClick={() => handleClearShift(reg.id)} className="text-[10px] text-red-500 hover:text-red-700 flex items-center gap-1"><Trash2 className="w-3 h-3" /> Hủy ca</button>
-                                                                    ) : <span></span>}
-                                                                    {reg && (
-                                                                        <button onClick={() => handleRegister(reg.shift_id, dateStr, profile.id, noteValue)} className="text-[10px] bg-teal-600 text-white px-3 py-1 rounded hover:bg-teal-700 font-medium">Lưu note</button>
-                                                                    )}
+                                                                <div className="space-y-2">
+                                                                    <input
+                                                                        autoFocus
+                                                                        type="text"
+                                                                        placeholder="Nhập ghi chú..."
+                                                                        className="w-full text-xs border border-slate-200 rounded px-2 py-1.5 focus:ring-1 focus:ring-teal-500 outline-none bg-white"
+                                                                        value={noteValue}
+                                                                        onChange={(e) => setNoteValue(e.target.value)}
+                                                                        onKeyDown={(e) => {
+                                                                            if (e.key === 'Enter' && reg) handleRegister(reg.shift_id, dateStr, profile.id, noteValue);
+                                                                        }}
+                                                                    />
+                                                                    <div className="flex justify-between items-center gap-2">
+                                                                        {reg ? (
+                                                                            <button
+                                                                                onClick={() => handleClearShift(reg.id)}
+                                                                                className="flex-1 py-1.5 text-[10px] bg-white border border-red-200 text-red-500 hover:bg-red-50 rounded flex items-center justify-center gap-1"
+                                                                            >
+                                                                                <Trash2 className="w-3 h-3" /> Hủy
+                                                                            </button>
+                                                                        ) : (<div className="flex-1"></div>)}
+
+                                                                        {reg && (
+                                                                            <button
+                                                                                onClick={() => handleRegister(reg.shift_id, dateStr, profile.id, noteValue)}
+                                                                                className="flex-1 py-1.5 text-[10px] bg-teal-600 text-white hover:bg-teal-700 rounded flex items-center justify-center gap-1 font-medium"
+                                                                            >
+                                                                                <Check className="w-3 h-3" /> Lưu
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
