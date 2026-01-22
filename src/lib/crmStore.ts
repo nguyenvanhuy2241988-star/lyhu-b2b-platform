@@ -14,8 +14,7 @@ export const getCRMBanner = async () => {
 export const updateCRMBanner = async (url: string | null) => {
     const { data, error } = await supabase
         .from('crm_settings')
-        .update({ banner_url: url, updated_at: new Date().toISOString() })
-        .eq('id', 1)
+        .upsert({ id: 1, banner_url: url, updated_at: new Date().toISOString() })
         .select()
         .single();
 
