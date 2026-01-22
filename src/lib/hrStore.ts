@@ -29,6 +29,13 @@ export interface HRProfile {
     position?: string;
     work_type?: 'fulltime' | 'parttime' | 'intern';
     phone?: string;
+    // Extended Fields
+    place_of_origin?: string;
+    identity_card?: string;
+    education_school?: string;
+    education_major?: string;
+    interests?: string;
+    social_facebook?: string;
 }
 
 const supabase = createClient();

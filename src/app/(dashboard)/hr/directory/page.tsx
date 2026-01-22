@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getDepartments, getHRProfiles, Department, HRProfile, updateHRProfile } from '@/lib/hrStore';
-import { Search, MapPin, Calendar, Briefcase, Mail, Phone, Filter } from 'lucide-react';
+import { Search, MapPin, Calendar, Briefcase, Mail, Phone, Filter, GraduationCap, Heart, Facebook, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function HRDirectoryPage() {
@@ -125,7 +125,7 @@ export default function HRDirectoryPage() {
                                         {profile.email && (
                                             <div className="flex items-center gap-2">
                                                 <Mail className="w-4 h-4 text-slate-400" />
-                                                {profile.email}
+                                                <span className="truncate">{profile.email}</span>
                                             </div>
                                         )}
                                         {profile.phone && (
@@ -140,7 +140,37 @@ export default function HRDirectoryPage() {
                                                 Sinh nhật: {format(new Date(profile.dob), 'dd/MM')}
                                             </div>
                                         )}
-                                        <div className="flex items-center gap-2">
+                                        {profile.place_of_origin && (
+                                            <div className="flex items-center gap-2">
+                                                <MapPin className="w-4 h-4 text-slate-400" />
+                                                {profile.place_of_origin}
+                                            </div>
+                                        )}
+                                        {(profile.education_school || profile.education_major) && (
+                                            <div className="flex items-start gap-2">
+                                                <GraduationCap className="w-4 h-4 text-slate-400 mt-0.5" />
+                                                <span>
+                                                    {profile.education_school}
+                                                    {profile.education_school && profile.education_major && ' - '}
+                                                    <span className="text-slate-500 italic">{profile.education_major}</span>
+                                                </span>
+                                            </div>
+                                        )}
+                                        {profile.social_facebook && (
+                                            <div className="flex items-center gap-2">
+                                                <Facebook className="w-4 h-4 text-blue-600" />
+                                                <a href={profile.social_facebook} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                                                    Facebook Profile
+                                                </a>
+                                            </div>
+                                        )}
+                                        {profile.interests && (
+                                            <div className="flex items-start gap-2 pt-1 border-t border-slate-100 mt-2">
+                                                <Heart className="w-4 h-4 text-pink-400 mt-0.5" />
+                                                <p className="text-xs text-slate-500 line-clamp-2">{profile.interests}</p>
+                                            </div>
+                                        )}
+                                        <div className="flex items-center gap-2 pt-1 border-t border-slate-100 mt-1">
                                             <Briefcase className="w-4 h-4 text-slate-400" />
                                             {profile.work_type === 'parttime' ? 'Part-time' : (profile.work_type === 'intern' ? 'Thực tập sinh' : 'Full-time')}
                                         </div>
@@ -157,57 +187,138 @@ export default function HRDirectoryPage() {
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl w-full max-w-md p-6">
                         <h2 className="text-xl font-bold mb-4">Cập nhật hồ sơ: {editingProfile.full_name}</h2>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Phòng ban</label>
-                                <select
-                                    className="w-full border rounded-lg px-3 py-2 outline-none"
-                                    value={editingProfile.department_id || ''}
-                                    onChange={e => setEditingProfile({ ...editingProfile, department_id: e.target.value })}
-                                >
-                                    <option value="">-- Chọn phòng ban --</option>
-                                    {departments.map(d => (
-                                        <option key={d.id} value={d.id}>{d.name}</option>
-                                    ))}
-                                </select>
+                        <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-2">
+                            {/* Group 1: Work Info */}
+                            <div className="bg-slate-50 p-4 rounded-lg space-y-3">
+                                <h3 className="font-semibold text-slate-700 flex items-center gap-2">
+                                    <Briefcase className="w-4 h-4" /> Thông tin công việc
+                                </h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-medium mb-1">Phòng ban</label>
+                                        <select
+                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            value={editingProfile.department_id || ''}
+                                            onChange={e => setEditingProfile({ ...editingProfile, department_id: e.target.value })}
+                                        >
+                                            <option value="">-- Chọn --</option>
+                                            {departments.map(d => (
+                                                <option key={d.id} value={d.id}>{d.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium mb-1">Loại hình</label>
+                                        <select
+                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            value={editingProfile.work_type || 'fulltime'}
+                                            onChange={e => setEditingProfile({ ...editingProfile, work_type: e.target.value as any })}
+                                        >
+                                            <option value="fulltime">Full-time</option>
+                                            <option value="parttime">Part-time</option>
+                                            <option value="intern">Thực tập</option>
+                                        </select>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-medium mb-1">Vị trí / Chức danh</label>
+                                        <input
+                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            value={editingProfile.position || ''}
+                                            onChange={e => setEditingProfile({ ...editingProfile, position: e.target.value })}
+                                            placeholder="VD: Telesales Part-time"
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Vị trí / Chức danh</label>
-                                <input
-                                    className="w-full border rounded-lg px-3 py-2 outline-none"
-                                    value={editingProfile.position || ''}
-                                    onChange={e => setEditingProfile({ ...editingProfile, position: e.target.value })}
-                                    placeholder="VD: Telesales Part-time"
-                                />
+
+                            {/* Group 2: Personal Info */}
+                            <div className="space-y-3">
+                                <h3 className="font-semibold text-slate-700 flex items-center gap-2">
+                                    <UserIcon className="w-4 h-4" /> Thông tin cá nhân
+                                </h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-medium mb-1">Ngày sinh</label>
+                                        <input
+                                            type="date"
+                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            value={editingProfile.dob || ''}
+                                            onChange={e => setEditingProfile({ ...editingProfile, dob: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium mb-1">Số điện thoại</label>
+                                        <input
+                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            value={editingProfile.phone || ''}
+                                            onChange={e => setEditingProfile({ ...editingProfile, phone: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-medium mb-1">Quê quán</label>
+                                        <input
+                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            value={editingProfile.place_of_origin || ''}
+                                            onChange={e => setEditingProfile({ ...editingProfile, place_of_origin: e.target.value })}
+                                            placeholder="VD: Nam Định"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-medium mb-1">CMND/The căn cước</label>
+                                        <input
+                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            value={editingProfile.identity_card || ''}
+                                            onChange={e => setEditingProfile({ ...editingProfile, identity_card: e.target.value })}
+                                            placeholder="Số CCCD"
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Loại hình làm việc</label>
-                                <select
-                                    className="w-full border rounded-lg px-3 py-2 outline-none"
-                                    value={editingProfile.work_type || 'fulltime'}
-                                    onChange={e => setEditingProfile({ ...editingProfile, work_type: e.target.value as any })}
-                                >
-                                    <option value="fulltime">Full-time</option>
-                                    <option value="parttime">Part-time (Sinh viên)</option>
-                                    <option value="intern">Thực tập sinh</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Ngày sinh</label>
-                                <input
-                                    type="date"
-                                    className="w-full border rounded-lg px-3 py-2 outline-none"
-                                    value={editingProfile.dob || ''}
-                                    onChange={e => setEditingProfile({ ...editingProfile, dob: e.target.value })}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium mb-1">Số điện thoại</label>
-                                <input
-                                    className="w-full border rounded-lg px-3 py-2 outline-none"
-                                    value={editingProfile.phone || ''}
-                                    onChange={e => setEditingProfile({ ...editingProfile, phone: e.target.value })}
-                                />
+
+                            {/* Group 3: Education & Interests */}
+                            <div className="space-y-3">
+                                <h3 className="font-semibold text-slate-700 flex items-center gap-2">
+                                    <GraduationCap className="w-4 h-4" /> Học vấn & Sở thích
+                                </h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-medium mb-1">Trường học</label>
+                                        <input
+                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            value={editingProfile.education_school || ''}
+                                            onChange={e => setEditingProfile({ ...editingProfile, education_school: e.target.value })}
+                                            placeholder="VD: ĐH Kinh tế"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium mb-1">Chuyên ngành</label>
+                                        <input
+                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            value={editingProfile.education_major || ''}
+                                            onChange={e => setEditingProfile({ ...editingProfile, education_major: e.target.value })}
+                                            placeholder="VD: QTKD"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-medium mb-1">Sở thích</label>
+                                        <textarea
+                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            rows={2}
+                                            value={editingProfile.interests || ''}
+                                            onChange={e => setEditingProfile({ ...editingProfile, interests: e.target.value })}
+                                            placeholder="VD: Đọc sách, đá bóng..."
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-medium mb-1">Facebook Profile</label>
+                                        <input
+                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            value={editingProfile.social_facebook || ''}
+                                            onChange={e => setEditingProfile({ ...editingProfile, social_facebook: e.target.value })}
+                                            placeholder="https://facebook.com/..."
+                                        />
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div className="mt-6 flex justify-end gap-3">
@@ -216,7 +327,7 @@ export default function HRDirectoryPage() {
                                 onClick={() => handleUpdateProfile(editingProfile)}
                                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
                             >
-                                Lưu thay đổi
+                                Update
                             </button>
                         </div>
                     </div>
