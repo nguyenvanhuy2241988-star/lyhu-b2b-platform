@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
     LayoutDashboard,
     List,
@@ -443,21 +443,34 @@ export default function CRMPage() {
 
     const handleDrop = async (e: React.DragEvent, targetColId: string) => {
         e.preventDefault();
-        const draggedId = e.dataTransfer.getData("crm/deal");
-        const sourceColId = e.dataTransfer.getData("crm/source-col");
-        setDraggedDealId(null);
-        setDropIndicator(null);
-        setDragOverColId(null);
+        // ...
+    };
 
-        const dealToMove = deals.find(d => d.id === draggedId);
-        if (!dealToMove) return;
+    // --- Deep Linking Logic ---
+    const searchParams = useSearchParams(); // Should be imported
 
-        // Check if dragging from 'done' to another column - need to reopen
-        const isMovingFromDone = sourceColId === 'done' && targetColId !== 'done';
+    useEffect(() => {
+        const dealIdFromUrl = searchParams.get('dealId');
+        if (dealIdFromUrl && !isDataLoading) {
+            // Find deal in populated columns
+            // Data structure: deals array
+            const dealExists = deals.find(d => d.id === dealIdFromUrl);
 
-        logDebug(`Moving deal ${dealToMove.title} to ${targetColId}...`);
+            if (dealExists) {
+                setTimeout(() => {
+                    const el = document.getElementById(`deal-${dealIdFromUrl}`);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        setHighlightedDealId(dealIdFromUrl);
+                        // Clear highlight after 3s
+                        setTimeout(() => setHighlightedDealId(null), 3000);
+                    }
+                }, 1000);
+            }
+        }
+    }, [searchParams, isDataLoading, deals]);
 
-        if (targetColId === draggedId) return; // Same column check
+    const getUserInfo = useCallback((): { id: string | null; role: string } => {
 
         // Optimistic UI Update first...
 
