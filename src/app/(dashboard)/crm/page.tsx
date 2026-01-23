@@ -621,7 +621,8 @@ export default function CRMPage() {
                 stage,
                 debouncedSearchQuery,
                 isAdminOrSaleAdmin ? (filterUserId === 'all' ? undefined : filterUserId) : userInfo.id,
-                session?.access_token
+                session?.access_token,
+                filterSource
             );
 
             setDeals(prev => {
@@ -644,7 +645,7 @@ export default function CRMPage() {
         } finally {
             setLoadingStages(prev => ({ ...prev, [stage]: false }));
         }
-    }, [userInfo.id, isAdminOrSaleAdmin, session?.access_token, pageSize, debouncedSearchQuery, filterUserId]);
+    }, [userInfo.id, isAdminOrSaleAdmin, session?.access_token, pageSize, debouncedSearchQuery, filterUserId, filterSource]);
 
     const refreshData = useCallback(async (isManual = false) => {
         if (!userInfo.id) return;
