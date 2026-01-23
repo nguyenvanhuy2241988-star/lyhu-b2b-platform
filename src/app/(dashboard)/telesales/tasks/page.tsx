@@ -379,6 +379,7 @@ function useDebounce<T>(value: T, delay: number): T {
 
 export default function TelesalesTasksPage() {
     const { user, session, isLoading: authIsLoading } = useAuth();
+    // Force re-deploy
     const searchParams = useSearchParams(); // Added here
 
     // --- Deep Linking Logic ---
