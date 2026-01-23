@@ -58,6 +58,13 @@ export default function MarketingScraperPage() {
     const fetchJobs = async () => {
         setIsRefreshing(true);
         try {
+            // Trigger sync for running jobs before fetching
+            await fetch('/api/marketing/scrape/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            }).catch(e => console.error("Sync error:", e));
+
             const { data, error } = await supabase
                 .from('marketing_scrape_jobs')
                 .select('*')
