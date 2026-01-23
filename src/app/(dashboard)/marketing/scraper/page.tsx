@@ -5,22 +5,21 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
 import {
-import {
-        Globe,
-        Play,
-        RefreshCw,
-        List,
-        ExternalLink,
-        Loader2,
-        CheckCircle2,
-        XCircle,
-        UserPlus,
-        X,
-        Save,
-        MapPin,
-        Facebook,
-        Search
-    } from "lucide-react";
+    Globe,
+    Play,
+    RefreshCw,
+    List,
+    ExternalLink,
+    Loader2,
+    CheckCircle2,
+    XCircle,
+    UserPlus,
+    X,
+    Save,
+    MapPin,
+    Facebook,
+    Search
+} from "lucide-react";
 import { createDeal } from "@/lib/crmDealsStore";
 
 interface ScrapeJob {
