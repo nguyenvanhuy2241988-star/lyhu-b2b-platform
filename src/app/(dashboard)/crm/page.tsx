@@ -486,8 +486,7 @@ export default function CRMPage() {
         logDebug(`SUCCESS saved deal ${dealToMove.title}.`, 'info');
     };
 
-    // --- Deep Linking Logic ---
-    const searchParams = useSearchParams();
+
 
     // --- Deep Linking Logic ---
     const searchParams = useSearchParams();
