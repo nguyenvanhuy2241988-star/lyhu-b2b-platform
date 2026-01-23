@@ -37,13 +37,14 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, s
             {/* Header */}
             <div className="flex justify-between items-start mb-6 border-b border-gray-300 pb-6">
                 <div>
+                    <img src="/logo-full.png" alt="LYHU Logo" className="h-16 w-auto mb-3 object-contain" />
                     <h1 className="text-xl font-bold uppercase mb-2 text-indigo-900">{company.name}</h1>
                     <p className="text-sm">Địa chỉ: {company.address}</p>
                     <p className="text-sm">Hotline: {company.hotline} - Email: {company.email}</p>
                     <p className="text-sm">Website: {company.website}</p>
                 </div>
                 <div className="text-right">
-                    <h2 className="text-2xl font-bold uppercase text-indigo-900">ĐƠN ĐẶT HÀNG</h2>
+                    <h2 className="text-2xl font-bold uppercase text-indigo-900 whitespace-nowrap">ĐƠN ĐẶT HÀNG</h2>
                     <p className="text-base font-bold text-gray-800 mt-1">Mã đơn: {order.readableId || order.id}</p>
                     <p className="text-sm text-gray-600">Ngày tạo: {formatDate(order.createdAt)}</p>
                     {order.creatorName && <p className="text-sm text-gray-600">Người tạo: <span className="font-semibold">{order.creatorName}</span></p>}
