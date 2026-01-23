@@ -379,6 +379,17 @@ function useDebounce<T>(value: T, delay: number): T {
 
 export default function TelesalesTasksPage() {
     const { user, session, isLoading: authIsLoading } = useAuth();
+    const searchParams = useSearchParams(); // Added here
+
+    // --- Deep Linking Logic ---
+    // (Moved from bottom)
+    // We need columnTasks and isLoading available, which are defined below.
+    // Wait, hooks order matters but variable access inside useEffect depends on scope.
+    // columnTasks is defined below.
+    // I should place this useEffect AFTER state definitions.
+
+    // I will insert searchParams here first.
+
 
     // Per-column states
     const [columnTasks, setColumnTasks] = useState<Record<string, TelesalesTask[]>>({});
@@ -429,6 +440,24 @@ export default function TelesalesTasksPage() {
     const [highlightedTaskId, setHighlightedTaskId] = useState<string | null>(null);
 
     const msToday = new Date().setHours(0, 0, 0, 0);
+
+    // --- Deep Linking Logic ---
+    useEffect(() => {
+        const taskIdFromUrl = searchParams.get('taskId');
+        if (taskIdFromUrl && !isLoading) {
+            // Check if task exists in loaded tasks
+            const allLoadedTasks = Object.values(columnTasks).flat();
+            const taskExists = allLoadedTasks.find(t => t.id === taskIdFromUrl);
+
+            if (taskExists) {
+                // Small delay to ensure rendering is complete
+                setTimeout(() => {
+                    handleLocateTask(taskIdFromUrl);
+                }, 500);
+            }
+        }
+    }, [searchParams, isLoading, columnTasks]);
+
 
     const handleToggleTaskStatus = async (task: TelesalesTask) => {
         const taskId = task.id;
