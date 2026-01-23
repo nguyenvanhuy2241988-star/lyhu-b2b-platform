@@ -5,12 +5,14 @@ import { Bell, Check, Info, AlertTriangle, CheckCircle, Package, Calendar } from
 import { useNotificationsStore, Notification } from "@/lib/notificationsStore";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 
 export default function NotificationBell() {
     const { user } = useAuth();
+    const router = useRouter();
     const {
         notifications,
         unreadCount,
@@ -70,6 +72,8 @@ export default function NotificationBell() {
         markAsRead(id);
         if (link) {
             setIsOpen(false);
+            console.log("Navigating to:", link);
+            router.push(link);
         }
     };
 
@@ -116,7 +120,10 @@ export default function NotificationBell() {
                                 {notifications.map((notif) => (
                                     <div
                                         key={notif.id}
-                                        onClick={() => handleNotificationClick(notif.id, notif.link)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleNotificationClick(notif.id, notif.link);
+                                        }}
                                         className={`p-4 hover:bg-slate-50 transition-colors cursor-pointer relative ${!notif.is_read ? 'bg-blue-50/30' : ''}`}
                                     >
                                         {!notif.is_read && (
@@ -138,9 +145,6 @@ export default function NotificationBell() {
                                                 </p>
                                             </div>
                                         </div>
-                                        {notif.link && (
-                                            <Link href={notif.link} className="absolute inset-0" onClick={(e) => { e.stopPropagation(); handleNotificationClick(notif.id, notif.link); }} />
-                                        )}
                                     </div>
                                 ))}
                             </div>
