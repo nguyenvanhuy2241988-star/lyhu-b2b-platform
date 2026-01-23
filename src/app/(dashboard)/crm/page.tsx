@@ -498,20 +498,29 @@ export default function CRMPage() {
         if (dealIdFromUrl && !isDataLoading) {
             const dealExists = deals.find(d => d.id === dealIdFromUrl);
 
-            if (dealExists) {
+            // Helper to execute deep link actions
+            const executeDeepLink = (deal: CRMDeal) => {
+                // 1. Scroll to card for context
                 setTimeout(() => {
-                    const el = document.getElementById(`deal-${dealIdFromUrl}`);
+                    const el = document.getElementById(`deal-${deal.id}`);
                     if (el) {
                         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        setHighlightedDealId(dealIdFromUrl);
+                        setHighlightedDealId(deal.id);
                         setTimeout(() => setHighlightedDealId(null), 3000);
-
-                        // Clear URL param to prevent sticky behavior
-                        const newUrl = new URL(window.location.href);
-                        newUrl.searchParams.delete('dealId');
-                        window.history.replaceState({}, '', newUrl.toString());
                     }
-                }, 1500);
+                }, 500);
+
+                // 2. AUTO OPEN MODAL (The "Handled" Experience)
+                handleEditDeal(deal);
+
+                // 3. Cleanup URL
+                const newUrl = new URL(window.location.href);
+                newUrl.searchParams.delete('dealId');
+                window.history.replaceState({}, '', newUrl.toString());
+            };
+
+            if (dealExists) {
+                executeDeepLink(dealExists);
             } else {
                 // Deal not found in current list, fetch manually
                 fetchDeal(dealIdFromUrl, session?.access_token).then(fetchedDeal => {
@@ -520,6 +529,8 @@ export default function CRMPage() {
                             if (prev.find(d => d.id === fetchedDeal.id)) return prev;
                             return [fetchedDeal, ...prev];
                         });
+                        // Execute actions immediately after fetching
+                        executeDeepLink(fetchedDeal);
                     }
                 });
             }
