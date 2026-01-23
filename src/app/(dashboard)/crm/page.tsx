@@ -505,12 +505,15 @@ export default function CRMPage() {
             if (dealExists) {
                 setTimeout(() => {
                     const el = document.getElementById(`deal-${dealIdFromUrl}`);
+                    console.log("[CRM DeepLink] Element found in DOM?", !!el);
                     if (el) {
                         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         setHighlightedDealId(dealIdFromUrl);
                         setTimeout(() => setHighlightedDealId(null), 3000);
+                    } else {
+                        console.warn("[CRM DeepLink] Deal exists but Element ID not found in DOM:", `deal-${dealIdFromUrl}`);
                     }
-                }, 1000);
+                }, 2000);
             }
         }
     }, [searchParams, isDataLoading, deals]);
