@@ -146,11 +146,12 @@ export default function MarketingScraperPage() {
             for (const item of itemsToSave) {
                 const dealData = {
                     title: `FB: ${item.facebook_name}`,
-                    stage: 'new', // new lead
-                    priority: 'medium',
+                    stage: 'new_data' as const,
+                    priority: 'normal' as const,
                     source_category: 'MARKETING',
-                    source: 'FACEBOOK_SCAN',
-                    description: `Nội dung: ${item.content}\nLink: ${item.post_url}`,
+                    source: 'data_moi' as const,
+                    source_detail: 'FACEBOOK_SCAN',
+                    note: `Nội dung: ${item.content}\nLink: ${item.post_url}`,
                     expected_value: 0
                 };
 
@@ -165,10 +166,11 @@ export default function MarketingScraperPage() {
                     .select()
                     .single();
 
-                if (customer) {
+                if (customer && user?.id) {
                     await createDeal({
                         ...dealData,
-                        customer_id: customer.id
+                        customer_id: customer.id,
+                        owner_user_id: user.id
                     }, session?.access_token);
                     successCount++;
                 }
