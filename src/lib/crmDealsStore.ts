@@ -806,7 +806,8 @@ export async function fetchPaginatedDeals(
     stage: DealStage | 'all' = 'all',
     searchTerm?: string,
     ownerId?: string,
-    token?: string
+    token?: string,
+    source?: string // New param
 ): Promise<{ data: CRMDeal[]; count: number }> {
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
@@ -831,6 +832,11 @@ export async function fetchPaginatedDeals(
 
         if (stage && stage !== 'all') {
             url += `&stage=eq.${stage}`;
+        }
+
+        // Apply Source Filter
+        if (source && source !== 'all') {
+            url += `&source=eq.${source}`;
         }
 
         if (searchTerm) {

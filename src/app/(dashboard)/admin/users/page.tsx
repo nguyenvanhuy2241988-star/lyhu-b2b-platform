@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Plus, Pencil, Trash2, X, Loader2, Check, BarChart3, Smartphone, Monitor, User as UserIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Loader2, Check, BarChart3, Smartphone, Monitor, User as UserIcon, Clock, Activity, FileText, CheckCircle } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { vi } from "date-fns/locale";
 import { toast } from "sonner";
 import { ROLES } from "@/lib/constants";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -52,7 +54,7 @@ interface User {
 }
 
 type TimeRange = '7d' | '30d' | '1y' | '3y' | '5y';
-type ModalTab = 'overview';
+type ModalTab = 'overview' | 'activity_log';
 
 export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([]);
@@ -77,6 +79,10 @@ export default function UsersPage() {
     const [historyData, setHistoryData] = useState<any[]>([]);
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
     const [timeRange, setTimeRange] = useState<TimeRange>('7d');
+
+    // Activity Logs State
+    const [activityLogs, setActivityLogs] = useState<any[]>([]);
+    const [isLoadingLogs, setIsLoadingLogs] = useState(false);
 
 
 
@@ -147,6 +153,26 @@ export default function UsersPage() {
         }
     };
 
+    const fetchActivityLogs = async (userId: string) => {
+        setIsLoadingLogs(true);
+        try {
+            const { data, error } = await supabase
+                .from('crm_activities')
+                .select('*, deal:crm_deals(title)')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false })
+                .limit(50);
+
+            if (error) throw error;
+            setActivityLogs(data || []);
+        } catch (err) {
+            console.error(err);
+            toast.error("Lỗi tải nhật ký hoạt động");
+        } finally {
+            setIsLoadingLogs(false);
+        }
+    };
+
 
 
     useEffect(() => {
@@ -179,8 +205,12 @@ export default function UsersPage() {
 
     // Fetch history when dragging range
     useEffect(() => {
-        if (viewingUser && isDetailOpen && currentTab === 'overview') {
-            fetchUserHistory(viewingUser.id, timeRange);
+        if (viewingUser && isDetailOpen) {
+            if (currentTab === 'overview') {
+                fetchUserHistory(viewingUser.id, timeRange);
+            } else if (currentTab === 'activity_log') {
+                fetchActivityLogs(viewingUser.id);
+            }
         }
     }, [timeRange, viewingUser, isDetailOpen, currentTab]);
 
@@ -474,6 +504,13 @@ export default function UsersPage() {
                                 <BarChart3 className="w-4 h-4" />
                                 Tổng quan & Hoạt động
                             </button>
+                            <button
+                                onClick={() => setCurrentTab('activity_log')}
+                                className={`py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${currentTab === 'activity_log' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                            >
+                                <Activity className="w-4 h-4" />
+                                Nhật ký công việc
+                            </button>
 
                         </div>
 
@@ -586,6 +623,65 @@ export default function UsersPage() {
                                         <p className="text-center text-xs text-slate-400 mt-2 italic">
                                             * Dữ liệu được tổng hợp theo tháng để tối ưu hiệu năng
                                         </p>
+                                    )}
+                                </div>
+                            )}
+
+                            {currentTab === 'activity_log' && (
+                                <div className="space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="font-bold text-slate-800 flex items-center gap-2">
+                                            <Activity className="w-5 h-5 text-blue-600" />
+                                            Timeline hoạt động (50 gần nhất)
+                                        </h4>
+                                        <button onClick={() => viewingUser && fetchActivityLogs(viewingUser.id)} className="text-sm text-blue-600 hover:underline">
+                                            Làm mới
+                                        </button>
+                                    </div>
+
+                                    {isLoadingLogs ? (
+                                        <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>
+                                    ) : activityLogs.length === 0 ? (
+                                        <div className="text-center p-8 text-slate-500 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                                            Chưa có hoạt động nào được ghi nhận
+                                        </div>
+                                    ) : (
+                                        <div className="relative border-l-2 border-slate-200 ml-3 space-y-8 pl-8 py-2">
+                                            {activityLogs.map((log) => (
+                                                <div key={log.id} className="relative">
+                                                    {/* Dot */}
+                                                    <div className={`absolute -left-[39px] text-white rounded-full p-1.5 border-4 border-white shadow-sm
+                                                        ${log.type === 'call' ? 'bg-green-500' :
+                                                            log.type === 'system' ? 'bg-purple-500' :
+                                                                log.type === 'note' ? 'bg-amber-500' : 'bg-blue-500'}`}>
+                                                        {log.type === 'call' ? <Smartphone size={14} /> :
+                                                            log.type === 'system' ? <Activity size={14} /> :
+                                                                log.type === 'note' ? <FileText size={14} /> : <CheckCircle size={14} />}
+                                                    </div>
+
+                                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 hover:shadow-md transition-shadow">
+                                                        <div className="flex justify-between items-start mb-1">
+                                                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                                                {new Date(log.created_at).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                                                                <span className="mx-2">•</span>
+                                                                {new Date(log.created_at).toLocaleDateString('vi-VN')}
+                                                            </span>
+                                                            <span className="text-[10px] bg-white px-2 py-1 rounded border text-slate-400">
+                                                                {formatDistanceToNow(new Date(log.created_at), { addSuffix: true, locale: vi })}
+                                                            </span>
+                                                        </div>
+                                                        <h5 className="font-bold text-slate-800 text-sm mb-1">{log.subject}</h5>
+                                                        <p className="text-sm text-slate-600 mb-2">{log.description}</p>
+                                                        {log.deal && (
+                                                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border rounded text-xs text-blue-600 font-medium">
+                                                                <Activity size={12} />
+                                                                Deal: {log.deal.title}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     )}
                                 </div>
                             )}

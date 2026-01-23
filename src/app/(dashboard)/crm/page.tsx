@@ -393,6 +393,7 @@ export default function CRMPage() {
     const [filterUserId, setFilterUserId] = useState<string>("all");
     const [userOptions, setUserOptions] = useState<{ id: string, full_name: string }[]>([]);
     const [sortBy, setSortBy] = useState<"newest" | "oldest" | "due_date">("newest");
+    const [filterSource, setFilterSource] = useState<string>("all"); // New Source Filter
 
     // Pagination & Stage Filter
     const [currentPage, setCurrentPage] = useState(1);
@@ -663,7 +664,8 @@ export default function CRMPage() {
                     stageFilter,
                     debouncedSearchQuery,
                     isAdminOrSaleAdmin ? (filterUserId === 'all' ? undefined : filterUserId) : userInfo.id,
-                    session?.access_token
+                    session?.access_token,
+                    filterSource // Pass source filter
                 );
                 setDeals(data);
                 setTotalCount(count);
@@ -681,7 +683,7 @@ export default function CRMPage() {
         // as this function, and we want to avoid unnecessary recreations of this callback.
         // We use them inside, so we'll just keep the primary data deps.
         // We use them inside, so we'll just keep the primary data deps.
-    }, [userInfo.id, isAdminOrSaleAdmin, session?.access_token, currentPage, stageFilter, debouncedSearchQuery, viewMode, filterUserId]);
+    }, [userInfo.id, isAdminOrSaleAdmin, session?.access_token, currentPage, stageFilter, debouncedSearchQuery, viewMode, filterUserId, filterSource]);
 
     // Realtime Subscription
     useEffect(() => {
@@ -1279,6 +1281,15 @@ export default function CRMPage() {
                         <option value="npp">NPP</option>
                         <option value="sieu_thi">Siêu thị</option>
                     </select>
+
+                    <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} className="px-3 py-2 border rounded-lg text-sm bg-indigo-50 text-indigo-700 border-indigo-100 font-medium">
+                        <option value="all">Nguồn khách hàng</option>
+                        <option value="data_moi">Marketing (Data mới)</option>
+                        <option value="self_found">Tự tìm kiếm</option>
+                        <option value="referral">Được giới thiệu</option>
+                        <option value="inbound">Khách nhắn tin (Inbound)</option>
+                        <option value="reactivation">Chăm sóc lại</option>
+                    </select>
                     <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="px-3 py-2 border rounded-lg text-sm">
                         <option value="newest">Mới nhất</option>
                         <option value="oldest">Cũ nhất</option>
@@ -1288,213 +1299,219 @@ export default function CRMPage() {
             </div>
 
             {/* Kanban View */}
-            {viewMode === "kanban" && (
-                <div className="flex-1 overflow-x-auto pb-4">
-                    <div className="flex gap-4 min-w-[100%] h-full items-start">
-                        {visibleColumns.map(col => {
-                            const columnDeals = filteredDeals.filter(d => d.stage === col.id);
-                            const showAppendPlaceholder = draggedDealId && dragOverColId === col.id && !dropIndicator;
-                            const isColDragging = draggedColumnId === col.id;
-                            const showLeftIndicator = dropColIndicator?.colId === col.id && dropColIndicator.position === 'left';
-                            const showRightIndicator = dropColIndicator?.colId === col.id && dropColIndicator.position === 'right';
+            {
+                viewMode === "kanban" && (
+                    <div className="flex-1 overflow-x-auto pb-4">
+                        <div className="flex gap-4 min-w-[100%] h-full items-start">
+                            {visibleColumns.map(col => {
+                                const columnDeals = filteredDeals.filter(d => d.stage === col.id);
+                                const showAppendPlaceholder = draggedDealId && dragOverColId === col.id && !dropIndicator;
+                                const isColDragging = draggedColumnId === col.id;
+                                const showLeftIndicator = dropColIndicator?.colId === col.id && dropColIndicator.position === 'left';
+                                const showRightIndicator = dropColIndicator?.colId === col.id && dropColIndicator.position === 'right';
 
-                            return (
-                                <div key={col.id} className="flex items-start">
-                                    {/* Left drop indicator */}
-                                    {showLeftIndicator && (
-                                        <div className="w-1 h-full min-h-[200px] bg-primary-500 rounded animate-pulse mx-1" />
-                                    )}
-                                    <div
-                                        draggable={isAdmin}
-                                        onDragStart={(e) => isAdmin && handleColumnDragStart(e, col.id)}
-                                        onDragOver={(e) => {
-                                            handleDragOverColumn(e, col.id);
-                                            if (isAdmin) handleColumnDragOver(e, col.id);
-                                        }}
-                                        onDragEnd={handleColumnDragEnd}
-                                        onDrop={(e) => {
-                                            handleColumnDrop(e, col.id);
-                                            handleDrop(e, col.id);
-                                        }}
-                                        className={`flex-1 min-w-[280px] bg-slate-50/50 rounded-xl flex flex-col max-h-[calc(100vh-280px)] group/col border-2 transition-all ${dragOverColId === col.id ? 'border-primary-300 bg-primary-50/20' : 'border-transparent hover:border-slate-200'
-                                            } ${isColDragging ? 'opacity-50 scale-95' : ''}`}
-                                    >
-                                        {/* Column Header */}
-                                        <div className={`p-3 border-b bg-slate-50/95 rounded-t-xl sticky top-0 z-20 flex items-center justify-between ${isAdmin ? 'cursor-grab active:cursor-grabbing' : ''}`}>
-                                            <div className="flex items-center gap-2 flex-1">
-                                                {editingColumnId === col.id ? (
-                                                    <input
-                                                        ref={editInputRef}
-                                                        className="text-sm font-semibold px-2 py-1 border rounded w-full"
-                                                        value={editingTitle}
-                                                        onChange={(e) => setEditingTitle(e.target.value)}
-                                                        onKeyDown={(e) => { if (e.key === 'Enter') saveEditing(col.id); if (e.key === 'Escape') setEditingColumnId(null); }}
-                                                        onBlur={() => saveEditing(col.id)}
-                                                    />
-                                                ) : (
-                                                    <div className="flex items-center gap-2" onDoubleClick={() => startEditing(col)}>
-                                                        <h3 className="font-semibold text-slate-700 text-sm uppercase truncate">{col.label}</h3>
-                                                        <span className="bg-slate-200 text-slate-600 text-xs px-2 py-0.5 rounded-full">
-                                                            {stageCounts[col.id] || 0}
-                                                        </span>
+                                return (
+                                    <div key={col.id} className="flex items-start">
+                                        {/* Left drop indicator */}
+                                        {showLeftIndicator && (
+                                            <div className="w-1 h-full min-h-[200px] bg-primary-500 rounded animate-pulse mx-1" />
+                                        )}
+                                        <div
+                                            draggable={isAdmin}
+                                            onDragStart={(e) => isAdmin && handleColumnDragStart(e, col.id)}
+                                            onDragOver={(e) => {
+                                                handleDragOverColumn(e, col.id);
+                                                if (isAdmin) handleColumnDragOver(e, col.id);
+                                            }}
+                                            onDragEnd={handleColumnDragEnd}
+                                            onDrop={(e) => {
+                                                handleColumnDrop(e, col.id);
+                                                handleDrop(e, col.id);
+                                            }}
+                                            className={`flex-1 min-w-[280px] bg-slate-50/50 rounded-xl flex flex-col max-h-[calc(100vh-280px)] group/col border-2 transition-all ${dragOverColId === col.id ? 'border-primary-300 bg-primary-50/20' : 'border-transparent hover:border-slate-200'
+                                                } ${isColDragging ? 'opacity-50 scale-95' : ''}`}
+                                        >
+                                            {/* Column Header */}
+                                            <div className={`p-3 border-b bg-slate-50/95 rounded-t-xl sticky top-0 z-20 flex items-center justify-between ${isAdmin ? 'cursor-grab active:cursor-grabbing' : ''}`}>
+                                                <div className="flex items-center gap-2 flex-1">
+                                                    {editingColumnId === col.id ? (
+                                                        <input
+                                                            ref={editInputRef}
+                                                            className="text-sm font-semibold px-2 py-1 border rounded w-full"
+                                                            value={editingTitle}
+                                                            onChange={(e) => setEditingTitle(e.target.value)}
+                                                            onKeyDown={(e) => { if (e.key === 'Enter') saveEditing(col.id); if (e.key === 'Escape') setEditingColumnId(null); }}
+                                                            onBlur={() => saveEditing(col.id)}
+                                                        />
+                                                    ) : (
+                                                        <div className="flex items-center gap-2" onDoubleClick={() => startEditing(col)}>
+                                                            <h3 className="font-semibold text-slate-700 text-sm uppercase truncate">{col.label}</h3>
+                                                            <span className="bg-slate-200 text-slate-600 text-xs px-2 py-0.5 rounded-full">
+                                                                {stageCounts[col.id] || 0}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {/* Column actions - Only for Admin */}
+                                                {isAdmin && (
+                                                    <div className="flex items-center gap-0.5 opacity-0 group-hover/col:opacity-100">
+                                                        <button onClick={() => startEditing(col)} className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-blue-600">
+                                                            <Edit2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        <button onClick={() => deleteColumnHandler(col.id, col.isDefault)} className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-red-600">
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        <button onClick={() => openCreateModal(col.id as DealStage)} className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-600 ml-1">
+                                                            <Plus className="w-4 h-4" />
+                                                        </button>
                                                     </div>
                                                 )}
-                                            </div>
-                                            {/* Column actions - Only for Admin */}
-                                            {isAdmin && (
-                                                <div className="flex items-center gap-0.5 opacity-0 group-hover/col:opacity-100">
-                                                    <button onClick={() => startEditing(col)} className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-blue-600">
-                                                        <Edit2 className="w-3.5 h-3.5" />
-                                                    </button>
-                                                    <button onClick={() => deleteColumnHandler(col.id, col.isDefault)} className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-red-600">
-                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                    </button>
-                                                    <button onClick={() => openCreateModal(col.id as DealStage)} className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-600 ml-1">
+                                                {/* Quick add button for non-admin */}
+                                                {!isAdmin && (
+                                                    <button onClick={() => openCreateModal(col.id as DealStage)} className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-600 opacity-0 group-hover/col:opacity-100">
                                                         <Plus className="w-4 h-4" />
                                                     </button>
-                                                </div>
-                                            )}
-                                            {/* Quick add button for non-admin */}
-                                            {!isAdmin && (
-                                                <button onClick={() => openCreateModal(col.id as DealStage)} className="p-1 hover:bg-slate-200 rounded text-slate-400 hover:text-slate-600 opacity-0 group-hover/col:opacity-100">
-                                                    <Plus className="w-4 h-4" />
-                                                </button>
-                                            )}
-                                        </div>
+                                                )}
+                                            </div>
 
-                                        {/* Deals */}
-                                        <div className="p-2 flex-1 overflow-y-auto min-h-[100px]">
-                                            {loadingStages[col.id] && columnDeals.length === 0 ? (
-                                                <div className="space-y-3 p-1">
-                                                    {[1, 2, 3].map(i => (
-                                                        <div key={i} className="bg-slate-100/50 h-24 rounded-lg animate-pulse border border-slate-100" />
-                                                    ))}
-                                                </div>
-                                            ) : columnDeals.length === 0 && !showAppendPlaceholder ? (
-                                                <div className="text-center py-12 text-slate-400">
-                                                    <div className="text-4xl mb-2">📋</div>
-                                                    <p className="text-sm">Chưa có cơ hội</p>
-                                                </div>
-                                            ) : (
-                                                columnDeals.map(deal => {
-                                                    const isOverdue = !!(deal.next_action_at && new Date(deal.next_action_at).getTime() < msToday && deal.status === 'open');
-                                                    return (
-                                                        <DealCard
-                                                            key={deal.id}
-                                                            deal={deal}
-                                                            isDragging={draggedDealId === deal.id}
-                                                            onDragStart={handleDealDragStart}
-                                                            onDragOver={handleDealDragOver}
-                                                            onDragEnd={handleDealDragEnd}
-                                                            dropIndicator={dropIndicator}
-                                                            onEdit={handleEditDeal}
-                                                            onViewDetails={handleViewDetails}
-                                                            onCreateOrder={handleCreateOrder}
-                                                            onMarkWon={handleMarkWon}
-                                                            onMarkLost={handleOpenLostModal}
-                                                            onRefresh={refreshData}
-                                                            isOverdue={isOverdue}
-                                                            isHighlighted={highlightedDealId === deal.id}
-                                                        />
-                                                    );
-                                                })
-                                            )}
-                                            {showAppendPlaceholder && (
-                                                <div className="h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse" />
-                                            )}
+                                            {/* Deals */}
+                                            <div className="p-2 flex-1 overflow-y-auto min-h-[100px]">
+                                                {loadingStages[col.id] && columnDeals.length === 0 ? (
+                                                    <div className="space-y-3 p-1">
+                                                        {[1, 2, 3].map(i => (
+                                                            <div key={i} className="bg-slate-100/50 h-24 rounded-lg animate-pulse border border-slate-100" />
+                                                        ))}
+                                                    </div>
+                                                ) : columnDeals.length === 0 && !showAppendPlaceholder ? (
+                                                    <div className="text-center py-12 text-slate-400">
+                                                        <div className="text-4xl mb-2">📋</div>
+                                                        <p className="text-sm">Chưa có cơ hội</p>
+                                                    </div>
+                                                ) : (
+                                                    columnDeals.map(deal => {
+                                                        const isOverdue = !!(deal.next_action_at && new Date(deal.next_action_at).getTime() < msToday && deal.status === 'open');
+                                                        return (
+                                                            <DealCard
+                                                                key={deal.id}
+                                                                deal={deal}
+                                                                isDragging={draggedDealId === deal.id}
+                                                                onDragStart={handleDealDragStart}
+                                                                onDragOver={handleDealDragOver}
+                                                                onDragEnd={handleDealDragEnd}
+                                                                dropIndicator={dropIndicator}
+                                                                onEdit={handleEditDeal}
+                                                                onViewDetails={handleViewDetails}
+                                                                onCreateOrder={handleCreateOrder}
+                                                                onMarkWon={handleMarkWon}
+                                                                onMarkLost={handleOpenLostModal}
+                                                                onRefresh={refreshData}
+                                                                isOverdue={isOverdue}
+                                                                isHighlighted={highlightedDealId === deal.id}
+                                                            />
+                                                        );
+                                                    })
+                                                )}
+                                                {showAppendPlaceholder && (
+                                                    <div className="h-24 rounded-lg border-2 border-dashed border-primary-300 bg-primary-50/50 animate-pulse" />
+                                                )}
 
-                                            {/* Load More Button for Column */}
-                                            {stageHasMore[col.stage] && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        loadDealsForStage(col.stage as DealStage, (stagePages[col.stage] || 1) + 1, true);
-                                                    }}
-                                                    disabled={loadingStages[col.stage]}
-                                                    className="w-full py-2 mt-2 text-xs font-medium text-primary-600 hover:bg-primary-50 rounded-lg border border-dashed border-primary-200 transition-colors disabled:opacity-50"
-                                                >
-                                                    {loadingStages[col.stage] ? (
-                                                        <div className="flex items-center justify-center gap-2">
-                                                            <Loader2 className="w-3 h-3 animate-spin" />
-                                                            <span>Đang tải...</span>
-                                                        </div>
-                                                    ) : (
-                                                        "Xem thêm..."
-                                                    )}
-                                                </button>
-                                            )}
+                                                {/* Load More Button for Column */}
+                                                {stageHasMore[col.stage] && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            loadDealsForStage(col.stage as DealStage, (stagePages[col.stage] || 1) + 1, true);
+                                                        }}
+                                                        disabled={loadingStages[col.stage]}
+                                                        className="w-full py-2 mt-2 text-xs font-medium text-primary-600 hover:bg-primary-50 rounded-lg border border-dashed border-primary-200 transition-colors disabled:opacity-50"
+                                                    >
+                                                        {loadingStages[col.stage] ? (
+                                                            <div className="flex items-center justify-center gap-2">
+                                                                <Loader2 className="w-3 h-3 animate-spin" />
+                                                                <span>Đang tải...</span>
+                                                            </div>
+                                                        ) : (
+                                                            "Xem thêm..."
+                                                        )}
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
+                                        {/* Right drop indicator */}
+                                        {showRightIndicator && (
+                                            <div className="w-1 h-full min-h-[200px] bg-primary-500 rounded animate-pulse mx-1" />
+                                        )}
                                     </div>
-                                    {/* Right drop indicator */}
-                                    {showRightIndicator && (
-                                        <div className="w-1 h-full min-h-[200px] bg-primary-500 rounded animate-pulse mx-1" />
-                                    )}
+                                );
+                            })}
+                            {/* Add Column Button - Only for Admin */}
+                            {isAdmin && (
+                                <div className="min-w-[50px] flex items-start pt-2">
+                                    <button onClick={handleAddColumn} className="p-2 rounded-full hover:bg-slate-200 text-slate-400">
+                                        <Plus className="w-6 h-6" />
+                                    </button>
                                 </div>
-                            );
-                        })}
-                        {/* Add Column Button - Only for Admin */}
-                        {isAdmin && (
-                            <div className="min-w-[50px] flex items-start pt-2">
-                                <button onClick={handleAddColumn} className="p-2 rounded-full hover:bg-slate-200 text-slate-400">
-                                    <Plus className="w-6 h-6" />
-                                </button>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* List View */}
-            {viewMode === "list" && (
-                <div className="flex-1 bg-white rounded-xl shadow-sm border p-4">
-                    <div className="space-y-2">
-                        {filteredDeals.map(deal => (
-                            <div key={deal.id} className="flex justify-between items-center p-3 border rounded hover:bg-slate-50 cursor-pointer" onClick={() => handleEditDeal(deal)}>
-                                <div className="flex items-center gap-3">
-                                    <Building className="w-5 h-5 text-slate-400" />
-                                    <div>
-                                        <div className="font-medium">{deal.customer?.name} - {deal.title}</div>
-                                        <div className="text-sm text-slate-500">{deal.customer?.phone} • {DEAL_STAGE_LABELS[deal.stage]}</div>
+            {
+                viewMode === "list" && (
+                    <div className="flex-1 bg-white rounded-xl shadow-sm border p-4">
+                        <div className="space-y-2">
+                            {filteredDeals.map(deal => (
+                                <div key={deal.id} className="flex justify-between items-center p-3 border rounded hover:bg-slate-50 cursor-pointer" onClick={() => handleEditDeal(deal)}>
+                                    <div className="flex items-center gap-3">
+                                        <Building className="w-5 h-5 text-slate-400" />
+                                        <div>
+                                            <div className="font-medium">{deal.customer?.name} - {deal.title}</div>
+                                            <div className="text-sm text-slate-500">{deal.customer?.phone} • {DEAL_STAGE_LABELS[deal.stage]}</div>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <PriorityBadge priority={deal.priority} />
+                                        <span className={`px-2 py-0.5 rounded text-xs ${deal.status === 'won' ? 'bg-green-100 text-green-700' : deal.status === 'lost' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                                            {deal.status.toUpperCase()}
+                                        </span>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <PriorityBadge priority={deal.priority} />
-                                    <span className={`px-2 py-0.5 rounded text-xs ${deal.status === 'won' ? 'bg-green-100 text-green-700' : deal.status === 'lost' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
-                                        {deal.status.toUpperCase()}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Pagination Controls */}
-            {!isDataLoading && totalCount > pageSize && (
-                <div className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border shadow-sm mt-4">
-                    <div className="text-sm text-slate-500">
-                        Hiển thị <span className="font-medium">{deals.length}</span> cơ hội
-                        (Tổng <span className="font-medium">{totalCount}</span>)
+            {
+                !isDataLoading && totalCount > pageSize && (
+                    <div className="flex items-center justify-between bg-white px-4 py-3 rounded-xl border shadow-sm mt-4">
+                        <div className="text-sm text-slate-500">
+                            Hiển thị <span className="font-medium">{deals.length}</span> cơ hội
+                            (Tổng <span className="font-medium">{totalCount}</span>)
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setCurrentPage(p => Math.max(1, p - 1)); }}
+                                disabled={currentPage === 1}
+                                className="p-2 border rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <span className="text-sm font-medium">Trang {currentPage} / {Math.ceil(totalCount / pageSize)}</span>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setCurrentPage(p => p + 1); }}
+                                disabled={currentPage >= Math.ceil(totalCount / pageSize)}
+                                className="p-2 border rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); setCurrentPage(p => Math.max(1, p - 1)); }}
-                            disabled={currentPage === 1}
-                            className="p-2 border rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                        </button>
-                        <span className="text-sm font-medium">Trang {currentPage} / {Math.ceil(totalCount / pageSize)}</span>
-                        <button
-                            onClick={(e) => { e.stopPropagation(); setCurrentPage(p => p + 1); }}
-                            disabled={currentPage >= Math.ceil(totalCount / pageSize)}
-                            className="p-2 border rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            <ChevronRight className="w-4 h-4" />
-                        </button>
-                    </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Create/Edit Modal */}
             <CreateDealModal
@@ -1508,39 +1525,43 @@ export default function CRMPage() {
             />
 
             {/* Notification Panel */}
-            {isNotificationOpen && (
-                <>
-                    <div className="fixed inset-0 bg-black/20 z-[9990]" onClick={() => setIsNotificationOpen(false)} />
-                    <div className="fixed top-0 right-0 h-full w-[320px] bg-white shadow-2xl z-[9999] flex flex-col">
-                        <div className="p-4 border-b flex items-center justify-between">
-                            <h3 className="font-semibold flex items-center gap-2"><Bell className="w-4 h-4" /> Thông báo</h3>
-                            <button onClick={() => setIsNotificationOpen(false)} className="text-slate-400 hover:text-slate-600">×</button>
+            {
+                isNotificationOpen && (
+                    <>
+                        <div className="fixed inset-0 bg-black/20 z-[9990]" onClick={() => setIsNotificationOpen(false)} />
+                        <div className="fixed top-0 right-0 h-full w-[320px] bg-white shadow-2xl z-[9999] flex flex-col">
+                            <div className="p-4 border-b flex items-center justify-between">
+                                <h3 className="font-semibold flex items-center gap-2"><Bell className="w-4 h-4" /> Thông báo</h3>
+                                <button onClick={() => setIsNotificationOpen(false)} className="text-slate-400 hover:text-slate-600">×</button>
+                            </div>
+                            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                                <div className="text-sm font-medium text-slate-700">Quá hạn ({overdueCount})</div>
+                                {deals.filter(d => d.next_action_at && new Date(d.next_action_at).getTime() < msToday && d.status === 'open').map(d => (
+                                    <div key={d.id} className="p-3 bg-red-50 border border-red-200 rounded-lg cursor-pointer hover:shadow" onClick={() => { setIsNotificationOpen(false); setHighlightedDealId(d.id); setTimeout(() => setHighlightedDealId(null), 2000); }}>
+                                        <div className="font-medium text-sm">{d.customer?.name}</div>
+                                        <div className="text-xs text-red-600">{d.title}</div>
+                                    </div>
+                                ))}
+                                <div className="text-sm font-medium text-slate-700 mt-4">Hôm nay ({todayCount})</div>
+                                {deals.filter(d => d.next_action_at && new Date(d.next_action_at).setHours(0, 0, 0, 0) === msToday && d.status === 'open').map(d => (
+                                    <div key={d.id} className="p-3 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer hover:shadow" onClick={() => { setIsNotificationOpen(false); setHighlightedDealId(d.id); setTimeout(() => setHighlightedDealId(null), 2000); }}>
+                                        <div className="font-medium text-sm">{d.customer?.name}</div>
+                                        <div className="text-xs text-blue-600">{d.title}</div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                            <div className="text-sm font-medium text-slate-700">Quá hạn ({overdueCount})</div>
-                            {deals.filter(d => d.next_action_at && new Date(d.next_action_at).getTime() < msToday && d.status === 'open').map(d => (
-                                <div key={d.id} className="p-3 bg-red-50 border border-red-200 rounded-lg cursor-pointer hover:shadow" onClick={() => { setIsNotificationOpen(false); setHighlightedDealId(d.id); setTimeout(() => setHighlightedDealId(null), 2000); }}>
-                                    <div className="font-medium text-sm">{d.customer?.name}</div>
-                                    <div className="text-xs text-red-600">{d.title}</div>
-                                </div>
-                            ))}
-                            <div className="text-sm font-medium text-slate-700 mt-4">Hôm nay ({todayCount})</div>
-                            {deals.filter(d => d.next_action_at && new Date(d.next_action_at).setHours(0, 0, 0, 0) === msToday && d.status === 'open').map(d => (
-                                <div key={d.id} className="p-3 bg-blue-50 border border-blue-200 rounded-lg cursor-pointer hover:shadow" onClick={() => { setIsNotificationOpen(false); setHighlightedDealId(d.id); setTimeout(() => setHighlightedDealId(null), 2000); }}>
-                                    <div className="font-medium text-sm">{d.customer?.name}</div>
-                                    <div className="text-xs text-blue-600">{d.title}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </>
-            )}
+                    </>
+                )
+            }
 
-            {isDataLoading && (
-                <div className="absolute inset-0 bg-white/50 z-[100] flex items-center justify-center">
-                    <div className="animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full"></div>
-                </div>
-            )}
+            {
+                isDataLoading && (
+                    <div className="absolute inset-0 bg-white/50 z-[100] flex items-center justify-center">
+                        <div className="animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full"></div>
+                    </div>
+                )
+            }
 
             {/* DEBUG CONSOLE (Temporary) */}
             <div className="fixed bottom-4 right-4 bg-black/80 text-white p-4 rounded-lg z-[99999] max-w-md max-h-[300px] overflow-auto font-mono text-xs shadow-xl border border-white/20">
@@ -1563,6 +1584,6 @@ export default function CRMPage() {
                 onConfirm={handleConfirmLost}
                 dealTitle={dealToMarkLost?.title}
             />
-        </div>
+        </div >
     );
 }
