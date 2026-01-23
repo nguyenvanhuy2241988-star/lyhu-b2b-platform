@@ -1284,11 +1284,9 @@ export default function CRMPage() {
 
                     <select value={filterSource} onChange={(e) => setFilterSource(e.target.value)} className="px-3 py-2 border rounded-lg text-sm bg-indigo-50 text-indigo-700 border-indigo-100 font-medium">
                         <option value="all">Nguồn khách hàng</option>
-                        <option value="data_moi">Marketing (Data mới)</option>
-                        <option value="self_found">Tự tìm kiếm</option>
-                        <option value="referral">Được giới thiệu</option>
-                        <option value="inbound">Khách nhắn tin (Inbound)</option>
-                        <option value="reactivation">Chăm sóc lại</option>
+                        <option value="COMPANY">Công ty cấp</option>
+                        <option value="SELF_FOUND">Tự tìm kiếm</option>
+                        <option value="MARKETING">Chiến dịch Marketing</option>
                     </select>
                     <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="px-3 py-2 border rounded-lg text-sm">
                         <option value="newest">Mới nhất</option>

@@ -836,7 +836,7 @@ export async function fetchPaginatedDeals(
 
         // Apply Source Filter
         if (source && source !== 'all') {
-            url += `&source=eq.${source}`;
+            url += `&source_category=eq.${source}`;
         }
 
         if (searchTerm) {

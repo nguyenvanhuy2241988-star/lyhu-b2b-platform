@@ -81,8 +81,19 @@ export default function UsersPage() {
     const [timeRange, setTimeRange] = useState<TimeRange>('7d');
 
     // Activity Logs State
+    // Activity Logs State
     const [activityLogs, setActivityLogs] = useState<any[]>([]);
     const [isLoadingLogs, setIsLoadingLogs] = useState(false);
+    const [logDateStart, setLogDateStart] = useState(() => {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0); // Start of today
+        return d.toISOString().split('T')[0];
+    });
+    const [logDateEnd, setLogDateEnd] = useState(() => {
+        const d = new Date();
+        d.setHours(23, 59, 59, 999); // End of today
+        return d.toISOString().split('T')[0];
+    });
 
 
 
@@ -212,7 +223,7 @@ export default function UsersPage() {
                 fetchActivityLogs(viewingUser.id);
             }
         }
-    }, [timeRange, viewingUser, isDetailOpen, currentTab]);
+    }, [timeRange, viewingUser, isDetailOpen, currentTab, logDateStart, logDateEnd]); // Trigger fetch on date change
 
     const handleOpenCreate = () => {
         setEditingUser(null);
@@ -629,14 +640,31 @@ export default function UsersPage() {
 
                             {currentTab === 'activity_log' && (
                                 <div className="space-y-6">
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                         <h4 className="font-bold text-slate-800 flex items-center gap-2">
                                             <Activity className="w-5 h-5 text-blue-600" />
-                                            Timeline hoạt động (50 gần nhất)
+                                            Timeline hoạt động ({activityLogs.length})
                                         </h4>
-                                        <button onClick={() => viewingUser && fetchActivityLogs(viewingUser.id)} className="text-sm text-blue-600 hover:underline">
-                                            Làm mới
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+                                                <input
+                                                    type="date"
+                                                    value={logDateStart}
+                                                    onChange={e => setLogDateStart(e.target.value)}
+                                                    className="bg-transparent text-sm border-none focus:ring-0 px-2 py-1 text-slate-600 outline-none cursor-pointer"
+                                                />
+                                                <span className="text-slate-400">-</span>
+                                                <input
+                                                    type="date"
+                                                    value={logDateEnd}
+                                                    onChange={e => setLogDateEnd(e.target.value)}
+                                                    className="bg-transparent text-sm border-none focus:ring-0 px-2 py-1 text-slate-600 outline-none cursor-pointer"
+                                                />
+                                            </div>
+                                            <button onClick={() => viewingUser && fetchActivityLogs(viewingUser.id)} className="p-2 text-slate-400 hover:text-blue-600 rounded-full hover:bg-slate-100 transition-colors">
+                                                <Loader2 className={`w-4 h-4 ${isLoadingLogs ? 'animate-spin' : ''}`} />
+                                            </button>
+                                        </div>
                                     </div>
 
                                     {isLoadingLogs ? (
@@ -690,112 +718,115 @@ export default function UsersPage() {
                         </div>
                     </div>
                 </div>
-            )}
+            )
+            }
 
             {/* Create/Edit Modal */}
-            {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
-                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                            <h3 className="font-bold text-lg text-slate-800">
-                                {editingUser ? "Chỉnh sửa nhân sự" : "Thêm nhân sự mới"}
-                            </h3>
-                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-                                <input
-                                    required
-                                    type="email"
-                                    disabled={!!editingUser}
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 disabled:bg-slate-100 disabled:text-slate-500 focus:ring-2 focus:ring-blue-500 outline-none"
-                                    placeholder="vd: nhanvien@lyhu.vn"
-                                    value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                />
+            {
+                isModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+                        <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
+                            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                                <h3 className="font-bold text-lg text-slate-800">
+                                    {editingUser ? "Chỉnh sửa nhân sự" : "Thêm nhân sự mới"}
+                                </h3>
+                                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                    <X className="w-5 h-5" />
+                                </button>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    {editingUser ? "Mật khẩu mới (Để trống nếu không đổi)" : "Mật khẩu"}
-                                </label>
-                                <input
-                                    required={!editingUser}
-                                    type="text"
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                    placeholder={editingUser ? "Nhập mật khẩu mới..." : "Nhập mật khẩu..."}
-                                    value={formData.password}
-                                    onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                />
-                                {!editingUser && <p className="text-xs text-slate-500 mt-1">Mật khẩu tối thiểu 6 ký tự</p>}
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Họ và Tên</label>
-                                <input
-                                    required
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                    placeholder="vd: Nguyễn Văn A"
-                                    value={formData.fullName}
-                                    onChange={e => setFormData({ ...formData, fullName: e.target.value })}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Vai trò</label>
-                                <select
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                                    value={formData.role}
-                                    onChange={e => setFormData({ ...formData, role: e.target.value })}
-                                >
-                                    {Object.entries(ROLE_LABELS).map(([key, label]) => (
-                                        <option key={key} value={key}>{label}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {editingUser && (
+                            <form onSubmit={handleSubmit} className="p-6 space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Trạng thái</label>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                                    <input
+                                        required
+                                        type="email"
+                                        disabled={!!editingUser}
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 disabled:bg-slate-100 disabled:text-slate-500 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        placeholder="vd: nhanvien@lyhu.vn"
+                                        value={formData.email}
+                                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        {editingUser ? "Mật khẩu mới (Để trống nếu không đổi)" : "Mật khẩu"}
+                                    </label>
+                                    <input
+                                        required={!editingUser}
+                                        type="text"
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        placeholder={editingUser ? "Nhập mật khẩu mới..." : "Nhập mật khẩu..."}
+                                        value={formData.password}
+                                        onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                    />
+                                    {!editingUser && <p className="text-xs text-slate-500 mt-1">Mật khẩu tối thiểu 6 ký tự</p>}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Họ và Tên</label>
+                                    <input
+                                        required
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        placeholder="vd: Nguyễn Văn A"
+                                        value={formData.fullName}
+                                        onChange={e => setFormData({ ...formData, fullName: e.target.value })}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Vai trò</label>
                                     <select
                                         className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                                        value={formData.status}
-                                        onChange={e => setFormData({ ...formData, status: e.target.value })}
+                                        value={formData.role}
+                                        onChange={e => setFormData({ ...formData, role: e.target.value })}
                                     >
-                                        <option value="active">Hoạt động</option>
-                                        <option value="inactive">Ngưng hoạt động</option>
+                                        {Object.entries(ROLE_LABELS).map(([key, label]) => (
+                                            <option key={key} value={key}>{label}</option>
+                                        ))}
                                     </select>
                                 </div>
-                            )}
 
-                            <div className="pt-4 flex justify-end gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium"
-                                >
-                                    Hủy bỏ
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={isSubmitting}
-                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50"
-                                >
-                                    {isSubmitting ? (
-                                        <><Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý...</>
-                                    ) : (
-                                        <><Check className="w-4 h-4" /> {editingUser ? "Cập nhật" : "Tạo tài khoản"}</>
-                                    )}
-                                </button>
-                            </div>
-                        </form>
+                                {editingUser && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Trạng thái</label>
+                                        <select
+                                            className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                                            value={formData.status}
+                                            onChange={e => setFormData({ ...formData, status: e.target.value })}
+                                        >
+                                            <option value="active">Hoạt động</option>
+                                            <option value="inactive">Ngưng hoạt động</option>
+                                        </select>
+                                    </div>
+                                )}
+
+                                <div className="pt-4 flex justify-end gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsModalOpen(false)}
+                                        className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium"
+                                    >
+                                        Hủy bỏ
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={isSubmitting}
+                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50"
+                                    >
+                                        {isSubmitting ? (
+                                            <><Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý...</>
+                                        ) : (
+                                            <><Check className="w-4 h-4" /> {editingUser ? "Cập nhật" : "Tạo tài khoản"}</>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }
