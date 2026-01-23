@@ -61,8 +61,8 @@ export const WelcomeGreeting = () => {
             <div
                 className="relative overflow-hidden rounded-2xl shadow-2xl transform transition-all animate-in zoom-in-95 duration-500 max-w-md w-full"
             >
-                {/* Gradient Background: Primary -> Secondary */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-secondary-500 opacity-95"></div>
+                {/* Solid Background: Primary (Turquoise) */}
+                <div className="absolute inset-0 bg-primary-500 opacity-95"></div>
 
                 {/* Decorative Circles */}
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
