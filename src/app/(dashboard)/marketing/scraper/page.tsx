@@ -326,7 +326,7 @@ export default function MarketingScraperPage() {
                                             {job.processed_count}
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            {job.status === 'completed' && job.processed_count > 0 && (
+                                            {job.status === 'completed' && job.result_count > 0 && (
                                                 <button
                                                     onClick={() => handleViewResults(job)}
                                                     className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1 justify-end ml-auto">
