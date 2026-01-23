@@ -495,6 +495,13 @@ export default function CRMPage() {
     useEffect(() => {
         const dealIdFromUrl = searchParams.get('dealId');
 
+        // TOP LEVEL DEBUG
+        if (dealIdFromUrl) {
+            console.log("[CRM DeepLink] EFFECT TRIGGERED. URL ID:", dealIdFromUrl);
+            console.log("[CRM DeepLink] State - isDataLoading:", isDataLoading);
+            console.log("[CRM DeepLink] State - deals count:", deals.length);
+        }
+
         if (dealIdFromUrl && !isDataLoading) {
             const dealExists = deals.find(d => d.id === dealIdFromUrl);
 
