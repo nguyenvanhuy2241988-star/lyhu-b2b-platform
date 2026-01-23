@@ -524,10 +524,10 @@ export default function CRMPage() {
                 console.log("[CRM DeepLink] Opening Modal for deal:", deal.id); // DEBUG
                 handleEditDeal(deal);
 
-                // 3. Cleanup URL
-                const newUrl = new URL(window.location.href);
-                newUrl.searchParams.delete('dealId');
-                window.history.replaceState({}, '', newUrl.toString());
+                // 3. Cleanup URL - TEMPORARILY DISABLED FOR DEBUGGING
+                // const newUrl = new URL(window.location.href);
+                // newUrl.searchParams.delete('dealId');
+                // window.history.replaceState({}, '', newUrl.toString());
             };
 
             if (dealExists) {
