@@ -443,34 +443,21 @@ export default function CRMPage() {
 
     const handleDrop = async (e: React.DragEvent, targetColId: string) => {
         e.preventDefault();
-        // ...
-    };
+        const draggedId = e.dataTransfer.getData("crm/deal");
+        const sourceColId = e.dataTransfer.getData("crm/source-col");
+        setDraggedDealId(null);
+        setDropIndicator(null);
+        setDragOverColId(null);
 
-    // --- Deep Linking Logic ---
-    const searchParams = useSearchParams(); // Should be imported
+        const dealToMove = deals.find(d => d.id === draggedId);
+        if (!dealToMove) return;
 
-    useEffect(() => {
-        const dealIdFromUrl = searchParams.get('dealId');
-        if (dealIdFromUrl && !isDataLoading) {
-            // Find deal in populated columns
-            // Data structure: deals array
-            const dealExists = deals.find(d => d.id === dealIdFromUrl);
+        // Check if dragging from 'done' to another column - need to reopen
+        const isMovingFromDone = sourceColId === 'done' && targetColId !== 'done';
 
-            if (dealExists) {
-                setTimeout(() => {
-                    const el = document.getElementById(`deal-${dealIdFromUrl}`);
-                    if (el) {
-                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        setHighlightedDealId(dealIdFromUrl);
-                        // Clear highlight after 3s
-                        setTimeout(() => setHighlightedDealId(null), 3000);
-                    }
-                }, 1000);
-            }
-        }
-    }, [searchParams, isDataLoading, deals]);
+        logDebug(`Moving deal ${dealToMove.title} to ${targetColId}...`);
 
-    const getUserInfo = useCallback((): { id: string | null; role: string } => {
+        if (targetColId === draggedId) return; // Same column check
 
         // Optimistic UI Update first...
 
@@ -498,6 +485,28 @@ export default function CRMPage() {
         // This avoids request conflicts that cause hanging.
         logDebug(`SUCCESS saved deal ${dealToMove.title}.`, 'info');
     };
+
+    // --- Deep Linking Logic ---
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        const dealIdFromUrl = searchParams.get('dealId');
+        if (dealIdFromUrl && !isDataLoading) {
+            const dealExists = deals.find(d => d.id === dealIdFromUrl);
+
+            if (dealExists) {
+                setTimeout(() => {
+                    const el = document.getElementById(`deal-${dealIdFromUrl}`);
+                    if (el) {
+                        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        setHighlightedDealId(dealIdFromUrl);
+                        setTimeout(() => setHighlightedDealId(null), 3000);
+                    }
+                }, 1000);
+            }
+        }
+    }, [searchParams, isDataLoading, deals]);
+
 
     const getUserInfo = useCallback((): { id: string | null; role: string } => {
         // First try: Supabase auth with role from profiles table
