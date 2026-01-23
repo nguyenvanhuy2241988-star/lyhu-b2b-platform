@@ -69,6 +69,13 @@ export default function NotificationBell() {
     };
 
     const handleNotificationClick = (id: string, link?: string) => {
+        console.log("[NotificationBell] Clicked notification:", id);
+        console.log("[NotificationBell] Link:", link);
+
+        if (!link) {
+            alert("Thông báo này không có đường dẫn (Link is missing). Vui lòng kiểm tra lại trigger Database.");
+        }
+
         markAsRead(id);
         if (link) {
             setIsOpen(false);
