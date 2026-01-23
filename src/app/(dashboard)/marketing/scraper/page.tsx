@@ -38,7 +38,7 @@ interface ScrapeResult {
 }
 
 export default function MarketingScraperPage() {
-    const { userInfo, session } = useAuth();
+    const { user, session } = useAuth();
     const [targetUrl, setTargetUrl] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [jobs, setJobs] = useState<ScrapeJob[]>([]);
