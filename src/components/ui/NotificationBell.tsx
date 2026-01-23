@@ -69,6 +69,9 @@ export default function NotificationBell() {
     };
 
     const handleNotificationClick = (id: string, link?: string) => {
+        // FORCE ALERT DEBUG
+        alert(`Debug Click: ID=${id}, Link=${link || 'UNDEFINED'}`);
+
         console.log("[NotificationBell] Clicked notification:", id);
         console.log("[NotificationBell] Link:", link);
 
@@ -125,34 +128,33 @@ export default function NotificationBell() {
                         {notifications.length > 0 ? (
                             <div className="divide-y divide-slate-50">
                                 {notifications.map((notif) => (
-                                    <div
+                                    <button
                                         key={notif.id}
                                         onClick={(e) => {
-                                            e.stopPropagation();
+                                            console.log("Inline click fired", notif.id);
                                             handleNotificationClick(notif.id, notif.link);
                                         }}
-                                        className={`p-4 hover:bg-slate-50 transition-colors cursor-pointer relative ${!notif.is_read ? 'bg-blue-50/30' : ''}`}
+                                        className={`w-full text-left p-4 hover:bg-slate-50 transition-colors cursor-pointer relative flex gap-3 ${!notif.is_read ? 'bg-blue-50/30' : ''}`}
                                     >
                                         {!notif.is_read && (
                                             <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
                                         )}
-                                        <div className="flex gap-3">
-                                            <div className="mt-0.5 shrink-0">
-                                                {getIcon(notif.type)}
-                                            </div>
-                                            <div className="flex-1">
-                                                <h4 className={`text-sm ${!notif.is_read ? 'font-semibold text-slate-900' : 'font-medium text-slate-700'}`}>
-                                                    {notif.title}
-                                                </h4>
-                                                <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                                                    {notif.message}
-                                                </p>
-                                                <p className="text-[10px] text-slate-400 mt-1.5 font-medium">
-                                                    {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true, locale: vi })}
-                                                </p>
-                                            </div>
+                                        {/* Content Wrapper */}
+                                        <div className="mt-0.5 shrink-0">
+                                            {getIcon(notif.type)}
                                         </div>
-                                    </div>
+                                        <div className="flex-1">
+                                            <h4 className={`text-sm ${!notif.is_read ? 'font-semibold text-slate-900' : 'font-medium text-slate-700'}`}>
+                                                {notif.title}
+                                            </h4>
+                                            <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                                                {notif.message}
+                                            </p>
+                                            <p className="text-[10px] text-slate-400 mt-1.5 font-medium">
+                                                {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true, locale: vi })}
+                                            </p>
+                                        </div>
+                                    </button>
                                 ))}
                             </div>
                         ) : (
