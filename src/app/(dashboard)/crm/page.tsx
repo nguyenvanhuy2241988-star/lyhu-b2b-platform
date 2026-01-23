@@ -494,35 +494,37 @@ export default function CRMPage() {
 
     useEffect(() => {
         const dealIdFromUrl = searchParams.get('dealId');
-        // DEBUG LOGS RESTORED
-        if (dealIdFromUrl) {
-            console.log("[CRM DeepLink] URL dealId:", dealIdFromUrl);
-            console.log("[CRM DeepLink] Deals loaded:", deals.length);
-        }
 
         if (dealIdFromUrl && !isDataLoading) {
             const dealExists = deals.find(d => d.id === dealIdFromUrl);
-            console.log("[CRM DeepLink] Deal exists in state?", !!dealExists);
-            if (dealExists) {
-                console.log("[CRM DeepLink] Deal Status:", dealExists.status);
-                console.log("[CRM DeepLink] Deal Stage:", dealExists.stage);
-            }
 
             if (dealExists) {
                 setTimeout(() => {
                     const el = document.getElementById(`deal-${dealIdFromUrl}`);
-                    console.log("[CRM DeepLink] Element found in DOM?", el ? "YES" : "NO");
                     if (el) {
                         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         setHighlightedDealId(dealIdFromUrl);
                         setTimeout(() => setHighlightedDealId(null), 3000);
-                    } else {
-                        console.warn("[CRM DeepLink] Element NOT found. Check filters?");
+
+                        // Clear URL param to prevent sticky behavior
+                        const newUrl = new URL(window.location.href);
+                        newUrl.searchParams.delete('dealId');
+                        window.history.replaceState({}, '', newUrl.toString());
                     }
-                }, 2000);
+                }, 1500);
+            } else {
+                // Deal not found in current list, fetch manually
+                fetchDeal(dealIdFromUrl, session?.access_token).then(fetchedDeal => {
+                    if (fetchedDeal) {
+                        setDeals(prev => {
+                            if (prev.find(d => d.id === fetchedDeal.id)) return prev;
+                            return [fetchedDeal, ...prev];
+                        });
+                    }
+                });
             }
         }
-    }, [searchParams, isDataLoading, deals]);
+    }, [searchParams, isDataLoading, deals, session?.access_token]);
 
 
     const getUserInfo = useCallback((): { id: string | null; role: string } => {
