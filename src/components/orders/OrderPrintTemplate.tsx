@@ -149,7 +149,14 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, s
                             -{formatPrice((order.items || []).reduce((sum: number, item: any) => sum + (item.discount || 0), 0))}
                         </span>
                     </div>
-                    {/* Add VAT row if needed in future */}
+                    {(order.vat || 0) > 0 && (
+                        <div className="flex justify-between py-1">
+                            <span className="text-gray-600">VAT:</span>
+                            <span className="font-medium text-slate-600">
+                                +{formatPrice(order.vat || 0)}
+                            </span>
+                        </div>
+                    )}
                     <div className="border-t border-gray-300 my-2"></div>
                     <div className="flex justify-between text-lg font-bold items-center bg-gray-50 p-2 rounded">
                         <span>Tổng thanh toán:</span>
