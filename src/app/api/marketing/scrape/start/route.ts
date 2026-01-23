@@ -79,7 +79,8 @@ export async function POST(request: Request) {
         console.log('[API] Starting Apify Actor...');
         let run;
         try {
-            run = await client.actor("apify/facebook-group-scraper").start({
+            // Use the universal Facebook Scraper (handles Groups, Pages, Posts)
+            run = await client.actor("apify/facebook-scraper").start({
                 startUrls: [{ url: target_url }],
                 maxItems: 50, // Limit for cost control
                 proxyConfiguration: {
