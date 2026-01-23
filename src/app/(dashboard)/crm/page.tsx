@@ -500,9 +500,12 @@ export default function CRMPage() {
 
             // Helper to execute deep link actions
             const executeDeepLink = (deal: CRMDeal) => {
+                console.log("[CRM DeepLink] Executing actions for:", deal.title); // DEBUG
+
                 // 1. Scroll to card for context
                 setTimeout(() => {
                     const el = document.getElementById(`deal-${deal.id}`);
+                    console.log("[CRM DeepLink] Scrolling to element:", el); // DEBUG
                     if (el) {
                         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         setHighlightedDealId(deal.id);
@@ -511,6 +514,7 @@ export default function CRMPage() {
                 }, 500);
 
                 // 2. AUTO OPEN MODAL (The "Handled" Experience)
+                console.log("[CRM DeepLink] Opening Modal for deal:", deal.id); // DEBUG
                 handleEditDeal(deal);
 
                 // 3. Cleanup URL
@@ -520,10 +524,13 @@ export default function CRMPage() {
             };
 
             if (dealExists) {
+                console.log("[CRM DeepLink] Deal found in state immediately."); // DEBUG
                 executeDeepLink(dealExists);
             } else {
+                console.log("[CRM DeepLink] Deal NOT in state, fetching manually..."); // DEBUG
                 // Deal not found in current list, fetch manually
                 fetchDeal(dealIdFromUrl, session?.access_token).then(fetchedDeal => {
+                    console.log("[CRM DeepLink] Fetched result:", fetchedDeal); // DEBUG
                     if (fetchedDeal) {
                         setDeals(prev => {
                             if (prev.find(d => d.id === fetchedDeal.id)) return prev;
