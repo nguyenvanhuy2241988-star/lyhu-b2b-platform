@@ -155,14 +155,19 @@ export default function MarketingScraperPage() {
                     expected_value: 0
                 };
 
-                // Create Customer First (Simplest way)
+                // Create Customer First
+                const customerPayload: any = {
+                    name: item.facebook_name,
+                    phone: item.phone,
+                    source_category: 'MARKETING'
+                };
+                if (user?.id) {
+                    customerPayload.owner_user_id = user.id;
+                }
+
                 const { data: customer, error: custError } = await supabase
                     .from('customers')
-                    .insert({
-                        name: item.facebook_name,
-                        phone: item.phone,
-                        source: 'FACEBOOK_SCAN'
-                    })
+                    .insert(customerPayload)
                     .select()
                     .single();
 
