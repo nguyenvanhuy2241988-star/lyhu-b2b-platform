@@ -1438,27 +1438,7 @@ export default function TelesalesTasksPage() {
                 </div>
             )}
 
-
-    // --- Deep Linking Logic ---
-            const searchParams = useSearchParams();
-
-    useEffect(() => {
-        const taskIdFromUrl = searchParams.get('taskId');
-            if (taskIdFromUrl && !isLoading) {
-            // Check if task exists in loaded tasks
-            const allLoadedTasks = Object.values(columnTasks).flat();
-            const taskExists = allLoadedTasks.find(t => t.id === taskIdFromUrl);
-
-            if (taskExists) {
-                // Small delay to ensure rendering is complete
-                setTimeout(() => {
-                    handleLocateTask(taskIdFromUrl);
-                }, 500);
-            }
-        }
-    }, [searchParams, isLoading, columnTasks]); // Re-run when tasks load
-
-            // --- NEW Modals ---
+            {/* NEW Modals */}
             <TaskSimpleModal
                 isOpen={isSimpleModalOpen}
                 onClose={() => setIsSimpleModalOpen(false)}
