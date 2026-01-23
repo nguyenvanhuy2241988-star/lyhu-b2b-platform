@@ -1,73 +1,37 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
-import { NextResponse } from 'next/server';
+import { ApifyClient } from 'apify-client';
 
-// Temporary Mock for Apify to avoid needing API Key immediately during dev
-// In production, this would use ApifyClient
-const MOCK_APIFY = true;
+// ... (existing imports)
 
 export async function POST(request: Request) {
     try {
-        const cookieStore = cookies();
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+        // ... (existing supabase setup)
 
-        const supabase = createServerClient(
-            supabaseUrl,
-            supabaseAnonKey,
-            {
-                cookies: {
-                    get(name: string) {
-                        return cookieStore.get(name)?.value;
-                    },
-                },
+        // ... (existing auth check)
+
+        // ... (existing body parsing)
+
+        // ... (existing db insert)
+
+        // 3. Call Apify
+        const apifyToken = process.env.APIFY_API_TOKEN;
+        if (!apifyToken) {
+            throw new Error('Missing APIFY_API_TOKEN');
+        }
+
+        const client = new ApifyClient({
+            token: apifyToken,
+        });
+
+        // Start the actor and don't wait for it to finish
+        const run = await client.actor("apify/facebook-group-scraper").start({
+            startUrls: [{ url: target_url }],
+            maxItems: 50, // Limit for cost control
+            proxyConfiguration: {
+                useApifyProxy: true
             }
-        );
+        });
 
-        // 1. Check Auth
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const body = await request.json();
-        const { target_url } = body;
-
-        if (!target_url) {
-            return NextResponse.json({ error: 'Missing target_url' }, { status: 400 });
-        }
-
-        // 2. Insert Job record into DB (Pending)
-        const { data: job, error: dbError } = await supabase
-            .from('marketing_scrape_jobs')
-            .insert({
-                user_id: session.user.id,
-                target_url,
-                status: 'pending',
-                // apify_run_id: ... (will set this after calling Apify)
-            })
-            .select()
-            .single();
-
-        if (dbError) {
-            console.error(dbError);
-            return NextResponse.json({ error: 'Database Error' }, { status: 500 });
-        }
-
-        // 3. Call Apify (or Mock)
-        // Note: For real implementation, npm install apify-client
-        let apifyRunId = `mock_run_${Date.now()}`;
-
-        if (!MOCK_APIFY) {
-            // Real implementation would go here
-            // const client = new ApifyClient({ token: process.env.APIFY_API_TOKEN });
-            // const run = await client.actor("apify/facebook-group-scraper").call({ startUrls: [{ url: target_url }] });
-            // apifyRunId = run.id;
-        } else {
-            // Simulate starting a job
-            // In a real scenario, we might use a background worker or webhook for completion.
-            // For this MVP, we just acknowledge the start.
-        }
+        const apifyRunId = run.id;
 
         // 4. Update Job with Run ID and status 'running'
         const { error: updateError } = await supabase

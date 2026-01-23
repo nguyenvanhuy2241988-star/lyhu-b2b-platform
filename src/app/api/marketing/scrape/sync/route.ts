@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from 'next/server';
+import { ApifyClient } from 'apify-client';
 
 export async function POST(request: Request) {
     try {
@@ -20,11 +21,8 @@ export async function POST(request: Request) {
             }
         );
 
-        // 1. Check Auth (Optional for public webhook, but required if triggered by client)
+        // 1. Check Auth
         const { data: { session } } = await supabase.auth.getSession();
-
-        // In a real webhook, we would verify the signature instead of session
-        // For manual sync from client:
         if (!session) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -67,26 +65,67 @@ export async function POST(request: Request) {
 }
 
 async function syncJob(supabase: any, job: any) {
-    // MOCK LOGIC: If it's a mock run, we just finish it with random results
-    if (job.apify_run_id?.startsWith('mock_')) {
-        const mockResultCount = Math.floor(Math.random() * 50) + 10; // 10-60 items
-        const mockProcessedCount = Math.floor(mockResultCount * 0.4); // 40% have phones
+    if (!job.apify_run_id) return;
 
+    // Handle Mock Runs (Legacy support or fallback)
+    if (job.apify_run_id.startsWith('mock_')) {
+        // ... (Keep existing mock logic if needed, or just skip)
+        const mockResultCount = Math.floor(Math.random() * 50) + 10;
         await supabase
             .from('marketing_scrape_jobs')
             .update({
                 status: 'completed',
                 result_count: mockResultCount,
-                processed_count: mockProcessedCount
-                // We would also save the raw results to a storage bucket or another table here
+                processed_count: Math.floor(mockResultCount * 0.4)
             })
             .eq('id', job.id);
-    } else {
-        // REAL LOGIC:
-        // 1. Call Apify Client.run(job.apify_run_id).get()
-        // 2. Check status.
-        // 3. If SUCCEEDED, fetch dataset.
-        // 4. Parse dataset for phones.
-        // 5. Update DB.
+        return;
+    }
+
+    try {
+        const apifyToken = process.env.APIFY_API_TOKEN;
+        if (!apifyToken) return;
+
+        const client = new ApifyClient({ token: apifyToken });
+        const run = await client.run(job.apify_run_id).get();
+
+        if (!run) return;
+
+        let newStatus = job.status;
+        const apifyStatus = run.status; // READY, RUNNING, SUCCEEDED, FAILED, TIMED-OUT, ABORTED
+
+        if (apifyStatus === 'SUCCEEDED') {
+            newStatus = 'completed';
+        } else if (['FAILED', 'TIMED-OUT', 'ABORTED'].includes(apifyStatus)) {
+            newStatus = 'failed';
+        } else if (apifyStatus === 'RUNNING') {
+            newStatus = 'running';
+        }
+
+        // Prepare updates
+        const updates: any = { status: newStatus };
+
+        // If completed, get item count from dataset
+        if (newStatus === 'completed') {
+            const datasetId = run.defaultDatasetId;
+            const dataset = await client.dataset(datasetId).get();
+            if (dataset) {
+                updates.result_count = dataset.itemCount;
+                // processed_count will be updated when user views results and we run regex
+            }
+        } else if (newStatus === 'failed') {
+            updates.error_message = `Apify Run Failed: ${apifyStatus}`;
+        }
+
+        // Only update if changed
+        if (newStatus !== job.status || updates.result_count !== job.result_count) {
+            await supabase
+                .from('marketing_scrape_jobs')
+                .update(updates)
+                .eq('id', job.id);
+        }
+
+    } catch (err) {
+        console.error(`Error syncing job ${job.id}:`, err);
     }
 }
