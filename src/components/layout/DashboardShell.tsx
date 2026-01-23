@@ -6,6 +6,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import { UserRole } from "@/lib/auth";
+import { WelcomeGreeting } from "@/components/common/WelcomeGreeting";
 
 interface DashboardShellProps {
     role?: UserRole;
@@ -47,6 +48,7 @@ export default function DashboardShell({ children, role, allowedRoles, title }: 
                 <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
                     {children}
                 </main>
+                <WelcomeGreeting />
             </div>
         </div>
     );
