@@ -5,24 +5,30 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
 import {
-    Globe,
-    Play,
-    RefreshCw,
-    List,
-    ExternalLink,
-    Loader2,
-    CheckCircle2,
-    XCircle,
-    UserPlus,
-    X,
-    Save
-} from "lucide-react";
+import {
+        Globe,
+        Play,
+        RefreshCw,
+        List,
+        ExternalLink,
+        Loader2,
+        CheckCircle2,
+        XCircle,
+        UserPlus,
+        X,
+        Save,
+        MapPin,
+        Facebook,
+        Search
+    } from "lucide-react";
 import { createDeal } from "@/lib/crmDealsStore";
 
 interface ScrapeJob {
     id: string;
     created_at: string;
     target_url: string;
+    keywords?: string;
+    job_type: 'fb_group' | 'fb_page' | 'google_maps';
     status: 'pending' | 'running' | 'completed' | 'failed';
     result_count: number;
     processed_count: number;
@@ -34,12 +40,23 @@ interface ScrapeResult {
     phone: string;
     content: string;
     post_url: string;
+    // Business specific
+    address?: string;
+    website?: string;
     is_saved: boolean;
 }
 
+type JobType = 'fb_group' | 'fb_page' | 'google_maps';
+
 export default function MarketingScraperPage() {
     const { user, session } = useAuth();
+
+    // Form State
+    const [jobType, setJobType] = useState<JobType>('fb_group');
     const [targetUrl, setTargetUrl] = useState("");
+    const [keywords, setKeywords] = useState("");
+    const [limit, setLimit] = useState(50);
+
     const [isLoading, setIsLoading] = useState(false);
     const [jobs, setJobs] = useState<ScrapeJob[]>([]);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -81,17 +98,28 @@ export default function MarketingScraperPage() {
     };
 
     const handleStartScrape = async () => {
-        if (!targetUrl) {
-            toast.error("Vui lòng nhập Link Group hoặc bài viết");
+        if (jobType === 'google_maps' && !keywords) {
+            toast.error("Vui lòng nhập từ khóa tìm kiếm");
+            return;
+        }
+        if ((jobType === 'fb_group' || jobType === 'fb_page') && !targetUrl) {
+            toast.error("Vui lòng nhập đường dẫn (URL)");
             return;
         }
 
         setIsLoading(true);
         try {
+            const payload = {
+                job_type: jobType,
+                target_url: targetUrl,
+                keywords: keywords,
+                limit: limit
+            };
+
             const response = await fetch('/api/marketing/scrape/start', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ target_url: targetUrl })
+                body: JSON.stringify(payload)
             });
 
             const result = await response.json();
@@ -102,15 +130,16 @@ export default function MarketingScraperPage() {
 
             toast.success("Đã gửi yêu cầu quét thành công!");
             setTargetUrl("");
+            setKeywords("");
             fetchJobs(); // Reload list
 
-            // Auto sync after 2 seconds for demo purpose
+            // Auto sync after 3 seconds for demo purpose
             setTimeout(() => {
                 fetch('/api/marketing/scrape/sync', {
                     method: 'POST',
                     body: JSON.stringify({ job_id: result.job_id })
                 }).then(() => fetchJobs());
-            }, 2000);
+            }, 3000);
 
         } catch (error: any) {
             toast.error(error.message);
@@ -130,8 +159,8 @@ export default function MarketingScraperPage() {
             const data = await res.json();
             if (data.results) {
                 setResults(data.results);
-                // Auto select all valid phones
-                const validIds = data.results.filter((r: any) => r.phone).map((r: any) => r.id);
+                // Auto select all valid entries (phones or just valid items)
+                const validIds = data.results.map((r: any) => r.id);
                 setSelectedResults(new Set(validIds));
             }
         } catch (error) {
@@ -152,13 +181,13 @@ export default function MarketingScraperPage() {
         try {
             for (const item of itemsToSave) {
                 const dealData = {
-                    title: `FB: ${item.facebook_name}`,
+                    title: item.address ? `MAPS: ${item.facebook_name}` : `FB: ${item.facebook_name}`,
                     stage: 'new_data' as const,
                     priority: 'normal' as const,
                     source_category: 'MARKETING',
                     source: 'data_moi' as const,
-                    source_detail: 'FACEBOOK_SCAN',
-                    note: `Nội dung: ${item.content}\nLink: ${item.post_url}`,
+                    source_detail: selectedJob?.job_type === 'google_maps' ? 'GOOGLE_MAPS' : 'FACEBOOK_SCAN',
+                    note: `Nội dung: ${item.content}\nLink/Web: ${item.post_url || item.website || ''}`,
                     expected_value: 0
                 };
 
@@ -166,6 +195,8 @@ export default function MarketingScraperPage() {
                 const customerPayload: any = {
                     name: item.facebook_name,
                     phone: item.phone,
+                    address: item.address, // Added Address
+                    website: item.website,  // Added Website
                     source_category: 'MARKETING'
                 };
                 if (user?.id) {
@@ -224,46 +255,116 @@ export default function MarketingScraperPage() {
         }
     };
 
+    const getJobIcon = (type: string) => {
+        switch (type) {
+            case 'google_maps': return <MapPin className="w-4 h-4 text-red-500" />;
+            case 'fb_page': return <Globe className="w-4 h-4 text-blue-600" />;
+            default: return <Facebook className="w-4 h-4 text-blue-600" />;
+        }
+    }
+
+    const getJobLabel = (type: string) => {
+        switch (type) {
+            case 'google_maps': return 'Google Maps';
+            case 'fb_page': return 'FB Page/Ads';
+            default: return 'FB Group';
+        }
+    }
+
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
                         <Globe className="w-8 h-8 text-blue-600" />
-                        Quét Data Facebook
+                        Quét Data Đa Kênh
                     </h1>
-                    <p className="text-slate-500 mt-1">Quét số điện thoại từ Group và Bài viết Facebook (Sử dụng Apify)</p>
+                    <p className="text-slate-500 mt-1">Hệ thống quét dữ liệu từ Facebook & Google Maps</p>
                 </div>
             </div>
 
             {/* Tool Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <Play className="w-5 h-5 text-blue-500" />
-                    Công cụ quét
-                </h2>
-
-                <div className="flex gap-4 items-start">
-                    <div className="flex-1">
-                        <input
-                            type="text"
-                            placeholder="Dán Link Facebook Group hoặc Post vào đây (Ví dụ: https://www.facebook.com/groups/Example)..."
-                            className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-                            value={targetUrl}
-                            onChange={(e) => setTargetUrl(e.target.value)}
-                        />
-                        <p className="text-xs text-slate-400 mt-2">
-                            * Hỗ trợ quét bài viết mới nhất trong Group hoặc Comment của một bài viết cụ thể.
-                        </p>
-                    </div>
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+                {/* Tabs */}
+                <div className="flex border-b border-slate-100">
                     <button
-                        onClick={handleStartScrape}
-                        disabled={isLoading || !targetUrl}
-                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        onClick={() => setJobType('fb_group')}
+                        className={`px-6 py-4 text-sm font-medium flex items-center gap-2 transition-colors border-b-2 ${jobType === 'fb_group' ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                     >
-                        {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
-                        Bắt đầu Quét
+                        <Facebook className="w-4 h-4" /> Facebook Group
                     </button>
+                    <button
+                        onClick={() => setJobType('fb_page')}
+                        className={`px-6 py-4 text-sm font-medium flex items-center gap-2 transition-colors border-b-2 ${jobType === 'fb_page' ? 'border-blue-500 text-blue-600 bg-blue-50' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                    >
+                        <Globe className="w-4 h-4" /> Facebook Page/Ads
+                    </button>
+                    <button
+                        onClick={() => setJobType('google_maps')}
+                        className={`px-6 py-4 text-sm font-medium flex items-center gap-2 transition-colors border-b-2 ${jobType === 'google_maps' ? 'border-red-500 text-red-600 bg-red-50' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                    >
+                        <MapPin className="w-4 h-4" /> Google Maps
+                    </button>
+                </div>
+
+                <div className="p-6">
+                    <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                        {jobType === 'google_maps' ? <Search className="w-5 h-5 text-red-500" /> : <Play className="w-5 h-5 text-blue-500" />}
+                        {jobType === 'google_maps' ? 'Nhập từ khóa tìm kiếm' : 'Nhập đường dẫn cần quét'}
+                    </h2>
+
+                    <div className="flex gap-4 items-start">
+                        <div className="flex-1 space-y-3">
+                            {jobType === 'google_maps' ? (
+                                <div>
+                                    <input
+                                        type="text"
+                                        placeholder="Ví dụ: Tạp hóa tại Cầu Giấy, Spa tại Hà Nội..."
+                                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                                        value={keywords}
+                                        onChange={(e) => setKeywords(e.target.value)}
+                                    />
+                                    <p className="text-xs text-slate-400 mt-2">* Nhập từ khóa để tìm kiếm địa điểm kinh doanh.</p>
+                                </div>
+                            ) : (
+                                <div>
+                                    <input
+                                        type="text"
+                                        placeholder={jobType === 'fb_page' ? "Link Fanpage hoặc Link Bài Viết..." : "Link Facebook Group..."}
+                                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                                        value={targetUrl}
+                                        onChange={(e) => setTargetUrl(e.target.value)}
+                                    />
+                                    <p className="text-xs text-slate-400 mt-2">
+                                        {jobType === 'fb_page' ? '* Link bài viết để quét comment, Link Page để quét bài viết mới.' : '* Hỗ trợ quét bài viết mới trong Group.'}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Limit Input */}
+                            <div className="flex items-center gap-2">
+                                <label className="text-sm text-slate-600 font-medium">Số lượng tối đa:</label>
+                                <select
+                                    value={limit}
+                                    onChange={(e) => setLimit(Number(e.target.value))}
+                                    className="border border-slate-300 rounded-md px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value={20}>20 kết quả</option>
+                                    <option value={50}>50 kết quả</option>
+                                    <option value={100}>100 kết quả</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={handleStartScrape}
+                            disabled={isLoading || (jobType === 'google_maps' ? !keywords : !targetUrl)}
+                            className={`px-6 py-3 text-white font-medium rounded-lg shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${jobType === 'google_maps' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                        >
+                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
+                            Bắt đầu
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -287,11 +388,11 @@ export default function MarketingScraperPage() {
                     <table className="w-full">
                         <thead className="bg-slate-50 border-b border-slate-200 text-left">
                             <tr>
-                                <th className="px-6 py-3 text-sm font-semibold text-slate-600">Ngày tạo</th>
-                                <th className="px-6 py-3 text-sm font-semibold text-slate-600">Target (Link)</th>
+                                <th className="px-6 py-3 text-sm font-semibold text-slate-600">Loại</th>
+                                <th className="px-6 py-3 text-sm font-semibold text-slate-600">Mục tiêu</th>
                                 <th className="px-6 py-3 text-sm font-semibold text-slate-600">Trạng thái</th>
                                 <th className="px-6 py-3 text-sm font-semibold text-slate-600 text-center">Kết quả</th>
-                                <th className="px-6 py-3 text-sm font-semibold text-slate-600 text-center">SĐT Lọc được</th>
+                                <th className="px-6 py-3 text-sm font-semibold text-slate-600 text-center">Đã xử lý</th>
                                 <th className="px-6 py-3 text-sm font-semibold text-slate-600 text-right">Thao tác</th>
                             </tr>
                         </thead>
@@ -305,14 +406,21 @@ export default function MarketingScraperPage() {
                             ) : (
                                 jobs.map((job) => (
                                     <tr key={job.id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-6 py-4 text-sm text-slate-600">
-                                            {new Date(job.created_at).toLocaleString('vi-VN')}
+                                        <td className="px-6 py-4 text-sm font-medium text-slate-700">
+                                            <div className="flex items-center gap-2">
+                                                {getJobIcon(job.job_type)}
+                                                {getJobLabel(job.job_type)}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-blue-600">
-                                            <a href={job.target_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline truncate max-w-[200px] block">
-                                                {job.target_url}
-                                                <ExternalLink className="w-3 h-3" />
-                                            </a>
+                                            {job.job_type === 'google_maps' ? (
+                                                <span className="font-semibold text-slate-700">{job.keywords}</span>
+                                            ) : (
+                                                <a href={job.target_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline truncate max-w-[200px] block">
+                                                    {job.target_url}
+                                                    <ExternalLink className="w-3 h-3" />
+                                                </a>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(job.status)}`}>
@@ -320,7 +428,7 @@ export default function MarketingScraperPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-center font-medium">
-                                            {job.result_count} items
+                                            {job.result_count}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-center font-bold text-green-600">
                                             {job.processed_count}
@@ -331,7 +439,7 @@ export default function MarketingScraperPage() {
                                                     onClick={() => handleViewResults(job)}
                                                     className="text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-1 justify-end ml-auto">
                                                     <UserPlus className="w-4 h-4" />
-                                                    Xem & Lưu CRM
+                                                    Xem & Lưu
                                                 </button>
                                             )}
                                         </td>
@@ -346,9 +454,12 @@ export default function MarketingScraperPage() {
             {/* Results Modal */}
             {selectedJob && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[80vh] flex flex-col">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[85vh] flex flex-col">
                         <div className="p-4 border-b flex justify-between items-center">
-                            <h3 className="font-bold text-lg">Kết quả quét: {selectedJob.processed_count} SĐT tìm thấy</h3>
+                            <h3 className="font-bold text-lg flex items-center gap-2">
+                                {getJobIcon(selectedJob.job_type)}
+                                Kết quả: {results.length} mục tìm thấy
+                            </h3>
                             <button onClick={() => setSelectedJob(null)} className="p-1 hover:bg-slate-100 rounded-full">
                                 <X className="w-6 h-6 text-slate-500" />
                             </button>
@@ -359,9 +470,9 @@ export default function MarketingScraperPage() {
                                 <div className="flex justify-center py-8"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>
                             ) : (
                                 <table className="w-full">
-                                    <thead className="bg-slate-50">
+                                    <thead className="bg-slate-50 sticky top-0 z-10 shadow-sm">
                                         <tr>
-                                            <th className="px-4 py-2 w-10">
+                                            <th className="px-4 py-3 w-10">
                                                 <input
                                                     type="checkbox"
                                                     onChange={(e) => {
@@ -371,9 +482,16 @@ export default function MarketingScraperPage() {
                                                     checked={results.length > 0 && selectedResults.size === results.length}
                                                 />
                                             </th>
-                                            <th className="px-4 py-2 text-left text-sm font-semibold">Tên Facebook</th>
-                                            <th className="px-4 py-2 text-left text-sm font-semibold">SĐT</th>
-                                            <th className="px-4 py-2 text-left text-sm font-semibold">Nội dung</th>
+                                            <th className="px-4 py-3 text-left text-sm font-semibold">Tên (Facebook/Địa điểm)</th>
+                                            <th className="px-4 py-3 text-left text-sm font-semibold">SĐT</th>
+                                            {selectedJob.job_type === 'google_maps' ? (
+                                                <>
+                                                    <th className="px-4 py-3 text-left text-sm font-semibold">Địa chỉ</th>
+                                                    <th className="px-4 py-3 text-left text-sm font-semibold">Website</th>
+                                                </>
+                                            ) : (
+                                                <th className="px-4 py-3 text-left text-sm font-semibold">Nội dung / Comment</th>
+                                            )}
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y text-sm">
@@ -387,8 +505,17 @@ export default function MarketingScraperPage() {
                                                     />
                                                 </td>
                                                 <td className="px-4 py-2 font-medium">{r.facebook_name}</td>
-                                                <td className="px-4 py-2 text-green-600 font-bold">{r.phone}</td>
-                                                <td className="px-4 py-2 text-slate-600 truncate max-w-[300px]" title={r.content}>{r.content}</td>
+                                                <td className="px-4 py-2 text-green-600 font-bold">{r.phone || 'N/A'}</td>
+                                                {selectedJob.job_type === 'google_maps' ? (
+                                                    <>
+                                                        <td className="px-4 py-2 text-slate-600 truncate max-w-[200px]" title={r.address}>{r.address}</td>
+                                                        <td className="px-4 py-2 text-blue-600 truncate max-w-[150px]">
+                                                            {r.website ? <a href={r.website} target="_blank" rel="noreferrer" className="hover:underline">Website</a> : '-'}
+                                                        </td>
+                                                    </>
+                                                ) : (
+                                                    <td className="px-4 py-2 text-slate-600 truncate max-w-[300px]" title={r.content}>{r.content}</td>
+                                                )}
                                             </tr>
                                         ))}
                                     </tbody>

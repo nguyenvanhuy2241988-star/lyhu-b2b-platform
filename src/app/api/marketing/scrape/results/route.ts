@@ -83,24 +83,63 @@ export async function GET(request: Request) {
 
                 // Process Items
                 results = items.map((item: any, index: number) => {
-                    // Normalize fields (different actors/scrapers use different field names)
-                    const text = item.text || item.message || item.caption || item.description || '';
-                    const phones = text.match(PHONE_REGEX);
-                    const phone = phones ? phones[0] : null;
+                    if (job.job_type === 'google_maps') {
+                        // Google Maps Data Mapping
+                        return {
+                            id: item.cid || item.placeId || `maps_${index}`,
+                            facebook_name: item.title || item.name, // "Name" in FE
+                            facebook_id: item.cid || item.placeId,
+                            phone: item.phoneUnformatted || item.phone,
+                            content: item.address, // Use content field for address
+                            address: item.address, // Explicit address field
+                            website: item.website,
+                            post_url: item.url || item.googleMapsUrl,
+                            comment_url: item.website,
+                            timestamp: new Date().toISOString(),
+                            is_saved: false,
+                            // Extra fields for context
+                            rating: item.totalScore,
+                            reviews: item.reviewsCount
+                        };
+                    } else if (job.job_type === 'fb_page') {
+                        // FB Page Data Mapping (Posts/Comments)
+                        const text = item.text || item.message || item.caption || item.description || '';
+                        const phones = text.match(PHONE_REGEX);
+                        const phone = phones ? phones[0] : null;
 
-                    if (!phone) return null; // Filter out items without phone
+                        if (!phone) return null; // Filter logic same as groups
 
-                    return {
-                        id: item.id || `apify_${index}`,
-                        facebook_name: item.userName || item.ownerUsername || item.name || 'Unknown User',
-                        facebook_id: item.userId || item.ownerId,
-                        phone: phone,
-                        content: text,
-                        post_url: item.url || item.postUrl || job.target_url,
-                        comment_url: item.url || item.postUrl, // often same as post url for scrape results
-                        timestamp: item.timestamp || item.created_time,
-                        is_saved: false
-                    };
+                        return {
+                            id: item.id || `apify_${index}`,
+                            facebook_name: item.userName || item.ownerUsername || item.name || 'Unknown User',
+                            facebook_id: item.userId || item.ownerId,
+                            phone: phone,
+                            content: text,
+                            post_url: item.url || item.postUrl || job.target_url,
+                            comment_url: item.url || item.postUrl,
+                            timestamp: item.timestamp || item.created_time,
+                            is_saved: false
+                        };
+                    } else {
+                        // Default: FB Group Data Mapping
+                        const text = item.text || item.message || item.caption || item.description || '';
+                        const phones = text.match(PHONE_REGEX);
+                        const phone = phones ? phones[0] : null;
+
+                        if (!phone) return null;
+
+                        return {
+                            id: item.id || `apify_${index}`,
+                            facebook_name: item.userName || item.ownerUsername || item.name || 'Unknown User',
+                            facebook_id: item.userId || item.ownerId,
+                            phone: phone,
+                            content: text,
+                            post_url: item.url || item.postUrl || job.target_url,
+                            comment_url: item.url || item.postUrl,
+                            timestamp: item.timestamp || item.created_time,
+                            is_saved: false
+                        };
+                    }
                 }).filter(Boolean); // Remove nulls
 
                 // Check and Update processed_count in DB if it differs from current processing

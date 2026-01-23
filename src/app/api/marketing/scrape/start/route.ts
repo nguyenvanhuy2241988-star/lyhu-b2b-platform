@@ -33,9 +33,13 @@ export async function POST(request: Request) {
         console.log('[API] Auth success, user:', session.user.id);
 
         const body = await request.json();
-        const { target_url } = body;
+        const { target_url, job_type = 'fb_group', keywords, limit = 50 } = body;
 
-        if (!target_url) {
+        // Validation based on job type
+        if (job_type === 'google_maps' && !keywords) {
+            return NextResponse.json({ error: 'Missing keywords for Google Maps scrape' }, { status: 400 });
+        }
+        if ((job_type === 'fb_group' || job_type === 'fb_page') && !target_url) {
             return NextResponse.json({ error: 'Missing target_url' }, { status: 400 });
         }
 
@@ -44,7 +48,9 @@ export async function POST(request: Request) {
             .from('marketing_scrape_jobs')
             .insert({
                 user_id: session.user.id,
-                target_url,
+                target_url: target_url || '', // Optional for maps
+                job_type,
+                keywords,
                 status: 'pending',
                 // apify_run_id will be updated after calling Apify
             })
@@ -76,17 +82,37 @@ export async function POST(request: Request) {
         });
 
         // Start the actor and don't wait for it to finish
-        console.log('[API] Starting Apify Actor...');
+        console.log('[API] Starting Apify Actor for type:', job_type);
         let run;
         try {
-            // Try specific Groups Scraper
-            run = await client.actor("apify/facebook-groups-scraper").start({
-                startUrls: [{ url: target_url }],
-                maxItems: 50, // Limit for cost control
-                proxyConfiguration: {
-                    useApifyProxy: true
-                }
-            });
+            if (job_type === 'google_maps') {
+                // Google Maps Scraper (compass/crawler-google-places)
+                run = await client.actor("compass/crawler-google-places").start({
+                    searchStrings: [keywords],
+                    maxCrawledPlacesPerSearch: limit,
+                    language: "vi",
+                    countryCode: "VN",
+                    proxyConfig: { useApifyProxy: true }
+                });
+            } else if (job_type === 'fb_page') {
+                // Facebook Pages Scraper (apify/facebook-pages-scraper) - Scrapes posts/comments
+                run = await client.actor("apify/facebook-pages-scraper").start({
+                    startUrls: [{ url: target_url }],
+                    maxPosts: 5, // Get latest posts
+                    maxComments: limit, // Get comments from those posts
+                    proxyConfiguration: { useApifyProxy: true }
+                });
+            } else {
+                // Default: Facebook Groups Scraper
+                run = await client.actor("apify/facebook-groups-scraper").start({
+                    startUrls: [{ url: target_url }],
+                    maxItems: limit,
+                    proxyConfiguration: {
+                        useApifyProxy: true
+                    }
+                });
+            }
+
             console.log('[API] Apify Actor Started, Run ID:', run.id);
         } catch (apifyError: any) {
             console.error('[API] Apify Client Error:', apifyError);
