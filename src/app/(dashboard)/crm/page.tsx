@@ -493,25 +493,17 @@ export default function CRMPage() {
 
     useEffect(() => {
         const dealIdFromUrl = searchParams.get('dealId');
-        // DEBUG LOGS RESTORED
-        if (dealIdFromUrl) {
-            console.log("[CRM DeepLink] URL dealId:", dealIdFromUrl);
-        }
 
         if (dealIdFromUrl && !isDataLoading) {
             const dealExists = deals.find(d => d.id === dealIdFromUrl);
-            console.log("[CRM DeepLink] Deal exists?", !!dealExists);
 
             if (dealExists) {
                 setTimeout(() => {
                     const el = document.getElementById(`deal-${dealIdFromUrl}`);
-                    console.log("[CRM DeepLink] Element found in DOM?", !!el);
                     if (el) {
                         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         setHighlightedDealId(dealIdFromUrl);
                         setTimeout(() => setHighlightedDealId(null), 3000);
-                    } else {
-                        console.warn("[CRM DeepLink] Deal exists but Element ID not found in DOM:", `deal-${dealIdFromUrl}`);
                     }
                 }, 2000);
             }
