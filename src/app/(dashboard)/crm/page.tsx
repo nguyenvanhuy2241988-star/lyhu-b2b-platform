@@ -489,10 +489,19 @@ export default function CRMPage() {
     // --- Deep Linking Logic ---
     const searchParams = useSearchParams();
 
+    // --- Deep Linking Logic ---
+    const searchParams = useSearchParams();
+
     useEffect(() => {
         const dealIdFromUrl = searchParams.get('dealId');
+        // DEBUG LOGS RESTORED
+        if (dealIdFromUrl) {
+            console.log("[CRM DeepLink] URL dealId:", dealIdFromUrl);
+        }
+
         if (dealIdFromUrl && !isDataLoading) {
             const dealExists = deals.find(d => d.id === dealIdFromUrl);
+            console.log("[CRM DeepLink] Deal exists?", !!dealExists);
 
             if (dealExists) {
                 setTimeout(() => {
