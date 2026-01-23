@@ -59,7 +59,7 @@ export async function POST(request: Request) {
 
         if (dbError) {
             console.error('[API] Database Insert Error:', dbError);
-            return NextResponse.json({ error: 'Database Error' }, { status: 500 });
+            return NextResponse.json({ error: `Database Error: ${dbError.message}` }, { status: 500 });
         }
         console.log('[API] Job created in DB:', job.id);
 
