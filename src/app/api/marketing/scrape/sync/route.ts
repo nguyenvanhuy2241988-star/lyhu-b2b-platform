@@ -1,10 +1,24 @@
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
     try {
-        const supabase = createRouteHandlerClient({ cookies });
+        const cookieStore = cookies();
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+        const supabase = createServerClient(
+            supabaseUrl,
+            supabaseAnonKey,
+            {
+                cookies: {
+                    get(name: string) {
+                        return cookieStore.get(name)?.value;
+                    },
+                },
+            }
+        );
 
         // 1. Check Auth (Optional for public webhook, but required if triggered by client)
         const { data: { session } } = await supabase.auth.getSession();
