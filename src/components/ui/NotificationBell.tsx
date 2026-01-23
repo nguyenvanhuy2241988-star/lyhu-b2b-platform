@@ -79,7 +79,7 @@ export default function NotificationBell() {
         markAsRead(id);
         if (link) {
             setIsOpen(false);
-            console.log("Navigating to:", link);
+            console.log("[NotificationBell] Navigating to:", link);
             router.push(link);
         }
     };
