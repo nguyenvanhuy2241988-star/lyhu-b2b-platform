@@ -266,7 +266,7 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
                         <PotentialBadge level={deal.potential_level} />
                         {deal.source_category && (
                             <span className="px-1.5 py-0.5 rounded text-[9px] bg-slate-100 text-slate-600 border border-slate-200">
-                                {deal.source_category === 'SELF_FOUND' ? 'Tự tìm' : 'Cty cấp'}
+                                {deal.source_category === 'SELF_FOUND' ? 'Tự tìm' : deal.source_category === 'MARKETING' ? 'Marketing' : 'Cty cấp'}
                             </span>
                         )}
                     </div>
