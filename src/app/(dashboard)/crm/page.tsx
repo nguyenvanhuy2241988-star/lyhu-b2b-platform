@@ -48,7 +48,8 @@ import {
     canEditDeal,
     canDeleteDeal,
     fetchPaginatedDeals,
-    getDealStageCounts
+    getDealStageCounts,
+    fetchDeal
 } from "@/lib/crmDealsStore";
 import { CreateDealModal } from "@/components/telesales/CreateDealModal";
 import { LostReasonModal } from "@/components/telesales/LostReasonModal";
@@ -493,17 +494,30 @@ export default function CRMPage() {
 
     useEffect(() => {
         const dealIdFromUrl = searchParams.get('dealId');
+        // DEBUG LOGS RESTORED
+        if (dealIdFromUrl) {
+            console.log("[CRM DeepLink] URL dealId:", dealIdFromUrl);
+            console.log("[CRM DeepLink] Deals loaded:", deals.length);
+        }
 
         if (dealIdFromUrl && !isDataLoading) {
             const dealExists = deals.find(d => d.id === dealIdFromUrl);
+            console.log("[CRM DeepLink] Deal exists in state?", !!dealExists);
+            if (dealExists) {
+                console.log("[CRM DeepLink] Deal Status:", dealExists.status);
+                console.log("[CRM DeepLink] Deal Stage:", dealExists.stage);
+            }
 
             if (dealExists) {
                 setTimeout(() => {
                     const el = document.getElementById(`deal-${dealIdFromUrl}`);
+                    console.log("[CRM DeepLink] Element found in DOM?", el ? "YES" : "NO");
                     if (el) {
                         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         setHighlightedDealId(dealIdFromUrl);
                         setTimeout(() => setHighlightedDealId(null), 3000);
+                    } else {
+                        console.warn("[CRM DeepLink] Element NOT found. Check filters?");
                     }
                 }, 2000);
             }
