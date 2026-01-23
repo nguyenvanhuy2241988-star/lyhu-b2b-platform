@@ -445,16 +445,25 @@ export default function TelesalesTasksPage() {
     // --- Deep Linking Logic ---
     useEffect(() => {
         const taskIdFromUrl = searchParams.get('taskId');
+        console.log("DeepLink Debug: URL taskId:", taskIdFromUrl);
+        console.log("DeepLink Debug: isLoading:", isLoading);
+
         if (taskIdFromUrl && !isLoading) {
             // Check if task exists in loaded tasks
             const allLoadedTasks = Object.values(columnTasks).flat();
+            console.log("DeepLink Debug: Loaded tasks count:", allLoadedTasks.length);
+
             const taskExists = allLoadedTasks.find(t => t.id === taskIdFromUrl);
+            console.log("DeepLink Debug: Task found:", !!taskExists);
 
             if (taskExists) {
                 // Small delay to ensure rendering is complete
                 setTimeout(() => {
+                    console.log("DeepLink Debug: Scrolling to task...");
                     handleLocateTask(taskIdFromUrl);
-                }, 500);
+                }, 1000); // Increased delay to 1s
+            } else {
+                console.log("DeepLink Debug: Task NOT found in current view. It might be in another column or page.");
             }
         }
     }, [searchParams, isLoading, columnTasks]);
