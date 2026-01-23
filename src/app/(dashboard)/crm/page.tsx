@@ -1111,6 +1111,26 @@ export default function CRMPage() {
                         )}
                     </button>
 
+                    {/* DEBUG BUTTON */}
+                    <button
+                        onClick={() => {
+                            const deal = deals[0];
+                            if (deal) {
+                                console.log('Simulating Deep Link for:', deal.id);
+                                alert(`Simulating Deep Link for deal: ${deal.title}`);
+                                const url = new URL(window.location.href);
+                                url.searchParams.set('dealId', deal.id);
+                                window.history.pushState({}, '', url.toString());
+                                window.location.reload();
+                            } else {
+                                alert('Chưa có deal nào để test!');
+                            }
+                        }}
+                        className="bg-purple-600 text-white px-3 py-1.5 rounded hover:bg-purple-700 text-xs font-bold"
+                    >
+                        🐛 Test
+                    </button>
+
                     {/* Settings - Only for Admin */}
                     {isMounted && isAdmin && (
                         <div className="relative z-[60]">
