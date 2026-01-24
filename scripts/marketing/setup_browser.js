@@ -20,15 +20,17 @@ const SCREEN_HEIGHT = 768;
 async function launchBrowser() {
     console.log('[Setup] Launching Stealth Browser...');
 
+    console.log(`[Setup] Using Profile Path: ${USER_DATA_DIR}`);
+
     const browser = await puppeteer.launch({
         headless: false, // Run visible for testing/visual verification
+        userDataDir: USER_DATA_DIR, // Explicitly set user data dir
         args: [
             `--window-size=${SCREEN_WIDTH},${SCREEN_HEIGHT}`,
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-infobars',
             '--disable-blink-features=AutomationControlled', // Critical for stealth
-            `--user-data-dir=${USER_DATA_DIR}` // Save cookies/session
         ],
         defaultViewport: null,
         ignoreDefaultArgs: ['--enable-automation'] // Hide "Chrome is being controlled by automated software"
