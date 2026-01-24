@@ -28,6 +28,18 @@ async function warmUp(page, durationSeconds = 60) {
         await page.goto('https://www.facebook.com/', { waitUntil: 'networkidle2' });
     }
 
+    // Check if we are stuck on Login Page
+    const loginInput = await page.$('input[name="email"]');
+    if (loginInput) {
+        console.log("⚠️ [ALERT] Login Page detected! Please Log In manually in the browser.");
+        console.log("⏳ Waiting 60s for you to login...");
+        await sleep(60000); // Give user time to login
+
+        // Refresh to get to Newsfeed
+        console.log("🔄 Refreshing page...");
+        await page.goto('https://www.facebook.com/', { waitUntil: 'networkidle2' });
+    }
+
     const endTime = Date.now() + (durationSeconds * 1000);
 
     while (Date.now() < endTime) {

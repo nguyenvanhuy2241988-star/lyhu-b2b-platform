@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Megaphone, FileText, Calendar, TrendingUp } from "lucide-react";
+import { FileText, Calendar, Database, LayoutDashboard, Search, Users, UserPlus, Shield, Bot, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from "@/components/auth/AuthProvider";
 import { StatsSkeleton } from "@/components/ui/SkeletonUI";
@@ -219,7 +219,105 @@ export default function MarketingDashboard() {
                         </tbody>
                     </table>
                 </div>
+
+                {/* COMMAND CENTER - Level 20 */}
+                <div className="mt-8 bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <Bot className="w-24 h-24 text-blue-600" />
+                    </div>
+
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-3 bg-blue-100 rounded-lg">
+                            <Bot className="w-6 h-6 text-blue-600" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-800">Command Center</h2>
+                            <p className="text-slate-500">Trung tâm điều khiển BOT tự động</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <CommandCard
+                            title="Săn Khách Hàng"
+                            desc="Tìm & Kết bạn theo từ khóa"
+                            icon={<Search className="w-5 h-5" />}
+                            color="blue"
+                            script="execute_search_add.js"
+                        />
+                        <CommandCard
+                            title="Quét Hội Nhóm"
+                            desc="Tìm & Xin vào nhóm tiềm năng"
+                            icon={<Users className="w-5 h-5" />}
+                            color="indigo"
+                            script="group_finder.js"
+                        />
+                        <CommandCard
+                            title="Mời Bạn Bè"
+                            desc="Mời bạn bè Like Page (Traffic)"
+                            icon={<UserPlus className="w-5 h-5" />}
+                            color="green"
+                            script="invite_friend_page.js"
+                        />
+                        <CommandCard
+                            title="Lá Chắn Ảo"
+                            desc="Giả lập hành vi & Nuôi nick"
+                            icon={<Shield className="w-5 h-5" />}
+                            color="slate"
+                            script="defense_engine.js"
+                        />
+                    </div>
+                </div>
             </div>
         </div >
     );
 }
+
+function CommandCard({ title, desc, icon, color, script }: { title: string, desc: string, icon: React.ReactNode, color: string, script: string }) {
+    const [running, setRunning] = useState(false);
+
+    const runScript = async () => {
+        setRunning(true);
+        try {
+            const res = await fetch('/api/marketing/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ scriptName: script })
+            });
+            if (res.ok) {
+                toast.success(`Đã khởi động: ${title}`);
+            } else {
+                toast.error("Lỗi khởi động Bot");
+            }
+        } catch (e) {
+            toast.error("Lỗi kết nối");
+        } finally {
+            setTimeout(() => setRunning(false), 2000);
+        }
+    };
+
+    const colors: any = {
+        blue: "bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200",
+        indigo: "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border-indigo-200",
+        green: "bg-green-50 text-green-600 hover:bg-green-100 border-green-200",
+        slate: "bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200"
+    };
+
+    return (
+        <button
+            onClick={runScript}
+            disabled={running}
+            className={`flex flex-col items-start p-4 rounded-xl border transition-all ${colors[color]} ${running ? 'opacity-70 scale-95' : 'hover:-translate-y-1'}`}
+        >
+            <div className="flex items-center justify-between w-full mb-3">
+                <div className="p-2 bg-white rounded-lg shadow-sm">
+                    {running ? <Zap className="w-5 h-5 animate-pulse" /> : icon}
+                </div>
+                {running && <span className="text-xs font-bold animate-pulse">RUNNING...</span>}
+            </div>
+            <h3 className="font-bold text-lg mb-1">{title}</h3>
+            <p className="text-sm opacity-80 text-left">{desc}</p>
+        </button>
+    );
+}
+
+import { toast } from 'sonner';
