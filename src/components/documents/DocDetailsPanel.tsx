@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { DocumentFile, DocumentActivity, listActivity, getFileSignedUrl, renameFile, deleteFile } from '@/lib/documentsStore';
+import { DocumentFile, DocumentActivity, listActivity, getFileSignedUrl, renameFile, deleteFile, updateFileCaptions } from '@/lib/documentsStore';
 import {
     X,
     Download,
@@ -8,12 +8,16 @@ import {
     Trash2,
     Edit2,
     Image as ImageIcon,
-    Eye
+    Eye,
+    MessageSquare,
+    Plus,
+    Save
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import Image from 'next/image';
 import { FilePreviewModal } from './FilePreviewModal';
+import { toast } from 'sonner';
 
 interface DocDetailsPanelProps {
     file: DocumentFile | null;
@@ -29,6 +33,10 @@ export function DocDetailsPanel({ file, isAdmin, onClose, onUpdate }: DocDetails
     const [newName, setNewName] = useState('');
     const [showPreview, setShowPreview] = useState(false);
 
+    // Content/Captions State
+    const [captions, setCaptions] = useState<string[]>([]);
+    const [isEditingContent, setIsEditingContent] = useState(false);
+
     useEffect(() => {
         if (file) {
             setNewName(file.title);
@@ -36,9 +44,14 @@ export function DocDetailsPanel({ file, isAdmin, onClose, onUpdate }: DocDetails
             listActivity('file', file.id).then(setActivity);
             // Get URL (valid 1hr)
             getFileSignedUrl(file.storage_path).then(setSignedUrl);
+
+            // Set captions (ensure array)
+            const caps = file.captions || [];
+            setCaptions(Array.isArray(caps) ? caps : []);
         } else {
             setActivity([]);
             setSignedUrl(null);
+            setCaptions([]);
         }
     }, [file]);
 
@@ -71,24 +84,59 @@ export function DocDetailsPanel({ file, isAdmin, onClose, onUpdate }: DocDetails
         }
     };
 
+    // --- Content Manager Logic ---
+    const handleAddCaption = () => {
+        setCaptions([...captions, ""]);
+        setIsEditingContent(true);
+    };
+
+    const handleUpdateCaption = (index: number, val: string) => {
+        const newCaps = [...captions];
+        newCaps[index] = val;
+        setCaptions(newCaps);
+    };
+
+    const handleDeleteCaption = (index: number) => {
+        const newCaps = captions.filter((_, i) => i !== index);
+        setCaptions(newCaps);
+        // If removing while saved, we might want to auto-save or wait for explicit save.
+        // Let's require explicit save for safety.
+        setIsEditingContent(true);
+    };
+
+    const handleSaveContent = async () => {
+        try {
+            // Filter empty
+            const validCaptions = captions.filter(c => c.trim().length > 0);
+            await updateFileCaptions(file.id, validCaptions);
+            setCaptions(validCaptions);
+            setIsEditingContent(false);
+            toast.success("Đã lưu nội dung bài đăng!");
+            onUpdate(); // refresh parent to keep sync
+        } catch (error) {
+            console.error(error);
+            toast.error("Lỗi lưu nội dung");
+        }
+    };
+
     const isImage = file.mime_type.startsWith('image/');
 
     return (
         <>
-            <div className="h-full flex flex-col bg-white border-l border-slate-200 w-80 lg:w-96 shadow-xl relative z-10 transition-transform">
+            <div className="h-full flex flex-col bg-white border-l border-slate-200 w-80 lg:w-[450px] shadow-xl relative z-10 transition-transform">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 border-b border-slate-100">
-                    <h3 className="font-semibold text-slate-800">Chi tiết</h3>
+                <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-white sticky top-0 z-20">
+                    <h3 className="font-semibold text-slate-800">Chi tiết Tài liệu</h3>
                     <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded text-slate-500">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                <div className="flex-1 overflow-y-auto p-4 space-y-6 scrollbar-thin">
 
                     {/* Preview Thumbnail */}
                     <div
-                        className="aspect-video bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden border border-slate-200 cursor-pointer group relative"
+                        className="aspect-video bg-slate-100 rounded-lg flex items-center justify-center overflow-hidden border border-slate-200 cursor-pointer group relative shadow-sm"
                         onClick={() => setShowPreview(true)}
                     >
                         {isImage && signedUrl ? (
@@ -116,7 +164,7 @@ export function DocDetailsPanel({ file, isAdmin, onClose, onUpdate }: DocDetails
                     </div>
 
                     {/* Metadata */}
-                    <div className="space-y-4">
+                    <div className="space-y-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
                         <div className="group">
                             <label className="text-xs font-semibold text-slate-500 uppercase">Tên file</label>
                             {renaming ? (
@@ -154,13 +202,78 @@ export function DocDetailsPanel({ file, isAdmin, onClose, onUpdate }: DocDetails
                         </div>
                     </div>
 
+                    {/* --- CONTENT / CAPTIONS SECTION --- */}
+                    <div className="border border-indigo-100 bg-indigo-50/50 rounded-xl p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-bold text-indigo-900 flex items-center gap-2">
+                                <MessageSquare className="w-4 h-4 text-indigo-600" />
+                                Nội dung bài đăng ({captions.length})
+                            </h4>
+                            {isEditingContent ? (
+                                <button
+                                    onClick={handleSaveContent}
+                                    className="text-xs flex items-center gap-1 bg-indigo-600 text-white px-2 py-1 rounded hover:bg-indigo-700"
+                                >
+                                    <Save className="w-3 h-3" /> Lưu
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={handleAddCaption}
+                                    className="text-xs flex items-center gap-1 text-indigo-600 hover:text-indigo-800 px-2 py-1 rounded hover:bg-indigo-100"
+                                >
+                                    <Plus className="w-3 h-3" /> Thêm mẫu
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="space-y-3">
+                            {captions.length === 0 ? (
+                                <div className="text-center py-4 text-sm text-slate-400 italic">
+                                    Chưa có mẫu content nào. Hãy thêm để Bot sử dụng.
+                                </div>
+                            ) : (
+                                captions.map((cap, idx) => (
+                                    <div key={idx} className="relative group">
+                                        <textarea
+                                            value={cap}
+                                            onChange={(e) => {
+                                                handleUpdateCaption(idx, e.target.value);
+                                                setIsEditingContent(true);
+                                            }}
+                                            className="w-full text-sm p-3 rounded-lg border border-indigo-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 min-h-[80px]"
+                                            placeholder={`Mẫu nội dung #${idx + 1}...`}
+                                        />
+                                        <button
+                                            onClick={() => handleDeleteCaption(idx)}
+                                            className="absolute top-2 right-2 p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                            title="Xóa mẫu này"
+                                        >
+                                            <Trash2 className="w-3 h-3" />
+                                        </button>
+                                        <span className="absolute bottom-2 right-2 text-[10px] text-slate-400 pointer-events-none">
+                                            #{idx + 1}
+                                        </span>
+                                    </div>
+                                ))
+                            )}
+                            {captions.length > 0 && (
+                                <button
+                                    onClick={handleAddCaption}
+                                    className="w-full py-2 border border-dashed border-indigo-300 text-indigo-500 hover:bg-indigo-50 rounded-lg text-xs font-medium flex items-center justify-center gap-1"
+                                >
+                                    <Plus className="w-3 h-3" /> Thêm biến thể mới
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
                     {/* Actions */}
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-3 pt-2">
                         <button
                             onClick={() => setShowPreview(true)}
                             className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium shadow-sm"
                         >
-                            <Eye className="w-4 h-4" /> Xem trước
+                            <Eye className="w-4 h-4" /> Xem trước File
                         </button>
 
                         <div className="grid grid-cols-2 gap-3">
@@ -202,7 +315,7 @@ export function DocDetailsPanel({ file, isAdmin, onClose, onUpdate }: DocDetails
                                             {a.action === 'rename' && 'Đổi tên'}
                                             {a.action === 'move' && 'Di chuyển'}
                                             {a.action === 'delete' && 'Xóa'}
-                                            {a.action === 'update_guidance' && 'Cập nhật hướng dẫn'}
+                                            {a.action === 'update_guidance' && 'Cập nhật nội dung'}
                                         </p>
                                         <p className="text-slate-500">{a.message}</p>
                                         <p className="text-[10px] text-slate-400 mt-0.5">

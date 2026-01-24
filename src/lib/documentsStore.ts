@@ -40,6 +40,7 @@ export interface DocumentFile {
     created_at: string;
     updated_at: string;
     is_deleted: boolean;
+    captions?: string[]; // Marketing Content Variations
 }
 
 export interface DocumentActivity {
@@ -233,6 +234,16 @@ export async function renameFile(id: string, title: string): Promise<void> {
 
     if (error) throw error;
     await logActivity('file', id, 'rename', `Renamed file to "${title}"`);
+}
+
+export async function updateFileCaptions(id: string, captions: string[]): Promise<void> {
+    const { error } = await supabase
+        .from(FILES_TABLE)
+        .update({ captions, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+    if (error) throw error;
+    await logActivity('file', id, 'update_guidance', `Updated content variations (${captions.length})`);
 }
 
 export async function moveFile(id: string, targetFolderId: string): Promise<void> {
