@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText, Calendar, Database, LayoutDashboard, Search, Users, UserPlus, Shield, Bot, Zap, Megaphone, TrendingUp } from 'lucide-react';
+import { FileText, Calendar, Database, LayoutDashboard, Search, Users, UserPlus, Shield, Bot, Zap, Megaphone, TrendingUp, Key } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from "@/components/auth/AuthProvider";
 import { StatsSkeleton } from "@/components/ui/SkeletonUI";
@@ -265,6 +265,13 @@ export default function MarketingDashboard() {
                             color="slate"
                             script="defense_engine.js"
                         />
+                        <CommandCard
+                            title="Đăng Nhập"
+                            desc="Mở trình duyệt để Login tay"
+                            icon={<Key className="w-5 h-5" />}
+                            color="orange"
+                            script="manual_login.js"
+                        />
                     </div>
                 </div>
             </div>
@@ -299,7 +306,8 @@ function CommandCard({ title, desc, icon, color, script }: { title: string, desc
         blue: "bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200",
         indigo: "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border-indigo-200",
         green: "bg-green-50 text-green-600 hover:bg-green-100 border-green-200",
-        slate: "bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200"
+        slate: "bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200",
+        orange: "bg-orange-50 text-orange-600 hover:bg-orange-100 border-orange-200"
     };
 
     return (
