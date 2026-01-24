@@ -1,6 +1,6 @@
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-const { createBrowser } = require('./setup_browser');
+const { launchBrowser } = require('./setup_browser');
 const fs = require('fs');
 
 puppeteer.use(StealthPlugin());
@@ -22,7 +22,8 @@ async function runTrafficMagnet() {
     console.log("🚀 [TRAFFIC MAGNET] Starting Invite Sequence...");
 
     // 1. Init Browser (Stealth Mode)
-    const { browser, page } = await createBrowser();
+    const browser = await launchBrowser();
+    const page = await browser.newPage();
 
     try {
         // 2. Go to Page
