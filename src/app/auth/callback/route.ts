@@ -28,12 +28,11 @@ export async function GET(request: Request) {
     const code = url.searchParams.get("code");
     const nextParam = url.searchParams.get("next"); // dạng "/admin" ...
 
-    // Priority: 1. Avoid localhost redirect in Production, 2. Current origin on localhost, 3. NEXT_PUBLIC_SITE_URL
+    // Priority: 1. Keep localhost if currently on localhost. 2. NEXT_PUBLIC_SITE_URL. 3. Vercel URL.
     let baseUrl = url.origin;
 
-    // In production, if NEXT_PUBLIC_SITE_URL is set, use it.
-    // If not, use VERCEL_URL if available.
-    if (process.env.NODE_ENV === 'production') {
+    // Only override if we are NOT on localhost
+    if (!baseUrl.includes("localhost") && !baseUrl.includes("127.0.0.1")) {
         if (process.env.NEXT_PUBLIC_SITE_URL) {
             baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
         } else if (process.env.VERCEL_URL) {
