@@ -1,209 +1,132 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { ArrowLeft, User, Phone, Calendar, DollarSign, Loader2 } from "lucide-react";
-import Link from "next/link";
-import { useAuth } from "@/components/auth/AuthProvider";
-import { fetchCampaignLeads, MarketingLead } from "@/lib/marketingStore";
-import { DEAL_STAGE_LABELS, DealStage, createCustomer, createDeal, checkDuplicatePhone } from "@/lib/crmDealsStore";
-import { CreateDealModal } from "@/components/telesales/CreateDealModal";
-import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import React, { useEffect, useState } from 'react';
+import { StagingLead, getPendingLeads, rejectLead, approveLeadToCRM } from '@/lib/marketingLeadsStore';
+import { supabase } from '@/lib/supabaseClient';
+import { Check, X, ExternalLink, RefreshCw, Trash2, UserPlus } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function MarketingLeadsPage() {
-    const { session } = useAuth();
-    const searchParams = useSearchParams();
+    const [leads, setLeads] = useState<StagingLead[]>([]);
+    const [loading, setLoading] = useState(false);
 
-    // Get params
-    const campaignId = searchParams.get("campaign_id");
-    const campaignName = searchParams.get("campaign_name");
-
-    // Modals
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [leads, setLeads] = useState<MarketingLead[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const loadLeads = async () => {
+        setLoading(true);
+        try {
+            const data = await getPendingLeads();
+            setLeads(data);
+        } catch (error) {
+            console.error(error);
+            toast.error("Lỗi tải danh sách Lead");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        const loadLeads = async () => {
-            // If campaignId exists, fetch campaign leads.
-            // If NOT, we might want to fetch ALL marketing leads or just empty.
-            // For now, let's just fetch if campaignId is present to avoid confusion, 
-            // but allow the page to render so user can click "Create".
-            if (session?.access_token && campaignId) {
-                setIsLoading(true);
-                const data = await fetchCampaignLeads(session.access_token, campaignId);
-                setLeads(data);
-                setIsLoading(false);
-            } else {
-                setIsLoading(false);
-            }
-        };
         loadLeads();
-    }, [session, campaignId]);
 
-    const handleCreateLead = async (dealData: any) => {
-        if (!session?.user?.id) return;
+        // Realtime Subscription
+        const channel = supabase
+            .channel('marketing_leads_realtime')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'marketing_leads_staging' }, (payload) => {
+                setLeads(prev => [payload.new as StagingLead, ...prev]);
+                toast.info("Có Lead mới đổ về!");
+            })
+            .subscribe();
 
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
+
+    const handleApprove = async (lead: StagingLead) => {
         try {
-            let customerId = dealData.customer_id;
+            await approveLeadToCRM(lead);
+            setLeads(prev => prev.filter(l => l.id !== lead.id));
+            toast.success(`Đã duyệt: ${lead.name}`);
+        } catch (e) {
+            toast.error("Lỗi duyệt lead");
+        }
+    };
 
-            // 1. Create Customer if new
-            if (dealData.isNewCustomer && dealData.newCustomerData) {
-                // Check duplicate phone first
-                const duplicate = await checkDuplicatePhone(dealData.newCustomerData.phone, session.access_token);
-                if (duplicate) {
-                    toast.error("Số điện thoại khách hàng đã tồn tại!");
-                    return;
-                }
-
-                const newCustomer = await createCustomer({
-                    ...dealData.newCustomerData,
-                    owner_user_id: session.user.id
-                }, session.access_token);
-                customerId = newCustomer.id;
-            }
-
-            // 2. Create Deal
-            await createDeal({
-                ...dealData,
-                customer_id: customerId,
-                owner_user_id: dealData.isNewCustomer ? session.user.id : (dealData.customer?.owner_user_id || session.user.id),
-                source_category: 'MARKETING', // Default for marketing page
-                source_detail: campaignId ? `campaign:${campaignId}` : dealData.source_detail
-            }, session.access_token);
-
-            toast.success("Tạo Lead thành công!");
-            setIsCreateModalOpen(false);
-
-            // Reload if in campaign view
-            if (campaignId && session?.access_token) {
-                const data = await fetchCampaignLeads(session.access_token, campaignId);
-                setLeads(data);
-            }
-        } catch (error) {
-            console.error("Error creating lead:", error);
-            toast.error("Có lỗi xảy ra khi tạo Lead.");
+    const handleReject = async (lead: StagingLead) => {
+        if (!confirm("Chắc chắn loại bỏ Lead này?")) return;
+        try {
+            await rejectLead(lead.id);
+            setLeads(prev => prev.filter(l => l.id !== lead.id));
+            toast.success("Đã loại bỏ");
+        } catch (e) {
+            toast.error("Lỗi từ chối lead");
         }
     };
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <Link href="/marketing" className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-600">
-                        <ArrowLeft className="w-5 h-5" />
-                    </Link>
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-900">Danh sách Lead</h1>
-                        <p className="text-sm text-slate-500">
-                            {campaignId ? (
-                                <>Chiến dịch: <span className="font-semibold text-blue-600">{campaignName || "---"}</span></>
-                            ) : (
-                                "Toàn bộ Lead (Marketing)"
-                            )}
-                        </p>
-                    </div>
+        <div className="p-6 bg-slate-50 min-h-screen">
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-800">Duyệt Lead Marketing</h1>
+                    <p className="text-slate-500">Danh sách khách hàng tiềm năng do Bot thu thập</p>
                 </div>
                 <button
-                    onClick={() => setIsCreateModalOpen(true)}
-                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium flex items-center gap-2"
+                    onClick={loadLeads}
+                    className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600"
                 >
-                    <Plus className="w-4 h-4" />
-                    Tạo Lead mới
+                    <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
                 </button>
             </div>
 
-            {/* Content */}
-            {isLoading ? (
-                <div className="flex justify-center p-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+            {leads.length === 0 ? (
+                <div className="text-center py-20 bg-white rounded-lg border border-slate-200 shadow-sm">
+                    <Trash2 className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                    <p className="text-slate-500 font-medium">Hiện chưa có Lead nào cần duyệt.</p>
+                    <p className="text-sm text-slate-400">Hãy chạy Bot để đi săn khách hàng!</p>
                 </div>
             ) : (
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-                        <span className="font-medium text-slate-700">Tổng số: {leads.length} khách hàng</span>
-                    </div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {leads.map(lead => (
+                        <div key={lead.id} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative group">
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <h3 className="font-bold text-slate-800 text-lg">{lead.name || 'Unknown User'}</h3>
+                                    <a
+                                        href={lead.profile_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 text-sm hover:underline flex items-center gap-1 mt-1"
+                                    >
+                                        <ExternalLink className="w-3 h-3" /> Xem Profile
+                                    </a>
+                                </div>
+                                <span className="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full uppercase">
+                                    {lead.source}
+                                </span>
+                            </div>
 
-                    {leads.length > 0 ? (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left">
-                                <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
-                                    <tr>
-                                        <th className="px-6 py-3 font-medium">Khách hàng</th>
-                                        <th className="px-6 py-3 font-medium">Liên hệ</th>
-                                        <th className="px-6 py-3 font-medium">Trạng thái xử lý</th>
-                                        <th className="px-6 py-3 font-medium">Sale phụ trách</th>
-                                        <th className="px-6 py-3 font-medium text-right">Doanh thu dự kiến</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {leads.map((lead) => (
-                                        <tr key={lead.id} className="hover:bg-slate-50 transition-colors">
-                                            <td className="px-6 py-4">
-                                                <div className="font-medium text-slate-900">{lead.title}</div>
-                                                <div className="text-xs text-slate-500 flex items-center gap-1 mt-1">
-                                                    <User className="w-3 h-3" />
-                                                    {lead.customer_name}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 text-slate-600">
-                                                <div className="flex items-center gap-2">
-                                                    <Phone className="w-3.5 h-3.5" />
-                                                    {lead.phone || "---"}
-                                                </div>
-                                                <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
-                                                    <Calendar className="w-3 h-3" />
-                                                    {new Date(lead.created_at).toLocaleDateString('vi-VN')}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700`}>
-                                                    {DEAL_STAGE_LABELS[lead.stage as DealStage] || lead.stage}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                {lead.owner_name ? (
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">
-                                                            {lead.owner_name.charAt(0)}
-                                                        </div>
-                                                        <span className="text-slate-700">{lead.owner_name}</span>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-slate-400 italic">Chưa phân công</span>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 text-right font-medium text-slate-900">
-                                                {lead.expected_value
-                                                    ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(lead.expected_value)
-                                                    : '-'
-                                                }
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                            <div className="mt-4 space-y-2 text-sm text-slate-600">
+                                <p><span className="font-medium text-slate-500">SĐT:</span> {lead.phone || 'Chưa có'}</p>
+                                <p><span className="font-medium text-slate-500">Time:</span> {new Date(lead.created_at).toLocaleString('vi-VN')}</p>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="mt-6 flex items-center gap-3 pt-4 border-t border-slate-100">
+                                <button
+                                    onClick={() => handleReject(lead)}
+                                    className="flex-1 flex items-center justify-center gap-2 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors"
+                                >
+                                    <X className="w-4 h-4" /> Bỏ qua
+                                </button>
+                                <button
+                                    onClick={() => handleApprove(lead)}
+                                    className="flex-1 flex items-center justify-center gap-2 py-2 text-white bg-green-600 hover:bg-green-700 rounded-lg text-sm font-medium transition-colors shadow-sm shadow-green-200"
+                                >
+                                    <Check className="w-4 h-4" /> Duyệt CRM
+                                </button>
+                            </div>
                         </div>
-                    ) : (
-                        <div className="p-12 text-center text-slate-500">
-                            {campaignId ? "Chưa có dữ liệu khách hàng từ chiến dịch này." : "Chọn chiến dịch để xem danh sách hoặc Tạo Lead mới."}
-                        </div>
-                    )}
+                    ))}
                 </div>
             )}
-
-            <CreateDealModal
-                isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
-                onSave={handleCreateLead}
-                userId={session?.user?.id}
-                initialData={{
-                    source_category: 'MARKETING',
-                    source_detail: campaignId ? `campaign:${campaignId}` : undefined
-                }}
-            />
         </div>
     );
 }
