@@ -102,39 +102,68 @@ async function runTrafficMagnet() {
             // Note: Implementing exact click needs xpath or reliable selector.
         }
 
-        // Reliable Strategy: Find unchecked checkboxes and click them one by one up to limit
-        const checkboxes = await page.$$('div[role="checkbox"][aria-checked="false"]');
+        // Reliable Strategy: Try multiple selectors
+        // 1. Checkboxes (Old UI / Specific browser)
+        let checkboxes = await page.$$('div[role="checkbox"][aria-checked="false"]');
 
-        for (const checkbox of checkboxes) {
-            if (sentCount >= INVITE_LIMIT) break;
+        // 2. Fallback: Look for "Invite" buttons next to names (New UI often uses buttons instead of checkboxes)
+        if (checkboxes.length === 0) {
+            console.log("⚠️ No checkboxes found. Checking for 'Invite' buttons...");
+            checkboxes = await page.$$('div[aria-label="Invite"][role="button"]');
 
-            await checkbox.click();
-            console.log(`👉 Selected friend #${sentCount + 1}`);
-            sentCount++;
-
-            // Random micro-delay between clicks
-            await randomDelay(500, 1500);
-
-            // Occasionally pause longer
-            if (Math.random() > 0.8) {
-                console.log("Thinking...");
-                await randomDelay(2000, 4000);
+            // 3. Fallback: Look by text content "Invite" or "Mời"
+            if (checkboxes.length === 0) {
+                console.log("⚠️ No explicit Invite buttons found. Searching by text content...");
+                const allButtons = await page.$$('div[role="button"]');
+                for (const btn of allButtons) {
+                    const txt = await page.evaluate(el => el.textContent, btn);
+                    if (txt === 'Invite' || txt === 'Mời') {
+                        checkboxes.push(btn);
+                    }
+                }
             }
         }
 
-        if (sentCount === 0) {
-            console.log("⚠️ No new friends to invite found (or selector changed).");
-        } else {
-            console.log(`✅ Selected ${sentCount} friends.`);
+        if (checkboxes.length > 0) {
+            console.log(`✅ Found ${checkboxes.length} potential friends to invite.`);
 
-            // 6. Click "Send Invites"
-            console.log("📤 Sending Invites...");
+            for (const item of checkboxes) {
+                if (sentCount >= INVITE_LIMIT) break;
+
+                try {
+                    // Check if already clicked (for buttons that change text)
+                    const isClicked = await page.evaluate(el => {
+                        return el.getAttribute('aria-pressed') === 'true' || el.textContent === 'Invited' || el.textContent === 'Đã mời';
+                    }, item);
+
+                    if (isClicked) continue;
+
+                    await item.click();
+                    console.log(`👉 Invited friend #${sentCount + 1}`);
+                    sentCount++;
+
+                    // Random micro-delay
+                    await randomDelay(800, 2000);
+                } catch (e) {
+                    console.log("Error clicking item, skipping...", e.message);
+                }
+            }
+        } else {
+            console.log("⚠️ Still no friends found. Either list is empty or UI changed significantly.");
+        }
+
+        if (sentCount > 0) {
+            console.log(`✅ Successfully selected/invited ${sentCount} friends.`);
+
+            // If we used checkboxes, we might need to click a final "Send Invites" button
+            // If we used individual Invite buttons, we are done.
+            // Let's check for a main "Send Invites" button just in case.
             const sendButtons = await page.$$('div[role="button"]');
             for (const btn of sendButtons) {
                 const text = await page.evaluate(el => el.textContent, btn);
-                if (text === 'Send invites' || text === 'Gửi lời mời' || text.includes('Send invite')) {
+                if ((text === 'Send invites' || text === 'Gửi lời mời') && await btn.boundingBox()) {
+                    console.log("Found 'Send Invites' button, clicking...");
                     await btn.click();
-                    console.log("🚀 Invites Sent!");
                     break;
                 }
             }
@@ -145,6 +174,8 @@ async function runTrafficMagnet() {
     } catch (error) {
         console.error("❌ Fatal Error in Traffic Magnet:", error);
     } finally {
+        console.log("⏳ Keeping browser open for 60s for you to inspect or Log In...");
+        await sleep(60000);
         await browser.close();
         console.log("👋 Browser closed.");
     }

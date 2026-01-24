@@ -1,0 +1,77 @@
+const { launchBrowser } = require('./setup_browser');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+
+puppeteer.use(StealthPlugin());
+
+// Utilities
+async function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function randomDelay(min, max) {
+    const delay = Math.floor(Math.random() * (max - min + 1) + min);
+    await sleep(delay);
+}
+
+/**
+ * Humanizer Module: Makes the bot act like a bored human.
+ * - Scrolls Newsfeed
+ * - Pauses looking at posts
+ * - Randomly expands "See more"
+ */
+async function warmUp(page, durationSeconds = 60) {
+    console.log(`🛡️ [DEFENSE] Starting Warm-up Sequence (${durationSeconds}s)...`);
+
+    // 1. Go to Newsfeed
+    if (page.url() !== 'https://www.facebook.com/') {
+        await page.goto('https://www.facebook.com/', { waitUntil: 'networkidle2' });
+    }
+
+    const endTime = Date.now() + (durationSeconds * 1000);
+
+    while (Date.now() < endTime) {
+        // Random Scroll
+        const scrollAmount = Math.floor(Math.random() * 500) + 100;
+        await page.evaluate((y) => window.scrollBy(0, y), scrollAmount);
+
+        // Random Pause (Reading a post)
+        if (Math.random() > 0.7) {
+            console.log("   ...Reading a post...");
+            await randomDelay(2000, 5000);
+        } else {
+            await randomDelay(500, 1500);
+        }
+
+        // Randomly move mouse (Anti-bot detection)
+        if (Math.random() > 0.8) {
+            const x = Math.floor(Math.random() * 500);
+            const y = Math.floor(Math.random() * 500);
+            await page.mouse.move(x, y, { steps: 10 });
+        }
+    }
+
+    console.log("🛡️ [DEFENSE] Warm-up Complete. Account is ready.");
+}
+
+async function runDefenseTest() {
+    console.log("🧪 Testing Defense Engine...");
+    const browser = await launchBrowser();
+    const page = await browser.newPage();
+
+    try {
+        await warmUp(page, 30); // Warm up for 30 seconds
+    } catch (e) {
+        console.error("Defense Error:", e);
+    } finally {
+        await browser.close();
+    }
+}
+
+// Export for other modules to use
+module.exports = { warmUp, runDefenseTest };
+
+// If run directly
+if (require.main === module) {
+    runDefenseTest();
+}
