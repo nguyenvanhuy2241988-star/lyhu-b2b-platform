@@ -24,11 +24,19 @@ create table if not exists marketing_leads_staging (
 -- RLS
 alter table marketing_leads_staging enable row level security;
 
+-- Drop policy if exists to allow re-running the script
+drop policy if exists "Enable all access for authenticated users" on marketing_leads_staging;
+
 create policy "Enable all access for authenticated users" 
 on marketing_leads_staging for all 
 to authenticated 
 using (true) 
 with check (true);
 
--- Realtime
-alter publication supabase_realtime add table marketing_leads_staging;
+-- Realtime (Safe Add)
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and tablename = 'marketing_leads_staging') then
+    alter publication supabase_realtime add table marketing_leads_staging;
+  end if;
+end $$;
