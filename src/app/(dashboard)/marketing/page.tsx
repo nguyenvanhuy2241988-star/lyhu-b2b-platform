@@ -163,7 +163,7 @@ export default function MarketingDashboard() {
                                 <th className="px-6 py-3 font-medium">Chiến dịch</th>
                                 <th className="px-6 py-3 font-medium text-center">Trạng thái</th>
                                 <th className="px-6 py-3 font-medium text-right">Số Lead</th>
-                                <th className="px-6 py-3 font-medium">Tỷ trọng (Lead)</th> {/* Bar Chart Column */}
+                                <th className="px-6 py-3 font-medium">Tỷ trọng (Lead)</th>
                                 <th className="px-6 py-3 font-medium text-right">Doanh thu dự kiến</th>
                             </tr>
                         </thead>
