@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FileText, Calendar, Database, LayoutDashboard, Search, Users, UserPlus, Shield, Bot, Zap } from 'lucide-react';
+import { FileText, Calendar, Database, LayoutDashboard, Search, Users, UserPlus, Shield, Bot, Zap, Megaphone, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from "@/components/auth/AuthProvider";
 import { StatsSkeleton } from "@/components/ui/SkeletonUI";
