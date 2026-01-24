@@ -29,7 +29,7 @@ export default function MarketingLeadsPage() {
         // Realtime Subscription
         const channel = supabase
             .channel('marketing_leads_realtime')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'marketing_leads_staging' }, (payload) => {
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'marketing_leads_staging' }, (payload: any) => {
                 setLeads(prev => [payload.new as StagingLead, ...prev]);
                 toast.info("Có Lead mới đổ về!");
             })
