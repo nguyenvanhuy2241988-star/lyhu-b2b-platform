@@ -49,4 +49,32 @@ async function logAction(actionType, status, message, details = {}) {
     }
 }
 
-module.exports = { logAction };
+/**
+ * Saves a new lead/profile to the staging table
+ * @param {object} leadData - { name, profile_url, source }
+ */
+async function saveLead(leadData) {
+    if (!supabase) return;
+
+    try {
+        const payload = {
+            source: leadData.source || 'bot_unknown',
+            name: leadData.name || 'Unknown User',
+            profile_url: leadData.profile_url,
+            status: 'pending',
+            created_at: new Date().toISOString()
+        };
+
+        const { error } = await supabase
+            .from('marketing_leads_staging')
+            .insert(payload);
+
+        if (error) {
+            console.error("⚠️ [LOGGER] Save Lead Error:", error.message);
+        }
+    } catch (e) {
+        console.error("⚠️ [LOGGER] Exception in saveLead:", e);
+    }
+}
+
+module.exports = { logAction, saveLead };

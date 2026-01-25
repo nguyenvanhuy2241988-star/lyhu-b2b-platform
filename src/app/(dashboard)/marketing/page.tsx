@@ -239,6 +239,13 @@ export default function MarketingDashboard() {
                                 <h2 className="text-xl font-bold text-slate-800">Command Center</h2>
                                 <p className="text-slate-500">Trung tâm điều khiển BOT tự động</p>
                             </div>
+                            <Link
+                                href="/marketing/leads"
+                                className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 text-sm font-medium transition-colors"
+                            >
+                                <Users className="w-4 h-4" />
+                                Sổ Địa Chỉ (Leads)
+                            </Link>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

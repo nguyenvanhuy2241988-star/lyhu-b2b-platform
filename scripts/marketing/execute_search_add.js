@@ -7,7 +7,7 @@
  */
 
 const { launchBrowser } = require('./setup_browser');
-const { logAction } = require('./supabase_logger');
+const { logAction, saveLead } = require('./supabase_logger');
 
 async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -128,6 +128,13 @@ async function executeSearchAndAdd(keyword, maxAdds = 5) {
 
                     // Log to Dashboard with Profile Link
                     await logAction('search', 'success', `Đã gửi lời mời kết bạn (Click để xem)`, {
+                        profile_url: profileUrl
+                    });
+
+                    // Save to Leads Table for Management
+                    await saveLead({
+                        source: 'fb_search',
+                        name: 'Facebook User', // We could scrape name too if needed, but URL is most important
                         profile_url: profileUrl
                     });
 
