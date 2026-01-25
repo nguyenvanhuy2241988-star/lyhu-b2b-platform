@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const { launchBrowser } = require('./setup_browser');
+const { logAction } = require('./supabase_logger'); // Import Logger
 const fs = require('fs');
 
 puppeteer.use(StealthPlugin());
@@ -21,6 +22,7 @@ async function randomDelay(min, max) {
 
 async function runTrafficMagnet() {
     console.log("🚀 [TRAFFIC MAGNET] Starting Invite Sequence...");
+    await logAction('invite', 'info', `Bắt đầu mời bạn bè (Max: ${INVITE_LIMIT})...`);
 
     // 1. Init Browser (Stealth Mode)
     const browser = await launchBrowser();
@@ -141,6 +143,7 @@ async function runTrafficMagnet() {
 
                     await item.click();
                     console.log(`👉 Invited friend #${sentCount + 1}`);
+                    await logAction('invite', 'success', `Đã mời người thứ ${sentCount + 1}`);
                     sentCount++;
 
                     // Random micro-delay
@@ -155,6 +158,7 @@ async function runTrafficMagnet() {
 
         if (sentCount > 0) {
             console.log(`✅ Successfully selected/invited ${sentCount} friends.`);
+            await logAction('invite', 'success', `Đã mời thành công ${sentCount} bạn bè.`);
 
             // If we used checkboxes, we might need to click a final "Send Invites" button
             // If we used individual Invite buttons, we are done.
@@ -174,6 +178,7 @@ async function runTrafficMagnet() {
 
     } catch (error) {
         console.error("❌ Fatal Error in Traffic Magnet:", error);
+        await logAction('invite', 'error', `Lỗi: ${error.message}`);
     } finally {
         console.log("⏳ Keeping browser open for 60s for you to inspect or Log In...");
         await sleep(60000);
