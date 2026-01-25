@@ -27,30 +27,65 @@ async function executeRivalScan(pageUrl, maxAdds = 10) {
         await page.goto(pageUrl, { waitUntil: 'networkidle2' });
         await sleep(3000);
 
-        // Scroll to load posts
-        await page.evaluate(() => window.scrollBy(0, 1000));
-        await sleep(2000);
+        // DEEP SCROLLING (Maximized)
+        console.log(`[EXEC] Scrolling deeply to load maximum posts (Limit: 50)...`);
+        await page.evaluate(async () => {
+            await new Promise((resolve) => {
+                let totalHeight = 0;
+                let distance = 100;
+                let scrolls = 0;
+                let maxScrolls = 50; // Read "all" reasonably (prevents infinite loop on huge pages)
 
-        // Find "Comments" buttons/links to expand
-        // Heuristic: Look for "View more comments" or generic comment counting links
-        // However, usually detailed comments are visible or require clicking "Most Relevant".
-        // Strategy: Scrape currently visible comments first. 
+                const timer = setInterval(() => {
+                    const scrollHeight = document.body.scrollHeight;
+                    window.scrollBy(0, distance);
+                    totalHeight += distance;
+                    scrolls++;
 
-        // Find user links in comments
-        // Facebook comments usually have a profile link with strict structure
+                    // Stop if reached bottom or max scrolls
+                    if (totalHeight >= scrollHeight || scrolls >= maxScrolls) {
+                        clearInterval(timer);
+                        resolve();
+                    }
+                }, 100); // Fast smooth scroll
+            });
+        });
+        await sleep(3000); // Wait for final lazy loads
 
-        // COLLECT LEADS FROM COMMENTS
+        // EXPAND COMMENTS (New)
+        console.log(`[EXEC] Expanding comment sections...`);
+        await page.evaluate(async () => {
+            const commentTriggers = Array.from(document.querySelectorAll('span, div')).filter(el => {
+                const text = el.innerText ? el.innerText.toLowerCase() : '';
+                return (text.includes('bình luận') || text.includes('comments')) && text.length < 20;
+            });
+
+            // Click up to 20 comment sections to reveal more leads
+            for (let i = 0; i < Math.min(commentTriggers.length, 20); i++) {
+                commentTriggers[i].click();
+                await new Promise(r => setTimeout(r, 800));
+            }
+        });
+        await sleep(3000);
+
+        // JOB: HARVEST COMMENTS
         console.log(`[EXEC] Harvesting comments...`);
         const leads = await page.evaluate(() => {
             const results = [];
+
+            // DEBUG: Count potential containers
+            const articles = document.querySelectorAll('div[role="article"]');
+            console.log(`[DEBUG] Found ${articles.length} posts (articles).`);
+
             // Strategy: Look for specific comment containers. 
             // V2 Selector: Generic list items or spans that contain links + text
 
             // Try 1: Standard accessible comments
-            let commentDesignators = Array.from(document.querySelectorAll('div[role="article"], div[aria-label="Comment"], ul > li'));
+            let commentDesignators = Array.from(document.querySelectorAll('div[role="article"], div[aria-label="Comment"], ul > li, div[data-ad-preview="message"]'));
 
             // Try 2: If few results, grab all text-containing divs with links (Broad Scan)
             if (commentDesignators.length < 5) {
+                console.log('[DEBUG] Strict selectors found few items. Trying broad scan...');
                 const potentialComments = document.querySelectorAll('div[dir="auto"]');
                 commentDesignators = [...commentDesignators, ...Array.from(potentialComments)];
             }
@@ -77,6 +112,8 @@ async function executeRivalScan(pageUrl, maxAdds = 10) {
                         if (href.includes('facebook.com') &&
                             !href.includes('/hashtag/') &&
                             !href.includes('&comment_id=') && // Timestamp link
+                            !href.includes('/watch/') && // Video link
+                            !href.includes('/groups/') && // Group link
                             link.innerText && link.innerText.length > 2) {
                             authorLink = link;
                             break; // Assess first valid link as author
@@ -84,11 +121,15 @@ async function executeRivalScan(pageUrl, maxAdds = 10) {
                     }
 
                     if (authorLink) {
-                        results.push({
-                            url: authorLink.href,
-                            name: authorLink.innerText,
-                            signal: text.slice(0, 50).replace(/\n/g, ' ')
-                        });
+                        // Double check: Author name shouldn't be "Like" or "Reply"
+                        const name = authorLink.innerText;
+                        if (name !== 'Thích' && name !== 'Phản hồi' && name !== 'Like' && name !== 'Reply' && name !== 'Share') {
+                            results.push({
+                                url: authorLink.href,
+                                name: name,
+                                signal: text.slice(0, 50).replace(/\n/g, ' ')
+                            });
+                        }
                     }
                 }
             }
