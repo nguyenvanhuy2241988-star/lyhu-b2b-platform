@@ -43,23 +43,51 @@ async function executeRivalScan(pageUrl, maxAdds = 10) {
         console.log(`[EXEC] Harvesting comments...`);
         const leads = await page.evaluate(() => {
             const results = [];
-            // Select all links in comment section
-            // Comments are usually in 'div[role="article"]' or lists
-            const commentDesignators = document.querySelectorAll('div[role="article"]'); // Each comment is often an article
+            // Strategy: Look for specific comment containers. 
+            // V2 Selector: Generic list items or spans that contain links + text
+
+            // Try 1: Standard accessible comments
+            let commentDesignators = Array.from(document.querySelectorAll('div[role="article"], div[aria-label="Comment"], ul > li'));
+
+            // Try 2: If few results, grab all text-containing divs with links (Broad Scan)
+            if (commentDesignators.length < 5) {
+                const potentialComments = document.querySelectorAll('div[dir="auto"]');
+                commentDesignators = [...commentDesignators, ...Array.from(potentialComments)];
+            }
+
+            console.log(`[DEBUG] Raw Elements Examined: ${commentDesignators.length}`);
 
             for (const comment of commentDesignators) {
-                const text = comment.innerText.toLowerCase();
-                const buyingSignals = ['giá', 'ib', 'inbox', 'tư vấn', 'quan tâm', 'sỉ', 'ship'];
+                const text = comment.innerText ? comment.innerText.toLowerCase() : "";
+                if (text.length < 5) continue;
+
+                // Keywords: Price, Inbox, Consulting, Ship, Wholesale, Phone number logic
+                const buyingSignals = ['giá', 'ib', 'inbox', 'tư vấn', 'quan tâm', 'sỉ', 'ship', 'bao tiền', 'nhiêu', '09', '03', '08']; // Added phone prefixes
 
                 // Check signal
                 if (buyingSignals.some(s => text.includes(s))) {
                     // Extract Author
-                    const authorLink = comment.querySelector('a[role="link"]'); // Usually the name is a link
-                    if (authorLink && authorLink.href.includes('facebook.com')) {
+                    // Look for the first bold link or just any link that looks like a user
+                    const links = comment.querySelectorAll('a');
+                    let authorLink = null;
+
+                    for (const link of links) {
+                        const href = link.href;
+                        // Avoid links to hashtags, other pages, or timestamp links
+                        if (href.includes('facebook.com') &&
+                            !href.includes('/hashtag/') &&
+                            !href.includes('&comment_id=') && // Timestamp link
+                            link.innerText && link.innerText.length > 2) {
+                            authorLink = link;
+                            break; // Assess first valid link as author
+                        }
+                    }
+
+                    if (authorLink) {
                         results.push({
                             url: authorLink.href,
                             name: authorLink.innerText,
-                            signal: text.slice(0, 50) // Capture snippet
+                            signal: text.slice(0, 50).replace(/\n/g, ' ')
                         });
                     }
                 }
