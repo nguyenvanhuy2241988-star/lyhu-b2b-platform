@@ -15,6 +15,7 @@ type LogEntry = {
     status: 'success' | 'info' | 'error' | 'warning';
     details: {
         message: string;
+        profile_url?: string; // Optional URL field
     };
 };
 
@@ -103,6 +104,18 @@ export default function BotActivityLog() {
                             }>
                                 {log.details.message}
                             </span>
+
+                            {/* Profile Link Button */}
+                            {log.details.profile_url && (
+                                <a
+                                    href={log.details.profile_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="ml-2 px-2 py-0.5 bg-blue-900 border border-blue-700 text-blue-300 rounded hover:bg-blue-800 transition-colors text-[10px] inline-flex items-center gap-1"
+                                >
+                                    ↗ Xem Profile
+                                </a>
+                            )}
                         </div>
                     </div>
                 ))}
