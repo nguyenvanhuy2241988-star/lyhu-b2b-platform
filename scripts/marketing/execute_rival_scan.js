@@ -14,8 +14,20 @@ async function sleep(ms) {
 }
 
 async function executeRivalScan(pageUrl, maxAdds = 10) {
-    console.log(`[EXEC] Starting RIVAL SCAN on: ${pageUrl}`);
-    await logAction('search', 'info', `🎯 Bắt đầu Săn khách trên Page đối thủ: ${pageUrl}`);
+    const isSinglePost = pageUrl.includes('/posts/') ||
+        pageUrl.includes('/videos/') ||
+        pageUrl.includes('/reel/') ||
+        pageUrl.includes('/photo') ||
+        pageUrl.includes('/watch') ||
+        pageUrl.includes('story.php');
+
+    if (isSinglePost) {
+        console.log(`[EXEC] Detected SINGLE POST/AD URL. Switching to DEEP COMMENT MINING mode.`);
+        await logAction('search', 'info', `🔍 Chế độ Quét Bài Viết/Quảng Cáo (Deep Comment): ${pageUrl}`);
+    } else {
+        console.log(`[EXEC] Starting RIVAL PAGE SCAN on: ${pageUrl}`);
+        await logAction('search', 'info', `🎯 Bắt đầu Săn khách trên Page đối thủ: ${pageUrl}`);
+    }
 
     const browser = await launchBrowser();
     const page = await browser.newPage();
@@ -27,46 +39,86 @@ async function executeRivalScan(pageUrl, maxAdds = 10) {
         await page.goto(pageUrl, { waitUntil: 'networkidle2' });
         await sleep(3000);
 
-        // DEEP SCROLLING (Maximized)
-        console.log(`[EXEC] Scrolling deeply to load maximum posts (Limit: 50)...`);
-        await page.evaluate(async () => {
-            await new Promise((resolve) => {
-                let totalHeight = 0;
-                let distance = 100;
-                let scrolls = 0;
-                let maxScrolls = 50; // Read "all" reasonably (prevents infinite loop on huge pages)
+        // DEEP SCROLLING or SINGLE POST EXPANSION
+        if (isSinglePost) {
+            // SINGLE POST MODE: Focus entirely on exhausting comments
+            console.log(`[EXEC] Single Post Mode: Maximizing Comment Expansion...`);
 
-                const timer = setInterval(() => {
-                    const scrollHeight = document.body.scrollHeight;
-                    window.scrollBy(0, distance);
-                    totalHeight += distance;
-                    scrolls++;
+            // Loop to click "View more comments" or "View previous comments" until exhausted or limit reached
+            let expansionCount = 0;
+            const maxExpansions = 1000; // Full Data Extraction
 
-                    // Stop if reached bottom or max scrolls
-                    if (totalHeight >= scrollHeight || scrolls >= maxScrolls) {
-                        clearInterval(timer);
-                        resolve();
+            while (expansionCount < maxExpansions) {
+                const expanded = await page.evaluate(async () => {
+                    // Selectors for "View more comments", "View previous comments", "Most relevant"
+                    const triggers = Array.from(document.querySelectorAll('span, div, a')).filter(el => {
+                        const text = el.innerText ? el.innerText.toLowerCase() : '';
+                        return (text.includes('xem thêm bình luận') ||
+                            text.includes('view more comments') ||
+                            text.includes('view previous comments') ||
+                            text.includes('xem các bình luận trước') ||
+                            text.includes('phù hợp nhất')) && el.offsetParent !== null; // Visible
+                    });
+
+                    if (triggers.length > 0) {
+                        triggers[0].click();
+                        return true;
                     }
-                }, 100); // Fast smooth scroll
-            });
-        });
-        await sleep(3000); // Wait for final lazy loads
+                    return false;
+                });
 
-        // EXPAND COMMENTS (New)
-        console.log(`[EXEC] Expanding comment sections...`);
-        await page.evaluate(async () => {
-            const commentTriggers = Array.from(document.querySelectorAll('span, div')).filter(el => {
-                const text = el.innerText ? el.innerText.toLowerCase() : '';
-                return (text.includes('bình luận') || text.includes('comments')) && text.length < 20;
-            });
-
-            // Click up to 20 comment sections to reveal more leads
-            for (let i = 0; i < Math.min(commentTriggers.length, 20); i++) {
-                commentTriggers[i].click();
-                await new Promise(r => setTimeout(r, 800));
+                if (expanded) {
+                    process.stdout.write(`.`); // Visual progress
+                    await sleep(2000); // Wait for load
+                    expansionCount++;
+                } else {
+                    break; // No more comments to load
+                }
             }
-        });
-        await sleep(3000);
+            console.log(`\n[EXEC] Finished expanding comments. Total expansions: ${expansionCount}`);
+
+        } else {
+            // PAGE MODE: Deep Scroll to find posts
+            console.log(`[EXEC] Scrolling deeply to load ALL posts (Limit: 1000)...`);
+            await page.evaluate(async () => {
+                await new Promise((resolve) => {
+                    let totalHeight = 0;
+                    let distance = 100;
+                    let scrolls = 0;
+                    let maxScrolls = 1000; // Scan practically everything
+
+                    const timer = setInterval(() => {
+                        const scrollHeight = document.body.scrollHeight;
+                        window.scrollBy(0, distance);
+                        totalHeight += distance;
+                        scrolls++;
+
+                        // Stop if reached bottom or max scrolls
+                        if (totalHeight >= scrollHeight || scrolls >= maxScrolls) {
+                            clearInterval(timer);
+                            resolve();
+                        }
+                    }, 100); // Fast smooth scroll
+                });
+            });
+            await sleep(3000); // Wait for final lazy loads
+
+            // EXPAND COMMENTS (Light version for Page)
+            console.log(`[EXEC] Expanding comment sections (Page Mode)...`);
+            await page.evaluate(async () => {
+                const commentTriggers = Array.from(document.querySelectorAll('span, div')).filter(el => {
+                    const text = el.innerText ? el.innerText.toLowerCase() : '';
+                    return (text.includes('bình luận') || text.includes('comments')) && text.length < 20;
+                });
+
+                // Click up to 20 comment sections to reveal more leads
+                for (let i = 0; i < Math.min(commentTriggers.length, 20); i++) {
+                    commentTriggers[i].click();
+                    await new Promise(r => setTimeout(r, 800));
+                }
+            });
+            await sleep(3000);
+        }
 
         // JOB: HARVEST COMMENTS
         console.log(`[EXEC] Harvesting comments...`);
@@ -114,6 +166,7 @@ async function executeRivalScan(pageUrl, maxAdds = 10) {
                             !href.includes('&comment_id=') && // Timestamp link
                             !href.includes('/watch/') && // Video link
                             !href.includes('/groups/') && // Group link
+                            !href.includes('l.facebook.com') && // External link redirect (NOT a profile)
                             link.innerText && link.innerText.length > 2) {
                             authorLink = link;
                             break; // Assess first valid link as author
