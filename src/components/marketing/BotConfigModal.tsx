@@ -13,19 +13,27 @@ interface BotConfigModalProps {
 
 export default function BotConfigModal({ isOpen, onClose, scriptName, title }: BotConfigModalProps) {
     const [arg, setArg] = useState("");
+    const [strategy, setStrategy] = useState<'name' | 'post'>('post'); // Default to Smart Post Scan
     const [isLoading, setIsLoading] = useState(false);
 
     if (!isOpen) return null;
 
     const handleRun = async () => {
         setIsLoading(true);
+
+        // Determine actual script based on strategy selection
+        let finalScriptName = scriptName;
+        if (scriptName === 'execute_search_add.js' && strategy === 'post') {
+            finalScriptName = 'execute_post_scan.js';
+        }
+
         try {
             const res = await fetch('/api/marketing/execute', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    scriptName,
-                    args: arg // Pass user input as args
+                    scriptName: finalScriptName,
+                    args: arg
                 })
             });
 
@@ -47,17 +55,46 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
         switch (scriptName) {
             case 'execute_search_add.js':
                 return (
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Từ khóa tìm khách</label>
-                        <input
-                            type="text"
-                            className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="VD: Chủ Spa, Bất động sản..."
-                            value={arg}
-                            onChange={(e) => setArg(e.target.value)}
-                            autoFocus
-                        />
-                        <p className="text-xs text-slate-500 mt-1">Bot sẽ tìm người có từ khóa này trong tên hoặc bio.</p>
+                    <div className="space-y-4">
+                        {/* Strategy Selector */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">Chiến thuật Săn</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    onClick={() => setStrategy('post')}
+                                    className={`p-3 border rounded-lg text-sm text-left transition-all ${strategy === 'post' ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500' : 'border-slate-200 hover:border-slate-300'}`}
+                                >
+                                    <span className="font-bold block">🕵️ Thông minh (AI)</span>
+                                    <span className="text-[10px] opacity-80">Quét bài viết tìm chủ shop (VD: Khai trương, cần nguồn)</span>
+                                </button>
+                                <button
+                                    onClick={() => setStrategy('name')}
+                                    className={`p-3 border rounded-lg text-sm text-left transition-all ${strategy === 'name' ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500' : 'border-slate-200 hover:border-slate-300'}`}
+                                >
+                                    <span className="font-bold block">👤 Cơ bản (Tên)</span>
+                                    <span className="text-[10px] opacity-80">Tìm theo tên nick (VD: Hương Tạp Hóa)</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">
+                                {strategy === 'post' ? 'Từ khóa bài viết' : 'Tên/Biệt danh muốn tìm'}
+                            </label>
+                            <input
+                                type="text"
+                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                placeholder={strategy === 'post' ? "VD: Khai trương, Tìm nguồn sỉ, Mới mở tiệm..." : "VD: Chủ Spa, Bất động sản..."}
+                                value={arg}
+                                onChange={(e) => setArg(e.target.value)}
+                                autoFocus
+                            />
+                            <p className="text-xs text-slate-500 mt-1">
+                                {strategy === 'post'
+                                    ? 'Bot sẽ tìm bài viết chứa từ khóa này, sau đó kết bạn với người đăng.'
+                                    : 'Bot sẽ tìm người có tên này trong hồ sơ.'}
+                            </p>
+                        </div>
                     </div>
                 );
             case 'group_finder.js':

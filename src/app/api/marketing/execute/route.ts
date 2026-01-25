@@ -12,7 +12,8 @@ export async function POST(req: Request) {
             'group_finder.js',
             'invite_friend_page.js',
             'defense_engine.js',
-            'manual_login.js'
+            'manual_login.js',
+            'execute_post_scan.js'
         ];
 
         if (!ALLOWED_SCRIPTS.includes(scriptName)) {
