@@ -1,21 +1,20 @@
 /**
- * Level 4: Natural Language Targeting Interpreter
- * Translates User Commands ("Tìm chủ tạp hóa") -> Facebook Graph Search filters.
- * In a real-world scenario, this would potentially call an LLM API.
- * For this implementation, we use a robust Keyword Mapping strategy.
+ * Level 4: Natural Language Targeting Interpreter (V6 - NLP COMMANDER)
+ * Translates User Commands ("Tìm chủ tạp hóa ở Hà Nội") -> Structural Intent.
  */
 
-// Mapping Dictionary (Can be expanded)
-const KEYWORD_MAP = {
-    'tạp hóa': ['tạp hóa', 'bách hóa', 'minimart', 'siêu thị mini', 'hàng tiêu dùng'],
-    'chủ': ['chủ', 'owner', 'founder', 'ceo', 'quản lý', 'boss'],
-    'spa': ['spa', 'thẩm mỹ viện', 'làm đẹp', 'beauty'],
-    'bất động sản': ['bất động sản', 'nhà đất', 'real estate', 'môi giới'],
-    'quần áo': ['thời trang', 'quần áo', 'boutique', 'shop'],
-    'đồ ăn': ['ăn vặt', 'đồ ăn', 'food', 'quán ăn', 'nhà hàng'],
-    'hà nội': ['hà nội', 'ha noi', 'hn'],
-    'hcm': ['hồ chí minh', 'ho chi minh', 'hcm', 'sài gòn'],
-    'sỉ': ['sỉ', 'buôn', 'kho', 'phân phối']
+const LOCATION_MAP = {
+    'hà nội': ['hà nội', 'ha noi', 'hn', 'thủ đô'],
+    'hcm': ['hồ chí minh', 'ho chi minh', 'hcm', 'sài gòn', 'tphcm'],
+    'đà nẵng': ['đà nẵng', 'da nang'],
+    'hải phòng': ['hải phòng', 'hai phong'],
+    'cần thơ': ['cần thơ', 'can tho']
+};
+
+const ACTION_KEYWORDS = {
+    'tìm': 'find',
+    'kết bạn': 'add',
+    'quét': 'scan'
 };
 
 /**
@@ -24,62 +23,72 @@ const KEYWORD_MAP = {
  */
 function interpretCommand(command) {
     const lowerCmd = command.toLowerCase();
-    let searchKeywords = [];
     let location = null;
-    let role = null;
+    let target = command; // Default target is the whole command minus location
 
-    // 1. Detect Keywords
-    for (const [key, values] of Object.entries(KEYWORD_MAP)) {
-        if (lowerCmd.includes(key)) {
-            // Special handling for Location
-            if (['hà nội', 'hcm'].includes(key)) {
-                location = values[0];
-            }
-            // Special handling for Role
-            else if (['chủ'].includes(key)) {
-                role = values;
-            }
-            // General business keywords
-            else {
-                searchKeywords.push(...values);
-            }
+    // 1. Extract Location
+    // Look for patterns: "ở [City]", "khu vực [City]", "tại [City]"
+    for (const [cityKey, aliases] of Object.entries(LOCATION_MAP)) {
+        if (aliases.some(alias => lowerCmd.includes(alias))) {
+            location = cityKey; // Canonical location name
+
+            // Remove location text from command to isolate the Target
+            // e.g. "Tìm tạp hóa ở Hà Nội" -> "Tìm tạp hóa"
+            aliases.forEach(alias => {
+                target = target.replace(new RegExp(`ở ${alias}`, 'gi'), '')
+                    .replace(new RegExp(`tại ${alias}`, 'gi'), '')
+                    .replace(new RegExp(`khu vực ${alias}`, 'gi'), '')
+                    .replace(new RegExp(alias, 'gi'), ''); // Fallback
+            });
+            break;
         }
     }
 
-    // Default Fallback if no specific keywords found, use the whole command
-    if (searchKeywords.length === 0 && !location && !role) {
-        searchKeywords.push(command);
-    }
+    // Clean up target string
+    target = target.replace(/tìm kiếm|tìm|quét|người|muốn/gi, '').trim();
+    // Remove extra commas/spaces
+    target = target.replace(/^,|,$/g, '').trim();
 
-    // specific combination logic
-    // e.g. "chủ tạp hóa" -> search query should be "chủ tạp hóa" OR "tạp hóa owner"
-    let finalQueries = [];
+    // 2. Generate Smart Strategies
+    const strategies = [];
 
-    if (role && searchKeywords.length > 0) {
-        // Combinatorial expansion
-        role.forEach(r => {
-            searchKeywords.forEach(k => {
-                finalQueries.push(`${r} ${k}`);
-            });
-        });
-    } else {
-        finalQueries = searchKeywords;
-    }
+    // Strategy A: Post Scan (Contextual) - The "Smart" Way
+    // If Location exists, append it to query
+    const locationSuffix = location ? ` ${location}` : '';
 
-    // Deduplicate
-    finalQueries = [...new Set(finalQueries)];
+    const postQueries = [
+        `Khai trương ${target}${locationSuffix}`,
+        `Tìm nguồn ${target}${locationSuffix}`,
+        `Setup ${target}${locationSuffix}`,
+        `Cần nhập ${target}${locationSuffix}`
+    ];
 
-    // Limit to top 3 most relevant queries to avoid spamming search
-    if (finalQueries.length > 5) {
-        finalQueries = finalQueries.slice(0, 5);
-    }
+    // Strategy B: Group Scan (Community)
+    const groupQueries = [
+        `Hội ${target}${locationSuffix}`,
+        `Chợ ${target}${locationSuffix}`,
+        `Cộng đồng ${target}${locationSuffix}`
+    ];
+
+    // Strategy C: People Search (Direct)
+    const peopleQueries = [
+        // For direct name search, we usually don't append location to the string, 
+        // but rely on Filter (which we don't have automtated yet in script).
+        // So we just use the target name for now.
+        target
+    ];
 
     return {
         originalCommand: command,
-        hasLocation: !!location,
-        locationFilter: location,
-        generatedQueries: finalQueries.length > 0 ? finalQueries : [command],
-        estimatedReach: 'High' // Mock metric
+        parsed: {
+            target: target,
+            location: location
+        },
+        strategies: {
+            post_scan: postQueries,
+            group_scan: groupQueries,
+            people_search: peopleQueries
+        }
     };
 }
 
@@ -87,9 +96,8 @@ function interpretCommand(command) {
 if (require.main === module) {
     const testCmds = [
         "Tìm chủ tạp hóa ở Hà Nội",
-        "Kết bạn với người bán bất động sản",
-        "Tìm shop quần áo",
-        "Tìm người bán sỉ đồ ăn vặt"
+        "Quét các spa tại sài gòn",
+        "Tìm người bán bất động sản"
     ];
 
     testCmds.forEach(cmd => {

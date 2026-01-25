@@ -46,29 +46,28 @@ async function executePostScan(rawCommand, maxAdds = 5) {
 
             // 2. Scroll and Collect Authors
             let potentialAuthors = [];
-            for (let i = 0; i < 3; i++) { // Scroll a few times
+            // Increase scroll depth to find more results
+            for (let i = 0; i < 7; i++) {
                 const authors = await page.evaluate(() => {
                     const found = [];
-                    // Strategy: Look for standard Post Headers. 
-                    // Usually <a> tags with specific roles or structure inside feed units.
-                    // This is heuristic. We look for links that look like profile Links near the top of a card.
-                    // A safer bet: Look for 'h2' or 'h3' or 'strong' tags containing links.
-
-                    // Let's try to query links that *don't* look like hashtags or page links if possible.
-                    // But easiest is to grab ALL links, filter for profile patterns.
                     const links = Array.from(document.querySelectorAll('a[role="link"]'));
                     for (const link of links) {
                         const href = link.href;
                         const text = link.innerText;
 
+                        // Heuristic: Link must be a profile, not a group/page/hashtag
                         if (href && href.includes('facebook.com') &&
                             !href.includes('/groups/') &&
                             !href.includes('/hashtag/') &&
                             !href.includes('/watch') &&
                             !href.includes('/photo') &&
+                            !href.includes('/events/') &&
+                            !href.includes('l.facebook.com') && // External links
                             text.length > 2) {
 
-                            // Naive check: Does it look like a user profile?
+                            // Check if it looks like a profile
+                            // Profile URLs: /profile.php?id=... or /username
+                            // We filter out obvious non-profiles
                             if (href.includes('/profile.php') || (href.split('/').length === 4)) {
                                 found.push({ url: href, name: text });
                             }
@@ -78,24 +77,25 @@ async function executePostScan(rawCommand, maxAdds = 5) {
                 });
 
                 potentialAuthors = [...potentialAuthors, ...authors];
-                await page.evaluate(() => window.scrollBy(0, 800));
-                await sleep(2000);
+                await page.evaluate(() => window.scrollBy(0, 1000));
+                await sleep(1500 + Math.random() * 1000);
             }
 
-            console.log(`[EXEC] Found ${potentialAuthors.length} potential authors.`);
+            console.log(`[EXEC] Found ${potentialAuthors.length} potential authors (Raw).`);
 
             // 3. Process Authors (Deep Scan)
             for (const author of potentialAuthors) {
                 if (totalAdded >= maxAdds) break;
 
-                // Clean URL (remove params)
+                // Clean URL
                 let cleanUrl = author.url.split('?')[0];
                 if (cleanUrl.endsWith('/')) cleanUrl = cleanUrl.slice(0, -1);
 
+                // Skip duplicates and self
                 if (processedProfiles.has(cleanUrl)) continue;
                 processedProfiles.add(cleanUrl);
 
-                // --- AI DEEP SCAN LOGIC (Reused/Inline) ---
+                // --- AI DEEP SCAN LOGIC ---
                 console.log(`[EXEC] Deep Scan Initiation for Author: ${cleanUrl}`);
                 await logAction('search', 'info', `🕵️ AI đang thẩm định tác giả: ${author.name}`, { profile_url: cleanUrl });
 
@@ -107,12 +107,9 @@ async function executePostScan(rawCommand, maxAdds = 5) {
                     await profilePage.goto(cleanUrl, { waitUntil: 'networkidle2' });
                     await sleep(3000);
 
-                    // Check Bio Keywords
                     const pageText = await profilePage.evaluate(() => document.body.innerText.toLowerCase());
-                    const bizKeywords = ['sỉ', 'lẻ', 'ship', 'shop', 'store', 'zalo', 'hotline', 'địa chỉ', 'kios', 'kho', 'chủ', 'owner'];
-                    const interactionSignals = ['giá', 'ib', 'inbox', 'nhiêu']; // From Interaction Mining V4
+                    const bizKeywords = ['sỉ', 'lẻ', 'ship', 'shop', 'store', 'zalo', 'hotline', 'địa chỉ', 'kios', 'kho', 'chủ', 'owner', 'tạp hóa', 'mart'];
 
-                    // Score Calculation
                     const bioMatches = bizKeywords.filter(w => pageText.includes(w));
                     if (bioMatches.length > 0) aiScore += 20 + (bioMatches.length * 5);
 
@@ -120,21 +117,32 @@ async function executePostScan(rawCommand, maxAdds = 5) {
                     const hasMessageBtn = await profilePage.$('div[aria-label="Message"], div[aria-label="Nhắn tin"]');
                     if (hasMessageBtn) aiScore += 10;
 
-                    // High Score Threshold or "Ecosystem Match"
-                    // Since we found them via a RELEVANT POST (Context Mining), base reliability is high.
-                    // We just need to check if they are "Alive" and "Active".
-
-                    if (aiScore >= 20) isQualified = true;
+                    // Lower threshold slightly to ensure we don't miss potential matches due to strict keywords
+                    if (aiScore >= 15) isQualified = true;
 
                     console.log(`[EXEC] AI Score: ${aiScore} | Qualified: ${isQualified}`);
 
                     if (isQualified) {
-                        // Try to Add Friend
-                        // Look for Add Friend button on Profile Page
-                        const addBtn = await profilePage.$('div[aria-label="Add friend"], div[aria-label="Thêm bạn bè"]');
+                        // ROBUST ADD FRIEND CLICKING
+                        // Try 1: ARIA Label
+                        let addBtn = await profilePage.$('div[aria-label="Add friend"], div[aria-label="Thêm bạn bè"]');
+
+                        // Try 2: XPath Text Search (Most reliable)
+                        if (!addBtn) {
+                            const [btn] = await profilePage.$x("//div[@role='button'][contains(., 'Add friend') or contains(., 'Thêm bạn bè')]");
+                            if (btn) addBtn = btn;
+                        }
+
+                        // Try 3: Span text search
+                        if (!addBtn) {
+                            const [span] = await profilePage.$x("//span[contains(text(), 'Add friend') or contains(text(), 'Thêm bạn bè')]");
+                            if (span) addBtn = span;
+                        }
+
                         if (addBtn) {
                             await addBtn.click();
                             totalAdded++;
+                            console.log(`[EXEC] Clicked Add Friend for ${author.name}`);
 
                             await logAction('search', 'success', `Đã kết bạn với Chủ Shop (AI Score: ${aiScore})`, {
                                 profile_url: cleanUrl,
@@ -150,8 +158,17 @@ async function executePostScan(rawCommand, maxAdds = 5) {
 
                             await sleep(2000);
                         } else {
-                            console.log(`[EXEC] No Add Friend button for ${author.name}`);
-                            // Maybe Log as "Followed" or "Found" but couldn't add
+                            // Check if already requested or followed
+                            const isRequested = await profilePage.evaluate(() => {
+                                return document.body.innerText.includes('Cancel request') || document.body.innerText.includes('Hủy lời mời');
+                            });
+
+                            if (isRequested) {
+                                console.log(`[EXEC] Already requested ${author.name}`);
+                            } else {
+                                console.log(`[EXEC] No Add Friend button for ${author.name} (Might be Follow only or blocked)`);
+                                // Optional: Fallback to Follow?
+                            }
                         }
                     } else {
                         // await logAction('search', 'warning', `Bỏ qua: ${author.name} (Điểm thấp: ${aiScore})`);

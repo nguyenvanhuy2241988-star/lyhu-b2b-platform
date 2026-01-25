@@ -13,7 +13,7 @@ interface BotConfigModalProps {
 
 export default function BotConfigModal({ isOpen, onClose, scriptName, title }: BotConfigModalProps) {
     const [arg, setArg] = useState("");
-    const [strategy, setStrategy] = useState<'name' | 'post'>('post'); // Default to Smart Post Scan
+    const [strategy, setStrategy] = useState<'name' | 'post' | 'commander'>('commander'); // Default to NLP Commander
     const [isLoading, setIsLoading] = useState(false);
 
     if (!isOpen) return null;
@@ -23,8 +23,9 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
 
         // Determine actual script based on strategy selection
         let finalScriptName = scriptName;
-        if (scriptName === 'execute_search_add.js' && strategy === 'post') {
-            finalScriptName = 'execute_post_scan.js';
+        if (scriptName === 'execute_search_add.js') {
+            if (strategy === 'post') finalScriptName = 'execute_post_scan.js';
+            if (strategy === 'commander') finalScriptName = 'master_commander.js';
         }
 
         try {
@@ -59,40 +60,53 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
                         {/* Strategy Selector */}
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-2">Chiến thuật Săn</label>
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-3 gap-2">
+                                <button
+                                    onClick={() => setStrategy('commander')}
+                                    className={`p-2 border rounded-lg text-sm text-left transition-all ${strategy === 'commander' ? 'border-purple-500 bg-purple-50 text-purple-700 ring-1 ring-purple-500' : 'border-slate-200 hover:border-slate-300'}`}
+                                >
+                                    <span className="font-bold block">🧠 Tự động</span>
+                                    <span className="text-[10px] opacity-80">Hiểu lệnh: "Tìm spa ở HN"</span>
+                                </button>
                                 <button
                                     onClick={() => setStrategy('post')}
-                                    className={`p-3 border rounded-lg text-sm text-left transition-all ${strategy === 'post' ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500' : 'border-slate-200 hover:border-slate-300'}`}
+                                    className={`p-2 border rounded-lg text-sm text-left transition-all ${strategy === 'post' ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500' : 'border-slate-200 hover:border-slate-300'}`}
                                 >
-                                    <span className="font-bold block">🕵️ Thông minh (AI)</span>
-                                    <span className="text-[10px] opacity-80">Quét bài viết tìm chủ shop (VD: Khai trương, cần nguồn)</span>
+                                    <span className="font-bold block">🕵️ Bài viết</span>
+                                    <span className="text-[10px] opacity-80">Quét từ khóa bài đăng</span>
                                 </button>
                                 <button
                                     onClick={() => setStrategy('name')}
-                                    className={`p-3 border rounded-lg text-sm text-left transition-all ${strategy === 'name' ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500' : 'border-slate-200 hover:border-slate-300'}`}
+                                    className={`p-2 border rounded-lg text-sm text-left transition-all ${strategy === 'name' ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500' : 'border-slate-200 hover:border-slate-300'}`}
                                 >
-                                    <span className="font-bold block">👤 Cơ bản (Tên)</span>
-                                    <span className="text-[10px] opacity-80">Tìm theo tên nick (VD: Hương Tạp Hóa)</span>
+                                    <span className="font-bold block">👤 Cơ bản</span>
+                                    <span className="text-[10px] opacity-80">Tìm theo tên nick</span>
                                 </button>
                             </div>
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">
-                                {strategy === 'post' ? 'Từ khóa bài viết' : 'Tên/Biệt danh muốn tìm'}
+                                {strategy === 'commander' ? 'Ra lệnh cho Bot (Giọng nói/Văn bản)' :
+                                    strategy === 'post' ? 'Từ khóa bài viết' : 'Tên/Biệt danh muốn tìm'}
                             </label>
                             <input
                                 type="text"
                                 className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder={strategy === 'post' ? "VD: Khai trương, Tìm nguồn sỉ, Mới mở tiệm..." : "VD: Chủ Spa, Bất động sản..."}
+                                placeholder={
+                                    strategy === 'commander' ? "VD: Tìm chủ tạp hóa ở Cầu Giấy Hà Nội..." :
+                                        strategy === 'post' ? "VD: Khai trương, Tìm nguồn sỉ..." : "VD: Chủ Spa..."
+                                }
                                 value={arg}
                                 onChange={(e) => setArg(e.target.value)}
                                 autoFocus
                             />
                             <p className="text-xs text-slate-500 mt-1">
-                                {strategy === 'post'
-                                    ? 'Bot sẽ tìm bài viết chứa từ khóa này, sau đó kết bạn với người đăng.'
-                                    : 'Bot sẽ tìm người có tên này trong hồ sơ.'}
+                                {strategy === 'commander'
+                                    ? 'Bot sẽ tự phân tích câu lệnh để chọn cách tìm kiếm tốt nhất (Quét bài + Lọc địa điểm).'
+                                    : strategy === 'post'
+                                        ? 'Bot sẽ tìm bài viết chứa từ khóa này, sau đó kết bạn với người đăng.'
+                                        : 'Bot sẽ tìm người có tên này trong hồ sơ.'}
                             </p>
                         </div>
                     </div>
