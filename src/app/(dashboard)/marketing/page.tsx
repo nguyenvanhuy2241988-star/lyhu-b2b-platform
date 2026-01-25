@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAuth } from "@/components/auth/AuthProvider";
 import { StatsSkeleton } from "@/components/ui/SkeletonUI";
 import { fetchMarketingStats, fetchCampaignPerformance, CampaignPerformance } from "@/lib/marketingStore";
+import BotActivityLog from "@/components/marketing/BotActivityLog";
 
 export default function MarketingDashboard() {
     const { user, session, isLoading: authIsLoading } = useAuth();
@@ -220,60 +221,69 @@ export default function MarketingDashboard() {
                     </table>
                 </div>
 
-                {/* COMMAND CENTER - Level 20 */}
-                <div className="mt-8 bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <Bot className="w-24 h-24 text-blue-600" />
+                {/* COMMAND CENTER & LOGS */}
+                <div className="mt-8 grid grid-cols-1 xl:grid-cols-3 gap-6">
+                    {/* LEFT: CONTROLS */}
+                    <div className="xl:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <Bot className="w-24 h-24 text-blue-600" />
+                        </div>
+
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-blue-100 rounded-lg">
+                                <Bot className="w-6 h-6 text-blue-600" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-bold text-slate-800">Command Center</h2>
+                                <p className="text-slate-500">Trung tâm điều khiển BOT tự động</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <CommandCard
+                                title="Săn Khách Hàng"
+                                desc="Tìm & Kết bạn theo từ khóa"
+                                icon={<Search className="w-5 h-5" />}
+                                color="blue"
+                                script="execute_search_add.js"
+                            />
+                            <CommandCard
+                                title="Quét Hội Nhóm"
+                                desc="Tìm & Xin vào nhóm tiềm năng"
+                                icon={<Users className="w-5 h-5" />}
+                                color="indigo"
+                                script="group_finder.js"
+                            />
+                            <CommandCard
+                                title="Mời Bạn Bè"
+                                desc="Mời bạn bè Like Page (Traffic)"
+                                icon={<UserPlus className="w-5 h-5" />}
+                                color="green"
+                                script="invite_friend_page.js"
+                            />
+                            <CommandCard
+                                title="Lá Chắn Ảo"
+                                desc="Giả lập hành vi & Nuôi nick"
+                                icon={<Shield className="w-5 h-5" />}
+                                color="slate"
+                                script="defense_engine.js"
+                            />
+                            <CommandCard
+                                title="Đăng Nhập"
+                                desc="Mở trình duyệt để Login tay"
+                                icon={<Key className="w-5 h-5" />}
+                                color="orange"
+                                script="manual_login.js"
+                            />
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="p-3 bg-blue-100 rounded-lg">
-                            <Bot className="w-6 h-6 text-blue-600" />
-                        </div>
-                        <div>
-                            <h2 className="text-xl font-bold text-slate-800">Command Center</h2>
-                            <p className="text-slate-500">Trung tâm điều khiển BOT tự động</p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <CommandCard
-                            title="Săn Khách Hàng"
-                            desc="Tìm & Kết bạn theo từ khóa"
-                            icon={<Search className="w-5 h-5" />}
-                            color="blue"
-                            script="execute_search_add.js"
-                        />
-                        <CommandCard
-                            title="Quét Hội Nhóm"
-                            desc="Tìm & Xin vào nhóm tiềm năng"
-                            icon={<Users className="w-5 h-5" />}
-                            color="indigo"
-                            script="group_finder.js"
-                        />
-                        <CommandCard
-                            title="Mời Bạn Bè"
-                            desc="Mời bạn bè Like Page (Traffic)"
-                            icon={<UserPlus className="w-5 h-5" />}
-                            color="green"
-                            script="invite_friend_page.js"
-                        />
-                        <CommandCard
-                            title="Lá Chắn Ảo"
-                            desc="Giả lập hành vi & Nuôi nick"
-                            icon={<Shield className="w-5 h-5" />}
-                            color="slate"
-                            script="defense_engine.js"
-                        />
-                        <CommandCard
-                            title="Đăng Nhập"
-                            desc="Mở trình duyệt để Login tay"
-                            icon={<Key className="w-5 h-5" />}
-                            color="orange"
-                            script="manual_login.js"
-                        />
+                    {/* RIGHT: LIVE LOGS */}
+                    <div className="xl:col-span-1">
+                        <BotActivityLog />
                     </div>
                 </div>
+
             </div>
         </div >
     );

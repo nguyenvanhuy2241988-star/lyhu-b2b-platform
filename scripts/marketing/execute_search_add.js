@@ -9,9 +9,11 @@
 
 const { interpretCommand } = require('./targeting_interpreter');
 const { launchBrowser } = require('./setup_browser');
+const { logAction } = require('./supabase_logger');
 
 async function executeSearchAndAdd(command, maxAdds = 5) {
     console.log(`[EXEC] Received Command: "${command}"`);
+    await logAction('search', 'info', `Nhận lệnh: "${command}"`);
 
     // 1. Interpret
     const strategy = interpretCommand(command);
@@ -26,6 +28,7 @@ async function executeSearchAndAdd(command, maxAdds = 5) {
 
     for (const query of strategy.generatedQueries) {
         console.log(`[EXEC] >>> Searching for query: "${query}"`);
+        await logAction('search', 'info', `🔍 Đang tìm kiếm: ${query}`);
 
         // Construct FB Search URL (Reverse engineered)
         // https://www.facebook.com/search/people/?q=...
@@ -45,6 +48,7 @@ async function executeSearchAndAdd(command, maxAdds = 5) {
             console.log(`[EXEC]     🖱️ CLICKING "Add Friend"... (Random delay 3245ms)`);
             maxAdds--;
             console.log(`[EXEC]     ✨ Request Sent! Remaining quota: ${maxAdds}`);
+            await logAction('search', 'success', `Đã gửi kết bạn (Mock User). Còn lại: ${maxAdds}`);
         } else {
             console.log(`[EXEC]     🛑 Daily Quota Reached. Stopping.`);
             break;
@@ -55,6 +59,7 @@ async function executeSearchAndAdd(command, maxAdds = 5) {
 
     console.log(`[EXEC] ---------------------------------------------------`);
     console.log(`[EXEC] Mission Complete.`);
+    await logAction('search', 'success', `Hoàn thành nhiệm vụ tìm kiếm.`);
     // await browser.close();
 }
 

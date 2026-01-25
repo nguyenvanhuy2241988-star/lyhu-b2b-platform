@@ -1,4 +1,5 @@
 const { launchBrowser } = require('./setup_browser');
+const { logAction } = require('./supabase_logger'); // Import Logger
 const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 
@@ -22,6 +23,7 @@ async function randomDelay(min, max) {
  */
 async function warmUp(page, durationSeconds = 60) {
     console.log(`🛡️ [DEFENSE] Starting Warm-up Sequence (${durationSeconds}s)...`);
+    await logAction('defense', 'info', `Bắt đầu chế độ 'Lá Chắn Ảo' (${durationSeconds}s)...`);
 
     // 1. Go to Newsfeed
     if (page.url() !== 'https://www.facebook.com/') {
@@ -50,6 +52,7 @@ async function warmUp(page, durationSeconds = 60) {
         // Random Pause (Reading a post)
         if (Math.random() > 0.7) {
             console.log("   ...Reading a post...");
+            await logAction('defense', 'info', "...Đang đọc bài viết...");
             await randomDelay(2000, 5000);
         } else {
             await randomDelay(500, 1500);
@@ -64,6 +67,7 @@ async function warmUp(page, durationSeconds = 60) {
     }
 
     console.log("🛡️ [DEFENSE] Warm-up Complete. Account is ready.");
+    await logAction('defense', 'success', "Hoàn tất 'Lá Chắn Ảo'. Tài khoản đã an toàn.");
 }
 
 async function runDefenseTest() {
@@ -76,6 +80,7 @@ async function runDefenseTest() {
         await warmUp(page, 900);
     } catch (e) {
         console.error("Defense Error:", e);
+        await logAction('defense', 'error', `Lỗi: ${e.message}`);
     } finally {
         await browser.close();
     }
