@@ -13,7 +13,7 @@ interface BotConfigModalProps {
 
 export default function BotConfigModal({ isOpen, onClose, scriptName, title }: BotConfigModalProps) {
     const [arg, setArg] = useState("");
-    const [strategy, setStrategy] = useState<'name' | 'post' | 'commander'>('commander'); // Default to NLP Commander
+    const [strategy, setStrategy] = useState<'name' | 'post' | 'commander' | 'suggestion' | 'rival'>('commander'); // Default to NLP Commander
     const [isLoading, setIsLoading] = useState(false);
 
     if (!isOpen) return null;
@@ -26,6 +26,8 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
         if (scriptName === 'execute_search_add.js') {
             if (strategy === 'post') finalScriptName = 'execute_post_scan.js';
             if (strategy === 'commander') finalScriptName = 'master_commander.js';
+            if (strategy === 'suggestion') finalScriptName = 'execute_suggestion_scan.js';
+            if (strategy === 'rival') finalScriptName = 'execute_rival_scan.js';
         }
 
         try {
@@ -66,47 +68,68 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
                                     className={`p-2 border rounded-lg text-sm text-left transition-all ${strategy === 'commander' ? 'border-purple-500 bg-purple-50 text-purple-700 ring-1 ring-purple-500' : 'border-slate-200 hover:border-slate-300'}`}
                                 >
                                     <span className="font-bold block">🧠 Tự động</span>
-                                    <span className="text-[10px] opacity-80">Hiểu lệnh: "Tìm spa ở HN"</span>
+                                    <span className="text-[10px] opacity-80">Hiểu lệnh nói</span>
                                 </button>
                                 <button
                                     onClick={() => setStrategy('post')}
                                     className={`p-2 border rounded-lg text-sm text-left transition-all ${strategy === 'post' ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500' : 'border-slate-200 hover:border-slate-300'}`}
                                 >
                                     <span className="font-bold block">🕵️ Bài viết</span>
-                                    <span className="text-[10px] opacity-80">Quét từ khóa bài đăng</span>
+                                    <span className="text-[10px] opacity-80">Quét từ khóa</span>
+                                </button>
+                                <button
+                                    onClick={() => setStrategy('suggestion')}
+                                    className={`p-2 border rounded-lg text-sm text-left transition-all ${strategy === 'suggestion' ? 'border-green-500 bg-green-50 text-green-700 ring-1 ring-green-500' : 'border-slate-200 hover:border-slate-300'}`}
+                                >
+                                    <span className="font-bold block">🌊 Gợi ý</span>
+                                    <span className="text-[10px] opacity-80">Fb đề xuất</span>
+                                </button>
+                                <button
+                                    onClick={() => setStrategy('rival')}
+                                    className={`p-2 border rounded-lg text-sm text-left transition-all ${strategy === 'rival' ? 'border-red-500 bg-red-50 text-red-700 ring-1 ring-red-500' : 'border-slate-200 hover:border-slate-300'}`}
+                                >
+                                    <span className="font-bold block">🎯 Đối thủ</span>
+                                    <span className="text-[10px] opacity-80">Cướp comment</span>
                                 </button>
                                 <button
                                     onClick={() => setStrategy('name')}
-                                    className={`p-2 border rounded-lg text-sm text-left transition-all ${strategy === 'name' ? 'border-blue-500 bg-blue-50 text-blue-700 ring-1 ring-blue-500' : 'border-slate-200 hover:border-slate-300'}`}
+                                    className={`p-2 border rounded-lg text-sm text-left transition-all ${strategy === 'name' ? 'border-slate-500 bg-slate-50 text-slate-700 ring-1 ring-slate-500' : 'border-slate-200 hover:border-slate-300'}`}
                                 >
                                     <span className="font-bold block">👤 Cơ bản</span>
-                                    <span className="text-[10px] opacity-80">Tìm theo tên nick</span>
+                                    <span className="text-[10px] opacity-80">Theo tên</span>
                                 </button>
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">
-                                {strategy === 'commander' ? 'Ra lệnh cho Bot (Giọng nói/Văn bản)' :
-                                    strategy === 'post' ? 'Từ khóa bài viết' : 'Tên/Biệt danh muốn tìm'}
-                            </label>
-                            <input
-                                type="text"
-                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                placeholder={
-                                    strategy === 'commander' ? "VD: Tìm chủ tạp hóa ở Cầu Giấy Hà Nội..." :
-                                        strategy === 'post' ? "VD: Khai trương, Tìm nguồn sỉ..." : "VD: Chủ Spa..."
-                                }
-                                value={arg}
-                                onChange={(e) => setArg(e.target.value)}
-                                autoFocus
-                            />
+                            {strategy !== 'suggestion' && (
+                                <>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">
+                                        {strategy === 'commander' && 'Ra lệnh cho Bot (Giọng nói/Văn bản)'}
+                                        {strategy === 'post' && 'Từ khóa bài viết (Khai trương...)'}
+                                        {strategy === 'rival' && 'Link Fanpage Đối thủ'}
+                                        {strategy === 'name' && 'Tên/Biệt danh muốn tìm'}
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        placeholder={
+                                            strategy === 'commander' ? "VD: Tìm chủ tạp hóa ở Cầu Giấy..." :
+                                                strategy === 'post' ? "VD: Khai trương, Tìm nguồn sỉ..." :
+                                                    strategy === 'rival' ? "https://facebook.com/DoiThuCuaBan" :
+                                                        "VD: Chủ Spa..."
+                                        }
+                                        value={arg}
+                                        onChange={(e) => setArg(e.target.value)}
+                                        autoFocus
+                                    />
+                                </>
+                            )}
+
                             <p className="text-xs text-slate-500 mt-1">
-                                {strategy === 'commander'
-                                    ? 'Bot sẽ tự phân tích câu lệnh để chọn cách tìm kiếm tốt nhất (Quét bài + Lọc địa điểm).'
-                                    : strategy === 'post'
-                                        ? 'Bot sẽ tìm bài viết chứa từ khóa này, sau đó kết bạn với người đăng.'
-                                        : 'Bot sẽ tìm người có tên này trong hồ sơ.'}
+                                {strategy === 'commander' && 'Bot sẽ tự phân tích câu lệnh để chọn cách tìm kiếm tốt nhất.'}
+                                {strategy === 'suggestion' && 'Bot sẽ tự động kết bạn với những người trong danh sách "Gợi ý" của Facebook (Độ chính xác cao do thuật toán FB).'}
+                                {strategy === 'rival' && 'Bot sẽ vào Page đối thủ, tìm những người comment mua hàng để kết bạn.'}
                             </p>
                         </div>
                     </div>

@@ -14,7 +14,9 @@ export async function POST(req: Request) {
             'defense_engine.js',
             'manual_login.js',
             'execute_post_scan.js',
-            'master_commander.js'
+            'master_commander.js',
+            'execute_suggestion_scan.js',
+            'execute_rival_scan.js'
         ];
 
         if (!ALLOWED_SCRIPTS.includes(scriptName)) {

@@ -124,25 +124,35 @@ async function executePostScan(rawCommand, maxAdds = 5) {
 
                     if (isQualified) {
                         // ROBUST ADD FRIEND CLICKING
-                        // Try 1: ARIA Label
+                        // Try 1: Main Button (ARIA)
                         let addBtn = await profilePage.$('div[aria-label="Add friend"], div[aria-label="Thêm bạn bè"]');
 
-                        // Try 2: XPath Text Search (Most reliable)
+                        // Try 2: Main Button (XPath Text)
                         if (!addBtn) {
                             const [btn] = await profilePage.$x("//div[@role='button'][contains(., 'Add friend') or contains(., 'Thêm bạn bè')]");
                             if (btn) addBtn = btn;
                         }
 
-                        // Try 3: Span text search
+                        // Try 3: Hidden in "..." Menu (Mobile/Desktop variant)
                         if (!addBtn) {
-                            const [span] = await profilePage.$x("//span[contains(text(), 'Add friend') or contains(text(), 'Thêm bạn bè')]");
-                            if (span) addBtn = span;
+                            console.log(`[EXEC] Add button not found. Checking 'More' menu...`);
+                            // Click the "More" or "..." button
+                            const [moreBtn] = await profilePage.$x("//div[@aria-label='More' or @aria-label='Khác' or @aria-label='See options']");
+                            if (moreBtn) {
+                                await moreBtn.click();
+                                await sleep(1000);
+                                // Check dropdown items
+                                const [hiddenAddBtn] = await profilePage.$x("//div[@role='menuitem'][contains(., 'Add friend') or contains(., 'Thêm bạn bè')]");
+                                if (hiddenAddBtn) {
+                                    console.log(`[EXEC] Found hidden Add Friend button!`);
+                                    addBtn = hiddenAddBtn;
+                                }
+                            }
                         }
 
                         if (addBtn) {
                             await addBtn.click();
                             totalAdded++;
-                            console.log(`[EXEC] Clicked Add Friend for ${author.name}`);
 
                             await logAction('search', 'success', `Đã kết bạn với Chủ Shop (AI Score: ${aiScore})`, {
                                 profile_url: cleanUrl,
@@ -158,16 +168,26 @@ async function executePostScan(rawCommand, maxAdds = 5) {
 
                             await sleep(2000);
                         } else {
-                            // Check if already requested or followed
+                            // DIAGNOSTIC - WHY FAILED?
+
+                            // Check if already requested
                             const isRequested = await profilePage.evaluate(() => {
-                                return document.body.innerText.includes('Cancel request') || document.body.innerText.includes('Hủy lời mời');
+                                const text = document.body.innerText;
+                                return text.includes('Cancel request') || text.includes('Hủy lời mời') || text.includes('Request sent') || text.includes('Đã gửi lời mời');
                             });
 
                             if (isRequested) {
                                 console.log(`[EXEC] Already requested ${author.name}`);
+                                await logAction('search', 'warning', `Đã gửi lời mời trước đó: ${author.name}`);
                             } else {
-                                console.log(`[EXEC] No Add Friend button for ${author.name} (Might be Follow only or blocked)`);
-                                // Optional: Fallback to Follow?
+                                // Check if Follow Only
+                                const [followBtn] = await profilePage.$x("//div[contains(@aria-label, 'Follow') or contains(@aria-label, 'Theo dõi')]");
+                                if (followBtn) {
+                                    console.log(`[EXEC] Profile is Follow Only: ${author.name}`);
+                                    await logAction('search', 'warning', `Không thể kết bạn (Chỉ cho Follow): ${author.name}`);
+                                } else {
+                                    console.log(`[EXEC] Button unclickable or private profile: ${author.name}`);
+                                }
                             }
                         }
                     } else {
