@@ -7,3 +7,4 @@ dist/
 .env.local
 .env.*
 !.env.example
+.bot_profile/
