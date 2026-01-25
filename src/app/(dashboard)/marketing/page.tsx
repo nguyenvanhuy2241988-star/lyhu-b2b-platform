@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { StatsSkeleton } from "@/components/ui/SkeletonUI";
 import { fetchMarketingStats, fetchCampaignPerformance, CampaignPerformance } from "@/lib/marketingStore";
 import BotActivityLog from "@/components/marketing/BotActivityLog";
+import BotConfigModal from "@/components/marketing/BotConfigModal";
 
 export default function MarketingDashboard() {
     const { user, session, isLoading: authIsLoading } = useAuth();
@@ -18,6 +19,7 @@ export default function MarketingDashboard() {
     });
     const [performance, setPerformance] = useState<CampaignPerformance[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [activeScript, setActiveScript] = useState<{ name: string, title: string } | null>(null);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -245,35 +247,35 @@ export default function MarketingDashboard() {
                                 desc="Tìm & Kết bạn theo từ khóa"
                                 icon={<Search className="w-5 h-5" />}
                                 color="blue"
-                                script="execute_search_add.js"
+                                onClick={() => setActiveScript({ name: 'execute_search_add.js', title: 'Săn Khách Hàng' })}
                             />
                             <CommandCard
                                 title="Quét Hội Nhóm"
                                 desc="Tìm & Xin vào nhóm tiềm năng"
                                 icon={<Users className="w-5 h-5" />}
                                 color="indigo"
-                                script="group_finder.js"
+                                onClick={() => setActiveScript({ name: 'group_finder.js', title: 'Quét Hội Nhóm' })}
                             />
                             <CommandCard
                                 title="Mời Bạn Bè"
                                 desc="Mời bạn bè Like Page (Traffic)"
                                 icon={<UserPlus className="w-5 h-5" />}
                                 color="green"
-                                script="invite_friend_page.js"
+                                onClick={() => setActiveScript({ name: 'invite_friend_page.js', title: 'Mời Bạn Bè' })}
                             />
                             <CommandCard
                                 title="Lá Chắn Ảo"
                                 desc="Giả lập hành vi & Nuôi nick"
                                 icon={<Shield className="w-5 h-5" />}
                                 color="slate"
-                                script="defense_engine.js"
+                                onClick={() => setActiveScript({ name: 'defense_engine.js', title: 'Lá Chắn Ảo' })}
                             />
                             <CommandCard
                                 title="Đăng Nhập"
                                 desc="Mở trình duyệt để Login tay"
                                 icon={<Key className="w-5 h-5" />}
                                 color="orange"
-                                script="manual_login.js"
+                                onClick={() => setActiveScript({ name: 'manual_login.js', title: 'Đăng Nhập' })}
                             />
                         </div>
                     </div>
@@ -285,33 +287,26 @@ export default function MarketingDashboard() {
                 </div>
 
             </div>
+        </div>
+
+            {/* Config Modal */ }
+    {
+        activeScript && (
+            <BotConfigModal
+                isOpen={!!activeScript}
+                onClose={() => setActiveScript(null)}
+                scriptName={activeScript.name}
+                title={activeScript.title}
+            />
+        )
+    }
         </div >
     );
 }
 
-function CommandCard({ title, desc, icon, color, script }: { title: string, desc: string, icon: React.ReactNode, color: string, script: string }) {
-    const [running, setRunning] = useState(false);
+function CommandCard({ title, desc, icon, color, onClick }: { title: string, desc: string, icon: React.ReactNode, color: string, onClick: () => void }) {
 
-    const runScript = async () => {
-        setRunning(true);
-        try {
-            const res = await fetch('/api/marketing/execute', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ scriptName: script })
-            });
-            if (res.ok) {
-                toast.success(`Đã khởi động: ${title}`);
-            } else {
-                toast.error("Lỗi khởi động Bot");
-            }
-        } catch (e) {
-            toast.error("Lỗi kết nối");
-        } finally {
-            setTimeout(() => setRunning(false), 2000);
-        }
-    };
-
+    // Simplification: CommandCard is now just a trigger button. Running logic moved to Modal.
     const colors: any = {
         blue: "bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200",
         indigo: "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border-indigo-200",
@@ -322,15 +317,13 @@ function CommandCard({ title, desc, icon, color, script }: { title: string, desc
 
     return (
         <button
-            onClick={runScript}
-            disabled={running}
-            className={`flex flex-col items-start p-4 rounded-xl border transition-all ${colors[color]} ${running ? 'opacity-70 scale-95' : 'hover:-translate-y-1'}`}
+            onClick={onClick}
+            className={`flex flex-col items-start p-4 rounded-xl border transition-all ${colors[color]} hover:-translate-y-1`}
         >
             <div className="flex items-center justify-between w-full mb-3">
                 <div className="p-2 bg-white rounded-lg shadow-sm">
-                    {running ? <Zap className="w-5 h-5 animate-pulse" /> : icon}
+                    {icon}
                 </div>
-                {running && <span className="text-xs font-bold animate-pulse">RUNNING...</span>}
             </div>
             <h3 className="font-bold text-lg mb-1">{title}</h3>
             <p className="text-sm opacity-80 text-left">{desc}</p>

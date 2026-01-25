@@ -4,7 +4,7 @@ import path from 'path';
 
 export async function POST(req: Request) {
     try {
-        const { scriptName } = await req.json();
+        const { scriptName, args } = await req.json();
 
         // Whitelist allowed scripts for security
         const ALLOWED_SCRIPTS = [
@@ -26,7 +26,10 @@ export async function POST(req: Request) {
         // For 'defense_engine.js', capturing output might be better, but for Puppeteer scripts with 'headless: false',
         // seeing the valid browser window + terminal logs is best.
 
-        let command = `start cmd /k "node ${scriptPath}"`;
+        // Sanitize args to prevent command injection (basic check)
+        const safeArgs = args ? `"${args.replace(/[&|<>^%]/g, '')}"` : '';
+
+        let command = `start cmd /k "node ${scriptPath} ${safeArgs}"`;
 
         exec(command, (error, stdout, stderr) => {
             if (error) {

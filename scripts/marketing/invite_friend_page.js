@@ -7,7 +7,8 @@ puppeteer.use(StealthPlugin());
 
 // Config
 const TARGET_PAGE_URL = 'https://www.facebook.com/profile.php?id=61555986422874'; // LYHU App Fanpage
-const INVITE_LIMIT = 50; // Safety limit per run
+const TARGET_PAGE_URL = 'https://www.facebook.com/profile.php?id=61555986422874'; // LYHU App Fanpage
+const INVITE_LIMIT = parseInt(process.argv[2]) || 50; // Safety limit per run
 
 async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
