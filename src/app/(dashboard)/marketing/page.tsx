@@ -287,19 +287,19 @@ export default function MarketingDashboard() {
                 </div>
 
             </div>
-        </div>
 
-            {/* Config Modal */ }
-    {
-        activeScript && (
-            <BotConfigModal
-                isOpen={!!activeScript}
-                onClose={() => setActiveScript(null)}
-                scriptName={activeScript.name}
-                title={activeScript.title}
-            />
-        )
-    }
+
+            {/* Config Modal */}
+            {
+                activeScript && (
+                    <BotConfigModal
+                        isOpen={!!activeScript}
+                        onClose={() => setActiveScript(null)}
+                        scriptName={activeScript.name}
+                        title={activeScript.title}
+                    />
+                )
+            }
         </div >
     );
 }
