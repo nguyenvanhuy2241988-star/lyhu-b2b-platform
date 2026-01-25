@@ -43,7 +43,7 @@ export default function BotActivityLog() {
             .on(
                 'postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'marketing_action_logs' },
-                (payload) => {
+                (payload: any) => {
                     const newLog = payload.new as LogEntry;
                     setLogs((prev) => [...prev.slice(-49), newLog]); // Keep last 50
 
