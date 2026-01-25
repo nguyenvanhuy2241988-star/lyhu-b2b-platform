@@ -210,37 +210,44 @@ async function executeRivalScan(pageUrl, maxAdds = 10) {
                 await profilePage.goto(cleanUrl, { waitUntil: 'networkidle2' });
                 await sleep(3000);
 
-                // ROBUST ADD FRIEND CLICKING (Ported from Post Scan V7)
-                // Try 1: Main Button (ARIA)
-                let addBtn = await profilePage.$('div[aria-label="Add friend"], div[aria-label="Thêm bạn bè"]');
-
-                // Try 2: Main Button (XPath Text)
-                if (!addBtn) {
-                    const [btn] = await profilePage.$x("//div[@role='button'][contains(., 'Add friend') or contains(., 'Thêm bạn bè')]");
-                    if (btn) addBtn = btn;
-                }
-
-                // Try 3: Hidden in "..." Menu
-                if (!addBtn) {
-                    console.log(`[EXEC] Add button not found. Checking 'More' menu...`);
-                    const [moreBtn] = await profilePage.$x("//div[@aria-label='More' or @aria-label='Khác' or @aria-label='See options']");
-                    if (moreBtn) {
-                        try {
-                            await moreBtn.click();
-                            await sleep(1000);
-                            const [hiddenAddBtn] = await profilePage.$x("//div[@role='menuitem'][contains(., 'Add friend') or contains(., 'Thêm bạn bè')]");
-                            if (hiddenAddBtn) {
-                                console.log(`[EXEC] Found hidden Add Friend button!`);
-                                addBtn = hiddenAddBtn;
-                            }
-                        } catch (e) {
-                            // Ignore click errors on menu
+                // ROBUST ADD FRIEND CLICKING (Fixed for Puppeteer Compatibility)
+                const added = await profilePage.evaluate(async () => {
+                    function clickByText(tag, textPatterns) {
+                        const xpath = `//${tag}[${textPatterns.map(t => `contains(., '${t}')`).join(' or ')}]`;
+                        const element = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                        if (element) {
+                            element.click();
+                            return true;
                         }
+                        return false;
                     }
-                }
 
-                if (addBtn) {
-                    await addBtn.click();
+                    // Try 1: Main Button (ARIA)
+                    const ariaBtn = document.querySelector('div[aria-label="Add friend"], div[aria-label="Thêm bạn bè"]');
+                    if (ariaBtn) {
+                        ariaBtn.click();
+                        return true;
+                    }
+
+                    // Try 2: Main Button (XPath Text via JS)
+                    if (clickByText('div[@role="button"]', ['Add friend', 'Thêm bạn bè'])) return true;
+
+                    // Try 3: Hidden in "..." Menu
+                    // Find menu button
+                    const menuBtnXPath = "//div[@aria-label='More' or @aria-label='Khác' or @aria-label='See options']";
+                    const menuBtn = document.evaluate(menuBtnXPath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+
+                    if (menuBtn) {
+                        menuBtn.click();
+                        await new Promise(r => setTimeout(r, 1000));
+                        // Click hidden add button
+                        if (clickByText('div[@role="menuitem"]', ['Add friend', 'Thêm bạn bè'])) return true;
+                    }
+
+                    return false;
+                });
+
+                if (added) {
                     totalAdded++;
                     await logAction('search', 'success', `Đã cướp khách thành công: ${lead.name}`, { profile_url: cleanUrl });
                     await saveLead({ source: `rival_scan: ${pageUrl}`, name: lead.name, profile_url: cleanUrl, ai_score: aiScore });
