@@ -72,7 +72,8 @@ async function runDefenseTest() {
     const page = await browser.newPage();
 
     try {
-        await warmUp(page, 30); // Warm up for 30 seconds
+        // Run for 15 minutes (900 seconds) as per the Warm-up Strategy
+        await warmUp(page, 900);
     } catch (e) {
         console.error("Defense Error:", e);
     } finally {
