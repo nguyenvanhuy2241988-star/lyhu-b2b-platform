@@ -88,16 +88,32 @@ async function executeRivalScan(pageUrl, maxAdds = 10) {
                 await profilePage.goto(cleanUrl, { waitUntil: 'networkidle2' });
                 await sleep(3000);
 
-                // Quick Add Check
+                // ROBUST ADD FRIEND CLICKING (Ported from Post Scan V7)
+                // Try 1: Main Button (ARIA)
                 let addBtn = await profilePage.$('div[aria-label="Add friend"], div[aria-label="Thêm bạn bè"]');
+
+                // Try 2: Main Button (XPath Text)
                 if (!addBtn) {
-                    // Check More
-                    const [moreBtn] = await profilePage.$x("//div[@aria-label='More' or @aria-label='Khác']");
+                    const [btn] = await profilePage.$x("//div[@role='button'][contains(., 'Add friend') or contains(., 'Thêm bạn bè')]");
+                    if (btn) addBtn = btn;
+                }
+
+                // Try 3: Hidden in "..." Menu
+                if (!addBtn) {
+                    console.log(`[EXEC] Add button not found. Checking 'More' menu...`);
+                    const [moreBtn] = await profilePage.$x("//div[@aria-label='More' or @aria-label='Khác' or @aria-label='See options']");
                     if (moreBtn) {
-                        await moreBtn.click();
-                        await sleep(500);
-                        const [hiddenAddBtn] = await profilePage.$x("//div[@role='menuitem'][contains(., 'Add friend')]");
-                        if (hiddenAddBtn) addBtn = hiddenAddBtn;
+                        try {
+                            await moreBtn.click();
+                            await sleep(1000);
+                            const [hiddenAddBtn] = await profilePage.$x("//div[@role='menuitem'][contains(., 'Add friend') or contains(., 'Thêm bạn bè')]");
+                            if (hiddenAddBtn) {
+                                console.log(`[EXEC] Found hidden Add Friend button!`);
+                                addBtn = hiddenAddBtn;
+                            }
+                        } catch (e) {
+                            // Ignore click errors on menu
+                        }
                     }
                 }
 
@@ -107,7 +123,16 @@ async function executeRivalScan(pageUrl, maxAdds = 10) {
                     await logAction('search', 'success', `Đã cướp khách thành công: ${lead.name}`, { profile_url: cleanUrl });
                     await saveLead({ source: `rival_scan: ${pageUrl}`, name: lead.name, profile_url: cleanUrl, ai_score: aiScore });
                 } else {
-                    console.log(`[EXEC] Could not add ${lead.name}`);
+                    // Diagnostic
+                    const isRequested = await profilePage.evaluate(() => {
+                        const text = document.body.innerText;
+                        return text.includes('Cancel request') || text.includes('Hủy lời mời');
+                    });
+                    if (isRequested) {
+                        await logAction('search', 'warning', `Đã gửi lời mời trước đó: ${lead.name}`);
+                    } else {
+                        console.log(`[EXEC] Could not add ${lead.name}`);
+                    }
                 }
 
             } catch (err) {

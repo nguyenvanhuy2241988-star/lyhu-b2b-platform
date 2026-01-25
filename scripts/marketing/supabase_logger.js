@@ -62,6 +62,8 @@ async function saveLead(leadData) {
             name: leadData.name || 'Unknown User',
             profile_url: leadData.profile_url,
             status: 'pending',
+            ai_score: leadData.ai_score || 0,
+            profile_vector: leadData.profile_vector || {},
             created_at: new Date().toISOString()
         };
 
