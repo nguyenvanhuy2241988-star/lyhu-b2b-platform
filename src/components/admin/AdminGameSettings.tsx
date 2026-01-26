@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { getGames, updateGameConfig } from "@/lib/entertainmentStore";
 import { Loader2, Save, Gamepad2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast"; // Assuming toast exists
+import { useToast } from "@/components/ui/toast"; // Corrected import path
 
 export const AdminGameSettings = () => {
     const [games, setGames] = useState<any[]>([]);
