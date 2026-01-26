@@ -60,7 +60,7 @@ const LeaderboardWidget = () => {
 
 export default function EntertainmentPage() {
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState<'wheel' | 'bird' | 'caro' | 'quiz' | 'store' | 'typing'>('wheel');
+    const [activeTab, setActiveTab] = useState<'wheel' | 'bird' | 'typing' | 'caro' | 'quiz' | 'store'>('wheel');
 
     return (
         <div className="min-h-screen bg-slate-50 p-6">
@@ -68,30 +68,30 @@ export default function EntertainmentPage() {
             <div className="mb-8 flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <Gamepad2 className="w-8 h-8 text-purple-600" /> Góc Giải Trí
+                        <Gamepad2 className="w-8 h-8 text-teal-600" /> Góc Giải Trí
                     </h1>
                     <p className="text-slate-500 mt-1">Nơi xả stress và gắn kết đồng đội!</p>
                 </div>
             </div>
 
             {/* Game Selector Tabs */}
-            <div className="flex gap-4 mb-6 border-b border-slate-200">
+            <div className="flex gap-4 mb-6 border-b border-slate-200 overflow-x-auto pb-2">
                 <button
                     onClick={() => setActiveTab('wheel')}
-                    className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'wheel'
-                        ? "border-purple-600 text-purple-700"
-                        : "border-transparent text-slate-500 hover:text-slate-700"
+                    className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === 'wheel'
+                            ? "border-teal-600 text-teal-700"
+                            : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
-                        <Gift className="w-4 h-4" /> Vòng Quay Nhân Phẩm
+                        <Gift className="w-4 h-4" /> Vòng Quay
                     </div>
                 </button>
                 <button
                     onClick={() => setActiveTab('bird')}
-                    className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'bird'
-                        ? "border-purple-600 text-purple-700"
-                        : "border-transparent text-slate-500 hover:text-slate-700"
+                    className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === 'bird'
+                            ? "border-teal-600 text-teal-700"
+                            : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -99,47 +99,47 @@ export default function EntertainmentPage() {
                     </div>
                 </button>
                 <button
-                    onClick={() => setActiveTab('caro')}
-                    className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'caro'
-                        ? "border-purple-600 text-purple-700"
-                        : "border-transparent text-slate-500 hover:text-slate-700"
+                    onClick={() => setActiveTab('typing')}
+                    className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === 'typing'
+                            ? "border-teal-600 text-teal-700"
+                            : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
-                        <Grid3X3 className="w-4 h-4" /> Cờ Caro (Beta)
+                        <Keyboard className="w-4 h-4" /> Đua Gõ (Tuần)
+                    </div>
+                </button>
+                <button
+                    onClick={() => setActiveTab('caro')}
+                    className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === 'caro'
+                            ? "border-teal-600 text-teal-700"
+                            : "border-transparent text-slate-500 hover:text-slate-700"
+                        }`}
+                >
+                    <div className="flex items-center gap-2">
+                        <Grid3X3 className="w-4 h-4" /> Cờ Caro
                     </div>
                 </button>
                 <button
                     onClick={() => setActiveTab('quiz')}
-                    className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'quiz'
-                        ? "border-purple-600 text-purple-700"
-                        : "border-transparent text-slate-500 hover:text-slate-700"
+                    className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === 'quiz'
+                            ? "border-teal-600 text-teal-700"
+                            : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
-                        <Image className="w-4 h-4" /> Đuổi Hình (Mới)
+                        <Image className="w-4 h-4" /> Đuổi Hình
                     </div>
                 </button>
                 <button
                     onClick={() => setActiveTab('store')}
-                    className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'store'
-                        ? "border-purple-600 text-purple-700"
-                        : "border-transparent text-slate-500 hover:text-slate-700"
+                    className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === 'store'
+                            ? "border-emerald-600 text-emerald-700"
+                            : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
                         <ShoppingBag className="w-4 h-4" /> Đổi Quà
-                    </div>
-                </button>
-                <button
-                    onClick={() => setActiveTab('typing')}
-                    className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'typing'
-                        ? "border-purple-600 text-purple-700"
-                        : "border-transparent text-slate-500 hover:text-slate-700"
-                        }`}
-                >
-                    <div className="flex items-center gap-2">
-                        <Keyboard className="w-4 h-4" /> Đua Gõ (Beta)
                     </div>
                 </button>
             </div>
@@ -149,7 +149,7 @@ export default function EntertainmentPage() {
                 {activeTab === 'wheel' && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
                         <div className="text-center mb-6">
-                            <h2 className="text-xl font-bold mb-2">Vòng Quay May Mắn</h2>
+                            <h2 className="text-xl font-bold mb-2">Vòng Quay Nhân Phẩm</h2>
                             <p className="text-slate-500 text-sm">Trưa nay ăn gì? Ai rửa bát? Để định mệnh quyết định!</p>
                         </div>
                         <LuckyWheelGame currentUser={user} />
@@ -167,6 +167,16 @@ export default function EntertainmentPage() {
                         <div className="w-full xl:w-80 shrink-0">
                             <LeaderboardWidget />
                         </div>
+                    </div>
+                )}
+
+                {activeTab === 'typing' && (
+                    <div className="animate-in fade-in duration-300">
+                        <div className="text-center mb-6">
+                            <h2 className="text-xl font-bold mb-2">Đua Gõ Phím (Typing Race)</h2>
+                            <p className="text-slate-500 text-sm">Luyện ngón tay vàng - Sẵn sàng chạy deadline!</p>
+                        </div>
+                        <TypingGame currentUser={user} />
                     </div>
                 )}
 
@@ -193,20 +203,10 @@ export default function EntertainmentPage() {
                 {activeTab === 'store' && (
                     <div className="animate-in fade-in duration-300">
                         <div className="text-center mb-6">
-                            <h2 className="text-xl font-bold mb-2">Cửa Hàng Đổi Quà</h2>
+                            <h2 className="text-xl font-bold mb-2 text-emerald-700">Cửa Hàng Đổi Quà</h2>
                             <p className="text-slate-500 text-sm">Dùng điểm tích lũy để đổi những phần quà hấp dẫn!</p>
                         </div>
                         <RewardStore currentUser={user} />
-                    </div>
-                )}
-
-                {activeTab === 'typing' && (
-                    <div className="animate-in fade-in duration-300">
-                        <div className="text-center mb-6">
-                            <h2 className="text-xl font-bold mb-2">Đua Gõ Phím (Typing Race)</h2>
-                            <p className="text-slate-500 text-sm">Luyện ngón tay vàng - Sẵn sàng chạy deadline!</p>
-                        </div>
-                        <TypingGame currentUser={user} />
                     </div>
                 )}
             </div>
