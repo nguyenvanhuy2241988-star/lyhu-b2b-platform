@@ -100,6 +100,7 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
         } else if (difficulty === 'MEDIUM') {
             bestMove = findMediumMove(board);
         } else {
+            // HARD MODE: Minimax with Alpha-Beta Pruning (Depth limited)
             bestMove = findBestMoveMinimax(board);
         }
 
@@ -156,66 +157,172 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
         return candidates[Math.floor(Math.random() * candidates.length)];
     }
 
-    // Hard Strategy: Simple Score Evaluation (Minimax too slow for 15x15 in React w/o worker)
+    // --- HARD MODE AI (Minimax) ---
+
     const findBestMoveMinimax = (b: CellValue[][]) => {
         const candidates = getEmptyNeighbors(b);
-        let bestScore = -Infinity;
-        let bestMove = candidates[0];
+        if (candidates.length === 1) return candidates[0];
 
+        let bestScore = -Infinity;
+        let bestMoves: { r: number, c: number }[] = [];
+
+        // 1. Check Immediate Win (Depth 0)
         for (let move of candidates) {
-            const score = evaluatePosition(b, move.r, move.c);
+            b[move.r][move.c] = 'O';
+            if (checkWinner(b, move.r, move.c, 'O')) {
+                b[move.r][move.c] = null;
+                return move;
+            }
+            b[move.r][move.c] = null;
+        }
+
+        // 2. Check Immediate Block (Depth 0)
+        for (let move of candidates) {
+            b[move.r][move.c] = 'X';
+            if (checkWinner(b, move.r, move.c, 'X')) {
+                b[move.r][move.c] = null;
+                return move;
+            }
+            b[move.r][move.c] = null;
+        }
+
+        // 3. Minimax (Depth 2 max) with heuristics
+        // Only search top candidates
+        const ratedCandidates = candidates.map(m => {
+            b[m.r][m.c] = 'O';
+            const score = evaluateBoard(b, 'O');
+            b[m.r][m.c] = null;
+            return { ...m, score };
+        }).sort((a, b) => b.score - a.score).slice(0, 12);
+
+        for (let move of ratedCandidates) {
+            b[move.r][move.c] = 'O';
+            const score = minimax(b, 2, false, -Infinity, Infinity);
+            b[move.r][move.c] = null;
+
             if (score > bestScore) {
                 bestScore = score;
-                bestMove = move;
+                bestMoves = [move];
+            } else if (score === bestScore) {
+                bestMoves.push(move);
             }
         }
-        return bestMove;
+
+        return bestMoves.length > 0 ? bestMoves[Math.floor(Math.random() * bestMoves.length)] : candidates[0];
     };
 
-    const evaluatePosition = (b: CellValue[][], r: number, c: number): number => {
-        let score = 0;
+    const minimax = (b: CellValue[][], depth: number, isMaximizing: boolean, alpha: number, beta: number): number => {
+        if (depth === 0) return evaluateBoard(b, 'O');
 
-        // Offensive (Bot O)
-        b[r][c] = 'O';
-        const winO = checkWinner(b, r, c, 'O');
-        if (winO) score += 10000;
-        else score += countConsecutive(b, r, c, 'O');
+        const candidates = getEmptyNeighbors(b);
+        const limit = 8;
 
-        // Defensive (Block X)
-        b[r][c] = 'X';
-        const winX = checkWinner(b, r, c, 'X');
-        if (winX) score += 5000;
-        else score += countConsecutive(b, r, c, 'X') * 0.8;
-
-        b[r][c] = null;
-
-        const centerDist = Math.abs(r - 7) + Math.abs(c - 7);
-        score -= centerDist;
-
-        return score + Math.random();
-    }
-
-    const countConsecutive = (b: CellValue[][], row: number, col: number, player: Player) => {
-        let total = 0;
-        const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
-        for (const [dx, dy] of directions) {
-            let count = 0;
-            // Check line length including this spot
-            for (let i = -4; i <= 4; i++) {
-                const r = row + i * dx;
-                const c = col + i * dy;
-                if (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE && b[r][c] === player) {
-                    count++;
-                } else {
-                    if (count >= 3) total += count * 10;
-                    if (count === 4) total += 500;
-                    count = 0;
+        if (isMaximizing) {
+            let maxEval = -Infinity;
+            const subset = candidates.slice(0, limit);
+            for (let move of subset) {
+                b[move.r][move.c] = 'O';
+                if (checkWinner(b, move.r, move.c, 'O')) {
+                    b[move.r][move.c] = null;
+                    return 100000 + depth;
                 }
+                const evalScore = minimax(b, depth - 1, false, alpha, beta);
+                b[move.r][move.c] = null;
+                maxEval = Math.max(maxEval, evalScore);
+                alpha = Math.max(alpha, evalScore);
+                if (beta <= alpha) break;
             }
-            if (count >= 3) total += count * 10;
+            return maxEval;
+        } else {
+            let minEval = Infinity;
+            const subset = candidates.slice(0, limit);
+            for (let move of subset) {
+                b[move.r][move.c] = 'X';
+                if (checkWinner(b, move.r, move.c, 'X')) {
+                    b[move.r][move.c] = null;
+                    return -100000 - depth;
+                }
+                const evalScore = minimax(b, depth - 1, true, alpha, beta);
+                b[move.r][move.c] = null;
+                minEval = Math.min(minEval, evalScore);
+                beta = Math.min(beta, evalScore);
+                if (beta <= alpha) break;
+            }
+            return minEval;
+        }
+    };
+
+    const evaluateBoard = (b: CellValue[][], player: 'O') => {
+        let score = 0;
+        score += evaluatePlayer(b, 'O');
+        score -= evaluatePlayer(b, 'X') * 1.2; // Defensive bias
+        return score;
+    };
+
+    // Pattern Weights
+    const SCORES = {
+        WIN_5: 100000,
+        OPEN_4: 10000,
+        CLOSED_4: 1000,
+        OPEN_3: 1000,
+        CLOSED_3: 100,
+        OPEN_2: 100,
+        CLOSED_2: 10
+    };
+
+    const evaluatePlayer = (b: CellValue[][], p: Player) => {
+        let total = 0;
+        // Horizontal
+        for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let c = 0; c < BOARD_SIZE - 4; c++) {
+                const chunk = [b[r][c], b[r][c + 1], b[r][c + 2], b[r][c + 3], b[r][c + 4]];
+                total += evaluateChunk(chunk, p);
+            }
+        }
+        // Vertical
+        for (let r = 0; r < BOARD_SIZE - 4; r++) {
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                const chunk = [b[r][c], b[r + 1][c], b[r + 2][c], b[r + 3][c], b[r + 4][c]];
+                total += evaluateChunk(chunk, p);
+            }
+        }
+        // Diagonal \
+        for (let r = 0; r < BOARD_SIZE - 4; r++) {
+            for (let c = 0; c < BOARD_SIZE - 4; c++) {
+                const chunk = [b[r][c], b[r + 1][c + 1], b[r + 2][c + 2], b[r + 3][c + 3], b[r + 4][c + 4]];
+                total += evaluateChunk(chunk, p);
+            }
+        }
+        // Diagonal /
+        for (let r = 0; r < BOARD_SIZE - 4; r++) {
+            for (let c = 4; c < BOARD_SIZE; c++) {
+                const chunk = [b[r][c], b[r + 1][c - 1], b[r + 2][c - 2], b[r + 3][c - 3], b[r + 4][c - 4]];
+                total += evaluateChunk(chunk, p);
+            }
         }
         return total;
     }
+
+    const evaluateChunk = (chunk: CellValue[], p: Player) => {
+        let count = 0;
+        let empty = 0;
+        let blocked = 0;
+
+        for (const cell of chunk) {
+            if (cell === p) count++;
+            else if (cell === null) empty++;
+            else blocked++;
+        }
+
+        if (blocked > 0) return 0;
+
+        if (count === 5) return SCORES.WIN_5;
+        if (count === 4 && empty === 1) return SCORES.OPEN_4;
+        if (count === 3 && empty === 2) return SCORES.OPEN_3;
+        if (count === 2 && empty === 3) return SCORES.OPEN_2;
+
+        return 0;
+    };
 
     const hasNeighbor = (r: number, c: number) => {
         for (let i = -1; i <= 1; i++) {
