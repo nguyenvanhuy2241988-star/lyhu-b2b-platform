@@ -9,7 +9,7 @@ export const AdminGameSettings = () => {
     const [games, setGames] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState<string | null>(null);
-    const { toast } = useToast();
+    const { showToast } = useToast();
 
     useEffect(() => {
         loadGames();
@@ -44,9 +44,9 @@ export const AdminGameSettings = () => {
         setSaving(game.code);
         try {
             await updateGameConfig(game.code, game.config);
-            toast({ title: "Cập nhật thành công", description: `Đã lưu cấu hình cho ${game.name}` });
+            showToast(`Cập nhật thành công cấu hình cho ${game.name}`, 'success');
         } catch (error) {
-            toast({ title: "Lỗi", description: "Không thể lưu cấu hình", variant: "destructive" });
+            showToast("Không thể lưu cấu hình", 'error');
         } finally {
             setSaving(null);
         }
