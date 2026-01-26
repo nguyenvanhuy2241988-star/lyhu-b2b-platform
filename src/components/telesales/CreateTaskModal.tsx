@@ -113,6 +113,7 @@ export const CreateTaskModal = ({
             assignee_ids: formData.assigneeIds,
             leader_id: formData.leaderId || null,
             type: taskType,
+            attachments: attachments // Pass attachments
         });
         onClose();
     };
@@ -126,23 +127,65 @@ export const CreateTaskModal = ({
         }
     };
 
+    const [attachments, setAttachments] = useState<any[]>(initialData?.attachments || []);
+    const [isUploading, setIsUploading] = useState(false);
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+
+        setIsUploading(true);
+        const file = e.target.files[0];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        try {
+            const { data, error } = await supabase.storage
+                .from('task_attachments')
+                .upload(filePath, file);
+
+            if (error) throw error;
+
+            const { data: publicUrlData } = supabase.storage
+                .from('task_attachments')
+                .getPublicUrl(filePath);
+
+            const newAttachment = {
+                name: file.name,
+                url: publicUrlData.publicUrl,
+                type: file.type,
+                size: file.size
+            };
+
+            setAttachments(prev => [...prev, newAttachment]);
+        } catch (error: any) {
+            alert(`Lỗi upload: ${error.message}`);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const removeAttachment = (index: number) => {
+        setAttachments(prev => prev.filter((_, i) => i !== index));
+    };
+
     return (
         <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-in fade-in zoom-in duration-200">
-                <div className="p-4 border-b border-slate-100">
-                    <div className="flex items-center justify-between mb-2">
+            <div className="bg-white rounded-xl shadow-xl max-w-md w-full animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
+                <div className="p-4 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
+                    <div>
                         <h3 className="font-semibold text-lg text-slate-900">
                             {isEditMode ? "✏️ Chỉnh sửa" : "➕ Thêm mới"}
                         </h3>
-                        <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-full text-slate-500">
-                            <X className="w-5 h-5" />
-                        </button>
+                        {isEditMode && initialData?.title && (
+                            <div className="text-sm text-slate-600 truncate max-w-[250px]">
+                                {initialData.title}
+                            </div>
+                        )}
                     </div>
-                    {isEditMode && initialData?.title && (
-                        <div className="text-sm text-slate-600">
-                            <span className="font-medium">{initialData.title}</span>
-                        </div>
-                    )}
+                    <button onClick={onClose} className="p-1 hover:bg-slate-100 rounded-full text-slate-500">
+                        <X className="w-5 h-5" />
+                    </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-4 space-y-4">
@@ -307,13 +350,51 @@ export const CreateTaskModal = ({
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Ghi chú</label>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="block text-sm font-medium text-slate-700">Ghi chú & Đính kèm</label>
+                            <label className="cursor-pointer text-blue-600 hover:text-blue-700 text-xs font-medium flex items-center gap-1">
+                                {isUploading ? 'Đang tải...' : (
+                                    <>
+                                        <span>+ Thêm file/ảnh</span>
+                                        <input type="file" className="hidden" onChange={handleFileUpload} />
+                                    </>
+                                )}
+                            </label>
+                        </div>
                         <textarea
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[80px]"
                             placeholder="Ghi chú thêm..."
                             value={formData.description}
                             onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
                         />
+
+                        {/* Attachments List */}
+                        {attachments.length > 0 && (
+                            <div className="grid grid-cols-3 gap-2 mt-2">
+                                {attachments.map((file, idx) => (
+                                    <div key={idx} className="relative group border border-slate-200 rounded-lg p-1 bg-slate-50 flex flex-col items-center">
+                                        <button
+                                            type="button"
+                                            onClick={() => removeAttachment(idx)}
+                                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+
+                                        {file.type?.startsWith('image/') ? (
+                                            <img src={file.url} alt={file.name} className="h-16 w-full object-cover rounded" />
+                                        ) : (
+                                            <div className="h-16 w-full flex items-center justify-center bg-slate-200 rounded text-slate-500 text-xs">
+                                                Attachment
+                                            </div>
+                                        )}
+                                        <div className="mt-1 w-full text-[10px] text-center truncate px-1 text-slate-600" title={file.name}>
+                                            {file.name}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex justify-between items-center pt-2">
@@ -353,8 +434,10 @@ export const CreateTaskModal = ({
                                             priority: formData.priority,
                                             due_date: formData.dueDate || null,
                                             note: formData.description,
-                                            type: taskType,
-                                            status: 'done' as TaskStatus  // Set to done
+                                            status: 'done' as TaskStatus,  // Set to done
+                                            assignee_ids: formData.assigneeIds,
+                                            leader_id: formData.leaderId || null,
+                                            attachments: attachments
                                         });
                                         onClose();
                                     }}
@@ -366,7 +449,8 @@ export const CreateTaskModal = ({
                             )}
                             <button
                                 type="submit"
-                                className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg"
+                                disabled={isUploading}
+                                className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg disabled:opacity-50"
                             >
                                 {isEditMode ? "Lưu thay đổi" : "Lưu công việc"}
                             </button>

@@ -170,6 +170,7 @@ export type TelesalesTask = {
     assigned_to?: string | null;   // User ID of assignee (legacy)
     assignee_ids?: string[] | null; // Array of user IDs
     leader_id?: string | null;     // User ID of leader
+    attachments?: any[] | null;     // Array of attachment objects { name, url, type, size }
 
     order?: number | null;
 
@@ -286,7 +287,8 @@ export async function fetchUnifiedTasks(input: {
             type: t.source_type, // 'deal' or 'task'
             is_overdue: t.is_overdue,
             assignee_ids: t.assignee_ids, // NEW
-            leader_id: t.leader_id      // NEW
+            leader_id: t.leader_id,      // NEW
+            attachments: t.attachments || [] // NEW
         })) as TelesalesTask[];
 
     } catch (err) {
@@ -307,6 +309,7 @@ export async function createTaskSupabase(input: {
     assigned_to?: string | null;
     assignee_ids?: string[];
     leader_id?: string | null;
+    attachments?: any[]; // NEW
 }, token?: string): Promise<TelesalesTask> { // Added token param
     const userId = await getUserIdSafe(); // Could pass this too, but for write mostly safe? Or use token payload?
     // Write operations are less prone to "loading" deadlocks than "onMount" reads, but safer to use Pure Fetch.
@@ -364,6 +367,7 @@ export async function createTaskSupabase(input: {
         assigned_to: input.assigned_to || null,
         assignee_ids: input.assignee_ids ?? [],
         leader_id: input.leader_id || null,
+        attachments: input.attachments || [], // NEW
         order: Math.floor(Date.now() / 1000),
     };
 
@@ -415,6 +419,7 @@ export async function updateTaskSupabase(taskId: string, patch: Partial<Telesale
         assigned_to: patch.assigned_to ?? undefined,
         assignee_ids: patch.assignee_ids ?? undefined,
         leader_id: patch.leader_id ?? undefined,
+        attachments: patch.attachments ?? undefined, // NEW
         updated_at: new Date().toISOString(),
     };
 
