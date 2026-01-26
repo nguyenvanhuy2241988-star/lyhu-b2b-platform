@@ -355,7 +355,7 @@ export const CreateTaskModal = ({
                                 {isUploading ? 'Đang tải...' : (
                                     <>
                                         <span>+ Thêm file/ảnh</span>
-                                        <input type="file" className="hidden" onChange={handleFileUpload} />
+                                        <input type="file" multiple className="hidden" onChange={handleFileUpload} />
                                     </>
                                 )}
                             </label>

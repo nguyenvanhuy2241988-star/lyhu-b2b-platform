@@ -100,9 +100,76 @@ export const TaskEditModal = ({
             status: formData.status,
             priority: formData.priority,
             note: formData.description,
-            phone: formData.phone
+            phone: formData.phone,
+            attachments: attachments // Sync attachments
         });
         onClose();
+    };
+
+    const [attachments, setAttachments] = useState<any[]>(initialData?.attachments || []);
+    const [isUploading, setIsUploading] = useState(false);
+
+    // Sync attachments when initialData changes
+    useEffect(() => {
+        if (isOpen && initialData) {
+            setAttachments(initialData.attachments || []);
+        }
+    }, [isOpen, initialData]);
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+
+        setIsUploading(true);
+        const files = Array.from(e.target.files);
+        const newAttachments: any[] = [];
+        const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+
+        try {
+            // Validate sizes first
+            const invalidFiles = files.filter(f => f.size > MAX_SIZE);
+            if (invalidFiles.length > 0) {
+                alert(`File quá nặng (>50MB): ${invalidFiles.map(f => f.name).join(', ')}`);
+                setIsUploading(false);
+                return;
+            }
+
+            // Upload parallel
+            await Promise.all(files.map(async (file) => {
+                // Sanitize filename
+                const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+                const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}_${sanitizedName}`;
+                const filePath = `${fileName}`;
+
+                const { data, error } = await supabase.storage
+                    .from('task_attachments')
+                    .upload(filePath, file);
+
+                if (error) throw error;
+
+                const { data: publicUrlData } = supabase.storage
+                    .from('task_attachments')
+                    .getPublicUrl(filePath);
+
+                newAttachments.push({
+                    name: file.name,
+                    url: publicUrlData.publicUrl,
+                    type: file.type,
+                    size: file.size
+                });
+            }));
+
+            setAttachments(prev => [...prev, ...newAttachments]);
+        } catch (error: any) {
+            console.error("Upload error:", error);
+            alert(`Lỗi upload: ${error.message}`);
+        } finally {
+            setIsUploading(false);
+            e.target.value = '';
+        }
+    };
+
+    const removeAttachment = (index: number) => {
+        setAttachments(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleDelete = () => {
@@ -301,6 +368,8 @@ export const TaskEditModal = ({
                                             <label className="block text-sm font-medium text-slate-700 mb-1">Số điện thoại</label>
                                             <input
                                                 type="text"
+                                            <input
+                                                type="text"
                                                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                                 value={formData.phone}
                                                 onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
@@ -309,6 +378,52 @@ export const TaskEditModal = ({
                                     </div>
                                 )}
                             </div>
+                        )}
+                    </div>
+
+                    {/* Attachments Section (Synced from CreateTaskModal) */}
+                    <div>
+                        <div className="flex justify-between items-center mb-1">
+                            <label className="block text-sm font-medium text-slate-700">Đính kèm</label>
+                            <label className="cursor-pointer text-blue-600 hover:text-blue-700 text-xs font-medium flex items-center gap-1">
+                                {isUploading ? 'Đang tải...' : (
+                                    <>
+                                        <span>+ Thêm file/ảnh</span>
+                                        <input type="file" multiple className="hidden" onChange={handleFileUpload} />
+                                    </>
+                                )}
+                            </label>
+                        </div>
+
+                        {attachments.length > 0 ? (
+                            <div className="grid grid-cols-4 gap-2 mt-2">
+                                {attachments.map((file, idx) => (
+                                    <div key={idx} className="relative group border border-slate-200 rounded-lg p-1 bg-slate-50 flex flex-col items-center">
+                                        <button
+                                            type="button"
+                                            onClick={() => removeAttachment(idx)}
+                                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+
+                                        {file.type?.startsWith('image/') ? (
+                                            <a href={file.url} target="_blank" rel="noopener noreferrer" className="block w-full">
+                                                <img src={file.url} alt={file.name} className="h-14 w-full object-cover rounded" />
+                                            </a>
+                                        ) : (
+                                            <a href={file.url} target="_blank" rel="noopener noreferrer" className="h-14 w-full flex items-center justify-center bg-slate-200 rounded text-slate-500 text-xs hover:bg-slate-300 transition-colors">
+                                                File
+                                            </a>
+                                        )}
+                                        <div className="mt-1 w-full text-[9px] text-center truncate px-1 text-slate-600" title={file.name}>
+                                            {file.name}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-slate-400 italic">Chưa có file đính kèm.</p>
                         )}
                     </div>
                 </div>
