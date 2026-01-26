@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { ShoppingBag, Star, Clock, CheckCircle } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
+import { getUserWallet, redeemReward } from "@/lib/entertainmentStore";
 
 interface Reward {
     id: string;
@@ -33,29 +34,20 @@ export const RewardStore = ({ currentUser }: { currentUser: any }) => {
     }, [currentUser]);
 
     const calculatePoints = async () => {
-        // Calculate total points from all games
-        // Specific query to sum score? For now let's mock or simple fetch
-        // In real app: create a view/function `get_user_total_score`
         if (!currentUser?.id) return;
-
-        const { data } = await supabase
-            .from('game_scores')
-            .select('score')
-            .eq('user_id', currentUser.id);
-
-        const total = (data as any[])?.reduce((acc, curr) => acc + curr.score, 0) || 0;
-
-        // Subtract spent points (TODO)
-        // const { data: spent } = ...
-
-        setMyPoints(total);
+        try {
+            const wallet = await getUserWallet(currentUser.id);
+            setMyPoints(wallet?.balance || 0);
+        } catch (e) {
+            console.error("Failed to load wallet", e);
+        }
     };
 
     const fetchData = async () => {
         setLoading(true);
         // Rewards
         const { data: rewardsData } = await supabase
-            .from('entertainment_rewards' as any)
+            .from('reward_store_items')
             .select('*')
             .eq('is_active', true)
             .order('cost', { ascending: true });
@@ -64,11 +56,14 @@ export const RewardStore = ({ currentUser }: { currentUser: any }) => {
         // History
         if (currentUser?.id) {
             const { data: histData } = await supabase
-                .from('user_redemptions' as any)
-                .select('*, reward:entertainment_rewards(name)')
+                .from('redemption_requests')
+                .select('*, reward:reward_store_items(name)')
                 .eq('user_id', currentUser.id)
-                .order('redeemed_at', { ascending: false });
-            setHistory((histData as any) || []);
+                .order('created_at', { ascending: false }); // table uses created_at
+
+            // Map created_at to redeemed_at for UI
+            const mapped = (histData as any[])?.map(h => ({ ...h, redeemed_at: h.created_at })) || [];
+            setHistory(mapped);
         }
         setLoading(false);
     };
@@ -81,20 +76,13 @@ export const RewardStore = ({ currentUser }: { currentUser: any }) => {
             return;
         }
 
-        const { error } = await supabase
-            .from('user_redemptions' as any)
-            .insert([{
-                user_id: currentUser.id,
-                reward_id: reward.id,
-                cost: reward.cost
-            }]);
-
-        if (error) {
-            alert("Lỗi đổi quà: " + error.message);
-        } else {
+        try {
+            await redeemReward(reward.id);
             alert("Đổi thành công! Vào lịch sử để xem trạng thái.");
-            calculatePoints(); // Refresh points
+            calculatePoints(); // Refresh balance
             fetchData(); // Refresh history
+        } catch (error: any) {
+            alert("Lỗi đổi quà: " + (error.message || "Không xác định"));
         }
     };
 

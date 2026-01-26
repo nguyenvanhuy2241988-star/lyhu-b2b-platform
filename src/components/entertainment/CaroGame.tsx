@@ -78,14 +78,27 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
         }
     };
 
-    const finishGame = (w: Player | 'DRAW', line?: number[][]) => {
+    const finishGame = async (w: Player | 'DRAW', line?: number[][]) => {
         setWinner(w);
         if (line) setWinningLine(line);
         if (w === 'X') {
+            // Calculate Points
+            let points = 0;
             let code = 'caro_easy';
-            if (difficulty === 'MEDIUM') code = 'caro_medium';
-            if (difficulty === 'HARD') code = 'caro_hard';
+            if (difficulty === 'EASY') points = config.points_easy || 50;
+            if (difficulty === 'MEDIUM') { points = config.points_medium || 100; code = 'caro_medium'; }
+            if (difficulty === 'HARD') { points = config.points_hard || 200; code = 'caro_hard'; }
+
+            // Save Score (Leaderboard)
             saveGameScore(code, 100, currentUser.id);
+
+            // Add Points to Wallet
+            try {
+                await addPoints(currentUser.id, points, 'GAME_WIN', `Thắng Caro (${difficulty})`, code);
+                // Maybe show a toast or modal effect?
+            } catch (e) {
+                console.error("Failed to add points", e);
+            }
         }
     };
 
