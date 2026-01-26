@@ -59,7 +59,7 @@ const LeaderboardWidget = () => {
 
 export default function EntertainmentPage() {
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState<'wheel' | 'bird' | 'caro' | 'quiz'>('wheel');
+    const [activeTab, setActiveTab] = useState<'wheel' | 'bird' | 'caro' | 'quiz' | 'store'>('wheel');
 
     return (
         <div className="min-h-screen bg-slate-50 p-6">
