@@ -221,7 +221,7 @@ export const LuckyWheelGame = ({ currentUser }: LuckyWheelGameProps) => {
                 <button
                     disabled={isSpinning || items.length < 2}
                     onClick={handleSpin}
-                    className="mt-8 px-12 py-4 bg-gradient-to-r from-teal-500 to-emerald-500 text-white text-xl font-bold rounded-full shadow-xl hover:scale-105 transition-transform disabled:opacity-50 disabled:grayscale"
+                    className="mt-8 px-12 py-4 bg-gradient-to-r from-teal-500 to-teal-400 text-white text-xl font-bold rounded-full shadow-xl hover:scale-105 transition-transform disabled:opacity-50 disabled:grayscale"
                 >
                     {isSpinning ? "Đang quay..." : "QUAY NGAY!"}
                 </button>
@@ -229,7 +229,7 @@ export const LuckyWheelGame = ({ currentUser }: LuckyWheelGameProps) => {
                 {winner && !isSpinning && (
                     <div className="mt-6 animate-bounce text-center">
                         <p className="text-sm text-slate-500 font-medium uppercase tracking-wider">Kết quả</p>
-                        <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-green-600">{winner}</h2>
+                        <h2 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-teal-600 to-emerald-500">{winner}</h2>
                     </div>
                 )}
             </div>

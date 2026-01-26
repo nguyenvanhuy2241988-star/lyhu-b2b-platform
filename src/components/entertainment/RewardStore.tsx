@@ -102,7 +102,7 @@ export const RewardStore = ({ currentUser }: { currentUser: any }) => {
         <div className="flex flex-col lg:flex-row gap-8 items-start">
             {/* Store (Left) */}
             <div className="flex-1 w-full">
-                <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl p-6 text-white mb-6 shadow-lg flex justify-between items-center">
+                <div className="bg-gradient-to-r from-teal-500 to-teal-700 rounded-xl p-6 text-white mb-6 shadow-lg flex justify-between items-center">
                     <div>
                         <h3 className="font-bold text-lg mb-1">Ví điểm của bạn</h3>
                         <p className="text-3xl font-black flex items-center gap-2">
@@ -114,7 +114,7 @@ export const RewardStore = ({ currentUser }: { currentUser: any }) => {
                 </div>
 
                 <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <ShoppingBag className="w-5 h-5 text-emerald-600" /> Danh sách quà
+                    <ShoppingBag className="w-5 h-5 text-emerald-500" /> Danh sách quà
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -136,7 +136,7 @@ export const RewardStore = ({ currentUser }: { currentUser: any }) => {
                                     <button
                                         onClick={() => handleRedeem(item)}
                                         disabled={myPoints < item.cost}
-                                        className="px-3 py-1 bg-emerald-600 text-white text-xs font-bold rounded hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="px-3 py-1 bg-teal-600 text-white text-xs font-bold rounded hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         Đổi ngay
                                     </button>

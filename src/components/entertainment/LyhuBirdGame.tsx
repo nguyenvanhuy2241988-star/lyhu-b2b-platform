@@ -277,7 +277,7 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
 
                         <button
                             onClick={(e) => { e.stopPropagation(); startGame(); }}
-                            className="flex items-center gap-2 px-6 py-3 bg-green-500 hover:bg-green-600 text-white rounded-full font-bold shadow-lg transition-transform hover:scale-105"
+                            className="flex items-center gap-2 px-6 py-3 bg-teal-500 hover:bg-teal-600 text-white rounded-full font-bold shadow-lg transition-transform hover:scale-105"
                         >
                             <RotateCcw className="w-5 h-5" /> Chơi Lại
                         </button>

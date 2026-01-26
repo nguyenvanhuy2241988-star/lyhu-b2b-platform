@@ -79,8 +79,8 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('wheel')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === 'wheel'
-                            ? "border-teal-600 text-teal-700"
-                            : "border-transparent text-slate-500 hover:text-slate-700"
+                        ? "border-teal-600 text-teal-700"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -90,8 +90,8 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('bird')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === 'bird'
-                            ? "border-teal-600 text-teal-700"
-                            : "border-transparent text-slate-500 hover:text-slate-700"
+                        ? "border-teal-600 text-teal-700"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -101,8 +101,8 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('typing')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === 'typing'
-                            ? "border-teal-600 text-teal-700"
-                            : "border-transparent text-slate-500 hover:text-slate-700"
+                        ? "border-teal-600 text-teal-700"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -112,8 +112,8 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('caro')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === 'caro'
-                            ? "border-teal-600 text-teal-700"
-                            : "border-transparent text-slate-500 hover:text-slate-700"
+                        ? "border-teal-600 text-teal-700"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -123,8 +123,8 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('quiz')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === 'quiz'
-                            ? "border-teal-600 text-teal-700"
-                            : "border-transparent text-slate-500 hover:text-slate-700"
+                        ? "border-teal-600 text-teal-700"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -134,8 +134,8 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('store')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 whitespace-nowrap ${activeTab === 'store'
-                            ? "border-emerald-600 text-emerald-700"
-                            : "border-transparent text-slate-500 hover:text-slate-700"
+                        ? "border-emerald-600 text-emerald-700"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -203,7 +203,7 @@ export default function EntertainmentPage() {
                 {activeTab === 'store' && (
                     <div className="animate-in fade-in duration-300">
                         <div className="text-center mb-6">
-                            <h2 className="text-xl font-bold mb-2 text-emerald-700">Cửa Hàng Đổi Quà</h2>
+                            <h2 className="text-xl font-bold mb-2 text-teal-700">Cửa Hàng Đổi Quà</h2>
                             <p className="text-slate-500 text-sm">Dùng điểm tích lũy để đổi những phần quà hấp dẫn!</p>
                         </div>
                         <RewardStore currentUser={user} />
