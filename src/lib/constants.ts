@@ -35,6 +35,7 @@ import {
     ToggleLeft,     // Role Switch
     ArrowRightLeft, // Accountant Reconciliation
     Zap,            // Automation
+    Gamepad2
 } from "lucide-react";
 import { MODULES } from '@/modules/registry';
 
@@ -136,6 +137,7 @@ export const NAV_ITEMS = {
         { label: "Xếp lịch (Coming)", href: "#", icon: Calendar },
         { label: "Văn hóa & Quỹ", href: "#", icon: Gift },
         { label: "------------", href: "#", icon: List }, // Separator
+        { label: "Góc Giải Trí", href: "/entertainment", icon: Gamepad2 },
         { label: "Lương & Thưởng", href: "/admin/payroll", icon: DollarSign },
         { label: "Cài đặt", href: "/admin/settings", icon: Settings },
         { label: "Tài liệu", href: "/documents", icon: FileText },
@@ -153,6 +155,7 @@ export const NAV_ITEMS = {
         { label: "Khách hàng", href: "/sales/customers", icon: Users },
         { label: "Đơn hàng", href: PATH_ORDERS_SALES, icon: ShoppingCart },
         { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
+        { label: "Góc Giải Trí", href: "/entertainment", icon: Gamepad2 },
         { label: "Tài liệu", href: "/documents", icon: FileText },
     ],
     [ROLES.CTV]: [
@@ -177,6 +180,7 @@ export const NAV_ITEMS = {
         { label: "Thu nhập & KPI", href: "/telesales/earnings", icon: DollarSign },
         { label: "Quy định & Chính sách", href: "/telesales/rules", icon: Book },
         { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
+        { label: "Góc Giải Trí", href: "/entertainment", icon: Gamepad2 },
         { label: "Tài liệu", href: "/documents", icon: FileText },
     ],
     [ROLES.RECRUITER]: [
@@ -188,6 +192,7 @@ export const NAV_ITEMS = {
         { label: "Hồ sơ Nhân sự", href: "/hr/directory", icon: Users },
         { label: "Việc cần làm", href: "/tasks", icon: ListTodo },
         { label: "Hồ sơ công ty", href: "/recruitment/settings", icon: Settings },
+        { label: "Góc Giải Trí", href: "/entertainment", icon: Gamepad2 },
         { label: "Tài liệu", href: "/documents", icon: FileText },
     ],
     [ROLES.WAREHOUSE]: [
@@ -198,6 +203,7 @@ export const NAV_ITEMS = {
         { label: "Kiểm kê Kho", href: "/warehouse/audit", icon: Archive },
         { label: "Sản phẩm", href: "/warehouse/products", icon: Package },
         { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
+        { label: "Góc Giải Trí", href: "/entertainment", icon: Gamepad2 },
         { label: "Tài liệu", href: "/documents", icon: FileText },
         { label: "Việc cần làm", href: "/tasks", icon: ListTodo },
     ],
@@ -210,6 +216,7 @@ export const NAV_ITEMS = {
         { label: "Quét Data", href: "/marketing/scraper", icon: Globe },
         { label: "Tự động hóa", href: "/marketing/automation", icon: Zap },
         { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
+        { label: "Góc Giải Trí", href: "/entertainment", icon: Gamepad2 },
         { label: "Tài liệu", href: "/documents", icon: FileText },
         { label: "Việc cần làm", href: "/tasks", icon: ListTodo },
     ],
