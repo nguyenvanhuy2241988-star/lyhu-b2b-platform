@@ -85,27 +85,6 @@ export const TaskEditModal = ({
         }
     }, [isOpen, initialData]);
 
-    if (!isOpen) return null;
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        onSave({
-            ...formData,
-            id: initialData.id,
-            due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
-            assigned_to: formData.assignedTo,
-            assignee_ids: formData.assigneeIds,
-            leader_id: formData.leaderId,
-            customer_name: formData.customerName,
-            status: formData.status,
-            priority: formData.priority,
-            note: formData.description,
-            phone: formData.phone,
-            attachments: attachments // Sync attachments
-        });
-        onClose();
-    };
-
     const [attachments, setAttachments] = useState<any[]>(initialData?.attachments || []);
     const [isUploading, setIsUploading] = useState(false);
 
@@ -170,6 +149,27 @@ export const TaskEditModal = ({
 
     const removeAttachment = (index: number) => {
         setAttachments(prev => prev.filter((_, i) => i !== index));
+    };
+
+    if (!isOpen) return null;
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSave({
+            ...formData,
+            id: initialData.id,
+            due_date: formData.dueDate ? new Date(formData.dueDate).toISOString() : null,
+            assigned_to: formData.assignedTo,
+            assignee_ids: formData.assigneeIds,
+            leader_id: formData.leaderId,
+            customer_name: formData.customerName,
+            status: formData.status,
+            priority: formData.priority,
+            note: formData.description,
+            phone: formData.phone,
+            attachments: attachments // Sync attachments
+        });
+        onClose();
     };
 
     const handleDelete = () => {
@@ -366,8 +366,6 @@ export const TaskEditModal = ({
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 mb-1">Số điện thoại</label>
-                                            <input
-                                                type="text"
                                             <input
                                                 type="text"
                                                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
