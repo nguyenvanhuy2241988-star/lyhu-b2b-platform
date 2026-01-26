@@ -9,7 +9,7 @@ interface QuizQuestion {
     question: string;
     image_url?: string;
     correct_answer: string;
-    options?: string[]; // If jsonb in DB, need to parse
+    options?: any; // JSONB comes as any or array
     explanation?: string;
 }
 

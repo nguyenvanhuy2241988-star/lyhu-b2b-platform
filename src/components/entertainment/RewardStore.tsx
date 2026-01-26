@@ -43,7 +43,7 @@ export const RewardStore = ({ currentUser }: { currentUser: any }) => {
             .select('score')
             .eq('user_id', currentUser.id);
 
-        const total = data?.reduce((acc, curr) => acc + curr.score, 0) || 0;
+        const total = (data as any[])?.reduce((acc, curr) => acc + curr.score, 0) || 0;
 
         // Subtract spent points (TODO)
         // const { data: spent } = ...
@@ -55,20 +55,20 @@ export const RewardStore = ({ currentUser }: { currentUser: any }) => {
         setLoading(true);
         // Rewards
         const { data: rewardsData } = await supabase
-            .from('entertainment_rewards')
+            .from('entertainment_rewards' as any)
             .select('*')
             .eq('is_active', true)
             .order('cost', { ascending: true });
-        setRewards(rewardsData || []);
+        setRewards((rewardsData as any) || []);
 
         // History
         if (currentUser?.id) {
             const { data: histData } = await supabase
-                .from('user_redemptions')
+                .from('user_redemptions' as any)
                 .select('*, reward:entertainment_rewards(name)')
                 .eq('user_id', currentUser.id)
                 .order('redeemed_at', { ascending: false });
-            setHistory(histData || []);
+            setHistory((histData as any) || []);
         }
         setLoading(false);
     };
@@ -82,7 +82,7 @@ export const RewardStore = ({ currentUser }: { currentUser: any }) => {
         }
 
         const { error } = await supabase
-            .from('user_redemptions')
+            .from('user_redemptions' as any)
             .insert([{
                 user_id: currentUser.id,
                 reward_id: reward.id,
