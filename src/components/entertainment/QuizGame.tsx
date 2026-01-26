@@ -125,7 +125,7 @@ export const QuizGame = () => {
 
                     {/* Options */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {currentQ.options && currentQ.options.map((opt, idx) => {
+                        {currentQ.options && (currentQ.options as string[]).map((opt: string, idx: number) => {
                             let stateClass = "border-slate-200 hover:border-purple-300 hover:bg-purple-50";
 
                             if (selectedAnswer) {
