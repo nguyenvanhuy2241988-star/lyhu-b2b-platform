@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Trash2, User, Phone, ChevronRight, ChevronDown, ExternalLink } from "lucide-react";
+import { X, Trash2, User, Phone, ChevronRight, ChevronDown, ExternalLink, Eye, Download } from "lucide-react";
 import {
     TaskStatus,
     TaskPriority,
@@ -149,6 +149,22 @@ export const TaskEditModal = ({
 
     const removeAttachment = (index: number) => {
         setAttachments(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleDownload = async (url: string, fileName: string) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error("Download error:", error);
+            window.open(url, '_blank');
+        }
     };
 
     if (!isOpen) return null;
@@ -394,28 +410,52 @@ export const TaskEditModal = ({
                         </div>
 
                         {attachments.length > 0 ? (
-                            <div className="grid grid-cols-4 gap-2 mt-2">
+                            <div className="grid grid-cols-1 gap-2 mt-2">
                                 {attachments.map((file, idx) => (
-                                    <div key={idx} className="relative group border border-slate-200 rounded-lg p-1 bg-slate-50 flex flex-col items-center">
-                                        <button
-                                            type="button"
-                                            onClick={() => removeAttachment(idx)}
-                                            className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                                        >
-                                            <X className="w-3 h-3" />
-                                        </button>
+                                    <div key={idx} className="group flex items-center justify-between p-2 border border-slate-200 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors">
+                                        <div className="flex items-center gap-3 overflow-hidden">
+                                            {/* Thumbnail / Icon */}
+                                            <div className="flex-shrink-0 w-10 h-10 bg-slate-200 rounded overflow-hidden flex items-center justify-center">
+                                                {file.type?.startsWith('image/') ? (
+                                                    <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="text-xs font-bold text-slate-500">FILE</span>
+                                                )}
+                                            </div>
+                                            {/* Info */}
+                                            <div className="overflow-hidden">
+                                                <p className="text-sm font-medium text-slate-700 truncate" title={file.name}>{file.name}</p>
+                                                <p className="text-[10px] text-slate-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                                            </div>
+                                        </div>
 
-                                        {file.type?.startsWith('image/') ? (
-                                            <a href={file.url} target="_blank" rel="noopener noreferrer" className="block w-full">
-                                                <img src={file.url} alt={file.name} className="h-14 w-full object-cover rounded" />
+                                        {/* Actions */}
+                                        <div className="flex items-center gap-1">
+                                            <a
+                                                href={file.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                title="Xem"
+                                            >
+                                                <Eye className="w-4 h-4" />
                                             </a>
-                                        ) : (
-                                            <a href={file.url} target="_blank" rel="noopener noreferrer" className="h-14 w-full flex items-center justify-center bg-slate-200 rounded text-slate-500 text-xs hover:bg-slate-300 transition-colors">
-                                                File
-                                            </a>
-                                        )}
-                                        <div className="mt-1 w-full text-[9px] text-center truncate px-1 text-slate-600" title={file.name}>
-                                            {file.name}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDownload(file.url, file.name)}
+                                                className="p-1.5 text-slate-500 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
+                                                title="Tải xuống"
+                                            >
+                                                <Download className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeAttachment(idx)}
+                                                className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                title="Xóa"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
                                         </div>
                                     </div>
                                 ))}
