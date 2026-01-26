@@ -1,4 +1,5 @@
 "use client";
+// Force rebuild
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -110,8 +111,8 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('quiz')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'quiz'
-                            ? "border-purple-600 text-purple-700"
-                            : "border-transparent text-slate-500 hover:text-slate-700"
+                        ? "border-purple-600 text-purple-700"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -121,8 +122,8 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('store')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'store'
-                            ? "border-purple-600 text-purple-700"
-                            : "border-transparent text-slate-500 hover:text-slate-700"
+                        ? "border-purple-600 text-purple-700"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
