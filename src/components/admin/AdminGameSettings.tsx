@@ -19,7 +19,7 @@ export const AdminGameSettings = () => {
         try {
             const data = await getGames();
             // Parse config if string (though supabase returns json)
-            const parsed = data.map(g => ({
+            const parsed = data.map((g: any) => ({
                 ...g,
                 config: typeof g.config === 'string' ? JSON.parse(g.config) : g.config || {}
             }));
