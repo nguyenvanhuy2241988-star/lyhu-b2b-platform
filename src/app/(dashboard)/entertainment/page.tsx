@@ -3,7 +3,56 @@
 import React, { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { LuckyWheelGame } from "@/components/entertainment/LuckyWheelGame";
-import { Gamepad2, Gift, Trophy } from "lucide-react";
+import { LyhuBirdGame } from "@/components/entertainment/LyhuBirdGame";
+import { Gamepad2, Gift, Trophy, Medal, User } from "lucide-react";
+import { getLeaderboard, GameScore } from "@/lib/entertainmentStore";
+import { useEffect } from "react";
+
+const LeaderboardWidget = () => {
+    const [scores, setScores] = React.useState<GameScore[]>([]);
+
+    const fetchScores = async () => {
+        try {
+            const data = await getLeaderboard('lyhu_bird');
+            setScores(data);
+        } catch (e) { console.error(e); }
+    };
+
+    useEffect(() => {
+        fetchScores();
+        // Listen for updates
+        const handler = () => fetchScores();
+        window.addEventListener('lb-update', handler);
+        return () => window.removeEventListener('lb-update', handler);
+    }, []);
+
+    return (
+        <div className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
+            <div className="bg-gradient-to-r from-yellow-400 to-orange-400 p-4 text-white">
+                <h3 className="font-bold flex items-center gap-2"><Trophy className="w-5 h-5" /> Bảng Xếp Hạng</h3>
+                <p className="text-xs opacity-90 mt-1">Top cao thủ "Lyhu Bird"</p>
+            </div>
+            <div className="divide-y divide-slate-100">
+                {scores.map((s, idx) => (
+                    <div key={s.id} className="p-3 flex items-center gap-3 hover:bg-slate-50">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${idx === 0 ? 'bg-yellow-100 text-yellow-600' :
+                                idx === 1 ? 'bg-slate-100 text-slate-600' :
+                                    idx === 2 ? 'bg-orange-100 text-orange-600' : 'text-slate-400'
+                            }`}>
+                            {idx + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-900 truncate">{s.user?.full_name || 'Ẩn danh'}</p>
+                            <p className="text-xs text-slate-500">{new Date(s.played_at).toLocaleDateString()}</p>
+                        </div>
+                        <div className="font-bold text-slate-700">{s.score}</div>
+                    </div>
+                ))}
+                {scores.length === 0 && <p className="p-4 text-center text-slate-400 text-sm">Chưa có ai chơi. Hãy là người đầu tiên!</p>}
+            </div>
+        </div>
+    );
+};
 
 export default function EntertainmentPage() {
     const { user } = useAuth();
@@ -26,8 +75,8 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('wheel')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'wheel'
-                            ? "border-purple-600 text-purple-700"
-                            : "border-transparent text-slate-500 hover:text-slate-700"
+                        ? "border-purple-600 text-purple-700"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -37,8 +86,8 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('bird')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'bird'
-                            ? "border-purple-600 text-purple-700"
-                            : "border-transparent text-slate-500 hover:text-slate-700"
+                        ? "border-purple-600 text-purple-700"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -60,13 +109,16 @@ export default function EntertainmentPage() {
                 )}
 
                 {activeTab === 'bird' && (
-                    <div className="flex flex-col items-center justify-center h-[500px] text-slate-400 animate-in fade-in duration-300">
-                        <Trophy className="w-20 h-20 mb-4 opacity-20" />
-                        <h3 className="text-lg font-bold text-slate-600">Sắp ra mắt!</h3>
-                        <p>Game thi đấu tính điểm xếp hạng đang được phát triển.</p>
-                        <button onClick={() => setActiveTab('wheel')} className="mt-4 text-purple-600 hover:underline text-sm">
-                            Chơi Vòng quay trước đi
-                        </button>
+                    <div className="flex flex-col xl:flex-row gap-8 items-start animate-in fade-in duration-300">
+                        {/* Game Area */}
+                        <div className="flex-1 w-full flex justify-center">
+                            <LyhuBirdGame currentUser={user} onScoreUpdate={() => window.dispatchEvent(new CustomEvent('lb-update'))} />
+                        </div>
+
+                        {/* Sidebar: Leaderboard */}
+                        <div className="w-full xl:w-80 shrink-0">
+                            <LeaderboardWidget />
+                        </div>
                     </div>
                 )}
             </div>
