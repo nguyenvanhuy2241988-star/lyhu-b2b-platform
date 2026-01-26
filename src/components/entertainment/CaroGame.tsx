@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { RotateCcw, User, Bot, Trophy, Grid3X3 } from "lucide-react";
-import { saveGameScore } from "@/lib/entertainmentStore";
+import { saveGameScore, getGameConfig, addPoints } from "@/lib/entertainmentStore";
 
 interface CaroGameProps {
     currentUser: any;
@@ -23,6 +23,16 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
     const [winner, setWinner] = useState<Player | 'DRAW' | null>(null);
     const [winningLine, setWinningLine] = useState<number[][] | null>(null);
     const [isBotThinking, setIsBotThinking] = useState(false);
+
+    // Config State
+    const [config, setConfig] = useState<any>({ points_easy: 50, points_medium: 100, points_hard: 200 });
+
+    useEffect(() => {
+        // Load config from Admin Settings
+        getGameConfig('caro_ai').then(cfg => {
+            if (cfg) setConfig(cfg);
+        });
+    }, []);
 
     // Bot Logic
     useEffect(() => {
