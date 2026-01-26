@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Check, X, RotateCcw, AlertCircle } from "lucide-react";
+import { Check, X, AlertCircle } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 
 interface QuizQuestion {

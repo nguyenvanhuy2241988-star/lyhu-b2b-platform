@@ -8,7 +8,7 @@ import { LyhuBirdGame } from "@/components/entertainment/LyhuBirdGame";
 import { CaroGame } from "@/components/entertainment/CaroGame";
 import { QuizGame } from "@/components/entertainment/QuizGame";
 import { RewardStore } from "@/components/entertainment/RewardStore";
-import { Gamepad2, Gift, Trophy, Medal, User, Grid3X3, Image } from "lucide-react";
+import { Gamepad2, Gift, Trophy, Grid3X3, Image, ShoppingBag } from "lucide-react";
 import { getLeaderboard, GameScore } from "@/lib/entertainmentStore";
 
 const LeaderboardWidget = () => {

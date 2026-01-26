@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Play, RotateCcw, Trophy, Save } from "lucide-react";
+import { Play, RotateCcw, Trophy } from "lucide-react";
 import { saveGameScore, getMyBestScore } from "@/lib/entertainmentStore";
 
 interface LyhuBirdGameProps {
