@@ -43,10 +43,23 @@ export const getLeaderboard = async (gameCode: string, limit = 10) => {
         .limit(limit);
 
     if (error) throw error;
+    if (error) throw error;
     return data as GameScore[];
 };
 
+// --- Games ---
+
+export const getGames = async () => {
+    const { data, error } = await supabase
+        .from('entertainment_games')
+        .select('*')
+        .order('name');
+    if (error) throw error;
+    return data;
+};
+
 // --- Games & Points ---
+
 
 export const getGameConfig = async (code: string) => {
     const { data, error } = await supabase
