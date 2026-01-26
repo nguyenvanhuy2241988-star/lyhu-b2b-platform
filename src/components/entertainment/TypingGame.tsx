@@ -93,7 +93,7 @@ export const TypingGame = ({ currentUser }: { currentUser: any }) => {
             {/* Stats */}
             <div className="flex gap-8 mb-8">
                 <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex items-center gap-3">
-                    <div className="p-2 bg-purple-100 text-purple-600 rounded-lg">
+                    <div className="p-2 bg-teal-100 text-teal-600 rounded-lg">
                         <Timer className="w-6 h-6" />
                     </div>
                     <div>
@@ -118,7 +118,7 @@ export const TypingGame = ({ currentUser }: { currentUser: any }) => {
                     value={input}
                     onChange={handleChange}
                     disabled={isFinished}
-                    className="w-full p-4 text-xl rounded-xl border-2 border-slate-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 outline-none transition-all shadow-sm disabled:opacity-50 disabled:bg-slate-50"
+                    className="w-full p-4 text-xl rounded-xl border-2 border-slate-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-100 outline-none transition-all shadow-sm disabled:opacity-50 disabled:bg-slate-50"
                     placeholder={isFinished ? "Hoàn thành!" : "Gõ nội dung trên vào đây..."}
                     autoComplete="off"
                     autoCorrect="off"
@@ -133,10 +133,10 @@ export const TypingGame = ({ currentUser }: { currentUser: any }) => {
             {isFinished && (
                 <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 text-center">
                     <h3 className="text-2xl font-bold text-slate-800 mb-2">Quá dữ! 🚀</h3>
-                    <p className="text-slate-500 mb-6">Bạn gõ với tốc độ <span className="font-bold text-purple-600">{wpm} từ/phút</span>.</p>
+                    <p className="text-slate-500 mb-6">Bạn gõ với tốc độ <span className="font-bold text-teal-600">{wpm} từ/phút</span>.</p>
                     <button
                         onClick={() => pickRandomText(textSamples)}
-                        className="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-full font-bold hover:bg-purple-700 transition-all shadow-lg hover:shadow-purple-200 mx-auto"
+                        className="flex items-center gap-2 px-6 py-3 bg-teal-600 text-white rounded-full font-bold hover:bg-teal-700 transition-all shadow-lg hover:shadow-teal-200 mx-auto"
                     >
                         <RotateCcw className="w-5 h-5" /> Thử đoạn khác
                     </button>

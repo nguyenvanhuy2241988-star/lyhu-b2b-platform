@@ -174,9 +174,9 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
         <div className="flex flex-col items-center">
             {/* Header / StatusBar */}
             <div className="flex items-center gap-8 mb-4">
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-colors ${isXNext ? 'bg-blue-100 border-blue-500' : 'border-transparent opacity-50'}`}>
-                    <User className="w-5 h-5 text-blue-600" />
-                    <span className="font-bold text-blue-900">Bạn (X)</span>
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-colors ${isXNext ? 'bg-teal-100 border-teal-500' : 'border-transparent opacity-50'}`}>
+                    <User className="w-5 h-5 text-teal-600" />
+                    <span className="font-bold text-teal-900">Bạn (X)</span>
                 </div>
 
                 <div className="text-xl font-bold text-slate-300">VS</div>
@@ -206,7 +206,7 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
                                     onClick={() => handleCellClick(rIdx, cIdx)}
                                     disabled={cell !== null || !!winner}
                                 >
-                                    {cell === 'X' && <span className="text-blue-600">X</span>}
+                                    {cell === 'X' && <span className="text-teal-600">X</span>}
                                     {cell === 'O' && <span className="text-red-500">O</span>}
                                 </button>
                             );
@@ -228,7 +228,7 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
                         </p>
                         <button
                             onClick={resetGame}
-                            className="flex items-center gap-2 mx-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-bold transition-all"
+                            className="flex items-center gap-2 mx-auto px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-full font-bold transition-all"
                         >
                             <RotateCcw className="w-5 h-5" /> Chơi ván mới
                         </button>

@@ -80,9 +80,9 @@ export const QuizGame = () => {
                 <span className="text-4xl">🎉</span>
             </div>
             <h2 className="text-2xl font-bold text-slate-800 mb-2">Hoàn thành!</h2>
-            <p className="text-slate-600 mb-6">Bạn trả lời đúng <span className="font-bold text-purple-600 text-xl">{score}/{questions.length}</span> câu.</p>
+            <p className="text-slate-600 mb-6">Bạn trả lời đúng <span className="font-bold text-teal-600 text-xl">{score}/{questions.length}</span> câu.</p>
 
-            <button onClick={resetGame} className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium">
+            <button onClick={resetGame} className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium">
                 Chơi lại
             </button>
         </div>
@@ -96,7 +96,7 @@ export const QuizGame = () => {
             <div className="mb-6 flex items-center gap-4">
                 <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div
-                        className="h-full bg-purple-500 transition-all duration-300"
+                        className="h-full bg-teal-500 transition-all duration-300"
                         style={{ width: `${((currentIndex) / questions.length) * 100}%` }}
                     />
                 </div>
@@ -126,7 +126,7 @@ export const QuizGame = () => {
                     {/* Options */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {currentQ.options && (currentQ.options as string[]).map((opt: string, idx: number) => {
-                            let stateClass = "border-slate-200 hover:border-purple-300 hover:bg-purple-50";
+                            let stateClass = "border-slate-200 hover:border-teal-300 hover:bg-teal-50";
 
                             if (selectedAnswer) {
                                 if (opt === currentQ.correct_answer) {
