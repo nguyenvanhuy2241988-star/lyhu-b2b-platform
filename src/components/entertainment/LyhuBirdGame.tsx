@@ -213,7 +213,7 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
     const handleJump = () => {
         if (gameState === 'PLAYING') {
             birdVelocity.current = JUMP;
-        } else if (gameState !== 'PLAYING') {
+        } else {
             startGame();
         }
     };
