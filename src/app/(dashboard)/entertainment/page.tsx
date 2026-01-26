@@ -5,7 +5,8 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { LuckyWheelGame } from "@/components/entertainment/LuckyWheelGame";
 import { LyhuBirdGame } from "@/components/entertainment/LyhuBirdGame";
 import { CaroGame } from "@/components/entertainment/CaroGame";
-import { Gamepad2, Gift, Trophy, Medal, User, Grid3X3 } from "lucide-react";
+import { QuizGame } from "@/components/entertainment/QuizGame";
+import { Gamepad2, Gift, Trophy, Medal, User, Grid3X3, Image } from "lucide-react";
 import { getLeaderboard, GameScore } from "@/lib/entertainmentStore";
 
 const LeaderboardWidget = () => {
@@ -36,8 +37,8 @@ const LeaderboardWidget = () => {
                 {scores.map((s, idx) => (
                     <div key={s.id} className="p-3 flex items-center gap-3 hover:bg-slate-50">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${idx === 0 ? 'bg-yellow-100 text-yellow-600' :
-                                idx === 1 ? 'bg-slate-100 text-slate-600' :
-                                    idx === 2 ? 'bg-orange-100 text-orange-600' : 'text-slate-400'
+                            idx === 1 ? 'bg-slate-100 text-slate-600' :
+                                idx === 2 ? 'bg-orange-100 text-orange-600' : 'text-slate-400'
                             }`}>
                             {idx + 1}
                         </div>
@@ -56,7 +57,7 @@ const LeaderboardWidget = () => {
 
 export default function EntertainmentPage() {
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState<'wheel' | 'bird' | 'caro'>('wheel');
+    const [activeTab, setActiveTab] = useState<'wheel' | 'bird' | 'caro' | 'quiz'>('wheel');
 
     return (
         <div className="min-h-screen bg-slate-50 p-6">
@@ -75,8 +76,8 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('wheel')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'wheel'
-                            ? "border-purple-600 text-purple-700"
-                            : "border-transparent text-slate-500 hover:text-slate-700"
+                        ? "border-purple-600 text-purple-700"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -86,8 +87,8 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('bird')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'bird'
-                            ? "border-purple-600 text-purple-700"
-                            : "border-transparent text-slate-500 hover:text-slate-700"
+                        ? "border-purple-600 text-purple-700"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -97,12 +98,23 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('caro')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'caro'
-                            ? "border-purple-600 text-purple-700"
-                            : "border-transparent text-slate-500 hover:text-slate-700"
+                        ? "border-purple-600 text-purple-700"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
                         <Grid3X3 className="w-4 h-4" /> Cờ Caro (Beta)
+                    </div>
+                </button>
+                <button
+                    onClick={() => setActiveTab('quiz')}
+                    className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'quiz'
+                        ? "border-purple-600 text-purple-700"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
+                        }`}
+                >
+                    <div className="flex items-center gap-2">
+                        <Image className="w-4 h-4" /> Đuổi Hình (Mới)
                     </div>
                 </button>
             </div>
@@ -140,6 +152,16 @@ export default function EntertainmentPage() {
                             <p className="text-slate-500 text-sm">Đấu với máy để giải trí nhanh. Luật 5 quân thẳng hàng.</p>
                         </div>
                         <CaroGame currentUser={user} />
+                    </div>
+                )}
+
+                {activeTab === 'quiz' && (
+                    <div className="animate-in fade-in duration-300">
+                        <div className="text-center mb-6">
+                            <h2 className="text-xl font-bold mb-2">Đuổi Hình Bắt Chữ</h2>
+                            <p className="text-slate-500 text-sm">Thử tài kiến thức và văn hóa công ty!</p>
+                        </div>
+                        <QuizGame />
                     </div>
                 )}
             </div>
