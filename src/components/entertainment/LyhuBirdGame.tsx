@@ -12,7 +12,7 @@ interface LyhuBirdGameProps {
 export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [gameState, setGameState] = useState<'MENU' | 'START' | 'PLAYING' | 'GAME_OVER'>('MENU');
-    const [difficulty, setDifficulty] = useState<'EASY' | 'HARD'>('EASY');
+    const [difficulty, setDifficulty] = useState<'EASY' | 'MEDIUM' | 'HARD'>('EASY');
     const [score, setScore] = useState(0);
     const [highScore, setHighScore] = useState(0);
     const [isSaving, setIsSaving] = useState(false);
@@ -24,6 +24,7 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
     // Difficulty Settings
     const SETTINGS = {
         EASY: { gap: 170, speed: 3, spawnRate: 110, code: 'lyhu_bird_easy' },
+        MEDIUM: { gap: 150, speed: 4, spawnRate: 100, code: 'lyhu_bird_medium' },
         HARD: { gap: 130, speed: 5, spawnRate: 80, code: 'lyhu_bird_hard' }
     };
 
@@ -108,7 +109,7 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         // Background
-        ctx.fillStyle = difficulty === 'EASY' ? '#2dd4bf' : '#0f766e'; // Teal Light vs Dark
+        ctx.fillStyle = difficulty === 'EASY' ? '#2dd4bf' : (difficulty === 'MEDIUM' ? '#0d9488' : '#0f766e');
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         // Pipes
@@ -247,16 +248,22 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 text-white rounded-lg p-6 text-center">
                         <Trophy className="w-16 h-16 text-yellow-400 mb-4 animate-bounce" />
                         <h2 className="text-3xl font-black mb-6">CHỌN CẤP ĐỘ</h2>
-                        <div className="flex gap-4">
+                        <div className="flex gap-2">
                             <button
                                 onClick={(e) => { e.stopPropagation(); setDifficulty('EASY'); setGameState('START'); }}
-                                className="px-6 py-3 bg-teal-500 hover:bg-teal-600 rounded-xl font-bold transition-transform hover:scale-105"
+                                className="px-5 py-3 bg-teal-500 hover:bg-teal-600 rounded-xl font-bold transition-transform hover:scale-105"
                             >
                                 DỄ
                             </button>
                             <button
+                                onClick={(e) => { e.stopPropagation(); setDifficulty('MEDIUM'); setGameState('START'); }}
+                                className="px-5 py-3 bg-blue-500 hover:bg-blue-600 rounded-xl font-bold transition-transform hover:scale-105"
+                            >
+                                VỪA
+                            </button>
+                            <button
                                 onClick={(e) => { e.stopPropagation(); setDifficulty('HARD'); setGameState('START'); }}
-                                className="px-6 py-3 bg-red-500 hover:bg-red-600 rounded-xl font-bold transition-transform hover:scale-105"
+                                className="px-5 py-3 bg-red-500 hover:bg-red-600 rounded-xl font-bold transition-transform hover:scale-105"
                             >
                                 KHÓ
                             </button>
@@ -269,7 +276,7 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
                     <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 text-white rounded-lg">
                         <Play className="w-16 h-16 mb-2 text-yellow-400 drop-shadow-md animate-pulse" />
                         <h2 className="text-2xl font-black drop-shadow-md">NHẤN ĐỂ CHƠI</h2>
-                        <p className="text-sm opacity-90 mb-4">Cấp độ: {difficulty === 'EASY' ? 'Dễ' : 'Khó'}</p>
+                        <p className="text-sm opacity-90 mb-4">Cấp độ: {difficulty === 'EASY' ? 'Dễ' : (difficulty === 'MEDIUM' ? 'Vừa' : 'Khó')}</p>
                         <button
                             onClick={(e) => { e.stopPropagation(); setGameState('MENU'); }}
                             className="text-xs text-white/70 hover:text-white underline"
@@ -322,7 +329,7 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
             <div className="flex items-center gap-6 mt-2 text-slate-600 font-medium">
                 <div className="flex items-center gap-2">
                     <Trophy className="w-5 h-5 text-yellow-500" />
-                    <span>Kỷ lục ({difficulty === 'EASY' ? 'Dễ' : 'Khó'}): <span className="font-bold text-slate-900">{highScore}</span></span>
+                    <span>Kỷ lục ({difficulty === 'EASY' ? 'Dễ' : (difficulty === 'MEDIUM' ? 'Vừa' : 'Khó')}): <span className="font-bold text-slate-900">{highScore}</span></span>
                 </div>
             </div>
         </div>

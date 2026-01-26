@@ -18,7 +18,7 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
         Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null))
     );
     const [gameState, setGameState] = useState<'MENU' | 'PLAYING' | 'FINISHED'>('MENU');
-    const [difficulty, setDifficulty] = useState<'EASY' | 'HARD'>('EASY');
+    const [difficulty, setDifficulty] = useState<'EASY' | 'MEDIUM' | 'HARD'>('EASY');
     const [isXNext, setIsXNext] = useState(true);
     const [winner, setWinner] = useState<Player | 'DRAW' | null>(null);
     const [winningLine, setWinningLine] = useState<number[][] | null>(null);
@@ -81,9 +81,11 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
     const finishGame = (w: Player | 'DRAW', line?: number[][]) => {
         setWinner(w);
         if (line) setWinningLine(line);
-        // Save score if player wins
         if (w === 'X') {
-            saveGameScore(difficulty === 'EASY' ? 'caro_easy' : 'caro_hard', 100, currentUser.id);
+            let code = 'caro_easy';
+            if (difficulty === 'MEDIUM') code = 'caro_medium';
+            if (difficulty === 'HARD') code = 'caro_hard';
+            saveGameScore(code, 100, currentUser.id);
         }
     };
 
@@ -91,61 +93,129 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
         let bestMove = { r: 7, c: 7 };
 
         if (difficulty === 'EASY') {
-            // Random move near existing content to make it look "alive" but stupid
-            // Or just completely random empty cell? Let's do random but preference center
-            const emptyCells = [];
-            for (let r = 0; r < BOARD_SIZE; r++) {
-                for (let c = 0; c < BOARD_SIZE; c++) {
-                    if (!board[r][c]) emptyCells.push({ r, c });
-                }
-            }
+            const emptyCells = getEmptyNeighbors(board);
             if (emptyCells.length > 0) {
                 bestMove = emptyCells[Math.floor(Math.random() * emptyCells.length)];
             }
+        } else if (difficulty === 'MEDIUM') {
+            bestMove = findMediumMove(board);
         } else {
-            // HARD MODE: Simple blocker/builder heuristic
-            // This is still Basic AI but better than random
-            // 1. Check if we can win immediately
-            // 2. Check if opponent is about to win (3 or 4 in row) -> Block
-            // 3. Otherwise Pick near center/neighbors
-
-            // For concise implementation, we use valid neighbor fallback
-            // To make it really hard we need Minimax, but for "Office Game" a good heuristic is enough
-            // Implement "Block 3 or 4" logic
-            bestMove = findStrategicMove(board);
+            bestMove = findBestMoveMinimax(board);
         }
 
         const newBoard = board.map(r => [...r]);
-        newBoard[bestMove.r][bestMove.c] = 'O';
-        setBoard(newBoard);
+        if (newBoard[bestMove.r][bestMove.c] === null) {
+            newBoard[bestMove.r][bestMove.c] = 'O';
+            setBoard(newBoard);
 
-        const line = checkWinner(newBoard, bestMove.r, bestMove.c, 'O');
-        if (line) {
-            finishGame('O', line);
-        } else {
-            setIsXNext(true);
-        }
-    };
-
-    // Very simplified heuristic for HARD mode
-    const findStrategicMove = (b: CellValue[][]) => {
-        // Priority 1: Can Bot Win?
-        // Priority 2: Must Block Player Win?
-        // Priority 3: Neighbors
-        const emptyCells = [];
-        for (let r = 0; r < BOARD_SIZE; r++) {
-            for (let c = 0; c < BOARD_SIZE; c++) {
-                if (b[r][c] === null) {
-                    if (hasNeighbor(r, c)) emptyCells.push({ r, c });
-                }
+            const line = checkWinner(newBoard, bestMove.r, bestMove.c, 'O');
+            if (line) {
+                finishGame('O', line);
+            } else {
+                setIsXNext(true);
             }
         }
-        if (emptyCells.length === 0) return { r: 7, c: 7 };
-
-        // Random fallback from neighbors
-        return emptyCells[Math.floor(Math.random() * emptyCells.length)];
     };
 
+    const getEmptyNeighbors = (b: CellValue[][]) => {
+        const cells = [];
+        for (let r = 0; r < BOARD_SIZE; r++) {
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                if (b[r][c] === null && hasNeighbor(r, c)) cells.push({ r, c });
+            }
+        }
+        if (cells.length === 0) return [{ r: 7, c: 7 }];
+        return cells;
+    };
+
+    // Medium Strategy: Win or Block Immediate Threat
+    const findMediumMove = (b: CellValue[][]) => {
+        const candidates = getEmptyNeighbors(b);
+
+        // 1. Check Win
+        for (let move of candidates) {
+            b[move.r][move.c] = 'O';
+            if (checkWinner(b, move.r, move.c, 'O')) {
+                b[move.r][move.c] = null;
+                return move;
+            }
+            b[move.r][move.c] = null;
+        }
+
+        // 2. Check Block
+        for (let move of candidates) {
+            b[move.r][move.c] = 'X';
+            if (checkWinner(b, move.r, move.c, 'X')) {
+                b[move.r][move.c] = null;
+                return move;
+            }
+            b[move.r][move.c] = null;
+        }
+
+        // 3. Random
+        return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+
+    // Hard Strategy: Simple Score Evaluation (Minimax too slow for 15x15 in React w/o worker)
+    const findBestMoveMinimax = (b: CellValue[][]) => {
+        const candidates = getEmptyNeighbors(b);
+        let bestScore = -Infinity;
+        let bestMove = candidates[0];
+
+        for (let move of candidates) {
+            const score = evaluatePosition(b, move.r, move.c);
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = move;
+            }
+        }
+        return bestMove;
+    };
+
+    const evaluatePosition = (b: CellValue[][], r: number, c: number): number => {
+        let score = 0;
+
+        // Offensive (Bot O)
+        b[r][c] = 'O';
+        const winO = checkWinner(b, r, c, 'O');
+        if (winO) score += 10000;
+        else score += countConsecutive(b, r, c, 'O');
+
+        // Defensive (Block X)
+        b[r][c] = 'X';
+        const winX = checkWinner(b, r, c, 'X');
+        if (winX) score += 5000;
+        else score += countConsecutive(b, r, c, 'X') * 0.8;
+
+        b[r][c] = null;
+
+        const centerDist = Math.abs(r - 7) + Math.abs(c - 7);
+        score -= centerDist;
+
+        return score + Math.random();
+    }
+
+    const countConsecutive = (b: CellValue[][], row: number, col: number, player: Player) => {
+        let total = 0;
+        const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+        for (const [dx, dy] of directions) {
+            let count = 0;
+            // Check line length including this spot
+            for (let i = -4; i <= 4; i++) {
+                const r = row + i * dx;
+                const c = col + i * dy;
+                if (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE && b[r][c] === player) {
+                    count++;
+                } else {
+                    if (count >= 3) total += count * 10;
+                    if (count === 4) total += 500;
+                    count = 0;
+                }
+            }
+            if (count >= 3) total += count * 10;
+        }
+        return total;
+    }
 
     const hasNeighbor = (r: number, c: number) => {
         for (let i = -1; i <= 1; i++) {
@@ -158,7 +228,7 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
         return false;
     };
 
-    const startGame = (d: 'EASY' | 'HARD') => {
+    const startGame = (d: 'EASY' | 'MEDIUM' | 'HARD') => {
         setDifficulty(d);
         setBoard(Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null)));
         setWinner(null);
@@ -176,20 +246,27 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
             <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-slate-200 shadow-sm min-h-[400px]">
                 <Grid3X3 className="w-20 h-20 text-teal-600 mb-6" />
                 <h2 className="text-2xl font-black text-slate-800 mb-8">CHỌN CẤP ĐỘ</h2>
-                <div className="flex gap-6">
+                <div className="flex gap-4">
                     <button
                         onClick={() => startGame('EASY')}
-                        className="flex flex-col items-center gap-2 p-6 bg-teal-50 border-2 border-teal-100 rounded-xl hover:border-teal-500 hover:shadow-lg transition-all w-40"
+                        className="flex flex-col items-center gap-2 p-6 bg-teal-50 border-2 border-teal-100 rounded-xl hover:border-teal-500 hover:shadow-lg transition-all w-32"
                     >
-                        <Bot className="w-10 h-10 text-teal-600" />
-                        <span className="font-bold text-teal-900">Tập Sự (Dễ)</span>
+                        <Bot className="w-8 h-8 text-teal-600" />
+                        <span className="font-bold text-teal-900">Dễ</span>
+                    </button>
+                    <button
+                        onClick={() => startGame('MEDIUM')}
+                        className="flex flex-col items-center gap-2 p-6 bg-blue-50 border-2 border-blue-100 rounded-xl hover:border-blue-500 hover:shadow-lg transition-all w-32"
+                    >
+                        <Bot className="w-8 h-8 text-blue-600" />
+                        <span className="font-bold text-blue-900">Vừa</span>
                     </button>
                     <button
                         onClick={() => startGame('HARD')}
-                        className="flex flex-col items-center gap-2 p-6 bg-red-50 border-2 border-red-100 rounded-xl hover:border-red-500 hover:shadow-lg transition-all w-40"
+                        className="flex flex-col items-center gap-2 p-6 bg-red-50 border-2 border-red-100 rounded-xl hover:border-red-500 hover:shadow-lg transition-all w-32"
                     >
-                        <Bot className="w-10 h-10 text-red-600" />
-                        <span className="font-bold text-red-900">Cao Thủ (Khó)</span>
+                        <Bot className="w-8 h-8 text-red-600" />
+                        <span className="font-bold text-red-900">Khó</span>
                     </button>
                 </div>
             </div>
@@ -198,18 +275,16 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
 
     return (
         <div className="flex flex-col items-center">
-            {/* Header / StatusBar */}
+            {/* Header */}
             <div className="flex items-center gap-8 mb-4">
                 <div className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-colors ${isXNext ? 'bg-teal-100 border-teal-500' : 'border-transparent opacity-50'}`}>
                     <User className="w-5 h-5 text-teal-600" />
                     <span className="font-bold text-teal-900">Bạn (X)</span>
                 </div>
-
                 <div className="text-xl font-bold text-slate-300">VS</div>
-
                 <div className={`flex items-center gap-2 px-4 py-2 rounded-full border-2 transition-colors ${!isXNext ? 'bg-red-100 border-red-500' : 'border-transparent opacity-50'}`}>
                     <Bot className="w-5 h-5 text-red-600" />
-                    <span className="font-bold text-red-900">Máy {difficulty === 'EASY' ? 'Gà' : 'Pro'} (O)</span>
+                    <span className="font-bold text-red-900">Máy ({difficulty})</span>
                     {isBotThinking && <span className="animate-pulse text-xs">...</span>}
                 </div>
             </div>
@@ -251,10 +326,7 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
                         <h2 className="text-3xl font-black mb-2 text-slate-800">
                             {winner === 'X' ? 'BẠN THẮNG!' : winner === 'O' ? 'MÁY THẮNG!' : 'HÒA!'}
                         </h2>
-                        <p className="text-slate-500 mb-6">
-                            {winner === 'X' ? 'Đỉnh cao trí tuệ!' : 'Thử lại nhé, máy chơi hay quá.'}
-                        </p>
-                        <div className="flex gap-4 justify-center">
+                        <div className="flex gap-4 justify-center mt-6">
                             <button
                                 onClick={() => startGame(difficulty)}
                                 className="flex items-center gap-2 px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-full font-bold transition-all"
