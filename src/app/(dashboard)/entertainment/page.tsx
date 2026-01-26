@@ -8,7 +8,8 @@ import { LyhuBirdGame } from "@/components/entertainment/LyhuBirdGame";
 import { CaroGame } from "@/components/entertainment/CaroGame";
 import { QuizGame } from "@/components/entertainment/QuizGame";
 import { RewardStore } from "@/components/entertainment/RewardStore";
-import { Gamepad2, Gift, Trophy, Grid3X3, Image, ShoppingBag } from "lucide-react";
+import { TypingGame } from "@/components/entertainment/TypingGame";
+import { Gamepad2, Gift, Trophy, Grid3X3, Image, ShoppingBag, Keyboard } from "lucide-react";
 import { getLeaderboard, GameScore } from "@/lib/entertainmentStore";
 
 const LeaderboardWidget = () => {
@@ -122,12 +123,23 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('store')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'store'
-                        ? "border-purple-600 text-purple-700"
-                        : "border-transparent text-slate-500 hover:text-slate-700"
+                            ? "border-purple-600 text-purple-700"
+                            : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
                         <ShoppingBag className="w-4 h-4" /> Đổi Quà
+                    </div>
+                </button>
+                <button
+                    onClick={() => setActiveTab('typing')}
+                    className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'typing'
+                            ? "border-purple-600 text-purple-700"
+                            : "border-transparent text-slate-500 hover:text-slate-700"
+                        }`}
+                >
+                    <div className="flex items-center gap-2">
+                        <Keyboard className="w-4 h-4" /> Đua Gõ (Beta)
                     </div>
                 </button>
             </div>
@@ -185,6 +197,16 @@ export default function EntertainmentPage() {
                             <p className="text-slate-500 text-sm">Dùng điểm tích lũy để đổi những phần quà hấp dẫn!</p>
                         </div>
                         <RewardStore currentUser={user} />
+                    </div>
+                )}
+
+                {activeTab === 'typing' && (
+                    <div className="animate-in fade-in duration-300">
+                        <div className="text-center mb-6">
+                            <h2 className="text-xl font-bold mb-2">Đua Gõ Phím (Typing Race)</h2>
+                            <p className="text-slate-500 text-sm">Luyện ngón tay vàng - Sẵn sàng chạy deadline!</p>
+                        </div>
+                        <TypingGame currentUser={user} />
                     </div>
                 )}
             </div>
