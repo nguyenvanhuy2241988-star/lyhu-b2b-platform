@@ -69,6 +69,9 @@ export const CreateTaskModal = ({
 
     const taskType: TaskType = 'task'; // Phase 3: Always 'task', removed type selector
 
+    const [attachments, setAttachments] = useState<any[]>(initialData?.attachments || []);
+    const [isUploading, setIsUploading] = useState(false);
+
     // Load profiles
     useEffect(() => {
         const loadProfiles = async () => {
@@ -92,43 +95,9 @@ export const CreateTaskModal = ({
                 assigneeIds: initialData?.assignee_ids || [],
                 leaderId: initialData?.leader_id || ""
             });
-
-            // Phase 3: Type is always 'task', removed inference logic
+            setAttachments(initialData?.attachments || []); // Reset attachments too
         }
     }, [isOpen, initialStatus, initialData]);
-
-    if (!isOpen) return null;
-
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        onSave({
-            id: initialData?.id,
-            title: formData.title,
-            customer_name: formData.customerName,
-            phone: formData.phone,
-            priority: formData.priority,
-            status: formData.status,
-            due_date: formData.dueDate || null,
-            note: formData.description,
-            assignee_ids: formData.assigneeIds,
-            leader_id: formData.leaderId || null,
-            type: taskType,
-            attachments: attachments // Pass attachments
-        });
-        onClose();
-    };
-
-    const handleDelete = () => {
-        if (isEditMode && onDelete && initialData?.id) {
-            if (window.confirm("Bạn có chắc muốn xóa việc này không? Hành động này không thể hoàn tác.")) {
-                onDelete(initialData.id);
-                onClose();
-            }
-        }
-    };
-
-    const [attachments, setAttachments] = useState<any[]>(initialData?.attachments || []);
-    const [isUploading, setIsUploading] = useState(false);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
@@ -167,6 +136,36 @@ export const CreateTaskModal = ({
 
     const removeAttachment = (index: number) => {
         setAttachments(prev => prev.filter((_, i) => i !== index));
+    };
+
+    if (!isOpen) return null;
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        onSave({
+            id: initialData?.id,
+            title: formData.title,
+            customer_name: formData.customerName,
+            phone: formData.phone,
+            priority: formData.priority,
+            status: formData.status,
+            due_date: formData.dueDate || null,
+            note: formData.description,
+            assignee_ids: formData.assigneeIds,
+            leader_id: formData.leaderId || null,
+            type: taskType,
+            attachments: attachments // Pass attachments
+        });
+        onClose();
+    };
+
+    const handleDelete = () => {
+        if (isEditMode && onDelete && initialData?.id) {
+            if (window.confirm("Bạn có chắc muốn xóa việc này không? Hành động này không thể hoàn tác.")) {
+                onDelete(initialData.id);
+                onClose();
+            }
+        }
     };
 
     return (
