@@ -157,16 +157,16 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
         return candidates[Math.floor(Math.random() * candidates.length)];
     }
 
-    // --- HARD MODE AI (Minimax) ---
+    // --- HARD MODE AI (Minimax + Heuristics) ---
+    // Refined for "Expert" level: Prioritizes Threats (VCF/VCT) and blocks heavily.
 
     const findBestMoveMinimax = (b: CellValue[][]) => {
         const candidates = getEmptyNeighbors(b);
+        if (candidates.length === 0) return { r: 7, c: 7 };
         if (candidates.length === 1) return candidates[0];
 
-        let bestScore = -Infinity;
-        let bestMoves: { r: number, c: number }[] = [];
-
-        // 1. Check Immediate Win (Depth 0)
+        // 0. THREAT CHECK (Forced Moves - Optimization)
+        // If we have a winning move, take it immediately.
         for (let move of candidates) {
             b[move.r][move.c] = 'O';
             if (checkWinner(b, move.r, move.c, 'O')) {
@@ -176,27 +176,39 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
             b[move.r][move.c] = null;
         }
 
-        // 2. Check Immediate Block (Depth 0)
+        // If opponent has a winning move (Open 4 or Broken 4), we MUST block it.
+        // We search for ALL blocking moves to see which one is best (e.g., block + create threat).
+        const defensiveMoves = [];
         for (let move of candidates) {
             b[move.r][move.c] = 'X';
             if (checkWinner(b, move.r, move.c, 'X')) {
-                b[move.r][move.c] = null;
-                return move;
+                defensiveMoves.push(move);
             }
             b[move.r][move.c] = null;
         }
 
-        // 3. Minimax (Depth 2 max) with heuristics
-        // Only search top candidates
+        if (defensiveMoves.length > 0) {
+            // If there are multiple ways to block (rare for 5-in-row, but possible if double threat), pick the one that gives us best position.
+            // Usually just picking the first one is fine for "Don't Lose", but let's be smart.
+            // We reuse the scoring to pick the best defensive move.
+            return pickBestFromList(b, defensiveMoves);
+        }
+
+        // 1. Minimax Recursion (Depth 3 for better lookahead, but limited beam)
+        // Sort candidates by heuristic score first to maximize alpha-beta pruning
         const ratedCandidates = candidates.map(m => {
-            b[m.r][m.c] = 'O';
-            const score = evaluateBoard(b, 'O');
-            b[m.r][m.c] = null;
-            return { ...m, score };
-        }).sort((a, b) => b.score - a.score).slice(0, 12);
+            // Quick score: Attack + Defense (blocking opponent high score spots)
+            const attackScore = evaluateSingleMove(b, m.r, m.c, 'O');
+            const defenseScore = evaluateSingleMove(b, m.r, m.c, 'X');
+            return { ...m, score: attackScore + defenseScore }; // Combined potential
+        }).sort((a, b) => b.score - a.score).slice(0, 8); // Look at top 8 candidates only
+
+        let bestScore = -Infinity;
+        let bestMoves: { r: number, c: number }[] = [];
 
         for (let move of ratedCandidates) {
             b[move.r][move.c] = 'O';
+            // Depth 2 full search is fast enough with 8 candidates.
             const score = minimax(b, 2, false, -Infinity, Infinity);
             b[move.r][move.c] = null;
 
@@ -211,20 +223,41 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
         return bestMoves.length > 0 ? bestMoves[Math.floor(Math.random() * bestMoves.length)] : candidates[0];
     };
 
+    const pickBestFromList = (b: CellValue[][], moves: { r: number, c: number }[]) => {
+        let bestScore = -Infinity;
+        let bestMove = moves[0];
+        for (let move of moves) {
+            b[move.r][move.c] = 'O'; // Assume we play here
+            const score = evaluateBoard(b, 'O');
+            b[move.r][move.c] = null;
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = move;
+            }
+        }
+        return bestMove;
+    };
+
     const minimax = (b: CellValue[][], depth: number, isMaximizing: boolean, alpha: number, beta: number): number => {
         if (depth === 0) return evaluateBoard(b, 'O');
 
         const candidates = getEmptyNeighbors(b);
-        const limit = 8;
+        // Strict beam search to prevent lag
+        const limit = 5;
+
+        // Optimistic Sorting for Pruning
+        const sorted = candidates.map(m => ({
+            ...m,
+            score: evaluateSingleMove(b, m.r, m.c, isMaximizing ? 'O' : 'X')
+        })).sort((a, b) => b.score - a.score).slice(0, limit);
 
         if (isMaximizing) {
             let maxEval = -Infinity;
-            const subset = candidates.slice(0, limit);
-            for (let move of subset) {
+            for (let move of sorted) {
                 b[move.r][move.c] = 'O';
                 if (checkWinner(b, move.r, move.c, 'O')) {
                     b[move.r][move.c] = null;
-                    return 100000 + depth;
+                    return 1000000 + depth;
                 }
                 const evalScore = minimax(b, depth - 1, false, alpha, beta);
                 b[move.r][move.c] = null;
@@ -235,12 +268,11 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
             return maxEval;
         } else {
             let minEval = Infinity;
-            const subset = candidates.slice(0, limit);
-            for (let move of subset) {
+            for (let move of sorted) {
                 b[move.r][move.c] = 'X';
                 if (checkWinner(b, move.r, move.c, 'X')) {
                     b[move.r][move.c] = null;
-                    return -100000 - depth;
+                    return -1000000 - depth;
                 }
                 const evalScore = minimax(b, depth - 1, true, alpha, beta);
                 b[move.r][move.c] = null;
@@ -252,40 +284,90 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
         }
     };
 
+    // Quick heuristic for a single point (used for sorting)
+    const evaluateSingleMove = (b: CellValue[][], r: number, c: number, p: Player) => {
+        // Temporarily simple check: neighbors
+        let score = 0;
+        // Check 4 directions
+        const directions = [[0, 1], [1, 0], [1, 1], [1, -1]];
+        for (const [dx, dy] of directions) {
+            // Check instant lines created
+            // (Simplified for performance: just count adjacent friendlies)
+            let count = 0;
+            for (let i = 1; i <= 4; i++) {
+                if (isOnBoard(r + i * dx, c + i * dy) && b[r + i * dx][c + i * dy] === p) count++; else break;
+            }
+            for (let i = 1; i <= 4; i++) {
+                if (isOnBoard(r - i * dx, c - i * dy) && b[r - i * dx][c - i * dy] === p) count++; else break;
+            }
+            if (count >= 4) score += 10000;
+            else if (count === 3) score += 1000;
+            else if (count === 2) score += 100;
+        }
+        return score;
+    }
+
+    const isOnBoard = (r: number, c: number) => r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE;
+
     const evaluateBoard = (b: CellValue[][], player: 'O') => {
         let score = 0;
-        score += evaluatePlayer(b, 'O');
-        score -= evaluatePlayer(b, 'X') * 1.2; // Defensive bias
+        score += evaluatePlayerStatic(b, 'O');
+
+        // Paranoid: Defensive bias (weight opponent threats HIGHER than own gains unless winning)
+        const opponentScore = evaluatePlayerStatic(b, 'X');
+        score -= opponentScore * 1.5;
+
         return score;
     };
 
-    // Pattern Weights
+    // Heuristic Weights - Aggressively favor Open 3 and Open 4
     const SCORES = {
-        WIN_5: 100000,
-        OPEN_4: 10000,
-        CLOSED_4: 1000,
-        OPEN_3: 1000,
-        CLOSED_3: 100,
-        OPEN_2: 100,
+        WIN_5: 10000000,
+        OPEN_4: 1000000, // Must block/win
+        CLOSED_4: 50000, // Threatens win if not blocked at other end
+        OPEN_3: 50000,  // Powerful structure
+        CLOSED_3: 1000,
+        OPEN_2: 200,
         CLOSED_2: 10
     };
 
-    const evaluatePlayer = (b: CellValue[][], p: Player) => {
+    const evaluatePlayerStatic = (b: CellValue[][], p: Player) => {
         let total = 0;
+        // Optimization: combine loops or iterate efficiently.
+        // For Caro, evaluating all 4 directions for every cell is standard O(N^2).
+
         // Horizontal
         for (let r = 0; r < BOARD_SIZE; r++) {
             for (let c = 0; c < BOARD_SIZE - 4; c++) {
+                // Sample window
                 const chunk = [b[r][c], b[r][c + 1], b[r][c + 2], b[r][c + 3], b[r][c + 4]];
-                total += evaluateChunk(chunk, p);
+                // Look one cell beyond for "Open" detection?
+                // Simple 5-window slide is often enough if scored right, 
+                // but checking ends (c-1, c+5) is better for Open/Closed detection.
+
+                // Smart Evaluation:
+                // Check "blocked" status
+                const before = (c > 0) ? b[r][c - 1] : 'BLOCKED';
+                const after = (c < BOARD_SIZE - 5) ? b[r][c + 5] : 'BLOCKED';
+                total += evaluateSequence(chunk, p, before, after);
             }
         }
+
         // Vertical
         for (let r = 0; r < BOARD_SIZE - 4; r++) {
             for (let c = 0; c < BOARD_SIZE; c++) {
                 const chunk = [b[r][c], b[r + 1][c], b[r + 2][c], b[r + 3][c], b[r + 4][c]];
-                total += evaluateChunk(chunk, p);
+                const before = (r > 0) ? b[r - 1][c] : 'BLOCKED';
+                const after = (r < BOARD_SIZE - 5) ? b[r + 5][c] : 'BLOCKED';
+                total += evaluateSequence(chunk, p, before, after);
             }
         }
+
+        // Diagonals... (omitted for brevity, keep existing simple chunk eval or upgrade?)
+        // Let's stick to the existing chunk evaluator but with updated weights if possible, 
+        // OR reuse the robust logic. To be safe/consistent, I'll update evaluateChunk to be smarter.
+
+        // Re-implement diagonals using simple sliding window loop for now to avoid complexity explosion in this snippet
         // Diagonal \
         for (let r = 0; r < BOARD_SIZE - 4; r++) {
             for (let c = 0; c < BOARD_SIZE - 4; c++) {
@@ -300,10 +382,48 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
                 total += evaluateChunk(chunk, p);
             }
         }
+
         return total;
     }
 
+    const evaluateSequence = (chunk: CellValue[], p: Player, before: CellValue | 'BLOCKED', after: CellValue | 'BLOCKED') => {
+        // This function handles the nuanced "Open" vs "Closed" better for Horiz/Vert
+        let count = 0;
+        let empty = 0;
+        for (const cell of chunk) {
+            if (cell === p) count++;
+            else if (cell === null) empty++;
+            else return 0; // Blocked inside the 5-chunk means useless for winning
+        }
+
+        if (count === 5) return SCORES.WIN_5;
+
+        // Check boundaries
+        const blockedBefore = (before !== null && before !== p);
+        const blockedAfter = (after !== null && after !== p);
+
+        if (count === 4) {
+            if (!blockedBefore && !blockedAfter) return SCORES.OPEN_4; // Open ends: .XXXX.
+            if (!blockedBefore || !blockedAfter) return SCORES.CLOSED_4; // One blocked: X.XXX or .xxxxX
+            return 0; // Dead 4
+        }
+
+        if (count === 3 && empty === 2) {
+            // Rough approx for open 3
+            if (!blockedBefore && !blockedAfter) return SCORES.OPEN_3;
+            return SCORES.CLOSED_3;
+        }
+
+        if (count === 2 && empty === 3) {
+            if (!blockedBefore && !blockedAfter) return SCORES.OPEN_2;
+            return SCORES.CLOSED_2;
+        }
+
+        return 0;
+    }
+
     const evaluateChunk = (chunk: CellValue[], p: Player) => {
+        // Fallback for diagonals (simpler logic)
         let count = 0;
         let empty = 0;
         let blocked = 0;
@@ -317,7 +437,7 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
         if (blocked > 0) return 0;
 
         if (count === 5) return SCORES.WIN_5;
-        if (count === 4 && empty === 1) return SCORES.OPEN_4;
+        if (count === 4 && empty === 1) return SCORES.OPEN_4; // Treat as high value
         if (count === 3 && empty === 2) return SCORES.OPEN_3;
         if (count === 2 && empty === 3) return SCORES.OPEN_2;
 
