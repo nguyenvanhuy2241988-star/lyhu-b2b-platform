@@ -78,7 +78,7 @@ export const TypingGame = ({ currentUser }: { currentUser: any }) => {
 
         setWpm(calculatedWpm);
         setIsFinished(true);
-        saveGameScore(currentUser.id, 'typing', calculatedWpm);
+        saveGameScore('typing', calculatedWpm, currentUser.id);
     };
 
     const getCharClass = (char: string, index: number) => {
