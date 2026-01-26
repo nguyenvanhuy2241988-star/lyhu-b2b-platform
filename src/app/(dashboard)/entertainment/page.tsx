@@ -60,7 +60,7 @@ const LeaderboardWidget = () => {
 
 export default function EntertainmentPage() {
     const { user } = useAuth();
-    const [activeTab, setActiveTab] = useState<'wheel' | 'bird' | 'caro' | 'quiz' | 'store'>('wheel');
+    const [activeTab, setActiveTab] = useState<'wheel' | 'bird' | 'caro' | 'quiz' | 'store' | 'typing'>('wheel');
 
     return (
         <div className="min-h-screen bg-slate-50 p-6">
@@ -123,8 +123,8 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('store')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'store'
-                            ? "border-purple-600 text-purple-700"
-                            : "border-transparent text-slate-500 hover:text-slate-700"
+                        ? "border-purple-600 text-purple-700"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -134,8 +134,8 @@ export default function EntertainmentPage() {
                 <button
                     onClick={() => setActiveTab('typing')}
                     className={`pb-3 px-4 text-sm font-medium transition-colors border-b-2 ${activeTab === 'typing'
-                            ? "border-purple-600 text-purple-700"
-                            : "border-transparent text-slate-500 hover:text-slate-700"
+                        ? "border-purple-600 text-purple-700"
+                        : "border-transparent text-slate-500 hover:text-slate-700"
                         }`}
                 >
                     <div className="flex items-center gap-2">
