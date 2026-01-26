@@ -275,19 +275,18 @@ export default function HRSchedulingPage() {
                             <div className="w-full h-32 flex items-center justify-center text-slate-400 text-xs">Chưa có Banner (Full Width)</div>
                         )}
 
-                        {isHR && (
-                            <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 p-1 rounded backdrop-blur-sm">
-                                <input type="file" ref={bannerInputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleAssetUpload(e.target.files[0], 'banner')} />
-                                <button onClick={() => bannerInputRef.current?.click()} className="bg-white p-1.5 rounded shadow hover:text-teal-600" title="Đổi Banner">
-                                    <Edit3 className="w-4 h-4" />
+                        {/* Allow ALL users to change banner */}
+                        <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 p-1 rounded backdrop-blur-sm">
+                            <input type="file" ref={bannerInputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleAssetUpload(e.target.files[0], 'banner')} />
+                            <button onClick={() => bannerInputRef.current?.click()} className="bg-white p-1.5 rounded shadow hover:text-teal-600" title="Đổi Banner">
+                                <Edit3 className="w-4 h-4" />
+                            </button>
+                            {selectedSchedule.banner_url && (
+                                <button onClick={() => handleDeleteAsset('banner')} className="bg-white p-1.5 rounded shadow hover:text-red-600" title="Xóa Banner">
+                                    <Trash2 className="w-4 h-4" />
                                 </button>
-                                {selectedSchedule.banner_url && (
-                                    <button onClick={() => handleDeleteAsset('banner')} className="bg-white p-1.5 rounded shadow hover:text-red-600" title="Xóa Banner">
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                )}
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </>
                 )}
             </div>
@@ -317,7 +316,8 @@ export default function HRSchedulingPage() {
 
                 <div className="flex items-center gap-3 self-end md:self-auto">
                     {/* Poster Management Modal Trigger */}
-                    {isHR && selectedSchedule && (
+                    {/* Poster Management Modal Trigger - Allow ALL users */}
+                    {selectedSchedule && (
                         <div className="relative">
                             <button
                                 onClick={() => setShowPosterModal(!showPosterModal)}
@@ -387,8 +387,8 @@ export default function HRSchedulingPage() {
                         </div>
                     )}
 
-                    {/* Color Picker */}
-                    {isHR && selectedSchedule && (
+                    {/* Color Picker - Allow ALL users */}
+                    {selectedSchedule && (
                         <div className="h-7 w-7 rounded-full overflow-hidden border border-slate-300 cursor-pointer relative shadow-sm hover:scale-105 transition-transform">
                             <input
                                 type="color"
