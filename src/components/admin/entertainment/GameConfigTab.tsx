@@ -46,7 +46,7 @@ export const GameConfigTab = () => {
             if (g.code === code) {
                 return {
                     ...g,
-                    config: { ...g.config, [field]: Number(value) }
+                    config: { ...(g.config || {}), [field]: Number(value) }
                 };
             }
             return g;
@@ -98,7 +98,7 @@ export const GameConfigTab = () => {
                                 <label className="block text-xs font-semibold text-slate-500 mb-1">Điểm (Dễ)</label>
                                 <input
                                     type="number"
-                                    value={game.config.points_easy || 0}
+                                    value={game.config?.points_easy || 0}
                                     onChange={(e) => handleChange(game.code, 'points_easy', e.target.value)}
                                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                                 />
@@ -107,7 +107,7 @@ export const GameConfigTab = () => {
                                 <label className="block text-xs font-semibold text-slate-500 mb-1">Điểm (Vừa)</label>
                                 <input
                                     type="number"
-                                    value={game.config.points_medium || 0}
+                                    value={game.config?.points_medium || 0}
                                     onChange={(e) => handleChange(game.code, 'points_medium', e.target.value)}
                                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                                 />
@@ -116,7 +116,7 @@ export const GameConfigTab = () => {
                                 <label className="block text-xs font-semibold text-slate-500 mb-1">Điểm (Khó)</label>
                                 <input
                                     type="number"
-                                    value={game.config.points_hard || 0}
+                                    value={game.config?.points_hard || 0}
                                     onChange={(e) => handleChange(game.code, 'points_hard', e.target.value)}
                                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                                 />
@@ -125,7 +125,7 @@ export const GameConfigTab = () => {
                                 <label className="block text-xs font-semibold text-slate-500 mb-1">Giới hạn / ngày</label>
                                 <input
                                     type="number"
-                                    value={game.config.daily_limit || 0}
+                                    value={game.config?.daily_limit || 0}
                                     onChange={(e) => handleChange(game.code, 'daily_limit', e.target.value)}
                                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                                 />
