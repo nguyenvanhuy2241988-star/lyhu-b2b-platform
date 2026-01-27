@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { RotateCcw, User, Bot, Trophy, Grid3X3 } from "lucide-react";
+import { RotateCcw, User, Bot, Trophy, Grid3X3, Swords, Globe } from "lucide-react";
 import { saveGameScore, getGameConfig, addPoints } from "@/lib/entertainmentStore";
+import { CaroLobby } from "./CaroLobby";
+import { CaroOnlineGame } from "./CaroOnlineGame";
 
 interface CaroGameProps {
     currentUser: any;
@@ -17,12 +19,19 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
     const [board, setBoard] = useState<CellValue[][]>(
         Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null))
     );
-    const [gameState, setGameState] = useState<'MENU' | 'PLAYING' | 'FINISHED'>('MENU');
+    // Extended GameState
+    const [gameState, setGameState] = useState<'MENU' | 'PLAYING' | 'FINISHED' | 'LOBBY' | 'ONLINE_MATCH'>('MENU');
     const [difficulty, setDifficulty] = useState<'EASY' | 'MEDIUM' | 'HARD'>('EASY');
+    const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
+
+    // Bot Game State (Preserved)
     const [isXNext, setIsXNext] = useState(true);
     const [winner, setWinner] = useState<Player | 'DRAW' | null>(null);
     const [winningLine, setWinningLine] = useState<number[][] | null>(null);
     const [isBotThinking, setIsBotThinking] = useState(false);
+
+    // ... existing config state ...
+    // Config State (Deduped)
 
     // Config State
     const [config, setConfig] = useState<any>({ points_easy: 50, points_medium: 100, points_hard: 200 });
@@ -489,35 +498,84 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
 
     const returnToMenu = () => {
         setGameState('MENU');
+        setActiveRoomId(null);
     };
+
+    const handleEnterLobby = () => {
+        setGameState('LOBBY');
+    };
+
+    const handleJoinRoom = (roomId: string) => {
+        setActiveRoomId(roomId);
+        setGameState('ONLINE_MATCH');
+    };
+
+    // RENDER: LOBBY
+    if (gameState === 'LOBBY') {
+        return <CaroLobby
+            currentUser={currentUser}
+            onJoinRoom={handleJoinRoom}
+            onCreateRoom={() => { }}
+        />;
+    }
+
+    // RENDER: ONLINE MATCH
+    if (gameState === 'ONLINE_MATCH' && activeRoomId) {
+        return <CaroOnlineGame
+            currentUser={currentUser}
+            roomId={activeRoomId}
+            onExit={returnToMenu}
+        />;
+    }
 
     if (gameState === 'MENU') {
         return (
             <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-slate-200 shadow-sm min-h-[400px]">
                 <Grid3X3 className="w-20 h-20 text-teal-600 mb-6" />
-                <h2 className="text-2xl font-black text-slate-800 mb-8">CHỌN CẤP ĐỘ</h2>
-                <div className="flex gap-4">
-                    <button
-                        onClick={() => startGame('EASY')}
-                        className="flex flex-col items-center gap-2 p-6 bg-teal-50 border-2 border-teal-100 rounded-xl hover:border-teal-500 hover:shadow-lg transition-all w-32"
-                    >
-                        <Bot className="w-8 h-8 text-teal-600" />
-                        <span className="font-bold text-teal-900">Dễ</span>
-                    </button>
-                    <button
-                        onClick={() => startGame('MEDIUM')}
-                        className="flex flex-col items-center gap-2 p-6 bg-blue-50 border-2 border-blue-100 rounded-xl hover:border-blue-500 hover:shadow-lg transition-all w-32"
-                    >
-                        <Bot className="w-8 h-8 text-blue-600" />
-                        <span className="font-bold text-blue-900">Vừa</span>
-                    </button>
-                    <button
-                        onClick={() => startGame('HARD')}
-                        className="flex flex-col items-center gap-2 p-6 bg-red-50 border-2 border-red-100 rounded-xl hover:border-red-500 hover:shadow-lg transition-all w-32"
-                    >
-                        <Bot className="w-8 h-8 text-red-600" />
-                        <span className="font-bold text-red-900">Khó</span>
-                    </button>
+                <h2 className="text-2xl font-black text-slate-800 mb-8">CHỌN CHẾ ĐỘ CHƠI</h2>
+
+                <div className="flex flex-col gap-6">
+                    {/* Bot Mode */}
+                    <div className="flex flex-col items-center">
+                        <h3 className="text-sm font-bold text-slate-400 mb-3 uppercase tracking-wider">Đấu với Máy</h3>
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => startGame('EASY')}
+                                className="flex flex-col items-center gap-2 p-4 bg-teal-50 border-2 border-teal-100 rounded-xl hover:border-teal-500 hover:shadow-lg transition-all w-28"
+                            >
+                                <Bot className="w-8 h-8 text-teal-600" />
+                                <span className="font-bold text-teal-900">Dễ</span>
+                            </button>
+                            <button
+                                onClick={() => startGame('MEDIUM')}
+                                className="flex flex-col items-center gap-2 p-4 bg-blue-50 border-2 border-blue-100 rounded-xl hover:border-blue-500 hover:shadow-lg transition-all w-28"
+                            >
+                                <Bot className="w-8 h-8 text-blue-600" />
+                                <span className="font-bold text-blue-900">Vừa</span>
+                            </button>
+                            <button
+                                onClick={() => startGame('HARD')}
+                                className="flex flex-col items-center gap-2 p-4 bg-red-50 border-2 border-red-100 rounded-xl hover:border-red-500 hover:shadow-lg transition-all w-28"
+                            >
+                                <Bot className="w-8 h-8 text-red-600" />
+                                <span className="font-bold text-red-900">Khó</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="w-full h-px bg-slate-100"></div>
+
+                    {/* Online Mode */}
+                    <div className="flex flex-col items-center">
+                        <button
+                            onClick={handleEnterLobby}
+                            className="flex items-center gap-3 px-8 py-4 bg-indigo-600 text-white rounded-xl font-black text-lg hover:bg-indigo-700 hover:scale-105 transition-all shadow-xl shadow-indigo-200 w-full justify-center"
+                        >
+                            <Globe className="w-6 h-6 animate-pulse" />
+                            THÁCH ĐẤU ONLINE (PvP)
+                        </button>
+                        <p className="text-xs text-slate-400 mt-2">So tài thời gian thực với các đồng nghiệp!</p>
+                    </div>
                 </div>
             </div>
         );
