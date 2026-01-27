@@ -10,7 +10,7 @@ import { QuizGame } from "@/components/entertainment/QuizGame";
 import { RewardStore } from "@/components/entertainment/RewardStore";
 import { TypingGame } from "@/components/entertainment/TypingGame";
 import { Gamepad2, Gift, Trophy, Grid3X3, Image, ShoppingBag, Keyboard } from "lucide-react";
-import { getLeaderboard, GameScore } from "@/lib/entertainmentStore";
+import { getLeaderboard, getAccumulatedLeaderboard, GameScore } from "@/lib/entertainmentStore";
 
 interface LeaderboardWidgetProps {
     gamePrefix: string; // e.g. 'lyhu_bird' or 'caro'
@@ -19,13 +19,19 @@ interface LeaderboardWidgetProps {
 
 const LeaderboardWidget = ({ gamePrefix, gameName }: LeaderboardWidgetProps) => {
     const [scores, setScores] = useState<GameScore[]>([]);
-    const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+    const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard' | 'pvp'>('medium');
 
     const fetchScores = async () => {
         try {
-            // Map difficulty to code
-            const code = `${gamePrefix}_${difficulty}`;
-            const data = await getLeaderboard(code);
+            let data;
+            if (difficulty === 'pvp') {
+                // PvP is accumulated
+                data = await getAccumulatedLeaderboard(`${gamePrefix}_pvp`);
+            } else {
+                // Determine code
+                const code = `${gamePrefix}_${difficulty}`;
+                data = await getLeaderboard(code);
+            }
             setScores(data);
         } catch (e) { console.error(e); }
     };
@@ -46,25 +52,34 @@ const LeaderboardWidget = ({ gamePrefix, gameName }: LeaderboardWidgetProps) => 
             </div>
 
             {/* Difficulty Tabs */}
-            <div className="flex border-b border-slate-100">
+            <div className="flex border-b border-slate-100 overflow-x-auto">
                 <button
                     onClick={() => setDifficulty('easy')}
-                    className={`flex-1 py-2 text-xs font-bold ${difficulty === 'easy' ? 'text-teal-600 border-b-2 border-teal-500 bg-teal-50' : 'text-slate-400 hover:bg-slate-50'}`}
+                    className={`flex-1 py-2 px-2 text-[10px] sm:text-xs font-bold whitespace-nowrap ${difficulty === 'easy' ? 'text-teal-600 border-b-2 border-teal-500 bg-teal-50' : 'text-slate-400 hover:bg-slate-50'}`}
                 >
                     DỄ
                 </button>
                 <button
                     onClick={() => setDifficulty('medium')}
-                    className={`flex-1 py-2 text-xs font-bold ${difficulty === 'medium' ? 'text-blue-600 border-b-2 border-blue-500 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}
+                    className={`flex-1 py-2 px-2 text-[10px] sm:text-xs font-bold whitespace-nowrap ${difficulty === 'medium' ? 'text-blue-600 border-b-2 border-blue-500 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}
                 >
                     VỪA
                 </button>
                 <button
                     onClick={() => setDifficulty('hard')}
-                    className={`flex-1 py-2 text-xs font-bold ${difficulty === 'hard' ? 'text-red-600 border-b-2 border-red-500 bg-red-50' : 'text-slate-400 hover:bg-slate-50'}`}
+                    className={`flex-1 py-2 px-2 text-[10px] sm:text-xs font-bold whitespace-nowrap ${difficulty === 'hard' ? 'text-red-600 border-b-2 border-red-500 bg-red-50' : 'text-slate-400 hover:bg-slate-50'}`}
                 >
                     KHÓ
                 </button>
+                {/* Only show PvP for Caro */}
+                {gamePrefix === 'caro' && (
+                    <button
+                        onClick={() => setDifficulty('pvp')}
+                        className={`flex-1 py-2 px-2 text-[10px] sm:text-xs font-bold whitespace-nowrap ${difficulty === 'pvp' ? 'text-indigo-600 border-b-2 border-indigo-500 bg-indigo-50' : 'text-slate-400 hover:bg-slate-50'}`}
+                    >
+                        THÁCH ĐẤU
+                    </button>
+                )}
             </div>
 
             <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { createClient } from '@/lib/supabaseClient';
 import { User, Swords, RotateCcw, Trophy, LogOut } from "lucide-react";
 import { toast } from 'sonner';
+import { saveGameScore } from "@/lib/entertainmentStore";
 
 interface CaroOnlineGameProps {
     currentUser: any;
@@ -156,11 +157,18 @@ export const CaroOnlineGame = ({ currentUser, roomId, onExit }: CaroOnlineGamePr
         let newStatus = 'PLAYING';
         let winId = null;
 
+        // ... (inside component)
+
         if (line) {
             setWinningLine(line);
             setWinner(mySymbol); // Local update
             newStatus = 'FINISHED';
             winId = currentUser.id;
+
+            // Save PvP Score (1 win point)
+            saveGameScore('caro_pvp', 1, currentUser.id).then(() => {
+                window.dispatchEvent(new CustomEvent('lb-update'));
+            });
         }
 
         // Sync to DB

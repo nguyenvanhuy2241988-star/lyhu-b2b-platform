@@ -47,6 +47,28 @@ export const getLeaderboard = async (gameCode: string, limit = 10) => {
     return data as GameScore[];
 };
 
+export const getAccumulatedLeaderboard = async (gameCode: string, limit = 10) => {
+    const { data, error } = await supabase.rpc('get_accumulated_leaderboard', {
+        p_game_code: gameCode,
+        p_limit: limit
+    });
+
+    if (error) throw error;
+
+    // Map to GameScore interface shape (mocking id/played_at for compatibility)
+    return data.map((item: any) => ({
+        id: 'acc-' + item.user_id,
+        game_code: gameCode,
+        user_id: item.user_id,
+        score: item.total_score,
+        played_at: new Date().toISOString(),
+        user: {
+            full_name: item.full_name,
+            avatar_url: item.avatar_url
+        }
+    })) as GameScore[];
+};
+
 // --- Games ---
 
 export const getGames = async () => {
