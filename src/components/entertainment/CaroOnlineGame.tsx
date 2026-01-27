@@ -42,13 +42,19 @@ export const CaroOnlineGame = ({ currentUser, roomId, onExit }: CaroOnlineGamePr
             })
             .subscribe();
 
+        // Polling Fallback (Every 3s)
+        const interval = setInterval(() => {
+            fetchRoomDetails(true); // Silent fetch
+        }, 3000);
+
         return () => {
             supabase.removeChannel(channelRef.current);
+            clearInterval(interval);
         };
     }, [roomId]);
 
-    const fetchRoomDetails = async () => {
-        setLoading(true);
+    const fetchRoomDetails = async (silent = false) => {
+        if (!silent) setLoading(true);
         const { data, error } = await supabase
             .from('caro_rooms')
             .select(`*, player1:profiles!player1_id(*), player2:profiles!player2_id(*)`)
@@ -57,11 +63,11 @@ export const CaroOnlineGame = ({ currentUser, roomId, onExit }: CaroOnlineGamePr
 
         if (data) {
             handleRoomUpdate(data);
-        } else {
+        } else if (!silent) {
             toast.error("Không tìm thấy phòng!");
             onExit();
         }
-        setLoading(false);
+        if (!silent) setLoading(false);
     };
 
     const handleRoomUpdate = (roomData: any) => {
