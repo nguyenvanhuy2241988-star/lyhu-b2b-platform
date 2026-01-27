@@ -12,14 +12,19 @@ import { TypingGame } from "@/components/entertainment/TypingGame";
 import { Gamepad2, Gift, Trophy, Grid3X3, Image, ShoppingBag, Keyboard } from "lucide-react";
 import { getLeaderboard, GameScore } from "@/lib/entertainmentStore";
 
-const LeaderboardWidget = () => {
+interface LeaderboardWidgetProps {
+    gamePrefix: string; // e.g. 'lyhu_bird' or 'caro'
+    gameName: string;   // e.g. 'Lyhu Bird' or 'Caro'
+}
+
+const LeaderboardWidget = ({ gamePrefix, gameName }: LeaderboardWidgetProps) => {
     const [scores, setScores] = useState<GameScore[]>([]);
     const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
 
     const fetchScores = async () => {
         try {
             // Map difficulty to code
-            const code = `lyhu_bird_${difficulty}`;
+            const code = `${gamePrefix}_${difficulty}`;
             const data = await getLeaderboard(code);
             setScores(data);
         } catch (e) { console.error(e); }
@@ -31,13 +36,13 @@ const LeaderboardWidget = () => {
         const handler = () => fetchScores();
         window.addEventListener('lb-update', handler);
         return () => window.removeEventListener('lb-update', handler);
-    }, [difficulty]); // Refetch when difficulty changes
+    }, [difficulty, gamePrefix]); // Refetch when difficulty or game changes
 
     return (
         <div className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
             <div className="bg-gradient-to-r from-yellow-400 to-orange-400 p-4 text-white">
                 <h3 className="font-bold flex items-center gap-2"><Trophy className="w-5 h-5" /> Bảng Xếp Hạng</h3>
-                <p className="text-xs opacity-90 mt-1">Top cao thủ "Lyhu Bird"</p>
+                <p className="text-xs opacity-90 mt-1">Top cao thủ "{gameName}"</p>
             </div>
 
             {/* Difficulty Tabs */}
@@ -191,7 +196,7 @@ export default function EntertainmentPage() {
 
                         {/* Sidebar: Leaderboard */}
                         <div className="w-full xl:w-80 shrink-0">
-                            <LeaderboardWidget />
+                            <LeaderboardWidget gamePrefix="lyhu_bird" gameName="Lyhu Bird" />
                         </div>
                     </div>
                 )}
@@ -207,12 +212,19 @@ export default function EntertainmentPage() {
                 )}
 
                 {activeTab === 'caro' && (
-                    <div className="animate-in fade-in duration-300">
-                        <div className="text-center mb-6">
-                            <h2 className="text-xl font-bold mb-2">Cờ Caro (Gomoku)</h2>
-                            <p className="text-slate-500 text-sm">Đấu với máy để giải trí nhanh. Luật 5 quân thẳng hàng.</p>
+                    <div className="flex flex-col xl:flex-row gap-8 items-start animate-in fade-in duration-300">
+                        <div className="flex-1 w-full justify-center">
+                            <div className="text-center mb-6">
+                                <h2 className="text-xl font-bold mb-2">Cờ Caro (Gomoku)</h2>
+                                <p className="text-slate-500 text-sm">Đấu với máy để giải trí nhanh hoặc thách đấu đồng nghiệp.</p>
+                            </div>
+                            <CaroGame currentUser={user} />
                         </div>
-                        <CaroGame currentUser={user} />
+
+                        {/* Sidebar: Leaderboard */}
+                        <div className="w-full xl:w-80 shrink-0 mt-8 xl:mt-0">
+                            <LeaderboardWidget gamePrefix="caro" gameName="Cờ Caro" />
+                        </div>
                     </div>
                 )}
 

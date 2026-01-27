@@ -111,6 +111,9 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
             // Save Score (Leaderboard)
             saveGameScore(code, 100, currentUser.id);
 
+            // Trigger Leaderboard Update
+            window.dispatchEvent(new CustomEvent('lb-update'));
+
             // Add Points to Wallet
             try {
                 await addPoints(currentUser.id, points, 'GAME_WIN', `Thắng Caro (${difficulty})`, code);
