@@ -14,10 +14,13 @@ import { getLeaderboard, GameScore } from "@/lib/entertainmentStore";
 
 const LeaderboardWidget = () => {
     const [scores, setScores] = useState<GameScore[]>([]);
+    const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
 
     const fetchScores = async () => {
         try {
-            const data = await getLeaderboard('lyhu_bird');
+            // Map difficulty to code
+            const code = `lyhu_bird_${difficulty}`;
+            const data = await getLeaderboard(code);
             setScores(data);
         } catch (e) { console.error(e); }
     };
@@ -28,7 +31,7 @@ const LeaderboardWidget = () => {
         const handler = () => fetchScores();
         window.addEventListener('lb-update', handler);
         return () => window.removeEventListener('lb-update', handler);
-    }, []);
+    }, [difficulty]); // Refetch when difficulty changes
 
     return (
         <div className="bg-white rounded-xl shadow border border-slate-200 overflow-hidden">
@@ -36,7 +39,30 @@ const LeaderboardWidget = () => {
                 <h3 className="font-bold flex items-center gap-2"><Trophy className="w-5 h-5" /> Bảng Xếp Hạng</h3>
                 <p className="text-xs opacity-90 mt-1">Top cao thủ "Lyhu Bird"</p>
             </div>
-            <div className="divide-y divide-slate-100">
+
+            {/* Difficulty Tabs */}
+            <div className="flex border-b border-slate-100">
+                <button
+                    onClick={() => setDifficulty('easy')}
+                    className={`flex-1 py-2 text-xs font-bold ${difficulty === 'easy' ? 'text-teal-600 border-b-2 border-teal-500 bg-teal-50' : 'text-slate-400 hover:bg-slate-50'}`}
+                >
+                    DỄ
+                </button>
+                <button
+                    onClick={() => setDifficulty('medium')}
+                    className={`flex-1 py-2 text-xs font-bold ${difficulty === 'medium' ? 'text-blue-600 border-b-2 border-blue-500 bg-blue-50' : 'text-slate-400 hover:bg-slate-50'}`}
+                >
+                    VỪA
+                </button>
+                <button
+                    onClick={() => setDifficulty('hard')}
+                    className={`flex-1 py-2 text-xs font-bold ${difficulty === 'hard' ? 'text-red-600 border-b-2 border-red-500 bg-red-50' : 'text-slate-400 hover:bg-slate-50'}`}
+                >
+                    KHÓ
+                </button>
+            </div>
+
+            <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
                 {scores.map((s, idx) => (
                     <div key={s.id} className="p-3 flex items-center gap-3 hover:bg-slate-50">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${idx === 0 ? 'bg-yellow-100 text-yellow-600' :
@@ -52,7 +78,7 @@ const LeaderboardWidget = () => {
                         <div className="font-bold text-slate-700">{s.score}</div>
                     </div>
                 ))}
-                {scores.length === 0 && <p className="p-4 text-center text-slate-400 text-sm">Chưa có ai chơi. Hãy là người đầu tiên!</p>}
+                {scores.length === 0 && <p className="p-4 text-center text-slate-400 text-sm">Chưa có ai chơi cấp độ này.</p>}
             </div>
         </div>
     );

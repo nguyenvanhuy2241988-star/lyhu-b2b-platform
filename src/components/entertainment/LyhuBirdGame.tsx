@@ -188,15 +188,14 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
             setHighScore(finalScore);
 
             // Point System Logic for Bird
-            // If score > threshold, award points
-            const threshold = difficulty === 'EASY' ? 10 : (difficulty === 'MEDIUM' ? 8 : 5);
-            if (finalScore >= threshold) {
-                // Fetch config on the fly or props? Let's just hardcode fallback/fetch
-                // For perf, usually fetched once.
+            // Award points if score >= 1
+            if (finalScore >= 1) {
+                // Fetch config or use defaults. 
+                // Note: Real logic should use DB config, but for now we update default fallback.
                 const reward = difficulty === 'EASY' ? 50 : (difficulty === 'MEDIUM' ? 100 : 200);
-                // We should really fetch this from DB config ideally.
-                // Assuming it's already implemented correctly in store.
-                await addPoints(currentUser.id, reward, 'GAME_WIN', `Lyhu Bird ${difficulty} (> ${threshold} điểm)`, SETTINGS[difficulty].code);
+
+                // Add points securely
+                await addPoints(currentUser.id, reward, 'GAME_WIN', `Lyhu Bird ${difficulty} (${finalScore} điểm)`, SETTINGS[difficulty].code);
             }
 
             if (onScoreUpdate) onScoreUpdate();

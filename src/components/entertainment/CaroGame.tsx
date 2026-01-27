@@ -544,7 +544,7 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
             {/* Board */}
             <div className="bg-[#f0d9b5] p-2 rounded shadow-xl border-4 border-[#b58863] overflow-hidden">
                 <div
-                    className="grid gap-[1px] bg-[#b58863]"
+                    className="grid bg-[#b58863]"
                     style={{ gridTemplateColumns: `repeat(${BOARD_SIZE}, 1fr)` }}
                 >
                     {board.map((row, rIdx) => (
@@ -553,8 +553,8 @@ export const CaroGame = ({ currentUser }: CaroGameProps) => {
                             return (
                                 <button
                                     key={`${rIdx}-${cIdx}`}
-                                    className={`w-8 h-8 sm:w-10 sm:h-10 bg-[#f0d9b5] flex items-center justify-center text-xl sm:text-2xl font-bold leading-none select-none transition-colors
-                                        ${isWin ? 'bg-yellow-200' : 'hover:bg-[#eacca0]'}
+                                    className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-xl sm:text-2xl font-bold leading-none select-none transition-colors border-[0.5px] border-[#b58863]/30
+                                        ${isWin ? 'bg-yellow-200' : 'bg-[#f0d9b5] hover:bg-[#eacca0]'}
                                     `}
                                     onClick={() => handleCellClick(rIdx, cIdx)}
                                     disabled={cell !== null || !!winner}
