@@ -95,29 +95,16 @@ export const getUserWallet = async (userId: string) => {
 };
 
 export const addPoints = async (userId: string, amount: number, type: string, description: string, refId?: string) => {
-    // 1. Transaction
-    const { error: txError } = await supabase.from('point_transactions').insert({
-        user_id: userId,
-        amount,
-        type,
-        description,
-        reference_id: refId
+    // Use RPC for secure transaction
+    const { error } = await supabase.rpc('award_game_points', {
+        p_user_id: userId,
+        p_amount: amount,
+        p_type: type,
+        p_description: description,
+        p_ref_id: refId
     });
-    if (txError) throw txError;
 
-    // 2. Update Wallet (Simple Increment)
-    // For safer concurrency, use RPC, but simple update is ok for low volume
-    const { data: wallet } = await supabase.from('user_wallets').select('balance, total_earned').eq('user_id', userId).single();
-    const currentBal = wallet?.balance || 0;
-    const currentTotal = wallet?.total_earned || 0;
-
-    const { error: walletError } = await supabase.from('user_wallets').update({
-        balance: currentBal + amount,
-        total_earned: amount > 0 ? currentTotal + amount : currentTotal,
-        last_updated: new Date().toISOString()
-    }).eq('user_id', userId);
-
-    if (walletError) throw walletError;
+    if (error) throw error;
 };
 
 export const redeemReward = async (itemId: string) => {
