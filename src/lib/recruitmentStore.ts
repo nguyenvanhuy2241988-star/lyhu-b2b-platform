@@ -147,9 +147,15 @@ export const getContacts = async () => {
 };
 
 export const createContact = async (contact: Partial<RecruitmentContact>) => {
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        throw new Error("Người dùng chưa đăng nhập");
+    }
+
     const { data, error } = await supabase
         .from('recruitment_contacts')
-        .insert([contact])
+        .insert([{ ...contact, created_by: user.id }])
         .select()
         .single();
 
