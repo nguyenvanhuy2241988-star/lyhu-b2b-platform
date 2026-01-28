@@ -32,22 +32,25 @@ export const getLeaderboard = async (gameCode: string, limit = 10) => {
     // Or we can filter by date in JS if needed, but SQL RLS/Filter is better for scale.
     // Here we get Top scores DESC.
 
-    const { data, error } = await supabase
-        .from('game_scores')
-        .select(`
-            *,
-            profiles(full_name, avatar_url)
-        `)
-        .eq('game_code', gameCode)
-        .order('score', { ascending: false })
-        .limit(limit);
+    // Use RPC to bypass PostgREST embedding issues (406 Not Acceptable)
+    const { data, error } = await supabase.rpc('get_game_leaderboard_simple', {
+        p_game_code: gameCode,
+        p_limit: limit
+    });
 
     if (error) throw error;
 
-    // Map profiles -> user for consistency with interface
+    // Map RPC result to GameScore interface
     return data.map((item: any) => ({
-        ...item,
-        user: item.profiles || { full_name: 'Unknown', avatar_url: null }
+        id: item.id,
+        game_code: item.game_code,
+        user_id: item.user_id,
+        score: item.score,
+        played_at: item.played_at,
+        user: {
+            full_name: item.full_name || 'Unknown',
+            avatar_url: item.avatar_url
+        }
     })) as GameScore[];
 };
 
