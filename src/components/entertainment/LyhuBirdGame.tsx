@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Play, RotateCcw, Trophy } from "lucide-react";
 import { saveGameScore, getMyBestScore, addPoints } from "@/lib/entertainmentStore";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/components/ui/toast";
 
 interface LyhuBirdGameProps {
     currentUser: any;
