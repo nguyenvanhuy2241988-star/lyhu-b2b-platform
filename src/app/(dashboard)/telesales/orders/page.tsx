@@ -267,7 +267,7 @@ export default function TelesalesOrdersPage() {
                                                 </button>
                                                 {order.status === 'pending' && (
                                                     <button
-                                                        onClick={() => setEditOrder(order)}
+                                                        onClick={() => router.push(`/telesales/create-order?edit=${order.id}`)}
                                                         className="text-slate-400 hover:text-blue-600 transition-colors bg-slate-50 hover:bg-blue-50 p-2 rounded-lg"
                                                         title="Sửa đơn hàng"
                                                     >
