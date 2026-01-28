@@ -28,6 +28,11 @@ const STATUS_CONFIG = {
         icon: Package,
         color: "bg-blue-100 text-blue-700",
     },
+    delivering: {
+        label: "Đang giao hàng",
+        icon: Package,
+        color: "bg-indigo-100 text-indigo-700",
+    },
     delivered: {
         label: "Đã giao",
         icon: CheckCircle,

@@ -11,6 +11,7 @@ const formatDate = (dateString: string) => new Date(dateString).toLocaleDateStri
 const STATUS_CONFIG: Record<string, any> = {
     pending: { label: "Chờ xác nhận", icon: Clock, color: "bg-yellow-100 text-yellow-700" },
     processing: { label: "Đang xử lý", icon: Package, color: "bg-blue-100 text-blue-700" },
+    delivering: { label: "Đang giao hàng", icon: Package, color: "bg-indigo-100 text-indigo-700" },
     delivered: { label: "Đã giao", icon: CheckCircle, color: "bg-green-100 text-green-700" },
     cancelled: { label: "Đã hủy", icon: XCircle, color: "bg-red-100 text-red-700" },
 };
