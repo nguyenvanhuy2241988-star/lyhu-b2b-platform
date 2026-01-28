@@ -13,7 +13,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { scanOrdersForFraud } from "@/lib/fraudScan";
 import {
     Package, Clock, CheckCircle, XCircle, Search, Calendar,
-    AlertTriangle, ShieldAlert, ArrowUpDown, Filter, Download, MessageCircle, Eye, Trash2, Truck
+    AlertTriangle, ShieldAlert, ArrowUpDown, Filter, Download, MessageCircle, Eye, Trash2, Truck, RotateCcw
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { exportOrdersToCSV } from "@/lib/exportCSV";
@@ -54,6 +54,11 @@ const STATUS_CONFIG = {
         label: "Đã giao",
         icon: CheckCircle,
         color: "bg-green-100 text-green-700",
+    },
+    returned: {
+        label: "Hoàn hàng",
+        icon: RotateCcw,
+        color: "bg-orange-100 text-orange-700",
     },
     cancelled: {
         label: "Đã hủy",
@@ -230,6 +235,7 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
         { value: "processing", label: "Đang xử lý" },
         { value: "delivering", label: "Đang giao hàng" },
         { value: "delivered", label: "Đã giao" },
+        { value: "returned", label: "Hoàn hàng" },
         { value: "cancelled", label: "Đã hủy" },
     ];
 
@@ -465,6 +471,7 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                                                             <option value="processing">Đang xử lý</option>
                                                             <option value="delivering">Đang giao hàng</option>
                                                             <option value="delivered">Đã giao</option>
+                                                            <option value="returned">Hoàn hàng</option>
                                                             <option value="cancelled">Hủy đơn</option>
                                                         </select>
                                                     )}

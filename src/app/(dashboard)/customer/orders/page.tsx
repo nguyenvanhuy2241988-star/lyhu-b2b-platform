@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { loadOrders, getOrdersByCustomer, type Order } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { Package, Clock, CheckCircle, XCircle, Filter } from "lucide-react";
+import { Package, Clock, CheckCircle, XCircle, Filter, RotateCcw } from "lucide-react";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {

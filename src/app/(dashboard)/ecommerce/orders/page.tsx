@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Package, Clock, CheckCircle, XCircle, Search, Filter, Globe, ShoppingCart, MessageCircle, ShoppingBag } from 'lucide-react';
+import { Package, Clock, CheckCircle, XCircle, Search, Filter, Globe, ShoppingCart, MessageCircle, ShoppingBag, RotateCcw } from 'lucide-react';
 import { createClient } from '@/lib/supabaseClient';
 import { Order, OrderSource } from '@/lib/ordersStore';
 
@@ -13,6 +13,7 @@ const STATUS_CONFIG: Record<string, any> = {
     processing: { label: "Đang xử lý", icon: Package, color: "bg-blue-100 text-blue-700" },
     delivering: { label: "Đang giao hàng", icon: Package, color: "bg-indigo-100 text-indigo-700" },
     delivered: { label: "Đã giao", icon: CheckCircle, color: "bg-green-100 text-green-700" },
+    returned: { label: "Hoàn hàng", icon: RotateCcw, color: "bg-orange-100 text-orange-700" },
     cancelled: { label: "Đã hủy", icon: XCircle, color: "bg-red-100 text-red-700" },
 };
 

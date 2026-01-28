@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { loadOrders, type Order } from "@/lib/ordersStore";
-import { Package, Clock, CheckCircle, XCircle, Search } from "lucide-react";
+import { Package, Clock, CheckCircle, XCircle, Search, RotateCcw } from "lucide-react";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -36,6 +36,11 @@ const STATUS_CONFIG = {
         label: "Đã giao",
         icon: CheckCircle,
         color: "bg-green-100 text-green-700",
+    },
+    returned: {
+        label: "Hoàn hàng",
+        icon: RotateCcw,
+        color: "bg-orange-100 text-orange-700",
     },
     cancelled: {
         label: "Đã hủy",

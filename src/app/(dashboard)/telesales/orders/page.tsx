@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Filter, Eye, FileText, MessageCircle, Pencil, Trash2, Clock, Package, CheckCircle, XCircle, Truck } from "lucide-react";
+import { Search, Filter, Eye, FileText, MessageCircle, Pencil, Trash2, Clock, Package, CheckCircle, XCircle, Truck, RotateCcw } from "lucide-react";
 import { fetchOrders } from "@/lib/ordersStore";
 import { supabase } from "@/lib/supabaseClient"
 import type { Order } from "@/lib/ordersStore";
@@ -47,6 +47,11 @@ const STATUS_CONFIG: Record<string, any> = {
         label: "Đã giao",
         icon: Eye, // Placeholder
         color: "bg-green-100 text-green-700",
+    },
+    returned: {
+        label: "Hoàn hàng",
+        icon: RotateCcw,
+        color: "bg-orange-100 text-orange-700",
     },
     cancelled: {
         label: "Đã hủy",
@@ -190,7 +195,9 @@ export default function TelesalesOrdersPage() {
                             <option value="all">Tất cả trạng thái</option>
                             <option value="pending">Chờ xác nhận</option>
                             <option value="confirmed">Đã xác nhận</option>
+                            <option value="delivering">Đang giao hàng</option>
                             <option value="delivered">Đã giao</option>
+                            <option value="returned">Hoàn hàng</option>
                             <option value="cancelled">Đã hủy</option>
                         </select>
                     </div>
