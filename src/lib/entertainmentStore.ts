@@ -36,15 +36,19 @@ export const getLeaderboard = async (gameCode: string, limit = 10) => {
         .from('game_scores')
         .select(`
             *,
-            user:profiles(full_name, avatar_url)
+            profiles(full_name, avatar_url)
         `)
         .eq('game_code', gameCode)
         .order('score', { ascending: false })
         .limit(limit);
 
     if (error) throw error;
-    if (error) throw error;
-    return data as GameScore[];
+
+    // Map profiles -> user for consistency with interface
+    return data.map((item: any) => ({
+        ...item,
+        user: item.profiles || { full_name: 'Unknown', avatar_url: null }
+    })) as GameScore[];
 };
 
 export const getAccumulatedLeaderboard = async (gameCode: string, limit = 10) => {
