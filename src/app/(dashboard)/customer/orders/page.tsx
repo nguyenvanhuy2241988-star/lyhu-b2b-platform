@@ -38,6 +38,11 @@ const STATUS_CONFIG = {
         icon: CheckCircle,
         color: "bg-green-100 text-green-700",
     },
+    returned: {
+        label: "Hoàn hàng",
+        icon: RotateCcw,
+        color: "bg-orange-100 text-orange-700",
+    },
     cancelled: {
         label: "Đã hủy",
         icon: XCircle,
@@ -54,7 +59,9 @@ const ORDER_STATUS_OPTIONS = [
     { value: "ALL", label: "Tất cả" },
     { value: "pending", label: "Chờ xác nhận" },
     { value: "processing", label: "Đang xử lý" },
+    { value: "delivering", label: "Đang giao hàng" },
     { value: "delivered", label: "Đã giao" },
+    { value: "returned", label: "Hoàn hàng" },
     { value: "cancelled", label: "Đã hủy" },
 ];
 
