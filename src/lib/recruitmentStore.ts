@@ -191,6 +191,39 @@ export const getPlatforms = async () => {
     return data as RecruitmentPlatform[];
 };
 
+export const createPlatform = async (platform: Partial<RecruitmentPlatform>) => {
+    const { data, error } = await supabase
+        .from('recruitment_platforms')
+        .insert([platform])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const updatePlatform = async (id: string, updates: Partial<RecruitmentPlatform>) => {
+    const { data, error } = await supabase
+        .from('recruitment_platforms')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const deletePlatform = async (id: string) => {
+    const { error } = await supabase
+        .from('recruitment_platforms')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+    return true;
+};
+
 // --- RESTORED: Candidates & Jobs Functions ---
 
 export const getJobs = async () => {

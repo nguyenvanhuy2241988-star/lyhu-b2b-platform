@@ -28,14 +28,17 @@ create table if not exists recruitment_daily_activities (
 -- RLS for recruitment_daily_activities
 alter table recruitment_daily_activities enable row level security;
 
+drop policy if exists "Users can view their own reports" on recruitment_daily_activities;
 create policy "Users can view their own reports"
     on recruitment_daily_activities for select
     using (auth.uid() = user_id or exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'recruiter_manager')));
 
+drop policy if exists "Users can insert their own reports" on recruitment_daily_activities;
 create policy "Users can insert their own reports"
     on recruitment_daily_activities for insert
     with check (auth.uid() = user_id);
 
+drop policy if exists "Users can update their own reports" on recruitment_daily_activities;
 create policy "Users can update their own reports"
     on recruitment_daily_activities for update
     using (auth.uid() = user_id);
@@ -99,10 +102,12 @@ create table if not exists recruitment_platforms (
 -- RLS for recruitment_platforms
 alter table recruitment_platforms enable row level security;
 
+drop policy if exists "Everyone can view platforms" on recruitment_platforms;
 create policy "Everyone can view platforms"
     on recruitment_platforms for select
     using (true);
 
+drop policy if exists "Admins can manage platforms" on recruitment_platforms;
 create policy "Admins can manage platforms"
     on recruitment_platforms for all
     using (exists (select 1 from profiles where id = auth.uid() and role in ('admin', 'recruiter_manager')));
