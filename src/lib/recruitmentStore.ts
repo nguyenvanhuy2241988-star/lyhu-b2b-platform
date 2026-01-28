@@ -55,6 +55,7 @@ export interface RecruitmentCandidate {
     phone?: string;
     cv_url?: string;
     source?: string;
+    tracking_code?: string;
     status: CandidateStatus;
     rating?: number;
     notes?: string;
