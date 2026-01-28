@@ -179,3 +179,81 @@ export const getPlatforms = async () => {
     if (error) throw error;
     return data as RecruitmentPlatform[];
 };
+
+// --- RESTORED: Candidates & Jobs Functions ---
+
+export const getJobs = async () => {
+    const { data, error } = await supabase
+        .from('recruitment_jobs')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data as RecruitmentJob[];
+};
+
+export const getCandidates = async () => {
+    const { data, error } = await supabase
+        .from('recruitment_candidates')
+        .select('*, job:job_id(*)')
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data as RecruitmentCandidate[];
+};
+
+export const createCandidate = async (candidate: Partial<RecruitmentCandidate>) => {
+    const { data, error } = await supabase
+        .from('recruitment_candidates')
+        .insert([candidate])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const updateCandidate = async (id: string, updates: Partial<RecruitmentCandidate>) => {
+    const { data, error } = await supabase
+        .from('recruitment_candidates')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const updateCandidateStatus = async (id: string, status: string) => {
+    const { data, error } = await supabase
+        .from('recruitment_candidates')
+        .update({ status })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const deleteCandidates = async (ids: string[]) => {
+    const { error } = await supabase
+        .from('recruitment_candidates')
+        .delete()
+        .in('id', ids);
+
+    if (error) throw error;
+    return true;
+};
+
+export const getInterviews = async (candidateId: string) => {
+    const { data, error } = await supabase
+        .from('recruitment_interviews')
+        .select('*, interviewer:interviewer_id(full_name)')
+        .eq('candidate_id', candidateId)
+        .order('scheduled_at', { ascending: true });
+
+    if (error) throw error;
+    return data as RecruitmentInterview[];
+};
