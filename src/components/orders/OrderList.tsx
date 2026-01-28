@@ -458,6 +458,19 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                                                         <Eye className="w-4 h-4" />
                                                     </button>
 
+                                                    {!readOnly && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setEditOrder(order);
+                                                            }}
+                                                            className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                            title="Sửa đơn hàng"
+                                                        >
+                                                            <Edit className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+
                                                     {readOnly ? (
                                                         <div className="px-2 py-1 bg-slate-100 text-slate-400 text-xs rounded">
                                                             Chỉ xem
