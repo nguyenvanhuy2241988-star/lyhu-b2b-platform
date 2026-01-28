@@ -266,3 +266,36 @@ export const getInterviews = async (candidateId: string) => {
 };
 
 export const getInterviewsByCandidate = getInterviews;
+
+export const scheduleInterview = async (interview: Partial<RecruitmentInterview>) => {
+    const { data, error } = await supabase
+        .from('recruitment_interviews')
+        .insert([interview])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const updateInterview = async (id: string, updates: Partial<RecruitmentInterview>) => {
+    const { data, error } = await supabase
+        .from('recruitment_interviews')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const deleteInterview = async (id: string) => {
+    const { error } = await supabase
+        .from('recruitment_interviews')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+    return true;
+};
