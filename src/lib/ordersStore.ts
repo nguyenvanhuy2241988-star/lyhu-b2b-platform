@@ -21,7 +21,7 @@ const getHeaders = (token?: string) => {
     return headers;
 };
 
-export type OrderStatus = 'pending' | 'processing' | 'delivered' | 'cancelled' | 'draft';
+export type OrderStatus = 'pending' | 'processing' | 'delivering' | 'delivered' | 'cancelled' | 'draft';
 export type OrderSource = 'TELESALES' | 'CUSTOMER' | 'SALES' | 'CTV' | 'SHOPEE' | 'TIKTOK' | 'WEB' | 'FACEBOOK' | 'ZALO';
 export type FraudStatus = "NONE" | "FLAGGED" | "CONFIRMED" | "CLEARED";
 
@@ -79,6 +79,7 @@ export type FulfillmentMode = 'SELF_SHIP' | 'LYHU_SHIP';
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
     pending: "Chờ xác nhận",
     processing: "Đang xử lý",
+    delivering: "Đang giao hàng",
     delivered: "Đã giao",
     cancelled: "Đã hủy",
     draft: "Nháp"
