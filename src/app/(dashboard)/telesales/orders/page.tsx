@@ -211,76 +211,78 @@ export default function TelesalesOrdersPage() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {filteredOrders.map((order) => (
-                                <tr key={order.id} className="hover:bg-slate-50">
-                                    <td className="px-6 py-4 font-medium text-slate-900">
-                                        ORD-{order.readableId}
-                                    </td>
-                                    <td className="px-6 py-4 text-slate-600">
-                                        {formatDate(order.createdAt)}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="font-medium text-slate-900">{order.customerName}</div>
-                                    </td>
-                                    <td className="px-6 py-4 text-right font-medium text-slate-900">
-                                        {formatPrice(order.totalAmount)}
-                                    </td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span
-                                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${STATUS_CONFIG[order.status]?.color || STATUS_CONFIG.pending.color
-                                                }`}
-                                        >
-                                            {STATUS_CONFIG[order.status]?.icon && (
-                                                <STATUS_CONFIG[order.status].icon className="w-3.5 h-3.5" />
-                                            )}
-                                            {STATUS_CONFIG[order.status]?.label || order.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <button
-                                                onClick={() => setChatOrder({ id: order.id, readableId: String(order.readableId || order.id.slice(0, 8)) })}
-                                                className="relative text-slate-400 hover:text-primary-600 transition-colors bg-slate-50 hover:bg-primary-50 p-2 rounded-lg"
-                                                title="Chat"
+                            {filteredOrders.map((order) => {
+                                const statusConfig = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
+                                const StatusIcon = statusConfig.icon;
+
+                                return (
+                                    <tr key={order.id} className="hover:bg-slate-50">
+                                        <td className="px-6 py-4 font-medium text-slate-900">
+                                            ORD-{order.readableId}
+                                        </td>
+                                        <td className="px-6 py-4 text-slate-600">
+                                            {formatDate(order.createdAt)}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <div className="font-medium text-slate-900">{order.customerName}</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-right font-medium text-slate-900">
+                                            {formatPrice(order.totalAmount)}
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span
+                                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}
                                             >
-                                                <MessageCircle className="w-4 h-4" />
-                                                {unreadOrders.has(order.id) && (
-                                                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
-                                                )}
-                                            </button>
-                                            <button
-                                                onClick={() => setSelectedOrder(order)}
-                                                className="text-slate-400 hover:text-indigo-600 transition-colors bg-slate-50 hover:bg-slate-100 p-2 rounded-lg"
-                                                title="Xem chi tiết"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                            </button>
-                                            {order.status === 'pending' && (
+                                                {StatusIcon && <StatusIcon className="w-3.5 h-3.5" />}
+                                                {statusConfig.label}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2">
                                                 <button
-                                                    onClick={() => router.push(`/telesales/create-order?edit=${order.id}`)}
-                                                    className="text-slate-400 hover:text-blue-600 transition-colors bg-slate-50 hover:bg-blue-50 p-2 rounded-lg"
-                                                    title="Sửa đơn hàng"
+                                                    onClick={() => setChatOrder({ id: order.id, readableId: String(order.readableId || order.id.slice(0, 8)) })}
+                                                    className="relative text-slate-400 hover:text-primary-600 transition-colors bg-slate-50 hover:bg-primary-50 p-2 rounded-lg"
+                                                    title="Chat"
                                                 >
-                                                    <Pencil className="w-4 h-4" />
+                                                    <MessageCircle className="w-4 h-4" />
+                                                    {unreadOrders.has(order.id) && (
+                                                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
+                                                    )}
                                                 </button>
-                                            )}
-                                            <button
-                                                onClick={async () => {
-                                                    if (window.confirm("Bạn có chắc chắn muốn xóa đơn hàng này không?")) {
-                                                        const { deleteOrder } = await import("@/lib/ordersStore");
-                                                        const success = await deleteOrder(order.id);
-                                                        // Realtime will auto-update the list
-                                                    }
-                                                }}
-                                                className="text-slate-400 hover:text-red-600 transition-colors bg-slate-50 hover:bg-red-50 p-2 rounded-lg"
-                                                title="Xóa đơn hàng"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
+                                                <button
+                                                    onClick={() => setSelectedOrder(order)}
+                                                    className="text-slate-400 hover:text-indigo-600 transition-colors bg-slate-50 hover:bg-slate-100 p-2 rounded-lg"
+                                                    title="Xem chi tiết"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </button>
+                                                {order.status === 'pending' && (
+                                                    <button
+                                                        onClick={() => router.push(`/telesales/create-order?edit=${order.id}`)}
+                                                        className="text-slate-400 hover:text-blue-600 transition-colors bg-slate-50 hover:bg-blue-50 p-2 rounded-lg"
+                                                        title="Sửa đơn hàng"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                                <button
+                                                    onClick={async () => {
+                                                        if (window.confirm("Bạn có chắc chắn muốn xóa đơn hàng này không?")) {
+                                                            const { deleteOrder } = await import("@/lib/ordersStore");
+                                                            const success = await deleteOrder(order.id);
+                                                            // Realtime will auto-update the list
+                                                        }
+                                                    }}
+                                                    className="text-slate-400 hover:text-red-600 transition-colors bg-slate-50 hover:bg-red-50 p-2 rounded-lg"
+                                                    title="Xóa đơn hàng"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                             {filteredOrders.length === 0 && (
                                 <tr>
                                     <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
