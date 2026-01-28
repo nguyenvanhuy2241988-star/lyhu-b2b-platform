@@ -181,7 +181,7 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
         }
     };
 
-    const { toast } = useToast();
+    const { showToast } = useToast();
 
     const handleSaveScore = async (finalScore: number) => {
         if (!currentUser?.id) return;
@@ -203,18 +203,10 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
 
             if (onScoreUpdate) onScoreUpdate();
 
-            toast({
-                title: "Lưu điểm thành công!",
-                description: `Bạn đã đạt ${finalScore} điểm (Top Server?)`,
-                className: "bg-green-500 text-white border-none"
-            });
+            showToast(`Lưu điểm thành công! Bạn đã đạt ${finalScore} điểm`, 'success');
         } catch (error: any) {
             console.error(error);
-            toast({
-                title: "Lỗi lưu điểm",
-                description: error.message || "Không thể lưu điểm số. Vui lòng thử lại.",
-                variant: "destructive"
-            });
+            showToast(error.message || "Không thể lưu điểm số. Vui lòng thử lại.", 'error');
         } finally {
             setIsSaving(false);
         }
