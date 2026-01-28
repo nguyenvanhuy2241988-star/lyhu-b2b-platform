@@ -261,3 +261,5 @@ export const getInterviews = async (candidateId: string) => {
     if (error) throw error;
     return data as RecruitmentInterview[];
 };
+
+export const getInterviewsByCandidate = getInterviews;
