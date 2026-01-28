@@ -110,6 +110,5 @@ export default function RevenueChart({ data, isLoading }: RevenueChartProps) {
                 </AreaChart>
             </ResponsiveContainer>
         </div>
-        </div >
     );
 }
