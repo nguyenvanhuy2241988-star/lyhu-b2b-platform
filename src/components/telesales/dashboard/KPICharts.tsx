@@ -35,7 +35,7 @@ export const SalesFunnelChart = ({ data }: SalesFunnelChartProps) => {
                         Số lượng: <span className="font-bold">{payload[0].value}</span>
                     </p>
                     <p className="text-xs text-slate-500">
-                        Giá trị: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(payload[0].payload.total_value)}
+                        Giá trị: {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(payload?.[0]?.payload?.total_value || 0)}
                     </p>
                 </div>
             );
