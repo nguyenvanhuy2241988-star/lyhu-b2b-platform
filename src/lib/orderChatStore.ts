@@ -140,6 +140,9 @@ export function subscribeToOrderMessages(
     if (token) {
         supabase.realtime.setAuth(token);
     }
+    // Clean up existing channel if any (rare but possible in race conditions)
+    supabase.removeChannel(supabase.channel(`order_chat_${orderId}`));
+
     const channel = supabase
         .channel(`order_chat_${orderId}`)
         .on(
@@ -151,10 +154,13 @@ export function subscribeToOrderMessages(
                 filter: `order_id=eq.${orderId}`
             },
             (payload: any) => {
+                console.log('[OrderChat] Received realtime message:', payload.new.id);
                 onNewMessage(mapMessage(payload.new));
             }
         )
-        .subscribe();
+        .subscribe((status) => {
+            console.log(`[OrderChat] Subscription status for ${orderId}:`, status);
+        });
 
     return () => {
         supabase.removeChannel(channel);
