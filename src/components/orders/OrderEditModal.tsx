@@ -127,8 +127,8 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
                 name: product.name,
                 sku: product.sku,
                 quantity: 1,
-                price: product.price || 0, // Retail price
-                unitPrice: product.price || 0,
+                price: product.wholesalePrice || 0, // Retail price
+                unitPrice: product.wholesalePrice || 0,
                 discount: 0
             }];
         });
@@ -193,7 +193,7 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
                                         .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
                                         .map(p => (
                                             <div key={p.id} onClick={() => handleAddItem(p)} className="p-2 hover:bg-slate-50 cursor-pointer text-sm">
-                                                {p.name} - {new Intl.NumberFormat('vi-VN').format(p.price || 0)}đ
+                                                {p.name} - {new Intl.NumberFormat('vi-VN').format(p.wholesalePrice || 0)}đ
                                             </div>
                                         ))}
                                 </div>
