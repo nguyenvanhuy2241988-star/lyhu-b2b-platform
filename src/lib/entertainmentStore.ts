@@ -16,11 +16,12 @@ export interface GameScore {
 const supabase = createClient();
 
 export const saveGameScore = async (gameCode: string, score: number, userId: string) => {
-    const { data, error } = await supabase
-        .from('game_scores')
-        .insert([{ game_code: gameCode, score, user_id: userId }])
-        .select()
-        .single();
+    // Use RPC to bypass PostgREST issues
+    const { data, error } = await supabase.rpc('insert_game_score', {
+        p_game_code: gameCode,
+        p_score: score,
+        p_user_id: userId
+    });
 
     if (error) throw error;
     return data;
