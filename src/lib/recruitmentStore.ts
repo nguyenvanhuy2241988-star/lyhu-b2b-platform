@@ -79,6 +79,7 @@ export interface RecruitmentInterview {
     candidate_id: string;
     interviewer_id?: string;
     interviewer?: { full_name: string };
+    candidate?: { full_name: string; job?: { title: string } };
     scheduled_at: string;
     type: 'online' | 'offline';
     location?: string;
