@@ -13,7 +13,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { scanOrdersForFraud } from "@/lib/fraudScan";
 import {
     Package, Clock, CheckCircle, XCircle, Search, Calendar,
-    AlertTriangle, ShieldAlert, ArrowUpDown, Filter, Download, MessageCircle, Eye, Trash2, Truck, RotateCcw
+    AlertTriangle, ShieldAlert, ArrowUpDown, Filter, Download, MessageCircle, Eye, Trash2, Truck, RotateCcw, Edit
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { exportOrdersToCSV } from "@/lib/exportCSV";
@@ -21,6 +21,7 @@ import { notifyNewOrder } from "@/hooks/useNotification";
 import { OrderChatModal } from "@/components/orders/OrderChatModal";
 import { OrderDetailsModal } from "@/components/orders/OrderDetailsModal"; // Added import
 import { getOrdersWithUnreadMessages } from "@/lib/orderChatStore";
+import { OrderEditModal } from "@/components/orders/OrderEditModal";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -94,6 +95,7 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
     const [endDate, setEndDate] = useState("");
     const [chatOrder, setChatOrder] = useState<{ id: string; readableId: string } | null>(null);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null); // Added state
+    const [editOrder, setEditOrder] = useState<Order | null>(null); // Edit state
     const [unreadOrders, setUnreadOrders] = useState<Set<string>>(new Set());
 
     // Stats calculated from REAL data
@@ -510,6 +512,13 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                 isOpen={!!selectedOrder}
                 order={selectedOrder}
                 onClose={() => setSelectedOrder(null)}
+            />
+
+            <OrderEditModal
+                isOpen={!!editOrder}
+                order={editOrder}
+                onClose={() => setEditOrder(null)}
+                onSuccess={() => loadData(true)}
             />
 
             {/* Chat Modal */}
