@@ -227,6 +227,7 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
         pipes.current = [];
         frameCount.current = 0;
         setScore(0);
+        scoreRef.current = 0; // Reset ref
         setGameState('START');
     };
 
@@ -358,7 +359,7 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
                     <Trophy className="w-5 h-5 text-yellow-500" />
                     <span>Kỷ lục ({difficulty === 'EASY' ? 'Dễ' : (difficulty === 'MEDIUM' ? 'Vừa' : 'Khó')}): <span className="font-bold text-slate-900">{highScore}</span></span>
                 </div>
-                <div className="text-[10px] text-slate-300 font-mono">v2.2 (Final Fix)</div>
+                <div className="text-[10px] text-slate-300 font-mono">v2.3 (Loop Fix)</div>
             </div>
         </div>
     );
