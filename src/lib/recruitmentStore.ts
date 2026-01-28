@@ -247,6 +247,10 @@ export const deleteCandidates = async (ids: string[]) => {
     return true;
 };
 
+export const deleteCandidate = async (id: string) => {
+    return deleteCandidates([id]);
+};
+
 export const getInterviews = async (candidateId: string) => {
     const { data, error } = await supabase
         .from('recruitment_interviews')
