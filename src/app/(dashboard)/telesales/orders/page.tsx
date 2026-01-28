@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabaseClient"
 import type { Order } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { OrderDetailsModal } from "@/components/orders/OrderDetailsModal";
+import { OrderEditModal } from "@/components/orders/OrderEditModal";
 import { OrderChatModal } from "@/components/orders/OrderChatModal";
 import { getOrdersWithUnreadMessages } from "@/lib/orderChatStore";
 
@@ -67,6 +68,7 @@ export default function TelesalesOrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [editOrder, setEditOrder] = useState<Order | null>(null); // Added edit state
     const [chatOrder, setChatOrder] = useState<{ id: string; readableId: string } | null>(null);
     const [unreadOrders, setUnreadOrders] = useState<Set<string>>(new Set());
 
@@ -265,7 +267,7 @@ export default function TelesalesOrdersPage() {
                                                 </button>
                                                 {order.status === 'pending' && (
                                                     <button
-                                                        onClick={() => router.push(`/telesales/create-order?edit=${order.id}`)}
+                                                        onClick={() => setEditOrder(order)}
                                                         className="text-slate-400 hover:text-blue-600 transition-colors bg-slate-50 hover:bg-blue-50 p-2 rounded-lg"
                                                         title="Sửa đơn hàng"
                                                     >
@@ -309,6 +311,13 @@ export default function TelesalesOrdersPage() {
                 isOpen={!!selectedOrder}
                 order={selectedOrder}
                 onClose={() => setSelectedOrder(null)}
+            />
+
+            <OrderEditModal
+                isOpen={!!editOrder}
+                order={editOrder}
+                onClose={() => setEditOrder(null)}
+                onSuccess={() => loadOrders(true)}
             />
 
             {/* Chat Modal */}
