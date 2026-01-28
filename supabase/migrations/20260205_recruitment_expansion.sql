@@ -62,18 +62,22 @@ create table if not exists recruitment_contacts (
 -- RLS for recruitment_contacts (Shared among recruiters)
 alter table recruitment_contacts enable row level security;
 
+drop policy if exists "Recruiters can view all contacts" on recruitment_contacts;
 create policy "Recruiters can view all contacts"
     on recruitment_contacts for select
     using (true); -- Simplify for now, or filter by role existence if needed
 
+drop policy if exists "Recruiters can insert contacts" on recruitment_contacts;
 create policy "Recruiters can insert contacts"
     on recruitment_contacts for insert
     with check (auth.uid() = created_by);
 
+drop policy if exists "Recruiters can update contacts" on recruitment_contacts;
 create policy "Recruiters can update contacts"
     on recruitment_contacts for update
     using (true);
 
+drop policy if exists "Recruiters can delete contacts" on recruitment_contacts;
 create policy "Recruiters can delete contacts"
     on recruitment_contacts for delete
     using (true);
