@@ -43,7 +43,12 @@ export interface RecruitmentJob {
     id: string;
     title: string;
     description?: string;
+    requirements?: string;
+    department?: string;
+    location?: string;
+    salary_range?: string;
     status: 'open' | 'closed' | 'draft';
+    created_at?: string;
 }
 
 export type CandidateStatus = 'new' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected';
