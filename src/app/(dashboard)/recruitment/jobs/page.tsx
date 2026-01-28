@@ -86,7 +86,7 @@ export default function JobsPage() {
                             </div>
 
                             <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500">
-                                <span>{format(new Date(job.created_at), 'dd/MM/yyyy')}</span>
+                                <span>{job.created_at ? format(new Date(job.created_at), 'dd/MM/yyyy') : '-'}</span>
                                 <Link
                                     href={`/recruitment/jobs/${job.id}`}
                                     className="text-blue-600 font-medium group-hover:underline flex items-center gap-1 hover:gap-2 transition-all"
