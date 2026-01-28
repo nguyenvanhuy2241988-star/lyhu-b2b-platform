@@ -38,6 +38,51 @@ export interface RecruitmentPlatform {
     active: boolean;
 }
 
+// --- Restore Missing Interfaces for Candidates ---
+export interface RecruitmentJob {
+    id: string;
+    title: string;
+    description?: string;
+    status: 'open' | 'closed' | 'draft';
+}
+
+export interface RecruitmentCandidate {
+    id: string;
+    full_name: string;
+    email?: string;
+    phone?: string;
+    cv_url?: string;
+    source?: string;
+    status: 'new' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected';
+    rating?: number;
+    notes?: string;
+    job_id?: string;
+    job?: RecruitmentJob;
+    skills?: string;
+    education?: string;
+    hometown?: string;
+    address?: string;
+    id_card_front?: string;
+    id_card_back?: string;
+    current_company?: string;
+    experience_years?: number;
+    expected_salary?: string;
+    availability_date?: string;
+    created_at: string;
+}
+
+export interface RecruitmentInterview {
+    id: string;
+    candidate_id: string;
+    interviewer_id?: string;
+    interviewer?: { full_name: string };
+    scheduled_at: string;
+    type: 'online' | 'offline';
+    status: 'scheduled' | 'completed' | 'cancelled';
+    feedback?: string;
+    created_at: string;
+}
+
 // --- Daily Activities ---
 
 export const getDailyReport = async (date: string, userId: string) => {
