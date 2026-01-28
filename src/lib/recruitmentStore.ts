@@ -81,6 +81,8 @@ export interface RecruitmentInterview {
     interviewer?: { full_name: string };
     scheduled_at: string;
     type: 'online' | 'offline';
+    location?: string;
+    meeting_link?: string;
     status: 'scheduled' | 'completed' | 'cancelled';
     feedback?: string;
     created_at: string;
