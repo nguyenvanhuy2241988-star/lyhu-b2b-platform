@@ -38,10 +38,33 @@ const LeaderboardWidget = ({ gamePrefix, gameName }: LeaderboardWidgetProps) => 
 
     useEffect(() => {
         fetchScores();
-        // Listen for updates
-        const handler = () => fetchScores();
-        window.addEventListener('lb-update', handler);
-        return () => window.removeEventListener('lb-update', handler);
+
+        // 1. Listen for local updates (when user plays)
+        const localHandler = () => fetchScores();
+        window.addEventListener('lb-update', localHandler);
+
+        // 2. Listen for Realtime updates (from other users)
+        const channel = supabase
+            .channel('leaderboard_custom_channel')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'game_scores',
+                    filter: `game_code=eq.${gamePrefix}_${difficulty}` // Only listen for relevant game/difficulty
+                },
+                () => {
+                    console.log('Leaderboard updated via Realtime');
+                    fetchScores();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            window.removeEventListener('lb-update', localHandler);
+            supabase.removeChannel(channel);
+        };
     }, [difficulty, gamePrefix]); // Refetch when difficulty or game changes
 
     return (
