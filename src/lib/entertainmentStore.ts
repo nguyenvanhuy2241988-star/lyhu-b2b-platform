@@ -144,15 +144,11 @@ export const redeemReward = async (itemId: string) => {
 };
 
 export const getMyBestScore = async (gameCode: string, userId: string) => {
-    const { data, error } = await supabase
-        .from('game_scores')
-        .select('score')
-        .eq('game_code', gameCode)
-        .eq('user_id', userId)
-        .order('score', { ascending: false })
-        .limit(1)
-        .single();
+    const { data, error } = await supabase.rpc('get_my_best_score', {
+        p_game_code: gameCode,
+        p_user_id: userId
+    });
 
-    if (error && error.code !== 'PGRST116') throw error; // 116 is no rows
-    return data?.score || 0;
+    if (error) throw error;
+    return data || 0;
 };
