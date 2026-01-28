@@ -46,6 +46,8 @@ export interface RecruitmentJob {
     status: 'open' | 'closed' | 'draft';
 }
 
+export type CandidateStatus = 'new' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected';
+
 export interface RecruitmentCandidate {
     id: string;
     full_name: string;
@@ -53,7 +55,7 @@ export interface RecruitmentCandidate {
     phone?: string;
     cv_url?: string;
     source?: string;
-    status: 'new' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected';
+    status: CandidateStatus;
     rating?: number;
     notes?: string;
     job_id?: string;
