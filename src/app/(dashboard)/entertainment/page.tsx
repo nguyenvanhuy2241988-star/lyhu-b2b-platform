@@ -11,6 +11,7 @@ import { RewardStore } from "@/components/entertainment/RewardStore";
 import { TypingGame } from "@/components/entertainment/TypingGame";
 import { Gamepad2, Gift, Trophy, Grid3X3, Image, ShoppingBag, Keyboard } from "lucide-react";
 import { getLeaderboard, getAccumulatedLeaderboard, GameScore } from "@/lib/entertainmentStore";
+import { createClient } from "@/lib/supabaseClient";
 
 interface LeaderboardWidgetProps {
     gamePrefix: string; // e.g. 'lyhu_bird' or 'caro'
@@ -18,6 +19,7 @@ interface LeaderboardWidgetProps {
 }
 
 const LeaderboardWidget = ({ gamePrefix, gameName }: LeaderboardWidgetProps) => {
+    const supabase = createClient();
     const [scores, setScores] = useState<GameScore[]>([]);
     const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard' | 'pvp'>('medium');
 
