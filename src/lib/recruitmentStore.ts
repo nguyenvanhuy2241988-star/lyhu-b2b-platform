@@ -244,11 +244,17 @@ export const deleteJob = async (id: string) => {
     return true;
 };
 
-export const getCandidates = async () => {
-    const { data, error } = await supabase
+export const getCandidates = async (jobId?: string) => {
+    let query = supabase
         .from('recruitment_candidates')
         .select('*, job:job_id(*)')
         .order('created_at', { ascending: false });
+
+    if (jobId) {
+        query = query.eq('job_id', jobId);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
     return data as RecruitmentCandidate[];
