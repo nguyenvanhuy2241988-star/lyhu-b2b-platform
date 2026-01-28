@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Play, RotateCcw, Trophy } from "lucide-react";
 import { saveGameScore, getMyBestScore, addPoints } from "@/lib/entertainmentStore";
+import { useToast } from "@/components/ui/use-toast";
 
 interface LyhuBirdGameProps {
     currentUser: any;
@@ -180,6 +181,8 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
         }
     };
 
+    const { toast } = useToast();
+
     const handleSaveScore = async (finalScore: number) => {
         if (!currentUser?.id) return;
         setIsSaving(true);
@@ -199,8 +202,19 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
             }
 
             if (onScoreUpdate) onScoreUpdate();
-        } catch (error) {
+
+            toast({
+                title: "Lưu điểm thành công!",
+                description: `Bạn đã đạt ${finalScore} điểm (Top Server?)`,
+                className: "bg-green-500 text-white border-none"
+            });
+        } catch (error: any) {
             console.error(error);
+            toast({
+                title: "Lỗi lưu điểm",
+                description: error.message || "Không thể lưu điểm số. Vui lòng thử lại.",
+                variant: "destructive"
+            });
         } finally {
             setIsSaving(false);
         }
