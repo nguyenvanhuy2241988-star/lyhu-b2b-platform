@@ -67,50 +67,49 @@ export default function RevenueChart({ data, isLoading }: RevenueChartProps) {
     }
 
     return (
-        <div className="h-64">
-            <div className="w-full h-full min-h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                        <defs>
-                            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.8} />
-                                <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
-                            </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                        <XAxis
-                            dataKey="date"
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fill: '#64748b', fontSize: 12 }}
-                            tickFormatter={(value) => {
-                                const date = new Date(value);
-                                return `${date.getDate()}/${date.getMonth() + 1}`;
-                            }}
-                        />
-                        <YAxis
-                            axisLine={false}
-                            tickLine={false}
-                            tick={{ fill: '#64748b', fontSize: 12 }}
-                            tickFormatter={(value) => {
-                                if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-                                if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
-                                return value;
-                            }}
-                        />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Area
-                            type="monotone"
-                            dataKey="revenue"
-                            stroke="#0ea5e9"
-                            strokeWidth={3}
-                            fillOpacity={1}
-                            fill="url(#colorRevenue)"
-                            animationDuration={1500}
-                        />
-                    </AreaChart>
-                </ResponsiveContainer>
-            </div>
+        <div className="w-full h-full min-h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                    <defs>
+                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.8} />
+                            <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
+                        </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis
+                        dataKey="date"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#64748b', fontSize: 12 }}
+                        tickFormatter={(value) => {
+                            const date = new Date(value);
+                            return `${date.getDate()}/${date.getMonth() + 1}`;
+                        }}
+                    />
+                    <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#64748b', fontSize: 12 }}
+                        tickFormatter={(value) => {
+                            if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+                            if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
+                            return value;
+                        }}
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Area
+                        type="monotone"
+                        dataKey="revenue"
+                        stroke="#0ea5e9"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#colorRevenue)"
+                        animationDuration={1500}
+                    />
+                </AreaChart>
+            </ResponsiveContainer>
         </div>
+        </div >
     );
 }
