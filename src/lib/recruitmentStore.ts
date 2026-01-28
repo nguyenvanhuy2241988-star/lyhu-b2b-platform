@@ -198,6 +198,50 @@ export const getJobs = async () => {
     return data as RecruitmentJob[];
 };
 
+export const getJobById = async (id: string) => {
+    const { data, error } = await supabase
+        .from('recruitment_jobs')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (error) throw error;
+    return data as RecruitmentJob;
+};
+
+export const createJob = async (job: Partial<RecruitmentJob>) => {
+    const { data, error } = await supabase
+        .from('recruitment_jobs')
+        .insert([job])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const updateJob = async (id: string, updates: Partial<RecruitmentJob>) => {
+    const { data, error } = await supabase
+        .from('recruitment_jobs')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const deleteJob = async (id: string) => {
+    const { error } = await supabase
+        .from('recruitment_jobs')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+    return true;
+};
+
 export const getCandidates = async () => {
     const { data, error } = await supabase
         .from('recruitment_candidates')
