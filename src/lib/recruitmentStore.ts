@@ -254,12 +254,17 @@ export const deleteCandidate = async (id: string) => {
     return deleteCandidates([id]);
 };
 
-export const getInterviews = async (candidateId: string) => {
-    const { data, error } = await supabase
+export const getInterviews = async (candidateId?: string) => {
+    let query = supabase
         .from('recruitment_interviews')
-        .select('*, interviewer:interviewer_id(full_name)')
-        .eq('candidate_id', candidateId)
+        .select('*, interviewer:interviewer_id(full_name), candidate:candidate_id(full_name, job:job_id(title))')
         .order('scheduled_at', { ascending: true });
+
+    if (candidateId) {
+        query = query.eq('candidate_id', candidateId);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
     return data as RecruitmentInterview[];
