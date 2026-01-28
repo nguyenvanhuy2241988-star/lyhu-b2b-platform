@@ -16,15 +16,14 @@ export interface GameScore {
 const supabase = createClient();
 
 export const saveGameScore = async (gameCode: string, score: number, userId: string) => {
-    // Use RPC to bypass PostgREST issues
-    const { data, error } = await supabase.rpc('insert_game_score', {
-        p_game_code: gameCode,
-        p_score: score,
-        p_user_id: userId
-    });
+    // Revert to standard insert WITHOUT select() to avoid 406 error and missing RPC issues.
+    // This is the most robust method that doesn't rely on complex SQL setup.
+    const { error } = await supabase
+        .from('game_scores')
+        .insert([{ game_code: gameCode, score, user_id: userId }]);
 
     if (error) throw error;
-    return data;
+    return { success: true };
 };
 
 export const getLeaderboard = async (gameCode: string, limit = 10) => {
