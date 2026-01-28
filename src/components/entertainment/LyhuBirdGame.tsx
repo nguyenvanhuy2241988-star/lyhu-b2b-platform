@@ -35,6 +35,7 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
     const pipes = useRef<{ x: number, topHeight: number, passed: boolean }[]>([]);
     const frameCount = useRef(0);
     const requestRef = useRef<number>();
+    const scoreRef = useRef(0); // Fix stale closure
 
     // Load High Score when entering menu or changing difficulty
     useEffect(() => {
@@ -97,7 +98,11 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
 
             if (!pipe.passed && pipe.x + pipeW < birdRect.x) {
                 pipe.passed = true;
-                setScore(prev => prev + 1);
+                setScore(prev => {
+                    const newScore = prev + 1;
+                    scoreRef.current = newScore;
+                    return newScore;
+                });
             }
         });
 
@@ -176,8 +181,13 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
     const handleGameOver = () => {
         setGameState('GAME_OVER');
         if (requestRef.current) cancelAnimationFrame(requestRef.current);
-        if (score > highScore) {
-            handleSaveScore(score);
+
+        // Use Ref for current score to avoid stale closure
+        const finalScore = scoreRef.current;
+        console.log("Game Over. Final Score (Ref):", finalScore, "Current High:", highScore);
+
+        if (finalScore > highScore) {
+            handleSaveScore(finalScore);
         }
     };
 
