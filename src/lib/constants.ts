@@ -96,6 +96,7 @@ export const NAV_ITEMS = {
         { label: "Danh mục MISA", href: "/accountant/master-data", icon: Book },
         { label: "Sản phẩm", href: "/accountant/products", icon: Package },
         { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
+        { label: "Góc Giải Trí", href: "/entertainment", icon: Gamepad2 },
         { label: "Tài liệu", href: "/documents", icon: Book },
     ],
     [ROLES.SHIPPER]: [
