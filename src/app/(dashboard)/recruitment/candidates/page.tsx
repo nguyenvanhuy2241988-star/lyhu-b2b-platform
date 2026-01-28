@@ -37,7 +37,7 @@ export default function CandidatesPage() {
         cv_url: '',
         notes: '',
         source: 'Referral',
-        experience_years: '',
+        experience_years: 0,
         expected_salary: '',
         skills: ''
     });
@@ -170,7 +170,7 @@ export default function CandidatesPage() {
                         onClick={() => {
                             setNewCandidate({
                                 full_name: '', email: '', phone: '', status: 'new', job_id: jobs[0]?.id || '', source: 'Referral',
-                                experience_years: '', expected_salary: '', skills: '', notes: ''
+                                experience_years: 0, expected_salary: '', skills: '', notes: ''
                             });
                             setShowModal(true);
                         }}
@@ -407,9 +407,11 @@ export default function CandidatesPage() {
                                 <div>
                                     <label className="block text-sm font-medium mb-1">Kinh nghiệm</label>
                                     <input
+                                        type="number"
+                                        min="0"
                                         className="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
                                         value={newCandidate.experience_years || ''}
-                                        onChange={e => setNewCandidate({ ...newCandidate, experience_years: e.target.value })}
+                                        onChange={e => setNewCandidate({ ...newCandidate, experience_years: e.target.value ? parseFloat(e.target.value) : 0 })}
                                         placeholder="VD: 2 năm"
                                     />
                                 </div>
