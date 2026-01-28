@@ -86,7 +86,7 @@ export default function CandidatesPage() {
         setNewCandidate({
             ...selectedCandidate,
             // Ensure nulls are empty strings for inputs
-            experience_years: selectedCandidate.experience_years || '',
+            experience_years: selectedCandidate.experience_years || 0,
             expected_salary: selectedCandidate.expected_salary || '',
             skills: selectedCandidate.skills || '',
             notes: selectedCandidate.notes || '',
