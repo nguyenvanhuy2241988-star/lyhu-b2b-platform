@@ -186,10 +186,13 @@ export const NAV_ITEMS = {
     ],
     [ROLES.RECRUITER]: [
         { label: "Tổng quan Tuyển dụng", href: "/recruitment", icon: LayoutDashboard },
+        { label: "Báo cáo ngày", href: "/recruitment/daily", icon: ClipboardList },
         { label: "Ứng viên (Kanban)", href: "/recruitment/candidates", icon: Users },
         { label: "Lịch phỏng vấn", href: "/recruitment/interviews", icon: Calendar },
         { label: "Tin tuyển dụng", href: "/recruitment/jobs", icon: Briefcase },
         { label: "Hiệu quả (Social)", href: "/recruitment/performance", icon: TrendingUp },
+        { label: "Mối quan hệ", href: "/recruitment/networking", icon: UserPlus },
+        { label: "Nền tảng & Tài nguyên", href: "/recruitment/platforms", icon: Globe },
         { label: "Hồ sơ Nhân sự", href: "/hr/directory", icon: Users },
         { label: "Việc cần làm", href: "/tasks", icon: ListTodo },
         { label: "Hồ sơ công ty", href: "/recruitment/settings", icon: Settings },
