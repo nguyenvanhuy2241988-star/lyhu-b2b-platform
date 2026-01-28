@@ -349,6 +349,7 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
                     <Trophy className="w-5 h-5 text-yellow-500" />
                     <span>Kỷ lục ({difficulty === 'EASY' ? 'Dễ' : (difficulty === 'MEDIUM' ? 'Vừa' : 'Khó')}): <span className="font-bold text-slate-900">{highScore}</span></span>
                 </div>
+                <div className="text-[10px] text-slate-300 font-mono">v2.1 (RPC)</div>
             </div>
         </div>
     );
