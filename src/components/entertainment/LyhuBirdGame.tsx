@@ -184,10 +184,19 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
     const { showToast } = useToast();
 
     const handleSaveScore = async (finalScore: number) => {
-        if (!currentUser?.id) return;
+        console.log("Attempting to save score:", finalScore);
+
+        if (!currentUser?.id) {
+            console.error("User not logged in!", currentUser);
+            showToast("Bạn chưa đăng nhập! Không thể lưu điểm.", "error");
+            return;
+        }
+
         setIsSaving(true);
         try {
+            console.log("Saving for user:", currentUser.id, "Difficulty:", difficulty);
             await saveGameScore(SETTINGS[difficulty].code, finalScore, currentUser.id);
+            console.log("Save success!");
             setHighScore(finalScore);
 
             // Point System Logic for Bird
@@ -205,8 +214,8 @@ export const LyhuBirdGame = ({ currentUser, onScoreUpdate }: LyhuBirdGameProps) 
 
             showToast(`Lưu điểm thành công! Bạn đã đạt ${finalScore} điểm`, 'success');
         } catch (error: any) {
-            console.error(error);
-            showToast(error.message || "Không thể lưu điểm số. Vui lòng thử lại.", 'error');
+            console.error("Save failed:", error);
+            showToast(error.message || "Lỗi lưu điểm (Xem Console)", 'error');
         } finally {
             setIsSaving(false);
         }
