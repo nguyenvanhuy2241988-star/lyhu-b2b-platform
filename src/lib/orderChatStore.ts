@@ -136,9 +136,10 @@ export function subscribeToOrderMessages(
     token?: string
 ) {
     // Auto-auth is handled by createBrowserClient
-    // if (token) {
-    //    supabase.realtime.setAuth(token);
-    // }
+    // Explicitly set auth for this subscription context
+    if (token) {
+        supabase.realtime.setAuth(token);
+    }
     const channel = supabase
         .channel(`order_chat_${orderId}`)
         .on(
