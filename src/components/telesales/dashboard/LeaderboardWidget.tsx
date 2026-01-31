@@ -6,6 +6,8 @@ import { LeaderboardEntry } from "@/lib/engagementStore";
 interface LeaderboardWidgetProps {
     leaderboard: LeaderboardEntry[];
     isLoading?: boolean;
+    timeFilter?: 'today' | 'week' | 'month' | 'year';
+    onFilterChange?: (filter: 'today' | 'week' | 'month' | 'year') => void;
 }
 
 const formatPrice = (price: number) => {
@@ -15,7 +17,7 @@ const formatPrice = (price: number) => {
     }).format(price);
 };
 
-export default function LeaderboardWidget({ leaderboard, isLoading }: LeaderboardWidgetProps) {
+export default function LeaderboardWidget({ leaderboard, isLoading, timeFilter = 'month', onFilterChange }: LeaderboardWidgetProps) {
     const top3 = leaderboard.slice(0, 3);
     const rest = leaderboard.slice(3, 10); // Show up to top 10
 
@@ -49,6 +51,28 @@ export default function LeaderboardWidget({ leaderboard, isLoading }: Leaderboar
                     <Flame className="w-3 h-3 fill-orange-500" />
                     Đang đua top
                 </div>
+            </div>
+
+            {/* Filter Bar */}
+            <div className="px-4 py-2 border-b border-slate-50 flex gap-2 overflow-x-auto no-scrollbar">
+                {[
+                    { key: 'today', label: 'Hôm nay' },
+                    { key: 'week', label: 'Tuần này' },
+                    { key: 'month', label: 'Tháng này' },
+                    { key: 'year', label: 'Năm nay' }
+                ].map((opt) => (
+                    <button
+                        key={opt.key}
+                        onClick={() => onFilterChange?.(opt.key as any)}
+                        className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors whitespace-nowrap
+                            ${timeFilter === opt.key
+                                ? 'bg-slate-900 text-white'
+                                : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                            }`}
+                    >
+                        {opt.label}
+                    </button>
+                ))}
             </div>
 
             <div className="p-2 flex-1 overflow-y-auto custom-scrollbar">

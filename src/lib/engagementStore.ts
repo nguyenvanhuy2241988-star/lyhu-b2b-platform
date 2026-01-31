@@ -152,17 +152,20 @@ export const fetchCareerLevels = async (token?: string) => {
 /**
  * Calculate Leaderboard based on CRM Deals Revenue (Realtime RPC)
  */
-export const getLeaderboard = async (period: 'this_month' | 'this_week' = 'this_month', token?: string): Promise<LeaderboardEntry[]> => {
+/**
+ * Calculate Leaderboard based on Delivered Orders Revenue (Realtime RPC V2)
+ */
+export const getLeaderboard = async (startDate: Date, endDate: Date, token?: string): Promise<LeaderboardEntry[]> => {
     try {
         const headers = getHeaders(token);
-        const now = new Date();
-        const month = now.getMonth() + 1;
-        const year = now.getFullYear();
 
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_realtime_leaderboard`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_realtime_leaderboard_v2`, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ p_month: month, p_year: year }),
+            body: JSON.stringify({
+                p_start_date: startDate.toISOString(),
+                p_end_date: endDate.toISOString()
+            }),
             cache: 'no-store',
             signal: getSignal(10000)
         });
@@ -179,7 +182,7 @@ export const getLeaderboard = async (period: 'this_month' | 'this_week' = 'this_
             user_id: item.user_id,
             user_name: item.full_name || 'Unknown',
             avatar_url: item.avatar_url,
-            total_orders: item.total_deals, // Mapped to total_deals
+            total_orders: item.total_orders,
             total_revenue: item.total_revenue,
             rank: item.rank
         }));

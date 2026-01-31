@@ -61,20 +61,57 @@ export default function TelesalesDashboard() {
     const [userAchievements, setUserAchievements] = useState<any[]>([]);
     const [careerLevels, setCareerLevels] = useState<CareerLevel[]>([]);
 
+    // Filter State
+    const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month' | 'year'>('month');
+
     // SAFE ACCESS: Ensure arrays
     const safeTasks = Array.isArray(tasks) ? tasks : [];
     const safeLeads = Array.isArray(leads) ? leads : [];
     const safeOrders = Array.isArray(orders) ? orders : [];
+
+    // Helper to get date range based on filter
+    const getDateRange = useCallback(() => {
+        const now = new Date();
+        const start = new Date();
+        const end = new Date();
+
+        // Reset time to end of day for end date
+        end.setHours(23, 59, 59, 999);
+
+        if (timeFilter === 'today') {
+            start.setHours(0, 0, 0, 0);
+        } else if (timeFilter === 'week') {
+            // Monday as start of week
+            const day = now.getDay();
+            const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+            start.setDate(diff);
+            start.setHours(0, 0, 0, 0);
+        } else if (timeFilter === 'month') {
+            start.setDate(1);
+            start.setHours(0, 0, 0, 0);
+        } else if (timeFilter === 'year') {
+            start.setMonth(0, 1);
+            start.setHours(0, 0, 0, 0);
+        }
+
+        return { start, end };
+    }, [timeFilter]);
 
     // Load all data
     const loadAll = useCallback(async (silent = false) => {
         if (!silent) setIsLoading(true);
         try {
             const token = session?.access_token;
-            // Get date range for this month
+            // Get date range for KPI (Always use Month for main KPI cards for now? Or sync with filter? 
+            // Usually KPIs like "Revenue this month" are fixed to month. 
+            // Leaderboard will use dynamic filter.)
+
             const now = new Date();
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+            // Dynamic range for Leaderboard
+            const { start: lbStart, end: lbEnd } = getDateRange();
 
             // Load tasks, leads and orders in parallel
             const [taskRows, leadRows, orderRows, kpiData, funnel] = await Promise.all([
@@ -94,7 +131,7 @@ export default function TelesalesDashboard() {
             // Load Engagement Data
             const [fundData, leaderboardData, achievementsData, roadmapData] = await Promise.all([
                 fetchBondingFund(token),
-                getLeaderboard('this_month', token),
+                getLeaderboard(lbStart, lbEnd, token),
                 fetchUserAchievements(user?.id || "", token),
                 fetchCareerLevels(token)
             ]);
@@ -108,7 +145,7 @@ export default function TelesalesDashboard() {
         } finally {
             if (!silent) setIsLoading(false);
         }
-    }, [user, session]);
+    }, [user, session, getDateRange]); // Added getDateRange dependency
 
     useEffect(() => {
         if (!user) return;
@@ -328,7 +365,12 @@ export default function TelesalesDashboard() {
 
                 {/* 1. Leaderboard (Bảng vàng Vinh danh) */}
                 <div className="lg:col-span-2 h-[500px]">
-                    <LeaderboardWidget leaderboard={leaderboard} isLoading={isLoading} />
+                    <LeaderboardWidget
+                        leaderboard={leaderboard}
+                        isLoading={isLoading}
+                        timeFilter={timeFilter}
+                        onFilterChange={setTimeFilter}
+                    />
                 </div>
 
                 {/* Right Column: Bonding & Roadmap */}
