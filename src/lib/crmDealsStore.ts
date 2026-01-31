@@ -1539,7 +1539,7 @@ export async function fetchKPIStats(startDate: Date, endDate: Date, userId?: str
         const headers = getHeaders(authToken);
 
         const res = await fetch(
-            `${supabaseUrl}/rest/v1/rpc/get_telesales_kpi_stats`,
+            `${supabaseUrl}/rest/v1/rpc/get_telesales_kpi_stats_v2`,
             {
                 method: 'POST',
                 headers,
