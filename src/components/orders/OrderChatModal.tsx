@@ -59,7 +59,6 @@ export function OrderChatModal({ isOpen, onClose, orderId, orderReadableId, onMa
 
         // Subscribe to new messages
         const unsubscribe = subscribeToOrderMessages(orderId, (newMsg) => {
-            console.log("[Chat] Realtime Update Received:", newMsg);
             setMessages(prev => {
                 // Check if message already exists (by ID or similar temp ID)
                 const exists = prev.some(m =>
@@ -68,7 +67,6 @@ export function OrderChatModal({ isOpen, onClose, orderId, orderReadableId, onMa
                 );
 
                 if (exists) {
-                    console.log("[Chat] Updating existing message:", newMsg.id);
                     // Replace temp message with real one
                     return prev.map(m =>
                         (m.id === newMsg.id || (m.id.startsWith('temp-') && m.content === newMsg.content && m.senderId === newMsg.senderId))
@@ -76,7 +74,6 @@ export function OrderChatModal({ isOpen, onClose, orderId, orderReadableId, onMa
                             : m
                     );
                 }
-                console.log("[Chat] Adding new message:", newMsg.id);
                 return [...prev, newMsg];
             });
 
