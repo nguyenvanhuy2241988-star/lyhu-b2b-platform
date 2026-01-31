@@ -95,7 +95,7 @@ export function getSalesStats(leads: SalesLead[]) {
 }
 
 // --- ASYNC ---
-export const fetchSalesLeads = async (userId?: string, token?: string): Promise<SalesLead[]> => {
+export const fetchSalesLeads = async (userId?: string, token?: string, filters?: { fromDate?: string, toDate?: string }): Promise<SalesLead[]> => {
     if (!userId) {
         console.warn("[fetchSalesLeads] No userId provided, returning empty.");
         return [];
@@ -111,6 +111,15 @@ export const fetchSalesLeads = async (userId?: string, token?: string): Promise<
             assigned_to: `eq.${userId}`,
             order: 'created_at.desc'
         });
+
+        // Apply Date Filters
+        if (filters?.fromDate) {
+            params.append('created_at', `gte.${filters.fromDate}`);
+        }
+        if (filters?.toDate) {
+            params.append('created_at', `lte.${filters.toDate}`);
+        }
+
         const res = await fetch(`${SUPABASE_URL}/rest/v1/leads?${params.toString()}`, {
             headers,
             signal: controller.signal

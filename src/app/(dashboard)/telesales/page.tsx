@@ -136,20 +136,23 @@ export default function TelesalesDashboard() {
             // Usually KPIs like "Revenue this month" are fixed to month. 
             // Leaderboard will use dynamic filter.)
 
-            const now = new Date();
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+            // Dynamic range for Global Filter (Leaderboard + KPI + Leads + Orders)
+            const { start: globalStart, end: globalEnd } = getDateRange();
 
-            // Dynamic range for Leaderboard
-            const { start: lbStart, end: lbEnd } = getDateRange();
-
-            // Load tasks, leads and orders in parallel
+            // Load all data with Global Filter
             const [taskRows, leadRows, orderRows, kpiData, funnel] = await Promise.all([
-                getMyTasks(user?.id, token),
-                fetchSalesLeads(user?.id, token),
-                fetchOrders(token),
-                fetchKPIStats(startOfMonth, endOfMonth, user?.id, token),
-                fetchSalesFunnel(startOfMonth, endOfMonth, user?.id, token)
+                getMyTasks(user?.id, token), // Tasks might not need filter or have own logic? Keeping as is for now.
+                fetchSalesLeads(user?.id, token, {
+                    fromDate: globalStart.toISOString(),
+                    toDate: globalEnd.toISOString()
+                }),
+                fetchOrders(token, {
+                    userId: user?.id,
+                    startDate: globalStart.toISOString(),
+                    endDate: globalEnd.toISOString()
+                }),
+                fetchKPIStats(globalStart, globalEnd, user?.id, token),
+                fetchSalesFunnel(globalStart, globalEnd, user?.id, token)
             ]);
 
             setTasks(Array.isArray(taskRows) ? taskRows : []);
@@ -158,10 +161,10 @@ export default function TelesalesDashboard() {
             setKpiStats(kpiData);
             setFunnelData(funnel);
 
-            // Load Engagement Data
+            // Load Engagement Data (Leaderboard also uses global filter)
             const [fundData, leaderboardData, achievementsData, roadmapData] = await Promise.all([
                 fetchBondingFund(token),
-                getLeaderboard(lbStart, lbEnd, token),
+                getLeaderboard(globalStart, globalEnd, token),
                 fetchUserAchievements(user?.id || "", token),
                 fetchCareerLevels(token)
             ]);
