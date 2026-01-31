@@ -29,11 +29,13 @@ export default function ReportsPage() {
     const { user } = useAuth();
     const [reports, setReports] = useState<ReportWithProfile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [filterType, setFilterType] = useState<'today' | 'week' | 'month'>('today');
+    const [filterType, setFilterType] = useState<'today' | 'yesterday' | 'week' | 'month' | 'custom'>('today');
     const [dateRange, setDateRange] = useState({ start: new Date(), end: new Date() });
 
     useEffect(() => {
-        updateDateRange(filterType);
+        if (filterType !== 'custom') {
+            updateDateRange(filterType);
+        }
     }, [filterType]);
 
     useEffect(() => {
@@ -42,12 +44,16 @@ export default function ReportsPage() {
         }
     }, [dateRange, user?.id]);
 
-    const updateDateRange = (type: 'today' | 'week' | 'month') => {
+    const updateDateRange = (type: 'today' | 'yesterday' | 'week' | 'month') => {
         const now = new Date();
         let start = now;
         let end = now;
 
-        if (type === 'week') {
+        if (type === 'yesterday') {
+            const yesterday = subDays(now, 1);
+            start = yesterday;
+            end = yesterday;
+        } else if (type === 'week') {
             start = startOfWeek(now, { weekStartsOn: 1 });
             end = endOfWeek(now, { weekStartsOn: 1 });
         } else if (type === 'month') {
@@ -55,6 +61,16 @@ export default function ReportsPage() {
             end = endOfMonth(now);
         }
         setDateRange({ start, end });
+    };
+
+    const handleCustomDateChange = (type: 'start' | 'end', value: string) => {
+        const newDate = new Date(value);
+        if (!isNaN(newDate.getTime())) {
+            setDateRange(prev => ({
+                ...prev,
+                [type]: newDate
+            }));
+        }
     };
 
     const loadReports = async () => {
@@ -95,25 +111,58 @@ export default function ReportsPage() {
                     <p className="text-slate-500 text-sm mt-1">Theo dõi hoạt động của đội ngũ Tuyển dụng</p>
                 </div>
 
-                <div className="flex bg-white rounded-lg border border-slate-200 p-1">
-                    <button
-                        onClick={() => setFilterType('today')}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'today' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        Hôm nay
-                    </button>
-                    <button
-                        onClick={() => setFilterType('week')}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'week' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        Tuần này
-                    </button>
-                    <button
-                        onClick={() => setFilterType('month')}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'month' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        Tháng này
-                    </button>
+                <div className="flex flex-col gap-2 items-end">
+                    <div className="flex bg-white rounded-lg border border-slate-200 p-1">
+                        <button
+                            onClick={() => setFilterType('today')}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'today' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Hôm nay
+                        </button>
+                        <button
+                            onClick={() => setFilterType('yesterday')}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'yesterday' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Hôm qua
+                        </button>
+                        <button
+                            onClick={() => setFilterType('week')}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'week' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Tuần này
+                        </button>
+                        <button
+                            onClick={() => setFilterType('month')}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'month' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Tháng này
+                        </button>
+                        <button
+                            onClick={() => setFilterType('custom')}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'custom' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Tùy chọn
+                        </button>
+                    </div>
+
+                    {filterType === 'custom' && (
+                        <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-slate-200 animate-in fade-in slide-in-from-top-2">
+                            <span className="text-sm text-slate-500">Từ</span>
+                            <input
+                                type="date"
+                                value={format(dateRange.start, "yyyy-MM-dd")}
+                                onChange={(e) => handleCustomDateChange('start', e.target.value)}
+                                className="px-2 py-1 text-sm border border-slate-200 rounded outline-none focus:border-blue-500"
+                            />
+                            <span className="text-sm text-slate-500">Đến</span>
+                            <input
+                                type="date"
+                                value={format(dateRange.end, "yyyy-MM-dd")}
+                                onChange={(e) => handleCustomDateChange('end', e.target.value)}
+                                className="px-2 py-1 text-sm border border-slate-200 rounded outline-none focus:border-blue-500"
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
 
