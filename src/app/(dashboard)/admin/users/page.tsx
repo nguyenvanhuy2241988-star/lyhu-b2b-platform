@@ -167,12 +167,20 @@ export default function UsersPage() {
     const fetchActivityLogs = async (userId: string) => {
         setIsLoadingLogs(true);
         try {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('crm_activities')
                 .select('*, deal:crm_deals(title)')
                 .eq('user_id', userId)
-                .order('created_at', { ascending: false })
-                .limit(50);
+                .order('created_at', { ascending: false });
+
+            if (logDateStart) {
+                query = query.gte('created_at', `${logDateStart}T00:00:00`);
+            }
+            if (logDateEnd) {
+                query = query.lte('created_at', `${logDateEnd}T23:59:59`);
+            }
+
+            const { data, error } = await query;
 
             if (error) throw error;
             setActivityLogs(data || []);
