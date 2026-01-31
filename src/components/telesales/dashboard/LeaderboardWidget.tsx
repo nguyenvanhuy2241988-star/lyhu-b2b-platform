@@ -1,13 +1,16 @@
 "use client";
 
-import { Trophy, Flame, Crown, Medal } from "lucide-react";
+import { Trophy, Flame, Crown, Medal, ChevronLeft, ChevronRight } from "lucide-react";
 import { LeaderboardEntry } from "@/lib/engagementStore";
 
 interface LeaderboardWidgetProps {
     leaderboard: LeaderboardEntry[];
     isLoading?: boolean;
     timeFilter?: 'today' | 'week' | 'month' | 'year';
+    currentDate?: Date;
     onFilterChange?: (filter: 'today' | 'week' | 'month' | 'year') => void;
+    onPrev?: () => void;
+    onNext?: () => void;
 }
 
 const formatPrice = (price: number) => {
@@ -17,7 +20,31 @@ const formatPrice = (price: number) => {
     }).format(price);
 };
 
-export default function LeaderboardWidget({ leaderboard, isLoading, timeFilter = 'month', onFilterChange }: LeaderboardWidgetProps) {
+const getFilterLabel = (filter: string, date: Date) => {
+    const d = new Date(date);
+    if (filter === 'today') return `${d.getDate()} thg ${d.getMonth() + 1}, ${d.getFullYear()}`;
+    if (filter === 'month') return `Tháng ${d.getMonth() + 1}, ${d.getFullYear()}`;
+    if (filter === 'year') return `Năm ${d.getFullYear()}`;
+
+    // Week: Tuần xx
+    const start = new Date(d);
+    const day = start.getDay();
+    const diff = start.getDate() - day + (day === 0 ? -6 : 1);
+    start.setDate(diff);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return `${start.getDate()}/${start.getMonth() + 1} - ${end.getDate()}/${end.getMonth() + 1}`;
+};
+
+export default function LeaderboardWidget({
+    leaderboard,
+    isLoading,
+    timeFilter = 'month',
+    currentDate = new Date(),
+    onFilterChange,
+    onPrev,
+    onNext
+}: LeaderboardWidgetProps) {
     const top3 = leaderboard.slice(0, 3);
     const rest = leaderboard.slice(3, 10); // Show up to top 10
 
@@ -44,30 +71,36 @@ export default function LeaderboardWidget({ leaderboard, isLoading, timeFilter =
                     <div className="p-1.5 bg-amber-100 text-amber-600 rounded-lg">
                         <Trophy className="w-5 h-5" />
                     </div>
-                    Bảng vàng Vinh danh
-                    <span className="text-xs font-normal text-slate-500 ml-1">Tháng {new Date().getMonth() + 1}</span>
+                    Bảng vàng
+                    <div className="flex items-center bg-white/50 rounded-md border border-slate-200/50 ml-2">
+                        <button onClick={onPrev} className="p-1 hover:bg-slate-100 text-slate-500 rounded-l-md"><ChevronLeft size={14} /></button>
+                        <span className="text-xs font-semibold px-2 text-slate-700 min-w-[90px] text-center">
+                            {getFilterLabel(timeFilter, currentDate)}
+                        </span>
+                        <button onClick={onNext} className="p-1 hover:bg-slate-100 text-slate-500 rounded-r-md"><ChevronRight size={14} /></button>
+                    </div>
                 </h3>
                 <div className="flex items-center gap-1.5 text-[10px] font-bold text-orange-500 bg-orange-50 px-2 py-1 rounded-full uppercase tracking-wider animate-pulse">
                     <Flame className="w-3 h-3 fill-orange-500" />
-                    Đang đua top
+                    Đua top
                 </div>
             </div>
 
             {/* Filter Bar */}
             <div className="px-4 py-2 border-b border-slate-50 flex gap-2 overflow-x-auto no-scrollbar">
                 {[
-                    { key: 'today', label: 'Hôm nay' },
-                    { key: 'week', label: 'Tuần này' },
-                    { key: 'month', label: 'Tháng này' },
-                    { key: 'year', label: 'Năm nay' }
+                    { key: 'today', label: 'Ngày' },
+                    { key: 'week', label: 'Tuần' },
+                    { key: 'month', label: 'Tháng' },
+                    { key: 'year', label: 'Năm' }
                 ].map((opt) => (
                     <button
                         key={opt.key}
                         onClick={() => onFilterChange?.(opt.key as any)}
-                        className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors whitespace-nowrap
+                        className={`text-[11px] px-3 py-1 rounded-full font-semibold transition-all whitespace-nowrap border
                             ${timeFilter === opt.key
-                                ? 'bg-slate-900 text-white'
-                                : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                ? 'bg-slate-800 text-white border-slate-800 shadow-sm'
+                                : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                             }`}
                     >
                         {opt.label}

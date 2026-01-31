@@ -63,17 +63,17 @@ export default function TelesalesDashboard() {
 
     // Filter State
     const [timeFilter, setTimeFilter] = useState<'today' | 'week' | 'month' | 'year'>('month');
+    const [currentDate, setCurrentDate] = useState(new Date());
 
     // SAFE ACCESS: Ensure arrays
     const safeTasks = Array.isArray(tasks) ? tasks : [];
     const safeLeads = Array.isArray(leads) ? leads : [];
     const safeOrders = Array.isArray(orders) ? orders : [];
 
-    // Helper to get date range based on filter
+    // Helper to get date range based on filter & current date
     const getDateRange = useCallback(() => {
-        const now = new Date();
-        const start = new Date();
-        const end = new Date();
+        const start = new Date(currentDate);
+        const end = new Date(currentDate);
 
         // Reset time to end of day for end date
         end.setHours(23, 59, 59, 999);
@@ -82,20 +82,50 @@ export default function TelesalesDashboard() {
             start.setHours(0, 0, 0, 0);
         } else if (timeFilter === 'week') {
             // Monday as start of week
-            const day = now.getDay();
-            const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+            const day = start.getDay();
+            const diff = start.getDate() - day + (day === 0 ? -6 : 1);
             start.setDate(diff);
             start.setHours(0, 0, 0, 0);
+
+            const endOfWeek = new Date(start);
+            endOfWeek.setDate(start.getDate() + 6);
+            endOfWeek.setHours(23, 59, 59, 999);
+            end.setTime(endOfWeek.getTime());
         } else if (timeFilter === 'month') {
             start.setDate(1);
             start.setHours(0, 0, 0, 0);
+
+            const endOfMonth = new Date(start.getFullYear(), start.getMonth() + 1, 0, 23, 59, 59);
+            end.setTime(endOfMonth.getTime());
         } else if (timeFilter === 'year') {
             start.setMonth(0, 1);
             start.setHours(0, 0, 0, 0);
+
+            const endOfYear = new Date(start.getFullYear(), 11, 31, 23, 59, 59);
+            end.setTime(endOfYear.getTime());
         }
 
         return { start, end };
-    }, [timeFilter]);
+    }, [timeFilter, currentDate]);
+
+    // Navigation Handlers
+    const handlePrev = () => {
+        const newDate = new Date(currentDate);
+        if (timeFilter === 'today') newDate.setDate(newDate.getDate() - 1);
+        if (timeFilter === 'week') newDate.setDate(newDate.getDate() - 7);
+        if (timeFilter === 'month') newDate.setMonth(newDate.getMonth() - 1);
+        if (timeFilter === 'year') newDate.setFullYear(newDate.getFullYear() - 1);
+        setCurrentDate(newDate);
+    };
+
+    const handleNext = () => {
+        const newDate = new Date(currentDate);
+        if (timeFilter === 'today') newDate.setDate(newDate.getDate() + 1);
+        if (timeFilter === 'week') newDate.setDate(newDate.getDate() + 7);
+        if (timeFilter === 'month') newDate.setMonth(newDate.getMonth() + 1);
+        if (timeFilter === 'year') newDate.setFullYear(newDate.getFullYear() + 1);
+        setCurrentDate(newDate);
+    };
 
     // Load all data
     const loadAll = useCallback(async (silent = false) => {
@@ -369,7 +399,10 @@ export default function TelesalesDashboard() {
                         leaderboard={leaderboard}
                         isLoading={isLoading}
                         timeFilter={timeFilter}
-                        onFilterChange={setTimeFilter}
+                        currentDate={currentDate}
+                        onFilterChange={(f) => { setTimeFilter(f); setCurrentDate(new Date()); }}
+                        onPrev={handlePrev}
+                        onNext={handleNext}
                     />
                 </div>
 
