@@ -9,9 +9,12 @@ import {
     sendMessage,
     uploadChatImage,
     subscribeToOrderMessages,
-    markChatAsRead
+    markChatAsRead,
+    recallMessage,
+    deleteMessage
 } from "@/lib/orderChatStore";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { MoreVertical, Trash2, RotateCcw } from "lucide-react";
 
 interface OrderChatModalProps {
     isOpen: boolean;
@@ -72,11 +75,15 @@ export function OrderChatModal({ isOpen, onClose, orderId, orderReadableId, onMa
                 }
                 return [...prev, newMsg];
             });
-            setTimeout(scrollToBottom, 100);
+
+            // If new message is own, scroll to bottom
+            if (newMsg.senderId === user?.id) {
+                setTimeout(scrollToBottom, 100);
+            }
         }, session?.access_token);
 
         return () => unsubscribe();
-    }, [isOpen, orderId, session?.access_token]); // Removed onMarkAsRead to prevent infinite loop
+    }, [isOpen, orderId, session?.access_token, user?.id]); // Added user?.id
 
     // Send text message
     const handleSend = async () => {
@@ -225,13 +232,25 @@ export function OrderChatModal({ isOpen, onClose, orderId, orderReadableId, onMa
                             Chưa có tin nhắn. Bắt đầu cuộc trò chuyện!
                         </div>
                     ) : (
-                        messages.map((msg) => (
-                            <ChatBubble
-                                key={msg.id}
-                                message={msg}
-                                isOwn={msg.senderId === user?.id}
-                            />
-                        ))
+                        messages
+                            .filter(m => !m.deletedAt) // Hide deleted messages
+                            .map((msg) => (
+                                <ChatBubble
+                                    key={msg.id}
+                                    message={msg}
+                                    isOwn={msg.senderId === user?.id}
+                                    onRecall={async () => {
+                                        if (confirm("Bạn có chắc muốn thu hồi tin nhắn này?")) {
+                                            await recallMessage(msg.id, session?.access_token);
+                                        }
+                                    }}
+                                    onDelete={async () => {
+                                        if (confirm("Bạn có chắc muốn xóa tin nhắn này?")) {
+                                            await deleteMessage(msg.id, session?.access_token);
+                                        }
+                                    }}
+                                />
+                            ))
                     )}
                     <div ref={messagesEndRef} />
                 </div>
@@ -289,7 +308,20 @@ export function OrderChatModal({ isOpen, onClose, orderId, orderReadableId, onMa
 }
 
 // Chat bubble component
-function ChatBubble({ message, isOwn }: { message: OrderMessage; isOwn: boolean }) {
+function ChatBubble({
+    message,
+    isOwn,
+    onRecall,
+    onDelete
+}: {
+    message: OrderMessage;
+    isOwn: boolean;
+    onRecall: () => void;
+    onDelete: () => void;
+}) {
+    const [showMenu, setShowMenu] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
     const roleColors: Record<string, string> = {
         admin: "text-red-600",
         telesales: "text-blue-600",
@@ -304,12 +336,59 @@ function ChatBubble({ message, isOwn }: { message: OrderMessage; isOwn: boolean 
         });
     };
 
+    // Close menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setShowMenu(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
     return (
-        <div className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
+        <div
+            className={`flex ${isOwn ? "justify-end" : "justify-start"} group relative mb-2`}
+            onMouseLeave={() => setShowMenu(false)}
+        >
+            {/* Action Menu (Only for own messages that are not recalled) */}
+            {isOwn && !message.isRecalled && (
+                <div className="absolute top-0 right-0 -mt-2 mr-2 z-10" ref={menuRef}>
+                    <div className={`opacity-0 group-hover:opacity-100 transition-opacity ${showMenu ? 'opacity-100' : ''}`}>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+                            className="p-1 bg-white rounded-full shadow border border-slate-200 text-slate-500 hover:text-blue-600"
+                        >
+                            <MoreVertical size={14} />
+                        </button>
+
+                        {showMenu && (
+                            <div className="absolute right-0 mt-1 w-32 bg-white rounded-lg shadow-lg border border-slate-100 overflow-hidden text-sm animate-in fade-in zoom-in-95 origin-top-right">
+                                <button
+                                    onClick={() => { setShowMenu(false); onRecall(); }}
+                                    className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-600"
+                                >
+                                    <RotateCcw size={14} /> Thu hồi
+                                </button>
+                                <button
+                                    onClick={() => { setShowMenu(false); onDelete(); }}
+                                    className="w-full text-left px-3 py-2 hover:bg-red-50 flex items-center gap-2 text-red-600"
+                                >
+                                    <Trash2 size={14} /> Xóa
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
             <div
-                className={`max-w-[80%] rounded-lg p-3 ${isOwn
-                    ? "bg-primary-600 text-white"
-                    : "bg-slate-100 text-slate-900"
+                className={`max-w-[80%] rounded-lg p-3 ${message.isRecalled
+                    ? "bg-slate-50 border border-slate-200 text-slate-400 italic"
+                    : isOwn
+                        ? "bg-blue-600 text-white" // Changed to blue-600 to match primary
+                        : "bg-slate-100 text-slate-900"
                     }`}
             >
                 {/* Sender info */}
@@ -324,26 +403,35 @@ function ChatBubble({ message, isOwn }: { message: OrderMessage; isOwn: boolean 
                     </div>
                 )}
 
-                {/* Image */}
-                {message.imageUrl && (
-                    <div className="relative w-full h-60 min-h-[150px] mb-2">
-                        <Image
-                            src={message.imageUrl}
-                            alt={`Ảnh từ ${message.senderName || 'Người gửi'}`}
-                            fill
-                            className="rounded-lg object-cover cursor-pointer"
-                            onClick={() => window.open(message.imageUrl!, '_blank')}
-                        />
-                    </div>
-                )}
+                {/* Content Logic */}
+                {message.isRecalled ? (
+                    <p className="text-sm">Tin nhắn đã thu hồi</p>
+                ) : (
+                    <>
+                        {/* Image */}
+                        {message.imageUrl && (
+                            <div className="relative w-full h-60 min-h-[150px] mb-2">
+                                <Image
+                                    src={message.imageUrl}
+                                    alt={`Ảnh từ ${message.senderName || 'Người gửi'}`}
+                                    fill
+                                    className="rounded-lg object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                    onClick={() => window.open(message.imageUrl!, '_blank')}
+                                />
+                            </div>
+                        )}
 
-                {/* Content */}
-                {message.content && (
-                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        {/* Content */}
+                        {message.content && (
+                            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        )}
+                    </>
                 )}
 
                 {/* Time */}
-                <div className={`text-xs mt-1 ${isOwn ? "text-primary-200" : "text-slate-400"}`}>
+                <div className={`text-[10px] mt-1 text-right ${message.isRecalled ? "text-slate-300" :
+                    isOwn ? "text-blue-100" : "text-slate-400"
+                    }`}>
                     {formatTime(message.createdAt)}
                 </div>
             </div>

@@ -29,6 +29,8 @@ export interface OrderMessage {
     content: string | null;
     imageUrl: string | null;
     createdAt: string;
+    isRecalled?: boolean;
+    deletedAt?: string | null;
 }
 
 /**
@@ -98,6 +100,40 @@ export async function sendMessage(
 }
 
 /**
+ * Recall a message
+ */
+export async function recallMessage(messageId: string, token?: string): Promise<boolean> {
+    try {
+        const headers = await getHeaders({ token });
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/order_messages?id=eq.${messageId}`, {
+            method: 'PATCH',
+            headers: { ...headers, 'Prefer': 'return=representation' },
+            body: JSON.stringify({ is_recalled: true })
+        });
+        return res.ok;
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Delete a message
+ */
+export async function deleteMessage(messageId: string, token?: string): Promise<boolean> {
+    try {
+        const headers = await getHeaders({ token });
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/order_messages?id=eq.${messageId}`, {
+            method: 'PATCH',
+            headers: { ...headers, 'Prefer': 'return=representation' },
+            body: JSON.stringify({ deleted_at: new Date().toISOString() })
+        });
+        return res.ok;
+    } catch {
+        return false;
+    }
+}
+
+/**
  * Upload image and get URL
  */
 export async function uploadChatImage(
@@ -148,14 +184,16 @@ export function subscribeToOrderMessages(
         .on(
             'postgres_changes',
             {
-                event: 'INSERT',
+                event: '*', // Listen to ALL events (INSERT, UPDATE)
                 schema: 'public',
                 table: 'order_messages',
                 filter: `order_id=eq.${orderId}`
             },
             (payload: any) => {
-                console.log('[OrderChat] Received realtime message:', payload.new.id);
-                onNewMessage(mapMessage(payload.new));
+                console.log('[OrderChat] Received realtime message:', payload.eventType, payload.new?.id);
+                if (payload.new) {
+                    onNewMessage(mapMessage(payload.new));
+                }
             }
         )
         .subscribe((status: any) => {
@@ -264,7 +302,9 @@ function mapMessage(row: any): OrderMessage {
         senderRole: row.sender_role,
         content: row.content,
         imageUrl: row.image_url,
-        createdAt: row.created_at
+        createdAt: row.created_at,
+        isRecalled: row.is_recalled,
+        deletedAt: row.deleted_at
     };
 }
 
