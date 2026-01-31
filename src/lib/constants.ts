@@ -132,6 +132,7 @@ export const NAV_ITEMS = {
         { label: "Sản phẩm", href: "/admin/products", icon: Package },
         { label: "Hiệu suất CTV", href: "/admin/ctv", icon: TrendingUp },
         { label: "Hiệu quả Tuyển dụng", href: "/recruitment/performance", icon: Trophy },
+        { label: "Báo cáo Tuyển dụng", href: "/recruitment/reports", icon: ClipboardList },
         { label: "------------", href: "#", icon: List }, // Separator
         { label: "Hồ sơ Nhân sự", href: "/hr/directory", icon: Users },
         { label: "Sự kiện (Coming)", href: "#", icon: Calendar },
@@ -187,6 +188,7 @@ export const NAV_ITEMS = {
     [ROLES.RECRUITER]: [
         { label: "Tổng quan Tuyển dụng", href: "/recruitment", icon: LayoutDashboard },
         { label: "Báo cáo ngày", href: "/recruitment/daily", icon: ClipboardList },
+        { label: "Báo cáo Tổng hợp", href: "/recruitment/reports", icon: ClipboardList },
         { label: "Ứng viên (Kanban)", href: "/recruitment/candidates", icon: Users },
         { label: "Lịch phỏng vấn", href: "/recruitment/interviews", icon: Calendar },
         { label: "Tin tuyển dụng", href: "/recruitment/jobs", icon: Briefcase },

@@ -1,0 +1,253 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from "date-fns";
+import { Calendar, Filter, Megaphone, Share2, Users, AlertTriangle, MessageSquare, CheckCircle2 } from "lucide-react";
+import { getAllDailyReports } from "@/lib/recruitmentStore";
+import { useAuth } from "@/components/auth/AuthProvider";
+
+type ReportWithProfile = {
+    id: string;
+    date: string;
+    user_id: string;
+    fb_posts_paid: number;
+    fb_posts_free: number;
+    fb_comments: number;
+    fb_friends: number;
+    threads_posts: number;
+    threads_comments: number;
+    issues: string;
+    request_support: string;
+    profile: {
+        full_name: string;
+        avatar_url: string;
+        email: string;
+    };
+};
+
+export default function ReportsPage() {
+    const { user } = useAuth();
+    const [reports, setReports] = useState<ReportWithProfile[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [filterType, setFilterType] = useState<'today' | 'week' | 'month'>('today');
+    const [dateRange, setDateRange] = useState({ start: new Date(), end: new Date() });
+
+    useEffect(() => {
+        updateDateRange(filterType);
+    }, [filterType]);
+
+    useEffect(() => {
+        if (user?.id) {
+            loadReports();
+        }
+    }, [dateRange, user?.id]);
+
+    const updateDateRange = (type: 'today' | 'week' | 'month') => {
+        const now = new Date();
+        let start = now;
+        let end = now;
+
+        if (type === 'week') {
+            start = startOfWeek(now, { weekStartsOn: 1 });
+            end = endOfWeek(now, { weekStartsOn: 1 });
+        } else if (type === 'month') {
+            start = startOfMonth(now);
+            end = endOfMonth(now);
+        }
+        setDateRange({ start, end });
+    };
+
+    const loadReports = async () => {
+        setIsLoading(true);
+        try {
+            const startStr = format(dateRange.start, "yyyy-MM-dd");
+            const endStr = format(dateRange.end, "yyyy-MM-dd");
+            const data = await getAllDailyReports(startStr, endStr);
+            setReports(data || []);
+        } catch (error) {
+            console.error("Error loading reports:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Calculate Summary Stats
+    const totalPosts = reports.reduce((sum, r) => sum + r.fb_posts_paid + r.fb_posts_free + r.threads_posts, 0);
+    const totalInteractions = reports.reduce((sum, r) => sum + r.fb_comments + r.threads_comments, 0);
+    const totalReports = reports.length;
+
+    // Group by Date for cleaner list
+    const reportsByDate = reports.reduce((acc, report) => {
+        if (!acc[report.date]) acc[report.date] = [];
+        acc[report.date].push(report);
+        return acc;
+    }, {} as Record<string, ReportWithProfile[]>);
+
+    return (
+        <div className="p-6 max-w-7xl mx-auto space-y-6">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                        <CheckCircle2 className="w-6 h-6 text-green-600" />
+                        Báo cáo Hàng ngày
+                    </h1>
+                    <p className="text-slate-500 text-sm mt-1">Theo dõi hoạt động của đội ngũ Tuyển dụng</p>
+                </div>
+
+                <div className="flex bg-white rounded-lg border border-slate-200 p-1">
+                    <button
+                        onClick={() => setFilterType('today')}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'today' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Hôm nay
+                    </button>
+                    <button
+                        onClick={() => setFilterType('week')}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'week' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Tuần này
+                    </button>
+                    <button
+                        onClick={() => setFilterType('month')}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'month' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Tháng này
+                    </button>
+                </div>
+            </div>
+
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p className="text-sm text-slate-500 mb-1">Số lượng báo cáo</p>
+                        <p className="text-2xl font-bold text-slate-900">{totalReports}</p>
+                    </div>
+                    <div className="p-3 bg-green-50 text-green-600 rounded-lg">
+                        <Calendar className="w-5 h-5" />
+                    </div>
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p className="text-sm text-slate-500 mb-1">Tổng bài đăng</p>
+                        <p className="text-2xl font-bold text-slate-900">{totalPosts}</p>
+                    </div>
+                    <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                        <Share2 className="w-5 h-5" />
+                    </div>
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p className="text-sm text-slate-500 mb-1">Tổng tương tác</p>
+                        <p className="text-2xl font-bold text-slate-900">{totalInteractions}</p>
+                    </div>
+                    <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
+                        <MessageSquare className="w-5 h-5" />
+                    </div>
+                </div>
+            </div>
+
+            {/* Report List */}
+            <div className="space-y-6">
+                {isLoading ? (
+                    <div className="text-center py-10">Đang tải dữ liệu...</div>
+                ) : Object.keys(reportsByDate).length === 0 ? (
+                    <div className="text-center py-10 text-slate-500 bg-white rounded-xl border border-slate-200 border-dashed">
+                        Chưa có báo cáo nào trong khoảng thời gian này.
+                    </div>
+                ) : (
+                    Object.keys(reportsByDate).sort().reverse().map(dateKey => (
+                        <div key={dateKey} className="space-y-3">
+                            <h3 className="font-semibold text-slate-700 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+                                {format(new Date(dateKey), "dd/MM/yyyy")}
+                            </h3>
+                            <div className="grid grid-cols-1 gap-4">
+                                {reportsByDate[dateKey].map(report => (
+                                    <div key={report.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                                        <div className="flex flex-col md:flex-row gap-6">
+                                            {/* User Info */}
+                                            <div className="flex items-start gap-3 min-w-[200px]">
+                                                {report.profile.avatar_url ? (
+                                                    <img src={report.profile.avatar_url} alt={report.profile.full_name} className="w-10 h-10 rounded-full object-cover border border-slate-200" />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-500">
+                                                        {report.profile.full_name.charAt(0)}
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <h4 className="font-semibold text-slate-900">{report.profile.full_name}</h4>
+                                                    <p className="text-xs text-slate-500">{report.profile.email}</p>
+                                                    <div className="text-xs text-slate-400 mt-1">
+                                                        {format(new Date(), "HH:mm")}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Metrics Grid */}
+                                            <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                                <div>
+                                                    <p className="text-xs text-slate-500 uppercase font-semibold">Facebook</p>
+                                                    <p className="text-sm font-medium text-slate-700 mt-1">
+                                                        {report.fb_posts_paid + report.fb_posts_free} bài
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-500 uppercase font-semibold">Tương tác</p>
+                                                    <p className="text-sm font-medium text-slate-700 mt-1">
+                                                        {report.fb_comments} cmt
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-500 uppercase font-semibold">Kết bạn</p>
+                                                    <p className="text-sm font-medium text-slate-700 mt-1">
+                                                        {report.fb_friends}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-500 uppercase font-semibold">Threads</p>
+                                                    <p className="text-sm font-medium text-slate-700 mt-1">
+                                                        {report.threads_posts} bài
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* Issues & Requests */}
+                                            <div className="flex-1 space-y-3">
+                                                {(report.issues || report.request_support) ? (
+                                                    <>
+                                                        {report.issues && (
+                                                            <div className="flex gap-2 text-sm bg-red-50 p-2 rounded text-red-700 border border-red-100">
+                                                                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                                                                <div>
+                                                                    <span className="font-semibold">Vấn đề:</span> {report.issues}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {report.request_support && (
+                                                            <div className="flex gap-2 text-sm bg-blue-50 p-2 rounded text-blue-700 border border-blue-100">
+                                                                <Megaphone className="w-4 h-4 shrink-0 mt-0.5" />
+                                                                <div>
+                                                                    <span className="font-semibold">Đề xuất:</span> {report.request_support}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <div className="h-full flex items-center justify-center text-sm text-slate-400 italic">
+                                                        Không có vấn đề hay đề xuất nào.
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+}

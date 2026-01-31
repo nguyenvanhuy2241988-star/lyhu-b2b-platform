@@ -134,6 +134,22 @@ export const getMyReportsHistory = async (userId: string, limit = 7) => {
     return data as DailyActivity[];
 };
 
+export const getAllDailyReports = async (startDate: string, endDate: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    // Join with profiles to get name/avatar
+    const { data, error } = await supabase
+        .from('recruitment_daily_activities')
+        .select('*, profile:profiles(full_name, avatar_url, email)')
+        .gte('date', startDate)
+        .lte('date', endDate)
+        .order('date', { ascending: false });
+
+    if (error) throw error;
+    return data as (DailyActivity & { profile: { full_name: string, avatar_url: string, email: string } })[];
+};
+
 // --- Networking / Contacts ---
 
 export const getContacts = async () => {
