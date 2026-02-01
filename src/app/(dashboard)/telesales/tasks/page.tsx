@@ -724,7 +724,14 @@ export default function TelesalesTasksPage() {
                             setEditingTask(current => {
                                 if (current && current.id === updatedTask.id) {
                                     console.log('[Realtime DEBUG] Updating open modal for task:', updatedTask.id);
-                                    console.log('[Realtime DEBUG] New Note content:', updatedTask.note);
+
+                                    // Parse keys explicitly to ensure no casing issues
+                                    const nextNote = updatedTask.note !== undefined ? updatedTask.note : current.note;
+                                    const nextAttachments = updatedTask.attachments !== undefined ? updatedTask.attachments : current.attachments;
+
+                                    console.log('[Realtime DEBUG] Old Note:', current.note);
+                                    console.log('[Realtime DEBUG] Update Payload Note:', updatedTask.note);
+                                    console.log('[Realtime DEBUG] Final Next Note:', nextNote);
 
                                     // Normalize assignee_ids to Array if string
                                     let normalizedAssignees = updatedTask.assignee_ids;
@@ -740,18 +747,24 @@ export default function TelesalesTasksPage() {
                                         }
                                     }
 
-                                    return {
+                                    const nextAssignees = normalizedAssignees !== undefined ? normalizedAssignees : current.assignee_ids;
+
+                                    const nextState = {
                                         ...current,
+                                        // Spread updatedTask but be careful not to overwrite with undefined if we handled it
+                                        // Actually, safest is to spread updatedTask check for specific keys?
+                                        // Let's spread updatedTask for scalar fields, but enforce our computed fields
                                         ...updatedTask,
-                                        assignee_ids: normalizedAssignees, // Use normalized array
-                                        // Explicitly ensure note/attachments are passed if they exist
-                                        // CRITICAL: If updatedTask.note is explicitly null/undefined but current has it (and we assume incomplete payload), keep current?
-                                        // But if user DELETED note, it should be null.
-                                        // However, with REPLICA IDENTITY FULL, payload is complete.
-                                        // If payload has note:null, it means it's empty.
-                                        note: updatedTask.note !== undefined ? updatedTask.note : current.note,
-                                        attachments: updatedTask.attachments !== undefined ? updatedTask.attachments : current.attachments
+                                        assignee_ids: nextAssignees,
+                                        note: nextNote,
+                                        attachments: nextAttachments,
+                                        // Ensure explicit mapping for camelCase if needed (though TelesalesTask uses snake_case mostly)
+                                        customer_name: updatedTask.customer_name !== undefined ? updatedTask.customer_name : current.customer_name,
+                                        due_date: updatedTask.due_date !== undefined ? updatedTask.due_date : current.due_date
                                     };
+
+                                    console.log('[Realtime DEBUG] Final Merged State:', nextState);
+                                    return nextState;
                                 }
                                 return current;
                             });
