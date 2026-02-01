@@ -718,6 +718,7 @@ export default function TelesalesTasksPage() {
                             console.log('[Realtime DEBUG] Update received for task:', updatedTask.id);
                             console.log('[Realtime DEBUG] Task Title:', updatedTask.title);
                             console.log('[Realtime DEBUG] Attachments count:', updatedTask.attachments ? updatedTask.attachments.length : 0);
+                            console.log('[Realtime DEBUG] Attachments FULL:', JSON.stringify(updatedTask.attachments));
                             console.log('[Realtime DEBUG] Is Relevant?:', isRelevant, 'User ID:', userId);
 
                             // Update Modal State if Open
