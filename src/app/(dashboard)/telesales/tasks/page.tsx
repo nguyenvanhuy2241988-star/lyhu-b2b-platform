@@ -637,7 +637,7 @@ export default function TelesalesTasksPage() {
                 .on(
                     'postgres_changes',
                     { event: '*', schema: 'public', table: 'telesales_tasks' },
-                    (payload) => {
+                    (payload: any) => {
                         console.log('[Tasks Page] Realtime Event:', payload);
 
                         // Handle INSERT
