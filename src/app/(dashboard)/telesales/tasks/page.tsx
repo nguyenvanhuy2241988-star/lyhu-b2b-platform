@@ -733,6 +733,12 @@ export default function TelesalesTasksPage() {
                                     console.log('[Realtime DEBUG] Old Note:', current.note);
                                     console.log('[Realtime DEBUG] Update Payload Note:', updatedTask.note);
                                     console.log('[Realtime DEBUG] Final Next Note:', nextNote);
+                                    console.log('[Realtime DEBUG] ====== ATTACHMENTS MERGE TRACE ======');
+                                    console.log('[Realtime DEBUG] current.attachments COUNT:', current.attachments ? current.attachments.length : 0);
+                                    console.log('[Realtime DEBUG] updatedTask.attachments COUNT:', updatedTask.attachments ? updatedTask.attachments.length : 0);
+                                    console.log('[Realtime DEBUG] nextAttachments COUNT:', nextAttachments ? nextAttachments.length : 0);
+                                    console.log('[Realtime DEBUG] updatedTask.attachments IS DEFINED:', updatedTask.attachments !== undefined);
+                                    console.log('[Realtime DEBUG] =====================================');
 
                                     // Normalize assignee_ids to Array if string
                                     let normalizedAssignees = updatedTask.assignee_ids;
