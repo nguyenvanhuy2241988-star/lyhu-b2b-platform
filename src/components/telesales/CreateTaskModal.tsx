@@ -84,6 +84,10 @@ export const CreateTaskModal = ({
     // Reset form when opening
     useEffect(() => {
         if (isOpen) {
+            console.log('[CreateTaskModal] Updating form data from initialData:', initialData?.id);
+            console.log('[CreateTaskModal] New Note:', initialData?.note);
+            console.log('[CreateTaskModal] New Attachments:', initialData?.attachments);
+
             setFormData({
                 title: initialData?.title || "",
                 customerName: initialData?.customer_name || "",

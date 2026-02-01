@@ -723,7 +723,16 @@ export default function TelesalesTasksPage() {
                             // Update Modal State if Open
                             setEditingTask(current => {
                                 if (current && current.id === updatedTask.id) {
-                                    return { ...current, ...updatedTask };
+                                    console.log('[Realtime DEBUG] Updating open modal for task:', updatedTask.id);
+                                    console.log('[Realtime DEBUG] New Note content:', updatedTask.note);
+                                    // Ensure we merge properly
+                                    return {
+                                        ...current,
+                                        ...updatedTask,
+                                        // Explicitly ensure note/attachments are passed if they exist
+                                        note: updatedTask.note !== undefined ? updatedTask.note : current.note,
+                                        attachments: updatedTask.attachments !== undefined ? updatedTask.attachments : current.attachments
+                                    };
                                 }
                                 return current;
                             });
