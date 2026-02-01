@@ -188,7 +188,7 @@ export const NAV_ITEMS = {
     [ROLES.RECRUITER]: [
         { label: "Tổng quan Tuyển dụng", href: "/recruitment", icon: LayoutDashboard },
         { label: "Báo cáo ngày", href: "/recruitment/daily", icon: ClipboardList },
-        { label: "Báo cáo Tổng hợp", href: "/recruitment/reports", icon: ClipboardList },
+
         { label: "Ứng viên (Kanban)", href: "/recruitment/candidates", icon: Users },
         { label: "Lịch phỏng vấn", href: "/recruitment/interviews", icon: Calendar },
         { label: "Tin tuyển dụng", href: "/recruitment/jobs", icon: Briefcase },
