@@ -675,7 +675,7 @@ export default function TelesalesTasksPage() {
 
                         // Handle UPDATE
                         if (payload.eventType === 'UPDATE') {
-                            const updatedTask = payload.new as TelesalesTask;
+                            const updatedTask = payload.new as any;
 
                             setColumnTasks(prev => {
                                 // Check if we have this task in ANY column
