@@ -642,7 +642,7 @@ export default function TelesalesTasksPage() {
 
                         // Handle INSERT
                         if (payload.eventType === 'INSERT') {
-                            const newTask = payload.new as TelesalesTask;
+                            const newTask = payload.new as any;
 
                             // Check relevance (Owner, Assignee, Leader, or explicitly Assigned)
                             const userId = user.id;
