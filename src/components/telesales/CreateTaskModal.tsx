@@ -97,6 +97,8 @@ export const CreateTaskModal = ({
 
             if (shouldSync) {
                 console.log('[CreateTaskModal] Syncing form data. TaskIdChanged:', taskIdChanged, 'HasUserEdited:', hasUserEdited);
+                console.log('[CreateTaskModal] *** NOTE VALUE BEING SYNCED ***:', initialData?.note);
+                console.log('[CreateTaskModal] *** ATTACHMENTS ***:', initialData?.attachments);
                 setFormData({
                     title: initialData?.title || "",
                     customerName: initialData?.customer_name || "",
