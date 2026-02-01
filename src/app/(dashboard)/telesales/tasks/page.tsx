@@ -677,6 +677,21 @@ export default function TelesalesTasksPage() {
                         if (payload.eventType === 'UPDATE') {
                             // Helper to check column belonging
                             const updatedTask = payload.new as any;
+
+                            // DEBUG LOGS
+                            const userId = user.id;
+                            const isRelevant =
+                                updatedTask.user_id === userId ||
+                                updatedTask.owner_id === userId ||
+                                updatedTask.assigned_to === userId ||
+                                updatedTask.leader_id === userId ||
+                                (updatedTask.assignee_ids && Array.isArray(updatedTask.assignee_ids) && updatedTask.assignee_ids.includes(userId));
+
+                            console.log('[Realtime DEBUG] Update received for task:', updatedTask.id);
+                            console.log('[Realtime DEBUG] Task Title:', updatedTask.title);
+                            console.log('[Realtime DEBUG] Attachments count:', updatedTask.attachments ? updatedTask.attachments.length : 0);
+                            console.log('[Realtime DEBUG] Is Relevant?:', isRelevant, 'User ID:', userId);
+
                             const checkTaskBelongsToColumn = (task: any, colId: string): boolean => {
                                 if (task.status === 'done' && colId === 'done') return true;
                                 if (task.status === 'done') return false; // Done tasks only in Done column usually
@@ -757,7 +772,12 @@ export default function TelesalesTasksPage() {
                         }
                     }
                 )
-                .subscribe();
+                .subscribe((status) => {
+                    console.log('[Tasks Page] Realtime Status:', status);
+                    if (status === 'SUBSCRIBED') {
+                        console.log('[Tasks Page] Successfully subscribed to changes');
+                    }
+                });
         }
 
         return () => {
