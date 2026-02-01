@@ -678,14 +678,42 @@ export default function TelesalesTasksPage() {
                             // Helper to check column belonging
                             const updatedTask = payload.new as any;
 
-                            // DEBUG LOGS
+                            // DEBUG LOGS & Robust Relevance Check
                             const userId = user.id;
+
+                            // Parse assignee_ids safely (handle string vs array)
+                            let assigneeIds: string[] = [];
+                            try {
+                                if (updatedTask.assignee_ids) {
+                                    if (Array.isArray(updatedTask.assignee_ids)) {
+                                        assigneeIds = updatedTask.assignee_ids;
+                                    } else if (typeof updatedTask.assignee_ids === 'string') {
+                                        // Handle Postgres array format "{uuid,uuid}" or JSON string
+                                        let cleaned = updatedTask.assignee_ids;
+                                        if (cleaned.startsWith('{') && cleaned.endsWith('}')) {
+                                            cleaned = cleaned.slice(1, -1); // remove {}
+                                        }
+                                        if (cleaned) {
+                                            assigneeIds = cleaned.split(',').map((id: string) => id.trim().replace(/['"]/g, ''));
+                                        }
+                                    }
+                                }
+                            } catch (e) {
+                                console.error('Error parsing assignee_ids:', e);
+                            }
+
                             const isRelevant =
                                 updatedTask.user_id === userId ||
                                 updatedTask.owner_id === userId ||
                                 updatedTask.assigned_to === userId ||
                                 updatedTask.leader_id === userId ||
-                                (updatedTask.assignee_ids && Array.isArray(updatedTask.assignee_ids) && updatedTask.assignee_ids.includes(userId));
+                                assigneeIds.includes(userId);
+
+                            console.log('[Realtime DEBUG] Update received for task:', updatedTask.id);
+                            console.log('[Realtime DEBUG] Task Title:', updatedTask.title);
+                            console.log('[Realtime DEBUG] Payload Assignee Ids (raw):', updatedTask.assignee_ids, typeof updatedTask.assignee_ids);
+                            console.log('[Realtime DEBUG] Parsed Assignee Ids:', assigneeIds);
+                            console.log('[Realtime DEBUG] Is Relevant?:', isRelevant, 'User ID:', userId);
 
                             console.log('[Realtime DEBUG] Update received for task:', updatedTask.id);
                             console.log('[Realtime DEBUG] Task Title:', updatedTask.title);
