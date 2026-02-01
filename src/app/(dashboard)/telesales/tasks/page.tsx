@@ -644,27 +644,27 @@ export default function TelesalesTasksPage() {
                         if (payload.eventType === 'INSERT') {
                             const newTask = payload.new as TelesalesTask;
 
-                            // Check if this task is relevant to us (assigned to us, owner, or leader)
-                            // This depends on RLS, but client-side we can double check or rely on RLS if subscription is filtered.
-                            // Note: standard subscription receives all events if no filter. 
+                            // Check relevance (Owner, Assignee, Leader, or explicitly Assigned)
                             const userId = user.id;
                             const isRelevant =
                                 newTask.user_id === userId ||
+                                newTask.owner_id === userId ||
+                                newTask.assigned_to === userId ||
                                 newTask.leader_id === userId ||
-                                (newTask.assignee_ids && newTask.assignee_ids.includes(userId));
+                                (newTask.assignee_ids && Array.isArray(newTask.assignee_ids) && newTask.assignee_ids.includes(userId));
 
                             if (isRelevant) {
-                                // Determine column
                                 let targetCol = newTask.status;
-                                // If due date logic overrides status (like today/tomorrow), we might need to recalculate?
-                                // Actually store handles this on Create. But raw insert might be raw.
-                                // We trust 'status' from DB usually mapping to column.
-                                // BUT for Date-based columns (Today/Tomorrow), the status should be set correct by backend/store.
-                                // Let's just put it in the column matching 'status'.
+                                // Basic mapping fallback
+                                if (!targetCol) targetCol = 'inbox';
 
                                 setColumnTasks(prev => {
+                                    // If we already have it, don't duplicate
+                                    for (const col in prev) {
+                                        if (prev[col].some(t => t.id === newTask.id)) return prev;
+                                    }
+
                                     const tasks = prev[targetCol] || [];
-                                    if (tasks.find(t => t.id === newTask.id)) return prev; // Dedupe
                                     return {
                                         ...prev,
                                         [targetCol]: [newTask, ...tasks]
@@ -676,26 +676,43 @@ export default function TelesalesTasksPage() {
                         // Handle UPDATE
                         if (payload.eventType === 'UPDATE') {
                             const updatedTask = payload.new as TelesalesTask;
-                            setColumnTasks(prev => {
-                                const newCols = { ...prev };
-                                let found = false;
 
-                                // Remove from old column if status changed
-                                for (const colId in newCols) {
-                                    if (Array.isArray(newCols[colId])) {
-                                        const idx = newCols[colId].findIndex(t => t.id === updatedTask.id);
-                                        if (idx !== -1) {
-                                            newCols[colId] = newCols[colId].filter(t => t.id !== updatedTask.id);
-                                            found = true;
-                                        }
+                            setColumnTasks(prev => {
+                                // Check if we have this task in ANY column
+                                let found = false;
+                                for (const colId in prev) {
+                                    if (prev[colId].some(t => t.id === updatedTask.id)) {
+                                        found = true;
+                                        break;
                                     }
                                 }
 
-                                // Add to new column (or current if status same)
-                                const targetCol = updatedTask.status;
+                                // If not found, check if it BECAME relevant
+                                if (!found) {
+                                    const userId = user.id;
+                                    const isRelevant =
+                                        updatedTask.user_id === userId ||
+                                        updatedTask.owner_id === userId ||
+                                        updatedTask.assigned_to === userId ||
+                                        updatedTask.leader_id === userId ||
+                                        (updatedTask.assignee_ids && Array.isArray(updatedTask.assignee_ids) && updatedTask.assignee_ids.includes(userId));
+
+                                    if (!isRelevant) return prev;
+                                }
+
+                                const newCols = { ...prev };
+
+                                // Remove from old column if status changed or just to refresh
+                                for (const colId in newCols) {
+                                    if (Array.isArray(newCols[colId])) {
+                                        newCols[colId] = newCols[colId].filter(t => t.id !== updatedTask.id);
+                                    }
+                                }
+
+                                // Add to correct column
+                                const targetCol = updatedTask.status || 'inbox';
                                 newCols[targetCol] = [updatedTask, ...(newCols[targetCol] || [])];
 
-                                // Sort? Maybe too expensive. Just prepend for visibility.
                                 return newCols;
                             });
                         }
