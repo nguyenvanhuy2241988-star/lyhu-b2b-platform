@@ -704,7 +704,7 @@ export default function TelesalesTasksPage() {
                                 }
                                 if (colId === 'overdue') {
                                     // Check if overdue
-                                    return taskDate && taskDate.getTime() < today.getTime();
+                                    return taskDate ? taskDate.getTime() < today.getTime() : false;
                                 }
 
                                 // Default/Legacy columns: match status
