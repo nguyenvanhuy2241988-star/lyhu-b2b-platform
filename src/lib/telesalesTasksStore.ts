@@ -427,6 +427,9 @@ export async function updateTaskSupabase(taskId: string, patch: Partial<Telesale
     // Clean undefined
     Object.keys(body).forEach(key => (body as any)[key] === undefined && delete (body as any)[key]);
 
+    console.log('[Tasks Store] Update Payload:', JSON.stringify(body)); // DEBUG SIZE
+
+
     try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${taskId}`, {
             method: 'PATCH',
