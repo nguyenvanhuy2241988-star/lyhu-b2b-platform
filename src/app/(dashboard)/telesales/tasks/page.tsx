@@ -850,7 +850,7 @@ export default function TelesalesTasksPage() {
                                                             cleaned = cleaned.slice(1, -1);
                                                         }
                                                         if (cleaned) {
-                                                            normalizedAssignees = cleaned.split(',').map((id: string) => id.trim().replace(/['"]/g, ''));
+                                                            normalizedAssignees = cleaned.split(',').map((id: string) => id.trim().replace(/['\"]/g, ''));
                                                         } else {
                                                             normalizedAssignees = [];
                                                         }
@@ -868,7 +868,8 @@ export default function TelesalesTasksPage() {
                                                 }
                                                 return t;
                                             });
-                                            // INSERT (moved into this column)
+                                        } else {
+                                            // INSERT (task moved INTO this column, didn't exist before)
                                             // Normalize updatedTask before adding
                                             let normalizedAssignees = updatedTask.assignee_ids;
                                             if (typeof normalizedAssignees === 'string') {
@@ -877,12 +878,11 @@ export default function TelesalesTasksPage() {
                                                     cleaned = cleaned.slice(1, -1);
                                                 }
                                                 if (cleaned) {
-                                                    normalizedAssignees = cleaned.split(',').map((id: string) => id.trim().replace(/['"]/g, ''));
+                                                    normalizedAssignees = cleaned.split(',').map((id: string) => id.trim().replace(/['\"]/g, ''));
                                                 } else {
                                                     normalizedAssignees = [];
                                                 }
                                             }
-                                            // Handle potential missing assignee_ids on INSERT if partial usage (though we use FULL identity now)
                                             const normalizedTask = {
                                                 ...updatedTask,
                                                 assignee_ids: normalizedAssignees !== undefined ? normalizedAssignees : []
