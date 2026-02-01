@@ -81,17 +81,11 @@ export const CreateTaskModal = ({
         loadProfiles();
     }, []);
 
-    // Reset form when opening or when initialData upgrades (Realtime)
+    // Reset form when opening or when Task ID changes (Switching tasks)
+    // IMPORTANT: Do NOT depend on the entire 'initialData' object, as Realtime updates create new references 
+    // and would overwrite user input while typing. Only reset when the Task ID actually changes.
     useEffect(() => {
         if (isOpen) {
-            console.log('[CreateTaskModal] isOpen or initialData Check. ID:', initialData?.id);
-            console.log('[CreateTaskModal] Incoming Note:', initialData?.note);
-            console.log('[CreateTaskModal] Current Form Note:', formData.description);
-            const isDifferent = (initialData?.note || "") !== formData.description;
-            if (isDifferent) {
-                console.log('[CreateTaskModal] ! Data Divergence detected. Overwriting Form Data with Initial Data.');
-            }
-
             setFormData({
                 title: initialData?.title || "",
                 customerName: initialData?.customer_name || "",
@@ -103,9 +97,9 @@ export const CreateTaskModal = ({
                 assigneeIds: initialData?.assignee_ids || [],
                 leaderId: initialData?.leader_id || ""
             });
-            setAttachments(initialData?.attachments || []); // Reset attachments too
+            setAttachments(initialData?.attachments || []);
         }
-    }, [isOpen, initialStatus, initialData]);
+    }, [isOpen, initialStatus, initialData?.id]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
