@@ -82,7 +82,8 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                 type: 'task',
                 assigned_to: assignedTo || currentUser?.id,
                 assignee_ids: assigneeIds,
-                leader_id: leaderId
+                leader_id: leaderId,
+                attachments: attachments // FIX: Include attachments in save payload
             });
             // Form is reset by useEffect on next open or we can close
         } catch (error) {
@@ -99,12 +100,35 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
         }
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            const file = e.target.files[0];
-            const url = URL.createObjectURL(file);
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+
+        const file = e.target.files[0];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        try {
+            const { data, error } = await supabase.storage
+                .from('task_attachments')
+                .upload(filePath, file);
+
+            if (error) throw error;
+
+            const { data: publicUrlData } = supabase.storage
+                .from('task_attachments')
+                .getPublicUrl(filePath);
+
             const type = file.type.startsWith('image/') ? 'image' : 'file';
-            setAttachments([...attachments, { type, url, name: file.name }]);
+            setAttachments([...attachments, {
+                type,
+                url: publicUrlData.publicUrl,
+                name: file.name
+            }]);
+            setIsAttachOpen(false);
+        } catch (error: any) {
+            console.error("Upload error:", error);
+            alert(`Lỗi upload: ${error.message}`);
         }
     };
 
