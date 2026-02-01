@@ -720,6 +720,14 @@ export default function TelesalesTasksPage() {
                             console.log('[Realtime DEBUG] Attachments count:', updatedTask.attachments ? updatedTask.attachments.length : 0);
                             console.log('[Realtime DEBUG] Is Relevant?:', isRelevant, 'User ID:', userId);
 
+                            // Update Modal State if Open
+                            setTaskToEdit(current => {
+                                if (current && current.id === updatedTask.id) {
+                                    return { ...current, ...updatedTask };
+                                }
+                                return current;
+                            });
+
                             const checkTaskBelongsToColumn = (task: any, colId: string): boolean => {
                                 if (task.status === 'done' && colId === 'done') return true;
                                 if (task.status === 'done') return false; // Done tasks only in Done column usually
