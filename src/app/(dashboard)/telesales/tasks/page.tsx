@@ -676,6 +676,7 @@ export default function TelesalesTasksPage() {
                         // Handle UPDATE
                         if (payload.eventType === 'UPDATE') {
                             // Helper to check column belonging
+                            const updatedTask = payload.new as any;
                             const checkTaskBelongsToColumn = (task: any, colId: string): boolean => {
                                 if (task.status === 'done' && colId === 'done') return true;
                                 if (task.status === 'done') return false; // Done tasks only in Done column usually
