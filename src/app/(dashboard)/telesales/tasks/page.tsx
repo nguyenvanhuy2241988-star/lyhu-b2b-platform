@@ -728,16 +728,32 @@ export default function TelesalesTasksPage() {
 
                                     // Parse keys explicitly to ensure no casing issues
                                     const nextNote = updatedTask.note !== undefined ? updatedTask.note : current.note;
-                                    const nextAttachments = updatedTask.attachments !== undefined ? updatedTask.attachments : current.attachments;
+
+                                    // FIX: Don't replace existing attachments with empty array from stale Realtime update
+                                    // If current has attachments and Realtime sends empty, keep current (likely stale update race condition)
+                                    // Only replace if Realtime sends non-empty OR current is empty
+                                    const rtAttachments = updatedTask.attachments;
+                                    const currentAttachments = current.attachments || [];
+                                    let nextAttachments;
+                                    if (rtAttachments === undefined) {
+                                        // Realtime didn't include attachments
+                                        nextAttachments = currentAttachments;
+                                    } else if (Array.isArray(rtAttachments) && rtAttachments.length === 0 && currentAttachments.length > 0) {
+                                        // Realtime sent empty but we have attachments - likely stale, keep current
+                                        console.log('[Realtime DEBUG] PRESERVING current attachments (RT sent empty but current has items)');
+                                        nextAttachments = currentAttachments;
+                                    } else {
+                                        // Realtime sent actual data - use it
+                                        nextAttachments = rtAttachments;
+                                    }
 
                                     console.log('[Realtime DEBUG] Old Note:', current.note);
                                     console.log('[Realtime DEBUG] Update Payload Note:', updatedTask.note);
                                     console.log('[Realtime DEBUG] Final Next Note:', nextNote);
                                     console.log('[Realtime DEBUG] ====== ATTACHMENTS MERGE TRACE ======');
-                                    console.log('[Realtime DEBUG] current.attachments COUNT:', current.attachments ? current.attachments.length : 0);
-                                    console.log('[Realtime DEBUG] updatedTask.attachments COUNT:', updatedTask.attachments ? updatedTask.attachments.length : 0);
+                                    console.log('[Realtime DEBUG] current.attachments COUNT:', currentAttachments.length);
+                                    console.log('[Realtime DEBUG] updatedTask.attachments COUNT:', rtAttachments ? rtAttachments.length : 'undefined');
                                     console.log('[Realtime DEBUG] nextAttachments COUNT:', nextAttachments ? nextAttachments.length : 0);
-                                    console.log('[Realtime DEBUG] updatedTask.attachments IS DEFINED:', updatedTask.attachments !== undefined);
                                     console.log('[Realtime DEBUG] =====================================');
 
                                     // Normalize assignee_ids to Array if string
