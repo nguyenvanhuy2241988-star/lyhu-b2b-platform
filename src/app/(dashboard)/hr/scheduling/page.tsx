@@ -11,7 +11,7 @@ import {
 } from "@/lib/hrStore";
 import { format, getISOWeek, getYear } from "date-fns";
 import {
-    Plus, Loader2, Upload, Edit3, MessageSquare, X, Palette, Trash2, Check, ExternalLink, Image as ImageIcon
+    Plus, Loader2, Upload, Edit3, MessageSquare, X, Palette, Trash2, Check, ExternalLink, Image as ImageIcon, Eye
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useHRLayout } from "@/components/hr/HRLayoutContext";
@@ -34,6 +34,7 @@ export default function HRSchedulingPage() {
     const [uploadingBanner, setUploadingBanner] = useState(false);
     // Poster management state
     const [showPosterModal, setShowPosterModal] = useState(false);
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
 
     const [createDate, setCreateDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [isCreating, setIsCreating] = useState(false);
@@ -277,6 +278,11 @@ export default function HRSchedulingPage() {
 
                         {/* Allow ALL users to change banner */}
                         <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 p-1 rounded backdrop-blur-sm">
+                            {selectedSchedule.banner_url && (
+                                <button onClick={() => setPreviewImage(selectedSchedule.banner_url)} className="bg-white p-1.5 rounded shadow hover:text-blue-600" title="Xem ảnh đầy đủ">
+                                    <Eye className="w-4 h-4" />
+                                </button>
+                            )}
                             <input type="file" ref={bannerInputRef} className="hidden" accept="image/*" onChange={(e) => e.target.files?.[0] && handleAssetUpload(e.target.files[0], 'banner')} />
                             <button onClick={() => bannerInputRef.current?.click()} className="bg-white p-1.5 rounded shadow hover:text-teal-600" title="Đổi Banner">
                                 <Edit3 className="w-4 h-4" />
@@ -340,7 +346,8 @@ export default function HRSchedulingPage() {
                                             {selectedSchedule.poster_url ? (
                                                 <div className="relative group rounded border border-slate-200 overflow-hidden">
                                                     <img src={selectedSchedule.poster_url} className="w-full h-24 object-contain bg-slate-50" />
-                                                    <div className="absolute top-1 right-1 flex gap-1">
+                                                    <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button onClick={() => setPreviewImage(selectedSchedule.poster_url)} className="bg-white/80 p-1 text-blue-600 rounded shadow hover:bg-white"><Eye className="w-3 h-3" /></button>
                                                         <button onClick={() => handleDeleteAsset('poster')} className="bg-white/80 p-1 text-red-600 rounded shadow"><Trash2 className="w-3 h-3" /></button>
                                                     </div>
                                                 </div>
@@ -354,7 +361,8 @@ export default function HRSchedulingPage() {
                                             {selectedSchedule.poster_url_2 ? (
                                                 <div className="relative group rounded border border-slate-200 overflow-hidden">
                                                     <img src={selectedSchedule.poster_url_2} className="w-full h-24 object-contain bg-slate-50" />
-                                                    <div className="absolute top-1 right-1 flex gap-1">
+                                                    <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button onClick={() => setPreviewImage(selectedSchedule.poster_url_2)} className="bg-white/80 p-1 text-blue-600 rounded shadow hover:bg-white"><Eye className="w-3 h-3" /></button>
                                                         <button onClick={() => handleDeleteAsset('poster2')} className="bg-white/80 p-1 text-red-600 rounded shadow"><Trash2 className="w-3 h-3" /></button>
                                                     </div>
                                                 </div>
@@ -368,7 +376,8 @@ export default function HRSchedulingPage() {
                                             {selectedSchedule.poster_url_3 ? (
                                                 <div className="relative group rounded border border-slate-200 overflow-hidden">
                                                     <img src={selectedSchedule.poster_url_3} className="w-full h-24 object-contain bg-slate-50" />
-                                                    <div className="absolute top-1 right-1 flex gap-1">
+                                                    <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button onClick={() => setPreviewImage(selectedSchedule.poster_url_3)} className="bg-white/80 p-1 text-blue-600 rounded shadow hover:bg-white"><Eye className="w-3 h-3" /></button>
                                                         <button onClick={() => handleDeleteAsset('poster3')} className="bg-white/80 p-1 text-red-600 rounded shadow"><Trash2 className="w-3 h-3" /></button>
                                                     </div>
                                                 </div>
@@ -564,6 +573,20 @@ export default function HRSchedulingPage() {
                     <div className="h-full flex items-center justify-center text-slate-400">Chọn hoặc tạo lịch làm việc</div>
                 )}
             </div>
+
+            {/* Image Preview Modal */}
+            {previewImage && (
+                <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setPreviewImage(null)}>
+                    <button className="absolute top-4 right-4 text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors">
+                        <X className="w-8 h-8" />
+                    </button>
+                    <img
+                        src={previewImage}
+                        className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                        onClick={e => e.stopPropagation()}
+                    />
+                </div>
+            )}
         </div>
     );
 }
