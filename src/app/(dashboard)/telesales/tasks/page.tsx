@@ -721,7 +721,7 @@ export default function TelesalesTasksPage() {
                             console.log('[Realtime DEBUG] Is Relevant?:', isRelevant, 'User ID:', userId);
 
                             // Update Modal State if Open
-                            setTaskToEdit(current => {
+                            setEditingTask(current => {
                                 if (current && current.id === updatedTask.id) {
                                     return { ...current, ...updatedTask };
                                 }
