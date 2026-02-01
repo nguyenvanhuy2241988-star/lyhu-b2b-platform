@@ -154,6 +154,7 @@ export function saveColumns(cols: TelesalesColumn[]) {
 export type TelesalesTask = {
     id: string;
     user_id: string;
+    owner_id?: string; // Added for Realtime logic consistency
 
     title: string;
     customer_name?: string | null;
