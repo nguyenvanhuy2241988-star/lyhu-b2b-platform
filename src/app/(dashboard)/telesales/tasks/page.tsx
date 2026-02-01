@@ -724,11 +724,25 @@ export default function TelesalesTasksPage() {
                             setEditingTask(current => {
                                 if (current && current.id === updatedTask.id) {
                                     console.log('[Realtime DEBUG] Updating open modal for task:', updatedTask.id);
-                                    console.log('[Realtime DEBUG] New Note content:', updatedTask.note);
-                                    // Ensure we merge properly
+
+                                    // Normalize assignee_ids to Array if string
+                                    let normalizedAssignees = updatedTask.assignee_ids;
+                                    if (typeof normalizedAssignees === 'string') {
+                                        let cleaned = normalizedAssignees;
+                                        if (cleaned.startsWith('{') && cleaned.endsWith('}')) {
+                                            cleaned = cleaned.slice(1, -1);
+                                        }
+                                        if (cleaned) {
+                                            normalizedAssignees = cleaned.split(',').map((id: string) => id.trim().replace(/['"]/g, ''));
+                                        } else {
+                                            normalizedAssignees = [];
+                                        }
+                                    }
+
                                     return {
                                         ...current,
                                         ...updatedTask,
+                                        assignee_ids: normalizedAssignees, // Use normalized array
                                         // Explicitly ensure note/attachments are passed if they exist
                                         note: updatedTask.note !== undefined ? updatedTask.note : current.note,
                                         attachments: updatedTask.attachments !== undefined ? updatedTask.attachments : current.attachments
