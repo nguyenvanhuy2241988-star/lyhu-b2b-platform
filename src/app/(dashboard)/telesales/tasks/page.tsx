@@ -631,7 +631,7 @@ export default function TelesalesTasksPage() {
         // --- REALTIME SUBSCRIPTION ---
         let channel: any = null;
         if (user) {
-            console.log("[Tasks Page] Subscribing to Realtime...");
+            console.log("[Tasks Page] Subscribing to Realtime... VERSION: DEBUG_V5_FULL_IDENTITY");
             channel = supabase
                 .channel('room_telesales_tasks')
                 .on(

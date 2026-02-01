@@ -81,12 +81,16 @@ export const CreateTaskModal = ({
         loadProfiles();
     }, []);
 
-    // Reset form when opening
+    // Reset form when opening or when initialData upgrades (Realtime)
     useEffect(() => {
         if (isOpen) {
-            console.log('[CreateTaskModal] Updating form data from initialData:', initialData?.id);
-            console.log('[CreateTaskModal] New Note:', initialData?.note);
-            console.log('[CreateTaskModal] New Attachments:', initialData?.attachments);
+            console.log('[CreateTaskModal] isOpen or initialData Check. ID:', initialData?.id);
+            console.log('[CreateTaskModal] Incoming Note:', initialData?.note);
+            console.log('[CreateTaskModal] Current Form Note:', formData.description);
+            const isDifferent = (initialData?.note || "") !== formData.description;
+            if (isDifferent) {
+                console.log('[CreateTaskModal] ! Data Divergence detected. Overwriting Form Data with Initial Data.');
+            }
 
             setFormData({
                 title: initialData?.title || "",
