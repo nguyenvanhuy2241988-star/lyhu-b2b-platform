@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import DashboardShell from "@/components/layout/DashboardShell";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { ROLES } from "@/lib/constants";
-import { Users, Calendar, Gift, ChevronRight } from "lucide-react";
+import { Users, Calendar, Gift, ChevronRight, Eye, X } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { HRLayoutProvider, useHRLayout } from "@/components/hr/HRLayoutContext";
 
@@ -24,6 +24,7 @@ function HRLayoutContent({ children }: { children: React.ReactNode }) {
 
     const hasPosters = posters.some(p => !!p);
     const [showGuide, setShowGuide] = useState(false);
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
 
     return (
         <DashboardShell role={(role as any) || ROLES.RECRUITER} title="Quản trị Nhân sự (HRM)">
@@ -78,12 +79,22 @@ function HRLayoutContent({ children }: { children: React.ReactNode }) {
                     {hasPosters && (
                         <div className="space-y-3">
                             {posters.map((url, idx) => url && (
-                                <div key={idx} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                                <div key={idx} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative group">
                                     <img
                                         src={url}
                                         alt={`Poster ${idx + 1}`}
                                         className="w-full h-auto object-contain max-h-[400px]"
                                     />
+                                    {/* Eye Icon Overlay */}
+                                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={() => setPreviewImage(url)}
+                                            className="bg-white/90 p-1.5 rounded-full shadow-md text-slate-600 hover:text-blue-600 hover:bg-white transition-all transform hover:scale-110"
+                                            title="Xem phóng to"
+                                        >
+                                            <Eye className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -104,7 +115,7 @@ function HRLayoutContent({ children }: { children: React.ReactNode }) {
                             onClick={() => setShowGuide(false)}
                             className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
                         >
-                            ✕
+                            <X className="w-5 h-5" />
                         </button>
                         <h3 className="text-lg font-bold text-teal-700 mb-4 flex items-center gap-2">
                             <Gift className="w-5 h-5" />
@@ -134,6 +145,20 @@ function HRLayoutContent({ children }: { children: React.ReactNode }) {
                             Đã hiểu
                         </button>
                     </div>
+                </div>
+            )}
+
+            {/* Preview Image Modal */}
+            {previewImage && (
+                <div className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setPreviewImage(null)}>
+                    <button className="absolute top-4 right-4 text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors">
+                        <X className="w-8 h-8" />
+                    </button>
+                    <img
+                        src={previewImage}
+                        className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+                        onClick={e => e.stopPropagation()}
+                    />
                 </div>
             )}
         </DashboardShell>
