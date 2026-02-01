@@ -72,6 +72,12 @@ export const CreateTaskModal = ({
     const [attachments, setAttachments] = useState<any[]>(initialData?.attachments || []);
     const [isUploading, setIsUploading] = useState(false);
 
+    // Track if user has made local edits (dirty state)
+    // When dirty, we DON'T overwrite with Realtime updates to protect user's input
+    // When clean, we sync from server (e.g., when admin updates)
+    const [hasUserEdited, setHasUserEdited] = useState(false);
+    const [lastSyncedTaskId, setLastSyncedTaskId] = useState<string | null>(null);
+
     // Load profiles
     useEffect(() => {
         const loadProfiles = async () => {
@@ -81,26 +87,42 @@ export const CreateTaskModal = ({
         loadProfiles();
     }, []);
 
-    // Reset form when opening or when Task ID changes (Switching tasks)
-    // [REDEPLOY TRIGGER] Ensuring latest logic is active
-    // IMPORTANT: Do NOT depend on the entire 'initialData' object, as Realtime updates create new references 
-    // and would overwrite user input while typing. Only reset when the Task ID actually changes.
+    // Smart sync logic:
+    // 1. ALWAYS sync when modal opens (isOpen changes to true) or task ID changes
+    // 2. ALSO sync if Realtime update arrives AND user hasn't made local edits yet
     useEffect(() => {
         if (isOpen) {
-            setFormData({
-                title: initialData?.title || "",
-                customerName: initialData?.customer_name || "",
-                phone: initialData?.phone || "",
-                priority: initialData?.priority || "normal",
-                dueDate: initialData?.due_date ? new Date(initialData.due_date).toISOString().split('T')[0] : "",
-                status: initialStatus,
-                description: initialData?.note || "",
-                assigneeIds: initialData?.assignee_ids || [],
-                leaderId: initialData?.leader_id || ""
-            });
-            setAttachments(initialData?.attachments || []);
+            const taskIdChanged = initialData?.id !== lastSyncedTaskId;
+            const shouldSync = taskIdChanged || !hasUserEdited;
+
+            if (shouldSync) {
+                console.log('[CreateTaskModal] Syncing form data. TaskIdChanged:', taskIdChanged, 'HasUserEdited:', hasUserEdited);
+                setFormData({
+                    title: initialData?.title || "",
+                    customerName: initialData?.customer_name || "",
+                    phone: initialData?.phone || "",
+                    priority: initialData?.priority || "normal",
+                    dueDate: initialData?.due_date ? new Date(initialData.due_date).toISOString().split('T')[0] : "",
+                    status: initialStatus,
+                    description: initialData?.note || "",
+                    assigneeIds: initialData?.assignee_ids || [],
+                    leaderId: initialData?.leader_id || ""
+                });
+                setAttachments(initialData?.attachments || []);
+                setLastSyncedTaskId(initialData?.id || null);
+
+                // Reset dirty state when syncing due to task change
+                if (taskIdChanged) {
+                    setHasUserEdited(false);
+                }
+            } else {
+                console.log('[CreateTaskModal] Skipping sync (user has local edits)');
+            }
+        } else {
+            // Modal closed - reset dirty state for next open
+            setHasUserEdited(false);
         }
-    }, [isOpen, initialStatus, initialData?.id]);
+    }, [isOpen, initialStatus, initialData]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
@@ -219,7 +241,7 @@ export const CreateTaskModal = ({
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                             placeholder="Ví dụ: Gọi lại khách A"
                             value={formData.title}
-                            onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                            onChange={e => { setFormData(prev => ({ ...prev, title: e.target.value })); setHasUserEdited(true); }}
                         />
                     </div>
 
@@ -247,7 +269,7 @@ export const CreateTaskModal = ({
                                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                         placeholder="Tên khách..."
                                         value={formData.customerName}
-                                        onChange={e => setFormData(prev => ({ ...prev, customerName: e.target.value }))}
+                                        onChange={e => { setFormData(prev => ({ ...prev, customerName: e.target.value })); setHasUserEdited(true); }}
                                     />
                                 </div>
                                 <div>
@@ -257,7 +279,7 @@ export const CreateTaskModal = ({
                                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                         placeholder="09xxx"
                                         value={formData.phone}
-                                        onChange={e => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+                                        onChange={e => { setFormData(prev => ({ ...prev, phone: e.target.value })); setHasUserEdited(true); }}
                                     />
                                 </div>
                             </div>
@@ -270,7 +292,7 @@ export const CreateTaskModal = ({
                             <select
                                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 value={formData.priority}
-                                onChange={e => setFormData(prev => ({ ...prev, priority: e.target.value as TaskPriority }))}
+                                onChange={e => { setFormData(prev => ({ ...prev, priority: e.target.value as TaskPriority })); setHasUserEdited(true); }}
                             >
                                 <option value="low">Thấp</option>
                                 <option value="normal">Bình thường</option>
@@ -283,7 +305,7 @@ export const CreateTaskModal = ({
                             <select
                                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                                 value={formData.status}
-                                onChange={e => setFormData(prev => ({ ...prev, status: e.target.value as TaskStatus }))}
+                                onChange={e => { setFormData(prev => ({ ...prev, status: e.target.value as TaskStatus })); setHasUserEdited(true); }}
                             >
                                 {columns.length > 0 ? (
                                     columns.map(col => (
@@ -304,7 +326,7 @@ export const CreateTaskModal = ({
                             type="date"
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm text-slate-700"
                             value={formData.dueDate}
-                            onChange={e => setFormData(prev => ({ ...prev, dueDate: e.target.value }))}
+                            onChange={e => { setFormData(prev => ({ ...prev, dueDate: e.target.value })); setHasUserEdited(true); }}
                         />
                         {!formData.dueDate && !initialData?.id && (
                             <p className="text-xs text-orange-500 mt-1">Không chọn ngày sẽ tự động vào "Hộp thư đến".</p>
@@ -323,7 +345,7 @@ export const CreateTaskModal = ({
                                             {p?.full_name || p?.email || id}
                                             <button
                                                 type="button"
-                                                onClick={() => setFormData(prev => ({ ...prev, assigneeIds: prev.assigneeIds.filter(aid => aid !== id) }))}
+                                                onClick={() => { setFormData(prev => ({ ...prev, assigneeIds: prev.assigneeIds.filter(aid => aid !== id) })); setHasUserEdited(true); }}
                                                 className="text-slate-400 hover:text-red-500"
                                             >
                                                 <X className="w-3 h-3" />
@@ -342,6 +364,7 @@ export const CreateTaskModal = ({
                                     const val = e.target.value;
                                     if (val && !formData.assigneeIds.includes(val)) {
                                         setFormData(prev => ({ ...prev, assigneeIds: [...prev.assigneeIds, val] }));
+                                        setHasUserEdited(true);
                                     }
                                 }}
                             >
@@ -357,7 +380,7 @@ export const CreateTaskModal = ({
                             <select
                                 className="w-full px-3 py-2 border border-blue-200 bg-blue-50/50 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 outline-none"
                                 value={formData.leaderId}
-                                onChange={e => setFormData(prev => ({ ...prev, leaderId: e.target.value }))}
+                                onChange={e => { setFormData(prev => ({ ...prev, leaderId: e.target.value })); setHasUserEdited(true); }}
                             >
                                 <option value="">-- Không có --</option>
                                 {profiles.filter(p => formData.assigneeIds.includes(p.id)).map(p => (
@@ -383,7 +406,7 @@ export const CreateTaskModal = ({
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[80px]"
                             placeholder="Ghi chú thêm..."
                             value={formData.description}
-                            onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                            onChange={e => { setFormData(prev => ({ ...prev, description: e.target.value })); setHasUserEdited(true); }}
                         />
 
                         {/* Attachments List */}
