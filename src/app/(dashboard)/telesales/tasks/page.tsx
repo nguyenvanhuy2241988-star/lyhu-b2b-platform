@@ -724,6 +724,7 @@ export default function TelesalesTasksPage() {
                             setEditingTask(current => {
                                 if (current && current.id === updatedTask.id) {
                                     console.log('[Realtime DEBUG] Updating open modal for task:', updatedTask.id);
+                                    console.log('[Realtime DEBUG] New Note content:', updatedTask.note);
 
                                     // Normalize assignee_ids to Array if string
                                     let normalizedAssignees = updatedTask.assignee_ids;
@@ -744,6 +745,10 @@ export default function TelesalesTasksPage() {
                                         ...updatedTask,
                                         assignee_ids: normalizedAssignees, // Use normalized array
                                         // Explicitly ensure note/attachments are passed if they exist
+                                        // CRITICAL: If updatedTask.note is explicitly null/undefined but current has it (and we assume incomplete payload), keep current?
+                                        // But if user DELETED note, it should be null.
+                                        // However, with REPLICA IDENTITY FULL, payload is complete.
+                                        // If payload has note:null, it means it's empty.
                                         note: updatedTask.note !== undefined ? updatedTask.note : current.note,
                                         attachments: updatedTask.attachments !== undefined ? updatedTask.attachments : current.attachments
                                     };
