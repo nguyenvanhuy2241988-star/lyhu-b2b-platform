@@ -627,8 +627,100 @@ export default function TelesalesTasksPage() {
         const handleColumnUpdate = () => setColumns(loadColumns().sort((a, b) => a.order - b.order));
 
         window.addEventListener("telesales-columns-updated", handleColumnUpdate);
+
+        // --- REALTIME SUBSCRIPTION ---
+        let channel: any = null;
+        if (user) {
+            console.log("[Tasks Page] Subscribing to Realtime...");
+            channel = supabase
+                .channel('room_telesales_tasks')
+                .on(
+                    'postgres_changes',
+                    { event: '*', schema: 'public', table: 'telesales_tasks' },
+                    (payload) => {
+                        console.log('[Tasks Page] Realtime Event:', payload);
+
+                        // Handle INSERT
+                        if (payload.eventType === 'INSERT') {
+                            const newTask = payload.new as TelesalesTask;
+
+                            // Check if this task is relevant to us (assigned to us, owner, or leader)
+                            // This depends on RLS, but client-side we can double check or rely on RLS if subscription is filtered.
+                            // Note: standard subscription receives all events if no filter. 
+                            const userId = user.id;
+                            const isRelevant =
+                                newTask.user_id === userId ||
+                                newTask.leader_id === userId ||
+                                (newTask.assignee_ids && newTask.assignee_ids.includes(userId));
+
+                            if (isRelevant) {
+                                // Determine column
+                                let targetCol = newTask.status;
+                                // If due date logic overrides status (like today/tomorrow), we might need to recalculate?
+                                // Actually store handles this on Create. But raw insert might be raw.
+                                // We trust 'status' from DB usually mapping to column.
+                                // BUT for Date-based columns (Today/Tomorrow), the status should be set correct by backend/store.
+                                // Let's just put it in the column matching 'status'.
+
+                                setColumnTasks(prev => {
+                                    const tasks = prev[targetCol] || [];
+                                    if (tasks.find(t => t.id === newTask.id)) return prev; // Dedupe
+                                    return {
+                                        ...prev,
+                                        [targetCol]: [newTask, ...tasks]
+                                    };
+                                });
+                            }
+                        }
+
+                        // Handle UPDATE
+                        if (payload.eventType === 'UPDATE') {
+                            const updatedTask = payload.new as TelesalesTask;
+                            setColumnTasks(prev => {
+                                const newCols = { ...prev };
+                                let found = false;
+
+                                // Remove from old column if status changed
+                                for (const colId in newCols) {
+                                    if (Array.isArray(newCols[colId])) {
+                                        const idx = newCols[colId].findIndex(t => t.id === updatedTask.id);
+                                        if (idx !== -1) {
+                                            newCols[colId] = newCols[colId].filter(t => t.id !== updatedTask.id);
+                                            found = true;
+                                        }
+                                    }
+                                }
+
+                                // Add to new column (or current if status same)
+                                const targetCol = updatedTask.status;
+                                newCols[targetCol] = [updatedTask, ...(newCols[targetCol] || [])];
+
+                                // Sort? Maybe too expensive. Just prepend for visibility.
+                                return newCols;
+                            });
+                        }
+
+                        // Handle DELETE
+                        if (payload.eventType === 'DELETE') {
+                            const deletedId = payload.old.id;
+                            setColumnTasks(prev => {
+                                const newCols = { ...prev };
+                                for (const colId in newCols) {
+                                    if (Array.isArray(newCols[colId])) {
+                                        newCols[colId] = newCols[colId].filter(t => t.id !== deletedId);
+                                    }
+                                }
+                                return newCols;
+                            });
+                        }
+                    }
+                )
+                .subscribe();
+        }
+
         return () => {
             window.removeEventListener("telesales-columns-updated", handleColumnUpdate);
+            if (channel) supabase.removeChannel(channel);
         };
     }, [user, session?.access_token, refreshData, authIsLoading]); // Added authIsLoading
 
