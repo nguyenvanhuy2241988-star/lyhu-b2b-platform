@@ -282,6 +282,7 @@ export async function fetchUnifiedTasks(input: {
             title: t.title,
             customer_name: t.customer_name,
             phone: t.phone,
+            note: t.note, // FIXED: Add note field to mapping
             due_date: t.due_date,
             status: t.status === 'won' ? 'done' : (t.status === 'lost' ? 'done' : (t.status || 'inbox')), // Map deal status to task status roughly
             priority: t.priority || 'normal',
