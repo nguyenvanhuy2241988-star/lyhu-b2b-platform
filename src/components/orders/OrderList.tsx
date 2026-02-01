@@ -13,7 +13,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { scanOrdersForFraud } from "@/lib/fraudScan";
 import {
     Package, Clock, CheckCircle, XCircle, Search, Calendar,
-    AlertTriangle, ShieldAlert, ArrowUpDown, Filter, Download, MessageCircle, Eye, Trash2, Truck, RotateCcw, Edit
+    AlertTriangle, ShieldAlert, ArrowUpDown, Filter, Download, MessageCircle, Eye, Trash2, Truck, RotateCcw, Edit, User as UserIcon
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { exportOrdersToCSV } from "@/lib/exportCSV";
@@ -22,6 +22,7 @@ import { OrderChatModal } from "@/components/orders/OrderChatModal";
 import { OrderDetailsModal } from "@/components/orders/OrderDetailsModal"; // Added import
 import { getOrdersWithUnreadMessages } from "@/lib/orderChatStore";
 import { OrderEditModal } from "@/components/orders/OrderEditModal";
+import { fetchUsers, type User } from "@/lib/usersStore"; // Import fetchUsers
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -98,6 +99,10 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
     const [editOrder, setEditOrder] = useState<Order | null>(null); // Edit state
     const [unreadOrders, setUnreadOrders] = useState<Set<string>>(new Set());
 
+    // User Filter State
+    const [users, setUsers] = useState<User[]>([]);
+    const [selectedUserId, setSelectedUserId] = useState<string>("all");
+
     // Stats calculated from REAL data
     const stats = {
         totalOrders: orders.length,
@@ -109,11 +114,28 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
             .reduce((sum, o) => sum + (o.totalAmount || 0), 0)
     };
 
+    // Load Users for Filter
+    useEffect(() => {
+        if (!readOnly && role !== 'telesales') { // Only load users for admins/managers
+            fetchUsers(session?.access_token).then(allUsers => {
+                const staffUsers = allUsers.filter(u =>
+                    ['telesales', 'sales', 'sale_admin', 'manager', 'admin'].includes(u.role)
+                );
+                setUsers(staffUsers);
+            });
+        }
+    }, [readOnly, role, session?.access_token]);
+
     const loadData = useCallback(async (silent = false) => {
         try {
             if (!silent) setIsLoading(true);
+            if (!silent) setIsLoading(true);
             // Pass role explicit to RPC to avoid permission lookup failures
-            const data = await fetchOrders(session?.access_token, { role: role || undefined });
+            // Pass selectedUserId to filter by user at DB level
+            const data = await fetchOrders(session?.access_token, {
+                role: role || undefined,
+                userId: selectedUserId !== 'all' ? selectedUserId : undefined,
+            });
             setOrders(data);
 
             if (data.length > 0) {
@@ -125,7 +147,7 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
         } finally {
             if (!silent) setIsLoading(false);
         }
-    }, [session?.access_token, role]);
+    }, [session?.access_token, role, selectedUserId]); // Reload when selectedUserId changes
 
     useEffect(() => {
         try {
@@ -306,31 +328,50 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                         ))}
                     </div>
 
-                    {/* Date Filters */}
-                    <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
-                        <Calendar className="w-4 h-4 text-slate-400" />
-                        <div className="flex items-center gap-1">
-                            <input
-                                type="date"
-                                className="bg-transparent border-none text-xs font-bold focus:ring-0 p-0 w-28 uppercase"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                            />
-                            <span className="text-slate-300 font-bold mx-1">-</span>
-                            <input
-                                type="date"
-                                className="bg-transparent border-none text-xs font-bold focus:ring-0 p-0 w-28 uppercase"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                            />
-                            {(startDate || endDate) && (
-                                <button
-                                    onClick={() => { setStartDate(""); setEndDate(""); }}
-                                    className="ml-2 p-1 hover:bg-slate-100 rounded-full text-slate-400 transition-colors"
+                    <div className="flex flex-wrap items-center gap-2">
+                        {/* User Filter (For Admin/Manager) */}
+                        {!readOnly && role !== 'telesales' && users.length > 0 && (
+                            <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
+                                <UserIcon className="w-4 h-4 text-slate-400" />
+                                <select
+                                    className="bg-transparent border-none text-xs font-bold focus:ring-0 p-0 text-slate-700 min-w-[120px]"
+                                    value={selectedUserId}
+                                    onChange={(e) => setSelectedUserId(e.target.value)}
                                 >
-                                    <XCircle className="w-4 h-4" />
-                                </button>
-                            )}
+                                    <option value="all">TẤT CẢ NHÂN VIÊN</option>
+                                    {users.map(u => (
+                                        <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        {/* Date Filters */}
+                        <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-200 shadow-sm">
+                            <Calendar className="w-4 h-4 text-slate-400" />
+                            <div className="flex items-center gap-1">
+                                <input
+                                    type="date"
+                                    className="bg-transparent border-none text-xs font-bold focus:ring-0 p-0 w-28 uppercase"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                />
+                                <span className="text-slate-300 font-bold mx-1">-</span>
+                                <input
+                                    type="date"
+                                    className="bg-transparent border-none text-xs font-bold focus:ring-0 p-0 w-28 uppercase"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                />
+                                {(startDate || endDate) && (
+                                    <button
+                                        onClick={() => { setStartDate(""); setEndDate(""); }}
+                                        className="ml-2 p-1 hover:bg-slate-100 rounded-full text-slate-400 transition-colors"
+                                    >
+                                        <XCircle className="w-4 h-4" />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
