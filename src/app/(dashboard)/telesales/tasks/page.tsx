@@ -817,17 +817,60 @@ export default function TelesalesTasksPage() {
                                     if (belongs) {
                                         if (exists) {
                                             // UPDATE in place
-                                            newCols[colId] = currentList.map(t => t.id === updatedTask.id ? { ...t, ...updatedTask } : t);
-                                        } else {
+                                            newCols[colId] = currentList.map(t => {
+                                                if (t.id === updatedTask.id) {
+                                                    // Normalize updatedTask
+                                                    let normalizedAssignees = updatedTask.assignee_ids;
+                                                    if (typeof normalizedAssignees === 'string') {
+                                                        let cleaned = normalizedAssignees;
+                                                        if (cleaned.startsWith('{') && cleaned.endsWith('}')) {
+                                                            cleaned = cleaned.slice(1, -1);
+                                                        }
+                                                        if (cleaned) {
+                                                            normalizedAssignees = cleaned.split(',').map((id: string) => id.trim().replace(/['"]/g, ''));
+                                                        } else {
+                                                            normalizedAssignees = [];
+                                                        }
+                                                    }
+
+                                                    // Careful merge like setEditingTask
+                                                    return {
+                                                        ...t,
+                                                        ...updatedTask,
+                                                        assignee_ids: normalizedAssignees !== undefined ? normalizedAssignees : t.assignee_ids,
+                                                        note: updatedTask.note !== undefined ? updatedTask.note : t.note,
+                                                        attachments: updatedTask.attachments !== undefined ? updatedTask.attachments : t.attachments,
+                                                        customer_name: updatedTask.customer_name !== undefined ? updatedTask.customer_name : t.customer_name
+                                                    };
+                                                }
+                                                return t;
+                                            });
                                             // INSERT (moved into this column)
-                                            newCols[colId] = [updatedTask, ...currentList];
+                                            // Normalize updatedTask before adding
+                                            let normalizedAssignees = updatedTask.assignee_ids;
+                                            if (typeof normalizedAssignees === 'string') {
+                                                let cleaned = normalizedAssignees;
+                                                if (cleaned.startsWith('{') && cleaned.endsWith('}')) {
+                                                    cleaned = cleaned.slice(1, -1);
+                                                }
+                                                if (cleaned) {
+                                                    normalizedAssignees = cleaned.split(',').map((id: string) => id.trim().replace(/['"]/g, ''));
+                                                } else {
+                                                    normalizedAssignees = [];
+                                                }
+                                            }
+                                            // Handle potential missing assignee_ids on INSERT if partial usage (though we use FULL identity now)
+                                            const normalizedTask = {
+                                                ...updatedTask,
+                                                assignee_ids: normalizedAssignees !== undefined ? normalizedAssignees : []
+                                            };
+                                            newCols[colId] = [normalizedTask, ...currentList];
                                         }
                                     } else {
                                         if (exists) {
                                             // DELETE (moved out of this column)
                                             newCols[colId] = currentList.filter(t => t.id !== updatedTask.id);
                                         }
-                                        // Else: doesn't belong and wasn't there. Do nothing.
                                     }
                                 });
                                 return newCols;
