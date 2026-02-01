@@ -279,7 +279,7 @@ export default function HRSchedulingPage() {
                         {/* Allow ALL users to change banner */}
                         <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 p-1 rounded backdrop-blur-sm">
                             {selectedSchedule.banner_url && (
-                                <button onClick={() => setPreviewImage(selectedSchedule.banner_url)} className="bg-white p-1.5 rounded shadow hover:text-blue-600" title="Xem ảnh đầy đủ">
+                                <button onClick={() => setPreviewImage(selectedSchedule.banner_url || null)} className="bg-white p-1.5 rounded shadow hover:text-blue-600" title="Xem ảnh đầy đủ">
                                     <Eye className="w-4 h-4" />
                                 </button>
                             )}
@@ -347,7 +347,7 @@ export default function HRSchedulingPage() {
                                                 <div className="relative group rounded border border-slate-200 overflow-hidden">
                                                     <img src={selectedSchedule.poster_url} className="w-full h-24 object-contain bg-slate-50" />
                                                     <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button onClick={() => setPreviewImage(selectedSchedule.poster_url)} className="bg-white/80 p-1 text-blue-600 rounded shadow hover:bg-white"><Eye className="w-3 h-3" /></button>
+                                                        <button onClick={() => setPreviewImage(selectedSchedule.poster_url || null)} className="bg-white/80 p-1 text-blue-600 rounded shadow hover:bg-white"><Eye className="w-3 h-3" /></button>
                                                         <button onClick={() => handleDeleteAsset('poster')} className="bg-white/80 p-1 text-red-600 rounded shadow"><Trash2 className="w-3 h-3" /></button>
                                                     </div>
                                                 </div>
@@ -362,7 +362,7 @@ export default function HRSchedulingPage() {
                                                 <div className="relative group rounded border border-slate-200 overflow-hidden">
                                                     <img src={selectedSchedule.poster_url_2} className="w-full h-24 object-contain bg-slate-50" />
                                                     <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button onClick={() => setPreviewImage(selectedSchedule.poster_url_2)} className="bg-white/80 p-1 text-blue-600 rounded shadow hover:bg-white"><Eye className="w-3 h-3" /></button>
+                                                        <button onClick={() => setPreviewImage(selectedSchedule.poster_url_2 || null)} className="bg-white/80 p-1 text-blue-600 rounded shadow hover:bg-white"><Eye className="w-3 h-3" /></button>
                                                         <button onClick={() => handleDeleteAsset('poster2')} className="bg-white/80 p-1 text-red-600 rounded shadow"><Trash2 className="w-3 h-3" /></button>
                                                     </div>
                                                 </div>
@@ -377,7 +377,7 @@ export default function HRSchedulingPage() {
                                                 <div className="relative group rounded border border-slate-200 overflow-hidden">
                                                     <img src={selectedSchedule.poster_url_3} className="w-full h-24 object-contain bg-slate-50" />
                                                     <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                        <button onClick={() => setPreviewImage(selectedSchedule.poster_url_3)} className="bg-white/80 p-1 text-blue-600 rounded shadow hover:bg-white"><Eye className="w-3 h-3" /></button>
+                                                        <button onClick={() => setPreviewImage(selectedSchedule.poster_url_3 || null)} className="bg-white/80 p-1 text-blue-600 rounded shadow hover:bg-white"><Eye className="w-3 h-3" /></button>
                                                         <button onClick={() => handleDeleteAsset('poster3')} className="bg-white/80 p-1 text-red-600 rounded shadow"><Trash2 className="w-3 h-3" /></button>
                                                     </div>
                                                 </div>
