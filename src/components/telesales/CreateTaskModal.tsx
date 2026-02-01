@@ -91,8 +91,8 @@ export const CreateTaskModal = ({
     // 1. ALWAYS sync when modal opens (isOpen changes to true) or task ID changes
     // 2. ALSO sync if Realtime update arrives AND user hasn't made local edits yet
     useEffect(() => {
-        if (isOpen) {
-            const taskIdChanged = initialData?.id !== lastSyncedTaskId;
+        if (isOpen && initialData) {
+            const taskIdChanged = initialData.id !== lastSyncedTaskId;
             const shouldSync = taskIdChanged || !hasUserEdited;
 
             if (shouldSync) {
@@ -100,18 +100,18 @@ export const CreateTaskModal = ({
                 console.log('[CreateTaskModal] *** NOTE VALUE BEING SYNCED ***:', initialData?.note);
                 console.log('[CreateTaskModal] *** ATTACHMENTS ***:', initialData?.attachments);
                 setFormData({
-                    title: initialData?.title || "",
-                    customerName: initialData?.customer_name || "",
-                    phone: initialData?.phone || "",
-                    priority: initialData?.priority || "normal",
-                    dueDate: initialData?.due_date ? new Date(initialData.due_date).toISOString().split('T')[0] : "",
+                    title: initialData.title || "",
+                    customerName: initialData.customer_name || "",
+                    phone: initialData.phone || "",
+                    priority: initialData.priority || "normal",
+                    dueDate: initialData.due_date ? new Date(initialData.due_date).toISOString().split('T')[0] : "",
                     status: initialStatus,
-                    description: initialData?.note || "",
-                    assigneeIds: initialData?.assignee_ids || [],
-                    leaderId: initialData?.leader_id || ""
+                    description: initialData.note || "",
+                    assigneeIds: initialData.assignee_ids || [],
+                    leaderId: initialData.leader_id || ""
                 });
-                setAttachments(initialData?.attachments || []);
-                setLastSyncedTaskId(initialData?.id || null);
+                setAttachments(initialData.attachments || []);
+                setLastSyncedTaskId(initialData.id || null);
 
                 // Reset dirty state when syncing due to task change
                 if (taskIdChanged) {
@@ -120,11 +120,12 @@ export const CreateTaskModal = ({
             } else {
                 console.log('[CreateTaskModal] Skipping sync (user has local edits)');
             }
-        } else {
+        } else if (!isOpen) {
             // Modal closed - reset dirty state for next open
             setHasUserEdited(false);
+            setLastSyncedTaskId(null); // Reset so next open triggers fresh sync
         }
-    }, [isOpen, initialStatus, initialData]);
+    }, [isOpen, initialStatus, initialData, hasUserEdited, lastSyncedTaskId]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
