@@ -52,18 +52,24 @@ export default function AdminZaloPage() {
 
     async function fetchMessages(accountId: string) {
         setIsLoading(true);
-        console.log("Fetching messages (RPC) for account:", accountId);
+        console.log("Fetching messages (API) for account:", accountId);
 
-        // Use RPC to bypass RLS
-        const { data, error } = await supabase.rpc('get_zalo_messages', {
-            p_account_id: accountId
-        });
+        try {
+            const res = await fetch(`/api/zalo/messages?accountId=${accountId}`);
+            const data = await res.json();
 
-        console.log("Messages Data (RPC):", data);
-        if (error) console.error("Messages Error (RPC):", error);
+            console.log("Messages Data (API):", data);
 
-        if (data) setMessages(data);
-        setIsLoading(false);
+            if (data.error) {
+                console.error("API Error:", data.error);
+            } else {
+                setMessages(data);
+            }
+        } catch (error) {
+            console.error("Network Error:", error);
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     return (
@@ -118,7 +124,7 @@ export default function AdminZaloPage() {
                                         }`}>
                                         <div className="text-xs opacity-70 mb-1 flex justify-between gap-4">
                                             <span>{msg.direction === 'outgoing' ? 'Nhân viên' : msg.sender_name || 'Khách hàng'}</span>
-                                            <span>{format(new Date(msg.msg_timestamp || msg.timestamp), 'HH:mm')}</span>
+                                            <span>{format(new Date(msg.timestamp), 'HH:mm')}</span>
                                         </div>
                                         <div className="whitespace-pre-wrap">{msg.content}</div>
                                         {/* Attachments placeholder */}
