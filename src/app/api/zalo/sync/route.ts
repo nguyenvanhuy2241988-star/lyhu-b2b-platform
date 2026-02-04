@@ -102,10 +102,15 @@ export async function POST(req: NextRequest) {
                 }, { status: 500, headers: corsHeaders });
             }
 
-            // 4. Update Account Timestamp
+            // 4. Update Account Timestamp AND Info (Name/Avatar) if changed
+            // This fixes the issue where an account created as "Unknown" stays "Unknown" forever
             await supabaseAdmin
                 .from("zalo_sync_accounts")
-                .update({ last_synced_at: new Date().toISOString() })
+                .update({
+                    last_synced_at: new Date().toISOString(),
+                    name: currentZaloUser.name !== "Unknown" ? currentZaloUser.name : undefined, // Only update if we have a real name
+                    avatar_url: currentZaloUser.avatar || undefined
+                })
                 .eq("id", account.id);
         }
 
