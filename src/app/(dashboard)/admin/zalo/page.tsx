@@ -118,7 +118,7 @@ export default function AdminZaloPage() {
                                         }`}>
                                         <div className="text-xs opacity-70 mb-1 flex justify-between gap-4">
                                             <span>{msg.direction === 'outgoing' ? 'Nhân viên' : msg.sender_name || 'Khách hàng'}</span>
-                                            <span>{format(new Date(msg.timestamp), 'HH:mm')}</span>
+                                            <span>{format(new Date(msg.msg_timestamp || msg.timestamp), 'HH:mm')}</span>
                                         </div>
                                         <div className="whitespace-pre-wrap">{msg.content}</div>
                                         {/* Attachments placeholder */}
