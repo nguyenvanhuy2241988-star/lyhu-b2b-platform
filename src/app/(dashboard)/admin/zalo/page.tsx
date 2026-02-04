@@ -57,7 +57,7 @@ export default function AdminZaloPage() {
         const { data, error } = await supabase
             .from("zalo_messages")
             .select("*")
-            .eq("account_id", accountId)
+            // .eq("account_id", accountId) // TEST: Remove filter
             .order("timestamp", { ascending: false })
             .limit(100);
 
