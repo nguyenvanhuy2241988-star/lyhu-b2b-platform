@@ -22,11 +22,18 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
 
+        // Log incoming data for debugging
+        console.log("=== ZALO SYNC API ===");
+        console.log("Received body:", JSON.stringify(body, null, 2));
+
         if (!body.currentAccount || !body.messages) {
+            console.log("ERROR: Missing currentAccount or messages");
             return NextResponse.json({ error: "Missing data" }, { status: 400, headers: corsHeaders });
         }
 
         const currentZaloUser = body.currentAccount;
+        console.log("Current Zalo User:", currentZaloUser);
+        console.log("Messages count:", body.messages?.length);
 
         // 1. Find or Create Account
         let { data: account, error: accError } = await supabaseAdmin
@@ -35,45 +42,65 @@ export async function POST(req: NextRequest) {
             .eq("zalo_id", currentZaloUser.id)
             .single();
 
+        console.log("Account lookup result:", account, "Error:", accError);
+
         if (!account) {
+            console.log("Creating new account...");
             const { data: newAccount, error: createError } = await supabaseAdmin
                 .from("zalo_sync_accounts")
                 .insert({
                     zalo_id: currentZaloUser.id,
                     name: currentZaloUser.name,
-                    avatar_url: currentZaloUser.avatar,
+                    avatar_url: currentZaloUser.avatar || "",
                     is_active: true
                 })
                 .select("id")
                 .single();
 
+            console.log("New account created:", newAccount, "Error:", createError);
             if (createError) throw createError;
             account = newAccount;
         }
 
-        // 2. Prepare Messages
-        const messagesToInsert = body.messages.map((msg: any) => ({
-            account_id: account.id,
-            msg_id: msg.msgId,
-            sender_id: msg.senderId,
-            sender_name: msg.senderName,
-            sender_avatar: msg.senderAvatar,
-            receiver_id: msg.receiverId,
-            receiver_name: msg.receiverName,
-            content: msg.content,
-            attachments: msg.attachments || [],
-            msg_type: msg.msgType || 'text',
-            timestamp: msg.timestamp || new Date().toISOString(),
-            direction: msg.senderId === currentZaloUser.id ? 'outgoing' : 'incoming',
-        }));
+        // 2. Prepare Messages - with safe defaults for required fields
+        const messagesToInsert = body.messages.map((msg: any, index: number) => {
+            const prepared = {
+                account_id: account.id,
+                msg_id: msg.msgId || `auto_${Date.now()}_${index}`,
+                sender_id: msg.senderId || "unknown_sender",
+                sender_name: msg.senderName || "Unknown",
+                sender_avatar: msg.senderAvatar || "",
+                receiver_id: msg.receiverId || "unknown_receiver",
+                receiver_name: msg.receiverName || "Unknown",
+                content: msg.content || "",
+                attachments: msg.attachments || [],
+                msg_type: msg.msgType || 'text',
+                timestamp: msg.timestamp || new Date().toISOString(),
+                direction: msg.isMe ? 'outgoing' : 'incoming',
+            };
+            console.log(`Message ${index}:`, prepared);
+            return prepared;
+        });
 
-        // 3. Upsert Messages
+        console.log("Total messages to insert:", messagesToInsert.length);
+
+        // 3. Insert Messages (not upsert to ensure they get added)
         if (messagesToInsert.length > 0) {
-            const { error: msgError } = await supabaseAdmin
+            const { data: insertedData, error: msgError } = await supabaseAdmin
                 .from("zalo_messages")
-                .upsert(messagesToInsert, { onConflict: 'msg_id', ignoreDuplicates: true });
+                .insert(messagesToInsert)
+                .select();
 
-            if (msgError) throw msgError;
+            console.log("Insert result:", insertedData?.length, "rows inserted");
+            console.log("Insert error:", msgError);
+
+            if (msgError) {
+                console.error("MESSAGE INSERT ERROR:", msgError);
+                return NextResponse.json({
+                    error: msgError.message,
+                    details: msgError
+                }, { status: 500, headers: corsHeaders });
+            }
 
             // 4. Update Account Timestamp
             await supabaseAdmin
@@ -82,10 +109,15 @@ export async function POST(req: NextRequest) {
                 .eq("id", account.id);
         }
 
-        return NextResponse.json({ success: true, count: messagesToInsert.length }, { headers: corsHeaders });
+        console.log("=== SYNC COMPLETE ===");
+        return NextResponse.json({
+            success: true,
+            count: messagesToInsert.length,
+            accountId: account.id
+        }, { headers: corsHeaders });
 
     } catch (err: any) {
-        console.error("Zalo Sync API Error:", err);
+        console.error("Zalo Sync API CATCH Error:", err);
         return NextResponse.json({ error: err.message }, { status: 500, headers: corsHeaders });
     }
 }
