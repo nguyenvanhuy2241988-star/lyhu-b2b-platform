@@ -36,7 +36,7 @@ export default function AdminZaloPage() {
             .channel(`zalo-messages-${selectedAccount.id}`)
             .on('postgres_changes',
                 { event: 'INSERT', schema: 'public', table: 'zalo_messages', filter: `account_id=eq.${selectedAccount.id}` },
-                (payload) => {
+                (payload: any) => {
                     setMessages((prev) => [payload.new, ...prev]);
                 }
             )
