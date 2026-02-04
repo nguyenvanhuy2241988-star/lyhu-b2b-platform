@@ -9,12 +9,12 @@ const supabaseAdmin = createClient(
 
 export async function GET(req: NextRequest) {
     try {
-        // Query ALL messages - EXACTLY like debug endpoint
+        // Query ALL messages with higher limit
         const { data: messages, error } = await supabaseAdmin
             .from("zalo_messages")
-            .select("*, zalo_sync_accounts(name)")
-            .order("created_at", { ascending: false })
-            .limit(100);
+            .select("*")
+            .order("timestamp", { ascending: false })
+            .limit(1000);
 
         if (error) {
             console.error("Messages API Error:", error);

@@ -1,9 +1,19 @@
-console.log("%c LYHU ZALO SYNC STARTED V3 ", "background: #222; color: #00ff00; font-size: 20px");
+console.log("%c LYHU ZALO SYNC STARTED V6 ", "background: #222; color: #00ff00; font-size: 20px");
 
 const SYNC_API_URL = "https://lyhu-b2b-platform.vercel.app/api/zalo/sync";
 const CONTACTS_API_URL = "https://lyhu-b2b-platform.vercel.app/api/zalo/contacts";
 
-// 1. Health Check Loops
+// STARTUP: Reset ALL sync flags when Extension first loads
+console.log("LYHU Sync: Resetting all sync flags on startup...");
+document.querySelectorAll('[data-lyhu-synced]').forEach(el => {
+    delete el.dataset.lyhuSynced;
+});
+document.querySelectorAll('[data-lyhu-contact-synced]').forEach(el => {
+    delete el.dataset.lyhuContactSynced;
+});
+window.lastPartnerName = null;
+
+// 1. Health Check Loops (Message sync every 3 seconds)
 setInterval(() => {
     scanAndSync();
 }, 3000);
@@ -13,10 +23,12 @@ setInterval(() => {
     scanSidebar();
 }, 10000);
 
-// Initial sidebar scan after 2 seconds
+// Initial scans after page loads
 setTimeout(() => {
+    console.log("LYHU Sync: Running initial sync...");
+    scanAndSync();
     scanSidebar();
-}, 2000);
+}, 1500);
 
 // ========== SIDEBAR SCRAPING ==========
 function scanSidebar() {
@@ -196,6 +208,15 @@ function getActiveConversationInfo() {
 function scanAndSync() {
     const partnerInfo = getActiveConversationInfo();
 
+    // Track current conversation - reset synced flags when switching chats
+    if (window.lastPartnerName && window.lastPartnerName !== partnerInfo.name) {
+        console.log(`LYHU Sync: Conversation changed from "${window.lastPartnerName}" to "${partnerInfo.name}". Resetting sync flags.`);
+        document.querySelectorAll('[data-lyhu-synced="true"]').forEach(el => {
+            el.dataset.lyhuSynced = "false";
+        });
+    }
+    window.lastPartnerName = partnerInfo.name;
+
     // Standard Selectors (Updated with common Zalo patterns)
     // trying data-id which is very common
     const elements = document.querySelectorAll('.card--text, .card-text, .bubble-content, div[id^="msg-"], div[id^="before-msg-"], div[data-id], .z-message');
@@ -220,9 +241,15 @@ function scanAndSync() {
     if (validElements.length === 0) return;
 
     const messages = [];
+    let skippedCount = 0;
+
     validElements.forEach(el => {
         try {
-            if (el.dataset.lyhuSynced === "true") return;
+            // Skip already synced elements
+            if (el.dataset.lyhuSynced === "true") {
+                skippedCount++;
+                return;
+            }
 
             let content = el.innerText;
             // cleanup if needed
@@ -259,22 +286,33 @@ function scanAndSync() {
         }
     });
 
+    // Debug: Show skipped vs new
+    if (skippedCount > 0 || messages.length > 0) {
+        console.log(`LYHU Sync Debug: ${skippedCount} already synced, ${messages.length} new to sync.`);
+    }
+
     if (messages.length > 0) {
         console.log(`LYHU Sync: Sending ${messages.length} messages. Partner: ${partnerInfo.name}`);
-        try {
-            chrome.runtime.sendMessage({
-                action: "sync_messages",
-                data: {
-                    currentAccount: { id: "default_staff", name: "Staff Zalo", avatar: "" },
-                    messages: messages
-                }
-            }, (response) => {
-                if (chrome.runtime.lastError) {
-                    console.log("Runtime Error (Connect):", chrome.runtime.lastError.message);
-                } else {
-                    console.log("Sync Response:", response);
-                }
+
+        // Direct API call (bypassing background script)
+        fetch(SYNC_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                currentAccount: { id: "default_staff", name: "Staff Zalo", avatar: "" },
+                messages: messages
+            })
+        })
+            .then(res => res.json())
+            .then(data => {
+                console.log("LYHU Sync: Messages Sync Response:", data);
+            })
+            .catch(err => {
+                console.log("LYHU Sync: Messages Sync Error:", err);
+                // Unmark as synced so they can retry
+                validElements.forEach(el => {
+                    el.dataset.lyhuSynced = "false";
+                });
             });
-        } catch (e) { }
     }
 }
