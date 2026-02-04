@@ -1,0 +1,32 @@
+{
+    "manifest_version": 3,
+    "name": "LYHU Zalo Sync",
+    "version": "1.0",
+    "description": "Syncs Zalo messages to LYHU CRM",
+    "permissions": [
+        "activeTab",
+        "storage",
+        "scripting"
+    ],
+    "host_permissions": [
+        "*://chat.zalo.me/*",
+        "*://lyhu-b2b-platform.vercel.app/*"
+    ],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "*://chat.zalo.me/*"
+            ],
+            "js": [
+                "content.js"
+            ],
+            "run_at": "document_end"
+        }
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    }
+}

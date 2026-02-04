@@ -73,6 +73,12 @@ export async function POST(req: NextRequest) {
                 .upsert(messagesToInsert, { onConflict: 'msg_id', ignoreDuplicates: true });
 
             if (msgError) throw msgError;
+
+            // Update Account Timestamp
+            await supabaseAdmin
+                .from("zalo_sync_accounts")
+                .update({ last_synced_at: new Date().toISOString() })
+                .eq("id", account.id);
         }
 
         return NextResponse.json({ success: true, count: messagesToInsert.length });
