@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"; // Or your client import
+import { createClient } from "@/lib/supabaseClient";
 import { format } from "date-fns";
 
 export default function AdminZaloPage() {
-    const supabase = createClientComponentClient();
+    const supabase = createClient();
     const [accounts, setAccounts] = useState<any[]>([]);
     const [selectedAccount, setSelectedAccount] = useState<any>(null);
     const [messages, setMessages] = useState<any[]>([]);
