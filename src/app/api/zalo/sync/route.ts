@@ -1,33 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// Init Supabase Admin to bypass RLS for writing (since Extension is "System")
+// Init Supabase Admin to bypass RLS for writing
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+// Handle Preflight Options
+export async function OPTIONS() {
+    return NextResponse.json({}, { headers: corsHeaders });
+}
+
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { accountId, messages } = body;
-        /**
-         * Body format expected:
-         * {
-         *   "accountId": "uuid-of-staff-account-in-db", (Optional, ideally we detect by zalo_id)
-         *   "zaloId": "staff-zalo-id", (Better for auto-detection)
-         *   "staffName": "Name from Zalo",
-         *   "messages": [ { content, senderId, receiverId, timestamp... } ]
-         * }
-         */
 
         if (!body.currentAccount || !body.messages) {
-            return NextResponse.json({ error: "Missing data" }, { status: 400 });
+            return NextResponse.json({ error: "Missing data" }, { status: 400, headers: corsHeaders });
         }
 
-        const currentZaloUser = body.currentAccount; // { id: '...', name: '...', avatar: '...' }
+        const currentZaloUser = body.currentAccount;
 
-        // 1. Find or Create the Zalo Account (Staff)
+        // 1. Find or Create Account
         let { data: account, error: accError } = await supabaseAdmin
             .from("zalo_sync_accounts")
             .select("id")
@@ -35,7 +36,6 @@ export async function POST(req: NextRequest) {
             .single();
 
         if (!account) {
-            // Create new account
             const { data: newAccount, error: createError } = await supabaseAdmin
                 .from("zalo_sync_accounts")
                 .insert({
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
             account = newAccount;
         }
 
-        // 2. Insert Messages (Upsert to avoid duplicates)
+        // 2. Prepare Messages
         const messagesToInsert = body.messages.map((msg: any) => ({
             account_id: account.id,
             msg_id: msg.msgId,
@@ -67,6 +67,7 @@ export async function POST(req: NextRequest) {
             direction: msg.senderId === currentZaloUser.id ? 'outgoing' : 'incoming',
         }));
 
+        // 3. Upsert Messages
         if (messagesToInsert.length > 0) {
             const { error: msgError } = await supabaseAdmin
                 .from("zalo_messages")
@@ -74,17 +75,17 @@ export async function POST(req: NextRequest) {
 
             if (msgError) throw msgError;
 
-            // Update Account Timestamp
+            // 4. Update Account Timestamp
             await supabaseAdmin
                 .from("zalo_sync_accounts")
                 .update({ last_synced_at: new Date().toISOString() })
                 .eq("id", account.id);
         }
 
-        return NextResponse.json({ success: true, count: messagesToInsert.length });
+        return NextResponse.json({ success: true, count: messagesToInsert.length }, { headers: corsHeaders });
 
     } catch (err: any) {
         console.error("Zalo Sync API Error:", err);
-        return NextResponse.json({ error: err.message }, { status: 500 });
+        return NextResponse.json({ error: err.message }, { status: 500, headers: corsHeaders });
     }
 }
