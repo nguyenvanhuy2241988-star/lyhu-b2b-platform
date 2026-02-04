@@ -2,8 +2,15 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabaseClient";
-import { format } from "date-fns";
+import { format, isToday, isYesterday } from "date-fns";
 import { vi } from "date-fns/locale";
+
+// Helper function to format date labels
+function getDateLabel(date: Date): string {
+    if (isToday(date)) return "Hôm nay";
+    if (isYesterday(date)) return "Hôm qua";
+    return format(date, "dd/MM/yyyy");
+}
 
 export default function AdminZaloPage() {
     const supabase = createClient();
@@ -224,30 +231,45 @@ export default function AdminZaloPage() {
                             {/* Messages List */}
                             <div className="flex-1 overflow-y-auto px-4 py-2 space-y-1 flex flex-col-reverse bg-[#EEF0F1]">
                                 {currentChat.messages.map((msg: any, index: number) => {
-                                    // Check if next message (visually previous in flex-reverse) is from same sender to group visually
-                                    const isLastInGroup = true; // Simplified for now
+                                    const currentDate = new Date(msg.timestamp);
+                                    const prevMsg = currentChat.messages[index - 1];
+                                    const prevDate = prevMsg ? new Date(prevMsg.timestamp) : null;
+
+                                    // Show date separator if this is first message or date changed
+                                    const showDateSeparator = !prevDate ||
+                                        currentDate.toDateString() !== prevDate.toDateString();
 
                                     return (
-                                        <div key={msg.id} className={`flex w-full mb-1 ${msg.direction === 'outgoing' ? 'justify-end' : 'justify-start'}`}>
-
-                                            {/* Chat Bubble */}
-                                            <div className={`max-w-[65%] relative group flex flex-col ${msg.direction === 'outgoing' ? 'items-end' : 'items-start'}`}>
-
-                                                <div className={`px-4 py-2.5 text-[15px] leading-relaxed shadow-sm break-words ${msg.direction === 'outgoing'
-                                                    ? 'bg-[#E5EFFF] text-gray-800 rounded-l-xl rounded-tr-xl rounded-br-sm border border-[#cbe2ff]'
-                                                    : 'bg-white text-gray-800 rounded-r-xl rounded-tl-xl rounded-bl-sm border border-gray-100'
-                                                    }`}>
-                                                    <div className="whitespace-pre-wrap">{msg.content}</div>
-
-                                                    {msg.attachments && msg.attachments.length > 0 && (
-                                                        <div className="mt-2 text-xs italic bg-black/5 p-2 rounded border border-black/5">
-                                                            📎 {msg.attachments.length} tệp đính kèm
-                                                        </div>
-                                                    )}
+                                        <div key={msg.id}>
+                                            {/* Date Separator */}
+                                            {showDateSeparator && (
+                                                <div className="flex items-center justify-center my-4">
+                                                    <div className="bg-gray-200/80 text-gray-600 text-xs px-4 py-1.5 rounded-full font-medium shadow-sm">
+                                                        {getDateLabel(currentDate)}
+                                                    </div>
                                                 </div>
+                                            )}
 
-                                                <div className={`text-[10px] text-gray-400 mt-1 px-1 select-none ${msg.direction === 'outgoing' ? 'text-right' : 'text-left'}`}>
-                                                    {format(new Date(msg.timestamp), 'HH:mm')}
+                                            {/* Message Bubble */}
+                                            <div className={`flex w-full mb-1 ${msg.direction === 'outgoing' ? 'justify-end' : 'justify-start'}`}>
+                                                <div className={`max-w-[65%] relative group flex flex-col ${msg.direction === 'outgoing' ? 'items-end' : 'items-start'}`}>
+
+                                                    <div className={`px-4 py-2.5 text-[15px] leading-relaxed shadow-sm break-words ${msg.direction === 'outgoing'
+                                                        ? 'bg-[#E5EFFF] text-gray-800 rounded-l-xl rounded-tr-xl rounded-br-sm border border-[#cbe2ff]'
+                                                        : 'bg-white text-gray-800 rounded-r-xl rounded-tl-xl rounded-bl-sm border border-gray-100'
+                                                        }`}>
+                                                        <div className="whitespace-pre-wrap">{msg.content}</div>
+
+                                                        {msg.attachments && msg.attachments.length > 0 && (
+                                                            <div className="mt-2 text-xs italic bg-black/5 p-2 rounded border border-black/5">
+                                                                📎 {msg.attachments.length} tệp đính kèm
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className={`text-[10px] text-gray-400 mt-1 px-1 select-none ${msg.direction === 'outgoing' ? 'text-right' : 'text-left'}`}>
+                                                        {format(new Date(msg.timestamp), 'HH:mm')}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
