@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { X, Calendar, User, MapPin, ShoppingBag, CreditCard, Printer, Image as ImageIcon } from "lucide-react";
+import { X, Calendar, User, MapPin, ShoppingBag, CreditCard, Printer, Image as ImageIcon, RefreshCw, CheckCircle2, AlertOctagon } from "lucide-react";
 import { Order } from "@/lib/ordersStore";
 import { OrderPrintTemplate } from "./OrderPrintTemplate";
 import html2canvas from "html2canvas";
@@ -12,6 +12,42 @@ interface OrderDetailsModalProps {
 
 export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
     const [settings, setSettings] = useState<any>(null);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [localMisaStatus, setLocalMisaStatus] = useState<any>(null); // To update UI immediately without reload
+
+    // Sync Misa Handler
+    const handleSyncMisa = async () => {
+        if (!order) return;
+        setIsSyncing(true);
+        try {
+            const res = await fetch('/api/misa/sync-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: order.id })
+            });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                setLocalMisaStatus({ status: 'synced', refId: data.refId, error: null });
+                alert("Đồng bộ Misa thành công!");
+            } else {
+                setLocalMisaStatus({ status: 'failed', refId: null, error: data.error || "Unknown error" });
+                alert("Đồng bộ thất bại: " + (data.error || "Lỗi không xác định"));
+            }
+        } catch (err: any) {
+            console.error("Sync Misa error", err);
+            setLocalMisaStatus({ status: 'failed', refId: null, error: err.message });
+            alert("Lỗi kết nối: " + err.message);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    // Determine effective status (local override or order prop)
+    const effectiveMisaStatus = localMisaStatus?.status || order?.misa_sync_status || 'pending';
+    const effectiveMisaRef = localMisaStatus?.refId || order?.misa_ref_id;
+    const effectiveMisaError = localMisaStatus?.error || order?.misa_sync_error;
+
 
     useEffect(() => {
         if (order) {
@@ -101,12 +137,27 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                             <h2 className="text-xl font-bold text-slate-900">Chi tiết đơn hàng</h2>
                             <p className="text-sm text-slate-500">#{order.readableId || order.id}</p>
                         </div>
-                        <button
-                            onClick={onClose}
-                            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                        >
-                            <X className="w-5 h-5 text-slate-500" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                            {/* Misa Status in Header */}
+                            {(effectiveMisaStatus === 'synced') ? (
+                                <div className="flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full border border-blue-200" title={`Ref: ${effectiveMisaRef}`}>
+                                    <div className="w-4 h-4 grid place-items-center bg-blue-600 rounded-full text-white text-[8px]">M</div>
+                                    Đã đồng bộ
+                                </div>
+                            ) : (effectiveMisaStatus === 'failed') ? (
+                                <div className="flex items-center gap-1 px-3 py-1 bg-red-50 text-red-700 text-xs font-bold rounded-full border border-red-200" title={effectiveMisaError}>
+                                    <AlertOctagon className="w-3.5 h-3.5" />
+                                    Lỗi Sync
+                                </div>
+                            ) : null}
+
+                            <button
+                                onClick={onClose}
+                                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                            >
+                                <X className="w-5 h-5 text-slate-500" />
+                            </button>
+                        </div>
                     </div>
 
                     {/* Body */}
@@ -236,6 +287,18 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
 
                     {/* Footer Actions */}
                     <div className="p-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 rounded-b-xl print:hidden">
+                        <button
+                            onClick={handleSyncMisa}
+                            disabled={isSyncing || effectiveMisaStatus === 'synced'}
+                            className={`px-4 py-2 border rounded-lg font-medium flex items-center gap-2 transition-colors ${effectiveMisaStatus === 'synced'
+                                    ? 'bg-slate-50 text-slate-400 border-slate-200'
+                                    : 'bg-white text-blue-700 border-blue-200 hover:bg-blue-50'
+                                }`}
+                        >
+                            <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                            {effectiveMisaStatus === 'synced' ? 'Đã Sync Misa' : 'Sync Misa'}
+                        </button>
+
                         <button
                             onClick={handleDownloadImage}
                             className="px-4 py-2 bg-white text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 font-medium flex items-center gap-2"
