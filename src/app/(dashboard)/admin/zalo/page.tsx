@@ -52,12 +52,17 @@ export default function AdminZaloPage() {
 
     async function fetchMessages(accountId: string) {
         setIsLoading(true);
-        const { data } = await supabase
+        console.log("Fetching messages for account:", accountId);
+
+        const { data, error } = await supabase
             .from("zalo_messages")
             .select("*")
             .eq("account_id", accountId)
             .order("timestamp", { ascending: false })
             .limit(100);
+
+        console.log("Messages Data:", data);
+        if (error) console.error("Messages Error:", error);
 
         if (data) setMessages(data);
         setIsLoading(false);
