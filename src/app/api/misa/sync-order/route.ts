@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
         }
 
         // 3. Push to Misa
-        const result = await MisaService.pushSalesOrder(orderId, order);
+        const result = await MisaService.pushSalesOrder(orderId, order, supabaseAdmin);
 
         // 4. Update Status in DB
         const updateData: any = {

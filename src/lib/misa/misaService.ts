@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabaseClient";
+// MisaService.ts - Server Side Service
 
 interface MisaConfig {
     clientId: string;
@@ -11,8 +11,8 @@ interface MisaConfig {
 // Temporary in-memory cache for token (should be DB in production)
 let tokenCache: { token: string; expiresAt: number } | null = null;
 
-// Helper function to fetch app settings from Supabase
-async function fetchAppSettings() {
+// Helper function to fetch app settings using the passed supabase client
+async function fetchAppSettings(supabase: any) {
     const { data, error } = await supabase
         .from('app_settings')
         .select('*')
@@ -27,9 +27,9 @@ async function fetchAppSettings() {
 
 export const MisaService = {
     // 1. Authentication
-    getAccessToken: async (): Promise<string> => {
+    getAccessToken: async (supabase: any): Promise<string> => {
         // 1. Get Settings from DB
-        const settings = await fetchAppSettings();
+        const settings = await fetchAppSettings(supabase);
         // @ts-ignore
         const config = settings?.misa_config;
 
@@ -97,18 +97,18 @@ export const MisaService = {
     },
 
     // 3. Push to Misa
-    pushSalesOrder: async (orderId: string, orderData: any): Promise<{ success: boolean; refId?: string; error?: string }> => {
+    pushSalesOrder: async (orderId: string, orderData: any, supabase: any): Promise<{ success: boolean; refId?: string; error?: string }> => {
         try {
             console.log(`[MisaService] Pushing order ${orderId} to Misa (REAL)...`);
 
-            // 1. Get Token (Now throws error if failed)
-            const token = await MisaService.getAccessToken();
+            // 1. Get Token (Pass supabase client)
+            const token = await MisaService.getAccessToken(supabase);
 
             // 2. Prepare Payload
             const payload = MisaService.mapOrderToMisaInvoice(orderData);
 
             // 3. Send to Misa API
-            const settings = await fetchAppSettings();
+            const settings = await fetchAppSettings(supabase);
             // @ts-ignore
             const apiUrl = settings?.misa_config?.apiUrl || "https://openservice.misa.com.vn";
             const endpoint = `${apiUrl}/api/v1/fa/sa_invoice`;
