@@ -1,11 +1,116 @@
-console.log("%c LYHU ZALO SYNC STARTED V2 ", "background: #222; color: #00ff00; font-size: 20px");
+console.log("%c LYHU ZALO SYNC STARTED V3 ", "background: #222; color: #00ff00; font-size: 20px");
 
 const SYNC_API_URL = "https://lyhu-b2b-platform.vercel.app/api/zalo/sync";
+const CONTACTS_API_URL = "https://lyhu-b2b-platform.vercel.app/api/zalo/contacts";
 
-// 1. Basic Health Check Loop
+// 1. Health Check Loops
 setInterval(() => {
     scanAndSync();
 }, 3000);
+
+// 2. Sidebar Scan Loop (Every 10 seconds)
+setInterval(() => {
+    scanSidebar();
+}, 10000);
+
+// Initial sidebar scan after 2 seconds
+setTimeout(() => {
+    scanSidebar();
+}, 2000);
+
+// ========== SIDEBAR SCRAPING ==========
+function scanSidebar() {
+    try {
+        console.log("LYHU Sync: Scanning Sidebar for Contacts...");
+
+        // Zalo sidebar conversation items are typically in the left panel
+        // We look for conversation cards/rows
+        const sidebarItems = document.querySelectorAll(
+            '.conv-item, ' +                     // Common Zalo class pattern
+            '.conversation-item, ' +             // Alternative pattern
+            '[data-id^="conversation"], ' +      // Data attribute pattern
+            '.friend-item, ' +                   // Friend/contact items
+            'div[role="listitem"], ' +           // A11y role pattern
+            '.truncate-2-line'                   // Zalo truncate pattern for preview
+        );
+
+        // Fallback: Scan for Avatar + Name combinations in left panel
+        // Left panel is usually < 400px from left edge
+        const allContainers = document.querySelectorAll('div');
+        const potentialContacts = [];
+
+        for (const container of allContainers) {
+            const rect = container.getBoundingClientRect();
+
+            // Must be in the left sidebar zone (< 400px from left, visible)
+            if (rect.left < 400 && rect.width > 100 && rect.width < 400 && rect.height > 40 && rect.height < 100) {
+
+                // Must contain an image (avatar) AND text
+                const img = container.querySelector('img');
+                const textContent = container.innerText?.trim();
+
+                if (img && textContent && textContent.length > 1 && textContent.length < 200) {
+                    // Check if this looks like a conversation preview
+                    // Usually has a name (larger) and a preview (smaller)
+
+                    // Avoid header/navigation items
+                    if (textContent.includes("Tìm kiếm") || textContent.includes("Zalo")) continue;
+
+                    // Skip if already captured this element
+                    if (container.dataset.lyhuContactSynced === "true") continue;
+
+                    // Extract name and preview
+                    // Usually the first line is the name, rest is preview
+                    const lines = textContent.split('\n').filter(l => l.trim().length > 0);
+
+                    if (lines.length >= 1) {
+                        const name = lines[0].trim();
+                        const lastMessage = lines.length > 1 ? lines[1].trim() : "";
+
+                        // Skip obvious non-contact lines
+                        if (name.length < 2 || name.includes("Online") || name.includes("phút") || name.includes("giờ")) continue;
+
+                        potentialContacts.push({
+                            name: name,
+                            avatar: img.src || "",
+                            lastMessage: lastMessage.substring(0, 100),
+                            lastSeen: new Date().toISOString()
+                        });
+
+                        container.dataset.lyhuContactSynced = "true";
+                    }
+                }
+            }
+        }
+
+        if (potentialContacts.length > 0) {
+            console.log(`LYHU Sync: Found ${potentialContacts.length} contacts in sidebar.`);
+
+            // Send to backend
+            fetch(CONTACTS_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contacts: potentialContacts,
+                    accountId: "default_staff"
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    console.log("LYHU Sync: Contacts Sync Response:", data);
+                })
+                .catch(err => {
+                    console.log("LYHU Sync: Contacts Sync Error:", err);
+                });
+        } else {
+            console.log("LYHU Sync: No new contacts found in sidebar.");
+        }
+
+    } catch (e) {
+        console.error("LYHU Sync: Sidebar Scan Error:", e);
+    }
+}
+
 
 function getActiveConversationInfo() {
     try {
