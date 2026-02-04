@@ -1,34 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// Init Supabase Admin (Bypass RLS)
+// Init Supabase Admin - EXACTLY like debug endpoint
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export const dynamic = 'force-dynamic'; // Ensure no caching
-
 export async function GET(req: NextRequest) {
     try {
-        const { searchParams } = new URL(req.url);
-        const accountId = searchParams.get('accountId');
-
-        if (!accountId) {
-            return NextResponse.json({ error: "Missing accountId" }, { status: 400 });
-        }
-
-        // Fetch messages directly using Admin Client
+        // Query ALL messages - EXACTLY like debug endpoint
         const { data: messages, error } = await supabaseAdmin
             .from("zalo_messages")
-            .select("*")
-            // .eq("account_id", accountId) // DEBUG: Show all messages
-            .order("timestamp", { ascending: false })
+            .select("*, zalo_sync_accounts(name)")
+            .order("created_at", { ascending: false })
             .limit(100);
 
-        if (error) throw error;
+        if (error) {
+            console.error("Messages API Error:", error);
+            return NextResponse.json({ error: error.message }, { status: 500 });
+        }
 
-        return NextResponse.json(messages);
+        // Return directly as array
+        return NextResponse.json(messages || []);
 
     } catch (err: any) {
         console.error("Fetch Messages API Error:", err);

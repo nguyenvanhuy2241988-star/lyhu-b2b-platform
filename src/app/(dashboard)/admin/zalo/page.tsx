@@ -52,18 +52,23 @@ export default function AdminZaloPage() {
 
     async function fetchMessages(accountId: string) {
         setIsLoading(true);
-        console.log("Fetching messages (API) for account:", accountId);
+        console.log("Fetching ALL messages via API...");
 
         try {
-            const res = await fetch(`/api/zalo/messages?accountId=${accountId}`);
+            // Call API - server returns all messages now
+            const res = await fetch(`/api/zalo/messages`);
             const data = await res.json();
 
-            console.log("Messages Data (API):", data);
+            console.log("API Response status:", res.status);
+            console.log("Messages received:", data?.length || 0, data);
 
             if (data.error) {
-                console.error("API Error:", data.error);
-            } else {
-                setMessages(data);
+                console.error("API returned error:", data.error);
+            } else if (Array.isArray(data)) {
+                // Filter by account if needed, or show all
+                const filtered = data.filter((m: any) => m.account_id === accountId);
+                console.log("Filtered for account:", filtered.length);
+                setMessages(filtered.length > 0 ? filtered : data);
             }
         } catch (error) {
             console.error("Network Error:", error);
