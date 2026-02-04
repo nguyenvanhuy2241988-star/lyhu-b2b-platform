@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
         const { data: messages, error } = await supabaseAdmin
             .from("zalo_messages")
             .select("*")
-            .eq("account_id", accountId)
+            // .eq("account_id", accountId) // DEBUG: Show all messages
             .order("timestamp", { ascending: false })
             .limit(100);
 
