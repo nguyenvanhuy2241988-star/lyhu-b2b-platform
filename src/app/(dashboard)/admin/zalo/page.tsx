@@ -52,17 +52,15 @@ export default function AdminZaloPage() {
 
     async function fetchMessages(accountId: string) {
         setIsLoading(true);
-        console.log("Fetching messages for account:", accountId);
+        console.log("Fetching messages (RPC) for account:", accountId);
 
-        const { data, error } = await supabase
-            .from("zalo_messages")
-            .select("*")
-            // .eq("account_id", accountId) // TEST: Remove filter
-            .order("timestamp", { ascending: false })
-            .limit(100);
+        // Use RPC to bypass RLS
+        const { data, error } = await supabase.rpc('get_zalo_messages', {
+            p_account_id: accountId
+        });
 
-        console.log("Messages Data:", data);
-        if (error) console.error("Messages Error:", error);
+        console.log("Messages Data (RPC):", data);
+        if (error) console.error("Messages Error (RPC):", error);
 
         if (data) setMessages(data);
         setIsLoading(false);
