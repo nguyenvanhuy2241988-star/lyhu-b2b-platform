@@ -17,6 +17,7 @@ export default function AdminZaloPage() {
     const [accounts, setAccounts] = useState<any[]>([]);
     const [selectedAccount, setSelectedAccount] = useState<string>("all");
     const [messages, setMessages] = useState<any[]>([]);
+    const [contacts, setContacts] = useState<any[]>([]); // NEW: Contacts from sidebar sync
     const [isLoading, setIsLoading] = useState(false);
     const [selectedContact, setSelectedContact] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
@@ -25,6 +26,7 @@ export default function AdminZaloPage() {
     useEffect(() => {
         fetchAccounts();
         fetchMessages();
+        fetchContacts(); // NEW: Fetch contacts
 
         // Realtime Subscription for Accounts
         const accChannel = supabase.channel('zalo-accounts-changes')
@@ -38,9 +40,15 @@ export default function AdminZaloPage() {
             })
             .subscribe();
 
+        // NEW: Realtime Subscription for Contacts
+        const contactChannel = supabase.channel('zalo-contacts-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'zalo_contacts' }, fetchContacts)
+            .subscribe();
+
         return () => {
             supabase.removeChannel(accChannel);
             supabase.removeChannel(msgChannel);
+            supabase.removeChannel(contactChannel);
         };
     }, []);
 
@@ -62,6 +70,17 @@ export default function AdminZaloPage() {
         }
     }
 
+    // NEW: Fetch contacts from sidebar sync
+    async function fetchContacts() {
+        try {
+            const res = await fetch(`/api/zalo/contacts`);
+            const data = await res.json();
+            if (Array.isArray(data)) setContacts(data);
+        } catch (error) {
+            console.error("Fetch contacts error:", error);
+        }
+    }
+
     // 2. Filter & Group Logic
     const filteredMessages = useMemo(() => {
         let items = messages;
@@ -79,20 +98,37 @@ export default function AdminZaloPage() {
         return items;
     }, [messages, selectedAccount, searchTerm]);
 
+    // UPDATED: Merge contacts from both messages AND zalo_contacts table
     const conversations = useMemo(() => {
         const groups: Record<string, any> = {};
 
+        // 1. First, populate from zalo_contacts (sidebar sync)
+        contacts.forEach(contact => {
+            if (!contact.name || contact.name === "Unknown") return;
+
+            // Apply search filter
+            if (searchTerm && !contact.name.toLowerCase().includes(searchTerm.toLowerCase())) return;
+
+            groups[contact.name] = {
+                name: contact.name,
+                avatar: contact.avatar_url || '',
+                lastMessage: {
+                    content: contact.last_message_preview || '',
+                    timestamp: contact.last_seen || contact.updated_at
+                },
+                messages: [],
+                unreadCount: 0,
+                fromContacts: true // Flag to indicate this came from contacts table
+            };
+        });
+
+        // 2. Then, enrich with actual messages
         filteredMessages.forEach(msg => {
-            // Identify Partner Name (Key)
             const partnerName = msg.direction === 'incoming'
                 ? (msg.sender_name || "Unknown")
                 : (msg.receiver_name || "Unknown");
 
-            // Filter out 'Unknown' if we have good data, usually caused by legacy sync
-            // but if we ONLY have unknown, we keep it.
-            // For now, let's group them.
-
-            if (!partnerName) return;
+            if (!partnerName || partnerName === "Unknown") return;
 
             if (!groups[partnerName]) {
                 groups[partnerName] = {
@@ -106,6 +142,12 @@ export default function AdminZaloPage() {
 
             groups[partnerName].messages.push(msg);
 
+            // Update lastMessage if this message is newer
+            if (!groups[partnerName].lastMessage.id ||
+                new Date(msg.timestamp) > new Date(groups[partnerName].lastMessage.timestamp)) {
+                groups[partnerName].lastMessage = msg;
+            }
+
             // Update avatar if newer message has it
             if (msg.direction === 'incoming' && msg.sender_avatar && !groups[partnerName].avatar) {
                 groups[partnerName].avatar = msg.sender_avatar;
@@ -113,7 +155,7 @@ export default function AdminZaloPage() {
         });
 
         return Object.values(groups).sort((a: any, b: any) =>
-            new Date(b.lastMessage.timestamp).getTime() - new Date(a.lastMessage.timestamp).getTime()
+            new Date(b.lastMessage?.timestamp || 0).getTime() - new Date(a.lastMessage?.timestamp || 0).getTime()
         );
     }, [filteredMessages]);
 
