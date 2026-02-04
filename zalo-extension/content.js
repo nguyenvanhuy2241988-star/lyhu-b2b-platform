@@ -30,6 +30,150 @@ setTimeout(() => {
     scanSidebar();
 }, 1500);
 
+// ========== AUTO-SYNC ALL (Keyboard: Ctrl+Shift+S) ==========
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+        e.preventDefault();
+        console.log("%c LYHU AUTO-SYNC STARTED ", "background: #ff6600; color: white; font-size: 16px");
+        autoSyncAll();
+    }
+});
+
+// State for auto-sync
+window.lyhuAutoSyncRunning = false;
+
+async function autoSyncAll() {
+    if (window.lyhuAutoSyncRunning) {
+        console.log("LYHU Auto-Sync: Already running, skipping...");
+        return;
+    }
+    window.lyhuAutoSyncRunning = true;
+
+    try {
+        // Step 1: Auto-scroll sidebar to load all contacts
+        console.log("LYHU Auto-Sync: Step 1 - Scrolling sidebar to load all contacts...");
+        await autoScrollSidebar();
+
+        // Step 2: Collect all visible contacts
+        console.log("LYHU Auto-Sync: Step 2 - Collecting all contacts...");
+        const contactElements = collectContactElements();
+        console.log(`LYHU Auto-Sync: Found ${contactElements.length} contacts to sync`);
+
+        // Step 3: Click through each contact to sync messages
+        console.log("LYHU Auto-Sync: Step 3 - Clicking through contacts to sync messages...");
+        for (let i = 0; i < contactElements.length; i++) {
+            const el = contactElements[i];
+            const name = el.innerText?.split('\n')[0] || `Contact ${i + 1}`;
+
+            console.log(`LYHU Auto-Sync: [${i + 1}/${contactElements.length}] Opening "${name}"...`);
+
+            // Click the contact
+            el.click();
+
+            // Wait 2-4 seconds (random to appear human)
+            const waitTime = 2000 + Math.random() * 2000;
+            await sleep(waitTime);
+
+            // Sync messages from this chat
+            scanAndSync();
+
+            // Small extra delay
+            await sleep(500);
+        }
+
+        console.log("%c LYHU AUTO-SYNC COMPLETE ", "background: #00cc00; color: white; font-size: 16px");
+        console.log(`LYHU Auto-Sync: Synced ${contactElements.length} contacts`);
+
+    } catch (err) {
+        console.error("LYHU Auto-Sync Error:", err);
+    } finally {
+        window.lyhuAutoSyncRunning = false;
+    }
+}
+
+async function autoScrollSidebar() {
+    // Find the sidebar scrollable container
+    const sidebar = document.querySelector('.conv-list, .conversation-list, [role="listbox"], .left-panel')
+        || document.querySelector('div[style*="overflow"]');
+
+    if (!sidebar) {
+        // Fallback: find scrollable div in left area
+        const allDivs = document.querySelectorAll('div');
+        for (const div of allDivs) {
+            const rect = div.getBoundingClientRect();
+            if (rect.left < 50 && rect.width > 200 && rect.width < 400 && div.scrollHeight > div.clientHeight) {
+                await scrollContainer(div);
+                return;
+            }
+        }
+        console.log("LYHU Auto-Sync: Could not find sidebar to scroll");
+        return;
+    }
+
+    await scrollContainer(sidebar);
+}
+
+async function scrollContainer(container) {
+    const maxScrollAttempts = 20;
+    let prevScrollTop = -1;
+
+    for (let i = 0; i < maxScrollAttempts; i++) {
+        container.scrollTop = container.scrollHeight;
+        await sleep(800 + Math.random() * 400);
+
+        // Scan new contacts after each scroll
+        scanSidebar();
+
+        // Check if we've reached the bottom
+        if (container.scrollTop === prevScrollTop) {
+            console.log("LYHU Auto-Sync: Reached bottom of sidebar");
+            break;
+        }
+        prevScrollTop = container.scrollTop;
+    }
+
+    // Scroll back to top
+    container.scrollTop = 0;
+}
+
+function collectContactElements() {
+    const elements = [];
+    const allDivs = document.querySelectorAll('div');
+
+    for (const div of allDivs) {
+        const rect = div.getBoundingClientRect();
+
+        // Contact items in sidebar: left position, reasonable size, has avatar
+        if (rect.left < 400 && rect.width > 100 && rect.width < 400 &&
+            rect.height > 40 && rect.height < 100) {
+
+            const img = div.querySelector('img');
+            const text = div.innerText?.trim();
+
+            if (img && text && text.length > 2 && text.length < 200) {
+                // Avoid duplicates and non-contact items
+                if (!text.includes("Tìm kiếm") && !text.includes("Zalo")) {
+                    elements.push(div);
+                }
+            }
+        }
+    }
+
+    // Remove duplicates by checking if parent contains child
+    const unique = elements.filter((el, idx) => {
+        return !elements.some((other, otherIdx) =>
+            otherIdx !== idx && other.contains(el)
+        );
+    });
+
+    return unique.slice(0, 50); // Limit to 50 contacts per run
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
 // ========== SIDEBAR SCRAPING ==========
 function scanSidebar() {
     try {
