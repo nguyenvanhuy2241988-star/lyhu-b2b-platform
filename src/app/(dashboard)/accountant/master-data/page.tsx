@@ -115,8 +115,8 @@ export default function AccountantMasterDataPage() {
     };
 
     const filteredItemsSize = activeTab === "products"
-        ? products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.sku.toLowerCase().includes(searchQuery.toLowerCase())).length
-        : customers.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.tax_code?.includes(searchQuery)).length;
+        ? products.filter(p => (p.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || (p.sku || "").toLowerCase().includes(searchQuery.toLowerCase())).length
+        : customers.filter(c => (c.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || (c.tax_code || "").includes(searchQuery)).length;
 
     return (
         <div className="space-y-6">
@@ -270,11 +270,11 @@ export default function AccountantMasterDataPage() {
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
                                         {activeTab === "products" ? (
-                                            products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.sku.toLowerCase().includes(searchQuery.toLowerCase())).map((p) => (
+                                            products.filter(p => (p.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || (p.sku || "").toLowerCase().includes(searchQuery.toLowerCase())).map((p) => (
                                                 <tr key={p.id} className="hover:bg-slate-50 transition-colors">
                                                     <td className="px-6 py-4">
-                                                        <div className="font-bold text-slate-900">{p.name}</div>
-                                                        <div className="text-[10px] text-slate-400 font-mono tracking-wider">{p.sku}</div>
+                                                        <div className="font-bold text-slate-900">{p.name || "Không tên"}</div>
+                                                        <div className="text-[10px] text-slate-400 font-mono tracking-wider">{p.sku || "N/A"}</div>
                                                     </td>
                                                     <td className="px-6 py-4 text-slate-500 lowercase">
                                                         {p.unit || "Cái/Hộp"}
@@ -299,10 +299,10 @@ export default function AccountantMasterDataPage() {
                                                 </tr>
                                             ))
                                         ) : (
-                                            customers.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()) || c.tax_code?.includes(searchQuery)).map((c) => (
+                                            customers.filter(c => (c.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || (c.tax_code || "").includes(searchQuery)).map((c) => (
                                                 <tr key={c.id} className="hover:bg-slate-50 transition-colors">
                                                     <td className="px-6 py-4">
-                                                        <div className="font-bold text-slate-900">{c.name}</div>
+                                                        <div className="font-bold text-slate-900">{c.name || "Không tên"}</div>
                                                         <div className="text-[10px] text-slate-400 uppercase">{c.type}</div>
                                                     </td>
                                                     <td className="px-6 py-4 text-slate-600">
