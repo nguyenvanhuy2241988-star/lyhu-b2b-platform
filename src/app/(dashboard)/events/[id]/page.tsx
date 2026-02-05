@@ -90,18 +90,18 @@ export default function EventDetailPage() {
 
                     if (partData && partData.length > 0) {
                         // Manual join for profiles
-                        const userIds = partData.map(p => p.user_id);
+                        const userIds = partData.map((p: any) => p.user_id);
                         const { data: profilesData } = await supabase
                             .from('profiles')
                             .select('id, full_name, email, avatar_url')
                             .in('id', userIds);
 
-                        const profileMap = (profilesData || []).reduce((acc, profile) => {
+                        const profileMap = (profilesData || []).reduce((acc: any, profile: any) => {
                             acc[profile.id] = profile;
                             return acc;
                         }, {} as Record<string, any>);
 
-                        const mergedParticipants = partData.map(p => ({
+                        const mergedParticipants = partData.map((p: any) => ({
                             ...p,
                             profiles: profileMap[p.user_id] || { full_name: 'Người dùng', email: '' }
                         }));
