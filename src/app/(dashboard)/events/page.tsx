@@ -43,7 +43,7 @@ export default function EventsPage() {
             {/* Upcoming Events List */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1, 2, 3].map((i) => (
-                    <Card key={i} className="group hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden border-slate-200/60">
+                    <div key={i} className="group hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden border border-slate-200/60 rounded-xl bg-white">
                         <div className="h-48 bg-slate-100 relative">
                             {/* Placeholder for event image */}
                             <div className="absolute inset-0 bg-slate-200 flex items-center justify-center text-slate-400">
@@ -64,7 +64,7 @@ export default function EventsPage() {
                                 <span>Khu du lịch Văn Thánh</span>
                             </div>
                         </div>
-                    </Card>
+                    </div>
                 ))}
             </div>
         </div>
