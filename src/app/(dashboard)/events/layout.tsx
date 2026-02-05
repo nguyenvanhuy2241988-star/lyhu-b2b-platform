@@ -68,19 +68,15 @@ export default function EventsLayout({ children }: { children: React.ReactNode }
                         </div>
                     </div>
 
-                    {/* Branding / Banner Widget (Optional) */}
-                    <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-xl p-4 text-white shadow-lg overflow-hidden relative">
-                        <div className="relative z-10">
-                            <h4 className="font-bold text-sm mb-1 flex items-center gap-2">
-                                <Heart className="w-4 h-4" /> Kết nối & Sẻ chia
-                            </h4>
-                            <p className="text-[11px] opacity-90 leading-relaxed">
-                                Nơi lưu giữ những khoảnh khắc đáng nhớ của đại gia đình LYHU.
-                            </p>
-                        </div>
-                        {/* Decorative Circles */}
-                        <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-white/10 rounded-full blur-xl"></div>
-                        <div className="absolute top-0 right-0 w-12 h-12 bg-white/10 rounded-full blur-lg"></div>
+                    {/* Branding / Banner Widget (Minimalist) */}
+                    <div className="bg-teal-50/50 rounded-xl p-4 border border-teal-100/50">
+                        <h4 className="font-semibold text-sm mb-1 flex items-center gap-2 text-teal-700">
+                            <Heart className="w-4 h-4 text-teal-600" />
+                            Kết nối & Sẻ chia
+                        </h4>
+                        <p className="text-xs text-slate-600 leading-relaxed opacity-80">
+                            Nơi lưu giữ những khoảnh khắc đáng nhớ của đại gia đình LYHU.
+                        </p>
                     </div>
                 </div>
 
