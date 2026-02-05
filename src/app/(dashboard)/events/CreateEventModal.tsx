@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { Plus, Loader2, X, Edit } from "lucide-react";
+import { Plus, Loader2, X, Edit, Upload, Image as ImageIcon, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,36 @@ interface EventFormModalProps {
 export default function EventFormModal({ onSuccess, initialData, eventId, trigger }: EventFormModalProps) {
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const router = useRouter();
+
+    const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+
+        try {
+            setUploading(true);
+            const file = e.target.files[0];
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+            const filePath = `banners/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+                .from('event-images')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data } = supabase.storage
+                .from('event-images')
+                .getPublicUrl(filePath);
+
+            setFormData(prev => ({ ...prev, banner_url: data.publicUrl }));
+        } catch (error: any) {
+            alert('Lỗi upload ảnh: ' + error.message);
+        } finally {
+            setUploading(false);
+        }
+    };
 
     const isEditMode = !!eventId;
 
@@ -245,15 +274,61 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                                 </div>
 
                                 <div className="space-y-2 col-span-2">
-                                    <label className="text-sm font-medium text-slate-700">Ảnh bìa (URL)</label>
-                                    <input
-                                        type="text"
-                                        placeholder="https://..."
-                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 border-slate-300"
-                                        value={formData.banner_url}
-                                        onChange={(e) => setFormData({ ...formData, banner_url: e.target.value })}
-                                    />
-                                    <p className="text-xs text-slate-500">Gợi ý: Dùng link ảnh từ Unsplash hoặc upload lên kho ảnh.</p>
+                                    <label className="text-sm font-medium text-slate-700">Ảnh bìa / Poster</label>
+
+                                    <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 transition-colors hover:border-teal-500 hover:bg-teal-50/30 text-center relative group">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                            onChange={handleBannerUpload}
+                                            disabled={uploading}
+                                        />
+
+                                        {formData.banner_url ? (
+                                            <div className="relative z-20">
+                                                <img
+                                                    src={formData.banner_url}
+                                                    alt="Banner Preview"
+                                                    className="w-full h-auto max-h-[300px] object-contain rounded-lg shadow-sm mx-auto"
+                                                />
+                                                <div className="absolute top-2 right-2 flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation(); // Avoid triggering input
+                                                            setFormData({ ...formData, banner_url: "" });
+                                                        }}
+                                                        className="p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition shadow-sm z-30"
+                                                        title="Xóa ảnh"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors rounded-lg pointer-events-none flex items-center justify-center">
+                                                    {/* Visual cue only */}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="py-8 text-slate-500">
+                                                {uploading ? (
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+                                                        <span>Đang tải lên...</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col items-center gap-2">
+                                                        <div className="p-3 bg-slate-100 rounded-full">
+                                                            <ImageIcon className="w-6 h-6 text-slate-400" />
+                                                        </div>
+                                                        <p className="font-medium">Nhấn để tải ảnh bìa lên</p>
+                                                        <p className="text-xs text-slate-400">PNG, JPG, GIF (Max 5MB)</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="space-y-2 col-span-2">

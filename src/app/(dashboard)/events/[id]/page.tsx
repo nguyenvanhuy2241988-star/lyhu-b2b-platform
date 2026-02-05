@@ -183,11 +183,16 @@ export default function EventDetailPage() {
     return (
         <div className="min-h-screen bg-slate-50/50 pb-20">
             {/* Header / Banner */}
-            <div className="relative h-[300px] w-full bg-slate-900 group">
+            <div className="relative w-full min-h-[300px] bg-slate-900 group">
                 {event.banner_url ? (
-                    <img src={event.banner_url} alt={event.title} className="w-full h-full object-cover opacity-60" />
+                    <img
+                        src={event.banner_url}
+                        alt={event.title}
+                        className="w-full h-auto block mx-auto"
+                        style={{ maxHeight: '85vh', objectFit: 'cover' }}
+                    />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-slate-800 to-slate-900 flex items-center justify-center opacity-80">
+                    <div className="w-full h-[300px] bg-gradient-to-r from-slate-800 to-slate-900 flex items-center justify-center opacity-80">
                         <span className="text-4xl text-white/20 font-bold tracking-widest uppercase">{event.event_type}</span>
                     </div>
                 )}
@@ -195,7 +200,7 @@ export default function EventDetailPage() {
                 <div className="absolute top-6 left-6 z-20 flex items-center gap-3">
                     <button
                         onClick={() => router.push('/events')}
-                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/20 hover:bg-black/30 text-white transition-all text-sm font-medium"
+                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/20 hover:bg-black/30 backdrop-blur-sm text-white transition-all text-sm font-medium border border-white/10"
                     >
                         <ArrowLeft className="w-4 h-4" />
                         Quay lại
@@ -207,7 +212,7 @@ export default function EventDetailPage() {
                             eventId={event.id}
                             onSuccess={() => window.location.reload()}
                             trigger={
-                                <button className="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white text-slate-800 rounded-full transition-colors font-medium text-sm">
+                                <button className="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white text-slate-800 rounded-full transition-colors font-medium text-sm backdrop-blur-sm">
                                     <Edit className="w-4 h-4" />
                                     Chỉnh sửa
                                 </button>
@@ -216,8 +221,8 @@ export default function EventDetailPage() {
                     )}
                 </div>
 
-                <div className="absolute inset-0 flex items-end">
-                    <div className="w-full p-8 text-white relative z-10">
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent pt-32 pb-8 px-6 md:px-10 flex items-end z-10 pointer-events-none">
+                    <div className="w-full text-white relative pointer-events-auto">
                         {/* Status Badge */}
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-sm font-medium mb-4 border border-white/10">
                             {event.status === 'draft' ? (
@@ -233,9 +238,9 @@ export default function EventDetailPage() {
                             )}
                         </div>
 
-                        <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">{event.title}</h1>
+                        <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight drop-shadow-lg">{event.title}</h1>
 
-                        <div className="flex flex-wrap items-center gap-6 text-white/90">
+                        <div className="flex flex-wrap items-center gap-6 text-white/95 font-medium drop-shadow-md">
                             <div className="flex items-center gap-2">
                                 <Calendar className="w-5 h-5" />
                                 <span className="text-lg capitalize">
