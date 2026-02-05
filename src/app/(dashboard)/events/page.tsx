@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import CreateEventModal from "./CreateEventModal";
 import { getCurrentUser } from "@/lib/auth";
 import EventCalendar from "./EventCalendar";
+import { useSearchParams, useRouter } from "next/navigation";
 
 interface Event {
     id: string;
@@ -24,10 +25,27 @@ interface Event {
 }
 
 export default function EventsPage() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const viewParam = searchParams.get('view');
+
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
     const [canCreate, setCanCreate] = useState(false);
-    const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+
+    // Derived state from URL or default
+    const viewMode = viewParam === 'calendar' ? 'calendar' : 'list';
+
+    // Function to change view via URL
+    const setViewMode = (mode: 'list' | 'calendar') => {
+        const newParams = new URLSearchParams(searchParams.toString());
+        if (mode === 'calendar') {
+            newParams.set('view', 'calendar');
+        } else {
+            newParams.delete('view');
+        }
+        router.push(`/events?${newParams.toString()}`);
+    };
 
     useEffect(() => {
         const fetchEvents = async () => {
@@ -78,11 +96,12 @@ export default function EventsPage() {
     }
 
     return (
-        <div className="p-6 max-w-[1600px] mx-auto space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="p-6 h-full overflow-y-auto">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Sự kiện & Văn hóa</h1>
-                    <p className="text-slate-500">Xem và tham gia các hoạt động của công ty</p>
+                    <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                        {viewMode === 'list' ? 'Sự kiện sắp tới' : 'Lịch sự kiện'}
+                    </h2>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
@@ -90,7 +109,7 @@ export default function EventsPage() {
                             onClick={() => setViewMode('list')}
                             className={cn(
                                 "p-2 rounded-md transition-all",
-                                viewMode === 'list' ? "bg-white shadow text-blue-600" : "text-slate-500 hover:text-slate-900"
+                                viewMode === 'list' ? "bg-white shadow text-teal-600" : "text-slate-500 hover:text-slate-900"
                             )}
                             title="Danh sách"
                         >
@@ -100,7 +119,7 @@ export default function EventsPage() {
                             onClick={() => setViewMode('calendar')}
                             className={cn(
                                 "p-2 rounded-md transition-all",
-                                viewMode === 'calendar' ? "bg-white shadow text-blue-600" : "text-slate-500 hover:text-slate-900"
+                                viewMode === 'calendar' ? "bg-white shadow text-teal-600" : "text-slate-500 hover:text-slate-900"
                             )}
                             title="Lịch"
                         >
@@ -115,18 +134,18 @@ export default function EventsPage() {
             </div>
 
             {viewMode === 'list' ? (
-                <>
+                <div className="space-y-8 pb-10">
                     {/* Featured Event / Banner */}
                     {featuredEvent ? (
                         <Link href={`/events/${featuredEvent.id}`}>
-                            <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-xl min-h-[300px] flex items-end cursor-pointer group hover:scale-[1.01] transition-transform duration-300">
+                            <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-lg min-h-[300px] flex items-end cursor-pointer group hover:scale-[1.01] transition-transform duration-300">
                                 {/* Fallback pattern or image */}
                                 <div className="absolute inset-0 bg-black/20 z-0" />
                                 {featuredEvent.banner_url && (
                                     <img
                                         src={featuredEvent.banner_url}
                                         alt={featuredEvent.title}
-                                        className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-50"
+                                        className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60"
                                     />
                                 )}
 
@@ -138,8 +157,8 @@ export default function EventsPage() {
                                         )} />
                                         {featuredEvent.status === 'draft' ? 'Bản nháp' : 'Sắp diễn ra'}
                                     </div>
-                                    <h2 className="text-4xl font-bold mb-2">{featuredEvent.title}</h2>
-                                    <div className="flex items-center gap-6 text-blue-100">
+                                    <h2 className="text-3xl md:text-4xl font-bold mb-2">{featuredEvent.title}</h2>
+                                    <div className="flex items-center gap-6 text-teal-50">
                                         <div className="flex items-center gap-2">
                                             <Calendar className="w-5 h-5" />
                                             <span>{format(new Date(featuredEvent.start_time), "dd/MM/yyyy", { locale: vi })}</span>
@@ -162,7 +181,7 @@ export default function EventsPage() {
                         <div className="p-12 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50">
                             <p className="text-slate-500">Hiện chưa có sự kiện nào sắp tới.</p>
                             {canCreate && (
-                                <p className="text-sm text-blue-600 mt-2">Hãy tạo sự kiện đầu tiên!</p>
+                                <p className="text-sm text-teal-600 mt-2">Hãy tạo sự kiện đầu tiên!</p>
                             )}
                         </div>
                     )}
@@ -172,7 +191,7 @@ export default function EventsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {otherEvents.map((event) => (
                                 <Link key={event.id} href={`/events/${event.id}`}>
-                                    <div className="group hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden border border-slate-200/60 rounded-xl bg-white h-full flex flex-col">
+                                    <div className="group hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden border border-slate-200/60 rounded-xl bg-white h-full flex flex-col hover:border-teal-200">
                                         <div className="h-48 bg-slate-100 relative">
                                             {event.banner_url ? (
                                                 <img src={event.banner_url} alt={event.title} className="w-full h-full object-cover" />
@@ -188,8 +207,8 @@ export default function EventsPage() {
                                             )}
                                         </div>
                                         <div className="p-4 space-y-3 flex-1">
-                                            <div className="flex items-center gap-2 text-xs font-medium text-blue-600">
-                                                <span className="px-2 py-0.5 rounded-full bg-blue-50 border border-blue-100 uppercase tracking-wide text-[10px]">
+                                            <div className="flex items-center gap-2 text-xs font-medium text-teal-600">
+                                                <span className="px-2 py-0.5 rounded-full bg-teal-50 border border-teal-100 uppercase tracking-wide text-[10px]">
                                                     {event.event_type}
                                                 </span>
                                                 <span className="text-slate-300">•</span>
@@ -197,7 +216,7 @@ export default function EventsPage() {
                                                     {format(new Date(event.start_time), "dd/MM/yyyy", { locale: vi })}
                                                 </span>
                                             </div>
-                                            <h3 className="font-semibold text-lg group-hover:text-blue-600 transition-colors line-clamp-2">
+                                            <h3 className="font-semibold text-lg group-hover:text-teal-700 transition-colors line-clamp-2">
                                                 {event.title}
                                             </h3>
                                             <div className="flex items-center text-slate-500 text-sm gap-2">
@@ -210,9 +229,10 @@ export default function EventsPage() {
                             ))}
                         </div>
                     )}
-                </>
+                </div>
             ) : (
                 <div className="opacity-0 animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-forwards opacity-100">
+                    {/* Render Calendar */}
                     <EventCalendar events={events} />
                 </div>
             )}
