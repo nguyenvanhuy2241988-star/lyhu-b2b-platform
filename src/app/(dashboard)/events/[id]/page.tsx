@@ -54,6 +54,7 @@ export default function EventDetailPage() {
     const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [role, setRole] = useState<string | null>(null);
+    const [currentUser, setCurrentUser] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'overview' | 'participants' | 'budget'>('overview');
 
     // Rich Text Editor State
@@ -98,6 +99,35 @@ export default function EventDetailPage() {
 
                 // 3. Fetch specific data based on role
                 const isAdminOrHr = user?.role === 'admin' || user?.role === 'recruiter';
+                setCurrentUser(user);
+
+                // Fetch Participants (Visible to everyone)
+                const { data: partData, error: partError } = await supabase
+                    .from('hr_event_participants')
+                    .select('*')
+                    .eq('event_id', id);
+
+                if (partData && partData.length > 0) {
+                    const userIds = partData.map((p: any) => p.user_id);
+                    const { data: profilesData } = await supabase
+                        .from('profiles')
+                        .select('id, full_name, email, avatar_url')
+                        .in('id', userIds);
+
+                    const profileMap = (profilesData || []).reduce((acc: any, profile: any) => {
+                        acc[profile.id] = profile;
+                        return acc;
+                    }, {} as Record<string, any>);
+
+                    const mergedParticipants = partData.map((p: any) => ({
+                        ...p,
+                        profiles: profileMap[p.user_id] || { full_name: 'Người dùng', email: '' }
+                    }));
+
+                    setParticipants(mergedParticipants as any);
+                } else {
+                    setParticipants([]);
+                }
 
                 if (isAdminOrHr) {
                     // Fetch Budget
@@ -106,37 +136,6 @@ export default function EventDetailPage() {
                         .select('*')
                         .eq('event_id', id);
                     if (budgetData) setBudgetItems(budgetData);
-
-                    // Fetch Participants (Split queries to avoid join error)
-                    const { data: partData, error: partError } = await supabase
-                        .from('hr_event_participants')
-                        .select('*')
-                        .eq('event_id', id);
-
-                    if (partData && partData.length > 0) {
-                        // Manual join for profiles
-                        const userIds = partData.map((p: any) => p.user_id);
-                        const { data: profilesData } = await supabase
-                            .from('profiles')
-                            .select('id, full_name, email, avatar_url')
-                            .in('id', userIds);
-
-                        const profileMap = (profilesData || []).reduce((acc: any, profile: any) => {
-                            acc[profile.id] = profile;
-                            return acc;
-                        }, {} as Record<string, any>);
-
-                        const mergedParticipants = partData.map((p: any) => ({
-                            ...p,
-                            profiles: profileMap[p.user_id] || { full_name: 'Người dùng', email: '' }
-                        }));
-
-                        setParticipants(mergedParticipants as any);
-                    } else {
-                        setParticipants([]);
-                    }
-                } else {
-                    // Normal user logic
                 }
 
             } catch (err: any) {
@@ -164,10 +163,8 @@ export default function EventDetailPage() {
                 }, { onConflict: 'event_id, user_id' });
 
             if (error) throw error;
-            alert(status === 'going' ? "Đã đăng ký tham gia!" : "Đã từ chối tham gia.");
-
-            // Refresh
-            // For now just reload basic logic or optimize
+            // alert(status === 'going' ? "Đã đăng ký tham gia!" : "Đã từ chối tham gia.");
+            window.location.reload();
         } catch (e) {
             console.error(e);
             alert("Có lỗi xảy ra");
@@ -326,30 +323,66 @@ export default function EventDetailPage() {
                                 <section className="pt-6 border-t border-slate-100">
                                     <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
                                         <Users className="w-5 h-5 text-teal-600" />
-                                        Bạn sẽ tham gia chứ?
+                                        Trạng thái tham gia
                                     </h3>
-                                    <div className="flex gap-4">
-                                        <button
-                                            onClick={() => handleJoin('going')}
-                                            className="px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium flex items-center gap-2"
-                                        >
-                                            <CheckCircle className="w-4 h-4" />
-                                            Chắc chắn tham gia
-                                        </button>
-                                        <button
-                                            onClick={() => handleJoin('not_going')}
-                                            className="px-6 py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition font-medium flex items-center gap-2"
-                                        >
-                                            <XCircle className="w-4 h-4" />
-                                            Xin vắng mặt
-                                        </button>
-                                    </div>
+
+                                    {participants.find(p => p.user_id === currentUser?.id)?.status === 'going' ? (
+                                        <div className="flex flex-col gap-3">
+                                            <div className="flex items-center gap-3 bg-green-50 border border-green-200 p-4 rounded-xl text-green-700 font-medium">
+                                                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                                                    <CheckCircle className="w-5 h-5 text-green-600" />
+                                                </div>
+                                                <div>
+                                                    <p>Bạn đã đăng ký tham gia sự kiện này.</p>
+                                                    <p className="text-xs text-green-600/80 font-normal">Chúng tôi rất mong được gặp bạn!</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => handleJoin('not_going')}
+                                                className="text-sm text-slate-500 hover:text-red-600 underline self-start ml-1"
+                                            >
+                                                Hủy đăng ký / Vắng mặt
+                                            </button>
+                                        </div>
+                                    ) : participants.find(p => p.user_id === currentUser?.id)?.status === 'not_going' ? (
+                                        <div className="flex flex-col gap-3">
+                                            <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 p-4 rounded-xl text-slate-600 font-medium">
+                                                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                                                    <XCircle className="w-5 h-5 text-slate-500" />
+                                                </div>
+                                                <p>Bạn đã báo vắng mặt.</p>
+                                            </div>
+                                            <button
+                                                onClick={() => handleJoin('going')}
+                                                className="text-sm text-teal-600 hover:underline self-start ml-1"
+                                            >
+                                                Đổi ý? Đăng ký tham gia lại
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex gap-4">
+                                            <button
+                                                onClick={() => handleJoin('going')}
+                                                className="px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-medium flex items-center gap-2 shadow-lg shadow-blue-200"
+                                            >
+                                                <CheckCircle className="w-4 h-4" />
+                                                Chắc chắn tham gia
+                                            </button>
+                                            <button
+                                                onClick={() => handleJoin('not_going')}
+                                                className="px-6 py-2.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition font-medium flex items-center gap-2"
+                                            >
+                                                <XCircle className="w-4 h-4" />
+                                                Xin vắng mặt
+                                            </button>
+                                        </div>
+                                    )}
                                 </section>
                             )}
                         </div>
                     )}
 
-                    {activeTab === 'participants' && isAdminOrHr && (
+                    {activeTab === 'participants' && (
                         <div className="space-y-4">
                             <h3 className="text-lg font-semibold mb-4">Danh sách đăng ký ({participants.length})</h3>
                             <div className="divide-y">
