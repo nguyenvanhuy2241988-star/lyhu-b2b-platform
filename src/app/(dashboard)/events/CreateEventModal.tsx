@@ -1,15 +1,10 @@
 'use client';
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Calendar as CalendarIcon, Loader2 } from "lucide-react";
+import { Plus, Loader2, X } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 
 interface CreateEventModalProps {
     onSuccess?: () => void;
@@ -23,7 +18,7 @@ export default function CreateEventModal({ onSuccess }: CreateEventModalProps) {
     const [formData, setFormData] = useState({
         title: "",
         description: "",
-        event_type: "other",
+        event_type: "party",
         start_date: "",
         start_time: "09:00",
         end_date: "",
@@ -65,7 +60,7 @@ export default function CreateEventModal({ onSuccess }: CreateEventModalProps) {
             setFormData({
                 title: "",
                 description: "",
-                event_type: "other",
+                event_type: "party",
                 start_date: "",
                 start_time: "09:00",
                 end_date: "",
@@ -91,105 +86,120 @@ export default function CreateEventModal({ onSuccess }: CreateEventModalProps) {
         }
     };
 
-    return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200 shadow-lg">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Tạo sự kiện mới
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>Lên kế hoạch sự kiện mới</DialogTitle>
-                </DialogHeader>
+    if (!open) {
+        return (
+            <button
+                onClick={() => setOpen(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-lg shadow-blue-200 transition-colors"
+            >
+                <Plus className="w-4 h-4" />
+                Tạo sự kiện mới
+            </button>
+        );
+    }
 
-                <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200">
+                <div className="p-6 border-b flex items-center justify-between sticky top-0 bg-white z-10">
+                    <h2 className="text-xl font-bold text-slate-900">Lên kế hoạch sự kiện mới</h2>
+                    <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-slate-600 transition-colors">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2 col-span-2">
-                            <Label>Tên sự kiện <span className="text-red-500">*</span></Label>
-                            <Input
+                            <label className="text-sm font-medium text-slate-700">Tên sự kiện <span className="text-red-500">*</span></label>
+                            <input
                                 required
+                                type="text"
                                 placeholder="Ví dụ: Tiệc Tất Niên 2026"
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 border-slate-300"
                                 value={formData.title}
                                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Loại sự kiện <span className="text-red-500">*</span></Label>
-                            <Select
+                            <label className="text-sm font-medium text-slate-700">Loại sự kiện <span className="text-red-500">*</span></label>
+                            <select
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 border-slate-300 bg-white"
                                 value={formData.event_type}
-                                onValueChange={(val) => setFormData({ ...formData, event_type: val })}
+                                onChange={(e) => setFormData({ ...formData, event_type: e.target.value })}
                             >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="party">Tiệc / Liên hoan</SelectItem>
-                                    <SelectItem value="birthday">Sinh nhật</SelectItem>
-                                    <SelectItem value="teambuilding">Team Building / Du lịch</SelectItem>
-                                    <SelectItem value="meeting">Họp mặt / Đào tạo</SelectItem>
-                                    <SelectItem value="holiday">Ngày lễ</SelectItem>
-                                    <SelectItem value="other">Khác</SelectItem>
-                                </SelectContent>
-                            </Select>
+                                <option value="party">Tiệc / Liên hoan</option>
+                                <option value="birthday">Sinh nhật</option>
+                                <option value="teambuilding">Team Building / Du lịch</option>
+                                <option value="meeting">Họp mặt / Đào tạo</option>
+                                <option value="holiday">Ngày lễ</option>
+                                <option value="other">Khác</option>
+                            </select>
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Địa điểm <span className="text-red-500">*</span></Label>
-                            <Input
+                            <label className="text-sm font-medium text-slate-700">Địa điểm <span className="text-red-500">*</span></label>
+                            <input
                                 required
+                                type="text"
                                 placeholder="Tại văn phòng, Nhà hàng ABC..."
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 border-slate-300"
                                 value={formData.location}
                                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Ngày bắt đầu <span className="text-red-500">*</span></Label>
-                            <Input
+                            <label className="text-sm font-medium text-slate-700">Ngày bắt đầu <span className="text-red-500">*</span></label>
+                            <input
                                 type="date"
                                 required
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 border-slate-300"
                                 value={formData.start_date}
                                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Giờ bắt đầu</Label>
-                            <Input
+                            <label className="text-sm font-medium text-slate-700">Giờ bắt đầu</label>
+                            <input
                                 type="time"
                                 required
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 border-slate-300"
                                 value={formData.start_time}
                                 onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Ngày kết thúc</Label>
-                            <Input
+                            <label className="text-sm font-medium text-slate-700">Ngày kết thúc</label>
+                            <input
                                 type="date"
+                                placeholder="Bỏ trống nếu trong ngày"
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 border-slate-300"
                                 value={formData.end_date}
                                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                                placeholder="Bỏ trống nếu trong ngày"
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <Label>Giờ kết thúc</Label>
-                            <Input
+                            <label className="text-sm font-medium text-slate-700">Giờ kết thúc</label>
+                            <input
                                 type="time"
                                 required
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 border-slate-300"
                                 value={formData.end_time}
                                 onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
                             />
                         </div>
 
                         <div className="space-y-2 col-span-2">
-                            <Label>Ảnh bìa (URL)</Label>
-                            <Input
+                            <label className="text-sm font-medium text-slate-700">Ảnh bìa (URL)</label>
+                            <input
+                                type="text"
                                 placeholder="https://..."
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 border-slate-300"
                                 value={formData.banner_url}
                                 onChange={(e) => setFormData({ ...formData, banner_url: e.target.value })}
                             />
@@ -197,35 +207,46 @@ export default function CreateEventModal({ onSuccess }: CreateEventModalProps) {
                         </div>
 
                         <div className="space-y-2 col-span-2">
-                            <Label>Ngân sách dự kiến (VNĐ)</Label>
-                            <Input
+                            <label className="text-sm font-medium text-slate-700">Ngân sách dự kiến (VNĐ)</label>
+                            <input
                                 type="number"
                                 min="0"
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 border-slate-300"
                                 value={formData.budget_total}
                                 onChange={(e) => setFormData({ ...formData, budget_total: Number(e.target.value) })}
                             />
                         </div>
 
                         <div className="space-y-2 col-span-2">
-                            <Label>Mô tả chi tiết</Label>
-                            <Textarea
+                            <label className="text-sm font-medium text-slate-700">Mô tả chi tiết</label>
+                            <textarea
                                 placeholder="Nội dung chương trình, lưu ý..."
-                                className="min-h-[100px]"
+                                className="w-full min-h-[100px] px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 border-slate-300"
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                             />
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-3 pt-4">
-                        <Button type="button" variant="outline" onClick={() => setOpen(false)}>Hủy</Button>
-                        <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white" disabled={loading}>
-                            {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    <div className="flex justify-end gap-3 pt-4 border-t sticky bottom-0 bg-white pb-2">
+                        <button
+                            type="button"
+                            onClick={() => setOpen(false)}
+                            className="px-4 py-2 border rounded-lg hover:bg-slate-50 font-medium text-slate-700 transition-colors"
+                        >
+                            Hủy
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-lg shadow-blue-200 transition-colors disabled:opacity-50"
+                        >
+                            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                             Tạo kế hoạch
-                        </Button>
+                        </button>
                     </div>
                 </form>
-            </DialogContent>
-        </Dialog>
+            </div>
+        </div>
     );
 }
