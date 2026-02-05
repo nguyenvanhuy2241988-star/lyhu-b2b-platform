@@ -63,6 +63,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
         title: "",
         description: "",
         event_type: "party",
+        status: "draft",
         start_date: "",
         start_time: "09:00",
         end_date: "",
@@ -80,6 +81,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                 title: initialData.title || "",
                 description: initialData.description || "",
                 event_type: initialData.event_type || "party",
+                status: initialData.status || "draft",
                 start_date: start.date,
                 start_time: start.time,
                 end_date: end.date,
@@ -94,6 +96,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                 title: "",
                 description: "",
                 event_type: "party",
+                status: "draft",
                 start_date: "",
                 start_time: "09:00",
                 end_date: "",
@@ -118,6 +121,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                 title: formData.title,
                 description: formData.description,
                 event_type: formData.event_type,
+                status: formData.status,
                 start_time: startDateTime.toISOString(),
                 end_time: endDateTime.toISOString(),
                 location: formData.location,
@@ -125,9 +129,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                 budget_total: formData.budget_total,
             };
 
-            if (!isEditMode) {
-                payload.status = 'draft'; // Default for new
-            }
+            // Removed manual status override
 
             let result;
 
@@ -200,6 +202,19 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                                         value={formData.title}
                                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                     />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Trạng thái</label>
+                                    <select
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 border-slate-300 bg-white"
+                                        value={formData.status}
+                                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                    >
+                                        <option value="draft">Bản nháp (Chỉ Admin)</option>
+                                        <option value="published">Công khai</option>
+                                        <option value="cancelled">Đã hủy</option>
+                                    </select>
                                 </div>
 
                                 <div className="space-y-2">
