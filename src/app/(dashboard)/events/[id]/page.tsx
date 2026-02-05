@@ -6,9 +6,10 @@ import { supabase } from "@/lib/supabaseClient";
 import { getCurrentUser } from "@/lib/auth";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { Calendar, MapPin, Clock, ArrowLeft, Users, DollarSign, CheckCircle, XCircle } from "lucide-react";
+import { Calendar, MapPin, Clock, ArrowLeft, Users, DollarSign, CheckCircle, XCircle, Edit, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import EventFormModal from "../CreateEventModal";
 
 interface EventDetail {
     id: string;
@@ -167,11 +168,28 @@ export default function EventDetailPage() {
                     </div>
                 )}
 
-                <div className="absolute top-6 left-6 z-20">
-                    <Link href="/events" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-colors">
+                <div className="absolute top-6 left-6 z-20 flex items-center gap-3">
+                    <button
+                        onClick={() => router.push('/events')}
+                        className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 backdrop-blur-md text-white hover:bg-white/20 transition-colors"
+                    >
                         <ArrowLeft className="w-4 h-4" />
                         Quay lại
-                    </Link>
+                    </button>
+
+                    {isAdminOrHr && (
+                        <EventFormModal
+                            initialData={event}
+                            eventId={event.id}
+                            onSuccess={() => window.location.reload()}
+                            trigger={
+                                <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors shadow-sm">
+                                    <Edit className="w-4 h-4" />
+                                    Chỉnh sửa
+                                </button>
+                            }
+                        />
+                    )}
                 </div>
 
                 <div className="absolute inset-0 flex items-end">
