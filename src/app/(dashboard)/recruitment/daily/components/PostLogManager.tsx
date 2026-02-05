@@ -10,9 +10,10 @@ interface PostLogManagerProps {
     userId: string;
     date: string;
     onUpdate?: () => void; // Callback when logs change (to update counts)
+    readOnly?: boolean;
 }
 
-export default function PostLogManager({ userId, date, onUpdate }: PostLogManagerProps) {
+export default function PostLogManager({ userId, date, onUpdate, readOnly = false }: PostLogManagerProps) {
     const [logs, setLogs] = useState<PostLog[]>([]);
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -176,15 +177,17 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
                     <span className="w-2 h-6 bg-teal-600 rounded-full"></span>
                     Minh chứng ({logs.length})
                 </h2>
-                <button
-                    onClick={() => {
-                        handleCancel(); // Reset any edit state
-                        setShowForm(!showForm);
-                    }}
-                    className="text-sm px-3 py-1.5 bg-teal-50 text-teal-600 rounded-lg hover:bg-teal-100 font-medium flex items-center gap-1 transition-colors"
-                >
-                    <Plus className="w-4 h-4" /> Thêm mới
-                </button>
+                {!readOnly && (
+                    <button
+                        onClick={() => {
+                            handleCancel(); // Reset any edit state
+                            setShowForm(!showForm);
+                        }}
+                        className="text-sm px-3 py-1.5 bg-teal-50 text-teal-600 rounded-lg hover:bg-teal-100 font-medium flex items-center gap-1 transition-colors"
+                    >
+                        <Plus className="w-4 h-4" /> Thêm mới
+                    </button>
+                )}
             </div>
 
             {/* List Existing Logs */}
@@ -252,29 +255,31 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
                             </div>
 
                             {/* Actions */}
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all self-center">
-                                <button
-                                    onClick={() => handleEdit(log)}
-                                    className="p-2 text-slate-400 hover:text-blue-600"
-                                    title="Sửa"
-                                >
-                                    <Pencil className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(log.id)}
-                                    className="p-2 text-slate-400 hover:text-red-600"
-                                    title="Xóa"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
+                            {!readOnly && (
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all self-center">
+                                    <button
+                                        onClick={() => handleEdit(log)}
+                                        className="p-2 text-slate-400 hover:text-blue-600"
+                                        title="Sửa"
+                                    >
+                                        <Pencil className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(log.id)}
+                                        className="p-2 text-slate-400 hover:text-red-600"
+                                        title="Xóa"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ))
                 )}
             </div>
 
             {/* Add/Edit Form */}
-            {showForm && (
+            {showForm && !readOnly && (
                 <div className="bg-slate-50 p-4 rounded-lg border border-teal-100 animate-in fade-in slide-in-from-top-2">
                     <h3 className="text-sm font-bold text-slate-800 mb-3">
                         {editingLogId ? "Chỉnh sửa minh chứng" : "Thêm minh chứng mới"}

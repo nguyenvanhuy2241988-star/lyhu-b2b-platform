@@ -204,6 +204,25 @@ export const searchGroups = async (keyword: string) => {
     return data as RecruitmentGroup[];
 };
 
+export const getGroups = async () => {
+    const { data, error } = await supabase
+        .from('recruitment_groups')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+    if (error) throw error;
+    return data as RecruitmentGroup[];
+};
+
+export const deleteGroup = async (id: string) => {
+    const { error } = await supabase
+        .from('recruitment_groups')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+};
+
 export const upsertDailyReport = async (report: Partial<DailyActivity>) => {
     // Only allow specific fields to be updated
     const { id, created_at, ...updateData } = report;

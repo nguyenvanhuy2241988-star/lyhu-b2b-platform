@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from "date-fns";
-import { Calendar, Filter, Megaphone, Share2, Users, AlertTriangle, MessageSquare, CheckCircle2 } from "lucide-react";
+import { Calendar, Filter, Megaphone, Share2, Users, AlertTriangle, MessageSquare, CheckCircle2, Eye } from "lucide-react";
 import { getAllDailyReports } from "@/lib/recruitmentStore";
 import { useAuth } from "@/components/auth/AuthProvider";
+import ReportDetailModal from "../daily/components/ReportDetailModal";
 
 type ReportWithProfile = {
     id: string;
@@ -18,6 +19,9 @@ type ReportWithProfile = {
     threads_comments: number;
     issues: string;
     request_support: string;
+    other_tasks?: string;
+    no_post_reason?: string;
+    plan_next_day?: string;
     profile: {
         full_name: string;
         avatar_url: string;
@@ -31,6 +35,7 @@ export default function ReportsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [filterType, setFilterType] = useState<'today' | 'yesterday' | 'week' | 'month' | 'custom'>('today');
     const [dateRange, setDateRange] = useState({ start: new Date(), end: new Date() });
+    const [selectedReport, setSelectedReport] = useState<ReportWithProfile | null>(null);
 
     useEffect(() => {
         if (filterType !== 'custom') {
@@ -289,6 +294,17 @@ export default function ReportsPage() {
                                                     </div>
                                                 )}
                                             </div>
+
+                                            {/* Show Details Button */}
+                                            <div className="flex items-center">
+                                                <button
+                                                    onClick={() => setSelectedReport(report)}
+                                                    className="p-3 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-full transition-colors"
+                                                    title="Xem chi tiết"
+                                                >
+                                                    <Eye className="w-5 h-5" />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -297,6 +313,12 @@ export default function ReportsPage() {
                     ))
                 )}
             </div>
+
+            <ReportDetailModal
+                isOpen={!!selectedReport}
+                onClose={() => setSelectedReport(null)}
+                report={selectedReport}
+            />
         </div>
     );
 }
