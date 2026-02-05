@@ -263,26 +263,27 @@ export default function EventDetailPage() {
                 {/* Main Content */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Tabs Navigation */}
-                    {isAdminOrHr && (
-                        <div className="flex border-b border-slate-200">
-                            <button
-                                onClick={() => setActiveTab('overview')}
-                                className={cn(
-                                    "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
-                                    activeTab === 'overview' ? "border-teal-600 text-teal-600" : "border-transparent text-slate-500 hover:text-slate-700"
-                                )}
-                            >
-                                Tổng quan
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('participants')}
-                                className={cn(
-                                    "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
-                                    activeTab === 'participants' ? "border-teal-600 text-teal-600" : "border-transparent text-slate-500 hover:text-slate-700"
-                                )}
-                            >
-                                Người tham gia ({participants.length})
-                            </button>
+                    {/* Tabs Navigation */}
+                    <div className="flex border-b border-slate-200">
+                        <button
+                            onClick={() => setActiveTab('overview')}
+                            className={cn(
+                                "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
+                                activeTab === 'overview' ? "border-teal-600 text-teal-600" : "border-transparent text-slate-500 hover:text-slate-700"
+                            )}
+                        >
+                            Tổng quan
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('participants')}
+                            className={cn(
+                                "px-6 py-3 text-sm font-medium border-b-2 transition-colors",
+                                activeTab === 'participants' ? "border-teal-600 text-teal-600" : "border-transparent text-slate-500 hover:text-slate-700"
+                            )}
+                        >
+                            Người tham gia ({participants.length})
+                        </button>
+                        {isAdminOrHr && (
                             <button
                                 onClick={() => setActiveTab('budget')}
                                 className={cn(
@@ -292,8 +293,8 @@ export default function EventDetailPage() {
                             >
                                 Ngân sách
                             </button>
-                        </div>
-                    )}
+                        )}
+                    </div>
 
                     {activeTab === 'overview' && (
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 space-y-8">
