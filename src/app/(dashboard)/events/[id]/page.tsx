@@ -82,20 +82,36 @@ export default function EventDetailPage() {
                         .eq('event_id', id);
                     if (budgetData) setBudgetItems(budgetData);
 
-                    // Fetch Participants
-                    const { data: partData } = await supabase
+                    // Fetch Participants (Split queries to avoid join error)
+                    const { data: partData, error: partError } = await supabase
                         .from('hr_event_participants')
-                        .select(`
-                            *,
-                            profiles:user_id ( full_name, email )
-                        `)
+                        .select('*')
                         .eq('event_id', id);
-                    // Note: TS might complain about profiles join structure, will handle loosely
-                    if (partData) setParticipants(partData as any);
+
+                    if (partData && partData.length > 0) {
+                        // Manual join for profiles
+                        const userIds = partData.map(p => p.user_id);
+                        const { data: profilesData } = await supabase
+                            .from('profiles')
+                            .select('id, full_name, email, avatar_url')
+                            .in('id', userIds);
+
+                        const profileMap = (profilesData || []).reduce((acc, profile) => {
+                            acc[profile.id] = profile;
+                            return acc;
+                        }, {} as Record<string, any>);
+
+                        const mergedParticipants = partData.map(p => ({
+                            ...p,
+                            profiles: profileMap[p.user_id] || { full_name: 'Người dùng', email: '' }
+                        }));
+
+                        setParticipants(mergedParticipants as any);
+                    } else {
+                        setParticipants([]);
+                    }
                 } else {
-                    // For normal user, maybe just check if they are participating?
-                    // Currently RLS allows viewing participants for all, so we COULD fetch list for everyone
-                    // But let's stick to plan: Simple view for normal users.
+                    // Normal user logic
                 }
 
             } catch (err: any) {
