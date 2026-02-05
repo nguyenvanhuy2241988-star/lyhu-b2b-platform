@@ -9,6 +9,7 @@ import { vi } from "date-fns/locale";
 import { Calendar, MapPin, Clock, ArrowLeft, Users, DollarSign, CheckCircle, XCircle, Edit, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import RichTextEditor from "@/components/ui/RichTextEditor";
 import EventFormModal from "../CreateEventModal";
 
 interface EventDetail {
@@ -55,6 +56,28 @@ export default function EventDetailPage() {
     const [role, setRole] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<'overview' | 'participants' | 'budget'>('overview');
 
+    // Rich Text Editor State
+    const [description, setDescription] = useState('');
+    const [saving, setSaving] = useState(false);
+
+    const saveDescription = async () => {
+        try {
+            setSaving(true);
+            const { error } = await supabase
+                .from('hr_events')
+                .update({ description })
+                .eq('id', id);
+
+            if (error) throw error;
+            // alert('Đã lưu nội dung!'); 
+        } catch (err) {
+            console.error(err);
+            alert('Lỗi khi lưu nội dung');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     useEffect(() => {
         const init = async () => {
             try {
@@ -71,6 +94,7 @@ export default function EventDetailPage() {
 
                 if (eventError) throw eventError;
                 setEvent(eventData);
+                setDescription(eventData.description || '');
 
                 // 3. Fetch specific data based on role
                 const isAdminOrHr = user?.role === 'admin' || user?.role === 'recruiter';
@@ -272,13 +296,24 @@ export default function EventDetailPage() {
                     {activeTab === 'overview' && (
                         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 space-y-8">
                             <section>
-                                <h3 className="text-lg font-bold text-slate-900 mb-4">Chi tiết sự kiện</h3>
-                                <div className="prose prose-slate max-w-none text-slate-600">
-                                    {event.description ? (
-                                        <p className="whitespace-pre-line">{event.description}</p>
-                                    ) : (
-                                        <p className="italic text-slate-400">Chưa có mô tả chi tiết.</p>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-bold text-slate-900">Chi tiết sự kiện</h3>
+                                    {isAdminOrHr && (
+                                        <button
+                                            onClick={saveDescription}
+                                            disabled={saving}
+                                            className="text-sm px-3 py-1.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition disabled:opacity-50"
+                                        >
+                                            {saving ? 'Đang lưu...' : 'Lưu nội dung'}
+                                        </button>
                                     )}
+                                </div>
+                                <div className="min-h-[200px]">
+                                    <RichTextEditor
+                                        content={description}
+                                        editable={isAdminOrHr}
+                                        onChange={setDescription}
+                                    />
                                 </div>
                             </section>
 
