@@ -131,9 +131,8 @@ export default function CreateEventModal({ onSuccess }: CreateEventModalProps) {
                             >
                                 <option value="party">Tiệc / Liên hoan</option>
                                 <option value="birthday">Sinh nhật</option>
-                                <option value="teambuilding">Team Building / Du lịch</option>
+                                <option value="trip">Team Building / Du lịch</option>
                                 <option value="meeting">Họp mặt / Đào tạo</option>
-                                <option value="holiday">Ngày lễ</option>
                                 <option value="other">Khác</option>
                             </select>
                         </div>
