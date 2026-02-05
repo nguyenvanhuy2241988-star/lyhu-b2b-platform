@@ -14,12 +14,35 @@ CREATE TABLE IF NOT EXISTS public.recruitment_groups (
 -- Enable RLS for recruitment_groups
 ALTER TABLE public.recruitment_groups ENABLE ROW LEVEL SECURITY;
 
--- Policy: Authenticated users can view and insert/update groups (Shared knowledge base)
-CREATE POLICY "Authenticated users can view groups" ON public.recruitment_groups
-    FOR SELECT TO authenticated USING (true);
+-- Policy: Only HR and Admin can view and manage groups
+DROP POLICY IF EXISTS "Authenticated users can view groups" ON public.recruitment_groups;
+CREATE POLICY "HR and Admin can view groups" ON public.recruitment_groups
+    FOR SELECT TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.profiles
+            WHERE profiles.id = auth.uid()
+            AND profiles.role IN ('admin', 'recruiter', 'hr')
+        )
+    );
 
-CREATE POLICY "Authenticated users can insert/update groups" ON public.recruitment_groups
-    FOR ALL TO authenticated USING (true); -- Allow shared editing for now
+DROP POLICY IF EXISTS "Authenticated users can insert/update groups" ON public.recruitment_groups;
+CREATE POLICY "HR and Admin can insert/update groups" ON public.recruitment_groups
+    FOR ALL TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM public.profiles
+            WHERE profiles.id = auth.uid()
+            AND profiles.role IN ('admin', 'recruiter', 'hr')
+        )
+    )
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM public.profiles
+            WHERE profiles.id = auth.uid()
+            AND profiles.role IN ('admin', 'recruiter', 'hr')
+        )
+    );
 
 -- Update post_logs to support Comments and Group Notes
 ALTER TABLE public.recruitment_post_logs
