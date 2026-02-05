@@ -1,4 +1,4 @@
-console.log("%c LYHU ZALO SYNC STARTED V6 ", "background: #222; color: #00ff00; font-size: 20px");
+console.log("%c LYHU ZALO SYNC STARTED V17 ", "background: #222; color: #ff00ff; font-size: 20px");
 
 const SYNC_API_URL = "https://lyhu-b2b-platform.vercel.app/api/zalo/sync";
 const CONTACTS_API_URL = "https://lyhu-b2b-platform.vercel.app/api/zalo/contacts";
@@ -174,74 +174,58 @@ function sleep(ms) {
 }
 
 
-// ========== SIDEBAR SCRAPING ==========
+// ========== SIDEBAR SCRAPING V17 (Refined Geometry) ==========
 function scanSidebar() {
     try {
-        console.log("LYHU Sync: Scanning Sidebar for Contacts...");
+        console.log("LYHU Sync: Scanning Sidebar (V17 Geometry)...");
 
-        // Zalo sidebar conversation items are typically in the left panel
-        // We look for conversation cards/rows
-        const sidebarItems = document.querySelectorAll(
-            '.conv-item, ' +                     // Common Zalo class pattern
-            '.conversation-item, ' +             // Alternative pattern
-            '[data-id^="conversation"], ' +      // Data attribute pattern
-            '.friend-item, ' +                   // Friend/contact items
-            'div[role="listitem"], ' +           // A11y role pattern
-            '.truncate-2-line'                   // Zalo truncate pattern for preview
-        );
-
-        // Fallback: Scan for Avatar + Name combinations in left panel
-        // Left panel is usually < 400px from left edge
-        const allContainers = document.querySelectorAll('div');
+        const allDivs = document.body.querySelectorAll('div');
         const potentialContacts = [];
+        let rawCandidates = 0;
 
-        for (const container of allContainers) {
-            const rect = container.getBoundingClientRect();
+        for (const div of allDivs) {
+            const rect = div.getBoundingClientRect();
 
-            // Must be in the left sidebar zone (< 400px from left, visible)
-            if (rect.left < 400 && rect.width > 100 && rect.width < 400 && rect.height > 40 && rect.height < 100) {
+            // STRICT SIDEBAR ZONE:
+            // V17 Update: Adjusted Left < 150 (was < 50) to account for Nav Bar width (~64px)
+            // Width 200px - 350px
+            if (rect.left < 150 && rect.width > 200 && rect.width < 350 && rect.height > 50 && rect.height < 120) {
+                rawCandidates++;
 
-                // Must contain an image (avatar) AND text
-                const img = container.querySelector('img');
-                const textContent = container.innerText?.trim();
+                const text = div.innerText?.trim();
+                const img = div.querySelector('img');
 
-                if (img && textContent && textContent.length > 1 && textContent.length < 200) {
-                    // Check if this looks like a conversation preview
-                    // Usually has a name (larger) and a preview (smaller)
+                if (text && text.length > 2 && text.length < 100 && img) {
+                    // Clean up name
+                    const lines = text.split('\n');
+                    const name = lines[0].trim();
 
-                    // Avoid header/navigation items
-                    if (textContent.includes("Tìm kiếm") || textContent.includes("Zalo")) continue;
+                    // Filter junk
+                    if (name.includes("Tìm kiếm") || name.includes("Phân loại") || name.includes("Zalo")) continue;
+                    if (name.match(/^\d+$/)) continue; // Skip numbers
 
-                    // Skip if already captured this element
-                    if (container.dataset.lyhuContactSynced === "true") continue;
+                    // Avoid duplicates
+                    if (potentialContacts.some(c => c.name === name)) continue;
 
-                    // Extract name and preview
-                    // Usually the first line is the name, rest is preview
-                    const lines = textContent.split('\n').filter(l => l.trim().length > 0);
+                    console.log(`LYHU Sync Debug: Found Sidebar Contact -> ${name}`);
 
-                    if (lines.length >= 1) {
-                        const name = lines[0].trim();
-                        const lastMessage = lines.length > 1 ? lines[1].trim() : "";
+                    const lastMessage = lines.length > 1 ? lines[1].trim().substring(0, 100) : "";
 
-                        // Skip obvious non-contact lines
-                        if (name.length < 2 || name.includes("Online") || name.includes("phút") || name.includes("giờ")) continue;
+                    potentialContacts.push({
+                        name: name,
+                        avatar: img.src,
+                        lastMessage: lastMessage,
+                        lastSeen: new Date().toISOString()
+                    });
 
-                        potentialContacts.push({
-                            name: name,
-                            avatar: img.src || "",
-                            lastMessage: lastMessage.substring(0, 100),
-                            lastSeen: new Date().toISOString()
-                        });
-
-                        container.dataset.lyhuContactSynced = "true";
-                    }
+                    div.dataset.lyhuContactSynced = "true";
                 }
             }
         }
 
-        if (potentialContacts.length > 0) {
-            console.log(`LYHU Sync: Found ${potentialContacts.length} contacts in sidebar.`);
+        console.log(`LYHU Sync: Geometry Scan found ${rawCandidates} raw elements, ${potentialContacts.length} valid contacts.`);
 
+        if (potentialContacts.length > 0) {
             // Send to backend
             fetch(CONTACTS_API_URL, {
                 method: 'POST',
@@ -252,14 +236,8 @@ function scanSidebar() {
                 })
             })
                 .then(res => res.json())
-                .then(data => {
-                    console.log("LYHU Sync: Contacts Sync Response:", data);
-                })
-                .catch(err => {
-                    console.log("LYHU Sync: Contacts Sync Error:", err);
-                });
-        } else {
-            console.log("LYHU Sync: No new contacts found in sidebar.");
+                .then(data => console.log("LYHU Sync: Contacts Sent. Response:", data))
+                .catch(err => console.error("LYHU Sync: Contacts Send Error:", err));
         }
 
     } catch (e) {
@@ -270,37 +248,21 @@ function scanSidebar() {
 
 function getActiveConversationInfo() {
     try {
-        // Strategy V6: GEOMETRIC ANCHOR (The Sniper)
-        // We focus ONLY on the top 150px of the screen (Where the Header lives)
-        // We look for the largest text element in that zone.
-
-        console.log("LYHU Sync: Scanning Header Zone (Top 150px)...");
-
-        // 1. Get all potential Name candidates in the Top Zone
         // Candidates: h4, div, span, specific Zalo classes
         const candidates = document.querySelectorAll('header div, header span, header h4, .header-title, .title, .font-600');
-
         let bestCandidate = null;
         let maxScore = 0;
 
         for (let el of candidates) {
             const rect = el.getBoundingClientRect();
-
             // FILTER: Must be in Top Left/Center Zone
-            // Top < 150px (Header height is usually 64px)
-            // Left < 70% width (Avoid right sidebar controls)
             if (rect.top >= 0 && rect.bottom < 150 && rect.left < window.innerWidth * 0.7) {
-
                 const text = el.innerText ? el.innerText.trim() : "";
-
                 // FILTER: Valid Name Quality
                 if (text.length > 0 && text.length < 50 && !text.includes("Truy cập") && !text.includes("Online")) {
-
-                    // SCORE: Formula = Font Size * position weight
-                    // We prefer larger text that is closer to the left
+                    // SCORE: Font Size
                     const fontSize = parseFloat(window.getComputedStyle(el).fontSize);
                     const score = fontSize;
-
                     if (score > maxScore) {
                         maxScore = score;
                         bestCandidate = { name: text, el: el };
@@ -310,105 +272,126 @@ function getActiveConversationInfo() {
         }
 
         if (bestCandidate) {
-            console.log(`LYHU Sync: Found Header Name (Geo-Scan): "${bestCandidate.name}"`);
-
-            // Try to find avatar near this name (in the same header block)
+            // Try to find avatar near this name
             let avatarSrc = "";
-            // Look for img in the same header container
-            const headerContainer = bestCandidate.el.closest('header, .header-wrapper') || document.body; // Fallback to body scope if strict parent fails, but constrained by rect later
-
+            const headerContainer = bestCandidate.el.closest('header, .header-wrapper') || document.body;
             if (headerContainer) {
                 const imgs = headerContainer.querySelectorAll('img');
                 for (let img of imgs) {
                     const r = img.getBoundingClientRect();
-                    // Avatar must be close to the name and in the top zone
                     if (r.bottom < 150 && Math.abs(r.left - bestCandidate.el.getBoundingClientRect().left) < 300) {
                         if (img.width > 20 && img.height > 20) {
                             avatarSrc = img.src;
-                            break; // Take first valid image
+                            break;
                         }
                     }
                 }
             }
-
             return { name: bestCandidate.name, avatar: avatarSrc };
         }
-
-        // Fallback: Check Right Sidebar if Header failed
-        const infoPanel = document.querySelector('[data-id="info_panel"], aside');
-        if (infoPanel) {
-            const nameEl = infoPanel.querySelector('.font-600.text-15, h4');
-            if (nameEl) return { name: nameEl.innerText.trim(), avatar: "" };
-        }
-
     } catch (e) {
         console.log("Error getting header info:", e);
     }
-
-    console.log("LYHU Sync: FAILED to find name. Keeping 'Unknown'.");
     return { name: "Unknown", avatar: "" };
 }
 
 function scanAndSync() {
+    // 1. Check for "Welcome" Screen
+    const welcomeText = document.body.innerText;
+    if (welcomeText.includes("Chào mừng đến với Zalo PC") || welcomeText.includes("Khám phá những tiện ích")) {
+        return;
+    }
+
     const partnerInfo = getActiveConversationInfo();
 
-    // Track current conversation - reset synced flags when switching chats
+    // 2. Safety Check: Unknown Partner
+    if (!partnerInfo || partnerInfo.name === "Unknown") {
+        return;
+    }
+
     if (window.lastPartnerName && window.lastPartnerName !== partnerInfo.name) {
-        console.log(`LYHU Sync: Conversation changed from "${window.lastPartnerName}" to "${partnerInfo.name}". Resetting sync flags.`);
+        console.log(`LYHU Sync: Conversation changed to "${partnerInfo.name}". Resetting flags.`);
         document.querySelectorAll('[data-lyhu-synced="true"]').forEach(el => {
             el.dataset.lyhuSynced = "false";
         });
     }
     window.lastPartnerName = partnerInfo.name;
 
-    // Standard Selectors (Updated with common Zalo patterns)
-    // trying data-id which is very common
-    const elements = document.querySelectorAll('.card--text, .card-text, .bubble-content, div[id^="msg-"], div[id^="before-msg-"], div[data-id], .z-message');
+    // ========== V12: ROBUST GLOBAL SEARCH ==========
+    const elements = document.querySelectorAll(
+        'span.text, ' +
+        'div.text, ' +
+        'div.card--text, ' +
+        'div.bubble-content, ' +
+        'div[class*="message"] span, ' +
+        'div[class*="content"] span, ' +
+        '[data-id] span'
+    );
 
-    // Filter elements that are likely messages (must have text)
+    // Filter elements
     const validElements = Array.from(elements).filter(el => {
-        // Must have some text
-        if (!el.innerText || el.innerText.trim().length === 0) return false;
-        // Must not be the whole page or huge container
-        if (el.tagName === 'DIV' && el.offsetHeight > 500) return false;
-        // Check for message-like attributes if using generic selector
-        if (el.hasAttribute('data-id') && !el.className.includes('msg')) {
-            // Zalo data-id for messages usually looks like "local_..." or "msg_..." or long number
-            const did = el.getAttribute('data-id');
-            if (did.length < 5) return false;
+        const text = el.innerText?.trim();
+        if (!text || text.length === 0) return false;
+        if (text.length > 1000) return false;
+
+        const rect = el.getBoundingClientRect();
+
+        // 1. LEFT SIDEBAR FILTER (Strict)
+        if (rect.left < 310) return false;
+
+        // 2. RIGHT SIDEBAR FILTER (Info Panel - V17 Expanded)
+        // Expanded to 400px to avoid leakage
+        if (rect.left > window.innerWidth - 400) return false;
+
+        // 3. CONTENT FILTER (V17 Aggressive Blacklist)
+        const contentBlacklist = [
+            "Ảnh/Video", "File", "Link", "Thiết lập bảo mật", "Danh sách nhắc hẹn",
+            "Tin nhắn tự xóa", "Ẩn trò chuyện", "Báo xấu", "Quản lý nhóm",
+            "Xem thành viên", "Bảng tin nhóm", "Ảnh", "Video", "Kho media",
+            "Tắt thông báo", "Ghim hội thoại", "Tạo nhóm trò chuyện",
+            "Thông tin hội thoại", "Xem tất cả", "nhóm chung", "của bạn"
+        ];
+
+        // Exact match check
+        if (contentBlacklist.some(s => text === s)) return false;
+
+        // Partial match for aggressive junk
+        if (text.includes("nhóm chung") || text.includes("Xem tất cả")) return false;
+
+        // Skip quote replies
+        if (el.closest('.quote-banner') || el.closest('.quote-view') || el.closest('.quote-content')) return false;
+
+        // Skip sidebar preview patterns
+        const lines = text.split('\n').filter(l => l.trim());
+        if (lines.length >= 2 && lines.length <= 5) {
+            if (rect.left < 400 && lines.some(l => l.match(/^\d+\s*(phút|giờ|ngày)/))) return false;
         }
+
         return true;
     });
-
-    console.log(`LYHU Sync Debug: Found ${validElements.length} potential message candidates.`);
 
     if (validElements.length === 0) return;
 
     const messages = [];
-    let skippedCount = 0;
 
     validElements.forEach(el => {
         try {
-            // Skip already synced elements
-            if (el.dataset.lyhuSynced === "true") {
-                skippedCount++;
-                return;
-            }
+            if (el.dataset.lyhuSynced === "true") return;
 
             let content = el.innerText;
-            // cleanup if needed
-
             if (!content || content.trim().length < 1) return;
 
-            const isMe = el.classList.contains('me') || el.closest('.me, .card-me') !== null;
+            const cardElement = el.closest('.card');
+            const isMe = el.classList.contains('me') ||
+                (cardElement && cardElement.classList.contains('me')) ||
+                el.closest('.k-message-sent') !== null ||
+                el.closest('.me') !== null;
+
             let originalId = el.getAttribute('id') || el.getAttribute('data-id');
             const id = originalId ? `zalo_${originalId}` : "msg_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
 
-            // Only sync if it looks like a real message (heuristics)
-            // 1. Not "Today", "Yesterday" labels
             if (content.length < 20 && (content.includes("Hôm nay") || content.includes("Hôm qua"))) return;
 
-            // Robust Sender Name
             let senderId = isMe ? "me" : partnerInfo.name;
             let senderName = isMe ? "Nhân viên" : partnerInfo.name;
 
@@ -430,15 +413,8 @@ function scanAndSync() {
         }
     });
 
-    // Debug: Show skipped vs new
-    if (skippedCount > 0 || messages.length > 0) {
-        console.log(`LYHU Sync Debug: ${skippedCount} already synced, ${messages.length} new to sync.`);
-    }
-
     if (messages.length > 0) {
-        console.log(`LYHU Sync: Sending ${messages.length} messages. Partner: ${partnerInfo.name}`);
-
-        // Direct API call (bypassing background script)
+        console.log(`LYHU Sync: Sending ${messages.length} messages.`);
         fetch(SYNC_API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -446,17 +422,9 @@ function scanAndSync() {
                 currentAccount: { id: "default_staff", name: "Staff Zalo", avatar: "" },
                 messages: messages
             })
-        })
-            .then(res => res.json())
-            .then(data => {
-                console.log("LYHU Sync: Messages Sync Response:", data);
-            })
-            .catch(err => {
-                console.log("LYHU Sync: Messages Sync Error:", err);
-                // Unmark as synced so they can retry
-                validElements.forEach(el => {
-                    el.dataset.lyhuSynced = "false";
-                });
-            });
+        }).catch(err => {
+            console.log("Sync Error:", err);
+            validElements.forEach(el => { el.dataset.lyhuSynced = "false"; });
+        });
     }
 }
