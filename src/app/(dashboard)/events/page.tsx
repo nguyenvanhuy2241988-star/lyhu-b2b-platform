@@ -59,6 +59,7 @@ export default function EventsPage() {
                 let query = supabase
                     .from('hr_events')
                     .select('*')
+                    .order('priority', { ascending: false })
                     .order('start_time', { ascending: true });
 
                 // If not admin/hr, only show published
@@ -138,15 +139,19 @@ export default function EventsPage() {
                     {/* Featured Event / Banner */}
                     {featuredEvent ? (
                         <Link href={`/events/${featuredEvent.id}`}>
-                            <div className="relative rounded-xl overflow-hidden bg-gradient-to-r from-teal-600 to-emerald-600 text-white min-h-[300px] flex items-end cursor-pointer group transition-all duration-300">
-                                {/* Fallback pattern or image */}
-                                <div className="absolute inset-0 bg-black/20 z-0" />
-                                {featuredEvent.banner_url && (
-                                    <img
-                                        src={featuredEvent.banner_url}
-                                        alt={featuredEvent.title}
-                                        className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60"
-                                    />
+                            <div className="relative rounded-xl overflow-hidden bg-slate-900 text-white min-h-[300px] flex items-end cursor-pointer group transition-all duration-300 shadow-xl">
+                                {featuredEvent.banner_url ? (
+                                    <>
+                                        <img
+                                            src={featuredEvent.banner_url}
+                                            alt={featuredEvent.title}
+                                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                        />
+                                        {/* Gradient Overlay for text readability */}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-90" />
+                                    </>
+                                ) : (
+                                    <div className="absolute inset-0 bg-gradient-to-r from-teal-600 to-emerald-600" />
                                 )}
 
                                 <div className="relative p-8 z-10 w-full">

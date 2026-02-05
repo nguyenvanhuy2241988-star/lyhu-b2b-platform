@@ -70,7 +70,8 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
         end_time: "17:00",
         location: "",
         banner_url: "",
-        budget_total: 0
+        budget_total: 0,
+        priority: 0
     });
 
     useEffect(() => {
@@ -88,7 +89,8 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                 end_time: end.time,
                 location: initialData.location || "",
                 banner_url: initialData.banner_url || "",
-                budget_total: initialData.budget_total || 0
+                budget_total: initialData.budget_total || 0,
+                priority: initialData.priority || 0
             });
         } else if (open && !initialData) {
             // Reset if opening in create mode
@@ -103,7 +105,8 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                 end_time: "17:00",
                 location: "",
                 banner_url: "",
-                budget_total: 0
+                budget_total: 0,
+                priority: 0
             });
         }
     }, [open, initialData]);
@@ -127,6 +130,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                 location: formData.location,
                 banner_url: formData.banner_url || null,
                 budget_total: formData.budget_total,
+                priority: Number(formData.priority)
             };
 
             // Removed manual status override
