@@ -222,6 +222,18 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
                                 </div>
 
                                 <div className="space-y-2">
+                                    <label className="text-sm font-medium text-slate-700">Độ ưu tiên (Sắp xếp)</label>
+                                    <input
+                                        type="number"
+                                        placeholder="0"
+                                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 border-slate-300"
+                                        value={formData.priority}
+                                        onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
+                                    />
+                                    <p className="text-xs text-slate-500">Số càng lớn càng hiển thị lên trên.</p>
+                                </div>
+
+                                <div className="space-y-2">
                                     <label className="text-sm font-medium text-slate-700">Loại sự kiện <span className="text-red-500">*</span></label>
                                     <select
                                         className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 border-slate-300 bg-white"
