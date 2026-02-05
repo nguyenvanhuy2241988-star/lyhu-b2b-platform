@@ -140,7 +140,7 @@ export default function EventFormModal({ onSuccess, initialData, eventId, trigge
         <>
             <div onClick={() => setOpen(true)}>
                 {trigger || (
-                    <button className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium shadow-lg shadow-teal-200 transition-colors">
+                    <button className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition-colors">
                         <Plus className="w-4 h-4" />
                         Tạo sự kiện mới
                     </button>

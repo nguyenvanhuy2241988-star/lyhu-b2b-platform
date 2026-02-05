@@ -104,12 +104,12 @@ export default function EventsPage() {
                     </h2>
                 </div>
                 <div className="flex items-center gap-3">
-                    <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
+                    <div className="flex p-0.5 rounded-lg border border-slate-200 bg-slate-50">
                         <button
                             onClick={() => setViewMode('list')}
                             className={cn(
                                 "p-2 rounded-md transition-all",
-                                viewMode === 'list' ? "bg-white shadow text-teal-600" : "text-slate-500 hover:text-slate-900"
+                                viewMode === 'list' ? "bg-white text-teal-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
                             )}
                             title="Danh sách"
                         >
@@ -119,7 +119,7 @@ export default function EventsPage() {
                             onClick={() => setViewMode('calendar')}
                             className={cn(
                                 "p-2 rounded-md transition-all",
-                                viewMode === 'calendar' ? "bg-white shadow text-teal-600" : "text-slate-500 hover:text-slate-900"
+                                viewMode === 'calendar' ? "bg-white text-teal-600 shadow-sm" : "text-slate-400 hover:text-slate-600"
                             )}
                             title="Lịch"
                         >
