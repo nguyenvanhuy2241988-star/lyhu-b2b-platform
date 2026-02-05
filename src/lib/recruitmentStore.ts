@@ -30,6 +30,18 @@ export interface PostLog {
     content_excerpt: string;
     image_url: string;
     created_at: string;
+    activity_type: 'post' | 'comment' | 'reaction' | 'share';
+    group_note?: string;
+}
+
+export interface RecruitmentGroup {
+    id: string;
+    link: string;
+    name: string;
+    platform: string;
+    notes?: string;
+    status: 'active' | 'archived' | 'banned';
+    updated_at: string;
 }
 
 export interface RecruitmentContact {
@@ -168,6 +180,28 @@ export const deletePostLog = async (id: string) => {
 
     if (error) throw error;
     return true;
+};
+
+export const upsertGroup = async (group: Partial<RecruitmentGroup>) => {
+    const { data, error } = await supabase
+        .from('recruitment_groups')
+        .upsert(group as any, { onConflict: 'link' })
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const searchGroups = async (keyword: string) => {
+    const { data, error } = await supabase
+        .from('recruitment_groups')
+        .select('*')
+        .ilike('name', `%${keyword}%`)
+        .limit(10);
+
+    if (error) throw error;
+    return data as RecruitmentGroup[];
 };
 
 export const upsertDailyReport = async (report: Partial<DailyActivity>) => {

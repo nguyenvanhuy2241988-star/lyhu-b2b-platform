@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Plus, Trash2, Link as LinkIcon, Image as ImageIcon, ExternalLink, Pencil } from "lucide-react";
+import { Loader2, Plus, Trash2, Link as LinkIcon, Image as ImageIcon, ExternalLink, Pencil, MessageSquare, Share2 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
-import { getPostLogs, createPostLog, deletePostLog, updatePostLog, PostLog } from "@/lib/recruitmentStore";
+import { getPostLogs, createPostLog, deletePostLog, updatePostLog, upsertGroup, PostLog } from "@/lib/recruitmentStore";
 import { cn } from "@/lib/utils";
 
 interface PostLogManagerProps {
@@ -22,14 +22,18 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
     // New Log Form State
     const [newLog, setNewLog] = useState<{
         platform: string;
+        activity_type: string;
         group_name: string;
         group_link: string;
+        group_note: string;
         post_link: string;
         image_url: string;
     }>({
         platform: 'facebook_group',
+        activity_type: 'post',
         group_name: '',
         group_link: '',
+        group_note: '',
         post_link: '',
         image_url: ''
     });
@@ -82,8 +86,10 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
     const handleEdit = (log: PostLog) => {
         setNewLog({
             platform: log.platform,
+            activity_type: log.activity_type || 'post',
             group_name: log.group_name || '',
             group_link: log.group_link || '',
+            group_note: log.group_note || '',
             post_link: log.post_link || '',
             image_url: log.image_url || ''
         });
@@ -98,37 +104,41 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
         }
 
         try {
+            const logData: any = {
+                platform: newLog.platform,
+                activity_type: newLog.activity_type,
+                group_name: newLog.group_name,
+                group_link: newLog.group_link,
+                group_note: newLog.group_note,
+                post_link: newLog.post_link,
+                image_url: newLog.image_url,
+            };
+
             if (editingLogId) {
-                await updatePostLog(editingLogId, {
-                    platform: newLog.platform as any,
-                    group_name: newLog.group_name,
-                    group_link: newLog.group_link,
-                    post_link: newLog.post_link,
-                    image_url: newLog.image_url,
-                });
+                await updatePostLog(editingLogId, logData);
             } else {
                 await createPostLog({
                     user_id: userId,
                     date: date,
-                    platform: newLog.platform as any,
-                    group_name: newLog.group_name,
-                    group_link: newLog.group_link,
-                    post_link: newLog.post_link,
-                    image_url: newLog.image_url,
+                    ...logData,
                     content_excerpt: 'Added via Daily Report'
                 });
             }
 
+            // Auto-save Group Data used
+            if (newLog.group_link && newLog.group_name) {
+                upsertGroup({
+                    link: newLog.group_link,
+                    name: newLog.group_name,
+                    platform: newLog.platform,
+                    notes: newLog.group_note,
+                    status: 'active',
+                    updated_at: new Date().toISOString()
+                }).catch(err => console.error("Error saving group data:", err));
+            }
+
             // Reset form
-            setNewLog({
-                platform: 'facebook_group',
-                group_name: '',
-                group_link: '',
-                post_link: '',
-                image_url: ''
-            });
-            setShowForm(false);
-            setEditingLogId(null);
+            handleCancel();
             loadLogs();
         } catch (error: any) {
             alert("Lỗi khi lưu: " + error.message);
@@ -150,8 +160,10 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
         setEditingLogId(null);
         setNewLog({
             platform: 'facebook_group',
+            activity_type: 'post',
             group_name: '',
             group_link: '',
+            group_note: '',
             post_link: '',
             image_url: ''
         });
@@ -162,7 +174,7 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
                     <span className="w-2 h-6 bg-teal-600 rounded-full"></span>
-                    Minh chứng Đăng bài ({logs.length})
+                    Minh chứng ({logs.length})
                 </h2>
                 <button
                     onClick={() => {
@@ -171,7 +183,7 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
                     }}
                     className="text-sm px-3 py-1.5 bg-teal-50 text-teal-600 rounded-lg hover:bg-teal-100 font-medium flex items-center gap-1 transition-colors"
                 >
-                    <Plus className="w-4 h-4" /> Thêm bài
+                    <Plus className="w-4 h-4" /> Thêm mới
                 </button>
             </div>
 
@@ -202,6 +214,16 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
                                     <span className={cn(
+                                        "text-xs px-2 py-0.5 rounded-full font-medium capitalize flex items-center gap-1",
+                                        log.activity_type === 'comment' ? "bg-orange-100 text-orange-700" :
+                                            log.activity_type === 'share' ? "bg-pink-100 text-pink-700" :
+                                                "bg-blue-100 text-blue-700"
+                                    )}>
+                                        {log.activity_type === 'comment' && <MessageSquare className="w-3 h-3" />}
+                                        {log.activity_type === 'share' && <Share2 className="w-3 h-3" />}
+                                        {log.activity_type || 'post'}
+                                    </span>
+                                    <span className={cn(
                                         "text-xs px-2 py-0.5 rounded-full font-medium capitalize",
                                         log.platform.includes('facebook') ? "bg-blue-100 text-blue-700" :
                                             log.platform === 'threads' ? "bg-black/5 text-black" : "bg-slate-100 text-slate-700"
@@ -221,6 +243,11 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
                                     <a href={log.post_link} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-blue-600 hover:underline font-medium truncate">
                                         <ExternalLink className="w-3 h-3" /> Xem bài viết trực tiếp
                                     </a>
+                                    {log.group_note && (
+                                        <p className="text-xs text-slate-500 italic truncate">
+                                            Ghi chú: {log.group_note}
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
@@ -254,9 +281,22 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                         <div>
+                            <label className="text-xs font-medium text-slate-600 block mb-1">Loại hoạt động</label>
+                            <select
+                                className="w-full px-3 py-2 text-sm border rounded-md bg-white font-medium text-slate-700"
+                                value={newLog.activity_type}
+                                onChange={(e) => setNewLog({ ...newLog, activity_type: e.target.value })}
+                            >
+                                <option value="post">Đăng bài (Post)</option>
+                                <option value="comment">Bình luận (Seeding)</option>
+                                <option value="share">Chia sẻ (Share)</option>
+                                <option value="reaction">Tương tác (Reaction)</option>
+                            </select>
+                        </div>
+                        <div>
                             <label className="text-xs font-medium text-slate-600 block mb-1">Nền tảng</label>
                             <select
-                                className="w-full px-3 py-2 text-sm border rounded-md"
+                                className="w-full px-3 py-2 text-sm border rounded-md bg-white"
                                 value={newLog.platform}
                                 onChange={(e) => setNewLog({ ...newLog, platform: e.target.value })}
                             >
@@ -288,8 +328,18 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
                                 onChange={(e) => setNewLog({ ...newLog, group_link: e.target.value })}
                             />
                         </div>
-                        <div>
-                            <label className="text-xs font-medium text-slate-600 block mb-1">Link Bài viết <span className="text-red-500">*</span></label>
+                        <div className="md:col-span-2">
+                            <label className="text-xs font-medium text-slate-600 block mb-1">Ghi chú về nhóm (Lưu lại cho lần sau)</label>
+                            <input
+                                type="text"
+                                className="w-full px-3 py-2 text-sm border rounded-md"
+                                placeholder="Vd: Nhóm duyệt bài nhanh, tương tác tốt..."
+                                value={newLog.group_note}
+                                onChange={(e) => setNewLog({ ...newLog, group_note: e.target.value })}
+                            />
+                        </div>
+                        <div className="md:col-span-2">
+                            <label className="text-xs font-medium text-slate-600 block mb-1">Link Bài viết / Comment <span className="text-red-500">*</span></label>
                             <input
                                 type="text"
                                 className="w-full px-3 py-2 text-sm border rounded-md"
