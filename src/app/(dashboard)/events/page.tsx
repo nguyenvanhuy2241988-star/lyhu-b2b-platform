@@ -7,6 +7,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import CreateEventModal from "./CreateEventModal";
+import { getCurrentUser } from "@/lib/auth";
 
 interface Event {
     id: string;
@@ -23,15 +25,28 @@ interface Event {
 export default function EventsPage() {
     const [events, setEvents] = useState<Event[]>([]);
     const [loading, setLoading] = useState(true);
+    const [canCreate, setCanCreate] = useState(false);
 
     useEffect(() => {
         const fetchEvents = async () => {
             try {
-                const { data, error } = await supabase
+                // Check permissions
+                const user = await getCurrentUser();
+                const isAllowed = user?.role === 'admin' || user?.role === 'recruiter';
+                setCanCreate(isAllowed);
+
+                // Build query
+                let query = supabase
                     .from('hr_events')
                     .select('*')
-                    .eq('status', 'published') // View only published by default
                     .order('start_time', { ascending: true });
+
+                // If not admin/hr, only show published
+                if (!isAllowed) {
+                    query = query.eq('status', 'published');
+                }
+
+                const { data, error } = await query;
 
                 if (error) {
                     console.error('Error fetching events:', error);
@@ -49,9 +64,13 @@ export default function EventsPage() {
     }, []);
 
     // Logic to split Featured vs List
-    // Filter out past events for the "Upcoming" view, or keep all?
-    // Let's keep upcoming events.
     const now = new Date();
+
+    // Filter logic:
+    // If Admin/HR: Maybe show past events too? Or just keep upcoming for dashboard?
+    // Let's keep "Upcoming" as the main focus for everyone.
+    // Admin can see past events in a future "List View" or Archive if needed.
+    // For now, consistent view for all.
     const upcomingEvents = events.filter(e => new Date(e.end_time) >= now);
 
     // Sort upcoming by date ascending (closest first)
@@ -71,6 +90,9 @@ export default function EventsPage() {
                     <h1 className="text-2xl font-bold tracking-tight">Sự kiện & Văn hóa</h1>
                     <p className="text-slate-500">Xem và tham gia các hoạt động của công ty</p>
                 </div>
+                {canCreate && (
+                    <CreateEventModal onSuccess={() => window.location.reload()} />
+                )}
             </div>
 
             {/* Featured Event / Banner */}
@@ -89,8 +111,11 @@ export default function EventsPage() {
 
                         <div className="relative p-8 z-10 w-full">
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-sm font-medium mb-4">
-                                <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                                Sắp diễn ra
+                                <span className={cn(
+                                    "w-2 h-2 rounded-full animate-pulse",
+                                    featuredEvent.status === 'draft' ? "bg-yellow-400" : "bg-green-400"
+                                )} />
+                                {featuredEvent.status === 'draft' ? 'Bản nháp' : 'Sắp diễn ra'}
                             </div>
                             <h2 className="text-4xl font-bold mb-2">{featuredEvent.title}</h2>
                             <div className="flex items-center gap-6 text-blue-100">
@@ -115,6 +140,9 @@ export default function EventsPage() {
             ) : (
                 <div className="p-12 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50">
                     <p className="text-slate-500">Hiện chưa có sự kiện nào sắp tới.</p>
+                    {canCreate && (
+                        <p className="text-sm text-blue-600 mt-2">Hãy tạo sự kiện đầu tiên!</p>
+                    )}
                 </div>
             )}
 
@@ -130,6 +158,11 @@ export default function EventsPage() {
                                     ) : (
                                         <div className="absolute inset-0 bg-slate-200 flex items-center justify-center text-slate-400 font-medium text-lg">
                                             {event.title.charAt(0)}
+                                        </div>
+                                    )}
+                                    {event.status === 'draft' && (
+                                        <div className="absolute top-2 right-2 px-2 py-1 bg-yellow-100 text-yellow-700 text-xs font-bold rounded">
+                                            DRAFT
                                         </div>
                                     )}
                                 </div>
