@@ -1,6 +1,5 @@
 'use client';
 
-import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Calendar, MapPin, Clock } from "lucide-react";
