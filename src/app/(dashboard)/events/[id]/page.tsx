@@ -388,48 +388,47 @@ export default function EventDetailPage() {
                         </div>
                     )}
                 </div>
-            </div>
 
-            {/* Sidebar Info */}
-            <div className="space-y-6">
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 className="font-semibold mb-4 text-slate-900">Thông tin nhanh</h3>
-                    <div className="space-y-4">
-                        <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
-                                <Calendar className="w-4 h-4" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium text-slate-900">Thời gian</p>
-                                <p className="text-sm text-slate-500 mt-0.5">
-                                    {format(new Date(event.start_time), "dd/MM/yyyy HH:mm", { locale: vi })}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600 shrink-0">
-                                <MapPin className="w-4 h-4" />
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium text-slate-900">Địa điểm</p>
-                                <p className="text-sm text-slate-500 mt-0.5">{event.location}</p>
-                            </div>
-                        </div>
-                        {isAdminOrHr && (
+                {/* Sidebar Info */}
+                <div className="space-y-6">
+                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                        <h3 className="font-semibold mb-4 text-slate-900">Thông tin nhanh</h3>
+                        <div className="space-y-4">
                             <div className="flex items-start gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600 shrink-0">
-                                    <DollarSign className="w-4 h-4" />
+                                <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+                                    <Calendar className="w-4 h-4" />
                                 </div>
                                 <div>
-                                    <p className="text-sm font-medium text-slate-900">Ngân sách dự kiến</p>
-                                    <p className="text-sm text-slate-500 mt-0.5">{Number(event.budget_total || 0).toLocaleString('vi-VN')} đ</p>
+                                    <p className="text-sm font-medium text-slate-900">Thời gian</p>
+                                    <p className="text-sm text-slate-500 mt-0.5">
+                                        {format(new Date(event.start_time), "dd/MM/yyyy HH:mm", { locale: vi })}
+                                    </p>
                                 </div>
                             </div>
-                        )}
+                            <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600 shrink-0">
+                                    <MapPin className="w-4 h-4" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium text-slate-900">Địa điểm</p>
+                                    <p className="text-sm text-slate-500 mt-0.5">{event.location}</p>
+                                </div>
+                            </div>
+                            {isAdminOrHr && (
+                                <div className="flex items-start gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-green-50 flex items-center justify-center text-green-600 shrink-0">
+                                        <DollarSign className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-slate-900">Ngân sách dự kiến</p>
+                                        <p className="text-sm text-slate-500 mt-0.5">{Number(event.budget_total || 0).toLocaleString('vi-VN')} đ</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        </div >
     );
 }
