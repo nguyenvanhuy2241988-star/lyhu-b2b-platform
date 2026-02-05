@@ -13,6 +13,23 @@ export interface DailyActivity {
     issues: string;
     request_support: string;
     created_at?: string;
+    // New fields for upgrade
+    other_tasks?: string;
+    no_post_reason?: string;
+    plan_next_day?: string;
+}
+
+export interface PostLog {
+    id: string;
+    user_id: string;
+    date: string;
+    platform: 'facebook_group' | 'facebook_page' | 'threads' | 'zalo' | 'linkedin' | 'other';
+    group_name: string;
+    group_link: string;
+    post_link: string;
+    content_excerpt: string;
+    image_url: string;
+    created_at: string;
 }
 
 export interface RecruitmentContact {
@@ -106,6 +123,39 @@ export const getDailyReport = async (date: string, userId: string) => {
 
     if (error) throw error;
     return data as DailyActivity | null;
+};
+
+export const getPostLogs = async (userId: string, date: string) => {
+    const { data, error } = await supabase
+        .from('recruitment_post_logs')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('date', date)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data as PostLog[];
+};
+
+export const createPostLog = async (log: Partial<PostLog>) => {
+    const { data, error } = await supabase
+        .from('recruitment_post_logs')
+        .insert([log])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data as PostLog;
+};
+
+export const deletePostLog = async (id: string) => {
+    const { error } = await supabase
+        .from('recruitment_post_logs')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+    return true;
 };
 
 export const upsertDailyReport = async (report: Partial<DailyActivity>) => {

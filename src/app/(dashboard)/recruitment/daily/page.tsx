@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { Save, Calendar, Loader2, AlertCircle, CheckCircle } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getDailyReport, upsertDailyReport, getMyReportsHistory, DailyActivity } from "@/lib/recruitmentStore";
+import PostLogManager from "./components/PostLogManager";
 
 export default function DailyReportPage() {
     const { user } = useAuth();
@@ -21,7 +22,10 @@ export default function DailyReportPage() {
         threads_posts: 0,
         threads_comments: 0,
         issues: "",
-        request_support: ""
+        request_support: "",
+        other_tasks: "",
+        no_post_reason: "",
+        plan_next_day: ""
     });
 
     useEffect(() => {
@@ -47,7 +51,10 @@ export default function DailyReportPage() {
                     threads_posts: 0,
                     threads_comments: 0,
                     issues: "",
-                    request_support: ""
+                    request_support: "",
+                    other_tasks: "",
+                    no_post_reason: "",
+                    plan_next_day: ""
                 });
             }
         } catch (error) {
@@ -108,104 +115,57 @@ export default function DailyReportPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Form Input */}
+                {/* Form Input */}
                 <div className="lg:col-span-2 space-y-6">
-                    {/* Facebook Section */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-                        <h2 className="text-lg font-semibold text-blue-700 mb-4 flex items-center gap-2">
-                            <span className="w-2 h-6 bg-blue-600 rounded-full"></span>
-                            Facebook Activities
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    Đăng bài nhóm (Trả phí)
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                    value={formData.fb_posts_paid || 0}
-                                    onChange={e => handleChange('fb_posts_paid', parseInt(e.target.value) || 0)}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    Đăng bài nhóm (Miễn phí)
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                    value={formData.fb_posts_free || 0}
-                                    onChange={e => handleChange('fb_posts_free', parseInt(e.target.value) || 0)}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    Comment / Seeding
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                    value={formData.fb_comments || 0}
-                                    onChange={e => handleChange('fb_comments', parseInt(e.target.value) || 0)}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    Kết bạn mới
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                                    value={formData.fb_friends || 0}
-                                    onChange={e => handleChange('fb_friends', parseInt(e.target.value) || 0)}
-                                />
-                            </div>
-                        </div>
-                    </div>
+                    {/* Evidence Manager */}
+                    <PostLogManager
+                        userId={user.id}
+                        date={date}
+                        onUpdate={() => {
+                            // Optional: Refresh report if we implement auto-count later
+                        }}
+                    />
 
-                    {/* Threads Section */}
+                    {/* Non-recruitment / Explanation Section */}
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                         <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                            <span className="w-2 h-6 bg-slate-900 rounded-full"></span>
-                            Threads Activities
+                            <span className="w-2 h-6 bg-orange-500 rounded-full"></span>
+                            Công việc & Giải trình
                         </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                        <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    Đăng bài mới
+                                    Công việc khác (Ngoài đăng tuyển)
                                 </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-500 outline-none"
-                                    value={formData.threads_posts || 0}
-                                    onChange={e => handleChange('threads_posts', parseInt(e.target.value) || 0)}
+                                <textarea
+                                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none min-h-[80px]"
+                                    placeholder="Ví dụ: Phỏng vấn 3 ứng viên, Làm thủ tục nhận việc cho NV mới..."
+                                    value={formData.other_tasks || ""}
+                                    onChange={e => handleChange('other_tasks', e.target.value)}
                                 />
                             </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                                    Comment tương tác
+                                    Lý do không đăng bài (Nếu có)
                                 </label>
                                 <input
-                                    type="number"
-                                    min="0"
-                                    className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-slate-500 outline-none"
-                                    value={formData.threads_comments || 0}
-                                    onChange={e => handleChange('threads_comments', parseInt(e.target.value) || 0)}
+                                    type="text"
+                                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                                    placeholder="Ví dụ: Đã đủ hồ sơ tuần này, Tập trung lọc CV cũ..."
+                                    value={formData.no_post_reason || ""}
+                                    onChange={e => handleChange('no_post_reason', e.target.value)}
                                 />
                             </div>
                         </div>
                     </div>
 
-                    {/* Report Section */}
+                    {/* Report & Plan Section */}
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                         <h2 className="text-lg font-semibold text-red-600 mb-4 flex items-center gap-2">
                             <span className="w-2 h-6 bg-red-600 rounded-full"></span>
-                            Báo cáo & Đề xuất
+                            Báo cáo & Kế hoạch
                         </h2>
                         <div className="space-y-4">
                             <div>
@@ -213,7 +173,7 @@ export default function DailyReportPage() {
                                     Vấn đề gặp phải hôm nay
                                 </label>
                                 <textarea
-                                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-500 outline-none min-h-[100px]"
+                                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-500 outline-none min-h-[80px]"
                                     placeholder="Ví dụ: Tài khoản bị checkpoint, nhóm không duyệt bài..."
                                     value={formData.issues || ""}
                                     onChange={e => handleChange('issues', e.target.value)}
@@ -228,6 +188,17 @@ export default function DailyReportPage() {
                                     placeholder="Cần cấp thêm ngân sách chạy ads..."
                                     value={formData.request_support || ""}
                                     onChange={e => handleChange('request_support', e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                    Kế hoạch ngày mai <span className="text-red-500">*</span>
+                                </label>
+                                <textarea
+                                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none min-h-[80px]"
+                                    placeholder="Ví dụ: Đăng 10 bài nhóm X, Phỏng vấn 2 ứng viên..."
+                                    value={formData.plan_next_day || ""}
+                                    onChange={e => handleChange('plan_next_day', e.target.value)}
                                 />
                             </div>
                         </div>
