@@ -148,6 +148,18 @@ export const createPostLog = async (log: Partial<PostLog>) => {
     return data as PostLog;
 };
 
+export const updatePostLog = async (id: string, updates: Partial<PostLog>) => {
+    const { data, error } = await supabase
+        .from('recruitment_post_logs')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data as PostLog;
+};
+
 export const deletePostLog = async (id: string) => {
     const { error } = await supabase
         .from('recruitment_post_logs')

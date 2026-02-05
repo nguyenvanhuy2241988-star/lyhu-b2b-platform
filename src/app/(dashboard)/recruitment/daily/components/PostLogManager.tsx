@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Plus, Trash2, Link as LinkIcon, Image as ImageIcon, ExternalLink } from "lucide-react";
+import { Loader2, Plus, Trash2, Link as LinkIcon, Image as ImageIcon, ExternalLink, Pencil } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
-import { getPostLogs, createPostLog, deletePostLog, PostLog } from "@/lib/recruitmentStore";
+import { getPostLogs, createPostLog, deletePostLog, updatePostLog, PostLog } from "@/lib/recruitmentStore";
 import { cn } from "@/lib/utils";
 
 interface PostLogManagerProps {
@@ -17,6 +17,7 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [showForm, setShowForm] = useState(false);
+    const [editingLogId, setEditingLogId] = useState<string | null>(null);
 
     // New Log Form State
     const [newLog, setNewLog] = useState<{
@@ -78,23 +79,45 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
         }
     };
 
-    const handleAddLog = async () => {
+    const handleEdit = (log: PostLog) => {
+        setNewLog({
+            platform: log.platform,
+            group_name: log.group_name || '',
+            group_link: log.group_link || '',
+            post_link: log.post_link || '',
+            image_url: log.image_url || ''
+        });
+        setEditingLogId(log.id);
+        setShowForm(true);
+    };
+
+    const handleSaveLog = async () => {
         if (!newLog.post_link) {
             alert("Vui lòng nhập Link bài viết!");
             return;
         }
 
         try {
-            await createPostLog({
-                user_id: userId,
-                date: date,
-                platform: newLog.platform as any,
-                group_name: newLog.group_name,
-                group_link: newLog.group_link,
-                post_link: newLog.post_link,
-                image_url: newLog.image_url,
-                content_excerpt: 'Added via Daily Report'
-            });
+            if (editingLogId) {
+                await updatePostLog(editingLogId, {
+                    platform: newLog.platform as any,
+                    group_name: newLog.group_name,
+                    group_link: newLog.group_link,
+                    post_link: newLog.post_link,
+                    image_url: newLog.image_url,
+                });
+            } else {
+                await createPostLog({
+                    user_id: userId,
+                    date: date,
+                    platform: newLog.platform as any,
+                    group_name: newLog.group_name,
+                    group_link: newLog.group_link,
+                    post_link: newLog.post_link,
+                    image_url: newLog.image_url,
+                    content_excerpt: 'Added via Daily Report'
+                });
+            }
 
             // Reset form
             setNewLog({
@@ -105,9 +128,10 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
                 image_url: ''
             });
             setShowForm(false);
+            setEditingLogId(null);
             loadLogs();
         } catch (error: any) {
-            alert("Lỗi khi thêm: " + error.message);
+            alert("Lỗi khi lưu: " + error.message);
         }
     };
 
@@ -121,6 +145,18 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
         }
     };
 
+    const handleCancel = () => {
+        setShowForm(false);
+        setEditingLogId(null);
+        setNewLog({
+            platform: 'facebook_group',
+            group_name: '',
+            group_link: '',
+            post_link: '',
+            image_url: ''
+        });
+    };
+
     return (
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
             <div className="flex items-center justify-between mb-4">
@@ -129,7 +165,10 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
                     Minh chứng Đăng bài ({logs.length})
                 </h2>
                 <button
-                    onClick={() => setShowForm(!showForm)}
+                    onClick={() => {
+                        handleCancel(); // Reset any edit state
+                        setShowForm(!showForm);
+                    }}
                     className="text-sm px-3 py-1.5 bg-teal-50 text-teal-600 rounded-lg hover:bg-teal-100 font-medium flex items-center gap-1 transition-colors"
                 >
                     <Plus className="w-4 h-4" /> Thêm bài
@@ -186,22 +225,33 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
                             </div>
 
                             {/* Actions */}
-                            <button
-                                onClick={() => handleDelete(log.id)}
-                                className="opacity-0 group-hover:opacity-100 p-2 text-slate-400 hover:text-red-600 transition-all self-center"
-                                title="Xóa"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all self-center">
+                                <button
+                                    onClick={() => handleEdit(log)}
+                                    className="p-2 text-slate-400 hover:text-blue-600"
+                                    title="Sửa"
+                                >
+                                    <Pencil className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => handleDelete(log.id)}
+                                    className="p-2 text-slate-400 hover:text-red-600"
+                                    title="Xóa"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
                         </div>
                     ))
                 )}
             </div>
 
-            {/* Add New Form */}
+            {/* Add/Edit Form */}
             {showForm && (
                 <div className="bg-slate-50 p-4 rounded-lg border border-teal-100 animate-in fade-in slide-in-from-top-2">
-                    <h3 className="text-sm font-bold text-slate-800 mb-3">Thêm minh chứng mới</h3>
+                    <h3 className="text-sm font-bold text-slate-800 mb-3">
+                        {editingLogId ? "Chỉnh sửa minh chứng" : "Thêm minh chứng mới"}
+                    </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                         <div>
                             <label className="text-xs font-medium text-slate-600 block mb-1">Nền tảng</label>
@@ -269,16 +319,16 @@ export default function PostLogManager({ userId, date, onUpdate }: PostLogManage
 
                     <div className="flex justify-end gap-2">
                         <button
-                            onClick={() => setShowForm(false)}
+                            onClick={handleCancel}
                             className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-800"
                         >
                             Hủy
                         </button>
                         <button
-                            onClick={handleAddLog}
+                            onClick={handleSaveLog}
                             className="px-4 py-1.5 text-xs font-medium bg-teal-600 text-white rounded-md hover:bg-teal-700 shadow-sm"
                         >
-                            Lưu minh chứng
+                            {editingLogId ? "Cập nhật" : "Lưu minh chứng"}
                         </button>
                     </div>
                 </div>
