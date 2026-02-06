@@ -87,28 +87,33 @@ export const MisaService = {
     mapOrderToMisaInvoice: (order: any) => {
         // Ensure null safety
         const items = order.items || [];
+
+        // MISA AMIS Open API (actopen) usually expects snake_case for fields
+        // Ref: sa_invoice
         return {
-            refId: order.id,
-            refNo: `ORD-${order.readableId || order.id.substring(0, 6)}`,
-            refDate: new Date(order.created_at || new Date()).toISOString(),
-            postedDate: new Date().toISOString(),
-            accountObjectCode: order.customer?.misa_code || "KH_LE",
-            journalMemo: `Bán hàng cho đơn hàng #${order.readableId}`,
-            totalAmount: order.totalAmount,
-            // Mapping fields specific to Misa Invoice
-            invSeries: "1C21Tky", // Example Series - Should ideally be configurable?
-            invDate: new Date().toISOString(),
-            currencyID: "VND",
-            exchangeRate: 1,
-            details: items.map((item: any) => ({
-                inventoryItemCode: item.product?.misa_code || item.sku || "SP_KHAC",
-                description: item.name,
-                quantity: item.quantity,
-                unitPrice: item.price || item.unitPrice || 0,
-                amount: (item.price || item.unitPrice || 0) * item.quantity,
-                vatRate: order.vat || 0,
-                stockCode: "KHO_TONG" // Default Warehouse
-            }))
+            voucher_type: "sa_invoice", // Critical for generic save endpoint
+            voucher_data: {
+                ref_no: `ORD-${order.readableId || order.id.substring(0, 6)}`,
+                ref_date: new Date(order.created_at || new Date()).toISOString().split('T')[0], // YYYY-MM-DD
+                posted_date: new Date().toISOString().split('T')[0],
+                account_object_code: order.customer?.misa_code || "KH_LE",
+                journal_memo: `Bán hàng cho đơn hàng #${order.readableId}`,
+                total_amount: order.totalAmount,
+                // Invoice details
+                currency_id: "VND",
+                exchange_rate: 1,
+
+                // Details (Detail table name is usually sa_invoice_detail)
+                detail: items.map((item: any) => ({
+                    inventory_item_code: item.product?.misa_code || item.sku || "SP_KHAC",
+                    description: item.name,
+                    quantity: item.quantity,
+                    unit_price: item.price || item.unitPrice || 0,
+                    amount: (item.price || item.unitPrice || 0) * item.quantity,
+                    vat_rate: order.vat || 0,
+                    stock_code: "KHO_TONG"
+                }))
+            }
         };
     },
 
@@ -122,17 +127,14 @@ export const MisaService = {
             const token = await MisaService.getAccessToken(supabase);
 
             // 2. Map Data
-            const invoiceData = MisaService.mapOrderToMisaInvoice(orderData);
+            const invoiceObj = MisaService.mapOrderToMisaInvoice(orderData);
 
-            // 3. Prepare Payload for /api/sync/actopen/save
-            // Structure: { app_id, org_company_code, voucher_data: [...] }? 
-            // Or just a list of vouchers if Token is in header?
-            // Based on doc references, usually:
-            // POST /api/sync/actopen/save
-            // Header: X-MISA-AccessToken
-            // Body: [ { ... invoice object ... } ]  <-- Array of vouchers
+            // 3. Prepare Payload
+            // The /api/sync/actopen/save usually expects a list of objects with app_id etc? 
+            // Or just the voucher data? 
+            // Let's try sending the mapped object directly in a list as "data"
 
-            const payload = [invoiceData];
+            const payload = [invoiceObj];
 
             // 4. Send to Misa API
             const settings = await fetchAppSettings(supabase);
@@ -140,10 +142,6 @@ export const MisaService = {
             const config = settings?.misa_config;
             const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
 
-            // Ensure we use the correct save endpoint
-            // If user enters 'openservice', we might need to fallback to actapp if that's where save lives.
-            // But let's trust the user's URL + standard path.
-            // Documentation usually points to /api/sync/actopen/save
             endpoint = `${apiUrl}/api/sync/actopen/save`;
 
             console.log(`[MisaService] POST ${endpoint}`);
@@ -158,32 +156,41 @@ export const MisaService = {
                 body: JSON.stringify(payload)
             });
 
-            // Handle non-JSON responses
             const textRaw = await res.text();
+
+            if (!res.ok) {
+                console.error(`[MisaService] Push Failed Status ${res.status}:`, textRaw);
+                let errorDetails = textRaw;
+                try {
+                    const errJson = JSON.parse(textRaw);
+                    // Extract user message if available
+                    errorDetails = errJson?.UserMessage || errJson?.DevMessage || errJson?.Data || JSON.stringify(errJson);
+                } catch (e) { }
+
+                return { success: false, error: `Misa Error (${res.status}): ${errorDetails}` };
+            }
+
+            // Success Case
             let resData;
             try {
                 resData = JSON.parse(textRaw);
             } catch (e) {
-                // If HTML returned (404/500), throw
-                throw new Error(`Misa API Error (${res.status}): ${textRaw.substring(0, 100)}`);
+                return { success: true, refId: "Unknown_Ref (Non-JSON)" };
             }
 
-            if (res.ok && resData?.Success) {
-                // Response Data for save is usually: { Success: true, Data: [ { RefID: ... } ] }
+            if (resData?.Success) {
                 const resultData = resData.Data;
                 const refId = Array.isArray(resultData) ? resultData[0]?.RefID : resultData;
-
                 console.log(`[MisaService] Push Success! Misa Ref: ${refId}`);
                 return { success: true, refId: refId || "MISA_SYNCed" };
             } else {
-                console.error("[MisaService] Push Failed:", resData);
-                const errorMsg = resData?.UserMessage || resData?.DevMessage || resData?.Data || JSON.stringify(resData);
+                const errorMsg = resData?.UserMessage || resData?.DevMessage || JSON.stringify(resData);
                 return { success: false, error: `Misa Reject: ${errorMsg}` };
             }
 
         } catch (err: any) {
             console.error("[MisaService] Exception:", err);
-            return { success: false, error: `Lỗi kết nối Misa: ${err.message}` };
+            return { success: false, error: `Lỗi hệ thống: ${err.message}` };
         }
     }
 };
