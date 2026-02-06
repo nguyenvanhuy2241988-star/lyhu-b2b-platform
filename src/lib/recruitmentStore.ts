@@ -34,8 +34,40 @@ export interface PostLog {
     group_note?: string;
 }
 
-// ... existing code ...
+export interface RecruitmentGroup {
+    id: string;
+    link: string;
+    name: string;
+    platform: string;
+    notes?: string;
+    status: 'active' | 'archived' | 'banned';
+    updated_at: string;
+}
 
+export interface RecruitmentContact {
+    id: string;
+    name: string;
+    position: string;
+    organization: string;
+    phone: string;
+    email: string;
+    social_link: string;
+    notes: string;
+    status: 'new' | 'contacted' | 'connected';
+    created_by?: string;
+    created_at?: string;
+}
+
+export interface RecruitmentPlatform {
+    id: string;
+    name: string;
+    type: string;
+    pricing_details: string;
+    tips: string;
+    active: boolean;
+}
+
+// --- KPI Types ---
 export interface RecruitmentKpiSettings {
     user_id: string;
     fb_posts_target: number;
