@@ -648,3 +648,18 @@ export const syncLogsToDailyReport = async (userId: string, date: string) => {
     }
 };
 
+
+// --- Admin Functions ---
+
+export const getRecruitmentUsers = async () => {
+    // Fetch profiles with relevant roles for recruitment
+    // This assumes specific roles are used. Adjust if 'telesales' is also used for recruitment.
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('id, email, full_name, role, avatar_url')
+        .in('role', ['admin', 'manager', 'recruiter', 'recruiter_manager', 'telesales'])
+        .order('full_name');
+
+    if (error) throw error;
+    return data as { id: string, email: string, full_name: string, role: string, avatar_url: string }[];
+};

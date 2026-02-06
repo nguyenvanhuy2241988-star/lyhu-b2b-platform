@@ -9,11 +9,13 @@ import { cn } from "@/lib/utils";
 
 interface KpiDashboardProps {
     date: string;
+    userId: string;
 }
 
-export default function KpiDashboard({ date }: KpiDashboardProps) {
+export default function KpiDashboard({ date, userId }: KpiDashboardProps) {
     const { user, role } = useAuth();
     const [stats, setStats] = useState<RecruitmentKpiStats | null>(null);
+
     const [loading, setLoading] = useState(true);
     const [showSettings, setShowSettings] = useState(false);
 
@@ -28,9 +30,9 @@ export default function KpiDashboard({ date }: KpiDashboardProps) {
     const isAdmin = role === 'admin' || role === 'manager' || role === 'recruiter_manager';
 
     const loadStats = async () => {
-        if (!user) return;
+        if (!userId) return;
         try {
-            const data = await getRecruitmentKpiStats(user.id, date);
+            const data = await getRecruitmentKpiStats(userId, date);
             setStats(data);
             setTargets({
                 posts: data.posts_target,
@@ -56,7 +58,7 @@ export default function KpiDashboard({ date }: KpiDashboardProps) {
                     event: '*',
                     schema: 'public',
                     table: 'recruitment_post_logs',
-                    filter: `user_id=eq.${user?.id}` // Only listen to my own changes
+                    filter: `user_id=eq.${userId}` // Listen to target user changes
                 },
                 () => {
                     console.log("Realtime update received!");
@@ -74,7 +76,7 @@ export default function KpiDashboard({ date }: KpiDashboardProps) {
                     event: '*',
                     schema: 'public',
                     table: 'recruitment_kpi_settings',
-                    filter: `user_id=eq.${user.id}`
+                    filter: `user_id=eq.${userId}`
                 },
                 () => {
                     console.log("Settings update received!");
@@ -87,14 +89,14 @@ export default function KpiDashboard({ date }: KpiDashboardProps) {
             supabase.removeChannel(channel);
             supabase.removeChannel(settingsChannel);
         };
-    }, [user, date]);
+    }, [userId, date]);
 
     const handleSaveSettings = async () => {
-        if (!user || !isAdmin) return;
+        if (!userId || !isAdmin) return;
         setSavingSettings(true);
         try {
             await updateRecruitmentKpiSettings({
-                user_id: user.id,
+                user_id: userId, // Update for target user
                 fb_posts_target: targets.posts,
                 fb_comments_target: targets.comments,
                 fb_friends_target: targets.friends

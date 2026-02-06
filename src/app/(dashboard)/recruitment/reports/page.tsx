@@ -297,13 +297,13 @@ export default function ReportsPage() {
 
                                             {/* Show Details Button */}
                                             <div className="flex items-center">
-                                                <button
-                                                    onClick={() => setSelectedReport(report)}
+                                                <a
+                                                    href={`/recruitment/daily?userId=${report.user_id}&date=${report.date}`}
                                                     className="p-3 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-full transition-colors"
-                                                    title="Xem chi tiết"
+                                                    title="Xem chi tiết & Chấm điểm"
                                                 >
                                                     <Eye className="w-5 h-5" />
-                                                </button>
+                                                </a>
                                             </div>
                                         </div>
                                     </div>
@@ -314,11 +314,6 @@ export default function ReportsPage() {
                 )}
             </div>
 
-            <ReportDetailModal
-                isOpen={!!selectedReport}
-                onClose={() => setSelectedReport(null)}
-                report={selectedReport}
-            />
         </div>
     );
 }
