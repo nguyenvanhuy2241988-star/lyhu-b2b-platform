@@ -101,8 +101,9 @@ export default function KpiDashboard({ date }: KpiDashboardProps) {
             });
             setShowSettings(false);
             loadStats(); // Refresh to reflect new targets
-        } catch (error) {
-            alert("Lỗi lưu cài đặt: " + error);
+        } catch (error: any) {
+            console.error(error);
+            alert("Lỗi lưu cài đặt: " + (error.message || JSON.stringify(error)));
         } finally {
             setSavingSettings(false);
         }
