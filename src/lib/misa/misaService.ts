@@ -89,11 +89,10 @@ export const MisaService = {
         const items = order.items || [];
 
         // MISA AMIS Open API often uses PascalCase for the "Save" endpoint data
-        // Search indicates voucher_type 11 = sa_invoice (Sales Invoice)
         return {
-            voucher_type: 11, // 11: Chứng từ Bán hàng (Sales Invoice)
-            org_refid: order.id,
-            voucher_data: {
+            VoucherType: 11, // PascalCase wrapper key
+            OrgRefID: order.id,
+            VoucherData: {
                 RefType: 155, // 155: Bán hàng chưa thu tiền (Credit Sales)
                 RefNo: `ORD-${order.readableId || order.id.substring(0, 6)}`,
                 RefDate: new Date(order.created_at || new Date()).toISOString().split('T')[0],
@@ -144,22 +143,30 @@ export const MisaService = {
 
             // 5. Send to Misa API
             const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
-            endpoint = `${apiUrl}/api/sync/actopen/save`;
+            // Check for trailing slash
+            const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+            endpoint = `${baseUrl}/api/sync/actopen/save`;
 
             console.log(`[MisaService] POST ${endpoint}`);
+            console.log(`[MisaService] Payload:`, JSON.stringify(payload, null, 2));
+
+            const headers = {
+                "Content-Type": "application/json",
+                "X-MISA-AccessToken": token,
+                "X-MISA-AppID": config.appId || "", // Try optional AppID header
+                "User-Agent": "LYHU-B2B-Platform/1.0"
+            };
+            console.log(`[MisaService] Request Headers:`, headers);
 
             const res = await fetch(endpoint, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-MISA-AccessToken": token,
-                    "User-Agent": "LYHU-B2B-Platform/1.0"
-                },
+                headers: headers,
                 body: JSON.stringify(payload)
             });
 
             // Handle non-JSON responses
             const textRaw = await res.text();
+            console.log(`[MisaService] Response Raw:`, textRaw);
 
             if (!res.ok) {
                 console.error(`[MisaService] Push Failed Status ${res.status}:`, textRaw);
