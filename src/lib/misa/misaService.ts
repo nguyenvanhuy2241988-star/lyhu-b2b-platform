@@ -85,40 +85,76 @@ export const MisaService = {
 
     // 2. Map Order to Misa Invoice
     mapOrderToMisaInvoice: (order: any) => {
-        // Ensure null safety
         const items = order.items || [];
+        const today = new Date().toISOString().split('T')[0];
+        const orderDate = new Date(order.created_at || new Date()).toISOString().split('T')[0];
 
-        // MISA AMIS Open API often uses PascalCase for the "Save" endpoint data
+        // MISA Service "Save" API (5.1.4 Hóa đơn bán hàng)
+        // Ref: https://actdocs.misa.vn
         return {
-            // Updated Hypothesis: Wrapper keys are snake_case, Inner Data is PascalCase
-            voucher_type: 11,
+            voucher_type: 11, // Hóa đơn bán hàng
+            // reftype: 3560 is default for domestic sales, but can be explicit if needed in wrapper?
+            // Actually, reftype is usually inferred or inside. The doc says 'reftype' column exists in sa_invoice.
+            // Let's include it.
+
             org_refid: order.id,
-            voucher_data: {
-                RefType: 155, // 155: Bán hàng chưa thu tiền (Credit Sales)
-                RefNo: `ORD-${order.readableId || order.id.substring(0, 6)}`,
-                RefDate: new Date(order.created_at || new Date()).toISOString().split('T')[0],
-                PostedDate: new Date().toISOString().split('T')[0],
+            org_refno: `ORD-${order.readableId || order.id.substring(0, 6)}`,
+            org_reftype_name: "Đơn đặt hàng website", // Optional description
 
-                AccountObjectCode: order.customer?.misa_code || "KH_LE",
-                JournalMemo: `Bán hàng cho đơn hàng #${order.readableId}`,
-                TotalAmount: order.totalAmount,
+            refdate: orderDate,
+            posted_date: today,
+            inv_date: today,
 
-                CurrencyID: "VND",
-                ExchangeRate: 1,
+            // Required: 3560: Hóa đơn bán hàng hóa, dịch vụ trong nước
+            reftype: 3560,
 
-                // MISA usually expects PascalCase 'SAInvoiceDetail' when using voucher_type 11
-                SAInvoiceDetail: items.map((item: any) => ({
-                    InventoryItemCode: item.product?.misa_code || item.sku || "SP_KHAC",
-                    Description: item.name,
-                    Quantity: item.quantity,
-                    UnitPrice: item.price || item.unitPrice || 0,
-                    Amount: (item.price || item.unitPrice || 0) * item.quantity,
-                    VATRate: order.vat || 0,
-                    DebitAccount: "131",
-                    CreditAccount: "5111",
-                    StockCode: "KHO_TONG"
-                }))
-            }
+            // Customer Info (snake_case)
+            account_object_code: order.customer?.misa_code || "KH_LE",
+            account_object_name: order.customer?.name || order.customer_name || "Khách lẻ",
+
+            // Financial Info
+            journal_memo: `Bán hàng đơn #${order.readableId}`,
+            currency_id: "VND",
+            exchange_rate: 1,
+
+            // Invoice Details (snake_case)
+            inv_series: "K0/001", // Example, might need config
+            inv_no: `INV-${order.readableId}`, // Proposing a number
+
+            // Item Details
+            detail: items.map((item: any, index: number) => {
+                const price = item.price || item.unitPrice || 0;
+                const qty = item.quantity || 1;
+                const amount = price * qty;
+
+                return {
+                    sort_order: index + 1,
+                    inventory_item_code: item.product?.misa_code || item.sku || "SP_KHAC",
+                    inventory_item_name: item.name,
+                    description: item.name,
+
+                    quantity: qty,
+                    unit_price: price,
+                    amount: amount,
+                    amount_oc: amount, // Nguyên tệ
+
+                    // Accounts (Standard Defaults)
+                    debit_account: "131",
+                    credit_account: "5111",
+
+                    // VAT (Basic assumption)
+                    vat_rate: order.vat || 0,
+                    vat_amount: (amount * (order.vat || 0)) / 100,
+                    vat_amount_oc: (amount * (order.vat || 0)) / 100,
+
+                    stock_code: "KHO_TONG", // Default Stock
+                    exchange_rate_operator: "*",
+
+                    main_convert_rate: 1,
+                    main_quantity: qty,
+                    main_unit_price: price
+                };
+            })
         };
     },
 
@@ -139,14 +175,14 @@ export const MisaService = {
             // 3. Map Data
             const invoiceObj = MisaService.mapOrderToMisaInvoice(orderData);
 
-            // 4. Prepare Payload (Wrapped with AppID/CompanyCode)
-            // Use fallback AppID same as Auth
+            // 4. Prepare Payload (Strict V5 Schema)
+            // https://actdocs.misa.vn
             const appId = config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e";
 
             const payload = {
                 app_id: appId,
                 org_company_code: config?.companyCode,
-                data: [invoiceObj]
+                voucher: [invoiceObj] // Critical: Key is "voucher", not "data"
             };
 
             // 5. Send to Misa API
