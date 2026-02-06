@@ -17,6 +17,7 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
 
     // Sync Misa Handler
     const handleSyncMisa = async () => {
+        console.log("CLICKED SYNC BUTTON for order:", order?.id); // Debug click
         if (!order) return;
         setIsSyncing(true);
         try {
@@ -26,12 +27,16 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                 body: JSON.stringify({ orderId: order.id })
             });
             const data = await res.json();
+            console.log("MISA API RESPONSE:", data); // Debug Response
 
             if (res.ok && data.success) {
-                setLocalMisaStatus({ status: 'synced', refId: data.refId, error: null });
-                alert("Đồng bộ Misa thành công!");
+                const misaRef = data.refId || "Unknown Ref";
+                setLocalMisaStatus({ status: 'synced', refId: misaRef, error: null });
+                console.log("%c[MISA SUCCESS] Ref ID: " + misaRef, "color: green; font-size: 16px; font-weight: bold;");
+                alert(`✅ Đồng bộ MISA thành công!\n\nMã chứng từ MISA: ${misaRef}\n\n(Hãy dùng mã này tìm kiếm trong MISA)`);
             } else {
                 setLocalMisaStatus({ status: 'failed', refId: null, error: data.error || "Unknown error" });
+                console.error("[MISA FAILURE]", data);
 
                 // Log payload for debugging
                 if (data.debugPayload) {
