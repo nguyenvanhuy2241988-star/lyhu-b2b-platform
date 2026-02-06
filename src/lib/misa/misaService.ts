@@ -70,8 +70,22 @@ export const MisaService = {
             }
 
             if (data?.Success && data?.Data) {
-                console.log("[MisaService] Auth Success! Token obtained.");
-                return data.Data; // The Access Token
+                console.log("[MisaService] Auth Success! Raw Data:", data.Data);
+
+                // Fix: data.Data might be a JSON string containing access_token
+                let token = data.Data;
+                if (typeof token === 'string' && token.trim().startsWith('{')) {
+                    try {
+                        const parsed = JSON.parse(token);
+                        if (parsed.access_token) {
+                            token = parsed.access_token;
+                        }
+                    } catch (e) {
+                        console.warn("[MisaService] Failed to parse Token JSON:", e);
+                    }
+                }
+
+                return token;
             }
 
             throw new Error("Misa Auth: Không lấy được Token");
