@@ -89,25 +89,68 @@ export const MisaService = {
         const today = new Date().toISOString().split('T')[0];
         const orderDate = new Date(order.created_at || new Date()).toISOString().split('T')[0];
 
+        // 1. Calculate Details & Totals
+        let totalAmount = 0; // This will be total_amount (including VAT)
+        let totalVat = 0;
+        let totalDiscount = 0;
+
+        const details = items.map((item: any, index: number) => {
+            const price = item.price || item.unitPrice || 0;
+            const qty = item.quantity || 1;
+            const amount = price * qty; // Pre-tax amount for this item
+            const vatRate = order.vat || 0; // simple assumption
+            const vatAmount = (amount * vatRate) / 100;
+
+            totalAmount += amount + vatAmount;
+            totalVat += vatAmount;
+
+            return {
+                sort_order: index + 1,
+                inventory_item_code: item.product?.misa_code || item.sku || "SP_KHAC",
+                inventory_item_name: item.name,
+                description: item.name,
+
+                quantity: qty,
+                unit_price: price,
+                amount: amount,
+                amount_oc: amount, // Nguyên tệ
+
+                // Accounts (Standard Defaults)
+                debit_account: "131",
+                credit_account: "5111",
+
+                // VAT
+                vat_rate: vatRate,
+                vat_amount: vatAmount,
+                vat_amount_oc: vatAmount,
+
+                stock_code: "KHO_TONG", // Default Stock
+                exchange_rate_operator: "*",
+
+                main_convert_rate: 1,
+                main_quantity: qty,
+                main_unit_price: price,
+
+                // Required by some MISA setups
+                inventory_item_type: 0 // Vật tư hàng hóa
+            };
+        });
+
+        const totalSaleAmount = totalAmount - totalVat; // Pre-tax roughly
+
         // MISA Service "Save" API (5.1.4 Hóa đơn bán hàng)
-        // Ref: https://actdocs.misa.vn
         return {
             voucher_type: 11, // Hóa đơn bán hàng
-            // reftype: 3560 is default for domestic sales, but can be explicit if needed in wrapper?
-            // Actually, reftype is usually inferred or inside. The doc says 'reftype' column exists in sa_invoice.
-            // Let's include it.
+            reftype: 3560,    // Hóa đơn bán hàng trong nước
 
             org_refid: order.id,
             org_refno: `ORD-${order.readableId || order.id.substring(0, 6)}`,
-            org_reftype: 3560, // Required by MISA API
-            org_reftype_name: "Đơn đặt hàng website", // Optional description
+            org_reftype_name: "Đơn đặt hàng website",
+            org_reftype: 3560,
 
             refdate: orderDate,
             posted_date: today,
             inv_date: today,
-
-            // Required: 3560: Hóa đơn bán hàng hóa, dịch vụ trong nước
-            reftype: 3560,
 
             // Customer Info (snake_case)
             account_object_code: order.customer?.misa_code || "KH_LE",
@@ -117,45 +160,26 @@ export const MisaService = {
             journal_memo: `Bán hàng đơn #${order.readableId}`,
             currency_id: "VND",
             exchange_rate: 1,
+            payment_method: "Tiền mặt",
 
-            // Invoice Details (snake_case)
-            inv_series: "K0/001", // Example, might need config
-            inv_no: `INV-${order.readableId}`, // Proposing a number
+            // Defaults for Required Fields
+            inv_series: "K24T",
+            inv_no: `INV-${order.readableId}`,
+            inv_template_no: "01GTKT0/001",
+            inv_type_id: 1, // GTGT
+
+            // Totals (REQUIRED)
+            total_sale_amount: totalSaleAmount,
+            total_sale_amount_oc: totalSaleAmount,
+            total_vat_amount: totalVat,
+            total_vat_amount_oc: totalVat,
+            total_amount: totalAmount,
+            total_amount_oc: totalAmount,
+            total_discount_amount: totalDiscount,
+            total_discount_amount_oc: totalDiscount,
 
             // Item Details
-            detail: items.map((item: any, index: number) => {
-                const price = item.price || item.unitPrice || 0;
-                const qty = item.quantity || 1;
-                const amount = price * qty;
-
-                return {
-                    sort_order: index + 1,
-                    inventory_item_code: item.product?.misa_code || item.sku || "SP_KHAC",
-                    inventory_item_name: item.name,
-                    description: item.name,
-
-                    quantity: qty,
-                    unit_price: price,
-                    amount: amount,
-                    amount_oc: amount, // Nguyên tệ
-
-                    // Accounts (Standard Defaults)
-                    debit_account: "131",
-                    credit_account: "5111",
-
-                    // VAT (Basic assumption)
-                    vat_rate: order.vat || 0,
-                    vat_amount: (amount * (order.vat || 0)) / 100,
-                    vat_amount_oc: (amount * (order.vat || 0)) / 100,
-
-                    stock_code: "KHO_TONG", // Default Stock
-                    exchange_rate_operator: "*",
-
-                    main_convert_rate: 1,
-                    main_quantity: qty,
-                    main_unit_price: price
-                };
-            })
+            detail: details
         };
     },
 
