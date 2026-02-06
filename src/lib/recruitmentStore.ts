@@ -30,7 +30,7 @@ export interface PostLog {
     content_excerpt: string;
     image_url: string;
     created_at: string;
-    activity_type: 'post' | 'comment' | 'reaction' | 'share';
+    activity_type: 'post' | 'comment' | 'reaction' | 'share' | 'friend';
     group_note?: string;
 }
 

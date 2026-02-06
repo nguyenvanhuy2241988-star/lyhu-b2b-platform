@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Plus, Trash2, Link as LinkIcon, Image as ImageIcon, ExternalLink, Pencil, MessageSquare, Share2 } from "lucide-react";
+import { Loader2, Plus, Trash2, Link as LinkIcon, Image as ImageIcon, ExternalLink, Pencil, MessageSquare, Share2, UserPlus } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { getPostLogs, createPostLog, deletePostLog, updatePostLog, upsertGroup, PostLog } from "@/lib/recruitmentStore";
 import { cn } from "@/lib/utils";
@@ -220,11 +220,13 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
                                         "text-xs px-2 py-0.5 rounded-full font-medium capitalize flex items-center gap-1",
                                         log.activity_type === 'comment' ? "bg-orange-100 text-orange-700" :
                                             log.activity_type === 'share' ? "bg-pink-100 text-pink-700" :
-                                                "bg-blue-100 text-blue-700"
+                                                log.activity_type === 'friend' ? "bg-purple-100 text-purple-700" :
+                                                    "bg-blue-100 text-blue-700"
                                     )}>
                                         {log.activity_type === 'comment' && <MessageSquare className="w-3 h-3" />}
                                         {log.activity_type === 'share' && <Share2 className="w-3 h-3" />}
-                                        {log.activity_type || 'post'}
+                                        {log.activity_type === 'friend' && <UserPlus className="w-3 h-3" />}
+                                        {log.activity_type === 'friend' ? 'Kết bạn' : (log.activity_type || 'post')}
                                     </span>
                                     <span className={cn(
                                         "text-xs px-2 py-0.5 rounded-full font-medium capitalize",
@@ -244,7 +246,7 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
                                         </a>
                                     )}
                                     <a href={log.post_link} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-blue-600 hover:underline font-medium truncate">
-                                        <ExternalLink className="w-3 h-3" /> Xem bài viết trực tiếp
+                                        <ExternalLink className="w-3 h-3" /> {log.activity_type === 'friend' ? 'Xem Profile' : 'Xem bài viết trực tiếp'}
                                     </a>
                                     {log.group_note && (
                                         <p className="text-xs text-slate-500 italic truncate">
@@ -296,6 +298,7 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
                                 <option value="comment">Bình luận (Seeding)</option>
                                 <option value="share">Chia sẻ (Share)</option>
                                 <option value="reaction">Tương tác (Reaction)</option>
+                                <option value="friend">Kết bạn (Add Friend)</option>
                             </select>
                         </div>
                         <div>
@@ -344,11 +347,13 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
                             />
                         </div>
                         <div className="md:col-span-2">
-                            <label className="text-xs font-medium text-slate-600 block mb-1">Link Bài viết / Comment <span className="text-red-500">*</span></label>
+                            <label className="text-xs font-medium text-slate-600 block mb-1">
+                                {newLog.activity_type === 'friend' ? 'Link người kết bạn (Profile Link)' : 'Link Bài viết / Comment'} <span className="text-red-500">*</span>
+                            </label>
                             <input
                                 type="text"
                                 className="w-full px-3 py-2 text-sm border rounded-md"
-                                placeholder="https://..."
+                                placeholder={newLog.activity_type === 'friend' ? "https://facebook.com/profile..." : "https://..."}
                                 value={newLog.post_link}
                                 onChange={(e) => setNewLog({ ...newLog, post_link: e.target.value })}
                             />
