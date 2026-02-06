@@ -124,6 +124,7 @@ export const MisaService = {
                 inventory_item_code: item.product?.misa_code || item.sku || "SP_KHAC",
                 inventory_item_name: item.name,
                 description: item.name,
+                unit_code: item.product?.unit || item.unit || "Gói", // Default to "Gói" (common for packaged products)
 
                 quantity: qty,
                 unit_price: price,
