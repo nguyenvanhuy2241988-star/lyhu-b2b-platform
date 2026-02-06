@@ -13,50 +13,76 @@ export async function GET(request: Request) {
     try {
         const token = await MisaService.getAccessToken(supabase);
 
-        // 1. Get Config
+        // Config
         const { data: settings } = await supabase.from('app_settings').select('*').single();
         const config = settings?.misa_config || {};
-        const appId = config.appId || "84318d18-5a63-4422-b94f-40e87d60567e";
+        const customAppId = config.appId;
+        const defaultAppId = "84318d18-5a63-4422-b94f-40e87d60567e";
         const companyCode = config.companyCode?.trim();
         const apiUrl = (config.apiUrl || "https://actapp.misa.vn").replace(/\/$/, "");
+        const readUrl = `${apiUrl}/api/sync/actopen/get_dictionary`;
 
         const results = [];
 
-        // TEST 1: READ Stocks (Dictionary Type 2)
-        // This validates: Token, AppID, CompanyCode, and basic Gateway access.
-        const readUrl = `${apiUrl}/api/sync/actopen/get_dictionary`;
-        const payloadRead = {
-            app_id: appId,
-            org_company_code: companyCode,
-            dictionary_type: 2 // 2 = MaterialGoods (Vật tư hàng hóa), 4 = Stock? check docs. 
-            // Try 2 first.
+        // Helper
+        const runTest = async (name: string, payload: any, headers: any) => {
+            try {
+                const res = await fetch(readUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", ...headers },
+                    body: JSON.stringify(payload)
+                });
+                const text = await res.text();
+                return { test: name, status: res.status, response: text.substring(0, 100) };
+            } catch (e: any) {
+                return { test: name, error: e.message };
+            }
         };
 
-        try {
-            const res1 = await fetch(readUrl, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-MISA-AccessToken": token,
-                    "X-MISA-AppID": appId
-                },
-                body: JSON.stringify(payloadRead)
-            });
-            const text1 = await res1.text();
-            results.push({
-                test: "Get Dictionary (Inventory Items)",
-                status: res1.status,
-                responseSample: text1.substring(0, 500)
-            });
-        } catch (e: any) {
-            results.push({ test: "Get Dictionary", error: e.message });
+        // TEST A: Standard (Custom AppID if set, else Default)
+        results.push(await runTest("A: Standard Config", {
+            app_id: customAppId || defaultAppId,
+            org_company_code: companyCode,
+            dictionary_type: 2
+        }, {
+            "X-MISA-AccessToken": token,
+            "X-MISA-AppID": customAppId || defaultAppId
+        }));
+
+        // TEST B: Force Default AppID (If user is using custom)
+        if (customAppId && customAppId !== defaultAppId) {
+            results.push(await runTest("B: Force Default AppID", {
+                app_id: defaultAppId,
+                org_company_code: companyCode,
+                dictionary_type: 2
+            }, {
+                "X-MISA-AccessToken": token,
+                "X-MISA-AppID": defaultAppId
+            }));
         }
 
-        // TEST 2: READ Config/Options? (If verify fails)
+        // TEST C: No Company Code in Body
+        results.push(await runTest("C: No Body CompanyCode", {
+            app_id: customAppId || defaultAppId,
+            dictionary_type: 2
+        }, {
+            "X-MISA-AccessToken": token,
+            "X-MISA-AppID": customAppId || defaultAppId
+        }));
+
+        // TEST D: Authorization Header Bearer
+        results.push(await runTest("D: Auth Bearer Header", {
+            app_id: customAppId || defaultAppId,
+            org_company_code: companyCode,
+            dictionary_type: 2
+        }, {
+            "Authorization": `Bearer ${token}`,
+            "X-MISA-AppID": customAppId || defaultAppId
+        }));
 
         return NextResponse.json({
             success: true,
-            config: { appId, companyCode, apiUrl },
+            usedAppId: customAppId || defaultAppId,
             results
         });
 
