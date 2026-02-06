@@ -129,10 +129,7 @@ export const MisaService = {
 
                 main_convert_rate: 1,
                 main_quantity: qty,
-                main_unit_price: price,
-
-                // Required by some MISA setups
-                inventory_item_type: 0 // Vật tư hàng hóa
+                main_unit_price: price
             };
         });
 
@@ -144,7 +141,7 @@ export const MisaService = {
             reftype: 3560,    // Hóa đơn bán hàng trong nước
 
             org_refid: order.id,
-            org_refno: `ORD-${order.readableId || order.id.substring(0, 6)}`,
+            org_refno: `ORD-${order.readable_id || order.readableId || order.id.substring(0, 6)}`,
             org_reftype_name: "Đơn đặt hàng website",
             org_reftype: 3560,
 
@@ -157,14 +154,14 @@ export const MisaService = {
             account_object_name: order.customer?.name || order.customer_name || "Khách lẻ",
 
             // Financial Info
-            journal_memo: `Bán hàng đơn #${order.readableId}`,
+            journal_memo: `Bán hàng đơn #${order.readable_id || order.readableId}`,
             currency_id: "VND",
             exchange_rate: 1,
             payment_method: "Tiền mặt",
 
             // Defaults for Required Fields
             // inv_series: "K24T",
-            // inv_no: `INV-${order.readableId}`,
+            // inv_no: `INV-${order.readable_id || order.readableId}`,
             // inv_template_no: "01GTKT0/001",
             inv_type_id: 1, // GTGT
 
