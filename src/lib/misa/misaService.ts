@@ -150,6 +150,10 @@ export const MisaService = {
 
         const totalSaleAmount = totalAmount - totalVat; // Pre-tax roughly
 
+        // Customer Info (Dynamic Mapping based on Phone)
+        const phoneCode = order.receiverPhone || order.customer?.phone || "";
+        const customerCode = phoneCode.trim() || "KH_LE";
+
         // MISA Service "Save" API (Reverted to 3560 - Hóa đơn bán hàng)
         const payload: any = {
             voucher_type: 11, // Hóa đơn bán hàng
@@ -164,9 +168,11 @@ export const MisaService = {
             posted_date: today,
             inv_date: today,
 
-            // Customer Info (snake_case)
-            account_object_code: order.customer?.misa_code || "KH_LE",
-            account_object_name: order.customer?.name || order.customer_name || "Khách lẻ",
+            // Customer Info (Dynamic Mapping based on Phone)
+            account_object_code: (order.receiverPhone || order.customer?.phone || "KH_LE").trim(),
+
+
+            account_object_name: order.customerName || order.customer?.name || "Khách lẻ",
 
             // Financial Info
             journal_memo: `Bán hàng đơn #${order.readable_id || order.readableId}`,
