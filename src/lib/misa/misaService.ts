@@ -155,10 +155,10 @@ export const MisaService = {
         const phoneCode = order.receiverPhone || order.customer?.phone || "";
         const customerCode = phoneCode.trim() || "KH_LE";
 
-        // MISA Service "Save" API - Đơn đặt hàng
+        // MISA Service "Save" API - Hóa đơn bán hàng
         const payload: any = {
             voucher_type: 11, // Bán hàng
-            reftype: 3020,    // Đơn đặt hàng (was 3560 - Hóa đơn)
+            reftype: 3560,    // Hóa đơn bán hàng trong nước (NOT 3020 which is Purchase)
 
             org_refid: order.id,
             org_refno: `ORD-${order.readable_id || order.readableId || order.id.substring(0, 6)}`,
