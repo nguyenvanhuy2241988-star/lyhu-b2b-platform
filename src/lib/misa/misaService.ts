@@ -99,6 +99,7 @@ export const MisaService = {
 
             org_refid: order.id,
             org_refno: `ORD-${order.readableId || order.id.substring(0, 6)}`,
+            org_reftype: 3560, // Required by MISA API
             org_reftype_name: "Đơn đặt hàng website", // Optional description
 
             refdate: orderDate,
