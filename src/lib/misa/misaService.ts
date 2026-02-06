@@ -262,13 +262,20 @@ export const MisaService = {
                 console.log(`[MisaService] Push Sent! Result Pending Callback.`);
                 return { success: true, refId: "PENDING_CALLBACK" };
             } else {
-                const errorMsg = resData?.UserMessage || resData?.DevMessage || JSON.stringify(resData);
-                return { success: false, error: `Misa Reject: ${errorMsg}` };
+                // V5 Standard: ErrorMessage, ErrorCode. V2/Other: UserMessage
+                const msg = resData?.ErrorMessage || resData?.UserMessage || resData?.DevMessage || "Unknown Error";
+                const code = resData?.ErrorCode || "";
+
+                // If it is a validation error (400), sometimes Data contains the specific field errors
+                const dataDetail = resData?.Data ? JSON.stringify(resData.Data) : "";
+
+                const fullError = `${code ? `[${code}] ` : ""}${msg}${dataDetail ? ` | Detail: ${dataDetail}` : ""}`;
+                return { success: false, error: `Misa Reject: ${fullError}` };
             }
 
         } catch (err: any) {
             console.error("[MisaService] Exception:", err);
             return { success: false, error: `Lỗi hệ thống: ${err.message}` };
         }
-    }
+    },
 };
