@@ -139,7 +139,7 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
             }
 
             // Sync with Daily Report for correct history counts
-            syncLogsToDailyReport(userId, date);
+            await syncLogsToDailyReport(userId, date);
 
             // Reset form
             handleCancel();
@@ -153,7 +153,7 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
         if (!confirm("Bạn có chắc muốn xóa minh chứng này?")) return;
         try {
             await deletePostLog(id);
-            syncLogsToDailyReport(userId, date);
+            await syncLogsToDailyReport(userId, date);
             loadLogs();
         } catch (error) {
             console.error(error);
