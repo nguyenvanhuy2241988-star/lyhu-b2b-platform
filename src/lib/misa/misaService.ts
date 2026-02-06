@@ -197,6 +197,11 @@ export const MisaService = {
             total_discount_amount: totalDiscount,
             total_discount_amount_oc: totalDiscount,
 
+            // Status flags (try adding these)
+            is_posted: true,              // Đã ghi sổ
+            is_confirm: true,             // Đã xác nhận
+            voucher_status: 1,            // 1 = Đã hoàn thành
+
             // Item Details
             detail: details
         };
