@@ -191,7 +191,7 @@ export const MisaService = {
     },
 
     // 3. Push to Misa
-    pushSalesOrder: async (orderId: string, orderData: any, supabase: any): Promise<{ success: boolean; refId?: string; error?: string }> => {
+    pushSalesOrder: async (orderId: string, orderData: any, supabase: any): Promise<{ success: boolean; refId?: string; error?: string; debugPayload?: any }> => {
         let endpoint = "";
         try {
             console.log(`[MisaService] Pushing order ${orderId} to Misa (REAL)...`);
@@ -264,7 +264,11 @@ export const MisaService = {
                     }
                 } catch (e) { }
 
-                return { success: false, error: `Misa Error (${res.status}): ${errorDetails}` };
+                return {
+                    success: false,
+                    error: `Misa Error (${res.status}): ${errorDetails}`,
+                    debugPayload: payload
+                };
             }
 
             let resData;
@@ -288,7 +292,11 @@ export const MisaService = {
                 const dataDetail = resData?.Data ? JSON.stringify(resData.Data) : "";
 
                 const fullError = `${code ? `[${code}] ` : ""}${msg}${dataDetail ? ` | Detail: ${dataDetail}` : ""}`;
-                return { success: false, error: `Misa Reject: ${fullError}` };
+                return {
+                    success: false,
+                    error: `Misa Reject: ${fullError}`,
+                    debugPayload: payload
+                };
             }
 
         } catch (err: any) {

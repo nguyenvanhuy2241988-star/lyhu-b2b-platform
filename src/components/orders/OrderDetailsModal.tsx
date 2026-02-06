@@ -32,7 +32,13 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                 alert("Đồng bộ Misa thành công!");
             } else {
                 setLocalMisaStatus({ status: 'failed', refId: null, error: data.error || "Unknown error" });
-                alert("❌ MISA Sync Error: " + (data.error || JSON.stringify(data)));
+
+                // Log payload for debugging
+                if (data.debugPayload) {
+                    console.error("[MISA DEBUG] Failed Payload:", JSON.stringify(data.debugPayload, null, 2));
+                }
+
+                alert("❌ MISA Sync Error: " + (data.error || JSON.stringify(data)) + "\n\n(Xem Console F12 để thấy Payload chi tiết)");
             }
         } catch (err: any) {
             console.error("Sync Misa error", err);
@@ -40,6 +46,20 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
             alert("Lỗi kết nối: " + err.message);
         } finally {
             setIsSyncing(false);
+        }
+    };
+
+    const handleTestConnection = async () => {
+        try {
+            const res = await fetch('/api/misa/test-connection');
+            const data = await res.json();
+            if (data.success) {
+                alert(`✅ Kết nối thành công! Token: ${data.tokenPreview}`);
+            } else {
+                alert(`❌ Kết nối thất bại: ${data.error}`);
+            }
+        } catch (e: any) {
+            alert(`Lỗi mạng: ${e.message}`);
         }
     };
 
@@ -297,6 +317,14 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                         >
                             <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
                             {effectiveMisaStatus === 'synced' ? 'Đã Sync Misa' : 'Sync Misa'}
+                        </button>
+
+                        <button
+                            onClick={handleTestConnection}
+                            className="px-3 py-2 bg-yellow-50 text-yellow-700 border border-yellow-200 rounded-lg hover:bg-yellow-100 font-medium text-sm"
+                            title="Kiểm tra kết nối MISA"
+                        >
+                            Test Misa
                         </button>
 
                         <button
