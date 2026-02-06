@@ -150,7 +150,8 @@ export const MisaService = {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-MISA-AccessToken": token
+                    "X-MISA-AccessToken": token,
+                    "User-Agent": "LYHU-B2B-Platform/1.0"
                 },
                 body: JSON.stringify(payload)
             });
