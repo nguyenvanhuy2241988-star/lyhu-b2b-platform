@@ -32,7 +32,7 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                 alert("Đồng bộ Misa thành công!");
             } else {
                 setLocalMisaStatus({ status: 'failed', refId: null, error: data.error || "Unknown error" });
-                alert("Đồng bộ thất bại: " + (data.error || "Lỗi không xác định"));
+                alert("Đồng bộ thất bại (Server Response): " + JSON.stringify(data));
             }
         } catch (err: any) {
             console.error("Sync Misa error", err);
@@ -291,8 +291,8 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                             onClick={handleSyncMisa}
                             disabled={isSyncing || effectiveMisaStatus === 'synced'}
                             className={`px-4 py-2 border rounded-lg font-medium flex items-center gap-2 transition-colors ${effectiveMisaStatus === 'synced'
-                                    ? 'bg-slate-50 text-slate-400 border-slate-200'
-                                    : 'bg-white text-blue-700 border-blue-200 hover:bg-blue-50'
+                                ? 'bg-slate-50 text-slate-400 border-slate-200'
+                                : 'bg-white text-blue-700 border-blue-200 hover:bg-blue-50'
                                 }`}
                         >
                             <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />

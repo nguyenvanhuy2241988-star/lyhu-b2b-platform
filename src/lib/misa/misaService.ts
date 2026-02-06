@@ -90,9 +90,10 @@ export const MisaService = {
 
         // MISA AMIS Open API often uses PascalCase for the "Save" endpoint data
         return {
-            VoucherType: 11, // PascalCase wrapper key
-            OrgRefID: order.id,
-            VoucherData: {
+            // Updated Hypothesis: Wrapper keys are snake_case, Inner Data is PascalCase
+            voucher_type: 11,
+            org_refid: order.id,
+            voucher_data: {
                 RefType: 155, // 155: Bán hàng chưa thu tiền (Credit Sales)
                 RefNo: `ORD-${order.readableId || order.id.substring(0, 6)}`,
                 RefDate: new Date(order.created_at || new Date()).toISOString().split('T')[0],
