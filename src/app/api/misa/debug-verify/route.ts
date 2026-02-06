@@ -83,6 +83,11 @@ export async function GET(request: Request) {
         return NextResponse.json({
             success: true,
             usedAppId: customAppId || defaultAppId,
+            token_preview: {
+                type: typeof token,
+                is_string: typeof token === 'string',
+                sample: typeof token === 'string' ? token.substring(0, 20) + "..." : JSON.stringify(token)
+            },
             results
         });
 
