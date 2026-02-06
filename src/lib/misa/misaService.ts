@@ -38,23 +38,9 @@ export const MisaService = {
         }
 
         // 2. Determine Auth URL
-        // If the user manually set the API URL to an 'actapp' domain, they likely want to use it for Auth.
-        // Otherwise, default to the standard production auth URL.
-        const userUrl = config.apiUrl || "";
-        let baseUrl = "https://actapp.misa.vn";
-
-        if (userUrl.includes("actapp") || userUrl.includes("misa.vn")) {
-            // If user explicitly points to a misa domain, let's respect the base
-            // But valid connect endpoint is always /api/oauth/actopen/connect
-            // We'll strip the path and append the correct one to be safe, or just use the user's string if it looks like a base.
-            try {
-                const urlObj = new URL(userUrl);
-                baseUrl = urlObj.origin;
-            } catch (e) {
-                // Invalid URL string, keep default
-            }
-        }
-
+        // connection endpoint is ALWAYS actapp.misa.vn for MISA AMIS ACT
+        // The config.apiUrl is purely for the Service Endpoint (openservice)
+        const baseUrl = "https://actapp.misa.vn";
         const connectUrl = `${baseUrl}/api/oauth/actopen/connect`;
 
         // Use a variable to track which URL failed
@@ -135,14 +121,30 @@ export const MisaService = {
             // 1. Get Token (Pass supabase client)
             const token = await MisaService.getAccessToken(supabase);
 
-            // 2. Prepare Payload
-            const payload = MisaService.mapOrderToMisaInvoice(orderData);
+            // 2. Map Data
+            const invoiceData = MisaService.mapOrderToMisaInvoice(orderData);
 
-            // 3. Send to Misa API
+            // 3. Prepare Payload for /api/sync/actopen/save
+            // Structure: { app_id, org_company_code, voucher_data: [...] }? 
+            // Or just a list of vouchers if Token is in header?
+            // Based on doc references, usually:
+            // POST /api/sync/actopen/save
+            // Header: X-MISA-AccessToken
+            // Body: [ { ... invoice object ... } ]  <-- Array of vouchers
+
+            const payload = [invoiceData];
+
+            // 4. Send to Misa API
             const settings = await fetchAppSettings(supabase);
             // @ts-ignore
-            const apiUrl = settings?.misa_config?.apiUrl || "https://openservice.misa.com.vn";
-            endpoint = `${apiUrl}/api/v1/fa/sa_invoice`;
+            const config = settings?.misa_config;
+            const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
+
+            // Ensure we use the correct save endpoint
+            // If user enters 'openservice', we might need to fallback to actapp if that's where save lives.
+            // But let's trust the user's URL + standard path.
+            // Documentation usually points to /api/sync/actopen/save
+            endpoint = `${apiUrl}/api/sync/actopen/save`;
 
             console.log(`[MisaService] POST ${endpoint}`);
 
@@ -156,28 +158,32 @@ export const MisaService = {
                 body: JSON.stringify(payload)
             });
 
-            // Handle non-JSON responses (like 502/404 HTML)
+            // Handle non-JSON responses
             const textRaw = await res.text();
             let resData;
             try {
                 resData = JSON.parse(textRaw);
             } catch (e) {
-                throw new Error(`Misa API returned non-JSON: ${textRaw.substring(0, 100)}...`);
+                // If HTML returned (404/500), throw
+                throw new Error(`Misa API Error (${res.status}): ${textRaw.substring(0, 100)}`);
             }
 
             if (res.ok && resData?.Success) {
-                const refId = resData.Data;
+                // Response Data for save is usually: { Success: true, Data: [ { RefID: ... } ] }
+                const resultData = resData.Data;
+                const refId = Array.isArray(resultData) ? resultData[0]?.RefID : resultData;
+
                 console.log(`[MisaService] Push Success! Misa Ref: ${refId}`);
                 return { success: true, refId: refId || "MISA_SYNCed" };
             } else {
                 console.error("[MisaService] Push Failed:", resData);
-                const errorMsg = resData?.UserMessage || resData?.DevMessage || JSON.stringify(resData);
+                const errorMsg = resData?.UserMessage || resData?.DevMessage || resData?.Data || JSON.stringify(resData);
                 return { success: false, error: `Misa Reject: ${errorMsg}` };
             }
 
         } catch (err: any) {
             console.error("[MisaService] Exception:", err);
-            return { success: false, error: `Lỗi kết nối Misa (Push): ${err.message}` };
+            return { success: false, error: `Lỗi kết nối Misa: ${err.message}` };
         }
     }
 };
