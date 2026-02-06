@@ -124,7 +124,7 @@ export const MisaService = {
                 vat_amount: vatAmount,
                 vat_amount_oc: vatAmount,
 
-                stock_code: "KHO_TONG", // Default Stock
+                // stock_code: "KHO_TONG", // Default Stock
                 exchange_rate_operator: "*",
 
                 main_convert_rate: 1,
@@ -163,9 +163,9 @@ export const MisaService = {
             payment_method: "Tiền mặt",
 
             // Defaults for Required Fields
-            inv_series: "K24T",
-            inv_no: `INV-${order.readableId}`,
-            inv_template_no: "01GTKT0/001",
+            // inv_series: "K24T",
+            // inv_no: `INV-${order.readableId}`,
+            // inv_template_no: "01GTKT0/001",
             inv_type_id: 1, // GTGT
 
             // Totals (REQUIRED)
@@ -248,7 +248,7 @@ export const MisaService = {
 
             if (!res.ok) {
                 console.error(`[MisaService] Push Failed Status ${res.status}:`, textRaw);
-                let errorDetails = textRaw;
+                let errorDetails = textRaw || "(EMPTY RESPONSE BODY)"; // Explicitly mark empty
                 try {
                     const errJson = JSON.parse(textRaw);
                     // V5 Standard uses ErrorMessage. fallback to UserMessage/DevMessage.
