@@ -88,35 +88,34 @@ export const MisaService = {
         // Ensure null safety
         const items = order.items || [];
 
-        // MISA AMIS Open API (actopen) usually expects snake_case for fields
-        // Ref: sa_invoice
+        // MISA AMIS Open API often uses PascalCase for the "Save" endpoint data
         return {
-            voucher_type: "sa_invoice",
-            org_refid: order.id, // Critical for async tracking
-            voucher_data: {
-                ref_type: 155, // 155: Bán hàng chưa thu tiền (Credit Sales)
-                ref_no: `ORD-${order.readableId || order.id.substring(0, 6)}`,
-                ref_date: new Date(order.created_at || new Date()).toISOString().split('T')[0],
-                posted_date: new Date().toISOString().split('T')[0],
+            refID: order.id, // Helps with tracking
+            voucherType: "SAInvoice", // Sometimes used as discriminator, or just RefType inside
+            voucherData: {
+                RefType: 155,
+                RefNo: `ORD-${order.readableId || order.id.substring(0, 6)}`,
+                RefDate: new Date(order.created_at || new Date()).toISOString().split('T')[0],
+                PostedDate: new Date().toISOString().split('T')[0],
 
-                account_object_code: order.customer?.misa_code || "KH_LE",
-                journal_memo: `Bán hàng cho đơn hàng #${order.readableId}`,
-                total_amount: order.totalAmount,
+                AccountObjectCode: order.customer?.misa_code || "KH_LE",
+                JournalMemo: `Bán hàng cho đơn hàng #${order.readableId}`,
+                TotalAmount: order.totalAmount,
 
-                currency_id: "VND",
-                exchange_rate: 1,
+                CurrencyID: "VND",
+                ExchangeRate: 1,
 
-                // Reverting to 'detail' as per standard structures
-                detail: items.map((item: any) => ({
-                    inventory_item_code: item.product?.misa_code || item.sku || "SP_KHAC",
-                    description: item.name,
-                    quantity: item.quantity,
-                    unit_price: item.price || item.unitPrice || 0,
-                    amount: (item.price || item.unitPrice || 0) * item.quantity,
-                    vat_rate: order.vat || 0,
-                    debit_account: "131",
-                    credit_account: "5111",
-                    stock_code: "KHO_TONG"
+                // Details
+                SAInvoiceDetail: items.map((item: any) => ({
+                    InventoryItemCode: item.product?.misa_code || item.sku || "SP_KHAC",
+                    Description: item.name,
+                    Quantity: item.quantity,
+                    UnitPrice: item.price || item.unitPrice || 0,
+                    Amount: (item.price || item.unitPrice || 0) * item.quantity,
+                    VATRate: order.vat || 0,
+                    DebitAccount: "131",
+                    CreditAccount: "5111",
+                    StockCode: "KHO_TONG"
                 }))
             }
         };
