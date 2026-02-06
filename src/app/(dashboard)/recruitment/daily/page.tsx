@@ -126,7 +126,8 @@ export default function DailyReportPage() {
                         userId={user.id}
                         date={date}
                         onUpdate={() => {
-                            // Optional: Refresh report if we implement auto-count later
+                            loadReportForDate(date);
+                            loadHistory();
                         }}
                     />
 
