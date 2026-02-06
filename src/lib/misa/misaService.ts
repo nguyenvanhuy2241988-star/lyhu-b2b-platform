@@ -106,8 +106,8 @@ export const MisaService = {
                 currency_id: "VND",
                 exchange_rate: 1,
 
-                // MISA usually expects 'sa_invoice_detail' for this voucher type
-                sa_invoice_detail: items.map((item: any) => ({
+                // Reverting to 'detail' as per standard structures
+                detail: items.map((item: any) => ({
                     inventory_item_code: item.product?.misa_code || item.sku || "SP_KHAC",
                     description: item.name,
                     quantity: item.quantity,
@@ -139,13 +139,8 @@ export const MisaService = {
             // 3. Map Data
             const invoiceObj = MisaService.mapOrderToMisaInvoice(orderData);
 
-            // 4. Prepare Context Wrapper
-            // /api/sync/actopen/save often requires app_id and company_code in the body
-            const payload = {
-                app_id: config.appId,
-                org_company_code: config.companyCode,
-                data: [invoiceObj]
-            };
+            // 4. Prepare Payload (Unwrapped Array)
+            const payload = [invoiceObj];
 
             // 5. Send to Misa API
             const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
