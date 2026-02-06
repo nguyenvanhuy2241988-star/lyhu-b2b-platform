@@ -25,6 +25,12 @@ export interface AppSettings {
         email_automation_enabled: boolean;
         // Future: distribution_rules, excluded_sources, etc.
     };
+    misa_config?: {
+        apiUrl: string;
+        appId: string;
+        accessCode: string;
+        companyCode: string;
+    };
 }
 
 export interface EmailLog {
