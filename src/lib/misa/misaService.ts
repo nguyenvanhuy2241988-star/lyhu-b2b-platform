@@ -313,7 +313,11 @@ export const MisaService = {
             if (resData?.Success) {
                 console.log(`[MISA SUCCESS] Push Sent! Full Response:`, JSON.stringify(resData));
                 // Usually resData.Data contains the Reference ID for ActOpen
-                return { success: true, refId: resData.Data || resData.Reference || "PENDING_CALLBACK" };
+                return {
+                    success: true,
+                    refId: resData.Data || resData.Reference || "PENDING_CALLBACK",
+                    debugPayload: payload // Add payload for debugging
+                };
             } else {
                 // V5 Standard: ErrorMessage, ErrorCode. V2/Other: UserMessage
                 const msg = resData?.ErrorMessage || resData?.UserMessage || resData?.DevMessage || "Unknown Error";

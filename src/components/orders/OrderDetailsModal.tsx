@@ -39,6 +39,11 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                     console.log("%c[DEBUG] Product Codes Sent:", "color: orange; font-weight: bold;");
                     console.table(data.debug.productCodes);
                 }
+                // Log full payload for debugging
+                if (data.debugPayload) {
+                    console.log("%c[DEBUG] FULL PAYLOAD SENT TO MISA:", "color: purple; font-size: 14px; font-weight: bold;");
+                    console.log(JSON.stringify(data.debugPayload, null, 2));
+                }
 
                 // Build alert message
                 let alertMsg = `✅ Đồng bộ MISA thành công!\n\nMã chứng từ: ${misaRef}`;
