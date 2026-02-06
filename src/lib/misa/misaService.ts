@@ -91,26 +91,30 @@ export const MisaService = {
         // MISA AMIS Open API (actopen) usually expects snake_case for fields
         // Ref: sa_invoice
         return {
-            voucher_type: "sa_invoice", // Critical for generic save endpoint
+            voucher_type: "sa_invoice",
             voucher_data: {
+                ref_type: 155, // 155: Bán hàng chưa thu tiền (Credit Sales)
                 ref_no: `ORD-${order.readableId || order.id.substring(0, 6)}`,
-                ref_date: new Date(order.created_at || new Date()).toISOString().split('T')[0], // YYYY-MM-DD
+                ref_date: new Date(order.created_at || new Date()).toISOString().split('T')[0],
                 posted_date: new Date().toISOString().split('T')[0],
+
                 account_object_code: order.customer?.misa_code || "KH_LE",
                 journal_memo: `Bán hàng cho đơn hàng #${order.readableId}`,
                 total_amount: order.totalAmount,
-                // Invoice details
+
                 currency_id: "VND",
                 exchange_rate: 1,
 
-                // Details (Detail table name is usually sa_invoice_detail)
-                detail: items.map((item: any) => ({
+                // MISA usually expects 'sa_invoice_detail' for this voucher type
+                sa_invoice_detail: items.map((item: any) => ({
                     inventory_item_code: item.product?.misa_code || item.sku || "SP_KHAC",
                     description: item.name,
                     quantity: item.quantity,
                     unit_price: item.price || item.unitPrice || 0,
                     amount: (item.price || item.unitPrice || 0) * item.quantity,
                     vat_rate: order.vat || 0,
+                    debit_account: "131", // Phải thu
+                    credit_account: "5111", // Doanh thu
                     stock_code: "KHO_TONG"
                 }))
             }
