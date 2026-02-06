@@ -65,8 +65,27 @@ export default function KpiDashboard({ date }: KpiDashboardProps) {
             )
             .subscribe();
 
+        // Subscribe to Settings changes (if Admin updates targets)
+        const settingsChannel = supabase
+            .channel('recruitment-kpi-settings-updates')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'recruitment_kpi_settings',
+                    filter: `user_id=eq.${user.id}`
+                },
+                () => {
+                    console.log("Settings update received!");
+                    loadStats();
+                }
+            )
+            .subscribe();
+
         return () => {
             supabase.removeChannel(channel);
+            supabase.removeChannel(settingsChannel);
         };
     }, [user, date]);
 

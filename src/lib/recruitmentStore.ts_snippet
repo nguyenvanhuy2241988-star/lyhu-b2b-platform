@@ -1,0 +1,22 @@
+
+export const syncLogsToDailyReport = async (userId: string, date: string) => {
+    // 1. Get current stats
+    const stats = await getRecruitmentKpiStats(userId, date);
+
+    // 2. Update Daily Report table
+    // Note: We use upsert to create the row if it doesn't exist yet
+    const { error } = await supabase
+        .from('recruitment_daily_activities')
+        .upsert({
+            user_id: userId,
+            date: date,
+            fb_posts_free: stats.posts_count, // Mapping 'post' to 'fb_posts_free' for now
+            fb_comments: stats.comments_count,
+            fb_friends: stats.friends_count,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id, date' });
+
+    if (error) {
+        console.error("Error syncing logs to daily report:", error);
+    }
+};

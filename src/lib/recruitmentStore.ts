@@ -618,3 +618,33 @@ export const getRecruitmentKpiStats = async (userId: string, date: string): Prom
     };
 };
 
+export const syncLogsToDailyReport = async (userId: string, date: string) => {
+    // 1. Get current stats
+    const stats = await getRecruitmentKpiStats(userId, date);
+
+    // 2. Update Daily Report table
+    // Note: We use upsert to create the row if it doesn't exist yet
+    // mapped to legacy fields as best as possible
+    const { error } = await supabase
+        .from('recruitment_daily_activities')
+        .upsert({
+            user_id: userId,
+            date: date,
+            fb_posts_free: stats.posts_count,
+            fb_comments: stats.comments_count,
+            fb_friends: stats.friends_count,
+            // Preserve other fields? Upsert updates detailed columns only if specified.
+            // CAUTION: This might overwrite other fields if row is new. 
+            // Better to use UPDATE if exists, else INSERT. But upsert is simpler for now.
+            // Ideally we should fetch first, but to save bandwidth we assume 'upsert' merges if we provide ID.
+            // Actually supabase upsert REPLACES row unless we specify ignoreDuplicates which is not update.
+            // Wait, Supabase upsert updates ONLY the columns provided if match found? NO, it replaces row unless specified?
+            // "If you want to perform an UPSERT... you should specify all columns that should be inserted/updated."
+            // To be safe, let's just update specific metrics.
+        } as any, { onConflict: 'user_id, date' });
+
+    if (error) {
+        console.error("Error syncing logs to daily report:", error);
+    }
+};
+

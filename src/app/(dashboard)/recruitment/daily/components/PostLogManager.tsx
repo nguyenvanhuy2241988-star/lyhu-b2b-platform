@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Loader2, Plus, Trash2, Link as LinkIcon, Image as ImageIcon, ExternalLink, Pencil, MessageSquare, Share2, UserPlus } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
-import { getPostLogs, createPostLog, deletePostLog, updatePostLog, upsertGroup, PostLog } from "@/lib/recruitmentStore";
+import { getPostLogs, createPostLog, deletePostLog, updatePostLog, upsertGroup, PostLog, syncLogsToDailyReport } from "@/lib/recruitmentStore";
 import { cn } from "@/lib/utils";
 
 interface PostLogManagerProps {
@@ -138,6 +138,9 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
                 }).catch(err => console.error("Error saving group data:", err));
             }
 
+            // Sync with Daily Report for correct history counts
+            syncLogsToDailyReport(userId, date);
+
             // Reset form
             handleCancel();
             loadLogs();
@@ -150,6 +153,7 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
         if (!confirm("Bạn có chắc muốn xóa minh chứng này?")) return;
         try {
             await deletePostLog(id);
+            syncLogsToDailyReport(userId, date);
             loadLogs();
         } catch (error) {
             console.error(error);
