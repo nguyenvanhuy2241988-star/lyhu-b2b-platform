@@ -89,11 +89,12 @@ export const MisaService = {
         const items = order.items || [];
 
         // MISA AMIS Open API often uses PascalCase for the "Save" endpoint data
+        // Search indicates voucher_type 11 = sa_invoice (Sales Invoice)
         return {
-            refID: order.id, // Helps with tracking
-            voucherType: "SAInvoice", // Sometimes used as discriminator, or just RefType inside
-            voucherData: {
-                RefType: 155,
+            voucher_type: 11, // 11: Chứng từ Bán hàng (Sales Invoice)
+            org_refid: order.id,
+            voucher_data: {
+                RefType: 155, // 155: Bán hàng chưa thu tiền (Credit Sales)
                 RefNo: `ORD-${order.readableId || order.id.substring(0, 6)}`,
                 RefDate: new Date(order.created_at || new Date()).toISOString().split('T')[0],
                 PostedDate: new Date().toISOString().split('T')[0],
@@ -105,7 +106,7 @@ export const MisaService = {
                 CurrencyID: "VND",
                 ExchangeRate: 1,
 
-                // Details
+                // MISA usually expects PascalCase 'SAInvoiceDetail' when using voucher_type 11
                 SAInvoiceDetail: items.map((item: any) => ({
                     InventoryItemCode: item.product?.misa_code || item.sku || "SP_KHAC",
                     Description: item.name,
