@@ -139,8 +139,15 @@ export const MisaService = {
             // 3. Map Data
             const invoiceObj = MisaService.mapOrderToMisaInvoice(orderData);
 
-            // 4. Prepare Payload (Unwrapped Array)
-            const payload = [invoiceObj];
+            // 4. Prepare Payload (Wrapped with AppID/CompanyCode)
+            // Use fallback AppID same as Auth
+            const appId = config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e";
+
+            const payload = {
+                app_id: appId,
+                org_company_code: config?.companyCode,
+                data: [invoiceObj]
+            };
 
             // 5. Send to Misa API
             const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
@@ -149,12 +156,13 @@ export const MisaService = {
             endpoint = `${baseUrl}/api/sync/actopen/save`;
 
             console.log(`[MisaService] POST ${endpoint}`);
+            console.log(`[MisaService] Config:`, JSON.stringify(config));
             console.log(`[MisaService] Payload:`, JSON.stringify(payload, null, 2));
 
             const headers = {
                 "Content-Type": "application/json",
                 "X-MISA-AccessToken": token,
-                "X-MISA-AppID": config.appId || "", // Try optional AppID header
+                "X-MISA-AppID": appId, // Ensure header also has valid ID
                 "User-Agent": "LYHU-B2B-Platform/1.0"
             };
             console.log(`[MisaService] Request Headers:`, headers);
