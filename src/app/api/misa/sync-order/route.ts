@@ -45,8 +45,19 @@ export async function POST(req: NextRequest) {
             console.warn(`Order ${orderId} has items without Misa Code:`, missingProductMaps.map((i: any) => i.product?.sku));
         }
 
+        // Debug: Log what product codes we're about to send
+        const productCodeDebug = order.items.map((i: any) => ({
+            name: i.product?.name || i.name,
+            misa_code: i.product?.misa_code || "MISSING",
+            sku: i.product?.sku || i.sku
+        }));
+        console.log(`[Sync] Order ${orderId} Product Codes:`, JSON.stringify(productCodeDebug));
+
         // 3. Push to Misa
         const result = await MisaService.pushSalesOrder(orderId, order, supabaseAdmin);
+
+        // Add debug info to result
+        (result as any).debug = { productCodes: productCodeDebug };
 
         // 4. Update Status in DB
         const updateData: any = {
