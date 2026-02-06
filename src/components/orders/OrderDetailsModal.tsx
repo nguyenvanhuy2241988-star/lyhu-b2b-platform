@@ -309,9 +309,9 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                     <div className="p-4 border-t border-slate-200 flex justify-end gap-3 bg-slate-50 rounded-b-xl print:hidden">
                         <button
                             onClick={handleSyncMisa}
-                            disabled={isSyncing || effectiveMisaStatus === 'synced'}
+                            disabled={isSyncing} // Force UNLOCKED for Debugging: removed || effectiveMisaStatus === 'synced'
                             className={`px-4 py-2 border rounded-lg font-medium flex items-center gap-2 transition-colors ${effectiveMisaStatus === 'synced'
-                                ? 'bg-slate-50 text-slate-400 border-slate-200'
+                                ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' // Changed style to indicate clickable success
                                 : 'bg-white text-blue-700 border-blue-200 hover:bg-blue-50'
                                 }`}
                         >
