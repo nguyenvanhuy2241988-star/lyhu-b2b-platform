@@ -84,7 +84,7 @@ export const MisaService = {
     },
 
     // 2. Map Order to Misa Invoice
-    mapOrderToMisaInvoice: (order: any, branchId?: string) => {
+    mapOrderToMisaInvoice: (order: any, branchId?: string, stockCode?: string) => {
         const items = order.items || [];
         const today = new Date().toISOString().split('T')[0];
         const orderDate = new Date(order.created_at || new Date()).toISOString().split('T')[0];
@@ -124,7 +124,7 @@ export const MisaService = {
                 vat_amount: vatAmount,
                 vat_amount_oc: vatAmount,
 
-                // stock_code: "KHO_TONG", // Default Stock
+                stock_code: stockCode || "KHO", // Default Stock or from Config
                 exchange_rate_operator: "*",
 
                 main_convert_rate: 1,
@@ -166,7 +166,7 @@ export const MisaService = {
             // inv_series: "K24T",
             // inv_no: `INV-${order.readableId}`,
             // inv_template_no: "01GTKT0/001",
-            // inv_type_id: 1, // GTGT
+            inv_type_id: 1, // GTGT
 
             // Totals (REQUIRED)
             total_sale_amount: totalSaleAmount,
@@ -204,9 +204,10 @@ export const MisaService = {
             // @ts-ignore
             const config = settings?.misa_config;
             const branchId = config?.branchId; // Retrieve branchId from config
+            const stockCode = config?.stockCode; // Retrieve stockCode from config
 
             // 3. Map Data
-            const invoiceObj = MisaService.mapOrderToMisaInvoice(orderData, branchId);
+            const invoiceObj = MisaService.mapOrderToMisaInvoice(orderData, branchId, stockCode);
 
             // 4. Prepare Payload (Strict V5 Schema)
             // https://actdocs.misa.vn
