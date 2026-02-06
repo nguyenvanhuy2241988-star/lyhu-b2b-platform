@@ -23,7 +23,7 @@ export interface PostLog {
     id: string;
     user_id: string;
     date: string;
-    platform: 'facebook_group' | 'facebook_page' | 'threads' | 'zalo' | 'linkedin' | 'other';
+    platform: 'facebook_group' | 'facebook_page' | 'facebook_personal' | 'threads' | 'zalo' | 'linkedin' | 'other';
     group_name: string;
     group_link: string;
     post_link: string;
@@ -34,46 +34,20 @@ export interface PostLog {
     group_note?: string;
 }
 
-export interface RecruitmentGroup {
-    id: string;
-    link: string;
-    name: string;
-    platform: string;
-    notes?: string;
-    status: 'active' | 'archived' | 'banned';
-    updated_at: string;
-}
-
-export interface RecruitmentContact {
-    id: string;
-    name: string;
-    position: string;
-    organization: string;
-    phone: string;
-    email: string;
-    social_link: string;
-    notes: string;
-    status: 'new' | 'contacted' | 'connected';
-    created_by?: string;
-    created_at?: string;
-}
-
-export interface RecruitmentPlatform {
-    id: string;
-    name: string;
-    type: string;
-    pricing_details: string;
-    tips: string;
-    active: boolean;
-}
-
-// --- KPI Types ---
+// ... existing code ...
 
 export interface RecruitmentKpiSettings {
     user_id: string;
     fb_posts_target: number;
     fb_comments_target: number;
     fb_friends_target: number;
+
+    // New targets
+    fb_personal_posts_target: number;
+    threads_posts_target: number;
+    threads_comments_target: number;
+    zalo_posts_target: number;
+
     created_at?: string;
     updated_at?: string;
 }
@@ -85,6 +59,19 @@ export interface RecruitmentKpiStats {
     posts_target: number;
     comments_target: number;
     friends_target: number;
+
+    // Granular Stats
+    fb_personal_posts_count: number;
+    fb_personal_posts_target: number;
+
+    threads_posts_count: number;
+    threads_posts_target: number;
+
+    threads_comments_count: number;
+    threads_comments_target: number;
+
+    zalo_posts_count: number;
+    zalo_posts_target: number;
 }
 
 // --- Restore Missing Interfaces for Candidates ---
@@ -572,11 +559,22 @@ export const getRecruitmentKpiSettings = async (userId: string) => {
             user_id: userId,
             fb_posts_target: 20,
             fb_comments_target: 50,
-            fb_friends_target: 10
+            fb_friends_target: 10,
+            fb_personal_posts_target: 5,
+            threads_posts_target: 10,
+            threads_comments_target: 20,
+            zalo_posts_target: 5
         } as RecruitmentKpiSettings;
     }
 
-    return data as RecruitmentKpiSettings;
+    // Fill missing keys if old row exists but new cols are null (should default in DB but safety here)
+    return {
+        ...data,
+        fb_personal_posts_target: data.fb_personal_posts_target ?? 5,
+        threads_posts_target: data.threads_posts_target ?? 10,
+        threads_comments_target: data.threads_comments_target ?? 20,
+        zalo_posts_target: data.zalo_posts_target ?? 5
+    } as RecruitmentKpiSettings;
 };
 
 export const updateRecruitmentKpiSettings = async (settings: Partial<RecruitmentKpiSettings> & { user_id: string }) => {
@@ -599,14 +597,17 @@ export const getRecruitmentKpiStats = async (userId: string, date: string): Prom
     const settings = await getRecruitmentKpiSettings(userId);
 
     // 2. Get Logs (Actuals)
-    // We fetch all logs for the day to count them.
-    // Optimization: In a huge app, we might use a summary table or count query, 
-    // but for daily logs (usually < 100 items), fetching client-side is fine and supports realtime updates easier.
     const logs = await getPostLogs(userId, date);
 
-    const postsCount = logs.filter(l => l.activity_type === 'post').length;
-    const commentsCount = logs.filter(l => l.activity_type === 'comment').length;
-    const friendsCount = logs.filter(l => l.activity_type === 'friend').length;
+    const postsCount = logs.filter(l => l.activity_type === 'post' && ['facebook_group', 'facebook_page'].includes(l.platform)).length;
+    const commentsCount = logs.filter(l => l.activity_type === 'comment' && ['facebook_group', 'facebook_page'].includes(l.platform)).length;
+    const friendsCount = logs.filter(l => l.activity_type === 'friend').length; // Friends usually FB
+
+    // Granular Counts
+    const fbPersonalPostsCount = logs.filter(l => l.activity_type === 'post' && l.platform === 'facebook_personal').length;
+    const threadsPostsCount = logs.filter(l => l.activity_type === 'post' && l.platform === 'threads').length;
+    const threadsCommentsCount = logs.filter(l => l.activity_type === 'comment' && l.platform === 'threads').length;
+    const zaloPostsCount = logs.filter(l => l.activity_type === 'post' && l.platform === 'zalo').length;
 
     return {
         posts_count: postsCount,
@@ -614,7 +615,19 @@ export const getRecruitmentKpiStats = async (userId: string, date: string): Prom
         friends_count: friendsCount,
         posts_target: settings.fb_posts_target,
         comments_target: settings.fb_comments_target,
-        friends_target: settings.fb_friends_target
+        friends_target: settings.fb_friends_target,
+
+        fb_personal_posts_count: fbPersonalPostsCount,
+        fb_personal_posts_target: settings.fb_personal_posts_target,
+
+        threads_posts_count: threadsPostsCount,
+        threads_posts_target: settings.threads_posts_target,
+
+        threads_comments_count: threadsCommentsCount,
+        threads_comments_target: settings.threads_comments_target,
+
+        zalo_posts_count: zaloPostsCount,
+        zalo_posts_target: settings.zalo_posts_target
     };
 };
 

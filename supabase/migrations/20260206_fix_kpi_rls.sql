@@ -17,9 +17,10 @@ END;
 $$;
 
 -- 2. Drop existing policies to avoid conflicts
+DROP POLICY IF EXISTS "Admins can manage all KPI settings" ON public.recruitment_kpi_settings;
 DROP POLICY IF EXISTS "Users can view own KPI settings" ON public.recruitment_kpi_settings;
-DROP POLICY IF EXISTS "Admins can view all KPI settings" ON public.recruitment_kpi_settings;
 DROP POLICY IF EXISTS "Users can insert own KPI settings" ON public.recruitment_kpi_settings;
+DROP POLICY IF EXISTS "Admins can view all KPI settings" ON public.recruitment_kpi_settings;
 DROP POLICY IF EXISTS "Admins can update KPI settings" ON public.recruitment_kpi_settings;
 DROP POLICY IF EXISTS "Admins can delete KPI settings" ON public.recruitment_kpi_settings;
 
@@ -35,8 +36,7 @@ CREATE POLICY "Users can view own KPI settings" ON public.recruitment_kpi_settin
     FOR SELECT
     USING (auth.uid() = user_id);
 
--- Allow Users to INSERT their own settings (if not exists)
--- (We might restrict UPDATE to admins only, which is covered because this is only FOR INSERT)
+-- Allow Users to INSERT their own settings
 CREATE POLICY "Users can insert own KPI settings" ON public.recruitment_kpi_settings
     FOR INSERT
     WITH CHECK (auth.uid() = user_id);

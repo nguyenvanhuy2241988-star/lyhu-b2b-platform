@@ -23,7 +23,11 @@ export default function KpiDashboard({ date, userId }: KpiDashboardProps) {
     const [targets, setTargets] = useState({
         posts: 20,
         comments: 50,
-        friends: 10
+        friends: 10,
+        fb_personal: 5,
+        threads_posts: 10,
+        threads_comments: 20,
+        zalo: 5
     });
     const [savingSettings, setSavingSettings] = useState(false);
 
@@ -37,7 +41,11 @@ export default function KpiDashboard({ date, userId }: KpiDashboardProps) {
             setTargets({
                 posts: data.posts_target,
                 comments: data.comments_target,
-                friends: data.friends_target
+                friends: data.friends_target,
+                fb_personal: data.fb_personal_posts_target,
+                threads_posts: data.threads_posts_target,
+                threads_comments: data.threads_comments_target,
+                zalo: data.zalo_posts_target
             });
         } catch (error) {
             console.error("Error loading KPI stats:", error);
@@ -99,7 +107,11 @@ export default function KpiDashboard({ date, userId }: KpiDashboardProps) {
                 user_id: userId, // Update for target user
                 fb_posts_target: targets.posts,
                 fb_comments_target: targets.comments,
-                fb_friends_target: targets.friends
+                fb_friends_target: targets.friends,
+                fb_personal_posts_target: targets.fb_personal,
+                threads_posts_target: targets.threads_posts,
+                threads_comments_target: targets.threads_comments,
+                zalo_posts_target: targets.zalo
             });
             setShowSettings(false);
             loadStats(); // Refresh to reflect new targets
@@ -116,7 +128,7 @@ export default function KpiDashboard({ date, userId }: KpiDashboardProps) {
 
     const items = [
         {
-            label: "Bài đăng",
+            label: "FB Groups/Page",
             icon: Share2,
             count: stats.posts_count,
             target: stats.posts_target,
@@ -125,22 +137,58 @@ export default function KpiDashboard({ date, userId }: KpiDashboardProps) {
             bar: "bg-blue-500"
         },
         {
-            label: "Bình luận",
+            label: "FB Comment (Seed)",
             icon: MessageSquare,
             count: stats.comments_count,
             target: stats.comments_target,
-            color: "text-orange-600",
-            bg: "bg-orange-50",
-            bar: "bg-orange-500"
+            color: "text-blue-600",
+            bg: "bg-blue-50",
+            bar: "bg-blue-500"
         },
         {
-            label: "Kết bạn",
+            label: "Kết bạn FB",
             icon: Users,
             count: stats.friends_count,
             target: stats.friends_target,
-            color: "text-purple-600",
-            bg: "bg-purple-50",
-            bar: "bg-purple-500"
+            color: "text-blue-600",
+            bg: "bg-blue-50",
+            bar: "bg-blue-500"
+        },
+        {
+            label: "FB Cá Nhân",
+            icon: Share2,
+            count: stats.fb_personal_posts_count,
+            target: stats.fb_personal_posts_target,
+            color: "text-indigo-600",
+            bg: "bg-indigo-50",
+            bar: "bg-indigo-500"
+        },
+        {
+            label: "Threads Bài",
+            icon: Share2,
+            count: stats.threads_posts_count,
+            target: stats.threads_posts_target,
+            color: "text-black",
+            bg: "bg-slate-100",
+            bar: "bg-slate-800"
+        },
+        {
+            label: "Threads Cmt",
+            icon: MessageSquare,
+            count: stats.threads_comments_count,
+            target: stats.threads_comments_target,
+            color: "text-black",
+            bg: "bg-slate-100",
+            bar: "bg-slate-800"
+        },
+        {
+            label: "Zalo Bài",
+            icon: Share2,
+            count: stats.zalo_posts_count,
+            target: stats.zalo_posts_target,
+            color: "text-blue-500",
+            bg: "bg-blue-50",
+            bar: "bg-blue-400"
         }
     ];
 
@@ -162,31 +210,34 @@ export default function KpiDashboard({ date, userId }: KpiDashboardProps) {
                 )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
                 {items.map((item, idx) => {
                     const percent = Math.min(100, Math.round((item.count / (item.target || 1)) * 100));
                     return (
-                        <div key={idx} className="border border-slate-100 rounded-lg p-3 relative overflow-hiddenGroup">
-                            <div className="flex justify-between items-start mb-2">
-                                <div className={cn("p-2 rounded-lg", item.bg)}>
-                                    <item.icon className={cn("w-4 h-4", item.color)} />
+                        <div key={idx} className="border border-slate-100 rounded-lg p-2 relative overflow-hiddenGroup flex flex-col justify-between min-h-[100px]">
+                            <div className="flex justify-between items-start mb-1">
+                                <div className={cn("p-1.5 rounded-lg", item.bg)}>
+                                    <item.icon className={cn("w-3.5 h-3.5", item.color)} />
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-2xl font-bold text-slate-900 leading-none">
-                                        {item.count}<span className="text-sm font-normal text-slate-400">/{item.target}</span>
+                                    <div className="text-lg font-bold text-slate-900 leading-none">
+                                        {item.count}<span className="text-[10px] font-normal text-slate-400">/{item.target}</span>
                                     </div>
-                                    <p className={cn("text-xs font-medium mt-1",
+                                    <p className={cn("text-[10px] font-medium mt-0.5",
                                         percent >= 100 ? "text-green-600" : "text-slate-500"
                                     )}>
                                         {percent}%
                                     </p>
                                 </div>
                             </div>
-                            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                                <div
-                                    className={cn("h-full rounded-full transition-all duration-500", item.bar)}
-                                    style={{ width: `${percent}%` }}
-                                ></div>
+                            <div>
+                                <p className="text-[10px] text-slate-500 font-medium truncate mb-1" title={item.label}>{item.label}</p>
+                                <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                                    <div
+                                        className={cn("h-full rounded-full transition-all duration-500", item.bar)}
+                                        style={{ width: `${percent}%` }}
+                                    ></div>
+                                </div>
                             </div>
                         </div>
                     );
@@ -196,39 +247,78 @@ export default function KpiDashboard({ date, userId }: KpiDashboardProps) {
             {/* Settings Modal */}
             {showSettings && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                         <div className="p-4 border-b flex justify-between items-center bg-slate-50">
                             <h3 className="font-semibold text-slate-800">Cấu hình Mục tiêu ngày (KPI)</h3>
                             <button onClick={() => setShowSettings(false)} className="text-slate-400 hover:text-slate-600">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
-                        <div className="p-4 space-y-4">
+                        <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[70vh] overflow-y-auto">
+                            <h4 className="md:col-span-2 font-medium text-slate-900 border-b pb-1 text-sm">Facebook Cơ bản</h4>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Mục tiêu Bài đăng</label>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">FB Groups/Page (Bài)</label>
                                 <input
                                     type="number"
-                                    className="w-full border rounded-md px-3 py-2 text-sm outline-teal-500"
+                                    className="w-full border rounded-md px-3 py-1.5 text-sm outline-teal-500"
                                     value={targets.posts}
                                     onChange={(e) => setTargets({ ...targets, posts: parseInt(e.target.value) || 0 })}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Mục tiêu Bình luận (Seeding)</label>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">FB Seeding (Cmt)</label>
                                 <input
                                     type="number"
-                                    className="w-full border rounded-md px-3 py-2 text-sm outline-teal-500"
+                                    className="w-full border rounded-md px-3 py-1.5 text-sm outline-teal-500"
                                     value={targets.comments}
                                     onChange={(e) => setTargets({ ...targets, comments: parseInt(e.target.value) || 0 })}
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Mục tiêu Kết bạn</label>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Kết bạn mới</label>
                                 <input
                                     type="number"
-                                    className="w-full border rounded-md px-3 py-2 text-sm outline-teal-500"
+                                    className="w-full border rounded-md px-3 py-1.5 text-sm outline-teal-500"
                                     value={targets.friends}
                                     onChange={(e) => setTargets({ ...targets, friends: parseInt(e.target.value) || 0 })}
+                                />
+                            </div>
+
+                            <h4 className="md:col-span-2 font-medium text-slate-900 border-b pb-1 text-sm mt-2">Mở rộng</h4>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">FB Cá nhân (Bài)</label>
+                                <input
+                                    type="number"
+                                    className="w-full border rounded-md px-3 py-1.5 text-sm outline-teal-500"
+                                    value={targets.fb_personal}
+                                    onChange={(e) => setTargets({ ...targets, fb_personal: parseInt(e.target.value) || 0 })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Zalo (Bài)</label>
+                                <input
+                                    type="number"
+                                    className="w-full border rounded-md px-3 py-1.5 text-sm outline-teal-500"
+                                    value={targets.zalo}
+                                    onChange={(e) => setTargets({ ...targets, zalo: parseInt(e.target.value) || 0 })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Threads (Bài)</label>
+                                <input
+                                    type="number"
+                                    className="w-full border rounded-md px-3 py-1.5 text-sm outline-teal-500"
+                                    value={targets.threads_posts}
+                                    onChange={(e) => setTargets({ ...targets, threads_posts: parseInt(e.target.value) || 0 })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Threads (Cmt)</label>
+                                <input
+                                    type="number"
+                                    className="w-full border rounded-md px-3 py-1.5 text-sm outline-teal-500"
+                                    value={targets.threads_comments}
+                                    onChange={(e) => setTargets({ ...targets, threads_comments: parseInt(e.target.value) || 0 })}
                                 />
                             </div>
                         </div>

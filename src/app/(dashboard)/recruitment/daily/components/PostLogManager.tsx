@@ -314,6 +314,7 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
                             >
                                 <option value="facebook_group">Facebook Group</option>
                                 <option value="facebook_page">Facebook Page</option>
+                                <option value="facebook_personal">Facebook Cá nhân</option>
                                 <option value="threads">Threads</option>
                                 <option value="zalo">Zalo</option>
                                 <option value="linkedin">LinkedIn</option>
