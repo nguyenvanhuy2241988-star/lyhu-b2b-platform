@@ -57,7 +57,7 @@ export const MisaService = {
                 body: JSON.stringify({
                     app_id: config.appId || "84318d18-5a63-4422-b94f-40e87d60567e",
                     access_code: config.accessCode,
-                    org_company_code: config.companyCode
+                    org_company_code: config.companyCode?.trim()
                 })
             });
 
@@ -166,7 +166,7 @@ export const MisaService = {
             // inv_series: "K24T",
             // inv_no: `INV-${order.readableId}`,
             // inv_template_no: "01GTKT0/001",
-            inv_type_id: 1, // GTGT
+            // inv_type_id: 1, // GTGT
 
             // Totals (REQUIRED)
             total_sale_amount: totalSaleAmount,
@@ -214,7 +214,7 @@ export const MisaService = {
 
             const payload = {
                 app_id: appId,
-                org_company_code: config?.companyCode,
+                org_company_code: config?.companyCode?.trim(),
                 voucher: [invoiceObj] // Critical: Key is "voucher", not "data"
             };
 
