@@ -150,14 +150,14 @@ export const MisaService = {
 
         const totalSaleAmount = totalAmount - totalVat; // Pre-tax roughly
 
-        // MISA Service "Save" API (5.1.4 Hóa đơn bán hàng)
+        // MISA Service "Save" API (Switching to 3500 - Đơn đặt hàng)
         const payload: any = {
-            voucher_type: 11, // Hóa đơn bán hàng
-            reftype: 3560,    // Hóa đơn bán hàng trong nước
+            // voucher_type: 11, // Removed for SAOrder
+            reftype: 3500,    // 3500 = Đơn đặt hàng (Sales Order)
 
             org_refid: order.id,
             org_refno: `ORD-${order.readable_id || order.readableId || order.id.substring(0, 6)}`,
-            org_reftype_name: "Đơn đặt hàng website",
+            org_reftype_name: "Đơn đặt hàng",
             org_reftype: 3560,
 
             refdate: orderDate,
