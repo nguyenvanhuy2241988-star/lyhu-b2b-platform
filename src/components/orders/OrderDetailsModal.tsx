@@ -32,8 +32,23 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
             if (res.ok && data.success) {
                 const misaRef = data.refId || "Unknown Ref";
                 setLocalMisaStatus({ status: 'synced', refId: misaRef, error: null });
+
+                // Log debug info prominently  
                 console.log("%c[MISA SUCCESS] Ref ID: " + misaRef, "color: green; font-size: 16px; font-weight: bold;");
-                alert(`✅ Đồng bộ MISA thành công!\n\nMã chứng từ MISA: ${misaRef}\n\n(Hãy dùng mã này tìm kiếm trong MISA)`);
+                if (data.debug?.productCodes) {
+                    console.log("%c[DEBUG] Product Codes Sent:", "color: orange; font-weight: bold;");
+                    console.table(data.debug.productCodes);
+                }
+
+                // Build alert message
+                let alertMsg = `✅ Đồng bộ MISA thành công!\n\nMã chứng từ: ${misaRef}`;
+                if (data.debug?.productCodes) {
+                    const missingCodes = data.debug.productCodes.filter((p: any) => p.misa_code === "MISSING");
+                    if (missingCodes.length > 0) {
+                        alertMsg += `\n\n⚠️ CẢNH BÁO: ${missingCodes.length} sản phẩm CHƯA CÓ MÃ MISA!`;
+                    }
+                }
+                alert(alertMsg);
             } else {
                 setLocalMisaStatus({ status: 'failed', refId: null, error: data.error || "Unknown error" });
                 console.error("[MISA FAILURE]", data);
