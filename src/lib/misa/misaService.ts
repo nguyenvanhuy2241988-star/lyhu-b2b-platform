@@ -85,6 +85,7 @@ export const MisaService = {
 
     // 2. Map Order to Misa Invoice
     mapOrderToMisaInvoice: (order: any, branchId?: string, stockCode?: string) => {
+        console.log("Mapping Order to Misa V5 Payload...");
         const items = order.items || [];
         const today = new Date().toISOString().split('T')[0];
         const orderDate = new Date(order.created_at || new Date()).toISOString().split('T')[0];
