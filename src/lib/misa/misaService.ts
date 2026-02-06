@@ -38,33 +38,50 @@ export const MisaService = {
         }
 
         // 2. Call Misa Auth API (Connect Endpoint)
+        // Use configured base URL if present, otherwise default to actapp for auth? 
+        // ACT Open API usually uses actapp.misa.vn for connect. 
+        // If the user inputs a custom API URL, we might want to respect it if it differs?
+        // Let's stick to the default for Auth unless we have a specific "authUrl".
+        // IMPROVEMENT: Use the apiUrl from config if it looks like an auth host, otherwise default.
+        // But to be safe, let's just wrap the fetch to catch network errors.
+
         const connectUrl = "https://actapp.misa.vn/api/oauth/actopen/connect";
 
-        console.log("[MisaService] Connecting to Misa...", connectUrl);
-        const res = await fetch(connectUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                app_id: config.appId || "84318d18-5a63-4422-b94f-40e87d60567e", // Use a generic/valid looking GUID if possible, or the user input
-                access_code: config.accessCode,
-                org_company_code: config.companyCode
-            })
-        });
+        // Use a variable to track which URL failed
+        let attemptUrl = connectUrl;
 
-        const data = await res.json();
+        try {
+            console.log("[MisaService] Connecting to Misa...", connectUrl);
+            const res = await fetch(connectUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    app_id: config.appId || "84318d18-5a63-4422-b94f-40e87d60567e",
+                    access_code: config.accessCode,
+                    org_company_code: config.companyCode
+                })
+            });
 
-        if (!res.ok || !data?.Success) {
-            console.error("[MisaService] Auth Failed:", data);
-            const msg = data?.UserMessage || data?.DevMessage || data?.Data || JSON.stringify(data);
-            throw new Error(`Lỗi kết nối Misa: ${msg}`);
+            const data = await res.json();
+
+            if (!res.ok || !data?.Success) {
+                console.error("[MisaService] Auth Failed:", data);
+                const msg = data?.UserMessage || data?.DevMessage || data?.Data || JSON.stringify(data);
+                throw new Error(`Misa Auth Refused: ${msg}`);
+            }
+
+            if (data?.Success && data?.Data) {
+                console.log("[MisaService] Auth Success! Token obtained.");
+                return data.Data; // The Access Token
+            }
+
+            throw new Error("Misa Auth: Không lấy được Token");
+
+        } catch (err: any) {
+            console.error(`[MisaService] Auth Network Error (${attemptUrl}):`, err);
+            // Throw a clearer error for the UI
+            throw new Error(`Lỗi kết nối Misa (Auth): ${err.message || "Network Error"}`);
         }
-
-        if (data?.Success && data?.Data) {
-            console.log("[MisaService] Auth Success! Token obtained.");
-            return data.Data; // The Access Token
-        }
-
-        throw new Error("Lỗi không xác định khi lấy Token Misa");
     },
 
     // 2. Map Order to Misa Invoice
@@ -80,7 +97,7 @@ export const MisaService = {
             journalMemo: `Bán hàng cho đơn hàng #${order.readableId}`,
             totalAmount: order.totalAmount,
             // Mapping fields specific to Misa Invoice
-            invSeries: "1C21Tky", // Example Series
+            invSeries: "1C21Tky", // Example Series - Should ideally be configurable?
             invDate: new Date().toISOString(),
             currencyID: "VND",
             exchangeRate: 1,
@@ -98,6 +115,7 @@ export const MisaService = {
 
     // 3. Push to Misa
     pushSalesOrder: async (orderId: string, orderData: any, supabase: any): Promise<{ success: boolean; refId?: string; error?: string }> => {
+        let endpoint = "";
         try {
             console.log(`[MisaService] Pushing order ${orderId} to Misa (REAL)...`);
 
@@ -111,7 +129,7 @@ export const MisaService = {
             const settings = await fetchAppSettings(supabase);
             // @ts-ignore
             const apiUrl = settings?.misa_config?.apiUrl || "https://openservice.misa.com.vn";
-            const endpoint = `${apiUrl}/api/v1/fa/sa_invoice`;
+            endpoint = `${apiUrl}/api/v1/fa/sa_invoice`;
 
             console.log(`[MisaService] POST ${endpoint}`);
 
@@ -124,7 +142,14 @@ export const MisaService = {
                 body: JSON.stringify(payload)
             });
 
-            const resData = await res.json();
+            // Handle non-JSON responses (like 502/404 HTML)
+            const textRaw = await res.text();
+            let resData;
+            try {
+                resData = JSON.parse(textRaw);
+            } catch (e) {
+                throw new Error(`Misa API returned non-JSON: ${textRaw.substring(0, 100)}...`);
+            }
 
             if (res.ok && resData?.Success) {
                 const refId = resData.Data;
@@ -138,7 +163,7 @@ export const MisaService = {
 
         } catch (err: any) {
             console.error("[MisaService] Exception:", err);
-            return { success: false, error: err.message };
+            return { success: false, error: `Lỗi kết nối Misa (Push): ${err.message}` };
         }
     }
 };

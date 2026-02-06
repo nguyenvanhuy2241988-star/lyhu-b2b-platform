@@ -172,8 +172,8 @@ export default function AccountantMasterDataPage() {
                                 <input
                                     value={misaConfig.apiUrl}
                                     onChange={(e) => setMisaConfig({ ...misaConfig, apiUrl: e.target.value })}
-                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none bg-slate-50"
-                                    disabled
+                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                                    placeholder="https://openservice.misa.com.vn"
                                 />
                             </div>
                             <div>
