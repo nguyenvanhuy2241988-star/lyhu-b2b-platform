@@ -251,7 +251,17 @@ export const MisaService = {
                 let errorDetails = textRaw;
                 try {
                     const errJson = JSON.parse(textRaw);
-                    errorDetails = errJson?.UserMessage || errJson?.DevMessage || errJson?.Data || JSON.stringify(errJson);
+                    // V5 Standard uses ErrorMessage. fallback to UserMessage/DevMessage.
+                    const msg = errJson?.ErrorMessage || errJson?.UserMessage || errJson?.DevMessage || "Unknown Error";
+                    const code = errJson?.ErrorCode || "";
+                    const dataDetail = errJson?.Data ? JSON.stringify(errJson.Data) : "";
+
+                    errorDetails = `${code ? `[${code}] ` : ""}${msg}${dataDetail ? ` | Detail: ${dataDetail}` : ""}`;
+
+                    // Fallback if parsing returned nothing useful but strict JSON exists
+                    if (errorDetails === "Unknown Error" && Object.keys(errJson).length > 0) {
+                        errorDetails = JSON.stringify(errJson);
+                    }
                 } catch (e) { }
 
                 return { success: false, error: `Misa Error (${res.status}): ${errorDetails}` };
