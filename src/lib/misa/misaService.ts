@@ -37,15 +37,25 @@ export const MisaService = {
             throw new Error("Chưa cấu hình Misa (Thiếu AccessCode hoặc Mã Chi nhánh)");
         }
 
-        // 2. Call Misa Auth API (Connect Endpoint)
-        // Use configured base URL if present, otherwise default to actapp for auth? 
-        // ACT Open API usually uses actapp.misa.vn for connect. 
-        // If the user inputs a custom API URL, we might want to respect it if it differs?
-        // Let's stick to the default for Auth unless we have a specific "authUrl".
-        // IMPROVEMENT: Use the apiUrl from config if it looks like an auth host, otherwise default.
-        // But to be safe, let's just wrap the fetch to catch network errors.
+        // 2. Determine Auth URL
+        // If the user manually set the API URL to an 'actapp' domain, they likely want to use it for Auth.
+        // Otherwise, default to the standard production auth URL.
+        const userUrl = config.apiUrl || "";
+        let baseUrl = "https://actapp.misa.vn";
 
-        const connectUrl = "https://actapp.misa.vn/api/oauth/actopen/connect";
+        if (userUrl.includes("actapp") || userUrl.includes("misa.vn")) {
+            // If user explicitly points to a misa domain, let's respect the base
+            // But valid connect endpoint is always /api/oauth/actopen/connect
+            // We'll strip the path and append the correct one to be safe, or just use the user's string if it looks like a base.
+            try {
+                const urlObj = new URL(userUrl);
+                baseUrl = urlObj.origin;
+            } catch (e) {
+                // Invalid URL string, keep default
+            }
+        }
+
+        const connectUrl = `${baseUrl}/api/oauth/actopen/connect`;
 
         // Use a variable to track which URL failed
         let attemptUrl = connectUrl;
@@ -54,7 +64,10 @@ export const MisaService = {
             console.log("[MisaService] Connecting to Misa...", connectUrl);
             const res = await fetch(connectUrl, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    "User-Agent": "LYHU-B2B-Platform/1.0"
+                },
                 body: JSON.stringify({
                     app_id: config.appId || "84318d18-5a63-4422-b94f-40e87d60567e",
                     access_code: config.accessCode,

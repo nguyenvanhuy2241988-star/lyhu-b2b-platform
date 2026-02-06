@@ -206,13 +206,32 @@ export default function AccountantMasterDataPage() {
                             </div>
 
                             <div className="pt-4">
-                                <button
-                                    onClick={handleSaveConfig}
-                                    disabled={isSaving}
-                                    className="px-6 py-2 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2"
-                                >
                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                     Lưu Cấu hình
+                                </button>
+                                
+                                <button
+                                    onClick={async () => {
+                                        setIsSaving(true);
+                                        try {
+                                            const res = await fetch('/api/misa/test', { method: 'POST' });
+                                            const data = await res.json();
+                                            if (data.success) {
+                                                alert("✅ " + data.message);
+                                            } else {
+                                                alert("❌ Kết nối thất bại: " + data.error);
+                                            }
+                                        } catch (e) {
+                                            alert("❌ Lỗi mạng hoặc server internal error");
+                                        } finally {
+                                            setIsSaving(false);
+                                        }
+                                    }}
+                                    disabled={isSaving}
+                                    className="px-6 py-2 bg-white text-slate-700 border border-slate-300 font-bold rounded-xl hover:bg-slate-50 disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    <div className="w-4 h-4 rounded-full border-2 border-slate-400 border-t-transparent animate-spin hidden" /> 
+                                    Kiểm tra kết nối
                                 </button>
                             </div>
 
@@ -228,168 +247,171 @@ export default function AccountantMasterDataPage() {
                                 </ul>
                             </div>
                         </div>
-                    )}
-                </div>
-            ) : (
-                <>
-                    {/* Filters */}
-                    <div className="flex gap-4 bg-white p-4 rounded-xl border border-slate-200">
-                        <div className="relative flex-1 max-w-md">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                            <input
-                                type="text"
-                                placeholder={activeTab === "products" ? "Tìm theo tên hoặc SKU..." : "Tìm tên hoặc Mã số thuế..."}
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Content Table */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
-                        {isLoading ? (
-                            <div className="flex flex-col items-center justify-center py-20">
-                                <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
-                            </div>
-                        ) : filteredItemsSize === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-20 text-center">
-                                <Database className="w-12 h-12 text-slate-200 mb-4" />
-                                <p className="text-slate-500">Không tìm thấy kết quả.</p>
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm whitespace-nowrap">
-                                    <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-medium">
-                                        <tr>
-                                            <th className="px-6 py-4">{activeTab === "products" ? "Sản phẩm / SKU" : "Khách hàng / Tên"}</th>
-                                            <th className="px-6 py-4">{activeTab === "products" ? "Đơn vị" : "Mã số thuế"}</th>
-                                            <th className="px-6 py-4">Mã MISA</th>
-                                            <th className="px-6 py-4 text-right">Thao tác</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100">
-                                        {activeTab === "products" ? (
-                                            products.filter(p => (p.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || (p.sku || "").toLowerCase().includes(searchQuery.toLowerCase())).map((p) => (
-                                                <tr key={p.id} className="hover:bg-slate-50 transition-colors">
-                                                    <td className="px-6 py-4">
-                                                        <div className="font-bold text-slate-900">{p.name || "Không tên"}</div>
-                                                        <div className="text-[10px] text-slate-400 font-mono tracking-wider">{p.sku || "N/A"}</div>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-slate-500 lowercase">
-                                                        {p.unit || "Cái/Hộp"}
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        {p.misa_code ? (
-                                                            <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-600 text-xs font-mono font-bold">
-                                                                {p.misa_code}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-orange-400 text-xs italic">Chưa map</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <button
-                                                            onClick={() => setEditingItem({ id: p.id, type: "product", value: p.misa_code || "" })}
-                                                            className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
-                                                        >
-                                                            <Pencil className="w-4 h-4" />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        ) : (
-                                            customers.filter(c => (c.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || (c.tax_code || "").includes(searchQuery)).map((c) => (
-                                                <tr key={c.id} className="hover:bg-slate-50 transition-colors">
-                                                    <td className="px-6 py-4">
-                                                        <div className="font-bold text-slate-900">{c.name || "Không tên"}</div>
-                                                        <div className="text-[10px] text-slate-400 uppercase">{c.type}</div>
-                                                    </td>
-                                                    <td className="px-6 py-4 text-slate-600">
-                                                        {c.tax_code || <span className="text-slate-300 italic">Thiếu MST</span>}
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        {c.misa_code ? (
-                                                            <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 text-xs font-mono font-bold">
-                                                                {c.misa_code}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-orange-400 text-xs italic">Chưa map</span>
-                                                        )}
-                                                    </td>
-                                                    <td className="px-6 py-4 text-right">
-                                                        <button
-                                                            onClick={() => setEditingItem({ id: c.id, type: "customer", value: c.misa_code || "", tax_code: c.tax_code || "" })}
-                                                            className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
-                                                        >
-                                                            <Pencil className="w-4 h-4" />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ))
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
-                </>
-            )}
-
-            {/* Edit Modal (Existing code unchanged) */}
-            {editingItem && (
-                <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200">
-                        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                            <h3 className="font-bold text-slate-900">Thiết lập Mã MISA</h3>
-                            <button onClick={() => setEditingItem(null)} className="p-1 hover:bg-slate-200 rounded-lg">
-                                <X className="w-5 h-5 text-slate-500" />
-                            </button>
-                        </div>
-                        <div className="p-6 space-y-4">
-                            {editingItem.type === "customer" && (
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Mã số thuế</label>
-                                    <input
-                                        value={editingItem.tax_code || ""}
-                                        onChange={(e) => setEditingItem({ ...editingItem, tax_code: e.target.value })}
-                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
-                                        placeholder="Nhập MST khách hàng..."
-                                    />
-                                </div>
-                            )}
-                            <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Mã định danh MISA</label>
-                                <input
-                                    value={editingItem.value}
-                                    onChange={(e) => setEditingItem({ ...editingItem, value: e.target.value })}
-                                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
-                                    placeholder={editingItem.type === "product" ? "Ví dụ: SP001" : "Ví dụ: KH001"}
-                                />
-                                <p className="text-[10px] text-slate-400 mt-1 italic">
-                                    * Mã này phải khớp với mã đã khai báo trong danh mục của MISA AMIS/SME.
-                                </p>
-                            </div>
-                            <div className="pt-4 flex gap-3">
-                                <button
-                                    onClick={() => setEditingItem(null)}
-                                    className="flex-1 px-4 py-2 text-slate-600 font-bold rounded-xl hover:bg-slate-50"
-                                >
-                                    Hủy
-                                </button>
-                                <button
-                                    onClick={handleSaveMisa}
-                                    disabled={isSaving}
-                                    className="flex-1 px-4 py-2 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 disabled:opacity-50 flex items-center justify-center gap-2"
-                                >
-                                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                    Lưu thay đổi
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             )}
         </div>
+    ) : (
+        <>
+            {/* Filters */}
+            <div className="flex gap-4 bg-white p-4 rounded-xl border border-slate-200">
+                <div className="relative flex-1 max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                        type="text"
+                        placeholder={activeTab === "products" ? "Tìm theo tên hoặc SKU..." : "Tìm tên hoặc Mã số thuế..."}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary-500"
+                    />
+                </div>
+            </div>
+
+            {/* Content Table */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
+                {isLoading ? (
+                    <div className="flex flex-col items-center justify-center py-20">
+                        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+                    </div>
+                ) : filteredItemsSize === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-20 text-center">
+                        <Database className="w-12 h-12 text-slate-200 mb-4" />
+                        <p className="text-slate-500">Không tìm thấy kết quả.</p>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm whitespace-nowrap">
+                            <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-medium">
+                                <tr>
+                                    <th className="px-6 py-4">{activeTab === "products" ? "Sản phẩm / SKU" : "Khách hàng / Tên"}</th>
+                                    <th className="px-6 py-4">{activeTab === "products" ? "Đơn vị" : "Mã số thuế"}</th>
+                                    <th className="px-6 py-4">Mã MISA</th>
+                                    <th className="px-6 py-4 text-right">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {activeTab === "products" ? (
+                                    products.filter(p => (p.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || (p.sku || "").toLowerCase().includes(searchQuery.toLowerCase())).map((p) => (
+                                        <tr key={p.id} className="hover:bg-slate-50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="font-bold text-slate-900">{p.name || "Không tên"}</div>
+                                                <div className="text-[10px] text-slate-400 font-mono tracking-wider">{p.sku || "N/A"}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-500 lowercase">
+                                                {p.unit || "Cái/Hộp"}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {p.misa_code ? (
+                                                    <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-600 text-xs font-mono font-bold">
+                                                        {p.misa_code}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-orange-400 text-xs italic">Chưa map</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button
+                                                    onClick={() => setEditingItem({ id: p.id, type: "product", value: p.misa_code || "" })}
+                                                    className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    customers.filter(c => (c.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || (c.tax_code || "").includes(searchQuery)).map((c) => (
+                                        <tr key={c.id} className="hover:bg-slate-50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="font-bold text-slate-900">{c.name || "Không tên"}</div>
+                                                <div className="text-[10px] text-slate-400 uppercase">{c.type}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-600">
+                                                {c.tax_code || <span className="text-slate-300 italic">Thiếu MST</span>}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {c.misa_code ? (
+                                                    <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 text-xs font-mono font-bold">
+                                                        {c.misa_code}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-orange-400 text-xs italic">Chưa map</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button
+                                                    onClick={() => setEditingItem({ id: c.id, type: "customer", value: c.misa_code || "", tax_code: c.tax_code || "" })}
+                                                    className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-all"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+        </>
+    )
+}
+
+{/* Edit Modal (Existing code unchanged) */ }
+{
+    editingItem && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200">
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                    <h3 className="font-bold text-slate-900">Thiết lập Mã MISA</h3>
+                    <button onClick={() => setEditingItem(null)} className="p-1 hover:bg-slate-200 rounded-lg">
+                        <X className="w-5 h-5 text-slate-500" />
+                    </button>
+                </div>
+                <div className="p-6 space-y-4">
+                    {editingItem.type === "customer" && (
+                        <div>
+                            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Mã số thuế</label>
+                            <input
+                                value={editingItem.tax_code || ""}
+                                onChange={(e) => setEditingItem({ ...editingItem, tax_code: e.target.value })}
+                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                                placeholder="Nhập MST khách hàng..."
+                            />
+                        </div>
+                    )}
+                    <div>
+                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Mã định danh MISA</label>
+                        <input
+                            value={editingItem.value}
+                            onChange={(e) => setEditingItem({ ...editingItem, value: e.target.value })}
+                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
+                            placeholder={editingItem.type === "product" ? "Ví dụ: SP001" : "Ví dụ: KH001"}
+                        />
+                        <p className="text-[10px] text-slate-400 mt-1 italic">
+                            * Mã này phải khớp với mã đã khai báo trong danh mục của MISA AMIS/SME.
+                        </p>
+                    </div>
+                    <div className="pt-4 flex gap-3">
+                        <button
+                            onClick={() => setEditingItem(null)}
+                            className="flex-1 px-4 py-2 text-slate-600 font-bold rounded-xl hover:bg-slate-50"
+                        >
+                            Hủy
+                        </button>
+                        <button
+                            onClick={handleSaveMisa}
+                            disabled={isSaving}
+                            className="flex-1 px-4 py-2 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                            Lưu thay đổi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    )
+}
+        </div >
     );
 }
