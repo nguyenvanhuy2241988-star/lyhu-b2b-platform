@@ -32,7 +32,7 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                 alert("Đồng bộ Misa thành công!");
             } else {
                 setLocalMisaStatus({ status: 'failed', refId: null, error: data.error || "Unknown error" });
-                alert("Đồng bộ thất bại (Server Response): " + JSON.stringify(data));
+                alert("❌ MISA Sync Error: " + (data.error || JSON.stringify(data)));
             }
         } catch (err: any) {
             console.error("Sync Misa error", err);

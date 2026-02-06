@@ -84,7 +84,7 @@ export const MisaService = {
     },
 
     // 2. Map Order to Misa Invoice
-    mapOrderToMisaInvoice: (order: any) => {
+    mapOrderToMisaInvoice: (order: any, branchId?: string) => {
         const items = order.items || [];
         const today = new Date().toISOString().split('T')[0];
         const orderDate = new Date(order.created_at || new Date()).toISOString().split('T')[0];
@@ -139,7 +139,7 @@ export const MisaService = {
         const totalSaleAmount = totalAmount - totalVat; // Pre-tax roughly
 
         // MISA Service "Save" API (5.1.4 Hóa đơn bán hàng)
-        return {
+        const payload: any = {
             voucher_type: 11, // Hóa đơn bán hàng
             reftype: 3560,    // Hóa đơn bán hàng trong nước
 
@@ -181,6 +181,13 @@ export const MisaService = {
             // Item Details
             detail: details
         };
+
+        // Add Branch ID if available (Required for multi-branch sync)
+        if (branchId) {
+            payload.branch_id = branchId;
+        }
+
+        return payload;
     },
 
     // 3. Push to Misa
@@ -196,9 +203,10 @@ export const MisaService = {
             const settings = await fetchAppSettings(supabase);
             // @ts-ignore
             const config = settings?.misa_config;
+            const branchId = config?.branchId; // Retrieve branchId from config
 
             // 3. Map Data
-            const invoiceObj = MisaService.mapOrderToMisaInvoice(orderData);
+            const invoiceObj = MisaService.mapOrderToMisaInvoice(orderData, branchId);
 
             // 4. Prepare Payload (Strict V5 Schema)
             // https://actdocs.misa.vn
