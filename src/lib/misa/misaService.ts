@@ -174,6 +174,11 @@ export const MisaService = {
 
 
             account_object_name: order.customerName || order.customer?.name || "Khách lẻ",
+            account_object_address: order.receiverAddress || order.address || "",
+
+            // Employee/Sales person (may be required)
+            employee_code: order.telesalesCode || order.createdByCode || "",
+            employee_name: order.telesalesName || order.createdByName || "",
 
             // Financial Info
             journal_memo: `Bán hàng đơn #${order.readable_id || order.readableId}`,
