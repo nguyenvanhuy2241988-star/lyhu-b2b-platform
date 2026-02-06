@@ -150,15 +150,15 @@ export const MisaService = {
 
         const totalSaleAmount = totalAmount - totalVat; // Pre-tax roughly
 
-        // MISA Service "Save" API (Switching to 3500 - Đơn đặt hàng)
+        // MISA Service "Save" API (Reverted to 3560 - Hóa đơn bán hàng)
         const payload: any = {
-            // voucher_type: 11, // Removed for SAOrder
-            reftype: 3500,    // 3500 = Đơn đặt hàng (Sales Order)
+            voucher_type: 11, // Hóa đơn bán hàng
+            reftype: 3560,    // Hóa đơn bán hàng trong nước
 
             org_refid: order.id,
             org_refno: `ORD-${order.readable_id || order.readableId || order.id.substring(0, 6)}`,
-            org_reftype_name: "Đơn đặt hàng",
-            org_reftype: 3560,
+            org_reftype_name: "Đơn đặt hàng website",
+            // org_reftype: 3560, // Not needed
 
             refdate: orderDate,
             posted_date: today,
@@ -294,8 +294,9 @@ export const MisaService = {
             // Async API response usually is just { Success: true, Data: "TrackingID..." }
             // The actual success comes later via Callback.
             if (resData?.Success) {
-                console.log(`[MisaService] Push Sent! Result Pending Callback.`);
-                return { success: true, refId: "PENDING_CALLBACK" };
+                console.log(`[MISA SUCCESS] Push Sent! Full Response:`, JSON.stringify(resData));
+                // Usually resData.Data contains the Reference ID for ActOpen
+                return { success: true, refId: resData.Data || resData.Reference || "PENDING_CALLBACK" };
             } else {
                 // V5 Standard: ErrorMessage, ErrorCode. V2/Other: UserMessage
                 const msg = resData?.ErrorMessage || resData?.UserMessage || resData?.DevMessage || "Unknown Error";
