@@ -92,6 +92,7 @@ export const MisaService = {
         // Ref: sa_invoice
         return {
             voucher_type: "sa_invoice",
+            org_refid: order.id, // Critical for async tracking
             voucher_data: {
                 ref_type: 155, // 155: Bán hàng chưa thu tiền (Credit Sales)
                 ref_no: `ORD-${order.readableId || order.id.substring(0, 6)}`,
@@ -113,8 +114,8 @@ export const MisaService = {
                     unit_price: item.price || item.unitPrice || 0,
                     amount: (item.price || item.unitPrice || 0) * item.quantity,
                     vat_rate: order.vat || 0,
-                    debit_account: "131", // Phải thu
-                    credit_account: "5111", // Doanh thu
+                    debit_account: "131",
+                    credit_account: "5111",
                     stock_code: "KHO_TONG"
                 }))
             }
@@ -130,22 +131,24 @@ export const MisaService = {
             // 1. Get Token (Pass supabase client)
             const token = await MisaService.getAccessToken(supabase);
 
-            // 2. Map Data
-            const invoiceObj = MisaService.mapOrderToMisaInvoice(orderData);
-
-            // 3. Prepare Payload
-            // The /api/sync/actopen/save usually expects a list of objects with app_id etc? 
-            // Or just the voucher data? 
-            // Let's try sending the mapped object directly in a list as "data"
-
-            const payload = [invoiceObj];
-
-            // 4. Send to Misa API
+            // 2. Get Config
             const settings = await fetchAppSettings(supabase);
             // @ts-ignore
             const config = settings?.misa_config;
-            const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
 
+            // 3. Map Data
+            const invoiceObj = MisaService.mapOrderToMisaInvoice(orderData);
+
+            // 4. Prepare Context Wrapper
+            // /api/sync/actopen/save often requires app_id and company_code in the body
+            const payload = {
+                app_id: config.appId,
+                org_company_code: config.companyCode,
+                data: [invoiceObj]
+            };
+
+            // 5. Send to Misa API
+            const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
             endpoint = `${apiUrl}/api/sync/actopen/save`;
 
             console.log(`[MisaService] POST ${endpoint}`);
@@ -160,6 +163,7 @@ export const MisaService = {
                 body: JSON.stringify(payload)
             });
 
+            // Handle non-JSON responses
             const textRaw = await res.text();
 
             if (!res.ok) {
@@ -167,14 +171,12 @@ export const MisaService = {
                 let errorDetails = textRaw;
                 try {
                     const errJson = JSON.parse(textRaw);
-                    // Extract user message if available
                     errorDetails = errJson?.UserMessage || errJson?.DevMessage || errJson?.Data || JSON.stringify(errJson);
                 } catch (e) { }
 
                 return { success: false, error: `Misa Error (${res.status}): ${errorDetails}` };
             }
 
-            // Success Case
             let resData;
             try {
                 resData = JSON.parse(textRaw);
@@ -182,11 +184,11 @@ export const MisaService = {
                 return { success: true, refId: "Unknown_Ref (Non-JSON)" };
             }
 
+            // Async API response usually is just { Success: true, Data: "TrackingID..." }
+            // The actual success comes later via Callback.
             if (resData?.Success) {
-                const resultData = resData.Data;
-                const refId = Array.isArray(resultData) ? resultData[0]?.RefID : resultData;
-                console.log(`[MisaService] Push Success! Misa Ref: ${refId}`);
-                return { success: true, refId: refId || "MISA_SYNCed" };
+                console.log(`[MisaService] Push Sent! Result Pending Callback.`);
+                return { success: true, refId: "PENDING_CALLBACK" };
             } else {
                 const errorMsg = resData?.UserMessage || resData?.DevMessage || JSON.stringify(resData);
                 return { success: false, error: `Misa Reject: ${errorMsg}` };
