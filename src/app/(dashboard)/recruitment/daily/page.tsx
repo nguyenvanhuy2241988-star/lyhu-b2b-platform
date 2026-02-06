@@ -6,6 +6,7 @@ import { Save, Calendar, Loader2, AlertCircle, CheckCircle } from "lucide-react"
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getDailyReport, upsertDailyReport, getMyReportsHistory, DailyActivity } from "@/lib/recruitmentStore";
 import PostLogManager from "./components/PostLogManager";
+import KpiDashboard from "./components/KpiDashboard";
 
 export default function DailyReportPage() {
     const { user } = useAuth();
@@ -112,6 +113,9 @@ export default function DailyReportPage() {
                     />
                 </div>
             </div>
+
+            {/* KPI Dashboard */}
+            <KpiDashboard date={date} />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Form Input */}

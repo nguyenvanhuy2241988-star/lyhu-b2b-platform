@@ -67,6 +67,26 @@ export interface RecruitmentPlatform {
     active: boolean;
 }
 
+// --- KPI Types ---
+
+export interface RecruitmentKpiSettings {
+    user_id: string;
+    fb_posts_target: number;
+    fb_comments_target: number;
+    fb_friends_target: number;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface RecruitmentKpiStats {
+    posts_count: number;
+    comments_count: number;
+    friends_count: number;
+    posts_target: number;
+    comments_target: number;
+    friends_target: number;
+}
+
 // --- Restore Missing Interfaces for Candidates ---
 export interface RecruitmentJob {
     id: string;
@@ -534,3 +554,67 @@ export const deleteInterview = async (id: string) => {
     if (error) throw error;
     return true;
 };
+
+// --- KPI Functions ---
+
+export const getRecruitmentKpiSettings = async (userId: string) => {
+    const { data, error } = await supabase
+        .from('recruitment_kpi_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (error) throw error;
+
+    // Default values if no settings found
+    if (!data) {
+        return {
+            user_id: userId,
+            fb_posts_target: 20,
+            fb_comments_target: 50,
+            fb_friends_target: 10
+        } as RecruitmentKpiSettings;
+    }
+
+    return data as RecruitmentKpiSettings;
+};
+
+export const updateRecruitmentKpiSettings = async (settings: Partial<RecruitmentKpiSettings> & { user_id: string }) => {
+    // Only Admin/Manager can update - handled by RLS.
+    // However, for first-time insert (initialization), User can insert.
+    // We use upsert to handle both cases.
+
+    const { data, error } = await supabase
+        .from('recruitment_kpi_settings')
+        .upsert(settings)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data as RecruitmentKpiSettings;
+};
+
+export const getRecruitmentKpiStats = async (userId: string, date: string): Promise<RecruitmentKpiStats> => {
+    // 1. Get Settings (Targets)
+    const settings = await getRecruitmentKpiSettings(userId);
+
+    // 2. Get Logs (Actuals)
+    // We fetch all logs for the day to count them.
+    // Optimization: In a huge app, we might use a summary table or count query, 
+    // but for daily logs (usually < 100 items), fetching client-side is fine and supports realtime updates easier.
+    const logs = await getPostLogs(userId, date);
+
+    const postsCount = logs.filter(l => l.activity_type === 'post').length;
+    const commentsCount = logs.filter(l => l.activity_type === 'comment').length;
+    const friendsCount = logs.filter(l => l.activity_type === 'friend').length;
+
+    return {
+        posts_count: postsCount,
+        comments_count: commentsCount,
+        friends_count: friendsCount,
+        posts_target: settings.fb_posts_target,
+        comments_target: settings.fb_comments_target,
+        friends_target: settings.fb_friends_target
+    };
+};
+
