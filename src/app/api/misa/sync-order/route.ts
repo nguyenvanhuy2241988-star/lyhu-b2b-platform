@@ -24,9 +24,9 @@ export async function POST(req: NextRequest) {
                 *,
                 items:order_items (
                     *,
-                    product:products(id, sku, name, misa_code)
+                    product:products(id, sku, name, misa_code, unit)
                 ),
-                customer:customers(id, name, misa_code)
+                customer:customers(id, name, phone, misa_code)
             `)
             .eq("id", orderId)
             .single();
