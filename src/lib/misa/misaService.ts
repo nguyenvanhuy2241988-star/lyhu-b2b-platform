@@ -139,7 +139,7 @@ export const MisaService = {
                 vat_amount: vatAmount,
                 vat_amount_oc: vatAmount,
 
-                stock_code: stockCode || "KHO", // Default Stock or from Config
+                stock_code: stockCode || "KBH", // User's Sales Warehouse Code
                 exchange_rate_operator: "*",
 
                 main_convert_rate: 1,
