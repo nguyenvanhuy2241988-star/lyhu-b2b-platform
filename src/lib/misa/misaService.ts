@@ -163,10 +163,11 @@ export const MisaService = {
         // MISA Service "Save" API - Đơn đặt hàng (Sales Order)
         const payload: any = {
             voucher_type: 20, // Đơn đặt hàng
-            // reftype: 3500,    // Đơn đặt hàng (Optional for V5, but good to have)
+            reftype: 3500,    // Đơn đặt hàng (Explicitly set)
 
             org_refid: `${order.id}-${Date.now()}`,
-            org_refno: `ORD-${order.readable_id || order.readableId || order.id.substring(0, 6)}`,
+            // Randomize RefNo to avoid "Duplicate Voucher Number" error
+            org_refno: `ORD-${order.readable_id || order.readableId || order.id.substring(0, 6)}-${Math.floor(1000 + Math.random() * 9000)}`,
             org_reftype_name: "Đơn đặt hàng website",
 
             refdate: orderDate,
