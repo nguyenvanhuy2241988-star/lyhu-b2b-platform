@@ -47,13 +47,13 @@ export async function GET(request: Request) {
         // FINAL CONFIG: Restore skip/take (Worked in E1), Echo Token
         const branchId = config.branchId || null;
 
-        // Test 1: Stock (Type 2)
-        results.push(await runTest("1. Stock (2) [CC, skip:0, take:5]", {
+        // Test 1: Organization Unit (Type 1) - To find Branch ID
+        results.push(await runTest("1. OrgUnit (1) [No BranchID]", {
             app_id: customAppId || defaultAppId,
             ...(companyCode ? { org_company_code: companyCode } : {}),
-            dictionary_type: 2,
+            dictionary_type: 1, // Organization Unit
             skip: 0,
-            take: 5
+            take: 20
         }, { "X-MISA-AccessToken": token, "X-MISA-AppID": customAppId || defaultAppId }));
 
         // Test 2: Employee (Type 3)
