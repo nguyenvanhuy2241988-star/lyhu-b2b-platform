@@ -178,8 +178,12 @@ export const MisaService = {
             account_object_name: order.customerName || order.customer?.name || "Khách lẻ",
             account_object_address: order.receiverAddress || order.address || "",
 
-            // Employee (Disabled for now to avoid mismatch)
-            // employee_code: ...
+            // Employee (Hardcoded based on User Screenshot: NV000009 - Shoppe)
+            employee_code: config?.employeeCode || "NV000009",
+
+            // Dates
+            due_date: orderDate,
+            delivery_date: orderDate,
 
             // Financial Info
             journal_memo: `Đơn hàng #${order.readable_id || order.readableId}`,
