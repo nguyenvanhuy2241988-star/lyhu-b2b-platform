@@ -83,10 +83,10 @@ export async function GET(request: Request) {
         // TEST PROBE REVISITED: Type 2 (Stock) worked with take:5 before. Probe failed with take:1.
         // So we retry specific types with take:5.
 
-        // TEST E: Type 2 (Stock) - Should work
+        // TEST E: Probe Type 2 (Stock?)
         results.push(await runTest("E: Probe Type 2 (Stock?)", {
             app_id: customAppId || defaultAppId,
-            org_company_code: companyCode,
+            org_company_code: companyCode || "",
             dictionary_type: 2,
             skip: 0,
             take: 5
@@ -95,10 +95,10 @@ export async function GET(request: Request) {
             "X-MISA-AppID": customAppId || defaultAppId
         }));
 
-        // TEST F: Type 3 (Employee?)
+        // TEST F: Probe Type 3 (Employee?)
         results.push(await runTest("F: Probe Type 3 (Employee?)", {
             app_id: customAppId || defaultAppId,
-            org_company_code: companyCode,
+            org_company_code: companyCode || "",
             dictionary_type: 3,
             skip: 0,
             take: 5
@@ -110,7 +110,7 @@ export async function GET(request: Request) {
         // TEST H: Probe Type 8 (Employee Alternate?)
         results.push(await runTest("H: Probe Type 8", {
             app_id: customAppId || defaultAppId,
-            org_company_code: companyCode,
+            org_company_code: companyCode || "",
             dictionary_type: 8,
             skip: 0,
             take: 5
@@ -122,7 +122,7 @@ export async function GET(request: Request) {
         // TEST I: Probe Type 9 (Generic?)
         results.push(await runTest("I: Probe Type 9", {
             app_id: customAppId || defaultAppId,
-            org_company_code: companyCode,
+            org_company_code: companyCode || "",
             dictionary_type: 9,
             skip: 0,
             take: 5
@@ -133,11 +133,11 @@ export async function GET(request: Request) {
 
         return NextResponse.json({
             success: true,
-            usedAppId: customAppId || defaultAppId,
-            token_preview: {
-                type: typeof token,
-                is_string: typeof token === 'string',
-                sample: typeof token === 'string' ? token.substring(0, 20) + "..." : JSON.stringify(token)
+            debug_info: {
+                app_id: customAppId || defaultAppId,
+                company_code_len: companyCode ? companyCode.length : 0,
+                company_code_exists: !!companyCode,
+                token_len: token ? token.length : 0
             },
             results
         });
