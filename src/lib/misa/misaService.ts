@@ -163,7 +163,7 @@ export const MisaService = {
         // MISA Service "Save" API - Đơn đặt hàng (Sales Order)
         const payload: any = {
             voucher_type: 20, // Đơn đặt hàng
-            reftype: 3500,    // Đơn đặt hàng (Explicitly set)
+            // reftype: 3500,    // REMOVED: Caused InvalidParam error
 
             org_refid: `${order.id}-${Date.now()}`,
             // Randomize RefNo to avoid "Duplicate Voucher Number" error
