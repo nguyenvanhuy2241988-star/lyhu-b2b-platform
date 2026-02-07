@@ -83,6 +83,19 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                         if (testName.includes("Dictionary (Unit)")) testName = "G: Kiểm tra danh mục ĐƠN VỊ TÍNH";
 
                         msg += `\n${icon} ${testName}: ${status}`;
+                        if (r.response && !r.error) {
+                            try {
+                                // Try to format JSON nicely if possible, or just truncate
+                                const jsonResp = JSON.parse(r.response);
+                                if (Array.isArray(jsonResp) && jsonResp.length > 0) {
+                                    msg += `\n   ↪ Data: ${JSON.stringify(jsonResp[0]).substring(0, 150)}...`;
+                                } else {
+                                    msg += `\n   ↪ Data: ${r.response.substring(0, 50)}...`;
+                                }
+                            } catch (e) {
+                                msg += `\n   ↪ Data: ${r.response}`;
+                            }
+                        }
                     });
                 }
 

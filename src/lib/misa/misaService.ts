@@ -160,10 +160,9 @@ export const MisaService = {
         const phoneCode = order.receiverPhone || order.customer?.phone || "";
         const customerCode = phoneCode.trim() || "KH_LE";
 
-        // MISA Service "Save" API - Đơn đặt hàng (Sales Order)
         const payload: any = {
             voucher_type: 20, // Đơn đặt hàng
-            // reftype: 3500,    // REMOVED: Caused InvalidParam error
+            reftype: 3535,    // MISA Sales Order RefType (Research based)
 
             org_refid: `${order.id}-${Date.now()}`,
             // Randomize RefNo to avoid "Duplicate Voucher Number" error
@@ -175,7 +174,7 @@ export const MisaService = {
             // inv_date: today,    // Not needed for Order
 
             // Customer Info
-            account_object_code: "KH_LE", // HARDCODED TEST
+            account_object_code: (order.receiverPhone || order.customer?.phone || "KH_LE").trim(),
             account_object_name: order.customerName || order.customer?.name || "Khách lẻ",
             account_object_address: order.receiverAddress || order.address || "",
 
@@ -183,7 +182,7 @@ export const MisaService = {
             // employee_code: ...
 
             // Financial Info
-            journal_memo: `Test Sync #${order.readable_id || order.readableId}`,
+            journal_memo: `Đơn hàng #${order.readable_id || order.readableId}`,
             currency_id: "VND",
             exchange_rate: 1,
 
@@ -203,10 +202,6 @@ export const MisaService = {
             // Item Details
             detail: details.map((d: any) => ({
                 ...d,
-                // HARDCODED TEST DATA
-                inventory_item_code: "8938540202023", // Bánh tráng bơ Abi
-                unit_code: "Gói",
-
                 // Remove accounts for Order
                 debit_account: undefined,
                 credit_account: undefined,
