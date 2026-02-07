@@ -65,10 +65,21 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
 
     const handleTestConnection = async () => {
         try {
-            const res = await fetch('/api/misa/test-connection');
+            const res = await fetch('/api/misa/debug-verify');
             const data = await res.json();
             if (data.success) {
-                alert(`✅ Kết nối thành công! Token: ${data.tokenPreview}`);
+                let msg = `✅ Kết nối API OK!\n`;
+
+                // Parse results
+                if (data.results && Array.isArray(data.results)) {
+                    data.results.forEach((r: any) => {
+                        const icon = r.error || (r.response && r.status !== 200 && !r.response.includes("Success")) ? "❌" : "✅";
+                        const status = r.error ? `Error: ${r.error}` : `Status: ${r.status}`;
+                        msg += `\n${icon} ${r.test}: ${status}`;
+                    });
+                }
+
+                alert(msg + `\n\nPreview Token: ${typeof data.token_preview === 'object' ? data.token_preview.sample : data.token_preview}`);
             } else {
                 alert(`❌ Kết nối thất bại: ${data.error}`);
             }

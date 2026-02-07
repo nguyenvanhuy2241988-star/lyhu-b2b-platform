@@ -98,11 +98,16 @@ export const MisaService = {
     },
 
     // 2. Map Order to Misa Invoice
-    mapOrderToMisaInvoice: (order: any, branchId?: string, stockCode?: string) => {
+    mapOrderToMisaInvoice: (order: any, config: any) => {
         console.log("Mapping Order to Misa V5 Payload...");
         const items = order.items || [];
         const today = new Date().toISOString().split('T')[0];
         const orderDate = new Date(order.created_at || new Date()).toISOString().split('T')[0];
+
+        // Configurable Defaults
+        const stockCode = config?.stockCode || "KBH";
+        const debitAccount = config?.debitAccount || "131";
+        const creditAccount = config?.creditAccount || "5111";
 
         // 1. Calculate Details & Totals
         let totalAmount = 0; // This will be total_amount (including VAT)
@@ -131,16 +136,16 @@ export const MisaService = {
                 amount: amount,
                 amount_oc: amount, // Nguyên tệ
 
-                // Accounts (Standard Defaults)
-                debit_account: "131",
-                credit_account: "5111",
+                // Accounts (Configurable)
+                debit_account: debitAccount,
+                credit_account: creditAccount,
 
                 // VAT
                 vat_rate: vatRate,
                 vat_amount: vatAmount,
                 vat_amount_oc: vatAmount,
 
-                stock_code: stockCode || "KBH", // User's Sales Warehouse Code
+                stock_code: stockCode,
                 exchange_rate_operator: "*",
 
                 main_convert_rate: 1,
@@ -212,8 +217,8 @@ export const MisaService = {
         };
 
         // Add Branch ID if available (Required for multi-branch sync)
-        if (branchId) {
-            payload.branch_id = branchId;
+        if (config?.branchId) {
+            payload.branch_id = config.branchId;
         }
 
         return payload;
@@ -231,12 +236,10 @@ export const MisaService = {
             // 2. Get Config
             const settings = await fetchAppSettings(supabase);
             // @ts-ignore
-            const config = settings?.misa_config;
-            const branchId = config?.branchId; // Retrieve branchId from config
-            const stockCode = config?.stockCode; // Retrieve stockCode from config
+            const config = settings?.misa_config || {};
 
             // 3. Map Data
-            const invoiceObj = MisaService.mapOrderToMisaInvoice(orderData, branchId, stockCode);
+            const invoiceObj = MisaService.mapOrderToMisaInvoice(orderData, config);
 
             // 4. Prepare Payload (Strict V5 Schema)
             // https://actdocs.misa.vn
