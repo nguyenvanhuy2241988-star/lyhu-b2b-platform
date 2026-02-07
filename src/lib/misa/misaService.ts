@@ -160,44 +160,33 @@ export const MisaService = {
         const phoneCode = order.receiverPhone || order.customer?.phone || "";
         const customerCode = phoneCode.trim() || "KH_LE";
 
-        // MISA Service "Save" API - Hóa đơn bán hàng
+        // MISA Service "Save" API - Đơn đặt hàng (Sales Order)
         const payload: any = {
-            voucher_type: 11, // Bán hàng
-            reftype: 3560,    // Hóa đơn bán hàng trong nước (NOT 3020 which is Purchase)
+            voucher_type: 20, // Đơn đặt hàng
+            // reftype: 3500,    // Đơn đặt hàng (Optional for V5, but good to have)
 
             org_refid: `${order.id}-${Date.now()}`,
             org_refno: `ORD-${order.readable_id || order.readableId || order.id.substring(0, 6)}`,
             org_reftype_name: "Đơn đặt hàng website",
-            // org_reftype: 3560, // Not needed
 
             refdate: orderDate,
-            posted_date: today,
-            inv_date: today,
+            // posted_date: today, // Not needed for Order
+            // inv_date: today,    // Not needed for Order
 
-            // Customer Info (Dynamic Mapping based on Phone)
+            // Customer Info
             account_object_code: (order.receiverPhone || order.customer?.phone || "KH_LE").trim(),
-
-
             account_object_name: order.customerName || order.customer?.name || "Khách lẻ",
             account_object_address: order.receiverAddress || order.address || "",
 
-            // Employee/Sales person (may be required)
-            // employee_code: order.telesalesCode || order.createdByCode || "", 
-            // employee_name: order.telesalesName || order.createdByName || "",
+            // Employee (Disabled for now to avoid mismatch)
+            // employee_code: ...
 
             // Financial Info
-            journal_memo: `Bán hàng đơn #${order.readable_id || order.readableId}`,
+            journal_memo: `Đơn hàng #${order.readable_id || order.readableId}`,
             currency_id: "VND",
             exchange_rate: 1,
-            payment_method: "Tiền mặt",
 
-            // Defaults for Required Fields
-            // inv_series: "K24T",
-            // inv_no: `INV-${order.readable_id || order.readableId}`,
-            // inv_template_no: "01GTKT0/001",
-            inv_type_id: 1, // GTGT
-
-            // Totals (REQUIRED)
+            // Totals
             total_sale_amount: totalSaleAmount,
             total_sale_amount_oc: totalSaleAmount,
             total_vat_amount: totalVat,
@@ -207,13 +196,17 @@ export const MisaService = {
             total_discount_amount: totalDiscount,
             total_discount_amount_oc: totalDiscount,
 
-            // Status flags (Safe Mode: Unrecorded)
-            is_posted: false,             // Chưa ghi sổ (Để tránh lỗi kho/kỳ kế toán chặn)
-            // is_confirm: true,             
-            // voucher_status: 1,
+            // Status: 1=Chưa thực hiện (Pending)
+            order_status: 1,
 
             // Item Details
-            detail: details
+            detail: details.map((d: any) => ({
+                ...d,
+                // Remove accounts for Order
+                debit_account: undefined,
+                credit_account: undefined,
+                // Order specific fields if needed
+            }))
         };
 
         // Add Branch ID if available (Required for multi-branch sync)
