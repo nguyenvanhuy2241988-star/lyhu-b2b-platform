@@ -165,7 +165,7 @@ export const MisaService = {
             voucher_type: 11, // Bán hàng
             reftype: 3560,    // Hóa đơn bán hàng trong nước (NOT 3020 which is Purchase)
 
-            org_refid: order.id,
+            org_refid: `${order.id}-${Date.now()}`,
             org_refno: `ORD-${order.readable_id || order.readableId || order.id.substring(0, 6)}`,
             org_reftype_name: "Đơn đặt hàng website",
             // org_reftype: 3560, // Not needed
@@ -207,10 +207,10 @@ export const MisaService = {
             total_discount_amount: totalDiscount,
             total_discount_amount_oc: totalDiscount,
 
-            // Status flags (try adding these)
-            is_posted: true,              // Đã ghi sổ
-            is_confirm: true,             // Đã xác nhận
-            voucher_status: 1,            // 1 = Đã hoàn thành
+            // Status flags (Safe Mode: Unrecorded)
+            is_posted: false,             // Chưa ghi sổ (Để tránh lỗi kho/kỳ kế toán chặn)
+            // is_confirm: true,             
+            // voucher_status: 1,
 
             // Item Details
             detail: details
