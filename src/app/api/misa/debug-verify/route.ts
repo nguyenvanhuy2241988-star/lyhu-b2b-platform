@@ -48,42 +48,43 @@ export async function GET(request: Request) {
 
         const branchId = config.branchId || null;
 
-        // FINAL ATTEMPT: Remove skip/take (Might be causing Exception)
+        // FINAL CONFIG: Restore skip/take (Worked in E1), Echo Token
 
-        // Test 1: Stock (Type 2) - Minimal (No skip/take)
-        results.push(await runTest("1. Stock (Type 2) [Minimal]", {
+        const branchId = config.branchId || null;
+
+        // Test 1: Stock (Type 2)
+        results.push(await runTest("1. Stock (2) [CC, skip:0, take:5]", {
             app_id: customAppId || defaultAppId,
             ...(companyCode ? { org_company_code: companyCode } : {}),
-            dictionary_type: 2
+            dictionary_type: 2,
+            skip: 0,
+            take: 5
         }, { "X-MISA-AccessToken": token, "X-MISA-AppID": customAppId || defaultAppId }));
 
-        // Test 2: Employee (Type 3) - Minimal
-        results.push(await runTest("2. Employee (Type 3) [Minimal]", {
+        // Test 2: Employee (Type 3)
+        results.push(await runTest("2. Employee (3) [CC, skip:0, take:5]", {
             app_id: customAppId || defaultAppId,
             ...(companyCode ? { org_company_code: companyCode } : {}),
-            dictionary_type: 3
+            dictionary_type: 3,
+            skip: 0,
+            take: 5
         }, { "X-MISA-AccessToken": token, "X-MISA-AppID": customAppId || defaultAppId }));
 
-        // Test 3: Stock (Type 2) WITH BranchID
-        // Some MISA configurations require BranchID to know which stock to read
-        if (branchId) {
-            results.push(await runTest("3. Stock (Type 2) [With Branch]", {
-                app_id: customAppId || defaultAppId,
-                ...(companyCode ? { org_company_code: companyCode } : {}),
-                branch_id: branchId,
-                dictionary_type: 2
-            }, { "X-MISA-AccessToken": token, "X-MISA-AppID": customAppId || defaultAppId }));
-        } else {
-            results.push({ test: "3. Stock (Type 2) [With Branch]", status: "SKIPPED", error: "No Branch ID Configured" });
-        }
+        // Test 3: Employee (Type 3) - NO CC (Fallback)
+        results.push(await runTest("3. Employee (3) [NO CC, skip:0, take:5]", {
+            app_id: customAppId || defaultAppId,
+            dictionary_type: 3,
+            skip: 0,
+            take: 5
+        }, { "X-MISA-AccessToken": token, "X-MISA-AppID": customAppId || defaultAppId }));
 
         return NextResponse.json({
             success: true,
             debug_info: {
                 app_id: customAppId || defaultAppId,
                 company_code: companyCode,
-                branch_id: branchId
             },
+            token_preview: token ? `${token.substring(0, 10)}...` : "null",
             results
         });
 
