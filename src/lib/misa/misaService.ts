@@ -175,7 +175,7 @@ export const MisaService = {
             // inv_date: today,    // Not needed for Order
 
             // Customer Info
-            account_object_code: (order.receiverPhone || order.customer?.phone || "KH_LE").trim(),
+            account_object_code: "KH_LE", // HARDCODED TEST
             account_object_name: order.customerName || order.customer?.name || "Khách lẻ",
             account_object_address: order.receiverAddress || order.address || "",
 
@@ -183,7 +183,7 @@ export const MisaService = {
             // employee_code: ...
 
             // Financial Info
-            journal_memo: `Đơn hàng #${order.readable_id || order.readableId}`,
+            journal_memo: `Test Sync #${order.readable_id || order.readableId}`,
             currency_id: "VND",
             exchange_rate: 1,
 
@@ -203,6 +203,10 @@ export const MisaService = {
             // Item Details
             detail: details.map((d: any) => ({
                 ...d,
+                // HARDCODED TEST DATA
+                inventory_item_code: "8938540202023", // Bánh tráng bơ Abi
+                unit_code: "Gói",
+
                 // Remove accounts for Order
                 debit_account: undefined,
                 credit_account: undefined,
