@@ -80,8 +80,8 @@ export async function GET(request: Request) {
             "X-MISA-AppID": customAppId || defaultAppId
         }));
 
-        // TEST E1: Probe Stock - Minimal Payload (dictionary_type)
-        results.push(await runTest("E1: Stock Probe (dictionary_type)", {
+        // TEST E: Check Dictionary (Stock - VT_HH) - Type 2
+        results.push(await runTest("E: Check Dictionary (Stock)", {
             app_id: customAppId || defaultAppId,
             org_company_code: companyCode,
             dictionary_type: 2,
@@ -92,11 +92,11 @@ export async function GET(request: Request) {
             "X-MISA-AppID": customAppId || defaultAppId
         }));
 
-        // TEST E2: Probe Stock - Minimal Payload (data_type)
-        results.push(await runTest("E2: Stock Probe (data_type)", {
+        // TEST F: Check Dictionary (Employee - NV) - Type 3
+        results.push(await runTest("F: Check Dictionary (Employee)", {
             app_id: customAppId || defaultAppId,
             org_company_code: companyCode,
-            data_type: 2,
+            dictionary_type: 3,
             skip: 0,
             take: 5
         }, {
@@ -104,25 +104,11 @@ export async function GET(request: Request) {
             "X-MISA-AppID": customAppId || defaultAppId
         }));
 
-        // TEST E3: Probe Stock - Full Payload (data_type + last_sync_time + branch_id null)
-        results.push(await runTest("E3: Stock Probe (Full)", {
+        // TEST G: Check Dictionary (Unit - DVT) - Type 4
+        results.push(await runTest("G: Check Dictionary (Unit)", {
             app_id: customAppId || defaultAppId,
             org_company_code: companyCode,
-            data_type: 2,
-            branch_id: null,
-            last_sync_time: null,
-            skip: 0,
-            limit: 5
-        }, {
-            "X-MISA-AccessToken": token,
-            "X-MISA-AppID": customAppId || defaultAppId
-        }));
-
-        // TEST F: Check Dictionary (Employee - NV) - Type 3 (Only if E works, but keep for now)
-        results.push(await runTest("F: Check Dictionary (Employee)", {
-            app_id: customAppId || defaultAppId,
-            org_company_code: companyCode,
-            dictionary_type: 3,
+            dictionary_type: 4,
             skip: 0,
             take: 5
         }, {
