@@ -37,10 +37,17 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                 console.log("%c[MISA SUCCESS] Ref ID: " + misaRef, "color: green; font-size: 16px; font-weight: bold;");
 
                 // Build alert message
+                // Build alert message
                 let alertMsg = `✅ Đồng bộ MISA thành công!\n\nMã chứng từ: ${misaRef}\n\n👉 Vui lòng kiểm tra tab "Đơn đặt hàng" trên MISA.`;
+
                 if (data.warnings && data.warnings.length > 0) {
                     alertMsg += `\n\n⚠️ CẢNH BÁO:\n- ${data.warnings.join("\n- ")}`;
                 }
+
+                if (data.debugPayload) {
+                    alertMsg += `\n\n🔍 Debug Payload:\n${JSON.stringify(data.debugPayload, null, 2)}`;
+                }
+
                 alert(alertMsg);
             } else {
                 setLocalMisaStatus({ status: 'failed', refId: null, error: data.error || "Unknown error" });

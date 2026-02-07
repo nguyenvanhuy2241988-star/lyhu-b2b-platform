@@ -162,11 +162,11 @@ export const MisaService = {
 
         const payload: any = {
             voucher_type: 20, // Đơn đặt hàng
-            reftype: 3535,    // MISA Sales Order RefType (Research based)
+            // reftype: 3535,    // REMOVED: Let MISA infer (Might be causing silent rejection)
 
             org_refid: `${order.id}-${Date.now()}`,
-            // Randomize RefNo to avoid "Duplicate Voucher Number" error
-            org_refno: `ORD-${order.readable_id || order.readableId || order.id.substring(0, 6)}-${Math.floor(1000 + Math.random() * 9000)}`,
+            // Changed prefix to DH-WEB to be distinct
+            org_refno: `DH-WEB-${order.readable_id || order.readableId || order.id.substring(0, 6)}-${Math.floor(1000 + Math.random() * 9000)}`,
             org_reftype_name: "Đơn đặt hàng website",
 
             refdate: orderDate,
