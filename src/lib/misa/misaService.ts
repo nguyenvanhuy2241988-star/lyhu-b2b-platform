@@ -126,10 +126,10 @@ export const MisaService = {
 
             return {
                 sort_order: index + 1,
-                inventory_item_code: "8938540202023", // HARDCODED DEBUG: Bánh tráng bơ Abi
+                inventory_item_code: item.sku || item.product_code || `SP-${index + 1}`, // Dynamic SKU
                 inventory_item_name: item.name,
                 description: item.name,
-                unit_code: "Gói", // HARDCODED DEBUG: Valid Unit
+                unit_code: item.unit || "Cái", // Default Unit
 
                 quantity: qty,
                 unit_price: price,
@@ -145,7 +145,7 @@ export const MisaService = {
                 vat_amount: vatAmount,
                 vat_amount_oc: vatAmount,
 
-                stock_code: "KBH", // HARDCODED DEBUG: Valid Stock
+                stock_code: config?.stockCode || "KBH", // Configurable Stock
                 exchange_rate_operator: "*",
 
                 main_convert_rate: 1,
@@ -158,7 +158,8 @@ export const MisaService = {
 
         // Customer Info (Dynamic Mapping based on Phone)
         const phoneCode = order.receiverPhone || order.customer?.phone || "";
-        // const customerCode = phoneCode.trim() || "KH_LE";
+        // Auto-generate customer code if missing
+        const customerCode = phoneCode.trim() || `KH-${order.customer?.id || Date.now()}`;
 
         const payload: any = {
             voucher_type: 20, // Đơn đặt hàng
@@ -173,12 +174,13 @@ export const MisaService = {
             // posted_date: today, // Not needed for Order
             // inv_date: today,    // Not needed for Order
 
-            // Customer Info (Hardcoded Debug)
-            account_object_code: "0966455789", // HARDCODED DEBUG: Valid Customer
+            // Customer Info
+            account_object_code: customerCode,
             account_object_name: order.customerName || order.customer?.name || "Khách lẻ",
             account_object_address: order.receiverAddress || order.address || "",
 
             // Employee (Hardcoded based on User Screenshot: NV000009 - Shoppe)
+            // Consider moving this to config later, but keeping for stability now
             employee_code: config?.employeeCode || "NV000009",
 
             // Dates
