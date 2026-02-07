@@ -44,12 +44,7 @@ export async function GET(request: Request) {
             }
         };
 
-        // FINAL PROBE: Clean, Simple, Echo Payload with Echo Payload
-
-        const branchId = config.branchId || null;
-
         // FINAL CONFIG: Restore skip/take (Worked in E1), Echo Token
-
         const branchId = config.branchId || null;
 
         // Test 1: Stock (Type 2)
