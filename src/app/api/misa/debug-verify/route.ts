@@ -50,8 +50,6 @@ export async function GET(request: Request) {
 
         // FINAL ATTEMPT: Remove skip/take (Might be causing Exception)
 
-        const branchId = config.branchId || null;
-
         // Test 1: Stock (Type 2) - Minimal (No skip/take)
         results.push(await runTest("1. Stock (Type 2) [Minimal]", {
             app_id: customAppId || defaultAppId,
