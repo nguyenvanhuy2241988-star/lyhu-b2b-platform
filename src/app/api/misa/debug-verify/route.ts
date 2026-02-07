@@ -44,81 +44,30 @@ export async function GET(request: Request) {
             }
         };
 
-        // TEST A: Standard (Custom AppID if set, else Default)
-        results.push(await runTest("A: Standard Config", {
-            app_id: customAppId || defaultAppId,
-            org_company_code: companyCode,
-            dictionary_type: 2
-        }, {
-            "X-MISA-AccessToken": token,
-            "X-MISA-AppID": customAppId || defaultAppId
-        }));
+        // FINAL PROBE: Clean, Simple, Echo Payload with Echo Payload
 
-        // TEST B: Force Default AppID (If user is using custom)
-        if (customAppId && customAppId !== defaultAppId) {
-            results.push(await runTest("B: Force Default AppID", {
-                app_id: defaultAppId,
-                org_company_code: companyCode,
-                dictionary_type: 2
-            }, {
-                "X-MISA-AccessToken": token,
-                "X-MISA-AppID": defaultAppId
-            }));
-        }
-
-        // TEST C: No Company Code in Body
-        results.push(await runTest("C: No Body CompanyCode", {
-            app_id: customAppId || defaultAppId,
-            dictionary_type: 2
-        }, {
-            "X-MISA-AccessToken": token,
-            "X-MISA-AppID": customAppId || defaultAppId
-        }));
-
-        // TEST D: Authorization Header Bearer
-        results.push(await runTest("D: Auth Bearer Header", {
-            app_id: customAppId || defaultAppId,
-            org_company_code: companyCode,
-            dictionary_type: 2
-        }, {
-            "Authorization": `Bearer ${token}`,
-            "X-MISA-AppID": customAppId || defaultAppId
-        }));
-
-        // TEST PROBE REVISITED: Type 2 (Stock) worked with take:5 before. Probe failed with take:1.
-        // So we retry specific types with take:5.
-
-        // TEST REFACTOR: Echo Payload to find the working combination
         const branchId = config.branchId || null;
 
-        // V1: Type 2, No Company Code, No Branch
-        results.push(await runTest("V1: Stock (NoCC, NoBranch)", {
+        // Test 1: Stock (Type 2) with Configured Company Code
+        results.push(await runTest("1. Stock (Type 2) [Configured CC]", {
             app_id: customAppId || defaultAppId,
+            ...(companyCode ? { org_company_code: companyCode } : {}),
             dictionary_type: 2,
             skip: 0,
             take: 5
         }, { "X-MISA-AccessToken": token, "X-MISA-AppID": customAppId || defaultAppId }));
 
-        // V2: Type 2, Empty Company Code, No Branch
-        results.push(await runTest("V2: Stock (EmptyCC, NoBranch)", {
+        // Test 2: Employee (Type 3) with Configured Company Code
+        results.push(await runTest("2. Employee (Type 3) [Configured CC]", {
             app_id: customAppId || defaultAppId,
-            org_company_code: "",
-            dictionary_type: 2,
+            ...(companyCode ? { org_company_code: companyCode } : {}),
+            dictionary_type: 3,
             skip: 0,
             take: 5
         }, { "X-MISA-AccessToken": token, "X-MISA-AppID": customAppId || defaultAppId }));
 
-        // V3: Type 2, With Branch (if configured), No CC
-        results.push(await runTest("V3: Stock (Branch, NoCC)", {
-            app_id: customAppId || defaultAppId,
-            branch_id: branchId,
-            dictionary_type: 2,
-            skip: 0,
-            take: 5
-        }, { "X-MISA-AccessToken": token, "X-MISA-AppID": customAppId || defaultAppId }));
-
-        // V4: Type 3 (Employee), No CC
-        results.push(await runTest("V4: Employee (NoCC)", {
+        // Test 3: Employee (Type 3) with NO Company Code (Fallback check)
+        results.push(await runTest("3. Employee (Type 3) [NO CC]", {
             app_id: customAppId || defaultAppId,
             dictionary_type: 3,
             skip: 0,
