@@ -85,8 +85,10 @@ export async function GET(request: Request) {
             app_id: customAppId || defaultAppId,
             org_company_code: companyCode,
             dictionary_type: 2, // Vật tư hàng hóa
+            columns: "inventory_item_code,inventory_item_name",
+            order_by: "inventory_item_code ASC",
             skip: 0,
-            take: 5
+            limit: 5 // V5 uses limit, not take
         }, {
             "X-MISA-AccessToken": token,
             "X-MISA-AppID": customAppId || defaultAppId
@@ -97,8 +99,10 @@ export async function GET(request: Request) {
             app_id: customAppId || defaultAppId,
             org_company_code: companyCode,
             dictionary_type: 3, // Nhân viên
+            columns: "employee_code,employee_name,employee_id",
+            order_by: "employee_code ASC",
             skip: 0,
-            take: 5
+            limit: 5
         }, {
             "X-MISA-AccessToken": token,
             "X-MISA-AppID": customAppId || defaultAppId
@@ -109,8 +113,10 @@ export async function GET(request: Request) {
             app_id: customAppId || defaultAppId,
             org_company_code: companyCode,
             dictionary_type: 4, // Đơn vị tính
+            columns: "unit_code,unit_name,unit_id",
+            order_by: "unit_code ASC",
             skip: 0,
-            take: 5
+            limit: 5
         }, {
             "X-MISA-AccessToken": token,
             "X-MISA-AppID": customAppId || defaultAppId
