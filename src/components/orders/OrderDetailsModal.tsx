@@ -75,7 +75,14 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                     data.results.forEach((r: any) => {
                         const icon = r.error || (r.response && r.status !== 200 && !r.response.includes("Success")) ? "❌" : "✅";
                         const status = r.error ? `Error: ${r.error}` : `Status: ${r.status}`;
-                        msg += `\n${icon} ${r.test}: ${status}`;
+
+                        // Simple translation for test names
+                        let testName = r.test;
+                        if (testName.includes("Dictionary (Stock)")) testName = "E: Kiểm tra danh mục VẬT TƯ";
+                        if (testName.includes("Dictionary (Employee)")) testName = "F: Kiểm tra danh mục NHÂN VIÊN";
+                        if (testName.includes("Dictionary (Unit)")) testName = "G: Kiểm tra danh mục ĐƠN VỊ TÍNH";
+
+                        msg += `\n${icon} ${testName}: ${status}`;
                     });
                 }
 

@@ -92,6 +92,30 @@ export async function GET(request: Request) {
             "X-MISA-AppID": customAppId || defaultAppId
         }));
 
+        // TEST F: Check Dictionary (Employee - NV) - Type 3
+        results.push(await runTest("F: Check Dictionary (Employee)", {
+            app_id: customAppId || defaultAppId,
+            org_company_code: companyCode,
+            dictionary_type: 3, // Nhân viên
+            skip: 0,
+            take: 5
+        }, {
+            "X-MISA-AccessToken": token,
+            "X-MISA-AppID": customAppId || defaultAppId
+        }));
+
+        // TEST G: Check Dictionary (Unit - DVT) - Type 4
+        results.push(await runTest("G: Check Dictionary (Unit)", {
+            app_id: customAppId || defaultAppId,
+            org_company_code: companyCode,
+            dictionary_type: 4, // Đơn vị tính
+            skip: 0,
+            take: 5
+        }, {
+            "X-MISA-AccessToken": token,
+            "X-MISA-AppID": customAppId || defaultAppId
+        }));
+
         // TEST F: Check Dictionary (Account - TK) - Type 4? (Guessing, usually 4 or 9 for Accounts, or just verify using Stock first)
         // Let's stick to Stock as a proxy for "Dictionary Access OK"
 
