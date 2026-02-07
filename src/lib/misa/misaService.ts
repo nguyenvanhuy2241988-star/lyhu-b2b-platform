@@ -57,7 +57,7 @@ export const MisaService = {
                 body: JSON.stringify({
                     app_id: config.appId || "84318d18-5a63-4422-b94f-40e87d60567e",
                     access_code: config.accessCode,
-                    org_company_code: config.companyCode?.trim()
+                    org_company_code: "NB" // config.companyCode?.trim()
                 })
             });
 
@@ -245,7 +245,7 @@ export const MisaService = {
 
             const payload = {
                 app_id: appId,
-                org_company_code: config?.companyCode?.trim(),
+                org_company_code: "NB", // config?.companyCode?.trim(),
                 voucher: [invoiceObj] // Critical: Key is "voucher", not "data"
             };
 
