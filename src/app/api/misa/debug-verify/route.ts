@@ -80,19 +80,56 @@ export async function GET(request: Request) {
             "X-MISA-AppID": customAppId || defaultAppId
         }));
 
-        // TEST PROBE: Brute Force Types 1-9
-        for (let typeId = 1; typeId <= 9; typeId++) {
-            results.push(await runTest(`Probe Type ${typeId}`, {
-                app_id: customAppId || defaultAppId,
-                org_company_code: companyCode,
-                dictionary_type: typeId,
-                skip: 0,
-                take: 1
-            }, {
-                "X-MISA-AccessToken": token,
-                "X-MISA-AppID": customAppId || defaultAppId
-            }));
-        }
+        // TEST PROBE REVISITED: Type 2 (Stock) worked with take:5 before. Probe failed with take:1.
+        // So we retry specific types with take:5.
+
+        // TEST E: Type 2 (Stock) - Should work
+        results.push(await runTest("E: Probe Type 2 (Stock?)", {
+            app_id: customAppId || defaultAppId,
+            org_company_code: companyCode,
+            dictionary_type: 2,
+            skip: 0,
+            take: 5
+        }, {
+            "X-MISA-AccessToken": token,
+            "X-MISA-AppID": customAppId || defaultAppId
+        }));
+
+        // TEST F: Type 3 (Employee?)
+        results.push(await runTest("F: Probe Type 3 (Employee?)", {
+            app_id: customAppId || defaultAppId,
+            org_company_code: companyCode,
+            dictionary_type: 3,
+            skip: 0,
+            take: 5
+        }, {
+            "X-MISA-AccessToken": token,
+            "X-MISA-AppID": customAppId || defaultAppId
+        }));
+
+        // TEST H: Probe Type 8 (Employee Alternate?)
+        results.push(await runTest("H: Probe Type 8", {
+            app_id: customAppId || defaultAppId,
+            org_company_code: companyCode,
+            dictionary_type: 8,
+            skip: 0,
+            take: 5
+        }, {
+            "X-MISA-AccessToken": token,
+            "X-MISA-AppID": customAppId || defaultAppId
+        }));
+
+        // TEST I: Probe Type 9 (Generic?)
+        results.push(await runTest("I: Probe Type 9", {
+            app_id: customAppId || defaultAppId,
+            org_company_code: companyCode,
+            dictionary_type: 9,
+            skip: 0,
+            take: 5
+        }, {
+            "X-MISA-AccessToken": token,
+            "X-MISA-AppID": customAppId || defaultAppId
+        }));
 
         return NextResponse.json({
             success: true,
