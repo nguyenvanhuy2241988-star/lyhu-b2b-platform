@@ -18,7 +18,7 @@ export async function GET(request: Request) {
         const config = settings?.misa_config || {};
         const customAppId = config.appId;
         const defaultAppId = "84318d18-5a63-4422-b94f-40e87d60567e";
-        const companyCode = config.companyCode?.trim();
+        const companyCode = "NB"; // config.companyCode?.trim();
         const apiUrl = (config.apiUrl || "https://actapp.misa.vn").replace(/\/$/, "");
         const readUrl = `${apiUrl}/api/sync/actopen/get_dictionary`;
 
