@@ -86,7 +86,7 @@ export async function GET(request: Request) {
         // TEST E: Probe Type 2 (Stock?)
         results.push(await runTest("E: Probe Type 2 (Stock?)", {
             app_id: customAppId || defaultAppId,
-            org_company_code: companyCode || "",
+            ...(companyCode ? { org_company_code: companyCode } : {}),
             dictionary_type: 2,
             skip: 0,
             take: 5
@@ -98,7 +98,7 @@ export async function GET(request: Request) {
         // TEST F: Probe Type 3 (Employee?)
         results.push(await runTest("F: Probe Type 3 (Employee?)", {
             app_id: customAppId || defaultAppId,
-            org_company_code: companyCode || "",
+            ...(companyCode ? { org_company_code: companyCode } : {}),
             dictionary_type: 3,
             skip: 0,
             take: 5
@@ -110,7 +110,7 @@ export async function GET(request: Request) {
         // TEST H: Probe Type 8 (Employee Alternate?)
         results.push(await runTest("H: Probe Type 8", {
             app_id: customAppId || defaultAppId,
-            org_company_code: companyCode || "",
+            ...(companyCode ? { org_company_code: companyCode } : {}),
             dictionary_type: 8,
             skip: 0,
             take: 5
@@ -122,7 +122,7 @@ export async function GET(request: Request) {
         // TEST I: Probe Type 9 (Generic?)
         results.push(await runTest("I: Probe Type 9", {
             app_id: customAppId || defaultAppId,
-            org_company_code: companyCode || "",
+            ...(companyCode ? { org_company_code: companyCode } : {}),
             dictionary_type: 9,
             skip: 0,
             take: 5
