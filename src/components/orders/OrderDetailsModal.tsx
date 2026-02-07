@@ -71,6 +71,10 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                 let msg = `✅ Kết nối API OK!\n`;
 
                 // Parse results
+                if (data.debug_info) {
+                    msg += `\n⚙ Company: "${data.debug_info.company_code || ''}" | Branch: "${data.debug_info.branch_id || ''}"`;
+                }
+
                 if (data.results && Array.isArray(data.results)) {
                     data.results.forEach((r: any) => {
                         const icon = r.error || (r.response && r.status !== 200 && !r.response.includes("Success")) ? "❌" : "✅";
@@ -78,23 +82,28 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
 
                         // Simple translation for test names
                         let testName = r.test;
-                        if (testName.includes("Dictionary (Stock)")) testName = "E: Kiểm tra danh mục VẬT TƯ";
-                        if (testName.includes("Dictionary (Employee)")) testName = "F: Kiểm tra danh mục NHÂN VIÊN";
-                        if (testName.includes("Dictionary (Unit)")) testName = "G: Kiểm tra danh mục ĐƠN VỊ TÍNH";
+                        // ... (existing renaming logic if needed, or remove for clarity since we use V1, V2 etc)
 
                         msg += `\n${icon} ${testName}: ${status}`;
+
+                        if (icon === "❌" && r.payload_echo) {
+                            msg += `\n   ↪ Payload: ${JSON.stringify(r.payload_echo)}`;
+                        }
+
                         if (r.response && !r.error) {
                             try {
                                 // Try to format JSON nicely if possible, or just truncate
                                 const jsonResp = JSON.parse(r.response);
                                 if (Array.isArray(jsonResp) && jsonResp.length > 0) {
-                                    msg += `\n   ↪ Data: ${JSON.stringify(jsonResp[0]).substring(0, 150)}...`;
+                                    msg += `\n   ↪ Data: ${JSON.stringify(jsonResp[0]).substring(0, 100)}...`;
                                 } else {
-                                    msg += `\n   ↪ Data: ${r.response.substring(0, 50)}...`;
+                                    msg += `\n   ↪ Data: ${r.response.substring(0, 150)}...`;
                                 }
                             } catch (e) {
                                 msg += `\n   ↪ Data: ${r.response}`;
                             }
+                        } else if (r.error) {
+                            msg += `\n   ↪ Error: ${r.error}`;
                         }
                     });
                 }

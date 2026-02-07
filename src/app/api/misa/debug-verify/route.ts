@@ -33,9 +33,14 @@ export async function GET(request: Request) {
                     body: JSON.stringify(payload)
                 });
                 const text = await res.text();
-                return { test: name, status: res.status, response: text.substring(0, 100) };
+                return {
+                    test: name,
+                    status: res.status,
+                    payload_echo: payload,
+                    response: text.substring(0, 500) // Increase limit to see more error details 
+                };
             } catch (e: any) {
-                return { test: name, error: e.message };
+                return { test: name, error: e.message, payload_echo: payload };
             }
         };
 
@@ -83,61 +88,49 @@ export async function GET(request: Request) {
         // TEST PROBE REVISITED: Type 2 (Stock) worked with take:5 before. Probe failed with take:1.
         // So we retry specific types with take:5.
 
-        // TEST E: Probe Type 2 (Stock?)
-        results.push(await runTest("E: Probe Type 2 (Stock?)", {
+        // TEST REFACTOR: Echo Payload to find the working combination
+        const branchId = config.branchId || null;
+
+        // V1: Type 2, No Company Code, No Branch
+        results.push(await runTest("V1: Stock (NoCC, NoBranch)", {
             app_id: customAppId || defaultAppId,
-            ...(companyCode ? { org_company_code: companyCode } : {}),
             dictionary_type: 2,
             skip: 0,
             take: 5
-        }, {
-            "X-MISA-AccessToken": token,
-            "X-MISA-AppID": customAppId || defaultAppId
-        }));
+        }, { "X-MISA-AccessToken": token, "X-MISA-AppID": customAppId || defaultAppId }));
 
-        // TEST F: Probe Type 3 (Employee?)
-        results.push(await runTest("F: Probe Type 3 (Employee?)", {
+        // V2: Type 2, Empty Company Code, No Branch
+        results.push(await runTest("V2: Stock (EmptyCC, NoBranch)", {
             app_id: customAppId || defaultAppId,
-            ...(companyCode ? { org_company_code: companyCode } : {}),
+            org_company_code: "",
+            dictionary_type: 2,
+            skip: 0,
+            take: 5
+        }, { "X-MISA-AccessToken": token, "X-MISA-AppID": customAppId || defaultAppId }));
+
+        // V3: Type 2, With Branch (if configured), No CC
+        results.push(await runTest("V3: Stock (Branch, NoCC)", {
+            app_id: customAppId || defaultAppId,
+            branch_id: branchId,
+            dictionary_type: 2,
+            skip: 0,
+            take: 5
+        }, { "X-MISA-AccessToken": token, "X-MISA-AppID": customAppId || defaultAppId }));
+
+        // V4: Type 3 (Employee), No CC
+        results.push(await runTest("V4: Employee (NoCC)", {
+            app_id: customAppId || defaultAppId,
             dictionary_type: 3,
             skip: 0,
             take: 5
-        }, {
-            "X-MISA-AccessToken": token,
-            "X-MISA-AppID": customAppId || defaultAppId
-        }));
-
-        // TEST H: Probe Type 8 (Employee Alternate?)
-        results.push(await runTest("H: Probe Type 8", {
-            app_id: customAppId || defaultAppId,
-            ...(companyCode ? { org_company_code: companyCode } : {}),
-            dictionary_type: 8,
-            skip: 0,
-            take: 5
-        }, {
-            "X-MISA-AccessToken": token,
-            "X-MISA-AppID": customAppId || defaultAppId
-        }));
-
-        // TEST I: Probe Type 9 (Generic?)
-        results.push(await runTest("I: Probe Type 9", {
-            app_id: customAppId || defaultAppId,
-            ...(companyCode ? { org_company_code: companyCode } : {}),
-            dictionary_type: 9,
-            skip: 0,
-            take: 5
-        }, {
-            "X-MISA-AccessToken": token,
-            "X-MISA-AppID": customAppId || defaultAppId
-        }));
+        }, { "X-MISA-AccessToken": token, "X-MISA-AppID": customAppId || defaultAppId }));
 
         return NextResponse.json({
             success: true,
             debug_info: {
                 app_id: customAppId || defaultAppId,
-                company_code_len: companyCode ? companyCode.length : 0,
-                company_code_exists: !!companyCode,
-                token_len: token ? token.length : 0
+                company_code: companyCode,
+                branch_id: branchId
             },
             results
         });
