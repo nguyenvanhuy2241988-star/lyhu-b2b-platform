@@ -187,6 +187,7 @@ export const MisaService = {
 
             // Financial Info
             journal_memo: `Đơn hàng #${order.readable_id || order.readableId}`,
+            // Explicitly set Currency (Critical for Order)
             currency_id: "VND",
             exchange_rate: 1,
 
