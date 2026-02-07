@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { MisaService } from "@/lib/misa/misaService";
+import { MisaValidation } from "@/lib/misa/misaValidation";
 
 // Initialize Supabase Admin Client to bypass RLS for system operations
 const supabaseAdmin = createClient(
@@ -38,26 +39,48 @@ export async function POST(req: NextRequest) {
 
         const order = orders;
 
-        // 2. Validate Mappings
-        const missingProductMaps = order.items.filter((i: any) => !i.product?.misa_code);
-        // We warn but don't hard block, or maybe we block? Let's log for now.
-        if (missingProductMaps.length > 0) {
-            console.warn(`Order ${orderId} has items without Misa Code:`, missingProductMaps.map((i: any) => i.product?.sku));
+        // 2. NEW: Validate Mappings BEFORE Sync
+        // Helper to fetch settings
+        const { data: settings } = await supabaseAdmin.from('app_settings').select('misa_config').single();
+        const config = settings?.misa_config || {};
+
+        const validation = MisaValidation.validateOrder(order, config);
+
+        if (!validation.isValid) {
+            console.error(`[MISA Sync] Validation Failed for Order ${orderId}:`, validation.errors);
+
+            // Mark as failed in DB
+            await supabaseAdmin
+                .from("orders")
+                .update({
+                    misa_last_sync_at: new Date().toISOString(),
+                    misa_sync_status: "failed",
+                    misa_sync_error: validation.errors.join("\n")
+                })
+                .eq("id", orderId);
+
+            return NextResponse.json({
+                success: false,
+                error: "Dữ liệu không hợp lệ: " + validation.errors.join(", "),
+                details: validation.errors,
+                warnings: validation.warnings
+            }, { status: 400 });
         }
 
+        // 3. Push to Misa (Only if valid)
         // Debug: Log what product codes we're about to send
         const productCodeDebug = order.items.map((i: any) => ({
             name: i.product?.name || i.name,
             misa_code: i.product?.misa_code || "MISSING",
             sku: i.product?.sku || i.sku
         }));
-        console.log(`[Sync] Order ${orderId} Product Codes:`, JSON.stringify(productCodeDebug));
+        console.log(`[Sync] Order ${orderId} Validated OK. Sending... Codes:`, JSON.stringify(productCodeDebug));
 
-        // 3. Push to Misa
         const result = await MisaService.pushSalesOrder(orderId, order, supabaseAdmin);
 
         // Add debug info to result
         (result as any).debug = { productCodes: productCodeDebug };
+        (result as any).warnings = validation.warnings; // Pass warnings back
 
         // 4. Update Status in DB
         const updateData: any = {

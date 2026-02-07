@@ -35,35 +35,24 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
 
                 // Log debug info prominently  
                 console.log("%c[MISA SUCCESS] Ref ID: " + misaRef, "color: green; font-size: 16px; font-weight: bold;");
-                if (data.debug?.productCodes) {
-                    console.log("%c[DEBUG] Product Codes Sent:", "color: orange; font-weight: bold;");
-                    console.table(data.debug.productCodes);
-                }
-                // Log full payload for debugging
-                if (data.debugPayload) {
-                    console.log("%c[DEBUG] FULL PAYLOAD SENT TO MISA:", "color: purple; font-size: 14px; font-weight: bold;");
-                    console.log(JSON.stringify(data.debugPayload, null, 2));
-                }
 
                 // Build alert message
                 let alertMsg = `✅ Đồng bộ MISA thành công!\n\nMã chứng từ: ${misaRef}`;
-                if (data.debug?.productCodes) {
-                    const missingCodes = data.debug.productCodes.filter((p: any) => p.misa_code === "MISSING");
-                    if (missingCodes.length > 0) {
-                        alertMsg += `\n\n⚠️ CẢNH BÁO: ${missingCodes.length} sản phẩm CHƯA CÓ MÃ MISA!`;
-                    }
+                if (data.warnings && data.warnings.length > 0) {
+                    alertMsg += `\n\n⚠️ CẢNH BÁO:\n- ${data.warnings.join("\n- ")}`;
                 }
                 alert(alertMsg);
             } else {
                 setLocalMisaStatus({ status: 'failed', refId: null, error: data.error || "Unknown error" });
                 console.error("[MISA FAILURE]", data);
 
-                // Log payload for debugging
-                if (data.debugPayload) {
-                    console.error("[MISA DEBUG] Failed Payload:", JSON.stringify(data.debugPayload, null, 2));
+                let errorMsg = `❌ Lỗi đồng bộ MISA:\n${data.error || "Lỗi không xác định"}`;
+
+                if (data.details && Array.isArray(data.details)) {
+                    errorMsg += `\n\n📋 Chi tiết lỗi:\n- ${data.details.join("\n- ")}`;
                 }
 
-                alert("❌ MISA Sync Error: " + (data.error || JSON.stringify(data)) + "\n\n(Xem Console F12 để thấy Payload chi tiết)");
+                alert(errorMsg);
             }
         } catch (err: any) {
             console.error("Sync Misa error", err);
