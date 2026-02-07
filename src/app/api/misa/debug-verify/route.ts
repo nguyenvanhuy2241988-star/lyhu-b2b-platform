@@ -83,26 +83,26 @@ export async function GET(request: Request) {
         // TEST E: Check Dictionary (Stock - VT_HH) - Type 2
         results.push(await runTest("E: Check Dictionary (Stock)", {
             app_id: customAppId || defaultAppId,
-            org_company_code: companyCode,
-            dictionary_type: 2, // Vật tư hàng hóa
-            columns: "inventory_item_code,inventory_item_name",
-            order_by: "inventory_item_code ASC",
+            // org_company_code: companyCode, // Some docs say header only
+            data_type: 2, // Changed from dictionary_type to data_type
+            branch_id: null,
             skip: 0,
-            limit: 5 // V5 uses limit, not take
+            take: 5,
+            last_sync_time: null // Required by some docs
         }, {
             "X-MISA-AccessToken": token,
-            "X-MISA-AppID": customAppId || defaultAppId
+            "X-MISA-AppID": customAppId || defaultAppId,
+            "Content-Type": "application/json"
         }));
 
         // TEST F: Check Dictionary (Employee - NV) - Type 3
         results.push(await runTest("F: Check Dictionary (Employee)", {
             app_id: customAppId || defaultAppId,
-            org_company_code: companyCode,
-            dictionary_type: 3, // Nhân viên
-            columns: "employee_code,employee_name,employee_id",
-            order_by: "employee_code ASC",
+            data_type: 3,
+            branch_id: null,
             skip: 0,
-            limit: 5
+            take: 5,
+            last_sync_time: null
         }, {
             "X-MISA-AccessToken": token,
             "X-MISA-AppID": customAppId || defaultAppId
@@ -111,12 +111,11 @@ export async function GET(request: Request) {
         // TEST G: Check Dictionary (Unit - DVT) - Type 4
         results.push(await runTest("G: Check Dictionary (Unit)", {
             app_id: customAppId || defaultAppId,
-            org_company_code: companyCode,
-            dictionary_type: 4, // Đơn vị tính
-            columns: "unit_code,unit_name,unit_id",
-            order_by: "unit_code ASC",
+            data_type: 4,
+            branch_id: null,
             skip: 0,
-            limit: 5
+            take: 5,
+            last_sync_time: null
         }, {
             "X-MISA-AccessToken": token,
             "X-MISA-AppID": customAppId || defaultAppId
