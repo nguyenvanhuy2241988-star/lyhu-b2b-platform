@@ -128,6 +128,8 @@ export const MisaService = {
                 sort_order: index + 1,
                 inventory_item_code: item.sku || item.product_code || `SP-${index + 1}`, // Dynamic SKU
                 inventory_item_name: item.name,
+                inventory_item_type: 1, // Loại: Hàng hóa (Goods)
+                inventory_item_category_code: "HH", // Default Group: Goods (Matches screenshot)
                 description: item.name,
                 unit_code: item.unit || "Cái", // Default Unit
 
@@ -145,7 +147,7 @@ export const MisaService = {
                 vat_amount: vatAmount,
                 vat_amount_oc: vatAmount,
 
-                stock_code: config?.stockCode || "KBH", // Configurable Stock
+                stock_code: config?.stockCode || "KBH", // Should match user screenshot (Column 1)
                 exchange_rate_operator: "*",
 
                 main_convert_rate: 1,
