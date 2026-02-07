@@ -80,41 +80,19 @@ export async function GET(request: Request) {
             "X-MISA-AppID": customAppId || defaultAppId
         }));
 
-        // TEST E: Check Dictionary (Stock - VT_HH) - Type 2
-        results.push(await runTest("E: Check Dictionary (Stock)", {
-            app_id: customAppId || defaultAppId,
-            org_company_code: companyCode,
-            dictionary_type: 2,
-            skip: 0,
-            take: 5
-        }, {
-            "X-MISA-AccessToken": token,
-            "X-MISA-AppID": customAppId || defaultAppId
-        }));
-
-        // TEST F: Check Dictionary (Employee - NV) - Type 3
-        results.push(await runTest("F: Check Dictionary (Employee)", {
-            app_id: customAppId || defaultAppId,
-            org_company_code: companyCode,
-            dictionary_type: 3,
-            skip: 0,
-            take: 5
-        }, {
-            "X-MISA-AccessToken": token,
-            "X-MISA-AppID": customAppId || defaultAppId
-        }));
-
-        // TEST G: Check Dictionary (Unit - DVT) - Type 4
-        results.push(await runTest("G: Check Dictionary (Unit)", {
-            app_id: customAppId || defaultAppId,
-            org_company_code: companyCode,
-            dictionary_type: 4,
-            skip: 0,
-            take: 5
-        }, {
-            "X-MISA-AccessToken": token,
-            "X-MISA-AppID": customAppId || defaultAppId
-        }));
+        // TEST PROBE: Brute Force Types 1-9
+        for (let typeId = 1; typeId <= 9; typeId++) {
+            results.push(await runTest(`Probe Type ${typeId}`, {
+                app_id: customAppId || defaultAppId,
+                org_company_code: companyCode,
+                dictionary_type: typeId,
+                skip: 0,
+                take: 1
+            }, {
+                "X-MISA-AccessToken": token,
+                "X-MISA-AppID": customAppId || defaultAppId
+            }));
+        }
 
         return NextResponse.json({
             success: true,
