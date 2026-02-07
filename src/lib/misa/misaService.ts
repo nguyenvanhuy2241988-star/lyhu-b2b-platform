@@ -126,10 +126,10 @@ export const MisaService = {
 
             return {
                 sort_order: index + 1,
-                inventory_item_code: item.product?.misa_code || item.sku || "SP_KHAC",
+                inventory_item_code: "8938540202023", // HARDCODED DEBUG: Bánh tráng bơ Abi
                 inventory_item_name: item.name,
                 description: item.name,
-                unit_code: item.product?.unit || item.unit || "Gói", // Default to "Gói" (common for packaged products)
+                unit_code: "Gói", // HARDCODED DEBUG: Valid Unit
 
                 quantity: qty,
                 unit_price: price,
@@ -145,7 +145,7 @@ export const MisaService = {
                 vat_amount: vatAmount,
                 vat_amount_oc: vatAmount,
 
-                stock_code: stockCode,
+                stock_code: "KBH", // HARDCODED DEBUG: Valid Stock
                 exchange_rate_operator: "*",
 
                 main_convert_rate: 1,
@@ -158,7 +158,7 @@ export const MisaService = {
 
         // Customer Info (Dynamic Mapping based on Phone)
         const phoneCode = order.receiverPhone || order.customer?.phone || "";
-        const customerCode = phoneCode.trim() || "KH_LE";
+        // const customerCode = phoneCode.trim() || "KH_LE";
 
         const payload: any = {
             voucher_type: 20, // Đơn đặt hàng
@@ -173,8 +173,8 @@ export const MisaService = {
             // posted_date: today, // Not needed for Order
             // inv_date: today,    // Not needed for Order
 
-            // Customer Info
-            account_object_code: (order.receiverPhone || order.customer?.phone || "KH_LE").trim(),
+            // Customer Info (Hardcoded Debug)
+            account_object_code: "0966455789", // HARDCODED DEBUG: Valid Customer
             account_object_name: order.customerName || order.customer?.name || "Khách lẻ",
             account_object_address: order.receiverAddress || order.address || "",
 
