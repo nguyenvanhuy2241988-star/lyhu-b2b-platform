@@ -276,7 +276,9 @@ export const MisaService = {
             // We only want to map the Sales Person.
             // employee_code: config?.employeeCode || "NV000009",
 
+            employee_code: config?.employeeCode || "NV000009",
             sale_employee_code: config?.employeeCode || "NV000009",
+            sales_employee_code: config?.employeeCode || "NV000009", // Alias just in case
             // sales_employee_code: config?.employeeCode || "NV000009", // Try alias if needed
 
             // Debug Employee Code
