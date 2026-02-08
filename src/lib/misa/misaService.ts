@@ -287,6 +287,10 @@ export const MisaService = {
             // Map Description/Note from Order
             journal_memo: order.note || order.description || `Đơn hàng #${order.readable_id || order.readableId}`,
 
+            // Explicitly set Discount Type (1 = By Item / Theo mặt hàng)
+            // This is CRITICAL to show the Discount Columns in MISA
+            discount_type: 1,
+
             // Explicitly set Currency (Critical for Order)
             currency_id: "VND",
             exchange_rate: 1,
