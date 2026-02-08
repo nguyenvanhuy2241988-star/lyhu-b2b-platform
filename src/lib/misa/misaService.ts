@@ -116,9 +116,14 @@ export const MisaService = {
 
         const details = items.map((item: any, index: number) => {
             // Fix Price Logic: Ensure 0 is respected (e.g. for gifts)
-            const price = (item.price !== undefined && item.price !== null)
+            const isGift = item.is_gift || item.isGift;
+            let price = (item.price !== undefined && item.price !== null)
                 ? item.price
                 : (item.unitPrice || 0);
+
+            if (isGift) {
+                price = 0; // Force zero price for gifts
+            }
 
             const qty = item.quantity || 1;
 
@@ -153,6 +158,9 @@ export const MisaService = {
                     else vatRate = 0;
                 }
             }
+
+            // If gift, force VAT to 0 (usually)
+            if (isGift) vatRate = 0;
 
             const vatAmount = (amount * vatRate) / 100;
 
@@ -195,6 +203,9 @@ export const MisaService = {
                 discount_rate: discountRate,
                 discount_amount: discountAmount,
                 discount_amount_oc: discountAmount,
+
+                // Promotion (for Gifts)
+                is_promotion: isGift || false,
 
                 // VAT
                 vat_rate: vatRate,
