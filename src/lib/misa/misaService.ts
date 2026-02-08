@@ -270,11 +270,14 @@ export const MisaService = {
             // This is REQUIRED for auto-creating new customers
             account_object_group_code: config?.customerGroupCode || "NPP",
 
-            // Employee (Hardcoded based on User Screenshot: NV000009 - Shoppe)
-            // Consider moving this to config later, but keeping for stability now
-            employee_code: config?.employeeCode || "NV000009",
-            // Also add sale_employee_code in case MISA requires it specifically for Sales Orders
+            // Employee Mapping Fix:
+            // 'employee_code' usually refers to the System User. 
+            // 'sale_employee_code' refers to the Sales Person (Dictionary).
+            // We only want to map the Sales Person.
+            // employee_code: config?.employeeCode || "NV000009",
+
             sale_employee_code: config?.employeeCode || "NV000009",
+            // sales_employee_code: config?.employeeCode || "NV000009", // Try alias if needed
 
             // Debug Employee Code
             // console.log(`[MisaService] Payload Employee Code: ${config?.employeeCode || "NV000009"}`);
@@ -441,6 +444,7 @@ export const MisaService = {
                         _debug_mappedCode: mappedCode || "N/A",
                         _debug_mappedName: mappedName || "N/A",
                         _debug_finalEmployeeCode: config?.employeeCode || "N/A",
+                        _debug_codeLen: config?.employeeCode ? config.employeeCode.length : 0,
                         _debug_created_by: orderData.created_by || "N/A"
                     }
                 };
