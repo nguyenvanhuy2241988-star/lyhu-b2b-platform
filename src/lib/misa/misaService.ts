@@ -124,14 +124,26 @@ export const MisaService = {
             totalAmount += amount + vatAmount;
             totalVat += vatAmount;
 
+            // Determine Product Code (Priority: Product Misa Code > Product SKU > Item SKU)
+            const productCode = item.product?.misa_code || item.product?.sku || item.sku || item.product_code || `SP-${index + 1}`;
+            const productName = item.product?.name || item.name || item.inventory_item_name;
+            const unit = item.product?.unit || item.unit || "Cái";
+
+            // Log for debugging
+            console.log(`[MisaService] Mapping Item ${index + 1}:`, {
+                productCode,
+                productName,
+                originalSku: item.product?.sku || item.sku
+            });
+
             return {
                 sort_order: index + 1,
-                inventory_item_code: item.sku || item.product_code || `SP-${index + 1}`, // Dynamic SKU
-                inventory_item_name: item.name,
+                inventory_item_code: productCode,
+                inventory_item_name: productName,
                 inventory_item_type: 1, // Loại: Hàng hóa (Goods)
-                inventory_item_category_code: "HH", // Default Group: Goods (Matches screenshot)
-                description: item.name,
-                unit_code: item.unit || "Cái", // Default Unit
+                inventory_item_category_code: "HH", // Default Group: Goods
+                description: productName,
+                unit_code: unit,
 
                 quantity: qty,
                 unit_price: price,
