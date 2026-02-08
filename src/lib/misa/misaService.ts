@@ -199,6 +199,8 @@ export const MisaService = {
             // Employee (Hardcoded based on User Screenshot: NV000009 - Shoppe)
             // Consider moving this to config later, but keeping for stability now
             employee_code: config?.employeeCode || "NV000009",
+            // Also add sale_employee_code in case MISA requires it specifically for Sales Orders
+            sale_employee_code: config?.employeeCode || "NV000009",
 
             // Debug Employee Code
             // console.log(`[MisaService] Payload Employee Code: ${config?.employeeCode || "NV000009"}`);
