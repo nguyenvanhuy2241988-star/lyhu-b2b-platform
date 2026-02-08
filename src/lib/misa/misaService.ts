@@ -345,11 +345,12 @@ export const MisaService = {
             const userId = orderData.user_id || orderData.telesales_user_id || orderData.created_by;
 
             let mappedCode = null;
+            let mappedName = null;
             if (userId) {
                 console.log(`[MisaService] Fetching employee mapping for User ID: ${userId}`);
                 const { data: userProfile } = await supabase
                     .from('profiles')
-                    .select('misa_employee_code')
+                    .select('misa_employee_code, full_name')
                     .eq('id', userId)
                     .single();
 
@@ -357,6 +358,7 @@ export const MisaService = {
                     console.log(`[MisaService] Found Mapped Employee Code: ${userProfile.misa_employee_code}`);
                     config.employeeCode = userProfile.misa_employee_code;
                     mappedCode = userProfile.misa_employee_code;
+                    mappedName = userProfile.full_name;
                 } else {
                     console.log(`[MisaService] User has no MISA Code. Using default: ${config.employeeCode}`);
                 }
@@ -366,6 +368,12 @@ export const MisaService = {
 
             // 3. Map Data
             const invoiceObj = MisaService.mapOrderToMisaInvoice(orderData, config);
+
+            // Inject Name for debugging or if MISA supports it (unlikely for V5 but harmless)
+            if (mappedName) {
+                invoiceObj.sale_employee_name = mappedName;
+                invoiceObj.employee_name = mappedName;
+            }
 
             // 4. Prepare Payload (Strict V5 Schema)
             // https://actdocs.misa.vn
@@ -430,7 +438,9 @@ export const MisaService = {
                         ...payload,
                         _debug_userId: userId || "N/A",
                         _debug_mappedCode: mappedCode || "N/A",
-                        _debug_finalEmployeeCode: config?.employeeCode || "N/A"
+                        _debug_mappedName: mappedName || "N/A",
+                        _debug_finalEmployeeCode: config?.employeeCode || "N/A",
+                        _debug_created_by: orderData.created_by || "N/A"
                     }
                 };
             }
