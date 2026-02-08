@@ -370,10 +370,10 @@ export const MisaService = {
             const invoiceObj = MisaService.mapOrderToMisaInvoice(orderData, config);
 
             // Inject Name for debugging or if MISA supports it (unlikely for V5 but harmless)
-            if (mappedName) {
-                invoiceObj.sale_employee_name = mappedName;
-                invoiceObj.employee_name = mappedName;
-            }
+            // if (mappedName) {
+            //     invoiceObj.sale_employee_name = mappedName;
+            //     invoiceObj.employee_name = mappedName;
+            // }
 
             // 4. Prepare Payload (Strict V5 Schema)
             // https://actdocs.misa.vn
