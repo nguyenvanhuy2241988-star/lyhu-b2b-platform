@@ -371,8 +371,9 @@ export const MisaService = {
                         const branchCode = userProfile.misa_branch_code.trim();
                         // Only use if not empty
                         if (branchCode) {
-                            console.log(`[MisaService] Found Mapped Branch Code: ${branchCode}`);
-                            config.companyCode = branchCode;
+                            console.log(`[MisaService] Found Mapped Organization Unit: ${branchCode}`);
+                            // Do NOT override config.companyCode (Branch). Use branchCode for OrganizationUnit (Dept).
+                            config.orgUnitCode = branchCode;
                         }
                     }
                 } else {
@@ -400,8 +401,12 @@ export const MisaService = {
 
             const payload = {
                 app_id: appId,
-                org_company_code: config?.companyCode?.trim() || "NB", // Use dynamic branch code or fallback to NB
-                voucher: [invoiceObj] // Critical: Key is "voucher", not "data"
+                org_company_code: config?.companyCode?.trim() || "NB", // Access Code must match Company/Branch
+                voucher: [{
+                    ...invoiceObj,
+                    organization_unit_code: config?.orgUnitCode || config?.companyCode?.trim() || "NB",
+                    OrganizationUnitCode: config?.orgUnitCode || config?.companyCode?.trim() || "NB" // PascalCase alias
+                }]
             };
 
             // 5. Send to Misa API
