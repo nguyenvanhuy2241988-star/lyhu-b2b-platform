@@ -115,9 +115,20 @@ export const MisaService = {
         let totalDiscount = 0;
 
         const details = items.map((item: any, index: number) => {
-            const price = item.price || item.unitPrice || 0;
+            // Fix Price Logic: Ensure 0 is respected (e.g. for gifts)
+            const price = (item.price !== undefined && item.price !== null)
+                ? item.price
+                : (item.unitPrice || 0);
+
             const qty = item.quantity || 1;
-            const amount = price * qty; // Pre-tax amount for this item
+
+            // Calculate Discount (Per Item)
+            // Assuming item.discount is the TOTAL discount amount for this line item
+            const discountAmount = item.discount || 0;
+            const discountRate = (price * qty) > 0 ? (discountAmount / (price * qty)) * 100 : 0;
+
+            const amount = (price * qty) - discountAmount; // Net amount after discount
+
             // Calculate VAT Rate properly
             // If order.vat is an amount (e.g., 42560), we must not use it as rate.
             // Assumption: order.vat is the TOTAL VAT amount for the order.
@@ -128,6 +139,9 @@ export const MisaService = {
 
             // If items have specific tax rates (future proofing), use them. 
             // Otherwise, calculate from Total VAT / Total Amount (Pre-Tax)
+            // Note: Total Amount in standard commerce usually includes discounts but excludes tax
+            // If order.total_amount includes tax, we need to be careful.
+            // Given previous logic was `totalAmount += amount + vatAmount`, let's stick to simple rate calc from totals
             if (order.vat && order.total_amount && order.total_amount > order.vat) {
                 const preTaxTotal = order.total_amount - order.vat;
                 if (preTaxTotal > 0) {
@@ -142,6 +156,7 @@ export const MisaService = {
 
             const vatAmount = (amount * vatRate) / 100;
 
+            totalDiscount += discountAmount;
             totalAmount += amount + vatAmount;
             totalVat += vatAmount;
 
@@ -175,6 +190,11 @@ export const MisaService = {
                 // Accounts (Configurable)
                 debit_account: debitAccount,
                 credit_account: creditAccount,
+
+                // Discount
+                discount_rate: discountRate,
+                discount_amount: discountAmount,
+                discount_amount_oc: discountAmount,
 
                 // VAT
                 vat_rate: vatRate,
