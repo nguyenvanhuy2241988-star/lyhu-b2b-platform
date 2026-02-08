@@ -355,9 +355,10 @@ export const MisaService = {
                     .single();
 
                 if (userProfile?.misa_employee_code) {
-                    console.log(`[MisaService] Found Mapped Employee Code: ${userProfile.misa_employee_code}`);
-                    config.employeeCode = userProfile.misa_employee_code;
-                    mappedCode = userProfile.misa_employee_code;
+                    const cleanCode = userProfile.misa_employee_code.trim().toUpperCase();
+                    console.log(`[MisaService] Found Mapped Employee Code: ${cleanCode}`);
+                    config.employeeCode = cleanCode;
+                    mappedCode = cleanCode;
                     mappedName = userProfile.full_name;
                 } else {
                     console.log(`[MisaService] User has no MISA Code. Using default: ${config.employeeCode}`);
@@ -370,10 +371,10 @@ export const MisaService = {
             const invoiceObj = MisaService.mapOrderToMisaInvoice(orderData, config);
 
             // Inject Name for debugging or if MISA supports it (unlikely for V5 but harmless)
-            // if (mappedName) {
-            //     invoiceObj.sale_employee_name = mappedName;
-            //     invoiceObj.employee_name = mappedName;
-            // }
+            if (mappedName) {
+                invoiceObj.sale_employee_name = mappedName;
+                invoiceObj.employee_name = mappedName;
+            }
 
             // 4. Prepare Payload (Strict V5 Schema)
             // https://actdocs.misa.vn
