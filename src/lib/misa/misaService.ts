@@ -114,6 +114,22 @@ export const MisaService = {
         let totalVat = 0;
         let totalDiscount = 0;
 
+        // Handle Shipping Fee (Add as a service item)
+        if (order.shipping_fee && order.shipping_fee > 0) {
+            items.push({
+                is_shipping: true,
+                product: {
+                    misa_code: config?.shippingCode || "VANCHUYEN", // Need config for this
+                    name: "Phí vận chuyển",
+                    unit: "Lần"
+                },
+                quantity: 1,
+                price: order.shipping_fee,
+                unitPrice: order.shipping_fee,
+                vat: 0 // Usually 0 or depends on config
+            });
+        }
+
         const details = items.map((item: any, index: number) => {
             // Fix Price Logic: Ensure 0 is respected (e.g. for gifts)
             const isGift = item.is_gift || item.isGift;
@@ -268,7 +284,9 @@ export const MisaService = {
             delivery_date: orderDate,
 
             // Financial Info
-            journal_memo: `Đơn hàng #${order.readable_id || order.readableId}`,
+            // Map Description/Note from Order
+            journal_memo: order.note || order.description || `Đơn hàng #${order.readable_id || order.readableId}`,
+
             // Explicitly set Currency (Critical for Order)
             currency_id: "VND",
             exchange_rate: 1,
