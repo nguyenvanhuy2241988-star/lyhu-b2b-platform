@@ -397,7 +397,6 @@ export const MisaService = {
             const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
             endpoint = `${baseUrl}/api/sync/actopen/save`;
 
-            console.log(`[MisaService] Version Check: ${new Date().toISOString()}`);
             console.log(`[MisaService] POST ${endpoint}`);
             console.log(`[MisaService] Config:`, JSON.stringify(config));
             console.log(`[MisaService] Payload:`, JSON.stringify(payload, null, 2));
@@ -445,7 +444,7 @@ export const MisaService = {
                         ...payload,
                         _debug_userId: userId || "N/A",
                         _debug_mappedCode: mappedCode || "N/A",
-                        _debug_mappedCodeChars: mappedCode ? mappedCode.split('').map((c: string) => c.charCodeAt(0)) : [],
+                        // _debug_mappedCodeChars: removed for cleanliness
                         _debug_mappedName: mappedName || "N/A",
                         _debug_finalEmployeeCode: config?.employeeCode || "N/A",
                         _debug_codeLen: config?.employeeCode ? config.employeeCode.length : 0,
@@ -472,7 +471,7 @@ export const MisaService = {
                     debugPayload: {
                         ...payload,
                         _debug_mappedCode: mappedCode || "N/A",
-                        _debug_mappedCodeChars: mappedCode ? mappedCode.split('').map((c: string) => c.charCodeAt(0)) : [],
+                        // _debug_mappedCodeChars: removed for cleanliness
                         _debug_finalEmployeeCode: config?.employeeCode || "N/A"
                     }
                 };
