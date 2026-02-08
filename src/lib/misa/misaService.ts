@@ -342,53 +342,54 @@ export const MisaService = {
                     }
                 } catch (e) { }
 
-                success: false,
+                return {
+                    success: false,
                     error: `Misa Error (${res.status}): ${errorDetails}`,
-                        debugPayload: { 
+                    debugPayload: {
                         ...payload,
-    _debug_userId: userId || "N/A",
-    _debug_mappedCode: mappedCode || "N/A",
-    _debug_finalEmployeeCode: config?.employeeCode || "N/A"
-}
+                        _debug_userId: userId || "N/A",
+                        _debug_mappedCode: mappedCode || "N/A",
+                        _debug_finalEmployeeCode: config?.employeeCode || "N/A"
+                    }
                 };
             }
 
-let resData;
-try {
-    resData = JSON.parse(textRaw);
-} catch (e) {
-    return { success: true, refId: "Unknown_Ref (Non-JSON)" };
-}
+            let resData;
+            try {
+                resData = JSON.parse(textRaw);
+            } catch (e) {
+                return { success: true, refId: "Unknown_Ref (Non-JSON)" };
+            }
 
-// Async API response usually is just { Success: true, Data: "TrackingID..." }
-// The actual success comes later via Callback.
-if (resData?.Success) {
-    console.log(`[MISA SUCCESS] Push Sent! Full Response:`, JSON.stringify(resData));
-    // Usually resData.Data contains the Reference ID for ActOpen
-    return {
-        success: true,
-        refId: resData.Data || resData.Reference || "PENDING_CALLBACK",
-        debugPayload: payload // Add payload for debugging
-    };
-} else {
-    // V5 Standard: ErrorMessage, ErrorCode. V2/Other: UserMessage
-    const msg = resData?.ErrorMessage || resData?.UserMessage || resData?.DevMessage || "Unknown Error";
-    const code = resData?.ErrorCode || "";
+            // Async API response usually is just { Success: true, Data: "TrackingID..." }
+            // The actual success comes later via Callback.
+            if (resData?.Success) {
+                console.log(`[MISA SUCCESS] Push Sent! Full Response:`, JSON.stringify(resData));
+                // Usually resData.Data contains the Reference ID for ActOpen
+                return {
+                    success: true,
+                    refId: resData.Data || resData.Reference || "PENDING_CALLBACK",
+                    debugPayload: payload // Add payload for debugging
+                };
+            } else {
+                // V5 Standard: ErrorMessage, ErrorCode. V2/Other: UserMessage
+                const msg = resData?.ErrorMessage || resData?.UserMessage || resData?.DevMessage || "Unknown Error";
+                const code = resData?.ErrorCode || "";
 
-    // If it is a validation error (400), sometimes Data contains the specific field errors
-    const dataDetail = resData?.Data ? JSON.stringify(resData.Data) : "";
+                // If it is a validation error (400), sometimes Data contains the specific field errors
+                const dataDetail = resData?.Data ? JSON.stringify(resData.Data) : "";
 
-    const fullError = `${code ? `[${code}] ` : ""}${msg}${dataDetail ? ` | Detail: ${dataDetail}` : ""}`;
-    return {
-        success: false,
-        error: `Misa Reject: ${fullError}`,
-        debugPayload: payload
-    };
-}
+                const fullError = `${code ? `[${code}] ` : ""}${msg}${dataDetail ? ` | Detail: ${dataDetail}` : ""}`;
+                return {
+                    success: false,
+                    error: `Misa Reject: ${fullError}`,
+                    debugPayload: payload
+                };
+            }
 
         } catch (err: any) {
-    console.error("[MisaService] Exception:", err);
-    return { success: false, error: `Lỗi hệ thống: ${err.message}` };
-}
+            console.error("[MisaService] Exception:", err);
+            return { success: false, error: `Lỗi hệ thống: ${err.message}` };
+        }
     },
 };
