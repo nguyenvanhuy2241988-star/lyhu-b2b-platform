@@ -341,7 +341,8 @@ export const MisaService = {
             const config = settings?.misa_config || {};
 
             // 2b. Fetch Employee Code Mapping
-            const userId = orderData.user_id || orderData.telesales_user_id;
+            // Priority: user_id (Assignee) > telesales_user_id (Owner) > created_by (Creator)
+            const userId = orderData.user_id || orderData.telesales_user_id || orderData.created_by;
 
             let mappedCode = null;
             if (userId) {
