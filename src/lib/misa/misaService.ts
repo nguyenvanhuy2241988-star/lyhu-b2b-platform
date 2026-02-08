@@ -355,7 +355,7 @@ export const MisaService = {
                 console.log(`[MisaService] Fetching employee mapping for User ID: ${userId}`);
                 const { data: userProfile } = await supabase
                     .from('profiles')
-                    .select('misa_employee_code, full_name')
+                    .select('misa_employee_code, full_name, misa_branch_code')
                     .eq('id', userId)
                     .single();
 
@@ -365,6 +365,15 @@ export const MisaService = {
                     config.employeeCode = cleanCode;
                     mappedCode = cleanCode;
                     mappedName = userProfile.full_name;
+
+                    if (userProfile.misa_branch_code) {
+                        const branchCode = userProfile.misa_branch_code.trim();
+                        // Only use if not empty
+                        if (branchCode) {
+                            console.log(`[MisaService] Found Mapped Branch Code: ${branchCode}`);
+                            config.companyCode = branchCode;
+                        }
+                    }
                 } else {
                     console.log(`[MisaService] User has no MISA Code. Using default: ${config.employeeCode}`);
                 }
@@ -387,7 +396,7 @@ export const MisaService = {
 
             const payload = {
                 app_id: appId,
-                org_company_code: "NB", // config?.companyCode?.trim(),
+                org_company_code: config?.companyCode?.trim() || "NB", // Use dynamic branch code or fallback to NB
                 voucher: [invoiceObj] // Critical: Key is "voucher", not "data"
             };
 
