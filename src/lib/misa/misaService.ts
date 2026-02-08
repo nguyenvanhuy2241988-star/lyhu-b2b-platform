@@ -279,7 +279,8 @@ export const MisaService = {
             employee_code: config?.employeeCode || "NV000009",
             sale_employee_code: config?.employeeCode || "NV000009",
             sales_employee_code: config?.employeeCode || "NV000009", // Alias just in case
-            // sales_employee_code: config?.employeeCode || "NV000009", // Try alias if needed
+            SaleEmployeeCode: config?.employeeCode || "NV000009", // PascalCase alias
+            EmployeeCode: config?.employeeCode || "NV000009", // PascalCase alias
 
             // Debug Employee Code
             // console.log(`[MisaService] Payload Employee Code: ${config?.employeeCode || "NV000009"}`);
@@ -388,6 +389,9 @@ export const MisaService = {
             if (mappedName) {
                 invoiceObj.sale_employee_name = mappedName;
                 invoiceObj.employee_name = mappedName;
+                // Add redundant name fields
+                invoiceObj.SaleEmployeeName = mappedName;
+                invoiceObj.EmployeeName = mappedName;
             }
 
             // 4. Prepare Payload (Strict V5 Schema)
