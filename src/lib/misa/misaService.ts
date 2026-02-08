@@ -397,6 +397,7 @@ export const MisaService = {
             const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
             endpoint = `${baseUrl}/api/sync/actopen/save`;
 
+            console.log(`[MisaService] Version Check: ${new Date().toISOString()}`);
             console.log(`[MisaService] POST ${endpoint}`);
             console.log(`[MisaService] Config:`, JSON.stringify(config));
             console.log(`[MisaService] Payload:`, JSON.stringify(payload, null, 2));
