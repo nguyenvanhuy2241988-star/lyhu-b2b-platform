@@ -444,6 +444,7 @@ export const MisaService = {
                         ...payload,
                         _debug_userId: userId || "N/A",
                         _debug_mappedCode: mappedCode || "N/A",
+                        _debug_mappedCodeChars: mappedCode ? mappedCode.split('').map((c: string) => c.charCodeAt(0)) : [],
                         _debug_mappedName: mappedName || "N/A",
                         _debug_finalEmployeeCode: config?.employeeCode || "N/A",
                         _debug_codeLen: config?.employeeCode ? config.employeeCode.length : 0,
