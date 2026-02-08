@@ -469,7 +469,12 @@ export const MisaService = {
                 return {
                     success: true,
                     refId: resData.Data || resData.Reference || "PENDING_CALLBACK",
-                    debugPayload: payload // Add payload for debugging
+                    debugPayload: {
+                        ...payload,
+                        _debug_mappedCode: mappedCode || "N/A",
+                        _debug_mappedCodeChars: mappedCode ? mappedCode.split('').map((c: string) => c.charCodeAt(0)) : [],
+                        _debug_finalEmployeeCode: config?.employeeCode || "N/A"
+                    }
                 };
             } else {
                 // V5 Standard: ErrorMessage, ErrorCode. V2/Other: UserMessage
