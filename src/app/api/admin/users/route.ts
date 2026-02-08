@@ -175,7 +175,6 @@ export async function PUT(request: Request) {
         const body = await request.json();
         const { id, email, password, fullName, role, status, misa_employee_code } = body;
 
-        console.log(`[Admin Update] Received Body:`, JSON.stringify(body));
         console.log(`[Admin Update] Starting for ID: ${id}`, { fullName, role, status, misa_employee_code });
 
         if (!id) return NextResponse.json({ error: "Missing user ID (ID không được để trống)" }, { status: 400 });

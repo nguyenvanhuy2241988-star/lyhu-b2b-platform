@@ -118,10 +118,6 @@ export default function UsersPage() {
             // Use the new RPC to get users with activity stats
             const { data, error } = await supabase.rpc('get_users_activity_stats');
 
-            console.log('[UsersPage] Raw RPC Response:', data);
-
-            if (error) throw error;
-
             if (error) throw error;
 
             // Normalize ID
@@ -129,8 +125,6 @@ export default function UsersPage() {
                 ...u,
                 id: u.user_id
             }));
-
-            console.log('[UsersPage] Fetched Data Sample:', normalizedData.slice(0, 2));
 
             setUsers(normalizedData);
             setTotalCount(normalizedData.length);
