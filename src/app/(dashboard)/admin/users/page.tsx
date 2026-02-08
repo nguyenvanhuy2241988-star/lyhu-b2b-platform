@@ -126,6 +126,8 @@ export default function UsersPage() {
                 id: u.user_id
             }));
 
+            console.log('[UsersPage] Fetched Data Sample:', normalizedData.slice(0, 2));
+
             setUsers(normalizedData);
             setTotalCount(normalizedData.length);
 
