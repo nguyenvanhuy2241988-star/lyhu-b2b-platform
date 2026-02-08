@@ -36,11 +36,11 @@ console.log("Connecting to:", supabaseUrl);
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function checkData() {
-    console.log("Checking Order BH1053 (readable_id: 1053)...");
+    console.log("Checking Order #151 (readable_id: 151)...");
     const { data: order, error: orderError } = await supabase
         .from('orders')
         .select('id, readable_id, telesales_user_id, user_id')
-        .eq('readable_id', 1053)
+        .eq('readable_id', 151)
         .maybeSingle(); // Use maybeSingle to avoid 406 if not found
 
     if (orderError) {
