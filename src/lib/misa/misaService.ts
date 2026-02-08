@@ -180,6 +180,9 @@ export const MisaService = {
             account_object_code: customerCode,
             account_object_name: order.customerName || order.customer?.name || "Khách lẻ",
             account_object_address: order.receiverAddress || order.address || "",
+            // Default Customer Group: NPP (Nhà Phân Phối) or THU (Khách thử hàng mẫu)
+            // This is REQUIRED for auto-creating new customers
+            account_object_group_code: config?.customerGroupCode || "NPP",
 
             // Employee (Hardcoded based on User Screenshot: NV000009 - Shoppe)
             // Consider moving this to config later, but keeping for stability now
@@ -239,6 +242,25 @@ export const MisaService = {
             const settings = await fetchAppSettings(supabase);
             // @ts-ignore
             const config = settings?.misa_config || {};
+
+            // 2b. Fetch Employee Code Mapping
+            if (orderData.user_id) {
+                console.log(`[MisaService] Fetching employee mapping for User ID: ${orderData.user_id}`);
+                const { data: userProfile } = await supabase
+                    .from('profiles')
+                    .select('misa_employee_code')
+                    .eq('id', orderData.user_id)
+                    .single();
+
+                if (userProfile?.misa_employee_code) {
+                    console.log(`[MisaService] Found Mapped Employee Code: ${userProfile.misa_employee_code}`);
+                    config.employeeCode = userProfile.misa_employee_code;
+                } else {
+                    console.log(`[MisaService] No Mapped Employee Code found (or null). Using default: ${config.employeeCode || "NV000009"}`);
+                }
+            } else {
+                console.log(`[MisaService] Order has no user_id. Using default Employee Code: ${config.employeeCode || "NV000009"}`);
+            }
 
             // 3. Map Data
             const invoiceObj = MisaService.mapOrderToMisaInvoice(orderData, config);

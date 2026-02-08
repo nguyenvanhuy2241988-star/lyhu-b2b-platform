@@ -44,6 +44,7 @@ interface User {
     full_name: string;
     role: string;
     status: string;
+    misa_employee_code?: string; // Add this field
     created_at: string;
     // Activity Stats
     online_seconds: number;
@@ -102,7 +103,8 @@ export default function UsersPage() {
         password: "",
         fullName: "",
         role: "telesales", // Default
-        status: "active"
+        status: "active",
+        misa_employee_code: "" // Add this field
     });
 
     const { session } = useAuth();
@@ -235,7 +237,7 @@ export default function UsersPage() {
 
     const handleOpenCreate = () => {
         setEditingUser(null);
-        setFormData({ email: "", password: "", fullName: "", role: "telesales", status: "active" });
+        setFormData({ email: "", password: "", fullName: "", role: "telesales", status: "active", misa_employee_code: "" });
         setIsModalOpen(true);
     };
 
@@ -246,7 +248,8 @@ export default function UsersPage() {
             password: "", // Empty means no change
             fullName: user.full_name || "",
             role: user.role,
-            status: user.status
+            status: user.status,
+            misa_employee_code: user.misa_employee_code || ""
         });
         setIsModalOpen(true);
     };
@@ -390,6 +393,7 @@ export default function UsersPage() {
                             <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                                 <tr>
                                     <th className="px-6 py-3 font-medium">Họ & Tên</th>
+                                    <th className="px-6 py-3 font-medium">Mã MISA</th> {/* New Column */}
                                     <th className="px-6 py-3 font-medium">Trạng thái</th>
                                     <th className="px-6 py-3 font-medium">Hoạt động</th>
                                     <th className="px-6 py-3 font-medium">Vai trò</th>
@@ -403,6 +407,9 @@ export default function UsersPage() {
                                         <td className="px-6 py-4">
                                             <div className="font-medium text-slate-900">{user.email}</div>
                                             <div className="text-xs text-slate-500">{user.full_name || "Chưa đặt tên"}</div>
+                                        </td>
+                                        <td className="px-6 py-4 text-xs font-mono text-slate-600">
+                                            {user.misa_employee_code || "-"}
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col gap-1 items-start">
@@ -781,6 +788,17 @@ export default function UsersPage() {
                                         value={formData.fullName}
                                         onChange={e => setFormData({ ...formData, fullName: e.target.value })}
                                     />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Mã nhân viên MISA</label>
+                                    <input
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        placeholder="vd: NV001"
+                                        value={formData.misa_employee_code}
+                                        onChange={e => setFormData({ ...formData, misa_employee_code: e.target.value })}
+                                    />
+                                    <p className="text-xs text-slate-500 mt-1">Dùng để tính doanh số và đồng bộ đơn hàng</p>
                                 </div>
 
                                 <div>

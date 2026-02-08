@@ -82,7 +82,7 @@ export async function POST(request: Request) {
 
         // 2. Parse Request Body
         const body = await request.json();
-        const { email, password, fullName, role } = body;
+        const { email, password, fullName, role, misa_employee_code } = body;
 
         if (!email || !password || !fullName || !role) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -112,6 +112,7 @@ export async function POST(request: Request) {
                 full_name: fullName,
                 role: role,
                 status: 'active',
+                misa_employee_code: misa_employee_code,
                 updated_at: new Date().toISOString()
             });
 
@@ -172,9 +173,9 @@ export async function PUT(request: Request) {
 
         // 2. Parse Request Body
         const body = await request.json();
-        const { id, email, password, fullName, role, status } = body;
+        const { id, email, password, fullName, role, status, misa_employee_code } = body;
 
-        console.log(`[Admin Update] Starting for ID: ${id}`, { fullName, role, status });
+        console.log(`[Admin Update] Starting for ID: ${id}`, { fullName, role, status, misa_employee_code });
 
         if (!id) return NextResponse.json({ error: "Missing user ID (ID không được để trống)" }, { status: 400 });
         if (!role) return NextResponse.json({ error: "Missing role (Vai trò không được để trống)" }, { status: 400 });
@@ -203,6 +204,7 @@ export async function PUT(request: Request) {
                 full_name: fullName,
                 role: role,
                 status: status,
+                misa_employee_code: misa_employee_code, // Add this field
                 updated_at: new Date().toISOString()
             })
             .eq("id", id)
