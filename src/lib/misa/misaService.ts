@@ -129,7 +129,12 @@ export const MisaService = {
 
             // Calculate Discount (Per Item)
             // Assuming item.discount is the TOTAL discount amount for this line item
-            const discountAmount = item.discount || 0;
+            let discountAmount = item.discount || 0;
+
+            if (isGift) {
+                discountAmount = 0; // Force zero discount for gifts to avoid negative amount
+            }
+
             const discountRate = (price * qty) > 0 ? (discountAmount / (price * qty)) * 100 : 0;
 
             const amount = (price * qty) - discountAmount; // Net amount after discount
