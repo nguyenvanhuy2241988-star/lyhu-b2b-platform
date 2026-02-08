@@ -256,12 +256,14 @@ export const MisaService = {
             const config = settings?.misa_config || {};
 
             // 2b. Fetch Employee Code Mapping
-            if (orderData.user_id) {
-                console.log(`[MisaService] Fetching employee mapping for User ID: ${orderData.user_id}`);
+            const userId = orderData.user_id || orderData.telesales_user_id;
+
+            if (userId) {
+                console.log(`[MisaService] Fetching employee mapping for User ID: ${userId}`);
                 const { data: userProfile } = await supabase
                     .from('profiles')
                     .select('misa_employee_code')
-                    .eq('id', orderData.user_id)
+                    .eq('id', userId)
                     .single();
 
                 if (userProfile?.misa_employee_code) {
