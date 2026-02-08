@@ -118,7 +118,28 @@ export const MisaService = {
             const price = item.price || item.unitPrice || 0;
             const qty = item.quantity || 1;
             const amount = price * qty; // Pre-tax amount for this item
-            const vatRate = order.vat || 0; // simple assumption
+            // Calculate VAT Rate properly
+            // If order.vat is an amount (e.g., 42560), we must not use it as rate.
+            // Assumption: order.vat is the TOTAL VAT amount for the order.
+            // We need to distribute it or calculate the rate.
+
+            // Try to find a tax rate from the item or order if available as a percentage
+            let vatRate = 0;
+
+            // If items have specific tax rates (future proofing), use them. 
+            // Otherwise, calculate from Total VAT / Total Amount (Pre-Tax)
+            if (order.vat && order.total_amount && order.total_amount > order.vat) {
+                const preTaxTotal = order.total_amount - order.vat;
+                if (preTaxTotal > 0) {
+                    const calculatedRate = (order.vat / preTaxTotal) * 100;
+                    // Round to nearest standard rate: 0, 5, 8, 10
+                    if (calculatedRate > 9) vatRate = 10;
+                    else if (calculatedRate > 7) vatRate = 8;
+                    else if (calculatedRate > 4) vatRate = 5;
+                    else vatRate = 0;
+                }
+            }
+
             const vatAmount = (amount * vatRate) / 100;
 
             totalAmount += amount + vatAmount;
@@ -133,7 +154,8 @@ export const MisaService = {
             console.log(`[MisaService] Mapping Item ${index + 1}:`, {
                 productCode,
                 productName,
-                originalSku: item.product?.sku || item.sku
+                originalSku: item.product?.sku || item.sku,
+                vatRate: vatRate
             });
 
             return {
