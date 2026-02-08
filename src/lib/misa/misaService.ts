@@ -135,9 +135,9 @@ export const MisaService = {
                 discountAmount = 0; // Force zero discount for gifts to avoid negative amount
             }
 
-            const discountRate = (price * qty) > 0 ? (discountAmount / (price * qty)) * 100 : 0;
-
-            const amount = (price * qty) - discountAmount; // Net amount after discount
+            const grossAmount = price * qty; // Gross Amount
+            const discountRate = grossAmount > 0 ? (discountAmount / grossAmount) * 100 : 0;
+            const netAmount = grossAmount - discountAmount; // Net amount for VAT calc
 
             // Calculate VAT Rate properly
             // If order.vat is an amount (e.g., 42560), we must not use it as rate.
@@ -167,10 +167,10 @@ export const MisaService = {
             // If gift, force VAT to 0 (usually)
             if (isGift) vatRate = 0;
 
-            const vatAmount = (amount * vatRate) / 100;
+            const vatAmount = (netAmount * vatRate) / 100;
 
             totalDiscount += discountAmount;
-            totalAmount += amount + vatAmount;
+            totalAmount += netAmount + vatAmount;
             totalVat += vatAmount;
 
             // Determine Product Code (Priority: Product Misa Code > Product SKU > Item SKU)
@@ -197,8 +197,8 @@ export const MisaService = {
 
                 quantity: qty,
                 unit_price: price,
-                amount: amount,
-                amount_oc: amount, // Nguyên tệ
+                amount: grossAmount, // MISA subtracts discount from this
+                amount_oc: grossAmount, // Nguyên tệ
 
                 // Accounts (Configurable)
                 debit_account: debitAccount,
