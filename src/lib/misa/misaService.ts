@@ -200,6 +200,9 @@ export const MisaService = {
             // Consider moving this to config later, but keeping for stability now
             employee_code: config?.employeeCode || "NV000009",
 
+            // Debug Employee Code
+            // console.log(`[MisaService] Payload Employee Code: ${config?.employeeCode || "NV000009"}`);
+
             // Dates
             due_date: orderDate,
             delivery_date: orderDate,
