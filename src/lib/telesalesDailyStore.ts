@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabaseClient';
 export interface TelesalesDailyActivity {
     id: string;
     user_id: string;
-    date: string;
+    report_date: string;
     calls_completed: number;
     fb_group_posts: number;
     fb_comments: number;
@@ -23,7 +23,7 @@ export const getDailyReportTelesales = async (date: string, userId: string) => {
     const { data, error } = await supabase
         .from('telesales_daily_activities')
         .select('*')
-        .eq('date', date)
+        .eq('report_date', date)
         .eq('user_id', userId)
         .maybeSingle();
 
@@ -36,7 +36,7 @@ export const getMyReportsHistoryTelesales = async (userId: string, limit: number
         .from('telesales_daily_activities')
         .select('*')
         .eq('user_id', userId)
-        .order('date', { ascending: false })
+        .order('report_date', { ascending: false })
         .limit(limit);
 
     if (error) throw error;
@@ -44,14 +44,14 @@ export const getMyReportsHistoryTelesales = async (userId: string, limit: number
 };
 
 export const upsertDailyReportTelesales = async (reportData: Partial<TelesalesDailyActivity>) => {
-    const { user_id, date } = reportData;
-    if (!user_id || !date) throw new Error("Missing user_id or date");
+    const { user_id, report_date } = reportData;
+    if (!user_id || !report_date) throw new Error("Missing user_id or date");
 
     const { data: existing } = await supabase
         .from('telesales_daily_activities')
         .select('id')
         .eq('user_id', user_id)
-        .eq('date', date)
+        .eq('report_date', report_date)
         .maybeSingle();
 
     if (existing) {
@@ -80,7 +80,7 @@ export const upsertDailyReportTelesales = async (reportData: Partial<TelesalesDa
             .from('telesales_daily_activities')
             .insert([{
                 user_id: reportData.user_id,
-                date: reportData.date,
+                report_date: reportData.report_date,
                 calls_completed: reportData.calls_completed ?? 0,
                 fb_group_posts: reportData.fb_group_posts ?? 0,
                 fb_comments: reportData.fb_comments ?? 0,
