@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getTelesalesKpiStats, TelesalesKpiStats, updateTelesalesKpiSettings } from "@/lib/telesalesDailyStore";
 import { supabase } from "@/lib/supabaseClient";
-import { Settings, X, Save, TrendingUp, Phone, Users, MessageSquare, Share2, Database } from "lucide-react";
+import { Settings, X, Save, TrendingUp, Phone, Users, MessageSquare, Share2, Database, PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import TelesalesActivityLogModal from "./TelesalesActivityLogModal";
 
 interface TelesalesKpiDashboardProps {
     date: string;
@@ -18,6 +19,7 @@ export default function TelesalesKpiDashboard({ date, userId }: TelesalesKpiDash
 
     const [loading, setLoading] = useState(true);
     const [showSettings, setShowSettings] = useState(false);
+    const [showActivityModal, setShowActivityModal] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // Settings Form State
@@ -208,15 +210,25 @@ export default function TelesalesKpiDashboard({ date, userId }: TelesalesKpiDash
                     <TrendingUp className="w-5 h-5 text-blue-600" />
                     Tiến độ Thực hiện Target KPI
                 </h2>
-                {isAdmin && (
+                <div className="flex gap-2">
                     <button
-                        onClick={() => setShowSettings(true)}
-                        className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors"
-                        title="Cấu hình KPI"
+                        onClick={() => setShowActivityModal(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
+                        title="Cập nhật Tiến độ"
                     >
-                        <Settings className="w-4 h-4" />
+                        <PlusCircle className="w-4 h-4" />
+                        <span className="hidden sm:inline">Nhập báo cáo</span>
                     </button>
-                )}
+                    {isAdmin && (
+                        <button
+                            onClick={() => setShowSettings(true)}
+                            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors border border-transparent hover:border-slate-200"
+                            title="Cấu hình KPI Target"
+                        >
+                            <Settings className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
@@ -366,6 +378,18 @@ export default function TelesalesKpiDashboard({ date, userId }: TelesalesKpiDash
                         </div>
                     </div>
                 </div>
+            )}
+            {/* Activity Modal */}
+            {showActivityModal && (
+                <TelesalesActivityLogModal
+                    date={date}
+                    userId={userId}
+                    onClose={() => setShowActivityModal(false)}
+                    onSuccess={() => {
+                        setShowActivityModal(false);
+                        loadStats();
+                    }}
+                />
             )}
         </div>
     );

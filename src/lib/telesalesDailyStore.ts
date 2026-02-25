@@ -12,8 +12,9 @@ export interface TelesalesDailyActivity {
     fb_personal_posts: number;
     zalo_posts: number;
     self_sourced_data: number;
-    issues: string;
-    request_support: string;
+    notes?: string;
+    issues?: string;
+    request_support?: string;
     other_tasks?: string;
     plan_next_day?: string;
     created_at?: string;
@@ -66,6 +67,7 @@ export const upsertDailyReportTelesales = async (reportData: Partial<TelesalesDa
                 fb_personal_posts: reportData.fb_personal_posts ?? 0,
                 zalo_posts: reportData.zalo_posts ?? 0,
                 self_sourced_data: reportData.self_sourced_data ?? 0,
+                notes: reportData.notes ?? "",
                 issues: reportData.issues ?? "",
                 request_support: reportData.request_support ?? "",
                 other_tasks: reportData.other_tasks ?? "",
@@ -88,6 +90,7 @@ export const upsertDailyReportTelesales = async (reportData: Partial<TelesalesDa
                 fb_personal_posts: reportData.fb_personal_posts ?? 0,
                 zalo_posts: reportData.zalo_posts ?? 0,
                 self_sourced_data: reportData.self_sourced_data ?? 0,
+                notes: reportData.notes ?? "",
                 issues: reportData.issues ?? "",
                 request_support: reportData.request_support ?? "",
                 other_tasks: reportData.other_tasks ?? "",
