@@ -106,7 +106,7 @@ export default function TelesalesDailyReportPage() {
             await upsertDailyReportTelesales({
                 ...formData,
                 user_id: effectiveUserId,
-                date: date
+                report_date: date
             });
             alert("Đã lưu báo cáo thành công!");
             loadHistory();
@@ -321,12 +321,12 @@ export default function TelesalesDailyReportPage() {
                             ) : (
                                 history.map((h) => (
                                     <div
-                                        key={h.date}
-                                        onClick={() => setDate(h.date)}
-                                        className={`p-3 rounded-lg border cursor-pointer hover:bg-slate-50 transition ${h.date === date ? 'border-blue-500 bg-blue-50' : 'border-slate-100'}`}
+                                        key={h.report_date}
+                                        onClick={() => setDate(h.report_date!)}
+                                        className={`p-3 rounded-lg border cursor-pointer hover:bg-slate-50 transition ${h.report_date === date ? 'border-blue-500 bg-blue-50' : 'border-slate-100'}`}
                                     >
                                         <div className="flex justify-between items-center mb-1">
-                                            <span className="text-sm font-medium text-slate-900">{format(new Date(h.date), 'dd/MM/yyyy')}</span>
+                                            <span className="text-sm font-medium text-slate-900">{format(new Date(h.report_date!), 'dd/MM/yyyy')}</span>
                                             <CheckCircle className="w-4 h-4 text-green-500" />
                                         </div>
                                         <div className="text-xs text-slate-500">
