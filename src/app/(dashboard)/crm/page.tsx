@@ -373,6 +373,7 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
 // --- Main Page ---
 
 import CRMBanner from "@/components/crm/CRMBanner";
+import TelesalesKpiDashboard from "@/app/(dashboard)/telesales/components/TelesalesKpiDashboard";
 
 export default function CRMPage() {
     const { user, session, role: authRole, isLoading: authIsLoading } = useAuth();
@@ -1125,6 +1126,11 @@ export default function CRMPage() {
 
     return (
         <div className="p-4 sm:p-6 space-y-6 h-full flex flex-col relative" onClick={() => setIsSettingsOpen(false)}>
+            {/* KPI Dashboard */}
+            {isMounted && userInfo.id && (
+                <TelesalesKpiDashboard date={new Date().toISOString().split('T')[0]} userId={userInfo.id} />
+            )}
+
             <CRMBanner />
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 z-[60] relative">
