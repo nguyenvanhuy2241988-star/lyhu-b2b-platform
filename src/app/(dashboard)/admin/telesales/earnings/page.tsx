@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { Calendar, Download, Users, Phone, ShoppingBag, DollarSign, TrendingUp, Search, ArrowUpRight, ArrowDownRight, ChevronDown } from "lucide-react";
+import { Calendar, Download, Users, Phone, ShoppingBag, DollarSign, TrendingUp, Search, ArrowUpRight, ArrowDownRight, ChevronDown, Eye } from "lucide-react";
+import Link from "next/link";
 import { calculateKpiProgress, getGlobalKpiSummary, getKpiSummaryByUser, AdminTeleKpiRow, getWeeklyRanges } from "@/lib/telesalesKpiSelectors";
 import { ROLES } from "@/lib/constants";
 
@@ -286,12 +287,13 @@ export default function AdminTelesalesKpiPage() {
                                     </div>
                                 </th>
                                 <th className="px-6 py-3 font-medium text-center">Tiến độ KPI</th>
+                                <th className="px-6 py-3 font-medium text-center">Chi tiết</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {sortedUsers.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-8 text-center text-slate-500">Chưa có dữ liệu nhân sự telesales.</td>
+                                    <td colSpan={8} className="px-6 py-8 text-center text-slate-500">Chưa có dữ liệu nhân sự telesales.</td>
                                 </tr>
                             ) : (
                                 sortedUsers.map((user) => (
@@ -336,6 +338,15 @@ export default function AdminTelesalesKpiPage() {
                                                     />
                                                 </div>
                                             </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-center">
+                                            <Link
+                                                href={`/telesales/daily?userId=${user.userId}&date=${from.toISOString().split('T')[0]}`}
+                                                className="inline-flex items-center justify-center p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
+                                                title="Xem báo cáo chi tiết"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                            </Link>
                                         </td>
                                     </tr>
                                 ))
