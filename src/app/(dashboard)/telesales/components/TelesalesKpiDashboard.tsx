@@ -6,7 +6,7 @@ import { getTelesalesKpiStats, TelesalesKpiStats, updateTelesalesKpiSettings } f
 import { supabase } from "@/lib/supabaseClient";
 import { Settings, X, Save, TrendingUp, Phone, Users, MessageSquare, Share2, Database, PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import TelesalesActivityLogModal from "./TelesalesActivityLogModal";
+import { useRouter } from "next/navigation";
 
 interface TelesalesKpiDashboardProps {
     date: string;
@@ -15,11 +15,11 @@ interface TelesalesKpiDashboardProps {
 
 export default function TelesalesKpiDashboard({ date, userId }: TelesalesKpiDashboardProps) {
     const { user, role } = useAuth();
+    const router = useRouter();
     const [stats, setStats] = useState<TelesalesKpiStats | null>(null);
 
     const [loading, setLoading] = useState(true);
     const [showSettings, setShowSettings] = useState(false);
-    const [showActivityModal, setShowActivityModal] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     // Settings Form State
@@ -212,9 +212,9 @@ export default function TelesalesKpiDashboard({ date, userId }: TelesalesKpiDash
                 </h2>
                 <div className="flex gap-2">
                     <button
-                        onClick={() => setShowActivityModal(true)}
+                        onClick={() => router.push(`/telesales/daily?date=${date}&userId=${userId}`)}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
-                        title="Cập nhật Tiến độ"
+                        title="Trang Báo cáo Chi tiết"
                     >
                         <PlusCircle className="w-4 h-4" />
                         <span className="hidden sm:inline">Nhập báo cáo</span>
@@ -379,18 +379,7 @@ export default function TelesalesKpiDashboard({ date, userId }: TelesalesKpiDash
                     </div>
                 </div>
             )}
-            {/* Activity Modal */}
-            {showActivityModal && (
-                <TelesalesActivityLogModal
-                    date={date}
-                    userId={userId}
-                    onClose={() => setShowActivityModal(false)}
-                    onSuccess={() => {
-                        setShowActivityModal(false);
-                        loadStats();
-                    }}
-                />
-            )}
+            {/* Activity Modal removed in Phase 2 in favor of dedicated page */}
         </div>
     );
 }

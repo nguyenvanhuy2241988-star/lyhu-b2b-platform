@@ -18,18 +18,23 @@ CREATE TABLE IF NOT EXISTS public.telesales_post_logs (
 ALTER TABLE public.telesales_post_logs ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS "Users can view own telesales_post_logs" ON public.telesales_post_logs;
 CREATE POLICY "Users can view own telesales_post_logs" 
 ON public.telesales_post_logs FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own telesales_post_logs" ON public.telesales_post_logs;
 CREATE POLICY "Users can insert own telesales_post_logs" 
 ON public.telesales_post_logs FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own telesales_post_logs" ON public.telesales_post_logs;
 CREATE POLICY "Users can update own telesales_post_logs" 
 ON public.telesales_post_logs FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own telesales_post_logs" ON public.telesales_post_logs;
 CREATE POLICY "Users can delete own telesales_post_logs" 
 ON public.telesales_post_logs FOR DELETE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can view all telesales_post_logs" ON public.telesales_post_logs;
 CREATE POLICY "Admins can view all telesales_post_logs"
 ON public.telesales_post_logs FOR SELECT
 USING (
@@ -41,6 +46,7 @@ USING (
 );
 
 -- Create index for faster querying by user and date
+DROP INDEX IF EXISTS idx_telesales_post_logs_user_date;
 CREATE INDEX idx_telesales_post_logs_user_date ON public.telesales_post_logs(user_id, report_date);
 
 -- 2. Trigger Function: Auto-sync Calls to Daily KPI
