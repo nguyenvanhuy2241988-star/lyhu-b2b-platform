@@ -208,7 +208,7 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
             <div
                 id={`deal-${deal.id}`}
                 draggable
-                onClick={() => onEdit(deal)}
+                onClick={() => onViewDetails(deal.id)}
                 onDragStart={(e) => {
                     e.stopPropagation();
                     onDragStart(e, deal.id, deal.stage);
@@ -321,6 +321,13 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
                         >
                             <Phone className="w-3.5 h-3.5" />
                         </a>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onEdit(deal); }}
+                            className="p-1 hover:bg-orange-100 rounded text-slate-400 hover:text-orange-600"
+                            title="Sửa nhanh"
+                        >
+                            <Edit2 className="w-3.5 h-3.5" />
+                        </button>
                         <button
                             onClick={(e) => { e.stopPropagation(); onViewDetails(deal.id); }}
                             className="p-1 hover:bg-purple-100 rounded text-slate-400 hover:text-purple-600"
