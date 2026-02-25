@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Save, Calendar, Loader2, CheckCircle, ArrowLeft } from "lucide-react";
+import { Save, Calendar, Loader2, CheckCircle, ArrowLeft, Lock } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getDailyReportTelesales, upsertDailyReportTelesales, getMyReportsHistoryTelesales, TelesalesDailyActivity } from "@/lib/telesalesDailyStore";
 import { supabase } from "@/lib/supabaseClient";
+import TelesalesPostLogManager from "./components/TelesalesPostLogManager";
 
 export default function TelesalesDailyReportPage() {
     const { user, role } = useAuth();
@@ -163,6 +164,13 @@ export default function TelesalesDailyReportPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Form Input */}
                 <div className="lg:col-span-2 space-y-6">
+                    {/* Minh chứng - Tích hợp Evidence Component */}
+                    <TelesalesPostLogManager
+                        userId={effectiveUserId}
+                        date={date}
+                        readOnly={isAdmin && effectiveUserId !== user?.id}
+                        onUpdate={() => loadReportForDate(date)}
+                    />
                     {/* KPI Metrics Input Section */}
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                         <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
@@ -172,73 +180,84 @@ export default function TelesalesDailyReportPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Cuộc gọi (Khách cũ + Mới)</label>
+                                <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 mb-1">
+                                    <Lock className="w-3.5 h-3.5 text-slate-400" /> Cuộc gọi (Hệ thống tự đến)
+                                </label>
                                 <input
                                     type="number"
-                                    min="0"
-                                    className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full p-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-500 outline-none cursor-not-allowed"
                                     value={formData.calls_completed || 0}
-                                    onChange={e => handleChange('calls_completed', parseInt(e.target.value) || 0)}
+                                    readOnly
+                                    title="Hệ thống tự động cộng điểm khi bạn Ghi nhận cuộc gọi trên CRM"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Data tự tìm</label>
+                                <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 mb-1">
+                                    <Lock className="w-3.5 h-3.5 text-slate-400" /> Data tự tìm (Hệ thống tự đếm)
+                                </label>
                                 <input
                                     type="number"
-                                    min="0"
-                                    className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full p-2 border border-slate-200 rounded-lg bg-slate-50 text-slate-500 outline-none cursor-not-allowed"
                                     value={formData.self_sourced_data || 0}
-                                    onChange={e => handleChange('self_sourced_data', parseInt(e.target.value) || 0)}
+                                    readOnly
+                                    title="Hệ thống tự động cộng điểm khi bạn tạo Khách mới nguồn Data Mới"
                                 />
                             </div>
+
+                            {/* Read-Only Social Stats (Aggregated from Evidence Logs) */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Bài đăng nhóm Facebook</label>
+                                <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 mb-1">
+                                    <Lock className="w-3.5 h-3.5 text-slate-400" /> Bài đăng nhóm Facebook
+                                </label>
                                 <input
                                     type="number"
-                                    min="0"
-                                    className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full p-2 border border-transparent bg-blue-50/50 rounded-lg text-slate-600 outline-none cursor-not-allowed"
                                     value={formData.fb_group_posts || 0}
-                                    onChange={e => handleChange('fb_group_posts', parseInt(e.target.value) || 0)}
+                                    readOnly
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Comment Seeding FB</label>
+                                <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 mb-1">
+                                    <Lock className="w-3.5 h-3.5 text-slate-400" /> Comment Seeding FB
+                                </label>
                                 <input
                                     type="number"
-                                    min="0"
-                                    className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full p-2 border border-transparent bg-blue-50/50 rounded-lg text-slate-600 outline-none cursor-not-allowed"
                                     value={formData.fb_comments || 0}
-                                    onChange={e => handleChange('fb_comments', parseInt(e.target.value) || 0)}
+                                    readOnly
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Kết bạn Facebook</label>
+                                <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 mb-1">
+                                    <Lock className="w-3.5 h-3.5 text-slate-400" /> Kết bạn Facebook
+                                </label>
                                 <input
                                     type="number"
-                                    min="0"
-                                    className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full p-2 border border-transparent bg-blue-50/50 rounded-lg text-slate-600 outline-none cursor-not-allowed"
                                     value={formData.fb_friends || 0}
-                                    onChange={e => handleChange('fb_friends', parseInt(e.target.value) || 0)}
+                                    readOnly
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Đăng bài FB cá nhân</label>
+                                <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 mb-1">
+                                    <Lock className="w-3.5 h-3.5 text-slate-400" /> Đăng bài FB cá nhân
+                                </label>
                                 <input
                                     type="number"
-                                    min="0"
-                                    className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full p-2 border border-transparent bg-blue-50/50 rounded-lg text-slate-600 outline-none cursor-not-allowed"
                                     value={formData.fb_personal_posts || 0}
-                                    onChange={e => handleChange('fb_personal_posts', parseInt(e.target.value) || 0)}
+                                    readOnly
                                 />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Đăng nhóm/Tường Zalo</label>
+                            <div className="col-span-1 md:col-span-2">
+                                <label className="flex items-center gap-1.5 text-sm font-medium text-slate-700 mb-1">
+                                    <Lock className="w-3.5 h-3.5 text-slate-400" /> Tương tác Zalo (Đăng ảnh / Chào hàng)
+                                </label>
                                 <input
                                     type="number"
-                                    min="0"
-                                    className="w-full p-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full p-2 border border-transparent bg-blue-50/50 rounded-lg text-slate-600 outline-none cursor-not-allowed"
                                     value={formData.zalo_posts || 0}
-                                    onChange={e => handleChange('zalo_posts', parseInt(e.target.value) || 0)}
+                                    readOnly
                                 />
                             </div>
                         </div>

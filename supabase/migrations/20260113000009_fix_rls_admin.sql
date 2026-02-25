@@ -18,6 +18,7 @@ DROP POLICY IF EXISTS "Users can insert own deals" ON crm_deals;
 DROP POLICY IF EXISTS "Users can update own deals" ON crm_deals;
 
 -- Policy A: ADMINS / SALE_ADMINS -> FULL ACCESS
+DROP POLICY IF EXISTS "Admins select all crm_deals" ON crm_deals;
 CREATE POLICY "Admins select all crm_deals"
 ON crm_deals FOR SELECT
 USING (
@@ -28,6 +29,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Admins insert all crm_deals" ON crm_deals;
 CREATE POLICY "Admins insert all crm_deals"
 ON crm_deals FOR INSERT
 WITH CHECK (
@@ -38,6 +40,7 @@ WITH CHECK (
   )
 );
 
+DROP POLICY IF EXISTS "Admins update all crm_deals" ON crm_deals;
 CREATE POLICY "Admins update all crm_deals"
 ON crm_deals FOR UPDATE
 USING (
@@ -48,6 +51,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Admins delete all crm_deals" ON crm_deals;
 CREATE POLICY "Admins delete all crm_deals"
 ON crm_deals FOR DELETE
 USING (
@@ -59,6 +63,7 @@ USING (
 );
 
 -- Policy B: USERS -> OWN DATA ONLY
+DROP POLICY IF EXISTS "Users select own crm_deals" ON crm_deals;
 CREATE POLICY "Users select own crm_deals"
 ON crm_deals FOR SELECT
 USING (
@@ -66,12 +71,14 @@ USING (
   -- OR (assigned_to = auth.uid()) -- if you use another column
 );
 
+DROP POLICY IF EXISTS "Users insert own crm_deals" ON crm_deals;
 CREATE POLICY "Users insert own crm_deals"
 ON crm_deals FOR INSERT
 WITH CHECK (
   owner_user_id = auth.uid()
 );
 
+DROP POLICY IF EXISTS "Users update own crm_deals" ON crm_deals;
 CREATE POLICY "Users update own crm_deals"
 ON crm_deals FOR UPDATE
 USING (owner_user_id = auth.uid());
@@ -95,6 +102,7 @@ USING (
   )
 );
 
+DROP POLICY IF EXISTS "Admins all customers actions" ON customers;
 CREATE POLICY "Admins all customers actions"
 ON customers FOR ALL
 USING (
@@ -108,12 +116,14 @@ USING (
 -- User Policy (View All Customers? Typically CRM users see all customers, or only own?)
 -- Assuming for now: Users can View ALL customers, but maybe only Edit own.
 -- Let's stick to View All for simplicity unless specified.
+DROP POLICY IF EXISTS "Users view all customers" ON customers;
 CREATE POLICY "Users view all customers"
 ON customers FOR SELECT
 USING (true);
 
 -- User Policy (Edit Own Customers? - Needs 'created_by' or similar. 
 -- Assuming customers are shared resource).
+DROP POLICY IF EXISTS "Users insert customers" ON customers;
 CREATE POLICY "Users insert customers"
 ON customers FOR INSERT
 WITH CHECK (true);

@@ -42,6 +42,7 @@ alter table public.internal_messages enable row level security;
 -- Policies
 
 -- Conversations: Visible if you are a participant
+drop policy if exists "Users can view conversations they are in" on public.internal_conversations;
 create policy "Users can view conversations they are in"
     on public.internal_conversations for select
     using (
@@ -52,10 +53,12 @@ create policy "Users can view conversations they are in"
         )
     );
     
+drop policy if exists "Users can create conversations" on public.internal_conversations;
 create policy "Users can create conversations"
     on public.internal_conversations for insert
     with check (true);
 
+drop policy if exists "Users can update conversations they are in" on public.internal_conversations;
 create policy "Users can update conversations they are in"
     on public.internal_conversations for update
     using (
@@ -67,6 +70,7 @@ create policy "Users can update conversations they are in"
     );
 
 -- Participants: Visible if you share a conversation or it's you
+drop policy if exists "Users can view participants of their conversations" on public.internal_participants;
 create policy "Users can view participants of their conversations"
     on public.internal_participants for select
     using (
@@ -76,15 +80,18 @@ create policy "Users can view participants of their conversations"
         )
     );
 
+drop policy if exists "Users can add participants" on public.internal_participants;
 create policy "Users can add participants"
     on public.internal_participants for insert
     with check (true); -- Ideally stricter, but open for V1 simplicity
 
+drop policy if exists "Users can update their own read status" on public.internal_participants;
 create policy "Users can update their own read status"
     on public.internal_participants for update
     using (user_id = auth.uid());
 
 -- Messages: Visible if you are a participant of the conversation
+drop policy if exists "Users can view messages in their conversations" on public.internal_messages;
 create policy "Users can view messages in their conversations"
     on public.internal_messages for select
     using (
@@ -95,6 +102,7 @@ create policy "Users can view messages in their conversations"
         )
     );
 
+drop policy if exists "Users can insert messages to their conversations" on public.internal_messages;
 create policy "Users can insert messages to their conversations"
     on public.internal_messages for insert
     with check (

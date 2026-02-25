@@ -23,7 +23,7 @@ end $$;
 -- Re-add constraint with 'livestream'
 alter table public.profiles
 add constraint profiles_role_check
-check (role in ('admin', 'customer', 'sales', 'ctv', 'telesales', 'recruiter', 'warehouse', 'marketing', 'ecommerce', 'rnd', 'shipper', 'accountant', 'sale_admin', 'livestream'));
+check (role in ('admin', 'customer', 'sales', 'ctv', 'telesales', 'recruiter', 'warehouse', 'marketing', 'ecommerce', 'rnd', 'shipper', 'accountant', 'sale_admin', 'livestream', 'manager', 'telesales_manager', 'hr_manager', 'leader', 'hr'));
 
 -- Create Livestream Sessions Table
 create table if not exists public.livestream_sessions (
@@ -42,6 +42,7 @@ create table if not exists public.livestream_sessions (
 -- RLS
 alter table public.livestream_sessions enable row level security;
 
+drop policy if exists "Livestream staff and Admin can manage sessions" on public.livestream_sessions;
 create policy "Livestream staff and Admin can manage sessions"
   on public.livestream_sessions for all
   using (

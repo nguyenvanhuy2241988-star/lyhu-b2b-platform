@@ -10,6 +10,7 @@ DROP POLICY IF EXISTS "Enable read access for authenticated users" ON public.pro
 DROP POLICY IF EXISTS "Users can view all profiles" ON public.profiles;
 
 -- 2. CREATE A WIDE OPEN SELECT POLICY for authenticated users
+drop policy if exists "Allow authenticated users to view all profiles" on public.profiles;
 CREATE POLICY "Allow authenticated users to view all profiles"
     ON public.profiles
     FOR SELECT
@@ -17,12 +18,14 @@ CREATE POLICY "Allow authenticated users to view all profiles"
 
 -- 3. Ensure INSERT/UPDATE (Self only) - Optional but good practice to keep
 DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
+drop policy if exists "Users can insert their own profile" on public.profiles;
 CREATE POLICY "Users can insert their own profile"
     ON public.profiles
     FOR INSERT
     WITH CHECK (auth.uid() = id);
 
 DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+drop policy if exists "Users can update own profile" on public.profiles;
 CREATE POLICY "Users can update own profile"
     ON public.profiles
     FOR UPDATE

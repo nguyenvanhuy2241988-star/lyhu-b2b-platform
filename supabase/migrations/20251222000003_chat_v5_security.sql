@@ -15,6 +15,7 @@ DROP POLICY IF EXISTS "Users can add participants" ON public.internal_participan
 -- 1. They are already in the conversation (standard add member).
 -- 2. OR they are adding THEMSELVES (joining/creation trigger).
 
+drop policy if exists "Users can add participants" on public.internal_participants;
 CREATE POLICY "Users can add participants"
     ON public.internal_participants
     FOR INSERT

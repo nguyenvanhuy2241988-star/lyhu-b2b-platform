@@ -41,18 +41,21 @@ DROP POLICY IF EXISTS "Enable delete access for authenticated users" ON public.i
 -- For internal chat, we use simple authenticated-only policies
 -- Application logic handles fine-grained permissions
 
+drop policy if exists "auth_all_conversations" on public.internal_conversations;
 CREATE POLICY "auth_all_conversations"
     ON public.internal_conversations
     FOR ALL
     USING (auth.role() = 'authenticated')
     WITH CHECK (auth.role() = 'authenticated');
 
+drop policy if exists "auth_all_participants" on public.internal_participants;
 CREATE POLICY "auth_all_participants"
     ON public.internal_participants
     FOR ALL
     USING (auth.role() = 'authenticated')
     WITH CHECK (auth.role() = 'authenticated');
 
+drop policy if exists "auth_all_messages" on public.internal_messages;
 CREATE POLICY "auth_all_messages"
     ON public.internal_messages
     FOR ALL
@@ -104,7 +107,7 @@ BEGIN
     -- Return NULL for non-DM or invalid conversations
     RETURN NULL;
 END;
-$$ LANGUAGE plpgsql STABLE;
+$$ LANGUAGE plpgsql IMMUTABLE;
 
 -- Create unique index on the pair key
 -- This prevents creating multiple DM conversations between the same two users

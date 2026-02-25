@@ -14,9 +14,11 @@ CREATE TABLE IF NOT EXISTS social_pages (
 ALTER TABLE social_pages ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS "Enable read access for authenticated users" ON social_pages;
 CREATE POLICY "Enable read access for authenticated users" ON social_pages
     FOR SELECT USING (auth.role() = 'authenticated');
 
+DROP POLICY IF EXISTS "Enable all access for admin/marketing users" ON social_pages;
 CREATE POLICY "Enable all access for admin/marketing users" ON social_pages
     FOR ALL USING (
         exists (

@@ -23,4 +23,4 @@ end $$;
 -- Re-add the constraint with 'warehouse' included
 alter table public.profiles
 add constraint profiles_role_check
-check (role in ('admin', 'customer', 'sales', 'ctv', 'telesales', 'recruiter', 'warehouse'));
+check (role in ('admin', 'customer', 'sales', 'ctv', 'telesales', 'recruiter', 'warehouse', 'marketing', 'ecommerce', 'rnd', 'shipper', 'accountant', 'sale_admin', 'livestream', 'manager', 'telesales_manager', 'hr_manager', 'leader', 'hr'));

@@ -2,6 +2,8 @@
 
 -- 1. Top Selling Products
 -- Returns best selling products by revenue and quantity
+DROP FUNCTION IF EXISTS get_top_products(timestamptz, timestamptz) CASCADE;
+DROP FUNCTION IF EXISTS get_top_products(timestamptz, timestamptz, int) CASCADE;
 CREATE OR REPLACE FUNCTION get_top_products(
     p_start_date timestamptz,
     p_end_date timestamptz,
@@ -37,6 +39,7 @@ $$;
 
 -- 2. Lead Stage Distribution (Funnel)
 -- Returns count of leads in each stage
+DROP FUNCTION IF EXISTS get_lead_funnel_stats(timestamptz, timestamptz) CASCADE;
 CREATE OR REPLACE FUNCTION get_lead_funnel_stats(
     p_start_date timestamptz,
     p_end_date timestamptz

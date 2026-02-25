@@ -37,26 +37,48 @@ CREATE INDEX IF NOT EXISTS idx_social_messages_conversation ON social_messages(c
 ALTER TABLE social_conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE social_messages ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Marketing view conversations" ON social_conversations;
 CREATE POLICY "Marketing view conversations" ON social_conversations
     FOR SELECT USING (
         EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'sale_admin', 'marketing', 'telesales', 'sales'))
     );
 
+DROP POLICY IF EXISTS "Marketing manage conversations" ON social_conversations;
 CREATE POLICY "Marketing manage conversations" ON social_conversations
     FOR ALL USING (
         EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'sale_admin', 'marketing'))
     );
 
+DROP POLICY IF EXISTS "Marketing view messages" ON social_messages;
 CREATE POLICY "Marketing view messages" ON social_messages
     FOR SELECT USING (
         EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'sale_admin', 'marketing', 'telesales', 'sales'))
     );
 
+DROP POLICY IF EXISTS "Marketing manage messages" ON social_messages;
 CREATE POLICY "Marketing manage messages" ON social_messages
     FOR ALL USING (
         EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'sale_admin', 'marketing'))
     );
 
 -- Realtime
-ALTER PUBLICATION supabase_realtime ADD TABLE social_conversations;
-ALTER PUBLICATION supabase_realtime ADD TABLE social_messages;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime'
+        AND tablename = 'social_conversations'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE social_conversations;
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_publication_tables
+        WHERE pubname = 'supabase_realtime'
+        AND tablename = 'social_messages'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE social_messages;
+    END IF;
+END $$;

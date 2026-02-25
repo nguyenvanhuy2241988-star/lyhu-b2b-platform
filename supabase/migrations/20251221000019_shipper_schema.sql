@@ -23,7 +23,7 @@ end $$;
 -- Re-add constraint with 'shipper'
 alter table public.profiles
 add constraint profiles_role_check
-check (role in ('admin', 'customer', 'sales', 'ctv', 'telesales', 'recruiter', 'warehouse', 'marketing', 'ecommerce', 'rnd', 'shipper'));
+check (role in ('admin', 'customer', 'sales', 'ctv', 'telesales', 'recruiter', 'warehouse', 'marketing', 'ecommerce', 'rnd', 'shipper', 'accountant', 'sale_admin', 'livestream', 'manager', 'telesales_manager', 'hr_manager', 'leader', 'hr'));
 
 -- (Optional) Create a table for deliveries assignment if needed later, 
 -- but for v1 we can filter orders by 'shipper_id' if we add that column, 

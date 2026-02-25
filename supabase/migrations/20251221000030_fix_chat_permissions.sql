@@ -4,12 +4,14 @@ BEGIN;
 
 -- 1. internal_conversations: Allow INSERT for DMs (authenticated users)
 DROP POLICY IF EXISTS "Users can create DMs" ON public.internal_conversations;
+drop policy if exists "Users can create DMs" on public.internal_conversations;
 CREATE POLICY "Users can create DMs"
     ON public.internal_conversations FOR INSERT
     WITH CHECK (auth.role() = 'authenticated');
 
 -- 2. internal_participants: Allow INSERT for Self or DMs
 DROP POLICY IF EXISTS "Users can join conversations" ON public.internal_participants;
+drop policy if exists "Users can join conversations" on public.internal_participants;
 CREATE POLICY "Users can join conversations"
     ON public.internal_participants FOR INSERT
     WITH CHECK (auth.role() = 'authenticated'); 
@@ -21,11 +23,13 @@ CREATE POLICY "Users can join conversations"
 -- OR just allow authenticated users to read messages for now to unblock.
 
 DROP POLICY IF EXISTS "Authenticated users can read messages" ON public.internal_messages;
+drop policy if exists "Authenticated users can read messages" on public.internal_messages;
 CREATE POLICY "Authenticated users can read messages"
     ON public.internal_messages FOR SELECT
     USING (auth.role() = 'authenticated'); -- Simplified for stability
 
 DROP POLICY IF EXISTS "Authenticated users can insert messages" ON public.internal_messages;
+drop policy if exists "Authenticated users can insert messages" on public.internal_messages;
 CREATE POLICY "Authenticated users can insert messages"
     ON public.internal_messages FOR INSERT
     WITH CHECK (auth.role() = 'authenticated');

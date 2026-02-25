@@ -20,6 +20,7 @@ DROP POLICY IF EXISTS "Enable delete access for authenticated users" ON public.i
 DROP POLICY IF EXISTS "Allow all for authenticated users" ON public.internal_participants;
 
 -- Create the single, simple policy
+drop policy if exists "Allow all for authenticated users" on public.internal_participants;
 CREATE POLICY "Allow all for authenticated users"
     ON public.internal_participants
     FOR ALL
@@ -35,6 +36,7 @@ DROP POLICY IF EXISTS "Enable read access for authenticated users" ON public.int
 DROP POLICY IF EXISTS "Enable delete access for authenticated users" ON public.internal_conversations;
 DROP POLICY IF EXISTS "Allow all for authenticated users" ON public.internal_conversations; -- Drop potential duplicate
 
+drop policy if exists "Allow all for authenticated users" on public.internal_conversations;
 CREATE POLICY "Allow all for authenticated users"
     ON public.internal_conversations
     FOR ALL
@@ -50,6 +52,7 @@ DROP POLICY IF EXISTS "Enable read access for authenticated users" ON public.int
 DROP POLICY IF EXISTS "Enable delete access for authenticated users" ON public.internal_messages;
 DROP POLICY IF EXISTS "Allow all for authenticated users" ON public.internal_messages; -- Drop potential duplicate
 
+drop policy if exists "Allow all for authenticated users" on public.internal_messages;
 CREATE POLICY "Allow all for authenticated users"
     ON public.internal_messages
     FOR ALL

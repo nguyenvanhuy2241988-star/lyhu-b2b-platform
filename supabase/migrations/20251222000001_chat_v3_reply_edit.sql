@@ -10,6 +10,7 @@ ADD COLUMN IF NOT EXISTS is_deleted boolean DEFAULT false;
 
 -- Enhance RLS Policy for Updates (Edit/Delete)
 -- Only sender can update their own messages
+drop policy if exists "Users can update their own messages" on public.internal_messages;
 CREATE POLICY "Users can update their own messages"
 ON public.internal_messages FOR UPDATE
 USING (sender_id = auth.uid())

@@ -37,7 +37,7 @@ DROP POLICY IF EXISTS "Enable delete access for authenticated users" ON public.i
 DROP POLICY IF EXISTS "auth_all_messages" ON public.internal_messages;
 
 -- Drop old function if exists
-DROP FUNCTION IF EXISTS get_dm_pair_key(uuid);
+DROP FUNCTION IF EXISTS get_dm_pair_key(uuid) CASCADE;
 DROP INDEX IF EXISTS unique_dm_pair;
 
 
@@ -75,18 +75,21 @@ ALTER TABLE public.internal_messages ENABLE ROW LEVEL SECURITY;
 -- For internal chat, we use simple authenticated-only policies
 -- Application logic handles fine-grained permissions
 
+drop policy if exists "auth_all_conversations" on public.internal_conversations;
 CREATE POLICY "auth_all_conversations"
     ON public.internal_conversations
     FOR ALL
     USING (auth.role() = 'authenticated')
     WITH CHECK (auth.role() = 'authenticated');
 
+drop policy if exists "auth_all_participants" on public.internal_participants;
 CREATE POLICY "auth_all_participants"
     ON public.internal_participants
     FOR ALL
     USING (auth.role() = 'authenticated')
     WITH CHECK (auth.role() = 'authenticated');
 
+drop policy if exists "auth_all_messages" on public.internal_messages;
 CREATE POLICY "auth_all_messages"
     ON public.internal_messages
     FOR ALL

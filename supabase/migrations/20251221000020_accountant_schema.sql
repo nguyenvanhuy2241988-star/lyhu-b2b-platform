@@ -23,7 +23,7 @@ end $$;
 -- Re-add constraint with 'accountant'
 alter table public.profiles
 add constraint profiles_role_check
-check (role in ('admin', 'customer', 'sales', 'ctv', 'telesales', 'recruiter', 'warehouse', 'marketing', 'ecommerce', 'rnd', 'shipper', 'accountant'));
+check (role in ('admin', 'customer', 'sales', 'ctv', 'telesales', 'recruiter', 'warehouse', 'marketing', 'ecommerce', 'rnd', 'shipper', 'accountant', 'sale_admin', 'livestream', 'manager', 'telesales_manager', 'hr_manager', 'leader', 'hr'));
 
 -- Create Expenses Table
 create table if not exists public.expenses (
@@ -40,6 +40,7 @@ create table if not exists public.expenses (
 -- RLS
 alter table public.expenses enable row level security;
 
+drop policy if exists "Accountants and Admin can manage expenses" on public.expenses;
 create policy "Accountants and Admin can manage expenses"
   on public.expenses for all
   using (

@@ -16,6 +16,7 @@ create table if not exists public.chatbot_rules (
 alter table public.chatbot_rules enable row level security;
 
 -- Policies
+DROP POLICY IF EXISTS "Marketing manage chatbot rules" ON public.chatbot_rules;
 create policy "Marketing manage chatbot rules"
   on public.chatbot_rules for all
   using (

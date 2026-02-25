@@ -24,27 +24,33 @@ DROP POLICY IF EXISTS "Authenticated users can select participants" ON public.in
 -- 2. RE-APPLY BROAD PERMISSIONS (Authenticated Users)
 
 -- CONVERSATIONS
+drop policy if exists "Enable read access for authenticated users" on public.internal_conversations;
 CREATE POLICY "Enable read access for authenticated users"
     ON public.internal_conversations FOR SELECT
     USING (auth.role() = 'authenticated');
 
+drop policy if exists "Enable insert access for authenticated users" on public.internal_conversations;
 CREATE POLICY "Enable insert access for authenticated users"
     ON public.internal_conversations FOR INSERT
     WITH CHECK (auth.role() = 'authenticated');
 
+drop policy if exists "Enable update access for authenticated users" on public.internal_conversations;
 CREATE POLICY "Enable update access for authenticated users"
     ON public.internal_conversations FOR UPDATE
     USING (auth.role() = 'authenticated');
 
 -- PARTICIPANTS
+drop policy if exists "Enable read access for authenticated users" on public.internal_participants;
 CREATE POLICY "Enable read access for authenticated users"
     ON public.internal_participants FOR SELECT
     USING (auth.role() = 'authenticated');
 
+drop policy if exists "Enable insert access for authenticated users" on public.internal_participants;
 CREATE POLICY "Enable insert access for authenticated users"
     ON public.internal_participants FOR INSERT
     WITH CHECK (auth.role() = 'authenticated');
 
+drop policy if exists "Enable update access for authenticated users" on public.internal_participants;
 CREATE POLICY "Enable update access for authenticated users"
     ON public.internal_participants FOR UPDATE
     USING (auth.role() = 'authenticated');
@@ -53,10 +59,12 @@ CREATE POLICY "Enable update access for authenticated users"
 -- Keep simple: Authenticated users can read/insert.
 -- In a real app, we'd want strict "participant only" checks for reading, 
 -- but given the recursion issues we've faced, let's open it up for V1 stability.
+drop policy if exists "Enable read access for authenticated users" on public.internal_messages;
 CREATE POLICY "Enable read access for authenticated users"
     ON public.internal_messages FOR SELECT
     USING (auth.role() = 'authenticated');
 
+drop policy if exists "Enable insert access for authenticated users" on public.internal_messages;
 CREATE POLICY "Enable insert access for authenticated users"
     ON public.internal_messages FOR INSERT
     WITH CHECK (auth.role() = 'authenticated');

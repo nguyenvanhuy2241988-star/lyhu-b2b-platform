@@ -7,6 +7,7 @@ BEGIN;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
+drop policy if exists "Public profiles are viewable by everyone" on public.profiles;
 CREATE POLICY "Public profiles are viewable by everyone"
     ON public.profiles FOR SELECT
     USING ( auth.role() = 'authenticated' );

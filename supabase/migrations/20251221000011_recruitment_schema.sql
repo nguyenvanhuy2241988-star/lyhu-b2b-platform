@@ -51,6 +51,7 @@ alter table public.recruitment_interviews enable row level security;
 -- Helper function to check role (reusing or inlining logic)
 -- Note: 'recruiter' is now a valid role in profiles.
 
+drop policy if exists "Recruiters and Admin Full Access Jobs" on public.recruitment_jobs;
 create policy "Recruiters and Admin Full Access Jobs" on public.recruitment_jobs
     for all using (
         exists (
@@ -60,6 +61,7 @@ create policy "Recruiters and Admin Full Access Jobs" on public.recruitment_jobs
         )
     );
 
+drop policy if exists "Recruiters and Admin Full Access Candidates" on public.recruitment_candidates;
 create policy "Recruiters and Admin Full Access Candidates" on public.recruitment_candidates
     for all using (
         exists (
@@ -69,6 +71,7 @@ create policy "Recruiters and Admin Full Access Candidates" on public.recruitmen
         )
     );
 
+drop policy if exists "Recruiters and Admin Full Access Interviews" on public.recruitment_interviews;
 create policy "Recruiters and Admin Full Access Interviews" on public.recruitment_interviews
     for all using (
         exists (
@@ -79,6 +82,7 @@ create policy "Recruiters and Admin Full Access Interviews" on public.recruitmen
     );
 
 -- Allow Read Access to 'Jobs' for everyone (internal job board?) -> Maybe just authenticated for now.
+drop policy if exists "Authenticated Read Access Jobs" on public.recruitment_jobs;
 create policy "Authenticated Read Access Jobs" on public.recruitment_jobs
     for select using ( auth.role() = 'authenticated' );
 

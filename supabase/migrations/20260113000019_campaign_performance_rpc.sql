@@ -40,5 +40,5 @@ END;
 $$;
 
 -- Grant execute permission
-GRANT EXECUTE ON FUNCTION get_campaign_performance_stats TO authenticated;
-GRANT EXECUTE ON FUNCTION get_campaign_performance_stats TO service_role;
+GRANT EXECUTE ON FUNCTION get_campaign_performance_stats() TO authenticated;
+GRANT EXECUTE ON FUNCTION get_campaign_performance_stats() TO service_role;

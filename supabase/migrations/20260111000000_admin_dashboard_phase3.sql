@@ -34,6 +34,7 @@ WHERE oi.product_id = p.id AND (oi.cost_at_purchase = 0 OR oi.cost_at_purchase I
 
 
 -- 4. Update Admin Stats to Include Profit
+DROP FUNCTION IF EXISTS get_admin_dashboard_stats(timestamptz, timestamptz) CASCADE;
 CREATE OR REPLACE FUNCTION get_admin_dashboard_stats(
     p_start_date timestamptz,
     p_end_date timestamptz
@@ -103,6 +104,8 @@ END;
 $$;
 
 -- 5. RPC for Top Products (With Profit)
+DROP FUNCTION IF EXISTS get_top_products(timestamptz, timestamptz) CASCADE;
+DROP FUNCTION IF EXISTS get_top_products(timestamptz, timestamptz, int) CASCADE;
 CREATE OR REPLACE FUNCTION get_top_products(
     p_start_date timestamptz,
     p_end_date timestamptz,

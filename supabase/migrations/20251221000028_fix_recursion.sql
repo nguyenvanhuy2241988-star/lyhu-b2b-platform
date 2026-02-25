@@ -70,6 +70,7 @@ create policy "Users can view messages"
         or public.is_internal_member(conversation_id)
     );
 
+drop policy if exists "Users can send messages" on public.internal_messages;
 create policy "Users can send messages"
     on public.internal_messages for insert
     with check (

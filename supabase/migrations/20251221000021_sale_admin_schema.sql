@@ -23,7 +23,7 @@ end $$;
 -- Re-add constraint with 'sale_admin'
 alter table public.profiles
 add constraint profiles_role_check
-check (role in ('admin', 'customer', 'sales', 'ctv', 'telesales', 'recruiter', 'warehouse', 'marketing', 'ecommerce', 'rnd', 'shipper', 'accountant', 'sale_admin'));
+check (role in ('admin', 'customer', 'sales', 'ctv', 'telesales', 'recruiter', 'warehouse', 'marketing', 'ecommerce', 'rnd', 'shipper', 'accountant', 'sale_admin', 'livestream', 'manager', 'telesales_manager', 'hr_manager', 'leader', 'hr'));
 
 -- Create Quotations Table
 create table if not exists public.quotations (
@@ -39,6 +39,7 @@ create table if not exists public.quotations (
 -- RLS
 alter table public.quotations enable row level security;
 
+drop policy if exists "Sale Admin and Sales can manage quotations" on public.quotations;
 create policy "Sale Admin and Sales can manage quotations"
   on public.quotations for all
   using (

@@ -21,12 +21,14 @@ ON CONFLICT (id) DO NOTHING;
 
 -- 3. Storage Policies
 -- Allow authenticated users to upload
+drop policy if exists "Authenticated users can upload chat attachments" on storage.objects;
 CREATE POLICY "Authenticated users can upload chat attachments"
 ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (bucket_id = 'chat-attachments');
 
 -- Allow authenticated users to read
+drop policy if exists "Authenticated users can read chat attachments" on storage.objects;
 CREATE POLICY "Authenticated users can read chat attachments"
 ON storage.objects FOR SELECT
 TO authenticated

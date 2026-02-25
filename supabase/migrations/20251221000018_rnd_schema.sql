@@ -23,7 +23,7 @@ end $$;
 -- Re-add constraint with 'rnd'
 alter table public.profiles
 add constraint profiles_role_check
-check (role in ('admin', 'customer', 'sales', 'ctv', 'telesales', 'recruiter', 'warehouse', 'marketing', 'ecommerce', 'rnd'));
+check (role in ('admin', 'customer', 'sales', 'ctv', 'telesales', 'recruiter', 'warehouse', 'marketing', 'ecommerce', 'rnd', 'shipper', 'accountant', 'sale_admin', 'livestream', 'manager', 'telesales_manager', 'hr_manager', 'leader', 'hr'));
 
 -- Tables for R&D (Projects & Samples)
 create table if not exists public.rnd_projects (
@@ -50,6 +50,7 @@ create table if not exists public.rnd_samples (
 alter table public.rnd_projects enable row level security;
 alter table public.rnd_samples enable row level security;
 
+drop policy if exists "R&D staff and admins can manage projects" on public.rnd_projects;
 create policy "R&D staff and admins can manage projects"
   on public.rnd_projects for all
   using (
@@ -59,6 +60,7 @@ create policy "R&D staff and admins can manage projects"
     )
   );
 
+drop policy if exists "R&D staff and admins can manage samples" on public.rnd_samples;
 create policy "R&D staff and admins can manage samples"
   on public.rnd_samples for all
   using (

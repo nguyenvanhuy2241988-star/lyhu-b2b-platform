@@ -25,23 +25,28 @@ ALTER TABLE telesales_tasks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE telesales_task_logs ENABLE ROW LEVEL SECURITY;
 
 -- Policies for telesales_tasks
+drop policy if exists "Users can view their own tasks or assigned tasks" on telesales_tasks;
 CREATE POLICY "Users can view their own tasks or assigned tasks"
 ON telesales_tasks FOR SELECT
 USING (auth.uid() = owner_id OR auth.uid() = assigned_to);
 
+drop policy if exists "Users can create their own tasks" on telesales_tasks;
 CREATE POLICY "Users can create their own tasks"
 ON telesales_tasks FOR INSERT
 WITH CHECK (auth.uid() = owner_id OR auth.uid() = assigned_to);
 
+drop policy if exists "Users can update their own tasks or assigned tasks" on telesales_tasks;
 CREATE POLICY "Users can update their own tasks or assigned tasks"
 ON telesales_tasks FOR UPDATE
 USING (auth.uid() = owner_id OR auth.uid() = assigned_to);
 
+drop policy if exists "Users can delete their own tasks" on telesales_tasks;
 CREATE POLICY "Users can delete their own tasks"
 ON telesales_tasks FOR DELETE
 USING (auth.uid() = owner_id);
 
 -- Policies for telesales_task_logs
+drop policy if exists "Users can view logs for their tasks" on telesales_task_logs;
 CREATE POLICY "Users can view logs for their tasks"
 ON telesales_task_logs FOR SELECT
 USING (
@@ -52,6 +57,7 @@ USING (
     )
 );
 
+drop policy if exists "Users can create logs for their tasks" on telesales_task_logs;
 CREATE POLICY "Users can create logs for their tasks"
 ON telesales_task_logs FOR INSERT
 WITH CHECK (

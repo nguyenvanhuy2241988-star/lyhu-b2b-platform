@@ -64,9 +64,11 @@ returns text language sql security definer stable as $$
 $$;
 
 -- Policies for document_categories
+drop policy if exists "Categories Select All" on public.document_categories;
 create policy "Categories Select All" on public.document_categories
     for select using (auth.role() = 'authenticated');
 
+drop policy if exists "Categories Manage Admin" on public.document_categories;
 create policy "Categories Manage Admin" on public.document_categories
     for all using (
         public.current_user_role() in ('admin', 'manager') 
@@ -75,6 +77,7 @@ create policy "Categories Manage Admin" on public.document_categories
 
 -- Policies for documents
 -- 1. READ
+drop policy if exists "Documents Read" on public.documents;
 create policy "Documents Read" on public.documents
     for select using (
         auth.role() = 'authenticated' AND
@@ -89,17 +92,20 @@ create policy "Documents Read" on public.documents
     );
 
 -- 2. INSERT
+drop policy if exists "Documents Insert Auth" on public.documents;
 create policy "Documents Insert Auth" on public.documents
     for insert with check (
         auth.role() = 'authenticated' -- Anyone can create? Or restricted? User req: "created_by được update...". imply anyone.
     );
 
 -- 3. UPDATE/DELETE
+drop policy if exists "Documents Update Own or Admin" on public.documents;
 create policy "Documents Update Own or Admin" on public.documents
     for update using (
         auth.uid() = created_by OR public.current_user_role() = 'admin'
     );
 
+drop policy if exists "Documents Delete Own or Admin" on public.documents;
 create policy "Documents Delete Own or Admin" on public.documents
     for delete using (
         auth.uid() = created_by OR public.current_user_role() = 'admin'
@@ -111,6 +117,7 @@ create policy "Documents Delete Own or Admin" on public.documents
 -- User suggests: "app chỉ hiển thị file khi user có quyền xem document".
 -- So for Table access: Strict.
 
+drop policy if exists "Files Select Linked Doc" on public.document_files;
 create policy "Files Select Linked Doc" on public.document_files
     for select using (
         exists (
@@ -122,6 +129,7 @@ create policy "Files Select Linked Doc" on public.document_files
         )
     );
 
+drop policy if exists "Files Insert Own Doc" on public.document_files;
 create policy "Files Insert Own Doc" on public.document_files
     for insert with check (
         exists (
@@ -131,6 +139,7 @@ create policy "Files Insert Own Doc" on public.document_files
         )
     );
 
+drop policy if exists "Files Delete Own Doc" on public.document_files;
 create policy "Files Delete Own Doc" on public.document_files
     for delete using (
         exists (
@@ -146,12 +155,15 @@ insert into storage.buckets (id, name, public)
 values ('docs', 'docs', false) 
 on conflict (id) do nothing;
 
+drop policy if exists "Docs Bucket Select" on storage.objects;
 create policy "Docs Bucket Select" on storage.objects
     for select using ( bucket_id = 'docs' AND auth.role() = 'authenticated' );
 
+drop policy if exists "Docs Bucket Insert" on storage.objects;
 create policy "Docs Bucket Insert" on storage.objects
     for insert with check ( bucket_id = 'docs' AND auth.role() = 'authenticated' );
 
+drop policy if exists "Docs Bucket Delete" on storage.objects;
 create policy "Docs Bucket Delete" on storage.objects
     for delete using ( 
         bucket_id = 'docs' AND 

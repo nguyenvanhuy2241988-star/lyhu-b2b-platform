@@ -189,3 +189,92 @@ export const updateTelesalesKpiSettings = async (settings: TelesalesKpiSettings)
     }
     return true;
 };
+
+// ==========================================
+// EVIDENCE LOGS (POST LOGS) FOR TELESALES
+// ==========================================
+export interface TelesalesPostLog {
+    id: string;
+    user_id: string;
+    report_date: string;
+    platform: string;
+    activity_type: string;
+    group_name?: string;
+    group_link?: string;
+    post_link: string;
+    image_url?: string;
+    group_note?: string;
+    content_excerpt?: string;
+    created_at?: string;
+}
+
+export const getTelesalesPostLogs = async (userId: string, date: string) => {
+    const { data, error } = await supabase
+        .from('telesales_post_logs')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('report_date', date)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data as TelesalesPostLog[];
+};
+
+export const createTelesalesPostLog = async (logData: Omit<TelesalesPostLog, 'id' | 'created_at'>) => {
+    const { error } = await supabase
+        .from('telesales_post_logs')
+        .insert([logData]);
+
+    if (error) throw error;
+    return true;
+};
+
+export const updateTelesalesPostLog = async (id: string, logData: Partial<TelesalesPostLog>) => {
+    const { error } = await supabase
+        .from('telesales_post_logs')
+        .update(logData)
+        .eq('id', id);
+
+    if (error) throw error;
+    return true;
+};
+
+export const deleteTelesalesPostLog = async (id: string) => {
+    const { error } = await supabase
+        .from('telesales_post_logs')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+    return true;
+};
+
+// Sync Post Logs count back to Daily Report
+export const syncTelesalesLogsToDailyReport = async (userId: string, date: string) => {
+    try {
+        const logs = await getTelesalesPostLogs(userId, date);
+        const fbGroupPosts = logs.filter(l => l.platform === 'facebook_group' && l.activity_type === 'post').length;
+        const fbPersonalPosts = logs.filter(l => l.platform === 'facebook_personal' && l.activity_type === 'post').length;
+        const fbComments = logs.filter(l => l.platform.includes('facebook') && l.activity_type === 'comment').length;
+        const fbFriends = logs.filter(l => l.platform.includes('facebook') && l.activity_type === 'friend').length;
+        const zaloPosts = logs.filter(l => l.platform === 'zalo' && (l.activity_type === 'post' || l.activity_type === 'message')).length;
+
+        // Ensure a daily report exists
+        const report = await getDailyReportTelesales(date, userId);
+
+        await upsertDailyReportTelesales({
+            user_id: userId,
+            report_date: date,
+            calls_completed: report?.calls_completed || 0,
+            self_sourced_data: report?.self_sourced_data || 0,
+            fb_group_posts: fbGroupPosts,
+            fb_personal_posts: fbPersonalPosts,
+            fb_comments: fbComments,
+            fb_friends: fbFriends,
+            zalo_posts: zaloPosts,
+            notes: report?.notes || "",
+        });
+    } catch (e) {
+        console.error("Error syncing logs to report:", e);
+    }
+};

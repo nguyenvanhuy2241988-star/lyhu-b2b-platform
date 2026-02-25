@@ -21,9 +21,9 @@ begin
     end if;
 end $$;
 
--- 2. Re-add the constraint with 'recruiter' included
+-- 2. Re-add the constraint with 'recruiter' included (expanded to include future roles to prevent push errors on existing DB)
 alter table public.profiles
 add constraint profiles_role_check
-check (role in ('admin', 'customer', 'sales', 'ctv', 'telesales', 'recruiter'));
+check (role in ('admin', 'customer', 'sales', 'ctv', 'telesales', 'recruiter', 'warehouse', 'marketing', 'ecommerce', 'rnd', 'shipper', 'accountant', 'sale_admin', 'livestream', 'manager', 'telesales_manager', 'hr_manager', 'leader', 'hr'));
 
 -- 3. (Optional) Create a policy update if necessary (but RLS usually relies onauth.uid())

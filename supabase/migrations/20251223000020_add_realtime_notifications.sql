@@ -5,7 +5,15 @@
 -- =====================================================
 
 -- Enable Realtime on telesales_tasks table
-ALTER PUBLICATION supabase_realtime ADD TABLE telesales_tasks;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND tablename = 'telesales_tasks'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.telesales_tasks;
+  END IF;
+END $$;
 
 -- Create notification events table
 CREATE TABLE IF NOT EXISTS telesales_notifications (
@@ -23,20 +31,23 @@ CREATE TABLE IF NOT EXISTS telesales_notifications (
 ALTER TABLE telesales_notifications ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+drop policy if exists "Users can view their own notifications" on telesales_notifications;
 CREATE POLICY "Users can view their own notifications"
 ON telesales_notifications FOR SELECT
 USING (auth.uid() = user_id);
 
+drop policy if exists "Users can update their own notifications" on telesales_notifications;
 CREATE POLICY "Users can update their own notifications"
 ON telesales_notifications FOR UPDATE
 USING (auth.uid() = user_id);
 
+drop policy if exists "System can create notifications" on telesales_notifications;
 CREATE POLICY "System can create notifications"
 ON telesales_notifications FOR INSERT
 WITH CHECK (true); -- Will be triggered by function
 
 -- Index for performance
-CREATE INDEX idx_notifications_user_unread ON telesales_notifications(user_id, is_read, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON telesales_notifications(user_id, is_read, created_at DESC);
 
 -- Function: Create notification when task is assigned
 CREATE OR REPLACE FUNCTION notify_task_assigned()

@@ -64,10 +64,12 @@ create extension if not exists pg_trgm;
 create index if not exists idx_docs_files_title_trgm on public.documents_files using gin (title gin_trgm_ops);
 
 -- 4. Triggers (updated_at)
+drop trigger if exists trg_docs_folders_updated_at on public.documents_folders;
 create trigger trg_docs_folders_updated_at
 before update on public.documents_folders
 for each row execute function public.set_updated_at();
 
+drop trigger if exists trg_docs_files_updated_at on public.documents_files;
 create trigger trg_docs_files_updated_at
 before update on public.documents_files
 for each row execute function public.set_updated_at();
@@ -85,38 +87,46 @@ returns text language sql security definer stable as $$
 $$;
 
 -- Policies: Folders
+drop policy if exists "Folders Select" on public.documents_folders;
 create policy "Folders Select" on public.documents_folders
     for select using (
         auth.role() = 'authenticated' AND is_deleted = false
         -- Advanced visibility checks can be added here (e.g. check roles)
     );
 
+drop policy if exists "Folders Insert" on public.documents_folders;
 create policy "Folders Insert" on public.documents_folders
     for insert with check ( auth.role() = 'authenticated' );
 
+drop policy if exists "Folders Update Own/Admin" on public.documents_folders;
 create policy "Folders Update Own/Admin" on public.documents_folders
     for update using (
         (auth.uid() = created_by) OR (public.current_user_role() in ('admin', 'manager'))
     );
 
 -- Policies: Files
+drop policy if exists "Files Select" on public.documents_files;
 create policy "Files Select" on public.documents_files
     for select using (
         auth.role() = 'authenticated' AND is_deleted = false
     );
 
+drop policy if exists "Files Insert" on public.documents_files;
 create policy "Files Insert" on public.documents_files
     for insert with check ( auth.role() = 'authenticated' );
 
+drop policy if exists "Files Update Own/Admin" on public.documents_files;
 create policy "Files Update Own/Admin" on public.documents_files
     for update using (
         (auth.uid() = created_by) OR (public.current_user_role() in ('admin', 'manager'))
     );
 
 -- Policies: Activity
+drop policy if exists "Activity Select" on public.documents_activity;
 create policy "Activity Select" on public.documents_activity
     for select using ( auth.role() = 'authenticated' );
     
+drop policy if exists "Activity Insert" on public.documents_activity;
 create policy "Activity Insert" on public.documents_activity
     for insert with check ( auth.role() = 'authenticated' );
 
@@ -125,12 +135,15 @@ insert into storage.buckets (id, name, public)
 values ('lyhu-docs', 'lyhu-docs', false) 
 on conflict (id) do nothing;
 
+drop policy if exists "Docs Bucket Select" on storage.objects;
 create policy "Docs Bucket Select" on storage.objects
     for select using ( bucket_id = 'lyhu-docs' AND auth.role() = 'authenticated' );
 
+drop policy if exists "Docs Bucket Insert" on storage.objects;
 create policy "Docs Bucket Insert" on storage.objects
     for insert with check ( bucket_id = 'lyhu-docs' AND auth.role() = 'authenticated' );
 
+drop policy if exists "Docs Bucket Delete" on storage.objects;
 create policy "Docs Bucket Delete" on storage.objects
     for delete using ( 
         bucket_id = 'lyhu-docs' AND 

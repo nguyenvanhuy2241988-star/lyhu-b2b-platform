@@ -75,8 +75,11 @@ grant all on table public.documents_activity to authenticated;
 grant usage, select on sequence public.documents_activity_id_seq to authenticated;
 
 -- Policies
+drop policy if exists "Enable all for authenticated" on public.documents_folders;
 create policy "Enable all for authenticated" on public.documents_folders for all to authenticated using (true) with check (true);
+drop policy if exists "Enable all for authenticated" on public.documents_files;
 create policy "Enable all for authenticated" on public.documents_files for all to authenticated using (true) with check (true);
+drop policy if exists "Enable all for authenticated" on public.documents_activity;
 create policy "Enable all for authenticated" on public.documents_activity for all to authenticated using (true) with check (true);
 
 -- 5. Force Cache Reload

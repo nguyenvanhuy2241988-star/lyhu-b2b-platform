@@ -19,6 +19,7 @@ ALTER TABLE internal_message_reactions ENABLE ROW LEVEL SECURITY;
 -- But checking if I can see the message requires checking conversation participants.
 -- To avoid recursion or performance hit, we can just allow Authenticated users to see reactions (RLS on messages handles visibility of the message itself, so seeing reactions for a hidden message is rare/low risk unless ID is guessed).
 -- A safer approach:
+drop policy if exists "View reactions" on internal_message_reactions;
 CREATE POLICY "View reactions" ON internal_message_reactions
     FOR SELECT TO authenticated
     USING (true);
@@ -26,6 +27,7 @@ CREATE POLICY "View reactions" ON internal_message_reactions
 -- 2. Insert: Only if I am the user_id (handled by default? No, need check). And I should be in conversation.
 -- Simplified: Authenticated users can react to any message they can "see" (fetch). 
 -- Enforcing "in conversation" is better.
+drop policy if exists "Add reaction" on internal_message_reactions;
 CREATE POLICY "Add reaction" ON internal_message_reactions
     FOR INSERT TO authenticated
     WITH CHECK (
@@ -38,6 +40,7 @@ CREATE POLICY "Add reaction" ON internal_message_reactions
     );
 
 -- 3. Delete: Only if I am the owner
+drop policy if exists "Remove reaction" on internal_message_reactions;
 CREATE POLICY "Remove reaction" ON internal_message_reactions
     FOR DELETE TO authenticated
     USING (auth.uid() = user_id);

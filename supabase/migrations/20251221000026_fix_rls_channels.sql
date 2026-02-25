@@ -1,6 +1,7 @@
 -- 1. Update RLS for Conversations to allow reading public channels
 drop policy if exists "Users can view conversations they are in" on public.internal_conversations;
 
+drop policy if exists "Users can view conversations" on public.internal_conversations;
 create policy "Users can view conversations"
     on public.internal_conversations for select
     using (
@@ -36,6 +37,7 @@ create policy "Users can add participants"
 
 drop policy if exists "Users can view messages in their conversations" on public.internal_messages;
 
+drop policy if exists "Users can view messages" on public.internal_messages;
 create policy "Users can view messages"
     on public.internal_messages for select
     using (

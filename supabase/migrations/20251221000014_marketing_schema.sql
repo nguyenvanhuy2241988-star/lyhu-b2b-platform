@@ -23,7 +23,7 @@ end $$;
 -- Re-add constraint with 'marketing'
 alter table public.profiles
 add constraint profiles_role_check
-check (role in ('admin', 'customer', 'sales', 'ctv', 'telesales', 'recruiter', 'warehouse', 'marketing', 'ecommerce', 'rnd', 'shipper', 'accountant', 'sale_admin', 'livestream'));
+check (role in ('admin', 'customer', 'sales', 'ctv', 'telesales', 'recruiter', 'warehouse', 'marketing', 'ecommerce', 'rnd', 'shipper', 'accountant', 'sale_admin', 'livestream', 'manager', 'telesales_manager', 'hr_manager', 'leader', 'hr'));
 
 -- Create Marketing Campaigns Table
 create table if not exists public.marketing_campaigns (
@@ -55,6 +55,7 @@ alter table public.marketing_campaigns enable row level security;
 alter table public.marketing_posts enable row level security;
 
 -- Policies
+drop policy if exists "Marketing staff and admins can manage campaigns" on public.marketing_campaigns;
 create policy "Marketing staff and admins can manage campaigns"
   on public.marketing_campaigns for all
   using (
@@ -64,6 +65,7 @@ create policy "Marketing staff and admins can manage campaigns"
     )
   );
 
+drop policy if exists "Marketing staff and admins can manage posts" on public.marketing_posts;
 create policy "Marketing staff and admins can manage posts"
   on public.marketing_posts for all
   using (

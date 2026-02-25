@@ -9,6 +9,7 @@ DROP POLICY IF EXISTS "Users can view their own conversations" ON public.interna
 DROP POLICY IF EXISTS "Users can view public conversations" ON public.internal_conversations;
 -- Drop any other select policies...
 
+drop policy if exists "Authenticated users can select conversations" on public.internal_conversations;
 CREATE POLICY "Authenticated users can select conversations"
     ON public.internal_conversations FOR SELECT
     USING (auth.role() = 'authenticated');
@@ -17,6 +18,7 @@ CREATE POLICY "Authenticated users can select conversations"
 -- We need to check who is in a conversation before we join/create.
 DROP POLICY IF EXISTS "Users can view participants" ON public.internal_participants;
 
+drop policy if exists "Authenticated users can select participants" on public.internal_participants;
 CREATE POLICY "Authenticated users can select participants"
     ON public.internal_participants FOR SELECT
     USING (auth.role() = 'authenticated');
