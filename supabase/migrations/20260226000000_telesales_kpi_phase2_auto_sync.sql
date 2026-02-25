@@ -55,23 +55,10 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Only trigger for 'call' type activity
     IF NEW.type = 'call' THEN
-        -- Attempt to update existing daily report
-        UPDATE public.telesales_daily_activities
-        SET calls_completed = calls_completed + 1
-        WHERE user_id = NEW.user_id AND report_date = NEW.created_at::DATE;
-
-        -- If no report exists today, insert a new one
-        IF NOT FOUND THEN
-            BEGIN
-                INSERT INTO public.telesales_daily_activities (user_id, report_date, calls_completed)
-                VALUES (NEW.user_id, NEW.created_at::DATE, 1);
-            EXCEPTION WHEN unique_violation THEN
-                -- If it was inserted concurrently, just update it
-                UPDATE public.telesales_daily_activities
-                SET calls_completed = calls_completed + 1
-                WHERE user_id = NEW.user_id AND report_date = NEW.created_at::DATE;
-            END;
-        END IF;
+        INSERT INTO public.telesales_daily_activities (user_id, report_date, calls_completed)
+        VALUES (NEW.user_id, COALESCE(NEW.created_at::DATE, CURRENT_DATE), 1)
+        ON CONFLICT (user_id, report_date) 
+        DO UPDATE SET calls_completed = COALESCE(telesales_daily_activities.calls_completed, 0) + 1;
     END IF;
     RETURN NEW;
 END;
@@ -88,24 +75,28 @@ EXECUTE FUNCTION public.fn_auto_sync_telesales_calls();
 CREATE OR REPLACE FUNCTION public.fn_auto_sync_self_sourced_data()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Only count 'data_moi' source
-    IF NEW.source = 'data_moi' THEN
-        -- Attempt to update existing daily report
-        UPDATE public.telesales_daily_activities
-        SET self_sourced_data = self_sourced_data + 1
-        WHERE user_id = NEW.owner_user_id AND report_date = NEW.created_at::DATE;
-
-        -- If no report exists today, insert a new one
-        IF NOT FOUND THEN
-            BEGIN
-                INSERT INTO public.telesales_daily_activities (user_id, report_date, self_sourced_data)
-                VALUES (NEW.owner_user_id, NEW.created_at::DATE, 1);
-            EXCEPTION WHEN unique_violation THEN
-                -- If it was inserted concurrently, just update it
-                UPDATE public.telesales_daily_activities
-                SET self_sourced_data = self_sourced_data + 1
-                WHERE user_id = NEW.owner_user_id AND report_date = NEW.created_at::DATE;
-            END;
+    IF TG_OP = 'INSERT' THEN
+        -- Count only if source is SELF_FOUND
+        IF NEW.source_category = 'SELF_FOUND' THEN
+            INSERT INTO public.telesales_daily_activities (user_id, report_date, self_sourced_data)
+            VALUES (NEW.owner_user_id, COALESCE(NEW.created_at::DATE, CURRENT_DATE), 1)
+            ON CONFLICT (user_id, report_date) 
+            DO UPDATE SET self_sourced_data = COALESCE(telesales_daily_activities.self_sourced_data, 0) + 1;
+        END IF;
+    ELSIF TG_OP = 'UPDATE' THEN
+        -- Changed to SELF_FOUND (Increment)
+        IF COALESCE(OLD.source_category, '') != 'SELF_FOUND' AND COALESCE(NEW.source_category, '') = 'SELF_FOUND' THEN
+            INSERT INTO public.telesales_daily_activities (user_id, report_date, self_sourced_data)
+            VALUES (NEW.owner_user_id, COALESCE(NEW.created_at::DATE, CURRENT_DATE), 1)
+            ON CONFLICT (user_id, report_date) 
+            DO UPDATE SET self_sourced_data = COALESCE(telesales_daily_activities.self_sourced_data, 0) + 1;
+        END IF;
+        
+        -- Changed from SELF_FOUND to something else (Decrement)
+        IF COALESCE(OLD.source_category, '') = 'SELF_FOUND' AND COALESCE(NEW.source_category, '') != 'SELF_FOUND' THEN
+            UPDATE public.telesales_daily_activities
+            SET self_sourced_data = GREATEST(COALESCE(self_sourced_data, 0) - 1, 0)
+            WHERE user_id = NEW.owner_user_id AND report_date = COALESCE(NEW.created_at::DATE, CURRENT_DATE);
         END IF;
     END IF;
     RETURN NEW;
@@ -115,6 +106,6 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Map Trigger to crm_deals
 DROP TRIGGER IF EXISTS trg_auto_sync_self_sourced_data ON public.crm_deals;
 CREATE TRIGGER trg_auto_sync_self_sourced_data
-AFTER INSERT ON public.crm_deals
+AFTER INSERT OR UPDATE ON public.crm_deals
 FOR EACH ROW
 EXECUTE FUNCTION public.fn_auto_sync_self_sourced_data();

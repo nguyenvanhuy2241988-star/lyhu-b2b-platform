@@ -432,44 +432,28 @@ export async function checkDuplicatePhone(phone: string, token?: string): Promis
     }
 }
 
-export async function searchCustomers(query: string, ownerId?: string, token?: string): Promise<Customer[]> {
+export async function searchCustomers(query: string, ownerId?: string): Promise<Customer[]> {
     if (!query || query.length < 2) return [];
 
     try {
-        let authToken = token;
-        if (!authToken) {
-            const session = await getSessionSafe();
-            authToken = session?.access_token;
-        }
-
-        const headers = getHeaders(authToken);
-
-        // ilike filter: name.ilike.%query%, phone.ilike.%query%
-        // PostgREST or query needs to handle this carefully.
-        // or=(name.ilike.*query*,phone.ilike.*query*)
-
-        let url = `${SUPABASE_URL}/rest/v1/customers?select=*&limit=20`;
-
-        const encodedQuery = encodeURIComponent(query);
-        const searchFilter = `or=(name.ilike.*${encodedQuery}*,phone.ilike.*${encodedQuery}*)`;
+        const _query = query.trim();
+        let queryBuilder = supabase
+            .from('customers')
+            .select('*')
+            .or(`name.ilike.%${_query}%,phone.ilike.%${_query}%`)
+            .limit(20);
 
         if (ownerId) {
-            // We need (search) AND (owner)
-            // PostgREST combines top-level params with AND.
-            url += `&${searchFilter}`;
-            url += `&or=(owner_user_id.eq.${ownerId},owner_user_id.is.null)`;
-        } else {
-            url += `&${searchFilter}`;
+            queryBuilder = queryBuilder.or(`owner_user_id.eq.${ownerId},owner_user_id.is.null`);
         }
 
-        const res = await fetch(url, { headers });
+        const { data, error } = await queryBuilder;
 
-        if (!res.ok) {
-            console.error('searchCustomers error:', res.statusText);
+        if (error) {
+            console.error('searchCustomers error:', error.message);
             return [];
         }
 
-        const data = await res.json();
         return (data || []) as Customer[];
     } catch (err) {
         console.error('searchCustomers exception:', err);
