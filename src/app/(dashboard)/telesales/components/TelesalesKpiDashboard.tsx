@@ -18,6 +18,7 @@ export default function TelesalesKpiDashboard({ date, userId }: TelesalesKpiDash
 
     const [loading, setLoading] = useState(true);
     const [showSettings, setShowSettings] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     // Settings Form State
     const [targets, setTargets] = useState({
@@ -47,8 +48,9 @@ export default function TelesalesKpiDashboard({ date, userId }: TelesalesKpiDash
                 fb_personal_posts: data.fb_personal_posts_target,
                 zalo_posts: data.zalo_posts_target
             });
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error loading KPI stats:", error);
+            setError(error.message || JSON.stringify(error) || "Lỗi không xác định");
         } finally {
             setLoading(false);
         }
@@ -124,6 +126,13 @@ export default function TelesalesKpiDashboard({ date, userId }: TelesalesKpiDash
     };
 
     if (loading) return <div className="h-24 animate-pulse bg-slate-100 rounded-xl mb-6"></div>;
+    if (error) return (
+        <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-200 mb-6 text-sm flex flex-col gap-1">
+            <span className="font-bold">Lỗi tải dữ liệu KPI:</span>
+            <span>{error}</span>
+            <span className="text-red-500 text-xs mt-1">(Vui lòng kiểm tra xem Database đã được cập nhật chưa hoặc báo lỗi này cho Dev)</span>
+        </div>
+    );
     if (!stats) return null;
 
     const items = [
