@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { getTelesalesKpiStats, TelesalesKpiStats, updateTelesalesKpiSettings } from "@/lib/telesalesDailyStore";
+import { getTelesalesKpiStats, getTeamTelesalesKpiStats, TelesalesKpiStats, updateTelesalesKpiSettings } from "@/lib/telesalesDailyStore";
 import { supabase } from "@/lib/supabaseClient";
 import { Settings, X, Save, TrendingUp, Phone, Users, MessageSquare, Share2, Database, PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -39,7 +39,7 @@ export default function TelesalesKpiDashboard({ date, userId }: TelesalesKpiDash
     const loadStats = async () => {
         if (!userId) return;
         try {
-            const data = await getTelesalesKpiStats(userId, date);
+            const data = await (userId === 'ALL' ? getTeamTelesalesKpiStats(date) : getTelesalesKpiStats(userId, date));
             setStats(data);
             setTargets({
                 calls: data.calls_target,
@@ -63,14 +63,14 @@ export default function TelesalesKpiDashboard({ date, userId }: TelesalesKpiDash
 
         // Realtime Subscription
         const channel = supabase
-            .channel('telesales-kpi-updates')
+            .channel(`telesales-kpi-act-${userId}`)
             .on(
                 'postgres_changes',
                 {
                     event: '*',
                     schema: 'public',
                     table: 'telesales_daily_activities',
-                    filter: `user_id=eq.${userId}` // Listen to target user changes
+                    ...(userId !== 'ALL' ? { filter: `user_id=eq.${userId}` } : {})
                 },
                 () => {
                     console.log("Realtime update received for activities!");
@@ -81,14 +81,14 @@ export default function TelesalesKpiDashboard({ date, userId }: TelesalesKpiDash
 
         // Subscribe to Settings changes (if Admin updates targets)
         const settingsChannel = supabase
-            .channel('telesales-kpi-settings-updates')
+            .channel(`telesales-kpi-set-${userId}`)
             .on(
                 'postgres_changes',
                 {
                     event: '*',
                     schema: 'public',
                     table: 'telesales_kpi_settings',
-                    filter: `user_id=eq.${userId}`
+                    ...(userId !== 'ALL' ? { filter: `user_id=eq.${userId}` } : {})
                 },
                 () => {
                     console.log("Settings update received!");
@@ -208,18 +208,20 @@ export default function TelesalesKpiDashboard({ date, userId }: TelesalesKpiDash
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-blue-600" />
-                    Tiến độ Thực hiện Target KPI
+                    {userId === 'ALL' ? 'Tiến độ Target Toàn Bộ Team' : 'Tiến độ Thực hiện Target KPI'}
                 </h2>
                 <div className="flex gap-2">
-                    <button
-                        onClick={() => router.push(`/telesales/daily?date=${date}&userId=${userId}`)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
-                        title="Trang Báo cáo Chi tiết"
-                    >
-                        <PlusCircle className="w-4 h-4" />
-                        <span className="hidden sm:inline">Nhập báo cáo</span>
-                    </button>
-                    {isAdmin && (
+                    {userId !== 'ALL' && (
+                        <button
+                            onClick={() => router.push(`/telesales/daily?date=${date}&userId=${userId}`)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg transition-colors border border-blue-200"
+                            title="Trang Báo cáo Chi tiết"
+                        >
+                            <PlusCircle className="w-4 h-4" />
+                            <span className="hidden sm:inline">Nhập báo cáo</span>
+                        </button>
+                    )}
+                    {isAdmin && userId !== 'ALL' && (
                         <button
                             onClick={() => setShowSettings(true)}
                             className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors border border-transparent hover:border-slate-200"

@@ -9,20 +9,46 @@ USING (owner_user_id = auth.uid());
 -- 2. Refined Trigger for Call Activities (using standard EXCLUDED)
 CREATE OR REPLACE FUNCTION public.fn_auto_sync_telesales_calls()
 RETURNS TRIGGER AS $$
+DECLARE
+    call_count_today INT;
 BEGIN
     IF TG_OP = 'INSERT' THEN
         IF NEW.type = 'call' AND NEW.user_id IS NOT NULL THEN
-            INSERT INTO public.telesales_daily_activities (user_id, report_date, calls_completed)
-            VALUES (NEW.user_id, COALESCE(NEW.created_at::DATE, CURRENT_DATE), 1)
-            ON CONFLICT (user_id, report_date) 
-            DO UPDATE SET calls_completed = COALESCE(telesales_daily_activities.calls_completed, 0) + 1;
+            -- Check if this user already logged a call for this specific deal today
+            -- We want to count distinct deals called per day, not total call logs.
+            SELECT COUNT(*) INTO call_count_today
+            FROM public.crm_activities
+            WHERE user_id = NEW.user_id 
+              AND deal_id = NEW.deal_id 
+              AND type = 'call'
+              AND created_at::DATE = COALESCE(NEW.created_at::DATE, CURRENT_DATE)
+              AND id != NEW.id; -- Exclude the newly inserted record
+
+            -- Only increment KPI if this is the FIRST call for this deal today
+            IF call_count_today = 0 THEN
+                INSERT INTO public.telesales_daily_activities (user_id, report_date, calls_completed)
+                VALUES (NEW.user_id, COALESCE(NEW.created_at::DATE, CURRENT_DATE), 1)
+                ON CONFLICT (user_id, report_date) 
+                DO UPDATE SET calls_completed = COALESCE(telesales_daily_activities.calls_completed, 0) + 1;
+            END IF;
         END IF;
         RETURN NEW;
     ELSIF TG_OP = 'DELETE' THEN
         IF OLD.type = 'call' AND OLD.user_id IS NOT NULL THEN
-            UPDATE public.telesales_daily_activities
-            SET calls_completed = GREATEST(COALESCE(calls_completed, 0) - 1, 0)
-            WHERE user_id = OLD.user_id AND report_date = COALESCE(OLD.created_at::DATE, CURRENT_DATE);
+            -- Check if there are other calls for this deal today by this user
+            SELECT COUNT(*) INTO call_count_today
+            FROM public.crm_activities
+            WHERE user_id = OLD.user_id 
+              AND deal_id = OLD.deal_id 
+              AND type = 'call'
+              AND created_at::DATE = COALESCE(OLD.created_at::DATE, CURRENT_DATE);
+
+            -- If this was the LAST call for this deal today being deleted, decrement KPI
+            IF call_count_today = 0 THEN
+                UPDATE public.telesales_daily_activities
+                SET calls_completed = GREATEST(COALESCE(calls_completed, 0) - 1, 0)
+                WHERE user_id = OLD.user_id AND report_date = COALESCE(OLD.created_at::DATE, CURRENT_DATE);
+            END IF;
         END IF;
         RETURN OLD;
     END IF;
@@ -33,36 +59,74 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- 3. Refined Trigger for Deal Source Updates (using standard EXCLUDED)
 CREATE OR REPLACE FUNCTION public.fn_auto_sync_self_sourced_data()
 RETURNS TRIGGER AS $$
+DECLARE
+    deal_count_today INT;
 BEGIN
     IF TG_OP = 'INSERT' THEN
         IF NEW.source_category = 'SELF_FOUND' AND NEW.owner_user_id IS NOT NULL THEN
-            INSERT INTO public.telesales_daily_activities (user_id, report_date, self_sourced_data)
-            VALUES (NEW.owner_user_id, COALESCE(NEW.created_at::DATE, CURRENT_DATE), 1)
-            ON CONFLICT (user_id, report_date) 
-            DO UPDATE SET self_sourced_data = COALESCE(telesales_daily_activities.self_sourced_data, 0) + 1;
+            -- Check if this deal was already counted for this user today avoiding duplicate
+            SELECT COUNT(*) INTO deal_count_today
+            FROM public.crm_deals
+            WHERE owner_user_id = NEW.owner_user_id 
+              AND source_category = 'SELF_FOUND'
+              AND created_at::DATE = COALESCE(NEW.created_at::DATE, CURRENT_DATE)
+              AND id != NEW.id;
+
+            IF deal_count_today = 0 THEN
+                INSERT INTO public.telesales_daily_activities (user_id, report_date, self_sourced_data)
+                VALUES (NEW.owner_user_id, COALESCE(NEW.created_at::DATE, CURRENT_DATE), 1)
+                ON CONFLICT (user_id, report_date) 
+                DO UPDATE SET self_sourced_data = COALESCE(telesales_daily_activities.self_sourced_data, 0) + 1;
+            END IF;
         END IF;
         RETURN NEW;
     ELSIF TG_OP = 'UPDATE' THEN
         -- Changed to SELF_FOUND (Increment)
         IF COALESCE(OLD.source_category, '') != 'SELF_FOUND' AND COALESCE(NEW.source_category, '') = 'SELF_FOUND' AND NEW.owner_user_id IS NOT NULL THEN
-            INSERT INTO public.telesales_daily_activities (user_id, report_date, self_sourced_data)
-            VALUES (NEW.owner_user_id, COALESCE(NEW.created_at::DATE, CURRENT_DATE), 1)
-            ON CONFLICT (user_id, report_date) 
-            DO UPDATE SET self_sourced_data = COALESCE(telesales_daily_activities.self_sourced_data, 0) + 1;
+            SELECT COUNT(*) INTO deal_count_today
+            FROM public.crm_deals
+            WHERE owner_user_id = NEW.owner_user_id 
+              AND source_category = 'SELF_FOUND'
+              AND created_at::DATE = COALESCE(NEW.created_at::DATE, CURRENT_DATE)
+              AND id != NEW.id;
+
+            IF deal_count_today = 0 THEN
+                INSERT INTO public.telesales_daily_activities (user_id, report_date, self_sourced_data)
+                VALUES (NEW.owner_user_id, COALESCE(NEW.created_at::DATE, CURRENT_DATE), 1)
+                ON CONFLICT (user_id, report_date) 
+                DO UPDATE SET self_sourced_data = COALESCE(telesales_daily_activities.self_sourced_data, 0) + 1;
+            END IF;
         END IF;
         
         -- Changed from SELF_FOUND to something else (Decrement)
         IF COALESCE(OLD.source_category, '') = 'SELF_FOUND' AND COALESCE(NEW.source_category, '') != 'SELF_FOUND' AND NEW.owner_user_id IS NOT NULL THEN
-            UPDATE public.telesales_daily_activities
-            SET self_sourced_data = GREATEST(COALESCE(self_sourced_data, 0) - 1, 0)
-            WHERE user_id = NEW.owner_user_id AND report_date = COALESCE(NEW.created_at::DATE, CURRENT_DATE);
+            SELECT COUNT(*) INTO deal_count_today
+            FROM public.crm_deals
+            WHERE owner_user_id = NEW.owner_user_id 
+              AND source_category = 'SELF_FOUND'
+              AND created_at::DATE = COALESCE(NEW.created_at::DATE, CURRENT_DATE)
+              AND id != NEW.id;
+
+            IF deal_count_today = 0 THEN
+                UPDATE public.telesales_daily_activities
+                SET self_sourced_data = GREATEST(COALESCE(self_sourced_data, 0) - 1, 0)
+                WHERE user_id = NEW.owner_user_id AND report_date = COALESCE(NEW.created_at::DATE, CURRENT_DATE);
+            END IF;
         END IF;
         RETURN NEW;
     ELSIF TG_OP = 'DELETE' THEN
         IF OLD.source_category = 'SELF_FOUND' AND OLD.owner_user_id IS NOT NULL THEN
-            UPDATE public.telesales_daily_activities
-            SET self_sourced_data = GREATEST(COALESCE(self_sourced_data, 0) - 1, 0)
-            WHERE user_id = OLD.owner_user_id AND report_date = COALESCE(OLD.created_at::DATE, CURRENT_DATE);
+            SELECT COUNT(*) INTO deal_count_today
+            FROM public.crm_deals
+            WHERE owner_user_id = OLD.owner_user_id 
+              AND source_category = 'SELF_FOUND'
+              AND created_at::DATE = COALESCE(OLD.created_at::DATE, CURRENT_DATE);
+
+            IF deal_count_today = 0 THEN
+                UPDATE public.telesales_daily_activities
+                SET self_sourced_data = GREATEST(COALESCE(self_sourced_data, 0) - 1, 0)
+                WHERE user_id = OLD.owner_user_id AND report_date = COALESCE(OLD.created_at::DATE, CURRENT_DATE);
+            END IF;
         END IF;
         RETURN OLD;
     END IF;

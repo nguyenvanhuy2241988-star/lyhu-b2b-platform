@@ -52,18 +52,111 @@ export type AdminTeleKpiRow = {
     overallProgress: number;
 };
 
-export async function getGlobalKpiSummary(from: Date, to: Date) {
-    return {
+import { fetchUsers } from "./usersStore";
+import { fetchOrders } from "./ordersStore";
+import { supabase } from "./supabaseClient";
+
+export async function getGlobalKpiSummary(from: Date, to: Date, token?: string) {
+    const defaultRes = {
         totalCalls: 0,
         totalOrders: 0,
         totalRevenue: 0,
         totalCommission: 0,
         conversionRate: 0
     };
+
+    try {
+        const users = await getKpiSummaryByUser(from, to, token);
+        if (!users || users.length === 0) return defaultRes;
+
+        const sum = users.reduce((acc, current) => {
+            acc.totalCalls += current.totalCalls;
+            acc.totalOrders += current.totalOrders;
+            acc.totalRevenue += current.totalRevenue;
+            acc.totalCommission += current.totalCommission;
+            return acc;
+        }, { ...defaultRes });
+
+        sum.conversionRate = sum.totalCalls > 0 ? (sum.totalOrders / sum.totalCalls) * 100 : 0;
+        return sum;
+    } catch {
+        return defaultRes;
+    }
 }
 
-export async function getKpiSummaryByUser(from: Date, to: Date): Promise<AdminTeleKpiRow[]> {
-    return [];
+export async function getKpiSummaryByUser(from: Date, to: Date, token?: string): Promise<AdminTeleKpiRow[]> {
+    try {
+        // 1. Fetch Telesales profiles
+        const allUsers = await fetchUsers(token);
+        const teleUsers = allUsers.filter(u => u.role === 'telesales' || u.role === 'sale_admin');
+        if (teleUsers.length === 0) return [];
+
+        // 2. Fetch Orders for the whole date range with Role admin 
+        const orders = await fetchOrders(token, {
+            startDate: from.toISOString(),
+            endDate: to.toISOString(),
+            role: 'admin' // Forces getting all orders
+        });
+
+        // 3. Fetch KPI Settings (to get targets)
+        const { data: targetsData } = await supabase
+            .from('user_kpi_settings')
+            .select('*');
+        const defaultCommission = 0.03;
+
+        // 4. Fetch Daily Activities (Calls & Self Sourced Data)
+        const fromStr = from.toISOString().split('T')[0];
+        const toStr = to.toISOString().split('T')[0];
+        const { data: dailyActs } = await supabase
+            .from('telesales_daily_activities')
+            .select('user_id, calls_completed')
+            .gte('report_date', fromStr)
+            .lte('report_date', toStr);
+
+        // Map data by User
+        const rows: AdminTeleKpiRow[] = teleUsers.map(user => {
+            // Filter orders for this user
+            const userOrders = orders.filter(o =>
+                o.telesalesUserId === user.id &&
+                o.status !== 'cancelled' &&
+                o.status !== 'draft'
+            );
+
+            const uTotalOrders = userOrders.length;
+            const uTotalRevenue = userOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+
+            // Filter daily activities to get total calls
+            const uActivities = (dailyActs || []).filter((a: any) => a.user_id === user.id);
+            const uTotalCalls = uActivities.reduce((sum: number, a: any) => sum + (a.calls_completed || 0), 0);
+
+            // Target Settings
+            const tSetting = (targetsData || []).find((t: any) => t.user_id === user.id);
+            const cRate = tSetting?.commission_rate !== undefined ? tSetting.commission_rate : defaultCommission;
+            const uTotalCommission = uTotalRevenue * cRate;
+
+            const uConversionRate = uTotalCalls > 0 ? (uTotalOrders / uTotalCalls) * 100 : 0;
+
+            // Simple combined progress metric based on target revenue
+            const targetRevenue = tSetting?.daily_revenue_target ? tSetting.daily_revenue_target * 30 : 150000000; // Mock month target 150m
+            const progress = targetRevenue > 0 ? (uTotalRevenue / targetRevenue) * 100 : 0;
+
+            return {
+                userId: user.id,
+                userName: user.name || 'N/A',
+                totalCalls: uTotalCalls,
+                totalOrders: uTotalOrders,
+                totalRevenue: uTotalRevenue,
+                totalCommission: uTotalCommission,
+                conversionRate: uConversionRate,
+                overallProgress: Math.min(progress, 100)
+            };
+        });
+
+        return rows;
+    } catch (err) {
+        console.error("getKpiSummaryByUser err:", err);
+        return [];
+    }
 }
 
 export function getWeeklyRanges() {

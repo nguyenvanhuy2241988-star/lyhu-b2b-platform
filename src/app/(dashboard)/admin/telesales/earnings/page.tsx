@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Calendar, Download, Users, Phone, ShoppingBag, DollarSign, TrendingUp, Search, ArrowUpRight, ArrowDownRight, ChevronDown, Eye } from "lucide-react";
 import Link from "next/link";
 import { calculateKpiProgress, getGlobalKpiSummary, getKpiSummaryByUser, AdminTeleKpiRow, getWeeklyRanges } from "@/lib/telesalesKpiSelectors";
 import { ROLES } from "@/lib/constants";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { getRealtimeClient } from "@/lib/supabaseClient";
+import TelesalesKpiDashboard from "../../../telesales/components/TelesalesKpiDashboard";
 
 // Local helper if utils doesn't have it
 const formatCurrency = (price: number) => {
@@ -17,19 +20,26 @@ const formatCurrency = (price: number) => {
 type DateRangeOption = 'today' | 'last_7_days' | 'this_month';
 
 export default function AdminTelesalesKpiPage() {
+    const { session } = useAuth();
     const [dateRange, setDateRange] = useState<DateRangeOption>('today');
-    // We need to trigger re-renders when data changes (e.g. if we were listening to events).
-    // For now, let's just mount and calc. If real-time needed, we add listeners.
-    // However, the selectors use `loadTasks` which reads from localStorage. 
-    // We should use a simple state to force re-read or just rely on mount if admin doesn't expect live updates without refresh.
-    // Better: Add listener like in telesales page.
     const [refreshKey, setRefreshKey] = useState(0);
+    const [selectedUserId, setSelectedUserId] = useState<string>('');
 
     useEffect(() => {
         const handleUpdate = () => setRefreshKey(prev => prev + 1);
+        const supabase = getRealtimeClient();
+
+        const channel = supabase
+            .channel('admin-telesales-metrics-rt')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, handleUpdate)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'telesales_daily_activities' }, handleUpdate)
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'user_kpi_settings' }, handleUpdate)
+            .subscribe();
+
         window.addEventListener("telesales-tasks-updated", handleUpdate);
         window.addEventListener("users-updated", handleUpdate);
         return () => {
+            supabase.removeChannel(channel);
             window.removeEventListener("telesales-tasks-updated", handleUpdate);
             window.removeEventListener("users-updated", handleUpdate);
         }
@@ -79,10 +89,11 @@ export default function AdminTelesalesKpiPage() {
     useEffect(() => {
         let alive = true;
         const fetchData = async () => {
+            if (!session?.access_token) return;
             try {
                 const [g, u] = await Promise.all([
-                    getGlobalKpiSummary(from, to),
-                    getKpiSummaryByUser(from, to)
+                    getGlobalKpiSummary(from, to, session.access_token),
+                    getKpiSummaryByUser(from, to, session.access_token)
                 ]);
                 if (!alive) return;
                 setTeamStats(g);
@@ -93,7 +104,7 @@ export default function AdminTelesalesKpiPage() {
         };
         fetchData();
         return () => { alive = false; };
-    }, [from, to, refreshKey]);
+    }, [from, to, refreshKey, session?.access_token]);
 
     // Sorting State
     const [sortConfig, setSortConfig] = useState<{ key: keyof AdminTeleKpiRow; direction: 'asc' | 'desc' } | null>({ key: 'totalRevenue', direction: 'desc' });
@@ -188,6 +199,34 @@ export default function AdminTelesalesKpiPage() {
                         Xuất báo cáo
                     </button>
                 </div>
+            </div>
+
+            {/* Team Overview Component */}
+            <div className="mb-2">
+                <TelesalesKpiDashboard userId="ALL" date={new Date().toISOString().split('T')[0]} />
+            </div>
+
+            <div className="mb-8 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                    <h3 className="text-lg font-bold text-slate-800">Tiến độ KPI Cá nhân (Hôm nay)</h3>
+                    <select
+                        className="bg-slate-50 border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2"
+                        value={selectedUserId}
+                        onChange={(e) => setSelectedUserId(e.target.value)}
+                    >
+                        <option value="">-- Chọn Nhân viên --</option>
+                        {userStats.map(u => (
+                            <option key={u.userId} value={u.userId}>{u.userName}</option>
+                        ))}
+                    </select>
+                </div>
+                {selectedUserId ? (
+                    <TelesalesKpiDashboard userId={selectedUserId} date={new Date().toISOString().split('T')[0]} />
+                ) : (
+                    <div className="text-center py-8 text-slate-400 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                        Vui lòng chọn một nhân sự để xem chi tiết tiến độ.
+                    </div>
+                )}
             </div>
 
             {/* Team Overview Cards */}

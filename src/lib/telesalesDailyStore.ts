@@ -165,6 +165,74 @@ export const getTelesalesKpiStats = async (userId: string, date: string): Promis
     return stats;
 };
 
+export const getTeamTelesalesKpiStats = async (date: string): Promise<TelesalesKpiStats> => {
+    // 1. Lấy danh sách nhân sự Telesales
+    const { data: usersData } = await supabase
+        .from('profiles')
+        .select('id')
+        .in('role', ['telesales', 'sale_admin']);
+
+    const telesalesUserIds = (usersData || []).map((u: any) => u.id);
+
+    if (telesalesUserIds.length === 0) {
+        return {
+            user_id: 'ALL',
+            calls_target: 0, self_sourced_data_target: 0, fb_group_posts_target: 0, fb_comments_target: 0, fb_friends_target: 0, fb_personal_posts_target: 0, zalo_posts_target: 0,
+            calls_count: 0, self_sourced_data_count: 0, fb_group_posts_count: 0, fb_comments_count: 0, fb_friends_count: 0, fb_personal_posts_count: 0, zalo_posts_count: 0
+        };
+    }
+
+    // 2. Lấy cài đặt KPI của các nhân sự
+    const { data: settingsData } = await supabase
+        .from('telesales_kpi_settings')
+        .select('*')
+        .in('user_id', telesalesUserIds);
+
+    const settingsMap = new Map((settingsData || []).map((s: any) => [s.user_id, s]));
+
+    const defaultSettings: any = {
+        calls_target: 50, self_sourced_data_target: 10, fb_group_posts_target: 20, fb_comments_target: 50, fb_friends_target: 10, fb_personal_posts_target: 5, zalo_posts_target: 5
+    };
+
+    const aggregatedTargets = { calls_target: 0, self_sourced_data_target: 0, fb_group_posts_target: 0, fb_comments_target: 0, fb_friends_target: 0, fb_personal_posts_target: 0, zalo_posts_target: 0 };
+
+    for (const uid of telesalesUserIds) {
+        const s: any = settingsMap.get(uid) || defaultSettings;
+        aggregatedTargets.calls_target += s.calls_target || 0;
+        aggregatedTargets.self_sourced_data_target += s.self_sourced_data_target || 0;
+        aggregatedTargets.fb_group_posts_target += s.fb_group_posts_target || 0;
+        aggregatedTargets.fb_comments_target += s.fb_comments_target || 0;
+        aggregatedTargets.fb_friends_target += s.fb_friends_target || 0;
+        aggregatedTargets.fb_personal_posts_target += s.fb_personal_posts_target || 0;
+        aggregatedTargets.zalo_posts_target += s.zalo_posts_target || 0;
+    }
+
+    // 3. Lấy báo cáo hàng ngày
+    const { data: reports } = await supabase
+        .from('telesales_daily_activities')
+        .select('*')
+        .eq('report_date', date)
+        .in('user_id', telesalesUserIds);
+
+    const aggregatedCounts = { calls_count: 0, self_sourced_data_count: 0, fb_group_posts_count: 0, fb_comments_count: 0, fb_friends_count: 0, fb_personal_posts_count: 0, zalo_posts_count: 0 };
+
+    for (const r of (reports as any[] || [])) {
+        aggregatedCounts.calls_count += r.calls_completed || 0;
+        aggregatedCounts.self_sourced_data_count += r.self_sourced_data || 0;
+        aggregatedCounts.fb_group_posts_count += r.fb_group_posts || 0;
+        aggregatedCounts.fb_comments_count += r.fb_comments || 0;
+        aggregatedCounts.fb_friends_count += r.fb_friends || 0;
+        aggregatedCounts.fb_personal_posts_count += r.fb_personal_posts || 0;
+        aggregatedCounts.zalo_posts_count += r.zalo_posts || 0;
+    }
+
+    return {
+        user_id: 'ALL',
+        ...aggregatedTargets,
+        ...aggregatedCounts
+    };
+};
+
 export const updateTelesalesKpiSettings = async (settings: TelesalesKpiSettings) => {
     const { user_id, ...targets } = settings;
 
