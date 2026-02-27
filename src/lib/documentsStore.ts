@@ -21,7 +21,7 @@ export interface DocumentFolder {
     created_by: string;
     created_at: string;
     updated_at: string;
-    is_deleted: boolean;
+    is_deleted?: boolean;
     order_index?: number;
 }
 
@@ -40,7 +40,7 @@ export interface DocumentFile {
     created_by: string;
     created_at: string;
     updated_at: string;
-    is_deleted: boolean;
+    is_deleted?: boolean;
     captions?: string[]; // Marketing Content Variations
 }
 
@@ -184,6 +184,100 @@ export async function listFiles(
     const { data, error } = await q;
     if (error) throw error;
     return (data || []) as DocumentFile[];
+}
+
+export async function uploadDirectory(parentFolderId: string, files: File[]): Promise<DocumentFile[]> {
+    const uid = await getUserIdSafe();
+    if (!uid) throw new Error("Unauthorized");
+
+    const folderPaths = new Set<string>();
+    const folderMap = new Map<string, string>();
+    folderMap.set('', parentFolderId);
+
+    for (const file of files) {
+        const path = (file as any).webkitRelativePath || '';
+        if (path) {
+            const parts = path.split('/');
+            parts.pop(); // remove filename
+            if (parts.length > 0) {
+                folderPaths.add(parts.join('/'));
+            }
+        }
+    }
+
+    const sortedPaths = Array.from(folderPaths).sort((a, b) => a.split('/').length - b.split('/').length);
+
+    for (const path of sortedPaths) {
+        const parts = path.split('/');
+        const folderName = parts.pop()!;
+        const parentPath = parts.join('/');
+        const resolvedParentId = folderMap.get(parentPath);
+
+        if (!resolvedParentId) continue;
+
+        const { data: existing } = await supabase
+            .from('documents_folders')
+            .select('id')
+            .eq('parent_id', resolvedParentId)
+            .ilike('name', folderName)
+            .is('is_deleted', false)
+            .maybeSingle();
+
+        if (existing) {
+            folderMap.set(path, existing.id);
+        } else {
+            const { data: newFolder } = await supabase
+                .from('documents_folders')
+                .insert({ name: folderName, parent_id: resolvedParentId, created_by: uid, is_deleted: false, order_index: 0 })
+                .select('id')
+                .single();
+            if (newFolder) {
+                folderMap.set(path, newFolder.id);
+            }
+        }
+    }
+
+    const results: DocumentFile[] = [];
+    for (const file of files) {
+        let fileFolderId = parentFolderId;
+        const path = (file as any).webkitRelativePath || '';
+        if (path) {
+            const parts = path.split('/');
+            parts.pop();
+            const dirPath = parts.join('/');
+            if (folderMap.has(dirPath)) {
+                fileFolderId = folderMap.get(dirPath)!;
+            }
+        }
+
+        const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const storagePath = `global/${fileFolderId}/${Date.now()}-${uuidv4()}-${safeName}`;
+
+        const { error: storageError } = await supabase.storage.from(BUCKET_NAME).upload(storagePath, file);
+        if (storageError) continue;
+
+        const { data, error: dbError } = await supabase
+            .from(FILES_TABLE)
+            .insert({
+                folder_id: fileFolderId,
+                title: file.name,
+                original_name: file.name,
+                mime_type: file.type,
+                size_bytes: file.size,
+                storage_bucket: BUCKET_NAME,
+                storage_path: storagePath,
+                created_by: uid
+            })
+            .select()
+            .single();
+
+        if (data && !dbError) {
+            results.push(data as DocumentFile);
+            await logActivity('file', data.id, 'upload', `Uploaded file "${file.name}"`);
+        }
+    }
+
+    return results;
 }
 
 export async function uploadFiles(folderId: string, files: File[]): Promise<DocumentFile[]> {

@@ -13,18 +13,23 @@ import {
     deleteFolder,
     listFiles,
     uploadFiles,
+    uploadDirectory,
     moveFile,
     moveFiles,
     updateFolderOrder
 } from '@/lib/documentsStore';
 import { FolderTree } from '@/components/documents/FolderTree';
 import { FilesGrid } from '@/components/documents/FilesGrid';
+import { FilesList } from '@/components/documents/FilesList';
 import { DocDetailsPanel } from '@/components/documents/DocDetailsPanel';
 import { FolderInspector } from '@/components/documents/FolderInspector';
 import {
     Search,
     Upload,
-    Menu
+    FolderUp,
+    Menu,
+    LayoutGrid,
+    List
 } from 'lucide-react';
 
 console.log('[DocumentsPage] Loaded');
@@ -51,6 +56,7 @@ function DocumentsPageContent() {
     // Search Filters
     const [isGlobalSearch, setIsGlobalSearch] = useState(false);
     const [filterType, setFilterType] = useState<'all' | 'image' | 'pdf' | 'office'>('all');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
     // Selection State
     const selectedFolderId = searchParams?.get('folder');
@@ -58,6 +64,7 @@ function DocumentsPageContent() {
     const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set());
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const folderInputRef = useRef<HTMLInputElement>(null);
 
     const replaceFolderUrl = useCallback((id: string) => {
         const url = new URL(window.location.href);
@@ -210,6 +217,30 @@ function DocumentsPageContent() {
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files) return;
         handleUploadFiles(Array.from(e.target.files));
+    };
+
+    const handleFolderUploadFiles = async (fileList: File[]) => {
+        if (!selectedFolderId) {
+            alert("Vui lòng chọn thư mục để tải lên");
+            return;
+        }
+        setUploading(true);
+        try {
+            await uploadDirectory(selectedFolderId, fileList);
+            loadFiles(selectedFolderId);
+            loadFolders(true); // reload folders sidebar
+        } catch (error: any) {
+            console.error(error);
+            alert("Lỗi tải thư mục: " + (error?.message || "Unknown error"));
+        } finally {
+            setUploading(false);
+            if (folderInputRef.current) folderInputRef.current.value = '';
+        }
+    };
+
+    const handleFolderUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files) return;
+        handleFolderUploadFiles(Array.from(e.target.files));
     };
 
     const handleMoveFiles = async (payload: string, targetFolderId: string) => {
@@ -385,10 +416,47 @@ function DocumentsPageContent() {
                             >
                                 {isGlobalSearch ? '🌐 Tìm tất cả' : '📁 Thư mục này'}
                             </button>
+
+                            {/* View Toggle */}
+                            <div className="flex bg-slate-100 rounded-lg p-1 shrink-0 items-center">
+                                <button
+                                    onClick={() => setViewMode('grid')}
+                                    className={`p-1.5 rounded-md transition ${viewMode === 'grid' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                    title="Chế độ lưới"
+                                >
+                                    <LayoutGrid className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('list')}
+                                    className={`p-1.5 rounded-md transition ${viewMode === 'list' ? 'bg-white shadow-sm text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                                    title="Chế độ danh sách"
+                                >
+                                    <List className="w-4 h-4" />
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
+                        <input
+                            type="file"
+                            multiple
+                            // @ts-ignore
+                            webkitdirectory="true"
+                            directory="true"
+                            ref={folderInputRef}
+                            className="hidden"
+                            onChange={handleFolderUpload}
+                        />
+                        <button
+                            disabled={!selectedFolderId || uploading}
+                            onClick={() => folderInputRef.current?.click()}
+                            className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 border border-slate-200 transition disabled:opacity-50 text-sm font-medium shadow-sm w-full sm:w-auto justify-center"
+                        >
+                            <FolderUp className="w-4 h-4 text-blue-600" />
+                            <span className="hidden sm:inline">Tải thư mục</span>
+                        </button>
+
                         <input
                             type="file"
                             multiple
@@ -399,14 +467,14 @@ function DocumentsPageContent() {
                         <button
                             disabled={!selectedFolderId || uploading}
                             onClick={() => fileInputRef.current?.click()}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 text-sm font-medium shadow-sm w-full md:w-auto justify-center"
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 text-sm font-medium shadow-sm w-full sm:w-auto justify-center"
                         >
                             {uploading ? (
                                 <span className="animate-spin mr-1">↻</span>
                             ) : (
                                 <Upload className="w-4 h-4" />
                             )}
-                            Tải lên
+                            Tải file
                         </button>
                     </div>
                 </div>
@@ -451,24 +519,45 @@ function DocumentsPageContent() {
                                 </h2>
                             </div>
 
-                            <FilesGrid
-                                files={files}
-                                loading={loadingFiles}
-                                selectedFileId={selectedFile?.id || null}
-                                selectedFileIds={selectedFileIds}
-                                onSelectFile={(file) => setSelectedFile(file)}
-                                onToggleFileSelect={(fileId, multi) => {
-                                    setSelectedFileIds(prev => {
-                                        const newSet = new Set(multi ? prev : []);
-                                        if (newSet.has(fileId)) {
-                                            newSet.delete(fileId);
-                                        } else {
-                                            newSet.add(fileId);
-                                        }
-                                        return newSet;
-                                    });
-                                }}
-                            />
+                            {viewMode === 'grid' ? (
+                                <FilesGrid
+                                    files={files}
+                                    loading={loadingFiles}
+                                    selectedFileId={selectedFile?.id || null}
+                                    selectedFileIds={selectedFileIds}
+                                    onSelectFile={(file) => setSelectedFile(file)}
+                                    onToggleFileSelect={(fileId, multi) => {
+                                        setSelectedFileIds(prev => {
+                                            const newSet = new Set(multi ? prev : []);
+                                            if (newSet.has(fileId)) {
+                                                newSet.delete(fileId);
+                                            } else {
+                                                newSet.add(fileId);
+                                            }
+                                            return newSet;
+                                        });
+                                    }}
+                                />
+                            ) : (
+                                <FilesList
+                                    files={files}
+                                    loading={loadingFiles}
+                                    selectedFileId={selectedFile?.id || null}
+                                    selectedFileIds={selectedFileIds}
+                                    onSelectFile={(file) => setSelectedFile(file)}
+                                    onToggleFileSelect={(fileId, multi) => {
+                                        setSelectedFileIds(prev => {
+                                            const newSet = new Set(multi ? prev : []);
+                                            if (newSet.has(fileId)) {
+                                                newSet.delete(fileId);
+                                            } else {
+                                                newSet.add(fileId);
+                                            }
+                                            return newSet;
+                                        });
+                                    }}
+                                />
+                            )}
                         </div>
                     ) : (
                         <div className="flex flex-col items-center justify-center h-full text-slate-400">
