@@ -303,7 +303,7 @@ function DocumentsPageContent() {
         <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-slate-50">
             {/* Left: Folder Tree */}
             <div
-                className={`flex-col shrink-0 transition-all duration-300 ease-in-out border-r border-slate-200 bg-white
+                className={`flex flex-col h-full shrink-0 transition-all duration-300 ease-in-out border-r border-slate-200 bg-white
                 ${showSidebar ? 'w-64 translate-x-0' : 'w-0 -translate-x-full opacity-0 overflow-hidden border-none'}`}
             >
                 <div className="p-4 border-b border-slate-100 flex items-center justify-between gap-2 h-16 box-border">
