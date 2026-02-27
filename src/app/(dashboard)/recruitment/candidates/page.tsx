@@ -2,25 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Mail, Phone, MoreHorizontal, User, Calendar, Briefcase, Trash2 } from 'lucide-react';
-import { getCandidates, getJobs, createCandidate, updateCandidate, updateCandidateStatus, deleteCandidate, getInterviewsByCandidate, RecruitmentCandidate, RecruitmentJob, RecruitmentInterview, CandidateStatus } from '@/lib/recruitmentStore';
+import { Plus, Search, Mail, Phone, MoreHorizontal, User, Calendar, Briefcase, Trash2, Settings } from 'lucide-react';
+import { getCandidates, getJobs, createCandidate, updateCandidate, updateCandidateStatus, deleteCandidate, getInterviewsByCandidate, RecruitmentCandidate, RecruitmentJob, RecruitmentInterview, RecruitmentColumn, getKanbanColumns } from '@/lib/recruitmentStore';
 import CandidateDetailDrawer from './CandidateDetailDrawer';
+import RecruitmentColumnManager from './RecruitmentColumnManager';
 import { format } from 'date-fns';
-
-const STATUS_COLS: { id: CandidateStatus; label: string; color: string }[] = [
-    { id: 'new', label: 'Mới ứng tuyển', color: 'bg-blue-50 text-blue-700' },
-    { id: 'screening', label: 'Sàng lọc', color: 'bg-purple-50 text-purple-700' },
-    { id: 'interview', label: 'Phỏng vấn', color: 'bg-orange-50 text-orange-700' },
-    { id: 'offer', label: 'Offer', color: 'bg-yellow-50 text-yellow-700' },
-    { id: 'hired', label: 'Đã tuyển', color: 'bg-green-50 text-green-700' },
-    { id: 'rejected', label: 'Từ chối', color: 'bg-red-50 text-red-700' },
-];
 
 export default function CandidatesPage() {
     const [candidates, setCandidates] = useState<RecruitmentCandidate[]>([]);
     const [jobs, setJobs] = useState<RecruitmentJob[]>([]);
+    const [columns, setColumns] = useState<RecruitmentColumn[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [showColumnModal, setShowColumnModal] = useState(false);
 
     // Detail Drawer State
     const [selectedCandidate, setSelectedCandidate] = useState<RecruitmentCandidate | null>(null);
@@ -48,10 +42,11 @@ export default function CandidatesPage() {
 
     const loadData = async () => {
         try {
-            const [cands, jobsData] = await Promise.all([getCandidates(), getJobs()]);
+            const [cands, jobsData, colsData] = await Promise.all([getCandidates(), getJobs(), getKanbanColumns()]);
             setCandidates(cands);
             setJobs(jobsData);
-            if (jobsData.length > 0) {
+            setColumns(colsData);
+            if (jobsData.length > 0 && !newCandidate.job_id) {
                 setNewCandidate(prev => ({ ...prev, job_id: jobsData[0].id })); // default job
             }
         } catch (error) {
@@ -74,7 +69,7 @@ export default function CandidatesPage() {
             setShowModal(false);
             loadData();
             // Reset form
-            setNewCandidate({ full_name: '', email: '', phone: '', status: 'new', job_id: jobs[0]?.id || '', source: 'Referral' });
+            setNewCandidate({ full_name: '', email: '', phone: '', status: columns.length > 0 ? columns[0].id : 'new', job_id: jobs[0]?.id || '', source: 'Referral' });
         } catch (error) {
             console.error(error);
             alert('Lỗi lưu thông tin ứng viên');
@@ -103,7 +98,7 @@ export default function CandidatesPage() {
 
     const handleStatusChange = async (id: string, newStatus: string) => {
         try {
-            await updateCandidateStatus(id, newStatus as CandidateStatus);
+            await updateCandidateStatus(id, newStatus);
             // Optimistic update or reload
             loadData();
         } catch (error) {
@@ -138,8 +133,8 @@ export default function CandidatesPage() {
 
     const getCandidatesByStatus = (status: string) => candidates.filter(c => c.status === status);
 
-    const getStatusLabel = (status: string) => STATUS_COLS.find(s => s.id === status)?.label || status;
-    const getStatusColor = (status: string) => STATUS_COLS.find(s => s.id === status)?.color || 'text-gray-500';
+    const getStatusLabel = (status: string) => columns.find(s => s.id === status)?.label || status;
+    const getStatusColor = (status: string) => columns.find(s => s.id === status)?.color || 'bg-slate-50 text-slate-700';
 
     return (
         <div className="h-full flex flex-col p-6 overflow-hidden">
@@ -150,6 +145,13 @@ export default function CandidatesPage() {
                     <p className="text-slate-500">Quản lý hồ sơ theo quy trình</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setShowColumnModal(true)}
+                        className="flex items-center gap-2 bg-slate-100 text-slate-700 px-3 py-2 rounded-lg hover:bg-slate-200 transition font-medium text-sm border border-slate-200"
+                    >
+                        <Settings className="w-4 h-4" />
+                        Tùy chỉnh Bảng
+                    </button>
                     <div className="bg-white border p-1 rounded-lg flex text-sm font-medium">
                         <button
                             onClick={() => setViewMode('kanban')}
@@ -169,7 +171,7 @@ export default function CandidatesPage() {
                     <button
                         onClick={() => {
                             setNewCandidate({
-                                full_name: '', email: '', phone: '', status: 'new', job_id: jobs[0]?.id || '', source: 'Referral',
+                                full_name: '', email: '', phone: '', status: columns.length > 0 ? columns[0].id : 'new', job_id: jobs[0]?.id || '', source: 'Referral',
                                 experience_years: 0, expected_salary: '', skills: '', notes: ''
                             });
                             setShowModal(true);
@@ -189,7 +191,7 @@ export default function CandidatesPage() {
                 // KANBAN VIEW
                 <div className="flex-1 overflow-x-auto overflow-y-hidden">
                     <div className="flex gap-6 h-full min-w-[1200px]">
-                        {STATUS_COLS.map(col => (
+                        {columns.map(col => (
                             <div key={col.id} className="w-80 flex flex-col h-full">
                                 <div className={`flex items-center justify-between p-3 rounded-t-xl border-b-2 font-semibold ${col.color.replace('text', 'border')}`}>
                                     <span className={col.color.split(' ')[1]}>{col.label}</span>
@@ -233,7 +235,7 @@ export default function CandidatesPage() {
                                                 value={cand.status}
                                                 onChange={(e) => handleStatusChange(cand.id, e.target.value)}
                                             >
-                                                {STATUS_COLS.map(s => (
+                                                {columns.map(s => (
                                                     <option key={s.id} value={s.id}>{s.label}</option>
                                                 ))}
                                             </select>
@@ -518,6 +520,12 @@ export default function CandidatesPage() {
                     onEdit={handleEditClick}
                 />
             )}
+
+            <RecruitmentColumnManager
+                isOpen={showColumnModal}
+                onClose={() => setShowColumnModal(false)}
+                onColumnsChanged={loadData}
+            />
         </div>
     );
 }

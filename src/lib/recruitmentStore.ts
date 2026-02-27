@@ -119,7 +119,7 @@ export interface RecruitmentJob {
     created_at?: string;
 }
 
-export type CandidateStatus = 'new' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected';
+export type CandidateStatus = 'new' | 'screening' | 'interview' | 'offer' | 'hired' | 'rejected' | (string & {});
 
 export interface RecruitmentCandidate {
     id: string;
@@ -145,6 +145,16 @@ export interface RecruitmentCandidate {
     expected_salary?: string;
     availability_date?: string;
     created_at: string;
+}
+
+export interface RecruitmentColumn {
+    id: string;
+    label: string;
+    color: string;
+    order_index: number;
+    is_system?: boolean;
+    created_at?: string;
+    updated_at?: string;
 }
 
 export interface RecruitmentInterview {
@@ -607,6 +617,78 @@ export const getRecruitmentKpiSettings = async (userId: string) => {
         threads_comments_target: data.threads_comments_target ?? 20,
         zalo_posts_target: data.zalo_posts_target ?? 5
     } as RecruitmentKpiSettings;
+};
+
+// --- Kanban Columns Functions ---
+
+export const getKanbanColumns = async () => {
+    const { data, error } = await supabase
+        .from('recruitment_board_columns')
+        .select('*')
+        .order('order_index', { ascending: true });
+
+    if (error) throw error;
+    return data as RecruitmentColumn[];
+};
+
+export const createKanbanColumn = async (column: Partial<RecruitmentColumn>) => {
+    const { data, error } = await supabase
+        .from('recruitment_board_columns')
+        .insert([column])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data as RecruitmentColumn;
+};
+
+export const updateKanbanColumn = async (id: string, updates: Partial<RecruitmentColumn>) => {
+    const { data, error } = await supabase
+        .from('recruitment_board_columns')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data as RecruitmentColumn;
+};
+
+export const deleteKanbanColumn = async (id: string) => {
+    // First, check if there are any candidates in this status
+    const { count, error: countError } = await supabase
+        .from('recruitment_candidates')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', id);
+
+    if (countError) throw countError;
+
+    // Safety check: Don't allow deleting if there are candidates
+    if (count && count > 0) {
+        throw new Error(`Không thể xóa cột này vì đang có ${count} ứng viên bên trong. Vui lòng chuyển các ứng viên sang cột khác trước.`);
+    }
+
+    const { error } = await supabase
+        .from('recruitment_board_columns')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+    return true;
+};
+
+export const updateKanbanColumnsOrder = async (columns: { id: string; order_index: number }[]) => {
+    // Supabase RPC or multiple updates
+    // For simplicity, do a Promise.all update
+    const promises = columns.map(col =>
+        supabase
+            .from('recruitment_board_columns')
+            .update({ order_index: col.order_index })
+            .eq('id', col.id)
+    );
+
+    await Promise.all(promises);
+    return true;
 };
 
 export const updateRecruitmentKpiSettings = async (settings: Partial<RecruitmentKpiSettings> & { user_id: string }) => {
