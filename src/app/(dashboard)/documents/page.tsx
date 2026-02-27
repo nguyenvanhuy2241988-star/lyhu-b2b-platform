@@ -13,7 +13,9 @@ import {
     deleteFolder,
     listFiles,
     uploadFiles,
-    moveFile
+    moveFile,
+    moveFiles,
+    updateFolderOrder
 } from '@/lib/documentsStore';
 import { FolderTree } from '@/components/documents/FolderTree';
 import { FilesGrid } from '@/components/documents/FilesGrid';
@@ -53,6 +55,7 @@ function DocumentsPageContent() {
     // Selection State
     const selectedFolderId = searchParams?.get('folder');
     const [selectedFile, setSelectedFile] = useState<DocumentFile | null>(null);
+    const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set());
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -144,6 +147,8 @@ function DocumentsPageContent() {
     const handleSelectFolder = (id: string) => {
         replaceFolderUrl(id);
         setIsGlobalSearch(false); // Switch back to folder view when a folder is clicked
+        setSelectedFileIds(new Set()); // clear file selection
+        setSelectedFile(null);
     };
 
     const handleCreateFolder = async (parentId: string | null) => {
@@ -207,17 +212,72 @@ function DocumentsPageContent() {
         handleUploadFiles(Array.from(e.target.files));
     };
 
-    const handleMoveFile = async (fileId: string, targetFolderId: string) => {
-        // Prevent moving to the same folder
+    const handleMoveFiles = async (payload: string, targetFolderId: string) => {
         if (selectedFolderId === targetFolderId) return;
 
+        let fileIds: string[] = [];
         try {
-            await moveFile(fileId, targetFolderId);
-            // Optimistically update UI or just reload the current folder's files
-            setFiles(prev => prev.filter(f => f.id !== fileId));
+            fileIds = JSON.parse(payload);
+            if (!Array.isArray(fileIds)) fileIds = [payload];
+        } catch {
+            fileIds = [payload];
+        }
+
+        if (fileIds.length === 0) return;
+
+        try {
+            await moveFiles(fileIds, targetFolderId);
+            setFiles(prev => prev.filter(f => !fileIds.includes(f.id)));
+            setSelectedFileIds(new Set());
         } catch (error: any) {
             console.error("Lỗi di chuyển file:", error);
             alert("Lỗi di chuyển file: " + (error?.message || "Unknown error"));
+        }
+    };
+
+    const handleReorderFolders = async (draggedId: string, targetId: string, position: 'top' | 'center' | 'bottom') => {
+        if (draggedId === targetId) return;
+
+        const draggedFolder = folders.find(f => f.id === draggedId);
+        const targetFolder = folders.find(f => f.id === targetId);
+        if (!draggedFolder || !targetFolder) return;
+
+        let newParentId = targetFolder.parent_id || null;
+        let siblings = folders.filter(f => f.parent_id === newParentId && f.id !== draggedId)
+            .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+
+        if (position === 'center') {
+            newParentId = targetFolder.id;
+            siblings = folders.filter(f => f.parent_id === newParentId && f.id !== draggedId)
+                .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+            siblings.push(draggedFolder);
+        } else {
+            const targetIndex = siblings.findIndex(f => f.id === targetId);
+            if (position === 'top') {
+                siblings.splice(targetIndex, 0, draggedFolder);
+            } else { // bottom
+                siblings.splice(targetIndex + 1, 0, draggedFolder);
+            }
+        }
+
+        const updates = siblings.map((f, index) => ({
+            id: f.id,
+            parent_id: newParentId,
+            order_index: index * 10
+        }));
+
+        try {
+            await updateFolderOrder(updates);
+            // Optimistic update
+            setFolders(prev => prev.map(f => {
+                const u = updates.find(update => update.id === f.id);
+                if (u) return { ...f, parent_id: u.parent_id, order_index: u.order_index };
+                return f;
+            }));
+            loadFolders(true); // background refresh
+        } catch (error: any) {
+            console.error("Lỗi sắp xếp:", error);
+            alert("Lỗi sắp xếp thư mục: " + (error?.message || "Unknown error"));
         }
     };
 
@@ -254,7 +314,8 @@ function DocumentsPageContent() {
                         onCreateFolder={handleCreateFolder}
                         onRenameFolder={handleRenameFolder}
                         onDeleteFolder={handleDeleteFolder}
-                        onMoveFile={handleMoveFile}
+                        onMoveFile={handleMoveFiles}
+                        onReorderFolders={handleReorderFolders}
                     />
                 </div>
             </div>
@@ -381,7 +442,19 @@ function DocumentsPageContent() {
                                 files={files}
                                 loading={loadingFiles}
                                 selectedFileId={selectedFile?.id || null}
-                                onSelectFile={setSelectedFile}
+                                selectedFileIds={selectedFileIds}
+                                onSelectFile={(file) => setSelectedFile(file)}
+                                onToggleFileSelect={(fileId, multi) => {
+                                    setSelectedFileIds(prev => {
+                                        const newSet = new Set(multi ? prev : []);
+                                        if (newSet.has(fileId)) {
+                                            newSet.delete(fileId);
+                                        } else {
+                                            newSet.add(fileId);
+                                        }
+                                        return newSet;
+                                    });
+                                }}
                             />
                         </div>
                     ) : (

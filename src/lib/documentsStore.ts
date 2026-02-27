@@ -22,6 +22,7 @@ export interface DocumentFolder {
     created_at: string;
     updated_at: string;
     is_deleted: boolean;
+    order_index?: number;
 }
 
 export interface DocumentFile {
@@ -66,6 +67,7 @@ export async function listFolders(): Promise<DocumentFolder[]> {
         .from(FOLDERS_TABLE)
         .select('*')
         .eq('is_deleted', false)
+        .order('order_index', { ascending: true })
         .order('name', { ascending: true });
 
     if (error) {
@@ -134,6 +136,16 @@ export async function deleteFolder(id: string): Promise<void> {
 
     if (error) throw error;
     await logActivity('folder', id, 'delete', 'Deleted folder');
+}
+
+export async function updateFolderOrder(updates: { id: string, parent_id: string | null, order_index: number }[]): Promise<void> {
+    const promises = updates.map(update =>
+        supabase
+            .from(FOLDERS_TABLE)
+            .update({ parent_id: update.parent_id, order_index: update.order_index, updated_at: new Date().toISOString() })
+            .eq('id', update.id)
+    );
+    await Promise.all(promises);
 }
 
 // ---------- FILES ----------
@@ -254,6 +266,28 @@ export async function moveFile(id: string, targetFolderId: string): Promise<void
 
     if (error) throw error;
     await logActivity('file', id, 'move', 'Moved file to another folder');
+}
+
+export async function moveFiles(fileIds: string[], targetFolderId: string): Promise<void> {
+    if (!fileIds || fileIds.length === 0) return;
+
+    const { error } = await supabase
+        .from(FILES_TABLE)
+        .update({ folder_id: targetFolderId, updated_at: new Date().toISOString() })
+        .in('id', fileIds);
+
+    if (error) throw error;
+
+    const uid = await getUserIdSafe();
+    if (uid) {
+        await supabase.from(ACTIVITY_TABLE).insert({
+            entity_type: 'folder',
+            entity_id: targetFolderId,
+            action: 'move',
+            message: `Moved ${fileIds.length} files to folder`,
+            actor_id: uid
+        });
+    }
 }
 
 export async function deleteFile(id: string): Promise<void> {

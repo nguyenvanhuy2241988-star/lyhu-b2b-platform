@@ -10,7 +10,9 @@ interface FilesGridProps {
     files: DocumentFile[];
     loading: boolean;
     selectedFileId: string | null;
+    selectedFileIds?: Set<string>;
     onSelectFile: (file: DocumentFile) => void;
+    onToggleFileSelect?: (fileId: string, multi: boolean) => void;
 }
 
 const getFileIcon = (mimeType: string) => {
@@ -75,7 +77,7 @@ function FileThumbnail({ file }: { file: DocumentFile }) {
     );
 }
 
-export function FilesGrid({ files, loading, selectedFileId, onSelectFile }: FilesGridProps) {
+export function FilesGrid({ files, loading, selectedFileId, selectedFileIds = new Set(), onSelectFile, onToggleFileSelect }: FilesGridProps) {
     if (loading) {
         return <div className="text-center py-12 text-slate-400">Đang tải tài liệu...</div>;
     }
@@ -95,22 +97,49 @@ export function FilesGrid({ files, loading, selectedFileId, onSelectFile }: File
     return (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {files.map(file => {
-                const isSelected = selectedFileId === file.id;
+                const isSelected = selectedFileId === file.id || selectedFileIds.has(file.id);
                 return (
                     <div
                         key={file.id}
                         draggable
                         onDragStart={(e) => {
-                            e.dataTransfer.setData('text/plain', file.id);
+                            // If dragging a selected file and there are multiple selected, move all of them
+                            if (selectedFileIds.has(file.id) && selectedFileIds.size > 1) {
+                                e.dataTransfer.setData('text/plain', JSON.stringify(Array.from(selectedFileIds)));
+                            } else {
+                                e.dataTransfer.setData('text/plain', file.id);
+                            }
                             e.dataTransfer.effectAllowed = 'move';
+
+                            // Optional: set a custom drag image so it's clear multiple items are dragging
+                            if (selectedFileIds.has(file.id) && selectedFileIds.size > 1) {
+                                const crt = document.createElement("div");
+                                crt.innerHTML = `Đang di chuyển ${selectedFileIds.size} file`;
+                                crt.style.backgroundColor = "#2563eb";
+                                crt.style.color = "white";
+                                crt.style.padding = "4px 12px";
+                                crt.style.borderRadius = "8px";
+                                crt.style.position = "absolute";
+                                crt.style.top = "-1000px";
+                                document.body.appendChild(crt);
+                                e.dataTransfer.setDragImage(crt, 0, 0);
+                                setTimeout(() => document.body.removeChild(crt), 0);
+                            }
                         }}
                         className={cn(
-                            "group relative flex flex-col items-center p-3 rounded-xl border transition-all cursor-pointer hover:shadow-md",
+                            "group relative flex flex-col items-center p-3 rounded-xl border transition-all cursor-pointer hover:shadow-md select-none",
                             isSelected
-                                ? "bg-blue-50 border-blue-200 ring-2 ring-blue-500/20"
+                                ? "bg-blue-50 border-blue-200 ring-2 ring-blue-500/50"
                                 : "bg-white border-slate-200 hover:border-blue-200"
                         )}
-                        onClick={() => onSelectFile(file)}
+                        onClick={(e) => {
+                            if (e.ctrlKey || e.metaKey) {
+                                if (onToggleFileSelect) onToggleFileSelect(file.id, true);
+                            } else {
+                                onSelectFile(file);
+                                if (onToggleFileSelect) onToggleFileSelect(file.id, false);
+                            }
+                        }}
                     >
                         <div className="mb-3 w-full">
                             <FileThumbnail file={file} />

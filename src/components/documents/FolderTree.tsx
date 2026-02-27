@@ -22,6 +22,7 @@ interface FolderTreeProps {
     onRenameFolder: (folder: DocumentFolder) => void;
     onDeleteFolder: (folder: DocumentFolder) => void;
     onMoveFile?: (fileId: string, targetFolderId: string) => void;
+    onReorderFolders?: (draggedId: string, targetId: string, position: 'top' | 'center' | 'bottom') => void;
 }
 
 // Separate component for each node to allow proper useState usage
@@ -35,7 +36,8 @@ function FolderNode({
     onCreateFolder,
     onRenameFolder,
     onDeleteFolder,
-    onMoveFile
+    onMoveFile,
+    onReorderFolders
 }: {
     folder: DocumentFolder,
     allFolders: DocumentFolder[],
@@ -46,43 +48,74 @@ function FolderNode({
     onCreateFolder: (parentId: string | null) => void,
     onRenameFolder: (folder: DocumentFolder) => void,
     onDeleteFolder: (folder: DocumentFolder) => void,
-    onMoveFile?: (fileId: string, targetFolderId: string) => void
+    onMoveFile?: (fileId: string, targetFolderId: string) => void,
+    onReorderFolders?: (draggedId: string, targetId: string, position: 'top' | 'center' | 'bottom') => void
 }) {
     const [isExpanded, setIsExpanded] = useState(true);
-    const [isDragOver, setIsDragOver] = useState(false);
+    const [dragOverPos, setDragOverPos] = useState<'top' | 'center' | 'bottom' | null>(null);
 
-    const children = allFolders.filter(f => f.parent_id === folder.id);
+    const children = allFolders.filter(f => f.parent_id === folder.id)
+        .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
     const isSelected = selectedFolderId === folder.id;
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        setIsDragOver(true);
+
+        const rect = e.currentTarget.getBoundingClientRect();
+        const y = e.clientY - rect.top;
+        if (y < rect.height * 0.25) {
+            setDragOverPos('top');
+        } else if (y > rect.height * 0.75) {
+            setDragOverPos('bottom');
+        } else {
+            setDragOverPos('center');
+        }
     };
 
     const handleDragLeave = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        setIsDragOver(false);
+        setDragOverPos(null);
     };
 
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        setIsDragOver(false);
-        const fileId = e.dataTransfer.getData('text/plain');
-        if (fileId && onMoveFile) {
-            onMoveFile(fileId, folder.id);
+        const pos = dragOverPos;
+        setDragOverPos(null);
+
+        const data = e.dataTransfer.getData('text/plain');
+        if (!data) return;
+
+        if (data.startsWith('folder:')) {
+            const draggedFolderId = data.replace('folder:', '');
+            // Prevent dropping onto itself
+            if (draggedFolderId === folder.id) return;
+            if (onReorderFolders && pos) {
+                onReorderFolders(draggedFolderId, folder.id, pos);
+            }
+        } else {
+            // It's a file payload (could be JSON array or single ID)
+            if (onMoveFile && pos === 'center') {
+                onMoveFile(data, folder.id);
+            }
         }
     };
 
     return (
-        <div className="select-none">
+        <div className="select-none relative">
             <div
+                draggable={!readOnly}
+                onDragStart={(e) => {
+                    e.stopPropagation();
+                    e.dataTransfer.setData('text/plain', `folder:${folder.id}`);
+                    e.dataTransfer.effectAllowed = 'move';
+                }}
                 className={cn(
-                    "flex items-center gap-2 py-1.5 px-2 rounded-lg cursor-pointer transition-colors group",
+                    "flex items-center gap-2 py-1.5 px-2 rounded-lg cursor-pointer transition-colors group relative",
                     isSelected ? "bg-blue-50 text-blue-700 font-medium" : "text-slate-700 hover:bg-slate-100",
-                    isDragOver && "ring-2 ring-blue-400 bg-blue-50"
+                    dragOverPos === 'center' && "ring-2 ring-blue-400 bg-blue-50"
                 )}
                 style={{ paddingLeft: `${depth * 1.5 + 0.5}rem` }}
                 onClick={() => onSelectFolder(folder.id)}
@@ -90,6 +123,10 @@ function FolderNode({
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
             >
+                {/* Visual Indication for Reordering */}
+                {dragOverPos === 'top' && <div className="absolute top-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full z-10" />}
+                {dragOverPos === 'bottom' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500 rounded-full z-10" />}
+
                 {/* Expand Toggle */}
                 {children.length > 0 ? (
                     <button
@@ -153,6 +190,7 @@ function FolderNode({
                             onRenameFolder={onRenameFolder}
                             onDeleteFolder={onDeleteFolder}
                             onMoveFile={onMoveFile}
+                            onReorderFolders={onReorderFolders}
                         />
                     ))}
                 </div>
@@ -169,9 +207,11 @@ export function FolderTree({
     onCreateFolder,
     onRenameFolder,
     onDeleteFolder,
-    onMoveFile
+    onMoveFile,
+    onReorderFolders
 }: FolderTreeProps) {
-    const rootFolders = folders.filter(f => !f.parent_id);
+    const rootFolders = folders.filter(f => !f.parent_id)
+        .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
 
     return (
         <div className="space-y-1">
@@ -203,6 +243,7 @@ export function FolderTree({
                         onRenameFolder={onRenameFolder}
                         onDeleteFolder={onDeleteFolder}
                         onMoveFile={onMoveFile}
+                        onReorderFolders={onReorderFolders}
                     />
                 ))
             )}
