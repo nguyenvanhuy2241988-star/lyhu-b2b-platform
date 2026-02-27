@@ -9,20 +9,24 @@ export const ACTIVITY_TABLE = 'documents_activity';
 export const BUCKET_NAME = 'lyhu-docs';
 
 // Types
+export interface DocumentTag {
+    id: string;
+    name: string;
+    color: string;
+}
+
 export interface DocumentFolder {
     id: string;
-    parent_id?: string | null;
+    parent_id: string | null;
     name: string;
-    slug?: string | null;
-    guidance_md: string;
-    visibility: 'all' | 'roles' | 'private';
-    allowed_roles: string[];
+    guidance_md?: string | null;
     owner_id?: string | null;
     created_by: string;
     created_at: string;
     updated_at: string;
     is_deleted?: boolean;
     order_index?: number;
+    tags?: DocumentTag[];
 }
 
 export interface DocumentFile {
@@ -34,14 +38,13 @@ export interface DocumentFile {
     size_bytes: number;
     storage_bucket: string;
     storage_path: string;
-    visibility: 'inherit' | 'all' | 'roles' | 'private';
-    allowed_roles: string[];
     owner_id?: string | null;
     created_by: string;
     created_at: string;
     updated_at: string;
     is_deleted?: boolean;
     captions?: string[]; // Marketing Content Variations
+    tags?: DocumentTag[];
 }
 
 export interface DocumentActivity {
@@ -65,16 +68,27 @@ async function getUserIdSafe(): Promise<string | null> {
 export async function listFolders(): Promise<DocumentFolder[]> {
     const { data, error } = await supabase
         .from(FOLDERS_TABLE)
-        .select('*')
+        .select(`
+            *,
+            documents_folder_tags(documents_tags(*))
+        `)
         .eq('is_deleted', false)
         .order('order_index', { ascending: true })
         .order('name', { ascending: true });
 
-    if (error) {
-        console.error('listFolders error:', error);
-        throw error;
-    }
-    return (data || []) as DocumentFolder[];
+    if (error) throw error;
+
+    // Flatten tags
+    const folders = (data || []).map((f: any) => {
+        const item = { ...f };
+        if (item.documents_folder_tags) {
+            item.tags = item.documents_folder_tags.map((t: any) => t.documents_tags).filter(Boolean);
+            delete item.documents_folder_tags;
+        }
+        return item;
+    });
+
+    return folders as DocumentFolder[];
 }
 
 export async function createFolder(input: {
@@ -153,13 +167,24 @@ export async function updateFolderOrder(updates: { id: string, parent_id: string
 export async function listFiles(
     folderId: string | null,
     search?: string,
-    filterType?: 'all' | 'image' | 'pdf' | 'office'
+    filterType?: 'all' | 'image' | 'pdf' | 'office',
+    tagId?: string | 'all'
 ): Promise<DocumentFile[]> {
     let q = supabase
         .from(FILES_TABLE)
-        .select('*')
+        .select(`
+            *,
+            documents_file_tags${tagId && tagId !== 'all' ? '!inner' : ''}(
+                tag_id,
+                documents_tags(*)
+            )
+        `)
         .eq('is_deleted', false)
         .order('created_at', { ascending: false });
+
+    if (tagId && tagId !== 'all') {
+        q = q.eq('documents_file_tags.tag_id', tagId);
+    }
 
     // Only filter by folder if folderId is provided
     if (folderId) {
@@ -183,7 +208,18 @@ export async function listFiles(
 
     const { data, error } = await q;
     if (error) throw error;
-    return (data || []) as DocumentFile[];
+
+    // Flatten tags
+    const files = (data || []).map((f: any) => {
+        const item = { ...f };
+        if (item.documents_file_tags) {
+            item.tags = item.documents_file_tags.map((t: any) => t.documents_tags).filter(Boolean);
+            delete item.documents_file_tags;
+        }
+        return item;
+    });
+
+    return files as DocumentFile[];
 }
 
 export async function uploadDirectory(parentFolderId: string, files: File[]): Promise<DocumentFile[]> {
@@ -402,6 +438,47 @@ export async function getFileSignedUrl(storagePath: string): Promise<string | nu
 
     if (error) return null;
     return data?.signedUrl ?? null;
+}
+
+// ---------- TAGGING ----------
+
+export async function listTags(): Promise<DocumentTag[]> {
+    const { data, error } = await supabase.from('documents_tags').select('*').order('name');
+    if (error) throw error;
+    return data as DocumentTag[];
+}
+
+export async function createTag(name: string, color: string): Promise<DocumentTag> {
+    const uid = await getUserIdSafe();
+    const { data, error } = await supabase.from('documents_tags').insert({ name, color, created_by: uid }).select().single();
+    if (error) throw error;
+    return data as DocumentTag;
+}
+
+export async function deleteTag(id: string): Promise<void> {
+    const { error } = await supabase.from('documents_tags').delete().eq('id', id);
+    if (error) throw error;
+}
+
+export async function assignTagToFile(fileId: string, tagId: string): Promise<void> {
+    const { error } = await supabase.from('documents_file_tags').insert({ file_id: fileId, tag_id: tagId });
+    // Ignore duplicate key error (if already assigned)
+    if (error && error.code !== '23505') throw error;
+}
+
+export async function removeTagFromFile(fileId: string, tagId: string): Promise<void> {
+    const { error } = await supabase.from('documents_file_tags').delete().match({ file_id: fileId, tag_id: tagId });
+    if (error) throw error;
+}
+
+export async function assignTagToFolder(folderId: string, tagId: string): Promise<void> {
+    const { error } = await supabase.from('documents_folder_tags').insert({ folder_id: folderId, tag_id: tagId });
+    if (error && error.code !== '23505') throw error;
+}
+
+export async function removeTagFromFolder(folderId: string, tagId: string): Promise<void> {
+    const { error } = await supabase.from('documents_folder_tags').delete().match({ folder_id: folderId, tag_id: tagId });
+    if (error) throw error;
 }
 
 // ---------- RECYCLE BIN ----------

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { TagSelector } from './TagSelector';
 
 interface FolderInspectorProps {
     folder: DocumentFolder;
@@ -73,13 +74,15 @@ export function FolderInspector({ folder, readOnly = false, onUpdate, onClose }:
                             {format(new Date(folder.created_at), "dd/MM/yyyy", { locale: vi })}
                         </span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                        <span className="text-slate-500 flex items-center gap-2">
-                            <Users className="w-3.5 h-3.5" /> Quyền
-                        </span>
-                        <span className="text-slate-700 font-medium capitalize">
-                            {folder.visibility === 'all' ? 'Công khai' : folder.visibility}
-                        </span>
+
+                    {/* Tagging */}
+                    <div className="pt-2 border-t border-slate-100 mt-2">
+                        <TagSelector
+                            entityId={folder.id}
+                            entityType="folder"
+                            currentTags={folder.tags}
+                            onTagsChanged={() => onUpdate(folder)}
+                        />
                     </div>
                 </div>
 

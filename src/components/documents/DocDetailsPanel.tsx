@@ -17,6 +17,7 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import Image from 'next/image';
 import { FilePreviewModal } from './FilePreviewModal';
+import { TagSelector } from './TagSelector';
 import { toast } from 'sonner';
 
 interface DocDetailsPanelProps {
@@ -199,6 +200,16 @@ export function DocDetailsPanel({ file, isAdmin, onClose, onUpdate }: DocDetails
                                 <label className="text-xs font-semibold text-slate-500 uppercase">Ngày tạo</label>
                                 <p className="text-sm text-slate-700 mt-1">{format(new Date(file.created_at), "dd/MM/yyyy", { locale: vi })}</p>
                             </div>
+                        </div>
+
+                        {/* Tagging */}
+                        <div className="pt-2 border-t border-slate-200 mt-2">
+                            <TagSelector
+                                entityId={file.id}
+                                entityType="file"
+                                currentTags={file.tags}
+                                onTagsChanged={onUpdate}
+                            />
                         </div>
                     </div>
 

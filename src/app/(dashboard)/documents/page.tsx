@@ -16,7 +16,9 @@ import {
     uploadDirectory,
     moveFile,
     moveFiles,
-    updateFolderOrder
+    updateFolderOrder,
+    listTags,
+    DocumentTag
 } from '@/lib/documentsStore';
 import { FolderTree } from '@/components/documents/FolderTree';
 import { FilesGrid } from '@/components/documents/FilesGrid';
@@ -31,7 +33,8 @@ import {
     Menu,
     LayoutGrid,
     List,
-    Trash2
+    Trash2,
+    Tag
 } from 'lucide-react';
 
 console.log('[DocumentsPage] Loaded');
@@ -60,6 +63,8 @@ function DocumentsPageContent() {
     const [isGlobalSearch, setIsGlobalSearch] = useState(false);
     const [filterType, setFilterType] = useState<'all' | 'image' | 'pdf' | 'office'>('all');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [allTags, setAllTags] = useState<DocumentTag[]>([]);
+    const [selectedTagId, setSelectedTagId] = useState<string>('all');
 
     // Selection State
     const selectedFolderId = searchParams?.get('folder');
@@ -86,26 +91,27 @@ function DocumentsPageContent() {
         }
     }, []);
 
-    const loadFiles = useCallback(async (folderId: string | null, silent = false) => {
+    const loadFiles = useCallback(async (folderId: string | null, silent = false, forceGlobal = false) => {
         if (!silent) setLoadingFiles(true);
         try {
             // If global search is on, pass null as folderId. Otherwise pass the selected folderId.
-            const targetFolderId = isGlobalSearch ? null : folderId;
+            const targetFolderId = forceGlobal ? null : folderId;
 
             // If not global search and no folder selected, don't load anything (or load root if logic dictates)
-            if (!isGlobalSearch && !targetFolderId) {
+            if (!forceGlobal && !targetFolderId) {
                 setFiles([]);
                 return;
             }
 
-            const data = await listFiles(targetFolderId, search, filterType);
+            const data = await listFiles(targetFolderId, search, filterType, selectedTagId);
             setFiles(data);
+            setSelectedFileIds(new Set()); // clear multi-select on reload
         } catch (error) {
             console.error(error);
         } finally {
             if (!silent) setLoadingFiles(false);
         }
-    }, [search, isGlobalSearch, filterType]);
+    }, [search, filterType, selectedTagId]);
 
     // 1. Initial Load of Folders
     useEffect(() => {
@@ -119,6 +125,7 @@ function DocumentsPageContent() {
                 replaceFolderUrl(defaultId);
             }
         });
+        listTags().then(setAllTags).catch(console.error);
 
         // Realtime for Folders
         const folderChannel = supabase
@@ -137,21 +144,21 @@ function DocumentsPageContent() {
     useEffect(() => {
         if (!session?.access_token) return;
 
-        loadFiles(selectedFolderId || null);
+        loadFiles(selectedFolderId || null, false, isGlobalSearch);
 
         // Realtime for Files 
         let fileChannel: any = null;
         if (selectedFolderId && !isGlobalSearch) {
             fileChannel = supabase
                 .channel(`docs_files_${selectedFolderId}`)
-                .on('postgres_changes', { event: '*', schema: 'public', table: 'documents_files', filter: `folder_id=eq.${selectedFolderId}` }, () => loadFiles(selectedFolderId, true))
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'documents_files', filter: `folder_id=eq.${selectedFolderId}` }, () => loadFiles(selectedFolderId, true, isGlobalSearch))
                 .subscribe();
         }
 
         return () => {
             if (fileChannel) supabase.removeChannel(fileChannel);
         };
-    }, [selectedFolderId, session?.access_token, loadFiles, isGlobalSearch]);
+    }, [selectedFolderId, session?.access_token, loadFiles, isGlobalSearch, search, filterType, selectedTagId]);
 
     // Actions
     const handleSelectFolder = (id: string) => {
@@ -432,6 +439,21 @@ function DocumentsPageContent() {
                             >
                                 {isGlobalSearch ? '🌐 Tìm tất cả' : '📁 Thư mục này'}
                             </button>
+
+                            <div className="flex bg-slate-100 rounded-lg p-1 shrink-0 items-center">
+                                <Tag className="w-4 h-4 text-slate-400 ml-1.5 mr-1" />
+                                <select
+                                    className="px-2 py-1 bg-transparent border-none text-sm text-slate-700 outline-none cursor-pointer max-w-[120px] truncate"
+                                    value={selectedTagId}
+                                    onChange={(e) => setSelectedTagId(e.target.value)}
+                                    title="Lọc theo nhãn"
+                                >
+                                    <option value="all">Tất cả nhãn</option>
+                                    {allTags.map(t => (
+                                        <option key={t.id} value={t.id}>{t.name}</option>
+                                    ))}
+                                </select>
+                            </div>
 
                             {/* View Toggle */}
                             <div className="flex bg-slate-100 rounded-lg p-1 shrink-0 items-center">

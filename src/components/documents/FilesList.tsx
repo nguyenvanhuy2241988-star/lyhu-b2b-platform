@@ -5,6 +5,7 @@ import { DocumentFile } from '@/lib/documentsStore';
 import { FileText, ImageIcon, FileSpreadsheet, FileIcon } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { format } from "date-fns";
+import { getTagColorClasses } from './TagSelector';
 
 interface FilesListProps {
     files: DocumentFile[];
@@ -98,8 +99,25 @@ export function FilesList({ files, loading, selectedFileId, selectedFileIds = ne
                                         {getFileIcon(file.mime_type)}
                                     </div>
                                 </td>
-                                <td className="py-3 px-4 font-medium text-slate-700 truncate max-w-[200px]" title={file.title}>
-                                    {file.title}
+                                <td className="py-3 px-4 font-medium text-slate-700 max-w-[300px]" title={file.title}>
+                                    <div className="flex items-center gap-2">
+                                        <span className="truncate">{file.title}</span>
+                                        {/* Tags */}
+                                        {file.tags && file.tags.length > 0 && (
+                                            <div className="flex flex-wrap items-center gap-1 shrink-0">
+                                                {file.tags.slice(0, 2).map(tag => (
+                                                    <span key={tag.id} className={`text-[9px] px-1.5 py-0.5 rounded-[4px] border ${getTagColorClasses(tag.color)}`}>
+                                                        {tag.name}
+                                                    </span>
+                                                ))}
+                                                {file.tags.length > 2 && (
+                                                    <span className="text-[9px] text-slate-500 bg-slate-100 px-1 rounded-[4px] border border-slate-200">
+                                                        +{file.tags.length - 2}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </td>
                                 <td className="py-3 px-4 text-slate-500">
                                     {(file.size_bytes / 1024).toFixed(0)} KB

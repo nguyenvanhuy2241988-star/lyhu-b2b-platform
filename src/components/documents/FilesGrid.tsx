@@ -5,6 +5,7 @@ import { DocumentFile, getFileSignedUrl } from '@/lib/documentsStore';
 import { FileText, Download, Trash2, Eye, ExternalLink, ImageIcon, Loader2, FileSpreadsheet, FileIcon } from "lucide-react";
 import Image from "next/image";
 import { cn } from '@/lib/utils';
+import { getTagColorClasses } from './TagSelector';
 
 interface FilesGridProps {
     files: DocumentFile[];
@@ -152,6 +153,22 @@ export function FilesGrid({ files, loading, selectedFileId, selectedFileIds = ne
                             <p className="text-xs text-slate-400 mt-1">
                                 {(file.size_bytes / 1024).toFixed(0)} KB
                             </p>
+
+                            {/* Tags */}
+                            {file.tags && file.tags.length > 0 && (
+                                <div className="flex flex-wrap items-center justify-center gap-1 mt-1.5 h-[18px] overflow-hidden">
+                                    {file.tags.slice(0, 2).map(tag => (
+                                        <span key={tag.id} className={`text-[9px] px-1.5 py-0.5 rounded-[4px] border truncate max-w-[60px] ${getTagColorClasses(tag.color)}`}>
+                                            {tag.name}
+                                        </span>
+                                    ))}
+                                    {file.tags.length > 2 && (
+                                        <span className="text-[9px] text-slate-500 bg-slate-100 px-1 rounded-[4px] border border-slate-200">
+                                            +{file.tags.length - 2}
+                                        </span>
+                                    )}
+                                </div>
+                            )}
 
                             {/* Custom Tooltip on Hover for long names */}
                             {file.title && file.title.length > 20 && (
