@@ -34,7 +34,8 @@ function FolderNode({
     onSelectFolder,
     onCreateFolder,
     onRenameFolder,
-    onDeleteFolder
+    onDeleteFolder,
+    onMoveFile
 }: {
     folder: DocumentFolder,
     allFolders: DocumentFolder[],
