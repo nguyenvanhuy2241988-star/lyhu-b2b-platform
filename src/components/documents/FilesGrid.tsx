@@ -99,6 +99,11 @@ export function FilesGrid({ files, loading, selectedFileId, onSelectFile }: File
                 return (
                     <div
                         key={file.id}
+                        draggable
+                        onDragStart={(e) => {
+                            e.dataTransfer.setData('text/plain', file.id);
+                            e.dataTransfer.effectAllowed = 'move';
+                        }}
                         className={cn(
                             "group relative flex flex-col items-center p-3 rounded-xl border transition-all cursor-pointer hover:shadow-md",
                             isSelected

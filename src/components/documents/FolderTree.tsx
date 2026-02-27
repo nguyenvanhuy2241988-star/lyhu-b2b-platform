@@ -21,6 +21,7 @@ interface FolderTreeProps {
     onCreateFolder: (parentId: string | null) => void;
     onRenameFolder: (folder: DocumentFolder) => void;
     onDeleteFolder: (folder: DocumentFolder) => void;
+    onMoveFile?: (fileId: string, targetFolderId: string) => void;
 }
 
 // Separate component for each node to allow proper useState usage
@@ -43,21 +44,50 @@ function FolderNode({
     onSelectFolder: (id: string) => void,
     onCreateFolder: (parentId: string | null) => void,
     onRenameFolder: (folder: DocumentFolder) => void,
-    onDeleteFolder: (folder: DocumentFolder) => void
+    onDeleteFolder: (folder: DocumentFolder) => void,
+    onMoveFile?: (fileId: string, targetFolderId: string) => void
 }) {
     const [isExpanded, setIsExpanded] = useState(true);
+    const [isDragOver, setIsDragOver] = useState(false);
+
     const children = allFolders.filter(f => f.parent_id === folder.id);
     const isSelected = selectedFolderId === folder.id;
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(false);
+        const fileId = e.dataTransfer.getData('text/plain');
+        if (fileId && onMoveFile) {
+            onMoveFile(fileId, folder.id);
+        }
+    };
 
     return (
         <div className="select-none">
             <div
                 className={cn(
                     "flex items-center gap-2 py-1.5 px-2 rounded-lg cursor-pointer transition-colors group",
-                    isSelected ? "bg-blue-50 text-blue-700 font-medium" : "text-slate-700 hover:bg-slate-100"
+                    isSelected ? "bg-blue-50 text-blue-700 font-medium" : "text-slate-700 hover:bg-slate-100",
+                    isDragOver && "ring-2 ring-blue-400 bg-blue-50"
                 )}
                 style={{ paddingLeft: `${depth * 1.5 + 0.5}rem` }}
                 onClick={() => onSelectFolder(folder.id)}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
             >
                 {/* Expand Toggle */}
                 {children.length > 0 ? (
@@ -121,6 +151,7 @@ function FolderNode({
                             onCreateFolder={onCreateFolder}
                             onRenameFolder={onRenameFolder}
                             onDeleteFolder={onDeleteFolder}
+                            onMoveFile={onMoveFile}
                         />
                     ))}
                 </div>
@@ -136,7 +167,8 @@ export function FolderTree({
     onSelectFolder,
     onCreateFolder,
     onRenameFolder,
-    onDeleteFolder
+    onDeleteFolder,
+    onMoveFile
 }: FolderTreeProps) {
     const rootFolders = folders.filter(f => !f.parent_id);
 
@@ -169,6 +201,7 @@ export function FolderTree({
                         onCreateFolder={onCreateFolder}
                         onRenameFolder={onRenameFolder}
                         onDeleteFolder={onDeleteFolder}
+                        onMoveFile={onMoveFile}
                     />
                 ))
             )}

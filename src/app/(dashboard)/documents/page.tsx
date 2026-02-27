@@ -12,7 +12,8 @@ import {
     renameFolder,
     deleteFolder,
     listFiles,
-    uploadFiles
+    uploadFiles,
+    moveFile
 } from '@/lib/documentsStore';
 import { FolderTree } from '@/components/documents/FolderTree';
 import { FilesGrid } from '@/components/documents/FilesGrid';
@@ -206,6 +207,20 @@ function DocumentsPageContent() {
         handleUploadFiles(Array.from(e.target.files));
     };
 
+    const handleMoveFile = async (fileId: string, targetFolderId: string) => {
+        // Prevent moving to the same folder
+        if (selectedFolderId === targetFolderId) return;
+
+        try {
+            await moveFile(fileId, targetFolderId);
+            // Optimistically update UI or just reload the current folder's files
+            setFiles(prev => prev.filter(f => f.id !== fileId));
+        } catch (error: any) {
+            console.error("Lỗi di chuyển file:", error);
+            alert("Lỗi di chuyển file: " + (error?.message || "Unknown error"));
+        }
+    };
+
     const [isDragging, setIsDragging] = useState(false);
 
     // Derived Selection
@@ -239,6 +254,7 @@ function DocumentsPageContent() {
                         onCreateFolder={handleCreateFolder}
                         onRenameFolder={handleRenameFolder}
                         onDeleteFolder={handleDeleteFolder}
+                        onMoveFile={handleMoveFile}
                     />
                 </div>
             </div>
