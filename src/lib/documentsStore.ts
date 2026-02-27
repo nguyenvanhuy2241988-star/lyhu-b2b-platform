@@ -404,6 +404,53 @@ export async function getFileSignedUrl(storagePath: string): Promise<string | nu
     return data?.signedUrl ?? null;
 }
 
+// ---------- RECYCLE BIN ----------
+
+export async function listDeletedFolders(): Promise<DocumentFolder[]> {
+    const { data, error } = await supabase
+        .from(FOLDERS_TABLE)
+        .select('*')
+        .eq('is_deleted', true)
+        .order('updated_at', { ascending: false });
+    if (error) throw error;
+    return (data || []) as DocumentFolder[];
+}
+
+export async function listDeletedFiles(): Promise<DocumentFile[]> {
+    const { data, error } = await supabase
+        .from(FILES_TABLE)
+        .select('*')
+        .eq('is_deleted', true)
+        .order('updated_at', { ascending: false });
+    if (error) throw error;
+    return (data || []) as DocumentFile[];
+}
+
+export async function restoreFolder(id: string): Promise<void> {
+    const { error } = await supabase.from(FOLDERS_TABLE).update({ is_deleted: false, updated_at: new Date().toISOString() }).eq('id', id);
+    if (error) throw error;
+    await logActivity('folder', id, 'rename', 'Restored folder'); // Using rename to just trick the enum if restore is not an option
+}
+
+export async function restoreFile(id: string): Promise<void> {
+    const { error } = await supabase.from(FILES_TABLE).update({ is_deleted: false, updated_at: new Date().toISOString() }).eq('id', id);
+    if (error) throw error;
+    await logActivity('file', id, 'rename', 'Restored file');
+}
+
+export async function permanentlyDeleteFolder(id: string): Promise<void> {
+    const { error } = await supabase.from(FOLDERS_TABLE).delete().eq('id', id);
+    if (error) throw error;
+}
+
+export async function permanentlyDeleteFile(id: string, storagePath: string): Promise<void> {
+    if (storagePath) {
+        await supabase.storage.from(BUCKET_NAME).remove([storagePath]);
+    }
+    const { error } = await supabase.from(FILES_TABLE).delete().eq('id', id);
+    if (error) throw error;
+}
+
 // ---------- ACTIVITY ----------
 
 export async function listActivity(entityType: 'folder' | 'file', entityId: string): Promise<DocumentActivity[]> {

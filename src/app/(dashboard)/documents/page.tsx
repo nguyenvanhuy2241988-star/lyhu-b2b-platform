@@ -23,13 +23,15 @@ import { FilesGrid } from '@/components/documents/FilesGrid';
 import { FilesList } from '@/components/documents/FilesList';
 import { DocDetailsPanel } from '@/components/documents/DocDetailsPanel';
 import { FolderInspector } from '@/components/documents/FolderInspector';
+import { TrashModal } from '@/components/documents/TrashModal';
 import {
     Search,
     Upload,
     FolderUp,
     Menu,
     LayoutGrid,
-    List
+    List,
+    Trash2
 } from 'lucide-react';
 
 console.log('[DocumentsPage] Loaded');
@@ -52,6 +54,7 @@ function DocumentsPageContent() {
     const [search, setSearch] = useState('');
     const [uploading, setUploading] = useState(false);
     const [showSidebar, setShowSidebar] = useState(true);
+    const [showTrashModal, setShowTrashModal] = useState(false);
 
     // Search Filters
     const [isGlobalSearch, setIsGlobalSearch] = useState(false);
@@ -362,6 +365,19 @@ function DocumentsPageContent() {
                         onReorderFolders={handleReorderFolders}
                     />
                 </div>
+
+                {/* Trash Button */}
+                {isAdmin && (
+                    <div className="p-4 border-t border-slate-100 mt-auto bg-white">
+                        <button
+                            onClick={() => setShowTrashModal(true)}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium border border-slate-200"
+                        >
+                            <Trash2 className="w-5 h-5" />
+                            Thùng rác
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Center: Main Content (Files Grid) */}
@@ -586,6 +602,17 @@ function DocumentsPageContent() {
                     onClose={() => { }}
                 />
             ) : null}
+
+            {/* Trash Modal */}
+            {showTrashModal && (
+                <TrashModal
+                    onClose={() => setShowTrashModal(false)}
+                    onRestored={() => {
+                        loadFolders(true);
+                        if (selectedFolderId) loadFiles(selectedFolderId, true);
+                    }}
+                />
+            )}
         </div>
     );
 }
