@@ -145,13 +145,21 @@ export function FilesGrid({ files, loading, selectedFileId, selectedFileIds = ne
                             <FileThumbnail file={file} />
                         </div>
 
-                        <div className="w-full text-center px-1">
-                            <h3 className="text-sm font-medium text-slate-700 truncate w-full" title={file.title}>
+                        <div className="w-full text-center px-1 relative">
+                            <h3 className="text-sm font-medium text-slate-700 line-clamp-2 w-full break-words leading-tight h-8" title={file.title}>
                                 {file.title}
                             </h3>
                             <p className="text-xs text-slate-400 mt-1">
                                 {(file.size_bytes / 1024).toFixed(0)} KB
                             </p>
+
+                            {/* Custom Tooltip on Hover for long names */}
+                            {file.title && file.title.length > 20 && (
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-[200px] bg-slate-800 text-white text-xs rounded py-1.5 px-2.5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none break-words whitespace-normal text-center shadow-lg">
+                                    {file.title}
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 );
