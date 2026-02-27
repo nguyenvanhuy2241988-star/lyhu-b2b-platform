@@ -1474,7 +1474,10 @@ export default function TelesalesTasksPage() {
                 <div className="flex-1 overflow-x-auto pb-4">
                     <div className="flex gap-4 min-w-[100%] h-full items-start">
                         {visibleColumns.length > 0 && visibleColumns.map(col => {
-                            const tasks = columnTasks[col.id] || [];
+                            // FIX: Use filteredTasks to ensure Search/Priority filters apply to Kanban columns!
+                            // Previously it used columnTasks[col.id] directly, ignoring user filters on the frontend.
+                            const tasks = filteredTasks.filter(t => t.status === col.id);
+
                             const isLoadingCol = loadingColumns[col.id];
                             const hasMore = columnHasMore[col.id];
 
