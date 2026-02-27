@@ -114,7 +114,9 @@ export default function CandidatesPage() {
 
     // --- Drag and Drop Handlers ---
     const handleDragStart = (e: React.DragEvent, candidateId: string) => {
-        e.dataTransfer.setData('candidateId', candidateId);
+        e.stopPropagation();
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', candidateId);
         setDraggedCandidateId(candidateId);
     };
 
@@ -125,6 +127,7 @@ export default function CandidatesPage() {
 
     const handleDragOver = (e: React.DragEvent, columnId: string) => {
         e.preventDefault(); // Essential for allowing drop
+        e.dataTransfer.dropEffect = 'move';
         if (dragOverColumnId !== columnId) {
             setDragOverColumnId(columnId);
         }
@@ -139,7 +142,7 @@ export default function CandidatesPage() {
         e.preventDefault();
         setDragOverColumnId(null);
 
-        const candidateId = e.dataTransfer.getData('candidateId');
+        const candidateId = e.dataTransfer.getData('text/plain');
         if (candidateId) {
             const candidate = candidates.find(c => c.id === candidateId);
             // Protect against dropping in same col, or logic error
@@ -256,7 +259,7 @@ export default function CandidatesPage() {
                                             draggable
                                             onDragStart={(e) => handleDragStart(e, cand.id)}
                                             onDragEnd={handleDragEnd}
-                                            className={`bg-white p-4 rounded-lg shadow-sm border hover:shadow-md transition group cursor-grab active:cursor-grabbing ${draggedCandidateId === cand.id ? 'opacity-50 border-blue-400 rotate-2 scale-105 z-50 relative pointer-events-none' : 'border-slate-100'}`}
+                                            className={`bg-white p-4 rounded-lg shadow-sm border hover:shadow-md transition group cursor-grab active:cursor-grabbing ${draggedCandidateId === cand.id ? 'opacity-50 border-blue-400 rotate-2 scale-105 z-50 relative' : 'border-slate-100'}`}
                                         >
                                             <div className="flex justify-between items-start mb-2">
                                                 <h4
