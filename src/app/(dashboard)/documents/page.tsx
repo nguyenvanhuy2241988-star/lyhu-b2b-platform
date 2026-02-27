@@ -242,6 +242,19 @@ function DocumentsPageContent() {
         const targetFolder = folders.find(f => f.id === targetId);
         if (!draggedFolder || !targetFolder) return;
 
+        // Prevent circular reference (dragging a parent into its own child)
+        const isDescendant = (childId: string, parentId: string): boolean => {
+            if (childId === parentId) return true;
+            const childNode = folders.find(f => f.id === childId);
+            if (!childNode || !childNode.parent_id) return false;
+            return isDescendant(childNode.parent_id, parentId);
+        };
+
+        if (isDescendant(targetFolder.id, draggedFolder.id)) {
+            alert("Không thể di chuyển thư mục cha vào bên trong thư mục con của chính nó.");
+            return;
+        }
+
         let newParentId = targetFolder.parent_id || null;
         let siblings = folders.filter(f => f.parent_id === newParentId && f.id !== draggedId)
             .sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
