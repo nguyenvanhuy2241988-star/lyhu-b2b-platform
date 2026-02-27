@@ -16,6 +16,10 @@ export default function CandidatesPage() {
     const [showModal, setShowModal] = useState(false);
     const [showColumnModal, setShowColumnModal] = useState(false);
 
+    // Drag & Drop State
+    const [draggedCandidateId, setDraggedCandidateId] = useState<string | null>(null);
+    const [dragOverColumnId, setDragOverColumnId] = useState<string | null>(null);
+
     // Detail Drawer State
     const [selectedCandidate, setSelectedCandidate] = useState<RecruitmentCandidate | null>(null);
     const [candidateInterviews, setCandidateInterviews] = useState<RecruitmentInterview[]>([]);
@@ -98,12 +102,52 @@ export default function CandidatesPage() {
 
     const handleStatusChange = async (id: string, newStatus: string) => {
         try {
+            // Optimistic update
+            setCandidates(prev => prev.map(c => c.id === id ? { ...c, status: newStatus } : c));
             await updateCandidateStatus(id, newStatus);
-            // Optimistic update or reload
-            loadData();
         } catch (error) {
             console.error(error);
+            // Revert optimistic update gracefully by reloading
+            loadData();
         }
+    };
+
+    // --- Drag and Drop Handlers ---
+    const handleDragStart = (e: React.DragEvent, candidateId: string) => {
+        e.dataTransfer.setData('candidateId', candidateId);
+        setDraggedCandidateId(candidateId);
+    };
+
+    const handleDragEnd = () => {
+        setDraggedCandidateId(null);
+        setDragOverColumnId(null);
+    };
+
+    const handleDragOver = (e: React.DragEvent, columnId: string) => {
+        e.preventDefault(); // Essential for allowing drop
+        if (dragOverColumnId !== columnId) {
+            setDragOverColumnId(columnId);
+        }
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setDragOverColumnId(null);
+    };
+
+    const handleDrop = async (e: React.DragEvent, targetColumnId: string) => {
+        e.preventDefault();
+        setDragOverColumnId(null);
+
+        const candidateId = e.dataTransfer.getData('candidateId');
+        if (candidateId) {
+            const candidate = candidates.find(c => c.id === candidateId);
+            // Protect against dropping in same col, or logic error
+            if (candidate && candidate.status !== targetColumnId) {
+                await handleStatusChange(candidateId, targetColumnId);
+            }
+        }
+        setDraggedCandidateId(null);
     };
 
     const handleViewCandidate = async (candidate: RecruitmentCandidate) => {
@@ -192,16 +236,28 @@ export default function CandidatesPage() {
                 <div className="flex-1 overflow-x-auto overflow-y-hidden">
                     <div className="flex gap-6 h-full min-w-[1200px]">
                         {columns.map(col => (
-                            <div key={col.id} className="w-80 flex flex-col h-full">
+                            <div
+                                key={col.id}
+                                className="w-80 flex flex-col h-full"
+                                onDragOver={(e) => handleDragOver(e, col.id)}
+                                onDragLeave={handleDragLeave}
+                                onDrop={(e) => handleDrop(e, col.id)}
+                            >
                                 <div className={`flex items-center justify-between p-3 rounded-t-xl border-b-2 font-semibold ${col.color.replace('text', 'border')}`}>
                                     <span className={col.color.split(' ')[1]}>{col.label}</span>
                                     <span className="bg-white/50 px-2 py-0.5 rounded text-xs">
                                         {getCandidatesByStatus(col.id).length}
                                     </span>
                                 </div>
-                                <div className="bg-slate-50/50 flex-1 p-3 space-y-3 overflow-y-auto rounded-b-xl border border-slate-200">
+                                <div className={`bg-slate-50/50 flex-1 p-3 space-y-3 overflow-y-auto rounded-b-xl border transition-all duration-200 ${dragOverColumnId === col.id ? 'border-blue-400 border-dashed bg-blue-50/30 ring-2 ring-blue-100 ring-inset' : 'border-slate-200'}`}>
                                     {getCandidatesByStatus(col.id).map(cand => (
-                                        <div key={cand.id} className="bg-white p-4 rounded-lg shadow-sm border border-slate-100 hover:shadow-md transition group">
+                                        <div
+                                            key={cand.id}
+                                            draggable
+                                            onDragStart={(e) => handleDragStart(e, cand.id)}
+                                            onDragEnd={handleDragEnd}
+                                            className={`bg-white p-4 rounded-lg shadow-sm border hover:shadow-md transition group cursor-grab active:cursor-grabbing ${draggedCandidateId === cand.id ? 'opacity-50 border-blue-400 rotate-2 scale-105 z-50 relative pointer-events-none' : 'border-slate-100'}`}
+                                        >
                                             <div className="flex justify-between items-start mb-2">
                                                 <h4
                                                     className="font-semibold text-slate-800 cursor-pointer hover:text-blue-600"
