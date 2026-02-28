@@ -72,7 +72,10 @@ export default function TelesalesEarningsPage() {
                     startDate: startOfMonth.toISOString(),
                     endDate: endOfMonth.toISOString()
                 }),
-                fetchUserTransactions(user.id, session.access_token),
+                fetchUserTransactions(user.id, session.access_token, {
+                    startDate: startOfMonth.toISOString(),
+                    endDate: endOfMonth.toISOString()
+                }),
                 fetchPayrollConfig('telesales_parttime', session.access_token),
                 supabase.rpc('get_user_kpi_settings', { p_user_id: user.id }),
                 supabase.rpc('get_telesales_kpi_v4', {
@@ -498,7 +501,7 @@ export default function TelesalesEarningsPage() {
                                                     const badgeClass = pct >= 100 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : pct >= 50 ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-rose-50 text-rose-600 border-rose-200';
                                                     return (
                                                         <div key={item.key} className="bg-slate-50 rounded-lg p-3">
-                                                            <div className="flex justify-between items-center mb-2">
+                                                            <div className="flex justify-between items-center mb-1.5">
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="text-sm font-medium text-slate-700">{item.label}</span>
                                                                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${badgeClass}`}>
@@ -509,6 +512,11 @@ export default function TelesalesEarningsPage() {
                                                                     <span className="text-[10px] text-slate-400">×{item.salaryPercent}%</span>
                                                                     <span className="text-sm font-bold text-slate-900">{formatPrice(item.salaryAmount)}</span>
                                                                 </div>
+                                                            </div>
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <span className="text-xs text-slate-500">
+                                                                    {formatKpiValue(item.actual, item.field_type as any)} / {formatKpiValue(item.target, item.field_type as any)}
+                                                                </span>
                                                             </div>
                                                             <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
                                                                 <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${pct}%` }} />

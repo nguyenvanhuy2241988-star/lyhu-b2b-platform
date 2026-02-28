@@ -100,10 +100,20 @@ export const setPayrollLock = async (year: number, month: number, userId: string
     }
 };
 
-export const fetchUserTransactions = async (userId: string, token?: string): Promise<FinancialTransaction[]> => {
+export const fetchUserTransactions = async (userId: string, token?: string, options?: { startDate?: string; endDate?: string }): Promise<FinancialTransaction[]> => {
     try {
         const headers = getHeaders(token);
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/financial_transactions?user_id=eq.${userId}&order=created_at.desc`, { headers, cache: 'no-store' });
+        let url = `${SUPABASE_URL}/rest/v1/financial_transactions?user_id=eq.${userId}&order=created_at.desc`;
+
+        // Add date range filtering if provided
+        if (options?.startDate) {
+            url += `&created_at=gte.${options.startDate}`;
+        }
+        if (options?.endDate) {
+            url += `&created_at=lte.${options.endDate}`;
+        }
+
+        const res = await fetch(url, { headers, cache: 'no-store' });
 
         if (!res.ok) return [];
         const data = await res.json();

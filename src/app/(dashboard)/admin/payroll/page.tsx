@@ -103,12 +103,19 @@ export default function AdminPayrollPage() {
     const loadTransactions = useCallback(async (silent = false) => {
         if (!selectedUserId || !session?.access_token) return;
         try {
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
             const [txs, orders, config] = await Promise.all([
-                fetchUserTransactions(selectedUserId, session.access_token),
+                fetchUserTransactions(selectedUserId, session.access_token, {
+                    startDate: startOfMonth.toISOString(),
+                    endDate: endOfMonth.toISOString()
+                }),
                 fetchOrders(session.access_token, {
                     userId: selectedUserId,
-                    startDate: new Date(2024, 11, 1).toISOString(),
-                    endDate: new Date(2024, 11, 31, 23, 59, 59).toISOString()
+                    startDate: startOfMonth.toISOString(),
+                    endDate: endOfMonth.toISOString()
                 }),
                 fetchPayrollConfig('telesales_parttime', session.access_token)
             ]);
