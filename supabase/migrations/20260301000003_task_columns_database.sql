@@ -74,21 +74,46 @@ FOR EACH ROW
 EXECUTE FUNCTION trigger_create_default_columns();
 
 -- 6. RPC: Get tasks for a specific column (via placements)
+-- IMPORTANT: For inbox/custom columns, exclude tasks with due_date in date column range
+-- (those tasks are shown in date columns like Hôm nay, Ngày mai, etc.)
 CREATE OR REPLACE FUNCTION get_column_tasks(
     p_column_id UUID,
     p_limit INT DEFAULT 50,
     p_offset INT DEFAULT 0
 )
 RETURNS SETOF telesales_tasks AS $$
+DECLARE
+    v_column_type TEXT;
 BEGIN
-    RETURN QUERY
-    SELECT t.*
-    FROM telesales_tasks t
-    JOIN task_column_placements p ON p.task_id = t.id
-    WHERE p.user_id = auth.uid()
-    AND p.column_id = p_column_id
-    ORDER BY t."order" ASC NULLS LAST, t.created_at DESC
-    LIMIT p_limit OFFSET p_offset;
+    -- Get column type
+    SELECT column_type INTO v_column_type FROM task_user_columns WHERE id = p_column_id;
+
+    IF v_column_type = 'system_done' THEN
+        -- Done column: show ALL tasks placed here (regardless of due_date)
+        RETURN QUERY
+        SELECT t.*
+        FROM telesales_tasks t
+        JOIN task_column_placements p ON p.task_id = t.id
+        WHERE p.user_id = auth.uid()
+        AND p.column_id = p_column_id
+        ORDER BY t."order" ASC NULLS LAST, t.created_at DESC
+        LIMIT p_limit OFFSET p_offset;
+    ELSE
+        -- Inbox/Custom: EXCLUDE tasks whose due_date falls within date column ranges
+        -- (past → 7 days from now). These tasks already appear in date columns.
+        RETURN QUERY
+        SELECT t.*
+        FROM telesales_tasks t
+        JOIN task_column_placements p ON p.task_id = t.id
+        WHERE p.user_id = auth.uid()
+        AND p.column_id = p_column_id
+        AND (
+            t.due_date IS NULL
+            OR t.due_date::date > (CURRENT_DATE + INTERVAL '7 days')::date
+        )
+        ORDER BY t."order" ASC NULLS LAST, t.created_at DESC
+        LIMIT p_limit OFFSET p_offset;
+    END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
