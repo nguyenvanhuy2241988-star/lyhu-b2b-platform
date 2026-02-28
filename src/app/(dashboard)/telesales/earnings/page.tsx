@@ -466,7 +466,14 @@ export default function TelesalesEarningsPage() {
                                         Đơn hàng
                                     </button>
                                 </div>
-                                <span className="text-[10px] text-slate-400">Cập nhật lúc: {lastUpdated ? lastUpdated.toLocaleTimeString('vi-VN') : '--:--'}</span>
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                    <span className="text-[10px] text-slate-400">
+                                        {lastUpdated ? (
+                                            <>{lastUpdated.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} lúc {lastUpdated.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</>
+                                        ) : 'Chưa cập nhật'}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                         <div className="p-5">
@@ -620,7 +627,8 @@ export default function TelesalesEarningsPage() {
                                         transactions.map((t) => (
                                             <tr key={t.id} className="hover:bg-slate-50 transition-colors">
                                                 <td className="p-3 text-slate-400">
-                                                    {new Date(t.createdAt).toLocaleDateString('vi-VN')}
+                                                    {new Date(t.createdAt).toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit' })}
+                                                    <div className="text-[9px] text-slate-300 mt-0.5">{new Date(t.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</div>
                                                 </td>
                                                 <td className="p-3">
                                                     <div className="font-medium text-slate-700">{t.category}</div>
