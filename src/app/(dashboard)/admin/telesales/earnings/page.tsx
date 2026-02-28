@@ -17,13 +17,15 @@ const formatCurrency = (price: number) => {
     }).format(price);
 };
 
-type DateRangeOption = 'today' | 'last_7_days' | 'this_month';
+type DateRangeOption = 'today' | 'yesterday' | 'last_7_days' | 'this_week' | 'this_month' | 'last_month' | 'this_quarter' | 'custom';
 
 export default function AdminTelesalesKpiPage() {
     const { session } = useAuth();
     const [dateRange, setDateRange] = useState<DateRangeOption>('today');
     const [refreshKey, setRefreshKey] = useState(0);
     const [selectedUserId, setSelectedUserId] = useState<string>('');
+    const [customFrom, setCustomFrom] = useState('');
+    const [customTo, setCustomTo] = useState('');
 
     useEffect(() => {
         const handleUpdate = () => setRefreshKey(prev => prev + 1);
@@ -58,11 +60,26 @@ export default function AdminTelesalesKpiPage() {
                 end.setHours(23, 59, 59, 999);
                 l = "Hôm nay";
                 break;
+            case 'yesterday':
+                start.setDate(now.getDate() - 1);
+                start.setHours(0, 0, 0, 0);
+                end.setDate(now.getDate() - 1);
+                end.setHours(23, 59, 59, 999);
+                l = "Hôm qua";
+                break;
             case 'last_7_days':
                 start.setDate(now.getDate() - 6);
                 start.setHours(0, 0, 0, 0);
                 end.setHours(23, 59, 59, 999);
                 l = "7 ngày gần đây";
+                break;
+            case 'this_week':
+                // Monday-based week
+                const dayOfWeek = now.getDay() === 0 ? 6 : now.getDay() - 1;
+                start.setDate(now.getDate() - dayOfWeek);
+                start.setHours(0, 0, 0, 0);
+                end.setHours(23, 59, 59, 999);
+                l = "Tuần này";
                 break;
             case 'this_month':
                 start.setDate(1);
@@ -72,9 +89,38 @@ export default function AdminTelesalesKpiPage() {
                 end.setHours(23, 59, 59, 999);
                 l = "Tháng này";
                 break;
+            case 'last_month':
+                start.setMonth(now.getMonth() - 1);
+                start.setDate(1);
+                start.setHours(0, 0, 0, 0);
+                end.setDate(0); // Last day of previous month
+                end.setHours(23, 59, 59, 999);
+                l = "Tháng trước";
+                break;
+            case 'this_quarter': {
+                const q = Math.floor(now.getMonth() / 3);
+                start.setMonth(q * 3, 1);
+                start.setHours(0, 0, 0, 0);
+                end.setMonth(q * 3 + 3, 0);
+                end.setHours(23, 59, 59, 999);
+                l = `Quý ${q + 1}`;
+                break;
+            }
+            case 'custom':
+                if (customFrom && customTo) {
+                    const cf = new Date(customFrom);
+                    cf.setHours(0, 0, 0, 0);
+                    const ct = new Date(customTo);
+                    ct.setHours(23, 59, 59, 999);
+                    return { from: cf, to: ct, label: `${customFrom} → ${customTo}` };
+                }
+                start.setHours(0, 0, 0, 0);
+                end.setHours(23, 59, 59, 999);
+                l = "Tùy chọn";
+                break;
         }
         return { from: start, to: end, label: l };
-    }, [dateRange]);
+    }, [dateRange, customFrom, customTo]);
 
     // Data State (Async)
     const [teamStats, setTeamStats] = useState<any>({
@@ -183,13 +229,38 @@ export default function AdminTelesalesKpiPage() {
                                 {label}
                                 <ChevronDown className="w-3 h-3 text-slate-400" />
                             </button>
-                            <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-20 hidden group-hover:block">
+                            <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-20 hidden group-hover:block">
                                 <button onClick={() => setDateRange('today')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'today' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>Hôm nay</button>
+                                <button onClick={() => setDateRange('yesterday')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'yesterday' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>Hôm qua</button>
                                 <button onClick={() => setDateRange('last_7_days')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'last_7_days' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>7 ngày gần đây</button>
+                                <button onClick={() => setDateRange('this_week')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'this_week' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>Tuần này</button>
+                                <div className="border-t border-slate-100 my-1"></div>
                                 <button onClick={() => setDateRange('this_month')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'this_month' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>Tháng này</button>
+                                <button onClick={() => setDateRange('last_month')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'last_month' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>Tháng trước</button>
+                                <button onClick={() => setDateRange('this_quarter')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'this_quarter' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>Quý này</button>
+                                <div className="border-t border-slate-100 my-1"></div>
+                                <button onClick={() => setDateRange('custom')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'custom' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>Tùy chọn ngày...</button>
                             </div>
                         </div>
                     </div>
+
+                    {dateRange === 'custom' && (
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="date"
+                                value={customFrom}
+                                onChange={(e) => setCustomFrom(e.target.value)}
+                                className="px-2 py-1.5 text-sm border border-slate-200 rounded-lg bg-white shadow-sm focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                            />
+                            <span className="text-slate-400 text-sm">→</span>
+                            <input
+                                type="date"
+                                value={customTo}
+                                onChange={(e) => setCustomTo(e.target.value)}
+                                className="px-2 py-1.5 text-sm border border-slate-200 rounded-lg bg-white shadow-sm focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                            />
+                        </div>
+                    )}
 
                     <button
                         onClick={handleExport}

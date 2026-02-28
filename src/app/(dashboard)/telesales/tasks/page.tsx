@@ -909,6 +909,23 @@ export default function TelesalesTasksPage() {
     const handleSaveLog = async (logData: any) => {
         if (taskToLog) {
             await addLogSupabase(taskToLog.id, logData);
+
+            // Auto-sync to KPI: only count "answered" calls
+            const callResult = logData.call_result || logData.result;
+            if (callResult === 'answered' || callResult === 'Nghe máy') {
+                try {
+                    const { data } = await createClient().auth.getSession();
+                    const userId = data?.session?.user?.id;
+                    if (userId) {
+                        const today = new Date().toISOString().split('T')[0];
+                        const { incrementCallsCompleted } = await import('@/lib/telesalesDailyStore');
+                        await incrementCallsCompleted(userId, today);
+                    }
+                } catch (err) {
+                    console.error('Error syncing call to KPI:', err);
+                }
+            }
+
             setIsLogModalOpen(false);
             setTaskToLog(null);
             refreshData(); // Refresh to get logs if needed

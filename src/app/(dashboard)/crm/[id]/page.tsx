@@ -126,6 +126,13 @@ export default function DealDetailPage() {
             setActivities(prev => [activity, ...prev]);
         }
 
+        // Auto-sync to KPI: only count "answered" calls
+        if (callResult === 'answered') {
+            const today = new Date().toISOString().split('T')[0];
+            const { incrementCallsCompleted } = await import('@/lib/telesalesDailyStore');
+            await incrementCallsCompleted(user.id, today);
+        }
+
         setIsLogCallOpen(false);
     };
 

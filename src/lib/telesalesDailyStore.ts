@@ -102,6 +102,44 @@ export const upsertDailyReportTelesales = async (reportData: Partial<TelesalesDa
     return true;
 };
 
+/**
+ * Increment calls_completed by 1 for a given user and date.
+ * Used when a CRM call is logged with result 'answered' (Nghe máy).
+ * Other call results (no_answer, busy, wrong_number, callback, voicemail) are NOT counted for KPI.
+ */
+export const incrementCallsCompleted = async (userId: string, date: string) => {
+    try {
+        const existing = await getDailyReportTelesales(date, userId);
+
+        if (existing) {
+            // Increment existing counter
+            const { error } = await supabase
+                .from('telesales_daily_activities')
+                .update({ calls_completed: (existing.calls_completed || 0) + 1 })
+                .eq('id', existing.id);
+            if (error) console.error("Error incrementing calls_completed:", error);
+        } else {
+            // Create new row with calls_completed = 1
+            const { error } = await supabase
+                .from('telesales_daily_activities')
+                .insert([{
+                    user_id: userId,
+                    report_date: date,
+                    calls_completed: 1,
+                    fb_group_posts: 0,
+                    fb_comments: 0,
+                    fb_friends: 0,
+                    fb_personal_posts: 0,
+                    zalo_posts: 0,
+                    self_sourced_data: 0
+                }]);
+            if (error) console.error("Error creating daily activity for call:", error);
+        }
+    } catch (err) {
+        console.error("incrementCallsCompleted error:", err);
+    }
+};
+
 export interface TelesalesKpiSettings {
     user_id: string;
     calls_target: number;
