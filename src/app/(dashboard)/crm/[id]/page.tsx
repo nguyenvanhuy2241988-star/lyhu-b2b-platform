@@ -182,6 +182,20 @@ export default function DealDetailPage() {
         if (!deal) return;
         if (confirm("Bạn chắc chắn muốn xóa cơ hội này?")) {
             await deleteDeal(deal.id);
+
+            // Re-sync KPI after deletion
+            if (user?.id) {
+                try {
+                    const now = new Date();
+                    const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                    const { syncCallsFromCRM, syncSelfSourcedFromCRM } = await import('@/lib/telesalesDailyStore');
+                    await syncCallsFromCRM(user.id, localDate);
+                    await syncSelfSourcedFromCRM(user.id, localDate);
+                } catch (e) {
+                    console.error('Error re-syncing KPI after delete:', e);
+                }
+            }
+
             router.push('/crm');
         }
     };

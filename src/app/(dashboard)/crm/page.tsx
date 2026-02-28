@@ -925,6 +925,19 @@ export default function CRMPage() {
             setIsCreateModalOpen(false);
             setEditingDeal(null);
             refreshData();
+
+            // Re-sync KPI after deletion
+            if (userInfo.id) {
+                try {
+                    const now = new Date();
+                    const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                    const { syncCallsFromCRM, syncSelfSourcedFromCRM } = await import('@/lib/telesalesDailyStore');
+                    await syncCallsFromCRM(userInfo.id, localDate);
+                    await syncSelfSourcedFromCRM(userInfo.id, localDate);
+                } catch (e) {
+                    console.error('Error re-syncing KPI after delete:', e);
+                }
+            }
         }
     };
 
