@@ -440,8 +440,12 @@ export default function CRMPage() {
     const [isLostModalOpen, setIsLostModalOpen] = useState(false);
     const [dealToMarkLost, setDealToMarkLost] = useState<CRMDeal | null>(null);
 
-    // KPI Date Picker for self-tracking
-    const [kpiDate, setKpiDate] = useState(new Date().toISOString().split('T')[0]);
+    // KPI Date Picker for self-tracking - use LOCAL date (not UTC)
+    const getLocalDateStr = () => {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    };
+    const [kpiDate, setKpiDate] = useState(getLocalDateStr());
 
     // Inline column editing
     const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
@@ -893,8 +897,11 @@ export default function CRMPage() {
             setIsCreateModalOpen(false);
             setEditingDeal(null);
 
-            // Auto-sync self-sourced data to KPI when creating a new deal
-            if (!editingDeal?.id) {
+            // Auto-sync self-sourced data to KPI ONLY when:
+            // 1. Creating new deal (not editing)
+            // 2. User created a NEW customer (isNewCustomer)
+            // 3. Source is SELF_FOUND (Tự tìm kiếm)
+            if (!editingDeal?.id && dealData.isNewCustomer && dealData.source_category === 'SELF_FOUND') {
                 try {
                     const now = new Date();
                     const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -1170,9 +1177,9 @@ export default function CRMPage() {
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => {
-                                    const d = new Date(kpiDate);
+                                    const d = new Date(kpiDate + 'T12:00:00');
                                     d.setDate(d.getDate() - 1);
-                                    setKpiDate(d.toISOString().split('T')[0]);
+                                    setKpiDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
                                 }}
                                 className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
                                 title="Ngày trước"
@@ -1187,18 +1194,18 @@ export default function CRMPage() {
                             />
                             <button
                                 onClick={() => {
-                                    const d = new Date(kpiDate);
+                                    const d = new Date(kpiDate + 'T12:00:00');
                                     d.setDate(d.getDate() + 1);
-                                    setKpiDate(d.toISOString().split('T')[0]);
+                                    setKpiDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
                                 }}
                                 className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
                                 title="Ngày sau"
                             >
                                 ›
                             </button>
-                            {kpiDate !== new Date().toISOString().split('T')[0] && (
+                            {kpiDate !== getLocalDateStr() && (
                                 <button
-                                    onClick={() => setKpiDate(new Date().toISOString().split('T')[0])}
+                                    onClick={() => setKpiDate(getLocalDateStr())}
                                     className="text-xs text-primary-600 hover:underline ml-1"
                                 >
                                     Hôm nay
