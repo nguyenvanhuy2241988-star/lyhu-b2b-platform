@@ -334,32 +334,53 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                                         })}
                                     </tbody>
                                     <tfoot className="bg-slate-50 border-t border-slate-200">
-                                        <tr>
-                                            <td colSpan={4} className="px-4 py-2 text-right text-slate-500 text-xs uppercase tracking-wide">Tổng tiền hàng</td>
-                                            <td className="px-4 py-2 text-right font-medium text-slate-700">
-                                                {formatPrice((order.items || []).reduce((sum: number, item: any) => sum + ((item.price || 0) * item.quantity), 0))}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td colSpan={4} className="px-4 py-2 text-right text-slate-500 text-xs uppercase tracking-wide">Tổng chiết khấu</td>
-                                            <td className="px-4 py-2 text-right font-medium text-red-600">
-                                                -{formatPrice((order.items || []).reduce((sum: number, item: any) => sum + (item.discount || 0), 0))}
-                                            </td>
-                                        </tr>
-                                        {(order.vat || 0) > 0 && (
-                                            <tr>
-                                                <td colSpan={4} className="px-4 py-2 text-right text-slate-500 text-xs uppercase tracking-wide">VAT</td>
-                                                <td className="px-4 py-2 text-right font-medium text-slate-600">
-                                                    +{formatPrice(order.vat || 0)}
-                                                </td>
-                                            </tr>
-                                        )}
-                                        <tr>
-                                            <td colSpan={4} className="px-4 py-3 text-right font-bold text-slate-900">Tổng thanh toán</td>
-                                            <td className="px-4 py-3 text-right font-bold text-indigo-600 text-lg">
-                                                {formatPrice(order.totalAmount)}
-                                            </td>
-                                        </tr>
+                                        {(() => {
+                                            const items = order.items || [];
+                                            const totalListPrice = items.reduce((sum: number, item: any) => sum + ((item.price || 0) * item.quantity), 0);
+                                            const totalItemDiscount = items.reduce((sum: number, item: any) => sum + (item.discount || 0), 0);
+                                            const afterItemDiscount = totalListPrice - totalItemDiscount;
+                                            const orderDiscountPct = order.order_discount_percent || 0;
+                                            const orderDiscountAmt = afterItemDiscount * (orderDiscountPct / 100);
+                                            const afterAllDiscounts = afterItemDiscount - orderDiscountAmt;
+                                            const totalAllDiscounts = totalItemDiscount + orderDiscountAmt;
+                                            const discountPct = totalListPrice > 0 ? (totalAllDiscounts / totalListPrice * 100) : 0;
+                                            const vatAmt = order.vat || 0;
+                                            const vatPct = afterAllDiscounts > 0 ? (vatAmt / afterAllDiscounts * 100) : 0;
+                                            return (
+                                                <>
+                                                    <tr>
+                                                        <td colSpan={4} className="px-4 py-2 text-right text-slate-500 text-xs uppercase tracking-wide">Tổng tiền hàng</td>
+                                                        <td className="px-4 py-2 text-right font-medium text-slate-700">{formatPrice(totalListPrice)}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td colSpan={4} className="px-4 py-2 text-right text-slate-500 text-xs uppercase tracking-wide">
+                                                            Chiết khấu dòng {discountPct > 0 && <span className="text-red-500">({discountPct.toFixed(1)}%)</span>}
+                                                        </td>
+                                                        <td className="px-4 py-2 text-right font-medium text-red-600">-{formatPrice(totalItemDiscount)}</td>
+                                                    </tr>
+                                                    {orderDiscountPct > 0 && (
+                                                        <tr>
+                                                            <td colSpan={4} className="px-4 py-2 text-right text-slate-500 text-xs uppercase tracking-wide">
+                                                                Chiết khấu đơn <span className="text-red-500">({orderDiscountPct}%)</span>
+                                                            </td>
+                                                            <td className="px-4 py-2 text-right font-medium text-red-600">-{formatPrice(orderDiscountAmt)}</td>
+                                                        </tr>
+                                                    )}
+                                                    {vatAmt > 0 && (
+                                                        <tr>
+                                                            <td colSpan={4} className="px-4 py-2 text-right text-slate-500 text-xs uppercase tracking-wide">
+                                                                VAT <span className="text-blue-500">({vatPct.toFixed(1)}%)</span>
+                                                            </td>
+                                                            <td className="px-4 py-2 text-right font-medium text-slate-600">+{formatPrice(vatAmt)}</td>
+                                                        </tr>
+                                                    )}
+                                                    <tr>
+                                                        <td colSpan={4} className="px-4 py-3 text-right font-bold text-slate-900">Tổng thanh toán</td>
+                                                        <td className="px-4 py-3 text-right font-bold text-indigo-600 text-lg">{formatPrice(order.totalAmount)}</td>
+                                                    </tr>
+                                                </>
+                                            );
+                                        })()}
                                     </tfoot>
                                 </table>
                             </div>

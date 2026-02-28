@@ -138,34 +138,51 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, s
 
                 {/* Totals (Right Side) */}
                 <div className="w-1/2 space-y-2 text-sm">
-                    <div className="flex justify-between py-1">
-                        <span className="text-gray-600">Tổng tiền hàng:</span>
-                        <span className="font-medium">
-                            {formatPrice((order.items || []).reduce((sum: number, item: any) => sum + ((item.price || 0) * item.quantity), 0))}
-                        </span>
-                    </div>
-                    <div className="flex justify-between py-1">
-                        <span className="text-gray-600">Tổng chiết khấu:</span>
-                        <span className="font-medium text-red-600">
-                            -{formatPrice((order.items || []).reduce((sum: number, item: any) => sum + (item.discount || 0), 0))}
-                        </span>
-                    </div>
-                    {(order.vat || 0) > 0 && (
-                        <div className="flex justify-between py-1">
-                            <span className="text-gray-600">VAT:</span>
-                            <span className="font-medium text-slate-600">
-                                +{formatPrice(order.vat || 0)}
-                            </span>
-                        </div>
-                    )}
-                    <div className="border-t border-gray-300 my-2"></div>
-                    <div className="flex justify-between text-lg font-bold items-center bg-gray-50 p-2 rounded">
-                        <span>Tổng thanh toán:</span>
-                        <span className="text-indigo-700">{formatPrice(order.totalAmount)}</span>
-                    </div>
-                    <div className="text-right text-xs text-gray-500 italic mt-1">
-                        (Đã bao gồm VAT nếu có)
-                    </div>
+                    {(() => {
+                        const items = order.items || [];
+                        const totalListPrice = items.reduce((sum: number, item: any) => sum + ((item.price || 0) * item.quantity), 0);
+                        const totalItemDiscount = items.reduce((sum: number, item: any) => sum + (item.discount || 0), 0);
+                        const afterItemDiscount = totalListPrice - totalItemDiscount;
+                        const orderDiscountPct = (order as any).order_discount_percent || 0;
+                        const orderDiscountAmt = afterItemDiscount * (orderDiscountPct / 100);
+                        const afterAllDiscounts = afterItemDiscount - orderDiscountAmt;
+                        const totalAllDiscounts = totalItemDiscount + orderDiscountAmt;
+                        const discountPct = totalListPrice > 0 ? (totalAllDiscounts / totalListPrice * 100) : 0;
+                        const vatAmt = order.vat || 0;
+                        const vatPct = afterAllDiscounts > 0 ? (vatAmt / afterAllDiscounts * 100) : 0;
+                        return (
+                            <>
+                                <div className="flex justify-between py-1">
+                                    <span className="text-gray-600">Tổng tiền hàng:</span>
+                                    <span className="font-medium">{formatPrice(totalListPrice)}</span>
+                                </div>
+                                <div className="flex justify-between py-1">
+                                    <span className="text-gray-600">Chiết khấu dòng {discountPct > 0 && <span className="text-red-600">({discountPct.toFixed(1)}%)</span>}:</span>
+                                    <span className="font-medium text-red-600">-{formatPrice(totalItemDiscount)}</span>
+                                </div>
+                                {orderDiscountPct > 0 && (
+                                    <div className="flex justify-between py-1">
+                                        <span className="text-gray-600">Chiết khấu đơn <span className="text-red-600">({orderDiscountPct}%)</span>:</span>
+                                        <span className="font-medium text-red-600">-{formatPrice(orderDiscountAmt)}</span>
+                                    </div>
+                                )}
+                                {vatAmt > 0 && (
+                                    <div className="flex justify-between py-1">
+                                        <span className="text-gray-600">VAT <span className="text-blue-600">({vatPct.toFixed(1)}%)</span>:</span>
+                                        <span className="font-medium text-slate-600">+{formatPrice(vatAmt)}</span>
+                                    </div>
+                                )}
+                                <div className="border-t border-gray-300 my-2"></div>
+                                <div className="flex justify-between text-lg font-bold items-center bg-gray-50 p-2 rounded">
+                                    <span>Tổng thanh toán:</span>
+                                    <span className="text-indigo-700">{formatPrice(order.totalAmount)}</span>
+                                </div>
+                                <div className="text-right text-xs text-gray-500 italic mt-1">
+                                    (Đã bao gồm VAT nếu có)
+                                </div>
+                            </>
+                        );
+                    })()}
                 </div>
             </div>
 

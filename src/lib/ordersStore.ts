@@ -366,6 +366,7 @@ export const fetchOrders = async (token?: string, filters?: { userId?: string, s
             paymentMethod: o.payment_method,
             notes: o.note,
             vat: o.vat,
+            order_discount_percent: o.order_discount_percent || 0,
             receiverPhone: o.receiver_phone || o.customer?.phone,
             receiverAddress: o.receiver_address || o.customer?.address,
             creatorName: o.creator_name
