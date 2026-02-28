@@ -610,13 +610,37 @@ export default function TelesalesTasksPage() {
 
                         // Handle INSERT
                         if (payload.eventType === 'INSERT') {
-                            // Skip INSERT handling if we just saved (refreshData will handle it)
                             if (savingRef.current) {
                                 console.log('[Realtime] Skipping INSERT (save in progress)');
                                 return;
                             }
-                            // For new column system, just refresh to get correct placements
-                            refreshData();
+                            const newTask = payload.new as any;
+                            const userId = user.id;
+                            const isRelevant =
+                                newTask.user_id === userId ||
+                                newTask.owner_id === userId ||
+                                newTask.assigned_to === userId ||
+                                newTask.leader_id === userId ||
+                                (newTask.assignee_ids && Array.isArray(newTask.assignee_ids) && newTask.assignee_ids.includes(userId));
+
+                            if (isRelevant) {
+                                // Add to inbox column (first placement column found)
+                                setColumnTasks(prev => {
+                                    // If already exists anywhere, skip
+                                    for (const col in prev) {
+                                        if (prev[col]?.some(t => t.id === newTask.id)) return prev;
+                                    }
+                                    // Find inbox column ID from current columns
+                                    const inboxCol = columns.find((c: any) => c.column_type === 'system_inbox');
+                                    if (inboxCol) {
+                                        return {
+                                            ...prev,
+                                            [inboxCol.id]: [newTask, ...(prev[inboxCol.id] || [])]
+                                        };
+                                    }
+                                    return prev;
+                                });
+                            }
                         }
 
                         // Handle UPDATE
@@ -873,7 +897,8 @@ export default function TelesalesTasksPage() {
             window.removeEventListener("telesales-columns-updated", handleColumnUpdate);
             if (channel) supabase.removeChannel(channel);
         };
-    }, [user, session?.access_token, refreshData, authIsLoading]); // Added authIsLoading
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user, session?.access_token, authIsLoading]); // Removed refreshData to prevent infinite loop
 
     const handleLogCall = (task: TelesalesTask) => {
         setTaskToLog(task);
