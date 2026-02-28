@@ -68,6 +68,7 @@ BEGIN
             t.assignee_ids AS assignee_ids,
             t.leader_id AS leader_id,
             t.attachments AS attachments
+        FROM telesales_tasks t
         -- FIX: Only return tasks WITH due_date in the specified range
         -- Tasks without due_date belong in placement columns (inbox), not date columns
         WHERE t.due_date IS NOT NULL AND t.due_date BETWEEN p_start_date AND p_end_date
