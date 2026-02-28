@@ -80,6 +80,14 @@ BEGIN
             OR t.leader_id = p_user_id
             OR (t.assignee_ids IS NOT NULL AND p_user_id = ANY(t.assignee_ids))
         )
+        -- Exclude tasks that have a custom column placement (they belong in that column, not date columns)
+        AND NOT EXISTS (
+            SELECT 1 FROM task_column_placements tcp
+            JOIN task_user_columns tuc ON tuc.id = tcp.column_id
+            WHERE tcp.task_id = t.id 
+            AND tcp.user_id = p_user_id
+            AND tuc.column_type = 'custom'
+        )
     ) AS sub
     ORDER BY sub.due_date ASC NULLS LAST;
 END;
