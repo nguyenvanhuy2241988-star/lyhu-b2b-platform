@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { getTelesalesKpiStats, getTeamTelesalesKpiStats, TelesalesKpiStats, updateTelesalesKpiSettings } from "@/lib/telesalesDailyStore";
+import { getTelesalesKpiStats, getTeamTelesalesKpiStats, TelesalesKpiStats, updateTelesalesKpiSettings, syncCallsFromCRM, syncSelfSourcedFromCRM } from "@/lib/telesalesDailyStore";
 import { supabase } from "@/lib/supabaseClient";
 import { Settings, X, Save, TrendingUp, Phone, Users, MessageSquare, Share2, Database, PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -40,6 +40,16 @@ export default function TelesalesKpiDashboard({ date, userId, toDate }: Telesale
     const loadStats = async () => {
         if (!userId) return;
         try {
+            // Auto-sync from CRM data before loading stats (only for individual user, not team)
+            if (userId !== 'ALL' && !toDate) {
+                try {
+                    await syncCallsFromCRM(userId, date);
+                    await syncSelfSourcedFromCRM(userId, date);
+                } catch (syncErr) {
+                    console.error('Auto-sync error:', syncErr);
+                }
+            }
+
             const data = await (userId === 'ALL' ? getTeamTelesalesKpiStats(date, toDate) : getTelesalesKpiStats(userId, date, toDate));
             setStats(data);
             setTargets({
