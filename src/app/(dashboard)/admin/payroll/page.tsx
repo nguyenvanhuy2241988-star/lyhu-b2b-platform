@@ -42,6 +42,11 @@ import {
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getRealtimeClient } from "@/lib/supabaseClient";
 import { KPI_TEMPLATES, KpiFieldType, formatKpiValue } from "@/lib/kpi_config";
+import {
+    KpiMetricDefinition,
+    fetchKpiMetrics,
+    updateKpiMetricsBatch
+} from "@/lib/kpiSalaryStore";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -66,6 +71,7 @@ export default function AdminPayrollPage() {
     const [isKpiModalOpen, setIsKpiModalOpen] = useState(false);
     const [kpiSettings, setKpiSettings] = useState<UserKpiSettings | null>(null);
     const [isLoadingKpi, setIsLoadingKpi] = useState(false);
+    const [kpiMetrics, setKpiMetrics] = useState<KpiMetricDefinition[]>([]);
 
     // Form state
     const [newTx, setNewTx] = useState({
@@ -252,8 +258,12 @@ export default function AdminPayrollPage() {
         setIsLoadingKpi(true);
         setIsKpiModalOpen(true);
         try {
-            const settings = await fetchUserKpiSettings(selectedUserId, session?.access_token);
+            const [settings, metrics] = await Promise.all([
+                fetchUserKpiSettings(selectedUserId, session?.access_token),
+                fetchKpiMetrics()
+            ]);
             setKpiSettings(settings);
+            setKpiMetrics(metrics);
         } catch (e) {
             console.error(e);
         } finally {
@@ -265,7 +275,12 @@ export default function AdminPayrollPage() {
         if (!kpiSettings) return;
         setIsLoadingKpi(true);
         try {
+            // Save user KPI settings (targets, salary, commission)
             const success = await updateUserKpiSettings(kpiSettings, session?.access_token);
+            // Save salary weights to kpi_metric_definitions
+            if (kpiMetrics.length > 0) {
+                await updateKpiMetricsBatch(kpiMetrics);
+            }
             if (success) {
                 alert("Đã lưu cấu hình KPI thành công!");
                 setIsKpiModalOpen(false);
@@ -623,40 +638,87 @@ export default function AdminPayrollPage() {
                                         </div>
                                     </div>
 
-                                    {/* Section 2: Dynamic KPI Targets */}
+                                    {/* Section 2: KPI Targets + Salary Weights */}
                                     <div className="space-y-4">
                                         <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest border-l-4 border-rose-500 pl-3">
-                                            2. Chỉ tiêu KPI Quan trọng
+                                            2. Chỉ tiêu KPI & Trọng số Lương
                                         </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {getKpiTemplate(staff.find(s => s.id === selectedUserId)?.role).fields.map((field) => (
-                                                <div key={field.key} className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm hover:border-primary-200 transition-colors">
-                                                    <label className="block text-xs font-bold text-slate-700 mb-1">{field.label}</label>
-                                                    <div className="flex items-center gap-2">
-                                                        <input
-                                                            type="number"
-                                                            className="flex-1 py-2 px-3 bg-slate-50 border-none rounded-lg text-sm font-black text-slate-900 focus:ring-2 focus:ring-primary-500"
-                                                            value={kpiSettings.kpi_targets?.[field.key] || 0}
-                                                            onChange={(e) => {
-                                                                const val = parseFloat(e.target.value) || 0;
-                                                                setKpiSettings({
-                                                                    ...kpiSettings,
-                                                                    kpi_targets: {
-                                                                        ...kpiSettings.kpi_targets,
-                                                                        [field.key]: val
-                                                                    }
-                                                                });
-                                                            }}
-                                                        />
-                                                        <span className="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded">
-                                                            {field.suffix}
-                                                        </span>
-                                                    </div>
-                                                    {field.description && (
-                                                        <p className="text-[10px] text-slate-400 mt-1.5 leading-snug">{field.description}</p>
+                                        {(() => {
+                                            const activeMetrics = kpiMetrics.filter(m => m.is_active);
+                                            const totalSalary = activeMetrics.reduce((s, m) => s + (m.salary_percent || 0), 0);
+                                            return (
+                                                <>
+                                                    {totalSalary !== 100 && (
+                                                        <div className={`flex items-center gap-2 p-3 rounded-lg text-xs font-bold ${totalSalary > 100 ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+                                                            ⚠️ Tổng trọng số: {totalSalary}% (cần = 100%)
+                                                        </div>
                                                     )}
-                                                </div>
-                                            ))}
+                                                    {totalSalary === 100 && (
+                                                        <div className="flex items-center gap-2 p-3 rounded-lg text-xs font-bold bg-green-50 text-green-700 border border-green-200">
+                                                            ✅ Tổng trọng số: 100%
+                                                        </div>
+                                                    )}
+                                                </>
+                                            );
+                                        })()}
+                                        <div className="space-y-3">
+                                            {(kpiMetrics.length > 0 ? kpiMetrics.filter(m => m.is_active) : getKpiTemplate(staff.find(s => s.id === selectedUserId)?.role).fields.map(f => ({
+                                                id: f.key, key: f.key, label: f.label, description: f.description || '', data_source: 'manual' as const,
+                                                icon: 'Target', field_type: f.type, is_active: true, sort_order: 0, salary_percent: 0, monthly_target: 0
+                                            }))).map((metric) => {
+                                                const metricDef = metric as KpiMetricDefinition;
+                                                return (
+                                                    <div key={metricDef.key} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-primary-200 transition-colors">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <label className="text-xs font-bold text-slate-700">{metricDef.label}</label>
+                                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${metricDef.data_source === 'auto' ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500'
+                                                                }`}>
+                                                                {metricDef.data_source === 'auto' ? '🤖 Tự động' : '📝 Nhập tay'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="grid grid-cols-2 gap-3">
+                                                            <div>
+                                                                <span className="text-[10px] text-slate-400 font-semibold block mb-1">Target /tháng</span>
+                                                                <input
+                                                                    type="number"
+                                                                    className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-black text-slate-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                                                                    value={kpiSettings.kpi_targets?.[metricDef.key] || 0}
+                                                                    onChange={(e) => {
+                                                                        const val = parseFloat(e.target.value) || 0;
+                                                                        setKpiSettings({
+                                                                            ...kpiSettings,
+                                                                            kpi_targets: {
+                                                                                ...kpiSettings.kpi_targets,
+                                                                                [metricDef.key]: val
+                                                                            }
+                                                                        });
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <span className="text-[10px] text-slate-400 font-semibold block mb-1">% Lương</span>
+                                                                <div className="flex items-center gap-1">
+                                                                    <input
+                                                                        type="number"
+                                                                        className="w-full py-2 px-3 bg-primary-50 border border-primary-200 rounded-lg text-sm font-black text-primary-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                                                                        value={metricDef.salary_percent || 0}
+                                                                        onChange={(e) => {
+                                                                            const val = parseFloat(e.target.value) || 0;
+                                                                            setKpiMetrics(prev => prev.map(m =>
+                                                                                m.id === metricDef.id ? { ...m, salary_percent: val } : m
+                                                                            ));
+                                                                        }}
+                                                                    />
+                                                                    <span className="text-xs font-bold text-primary-500">%</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        {metricDef.description && (
+                                                            <p className="text-[10px] text-slate-400 mt-2 leading-snug">{metricDef.description}</p>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 </>

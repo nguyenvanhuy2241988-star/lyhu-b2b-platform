@@ -274,7 +274,12 @@ export const calculateKpiSalary = async (
     // 1. Get active metrics with salary weights
     const metrics = await fetchActiveKpiMetrics();
 
-    // 2. Get user-specific target overrides
+    // 2. Get user-specific target overrides from user_kpi_settings (existing payroll config)
+    const { data: userKpiSettings } = await supabase
+        .rpc('get_user_kpi_settings', { p_user_id: userId });
+    const userTargetsJson: Record<string, number> = (userKpiSettings as any)?.kpi_targets || {};
+
+    // Also check kpi_user_targets table as fallback
     const userTargets = await fetchUserTargets(userId);
     const userTargetMap = new Map(userTargets.map(t => [t.metric_key, t.monthly_target]));
 
@@ -289,7 +294,8 @@ export const calculateKpiSalary = async (
     for (const metric of metrics) {
         if (metric.salary_percent <= 0) continue;
 
-        const target = userTargetMap.get(metric.key) ?? metric.monthly_target;
+        // Priority: user_kpi_settings.kpi_targets > kpi_user_targets > metric default
+        const target = userTargetsJson[metric.key] || userTargetMap.get(metric.key) || metric.monthly_target;
         const actual = actuals[metric.key] || 0;
 
         const completion = target > 0 ? Math.min(actual / target, 1) : (actual > 0 ? 1 : 0);
