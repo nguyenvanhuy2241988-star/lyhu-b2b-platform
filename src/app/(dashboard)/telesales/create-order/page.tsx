@@ -206,6 +206,7 @@ function TelesalesCreateOrderContent() {
     // Step 2 & 3: Add products and quantities
     const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
     const [vatRate, setVatRate] = useState<number>(0); // Percentage
+    const [orderDiscountPercent, setOrderDiscountPercent] = useState<number>(0); // Order-level discount %
     const [orderNote, setOrderNote] = useState<string>("");
     const [paymentMethod, setPaymentMethod] = useState<string>("COD");
 
@@ -270,9 +271,22 @@ function TelesalesCreateOrderContent() {
             const newQuantity = Math.max(1, item.quantity + delta);
             const available = inventory[item.product.id] ?? 0;
 
-            // TODO: Total quantity check across multiple lines for same product?
-            // For simplicity, just checking per line for now, but ideally should sum all lines.
-            // Let's keep it simple as per request.
+            if (newQuantity > available) {
+                alert(`Kho chỉ còn ${available} sản phẩm!`);
+                return prev;
+            }
+
+            newItems[index] = { ...item, quantity: newQuantity };
+            return newItems;
+        });
+    };
+
+    const handleSetQuantity = (index: number, value: number) => {
+        setOrderItems((prev) => {
+            const newItems = [...prev];
+            const item = newItems[index];
+            const newQuantity = Math.max(1, value);
+            const available = inventory[item.product.id] ?? 0;
 
             if (newQuantity > available) {
                 alert(`Kho chỉ còn ${available} sản phẩm!`);
@@ -322,9 +336,28 @@ function TelesalesCreateOrderContent() {
     const handleToggleGift = (index: number) => {
         setOrderItems(prev => {
             const newItems = [...prev];
-            // If toggling ON, price effectively becomes irrelevant (it's 0 for subtotal), but we keep the stored price.
-            // If toggling OFF, it resumes being a normal item.
-            newItems[index] = { ...newItems[index], isGift: !newItems[index].isGift };
+            const item = newItems[index];
+
+            if (!item.isGift) {
+                // Toggling ON: make this line a gift
+                if (item.quantity > 1) {
+                    // Split: gift line gets qty=1, new normal line gets remaining
+                    const remainingQty = item.quantity - 1;
+                    newItems[index] = { ...item, isGift: true, quantity: 1, discount: 0, discountValue: 0 };
+                    // Insert new normal line right after
+                    newItems.splice(index + 1, 0, {
+                        ...item,
+                        isGift: false,
+                        quantity: remainingQty
+                    });
+                } else {
+                    // qty=1, just mark as gift
+                    newItems[index] = { ...item, isGift: true, discount: 0, discountValue: 0 };
+                }
+            } else {
+                // Toggling OFF: resume as normal item
+                newItems[index] = { ...item, isGift: false };
+            }
             return newItems;
         });
     };
@@ -338,8 +371,10 @@ function TelesalesCreateOrderContent() {
 
     const calculateTotal = () => {
         const subtotal = orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0);
-        const vatAmount = subtotal * (vatRate / 100);
-        return subtotal + vatAmount;
+        const orderDiscount = subtotal * (orderDiscountPercent / 100);
+        const afterOrderDiscount = subtotal - orderDiscount;
+        const vatAmount = afterOrderDiscount * (vatRate / 100);
+        return afterOrderDiscount + vatAmount;
     };
 
     const calculateTotalListPrice = () => {
@@ -381,7 +416,8 @@ function TelesalesCreateOrderContent() {
                     isGift: item.isGift
                 })),
                 totalAmount: total,
-                vat: calculateTotal() - orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0),
+                vat: totalVAT,
+                order_discount_percent: orderDiscountPercent,
                 notes: orderNote,
                 paymentMethod: paymentMethod
             }, session?.access_token);
@@ -415,7 +451,8 @@ function TelesalesCreateOrderContent() {
                 totalAmount: total,
                 status: "pending",
                 notes: orderNote || (dealInfo ? `Đơn hàng từ cơ hội: ${dealInfo.title}` : "Đơn hàng tạo bởi Telesales"),
-                vat: calculateTotal() - orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0), // exact vat val
+                vat: totalVAT,
+                order_discount_percent: orderDiscountPercent,
                 paymentMethod: paymentMethod
             }, session?.access_token);
 
@@ -442,6 +479,7 @@ function TelesalesCreateOrderContent() {
         setSelectedCustomer(null);
         setOrderItems([]);
         setVatRate(0);
+        setOrderDiscountPercent(0);
         setOrderNote("");
         setPaymentMethod("COD");
         setCurrentStep(1);
@@ -453,12 +491,14 @@ function TelesalesCreateOrderContent() {
 
     // Calculated Summary Data
     const totalListPrice = calculateTotalListPrice();
-    const totalDiscount = calculateTotalDiscount();
-    const totalAfterDiscount = totalListPrice - totalDiscount;
-    const itemsSubtotal = orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0); // Should equal totalAfterDiscount if no negative logic
-    const totalVAT = itemsSubtotal * (vatRate / 100);
-    const finalTotal = itemsSubtotal + totalVAT;
-    const discountPercent = totalListPrice > 0 ? (totalDiscount / totalListPrice) * 100 : 0;
+    const totalItemDiscount = calculateTotalDiscount();
+    const itemsSubtotal = orderItems.reduce((sum, item) => sum + calculateItemSubtotal(item), 0);
+    const orderDiscountAmount = itemsSubtotal * (orderDiscountPercent / 100);
+    const afterAllDiscounts = itemsSubtotal - orderDiscountAmount;
+    const totalVAT = afterAllDiscounts * (vatRate / 100);
+    const finalTotal = afterAllDiscounts + totalVAT;
+    const totalAllDiscounts = totalItemDiscount + orderDiscountAmount;
+    const discountPercent = totalListPrice > 0 ? (totalAllDiscounts / totalListPrice) * 100 : 0;
 
 
     return (
@@ -786,7 +826,13 @@ function TelesalesCreateOrderContent() {
                                                 >
                                                     <Minus className="w-3.5 h-3.5" />
                                                 </button>
-                                                <span className="w-8 text-center text-sm font-semibold">{item.quantity}</span>
+                                                <input
+                                                    type="number"
+                                                    className="w-12 text-center text-sm font-semibold bg-white border border-slate-200 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-0.5"
+                                                    value={item.quantity}
+                                                    onChange={(e) => handleSetQuantity(index, parseInt(e.target.value) || 1)}
+                                                    min={1}
+                                                />
                                                 <button
                                                     onClick={() => handleUpdateQuantity(index, 1)}
                                                     className="p-1 hover:bg-white rounded transition-colors"
@@ -885,21 +931,51 @@ function TelesalesCreateOrderContent() {
                                             <span>{formatPrice(totalListPrice)}</span>
                                         </div>
                                         <div className="flex items-center justify-between text-slate-600">
-                                            <span>Tổng được chiết khấu:</span>
-                                            <div className="text-right">
-                                                <span className="text-red-600 mr-1">-{formatPrice(totalDiscount)}</span>
-                                                <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded">
+                                            <span>Chiết khấu theo dòng:</span>
+                                            <span className="text-red-600">-{formatPrice(totalItemDiscount)}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-slate-600">
+                                            <span>Thành tiền (sau CK dòng):</span>
+                                            <span className="font-medium">{formatPrice(itemsSubtotal)}</span>
+                                        </div>
+
+                                        <div className="border-t border-slate-200 my-2"></div>
+
+                                        {/* Order-level discount % */}
+                                        <div className="flex items-center justify-between text-slate-600">
+                                            <div className="flex items-center gap-1.5">
+                                                <Percent className="w-3.5 h-3.5" />
+                                                <span>Chiết khấu đơn (%):</span>
+                                                <input
+                                                    type="number"
+                                                    className="w-14 px-1 py-0.5 text-center border border-slate-300 rounded focus:border-indigo-500 text-xs"
+                                                    placeholder="0"
+                                                    min={0}
+                                                    max={100}
+                                                    value={orderDiscountPercent || ""}
+                                                    onChange={(e) => setOrderDiscountPercent(Math.min(100, Math.max(0, Number(e.target.value))))}
+                                                />
+                                            </div>
+                                            <span className="text-red-600">-{formatPrice(orderDiscountAmount)}</span>
+                                        </div>
+
+                                        <div className="flex items-center justify-between text-slate-700 font-medium">
+                                            <span>Thành tiền (Trước VAT):</span>
+                                            <span>{formatPrice(afterAllDiscounts)}</span>
+                                        </div>
+
+                                        {/* Total discount summary */}
+                                        <div className="flex items-center justify-between text-slate-500 text-xs">
+                                            <span>Tổng chiết khấu:</span>
+                                            <div>
+                                                <span className="text-red-600 mr-1">-{formatPrice(totalAllDiscounts)}</span>
+                                                <span className="bg-red-100 text-red-700 px-1.5 py-0.5 rounded">
                                                     {discountPercent.toFixed(1)}%
                                                 </span>
                                             </div>
                                         </div>
 
                                         <div className="border-t border-slate-200 my-2"></div>
-
-                                        <div className="flex items-center justify-between text-slate-600">
-                                            <span>Thành tiền (Trước VAT):</span>
-                                            <span className="font-medium">{formatPrice(itemsSubtotal)}</span>
-                                        </div>
 
                                         {/* VAT */}
                                         <div className="flex items-center justify-between text-slate-600">

@@ -420,7 +420,8 @@ export const addOrderSupabase = async (orderData: any, token?: string) => {
             source: orderData.source || 'CUSTOMER',
             vat: orderData.vat || 0,
             note: orderData.notes || orderData.note || null,
-            payment_method: orderData.paymentMethod || 'COD'
+            payment_method: orderData.paymentMethod || 'COD',
+            order_discount_percent: orderData.order_discount_percent || 0
         };
 
         // Prepare Items
@@ -594,7 +595,8 @@ export const updateOrderSupabase = async (orderId: string, updateData: any, toke
             payment_method: updateData.paymentMethod || 'COD',
             customer_name: updateData.customerName,
             customer_id: updateData.customer_id || updateData.customerId,
-            status: 'pending' // Force keep pending or use status? usually edit keeps it pending.
+            order_discount_percent: updateData.order_discount_percent || 0,
+            status: 'pending'
         };
 
         const itemsToInsert = (updateData.items || []).map((item: any) => ({
