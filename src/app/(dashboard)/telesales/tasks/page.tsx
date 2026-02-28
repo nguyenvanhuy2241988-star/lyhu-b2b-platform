@@ -942,6 +942,13 @@ export default function TelesalesTasksPage() {
         try {
             if (taskData.id) {
                 await updateTaskSupabase(taskData.id, taskData, session?.access_token);
+                // Also create/update placements for all assignees (handles newly tagged users)
+                const allUserIds = new Set<string>();
+                if (user?.id) allUserIds.add(user.id);
+                if (taskData.assignee_ids) taskData.assignee_ids.forEach((id: string) => allUserIds.add(id));
+                if (taskData.assigned_to) allUserIds.add(taskData.assigned_to);
+                if (taskData.leader_id) allUserIds.add(taskData.leader_id);
+                await createTaskPlacements(taskData.id, Array.from(allUserIds), session?.access_token);
             } else {
                 // Create mode - then create placements for all assignees
                 const created = await createTaskSupabase(taskData, session?.access_token);
@@ -1462,88 +1469,7 @@ export default function TelesalesTasksPage() {
                                     onDragStart={(e) => handleColumnDragStart(e, col.id)}
                                     onDragEnd={handleColumnDragEnd}
                                     onDragOver={(e) => handleDragOverColumn(e, col.id)}
-                                    onDrop={async (e) => {
-                                        // Custom Handle Drop for Date Logic
-                                        e.preventDefault();
-                                        e.stopPropagation();
-
-                                        const draggedTaskIdData = e.dataTransfer.getData("telesales/task");
-                                        const draggedColId = e.dataTransfer.getData("telesales/column");
-
-                                        setDraggedTaskId(null);
-                                        setDropIndicator(null);
-                                        setDragOverColId(null);
-
-                                        if (draggedTaskIdData) {
-                                            const allTasks = Object.values(columnTasks).flat();
-                                            const task = allTasks.find(t => t.id === draggedTaskIdData);
-                                            if (!task) return;
-
-                                            // Determine New Date & Status based on Target Col
-                                            let newStatus = col.id;
-                                            let newDueDate: string | null = task.due_date || null;
-
-                                            const today = new Date();
-
-                                            if (col.id === 'inbox') {
-                                                newDueDate = null;
-                                                newStatus = 'inbox';
-                                            } else if (col.id === 'today') {
-                                                const d = new Date();
-                                                newDueDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                                                newStatus = 'today';
-                                            } else if (col.id === 'tomorrow') {
-                                                const tmr = new Date();
-                                                tmr.setDate(tmr.getDate() + 1);
-                                                newDueDate = `${tmr.getFullYear()}-${String(tmr.getMonth() + 1).padStart(2, '0')}-${String(tmr.getDate()).padStart(2, '0')}`;
-                                                newStatus = 'tomorrow';
-                                            } else if (col.id === 'this_week') {
-                                                const next = new Date();
-                                                next.setDate(next.getDate() + 3); // Approx
-                                                newDueDate = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
-                                                newStatus = 'this_week';
-                                            } else if (col.id === 'later') {
-                                                const later = new Date(today);
-                                                later.setDate(later.getDate() + 7);
-                                                newDueDate = later.toISOString();
-                                                newStatus = 'later';
-                                            } else if (col.id === 'done') {
-                                                newStatus = 'done';
-                                                // Keep existing date or set today? Keep existing.
-                                            }
-
-                                            // Optimistic Update
-                                            const updatedTask = { ...task, status: newStatus as TaskStatus, due_date: newDueDate as string };
-                                            setColumnTasks(prev => {
-                                                const newColumnTasks = { ...prev };
-                                                // Remove from old column
-                                                for (const colId in newColumnTasks) {
-                                                    if (Array.isArray(newColumnTasks[colId])) {
-                                                        newColumnTasks[colId] = newColumnTasks[colId].filter(t => t.id !== draggedTaskIdData);
-                                                    }
-                                                }
-                                                // Add to new column
-                                                newColumnTasks[newStatus] = [...(Array.isArray(newColumnTasks[newStatus]) ? newColumnTasks[newStatus] : []), updatedTask];
-                                                return newColumnTasks;
-                                            });
-
-                                            await updateTaskSupabase(task.id, { status: newStatus as TaskStatus, due_date: newDueDate as any });
-                                            refreshData();
-                                        }
-
-                                        // Column Reorder (same as before)
-                                        if (draggedColId && draggedColId !== col.id) {
-                                            const currentCols = [...columns];
-                                            const sourceIndex = currentCols.findIndex(c => c.id === draggedColId);
-                                            const targetIndex = currentCols.findIndex(c => c.id === col.id);
-                                            if (sourceIndex >= 0 && targetIndex >= 0) {
-                                                const [movedCol] = currentCols.splice(sourceIndex, 1);
-                                                currentCols.splice(targetIndex, 0, movedCol);
-                                                setColumns(currentCols);
-                                                reorderUserColumns(currentCols.map((c, i) => ({ id: c.id, position: i })), session?.access_token);
-                                            }
-                                        }
-                                    }}
+                                    onDrop={(e) => handleDrop(e, col.id)}
                                     className={`flex-1 min-w-[280px] bg-slate-50/50 rounded-xl flex flex-col max-h-[calc(100vh-280px)] group/col border-2 transition-colors 
                                         ${dragOverColId === col.id ? 'border-primary-300 bg-primary-50/20' : 'border-transparent hover:border-slate-200'}
                                     `}
