@@ -124,12 +124,12 @@ export default function DealDetailPage() {
             setActivities(prev => [activity, ...prev]);
         }
 
-        // Auto-sync to KPI: only count "answered" calls
-        if (callResult === 'answered') {
-            const today = new Date().toISOString().split('T')[0];
-            const { incrementCallsCompleted } = await import('@/lib/telesalesDailyStore');
-            await incrementCallsCompleted(user.id, today);
-        }
+        // Auto-sync calls to KPI (re-count from actual CRM data)
+        // Use local date (not UTC) to match user's timezone
+        const now = new Date();
+        const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const { syncCallsFromCRM } = await import('@/lib/telesalesDailyStore');
+        await syncCallsFromCRM(user.id, localDate);
 
         setIsLogCallOpen(false);
     };

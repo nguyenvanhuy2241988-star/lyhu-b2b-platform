@@ -910,20 +910,19 @@ export default function TelesalesTasksPage() {
         if (taskToLog) {
             await addLogSupabase(taskToLog.id, logData);
 
-            // Auto-sync to KPI: only count "answered" calls
-            const callResult = logData.call_result || logData.result;
-            if (callResult === 'answered' || callResult === 'Nghe máy') {
-                try {
-                    const { data } = await createClient().auth.getSession();
-                    const userId = data?.session?.user?.id;
-                    if (userId) {
-                        const today = new Date().toISOString().split('T')[0];
-                        const { incrementCallsCompleted } = await import('@/lib/telesalesDailyStore');
-                        await incrementCallsCompleted(userId, today);
-                    }
-                } catch (err) {
-                    console.error('Error syncing call to KPI:', err);
+            // Auto-sync calls to KPI (re-count from actual CRM data)
+            try {
+                const { data } = await createClient().auth.getSession();
+                const userId = data?.session?.user?.id;
+                if (userId) {
+                    // Use local date (not UTC) to match user's timezone
+                    const now = new Date();
+                    const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                    const { syncCallsFromCRM } = await import('@/lib/telesalesDailyStore');
+                    await syncCallsFromCRM(userId, localDate);
                 }
+            } catch (err) {
+                console.error('Error syncing call to KPI:', err);
             }
 
             setIsLogModalOpen(false);

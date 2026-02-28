@@ -878,6 +878,18 @@ export default function CRMPage() {
             await refreshData();
             setIsCreateModalOpen(false);
             setEditingDeal(null);
+
+            // Auto-sync self-sourced data to KPI when creating a new deal
+            if (!editingDeal?.id) {
+                try {
+                    const now = new Date();
+                    const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                    const { syncSelfSourcedFromCRM } = await import('@/lib/telesalesDailyStore');
+                    await syncSelfSourcedFromCRM(userInfo.id, localDate);
+                } catch (e) {
+                    console.error('Error syncing self-sourced data:', e);
+                }
+            }
         } catch (error) {
             console.error("Failed to save deal", error);
             alert("Lỗi: " + (error instanceof Error ? error.message : "Đã có lỗi xảy ra. Vui lòng thử lại."));
