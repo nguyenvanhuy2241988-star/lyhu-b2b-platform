@@ -268,7 +268,7 @@ export interface TelesalesKpiStats extends TelesalesKpiSettings {
 }
 
 export const getTelesalesKpiStats = async (userId: string, date: string, toDate?: string): Promise<TelesalesKpiStats> => {
-    // 1. Get Settings
+    // 1. Get Settings from telesales_kpi_settings (legacy)
     const { data: settingsData, error: settingsError } = await supabase
         .from('telesales_kpi_settings')
         .select('*')
@@ -290,7 +290,28 @@ export const getTelesalesKpiStats = async (userId: string, date: string, toDate?
         zalo_posts_target: 5
     };
 
-    const settings: TelesalesKpiSettings = settingsData || defaultSettings;
+    let settings: TelesalesKpiSettings = settingsData || defaultSettings;
+
+    // 1b. Override targets from user_kpi_settings (payroll module) if available
+    const { data: payrollKpi } = await supabase
+        .from('user_kpi_settings')
+        .select('kpi_targets')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+    if (payrollKpi?.kpi_targets) {
+        const pt = payrollKpi.kpi_targets as Record<string, number>;
+        settings = {
+            ...settings,
+            calls_target: pt.calls || pt.calls_target || settings.calls_target,
+            self_sourced_data_target: pt.self_sourced || pt.self_sourced_data || pt.self_sourced_data_target || settings.self_sourced_data_target,
+            fb_group_posts_target: pt.fb_group_posts || pt.fb_group_posts_target || settings.fb_group_posts_target,
+            fb_comments_target: pt.fb_comments || pt.fb_comments_target || settings.fb_comments_target,
+            fb_friends_target: pt.fb_friends || pt.fb_friends_target || settings.fb_friends_target,
+            fb_personal_posts_target: pt.fb_personal_posts || pt.fb_personal_posts_target || settings.fb_personal_posts_target,
+            zalo_posts_target: pt.zalo_posts || pt.zalo_posts_target || settings.zalo_posts_target,
+        };
+    }
 
     // 2. Get reports for date range
     if (toDate && toDate !== date) {
@@ -391,13 +412,21 @@ export const getTeamTelesalesKpiStats = async (date: string, toDate?: string): P
         };
     }
 
-    // 2. Lấy cài đặt KPI của các nhân sự
+    // 2. Lấy cài đặt KPI của các nhân sự (legacy)
     const { data: settingsData } = await supabase
         .from('telesales_kpi_settings')
         .select('*')
         .in('user_id', telesalesUserIds);
 
     const settingsMap = new Map((settingsData || []).map((s: any) => [s.user_id, s]));
+
+    // 2b. Override with payroll targets (user_kpi_settings)
+    const { data: payrollSettings } = await supabase
+        .from('user_kpi_settings')
+        .select('user_id, kpi_targets')
+        .in('user_id', telesalesUserIds);
+
+    const payrollMap = new Map((payrollSettings || []).map((s: any) => [s.user_id, s.kpi_targets || {}]));
 
     const defaultSettings: any = {
         calls_target: 50, self_sourced_data_target: 10, fb_group_posts_target: 20, fb_comments_target: 50, fb_friends_target: 10, fb_personal_posts_target: 5, zalo_posts_target: 5
@@ -407,13 +436,16 @@ export const getTeamTelesalesKpiStats = async (date: string, toDate?: string): P
 
     for (const uid of telesalesUserIds) {
         const s: any = settingsMap.get(uid) || defaultSettings;
-        aggregatedTargets.calls_target += s.calls_target || 0;
-        aggregatedTargets.self_sourced_data_target += s.self_sourced_data_target || 0;
-        aggregatedTargets.fb_group_posts_target += s.fb_group_posts_target || 0;
-        aggregatedTargets.fb_comments_target += s.fb_comments_target || 0;
-        aggregatedTargets.fb_friends_target += s.fb_friends_target || 0;
-        aggregatedTargets.fb_personal_posts_target += s.fb_personal_posts_target || 0;
-        aggregatedTargets.zalo_posts_target += s.zalo_posts_target || 0;
+        const pt = (payrollMap.get(uid) || {}) as Record<string, number>;
+
+        // Priority: payroll targets > telesales_kpi_settings > default
+        aggregatedTargets.calls_target += pt.calls || pt.calls_target || s.calls_target || 0;
+        aggregatedTargets.self_sourced_data_target += pt.self_sourced || pt.self_sourced_data || pt.self_sourced_data_target || s.self_sourced_data_target || 0;
+        aggregatedTargets.fb_group_posts_target += pt.fb_group_posts || pt.fb_group_posts_target || s.fb_group_posts_target || 0;
+        aggregatedTargets.fb_comments_target += pt.fb_comments || pt.fb_comments_target || s.fb_comments_target || 0;
+        aggregatedTargets.fb_friends_target += pt.fb_friends || pt.fb_friends_target || s.fb_friends_target || 0;
+        aggregatedTargets.fb_personal_posts_target += pt.fb_personal_posts || pt.fb_personal_posts_target || s.fb_personal_posts_target || 0;
+        aggregatedTargets.zalo_posts_target += pt.zalo_posts || pt.zalo_posts_target || s.zalo_posts_target || 0;
     }
 
     // Scale targets by number of days in range
