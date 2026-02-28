@@ -448,7 +448,7 @@ export async function deleteTaskSupabase(taskId: string, token?: string) {
 
     try {
         const headers = await getAuthHeaders(token);
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${taskId}&user_id=eq.${userId}`, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE}?id=eq.${taskId}`, {
             method: 'DELETE',
             headers
         });
