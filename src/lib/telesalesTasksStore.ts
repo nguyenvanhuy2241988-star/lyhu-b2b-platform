@@ -682,3 +682,180 @@ export async function updateTasksOrderSupabase(updates: { id: string, order: num
         return false;
     }
 }
+
+// ============================================================
+// DATABASE COLUMN SYSTEM (replaces localStorage)
+// ============================================================
+
+export interface DbColumn {
+    id: string;
+    user_id: string;
+    label: string;
+    column_type: string; // 'system_inbox' | 'system_done' | 'date_overdue' | 'date_today' | 'date_tomorrow' | 'date_this_week' | 'custom'
+    position: number;
+    color: string | null;
+    is_visible: boolean;
+    created_at: string;
+}
+
+/** Check if column uses date-based queries (not placements) */
+export function isDateColumn(columnType: string): boolean {
+    return columnType.startsWith('date_');
+}
+
+/** Check if column uses placement-based queries */
+export function isPlacementColumn(columnType: string): boolean {
+    return columnType === 'system_inbox' || columnType === 'system_done' || columnType === 'custom';
+}
+
+/** Fetch user's columns from DB */
+export async function fetchUserColumns(token?: string): Promise<DbColumn[]> {
+    try {
+        const headers = (await getAuthHeaders(token)) as Record<string, string>;
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/task_user_columns?select=*&order=position.asc`, { headers });
+        if (!res.ok) {
+            console.error('[fetchUserColumns] Error:', res.status);
+            return [];
+        }
+        return await res.json();
+    } catch (e) {
+        logSupabaseError('fetchUserColumns', e);
+        return [];
+    }
+}
+
+/** Create a new custom column */
+export async function createUserColumn(data: { label: string; position?: number; color?: string }, token?: string): Promise<DbColumn | null> {
+    try {
+        const userId = await getUserIdSafe();
+        if (!userId) return null;
+        const headers = (await getAuthHeaders(token)) as Record<string, string>;
+        headers['Content-Type'] = 'application/json';
+        headers['Prefer'] = 'return=representation';
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/task_user_columns`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({
+                user_id: userId,
+                label: data.label,
+                column_type: 'custom',
+                position: data.position ?? 45,
+                color: data.color || null
+            })
+        });
+        if (!res.ok) return null;
+        const result = await res.json();
+        return Array.isArray(result) ? result[0] : result;
+    } catch (e) {
+        logSupabaseError('createUserColumn', e);
+        return null;
+    }
+}
+
+/** Update a column (label, position, color, is_visible) */
+export async function updateUserColumn(columnId: string, data: Partial<{ label: string; position: number; color: string; is_visible: boolean }>, token?: string): Promise<boolean> {
+    try {
+        const headers = (await getAuthHeaders(token)) as Record<string, string>;
+        headers['Content-Type'] = 'application/json';
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/task_user_columns?id=eq.${columnId}`, {
+            method: 'PATCH',
+            headers,
+            body: JSON.stringify(data)
+        });
+        return res.ok;
+    } catch (e) {
+        logSupabaseError('updateUserColumn', e);
+        return false;
+    }
+}
+
+/** Delete a column */
+export async function deleteUserColumn(columnId: string, token?: string): Promise<boolean> {
+    try {
+        const headers = (await getAuthHeaders(token)) as Record<string, string>;
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/task_user_columns?id=eq.${columnId}`, {
+            method: 'DELETE',
+            headers
+        });
+        return res.ok;
+    } catch (e) {
+        logSupabaseError('deleteUserColumn', e);
+        return false;
+    }
+}
+
+/** Reorder columns (batch update positions) */
+export async function reorderUserColumns(columns: { id: string; position: number }[], token?: string): Promise<boolean> {
+    try {
+        const headers = (await getAuthHeaders(token)) as Record<string, string>;
+        headers['Content-Type'] = 'application/json';
+        const requests = columns.map(col =>
+            fetch(`${SUPABASE_URL}/rest/v1/task_user_columns?id=eq.${col.id}`, {
+                method: 'PATCH',
+                headers,
+                body: JSON.stringify({ position: col.position })
+            })
+        );
+        const responses = await Promise.all(requests);
+        return responses.every(r => r.ok);
+    } catch (e) {
+        logSupabaseError('reorderUserColumns', e);
+        return false;
+    }
+}
+
+/** Fetch tasks for a specific column via placements (RPC) */
+export async function fetchColumnTasks(columnId: string, limit = 50, offset = 0, token?: string): Promise<TelesalesTask[]> {
+    try {
+        const headers = (await getAuthHeaders(token)) as Record<string, string>;
+        headers['Content-Type'] = 'application/json';
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_column_tasks`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ p_column_id: columnId, p_limit: limit, p_offset: offset })
+        });
+        if (!res.ok) {
+            console.error('[fetchColumnTasks] Error:', res.status);
+            return [];
+        }
+        return await res.json();
+    } catch (e) {
+        logSupabaseError('fetchColumnTasks', e);
+        return [];
+    }
+}
+
+/** Move task to a column (upsert placement via RPC) */
+export async function moveTaskToColumn(taskId: string, columnId: string, token?: string): Promise<boolean> {
+    try {
+        const headers = (await getAuthHeaders(token)) as Record<string, string>;
+        headers['Content-Type'] = 'application/json';
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/move_task_to_column`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ p_task_id: taskId, p_column_id: columnId })
+        });
+        return res.ok;
+    } catch (e) {
+        logSupabaseError('moveTaskToColumn', e);
+        return false;
+    }
+}
+
+/** Create placements for all assignees (puts in their inbox) via RPC */
+export async function createTaskPlacements(taskId: string, userIds: string[], token?: string): Promise<boolean> {
+    try {
+        if (!userIds || userIds.length === 0) return true;
+        const headers = (await getAuthHeaders(token)) as Record<string, string>;
+        headers['Content-Type'] = 'application/json';
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/create_task_placements`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ p_task_id: taskId, p_user_ids: userIds })
+        });
+        return res.ok;
+    } catch (e) {
+        logSupabaseError('createTaskPlacements', e);
+        return false;
+    }
+}

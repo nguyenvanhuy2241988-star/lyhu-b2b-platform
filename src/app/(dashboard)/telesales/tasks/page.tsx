@@ -36,53 +36,38 @@ import {
     updateTaskSupabase,
     createTaskSupabase,
     deleteTaskSupabase,
-    loadColumns,
-    saveColumns,
     TelesalesColumn,
-    DEFAULT_COLUMNS,
     fetchPaginatedTasks,
-    updateTasksOrderSupabase
+    updateTasksOrderSupabase,
+    // New DB Column System
+    DbColumn,
+    fetchUserColumns,
+    createUserColumn,
+    updateUserColumn,
+    deleteUserColumn,
+    reorderUserColumns,
+    fetchColumnTasks,
+    moveTaskToColumn,
+    createTaskPlacements,
+    isDateColumn,
+    isPlacementColumn
 } from "@/lib/telesalesTasksStore";
 
-// --- Local Implementations for Column Management (Missing in Store) ---
-const addColumn = () => {
-    const cols = loadColumns();
-    const newId = `col_${Date.now()}`;
-    // Force cast string to TaskStatus if needed, or update type to string
-    // TelesalesColumn id is TaskStatus. If we allow dynamic columns, TaskStatus type needs to be looser or id type.
-    // However, in new store, TaskStatus is union.
-    // Making id `any` for local compat or avoiding custom columns.
-    // If strict, we can't add custom columns.
-    // But UI has "Add Column".
-    // I will cast to any to satisfy TS for now.
-    const newCol: TelesalesColumn = { id: newId as any, label: "Cột mới", status: 'inbox', order: cols.length, isDefault: false, isVisible: true };
-    const newCols = [...cols, newCol];
-    saveColumns(newCols);
-    return newCols;
-};
-
-const deleteColumn = (id: string) => {
-    const cols = loadColumns().filter(c => c.id !== id);
-    saveColumns(cols);
-    return cols;
-};
-
-const updateColumn = (id: string, patch: Partial<TelesalesColumn>) => {
-    const cols = loadColumns().map(c => c.id === id ? { ...c, ...patch } : c);
-    saveColumns(cols);
-    return cols;
-};
-
-const reorderColumns = (newCols: TelesalesColumn[]) => {
-    const ordered = newCols.map((c, i) => ({ ...c, order: i }));
-    saveColumns(ordered);
-    return ordered;
-};
-
-const resetColumns = () => {
-    saveColumns(DEFAULT_COLUMNS);
-    return DEFAULT_COLUMNS;
-};
+// --- Helper: Convert DbColumn to TelesalesColumn for UI compatibility ---
+function dbColToUiCol(col: DbColumn): TelesalesColumn {
+    return {
+        id: col.id,
+        label: col.label,
+        status: col.column_type === 'system_inbox' ? 'inbox' as TaskStatus
+            : col.column_type === 'system_done' ? 'done' as TaskStatus
+                : col.id as any,
+        order: col.position,
+        isDefault: col.column_type !== 'custom',
+        isVisible: col.is_visible,
+        // Store column_type for the new system
+        ...(({ column_type: col.column_type }) as any)
+    };
+}
 
 // FIXED: Re-enabled log functionality with Pure Fetch
 const addLogSupabase = async (taskId: string, logData: any) => {
@@ -400,7 +385,8 @@ export default function TelesalesTasksPage() {
     const [totalCounts, setTotalCounts] = useState<Record<string, number>>({});
 
     const [profiles, setProfiles] = useState<Profile[]>([]);
-    const [columns, setColumns] = useState<TelesalesColumn[]>([]);
+    const [columns, setColumns] = useState<(TelesalesColumn & { column_type?: string })[]>([]);
+    const [dbColumns, setDbColumns] = useState<DbColumn[]>([]);
     const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
     const [isLoading, setIsLoading] = useState(false);
 
@@ -417,7 +403,8 @@ export default function TelesalesTasksPage() {
     const [isSimpleModalOpen, setIsSimpleModalOpen] = useState(false); // New Simple Modal
     const [isCreateLeadModalOpen, setIsCreateLeadModalOpen] = useState(false); // New Lead Modal
 
-    const [createModalInitialStatus, setCreateModalInitialStatus] = useState<TaskStatus>("today");
+    const [createModalInitialStatus, setCreateModalInitialStatus] = useState<TaskStatus>("inbox");
+    const savingRef = useRef(false); // Prevent Realtime duplication during save
     const [editingTask, setEditingTask] = useState<TelesalesTask | null>(null); // New state for editing
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -471,12 +458,12 @@ export default function TelesalesTasksPage() {
 
     const handleToggleTaskStatus = async (task: TelesalesTask) => {
         const taskId = task.id;
-        const newStatus = task.status === 'done' ? 'today' : 'done';
+        const isDone = task.status === 'done';
+        const newStatus = isDone ? 'active' : 'done';
 
         // 🚀 Optimistic update
         setColumnTasks(prev => {
             const newColumnTasks = { ...prev };
-            // Find and update the task in its current column
             for (const colId in newColumnTasks) {
                 newColumnTasks[colId] = newColumnTasks[colId].map(t =>
                     t.id === taskId ? { ...t, status: newStatus as TaskStatus } : t
@@ -487,116 +474,97 @@ export default function TelesalesTasksPage() {
 
         const success = await updateTaskSupabase(taskId, { status: newStatus as TaskStatus });
 
+        // Also move placement to done/inbox column
+        const targetColType = isDone ? 'system_inbox' : 'system_done';
+        const targetCol = dbColumns.find(c => c.column_type === targetColType);
+        if (targetCol) {
+            await moveTaskToColumn(taskId, targetCol.id, session?.access_token);
+        }
+
         if (!success) {
-            refreshData(); // Hard refresh on error
+            refreshData();
             alert("Lỗi: Không thể cập nhật trạng thái công việc.");
+        } else {
+            // Refresh to show task in correct column
+            refreshData();
         }
     };
 
-    const loadTasksForColumn = useCallback(async (colId: string, pageNum: number = 1, isLoadMore: boolean = false) => {
+    const loadTasksForColumn = useCallback(async (colId: string, pageNum: number = 1, isLoadMore: boolean = false, colType?: string) => {
         if (!user || !session?.access_token) return;
 
         setLoadingColumns(prev => ({ ...prev, [colId]: true }));
         try {
-            // UNIFIED TASKS LOGIC
-            const unifyColumns = ['today', 'tomorrow', 'this_week', 'overdue'];
-            if (unifyColumns.includes(colId)) {
-                // Determine Date Range
+            // Determine column type from dbColumns if not provided
+            const columnType = colType || dbColumns.find(c => c.id === colId)?.column_type || 'custom';
+
+            if (isDateColumn(columnType)) {
+                // DATE COLUMNS: fetch by due_date range using RPC
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-
                 let startDate = new Date(today);
                 let endDate = new Date(today);
 
-                if (colId === 'today') {
+                if (columnType === 'date_today') {
                     endDate.setHours(23, 59, 59, 999);
-                } else if (colId === 'tomorrow') {
+                } else if (columnType === 'date_tomorrow') {
                     startDate.setDate(today.getDate() + 1);
                     endDate.setDate(today.getDate() + 1);
                     endDate.setHours(23, 59, 59, 999);
-                } else if (colId === 'this_week') {
-                    startDate.setDate(today.getDate() + 2); // Skip Today (+0) and Tomorrow (+1)
+                } else if (columnType === 'date_this_week') {
+                    startDate.setDate(today.getDate() + 2);
                     endDate.setDate(today.getDate() + 7);
                     endDate.setHours(23, 59, 59, 999);
-                } else if (colId === 'overdue') {
-                    // Overdue: from Past to Yesterday
+                } else if (columnType === 'date_overdue') {
                     startDate = new Date('2000-01-01');
                     endDate.setDate(today.getDate() - 1);
                     endDate.setHours(23, 59, 59, 999);
                 }
 
-                // Call RPC
-                // We need to import fetchUnifiedTasks at top, but for now assuming it's exported from store
-                // I need to add import to top of file in next step or use require? 
-                // Better to assume I added it to imports.
+                const { fetchUnifiedTasks } = require("@/lib/telesalesTasksStore");
+                const data = await fetchUnifiedTasks({ userId: user.id, startDate, endDate }, session.access_token);
 
-                // Using Dynamic Import or assuming I will fix imports. 
-                // Actually, I can use the module imported at line 44.
-                // Wait, line 44 imports specific items. I need to add fetchUnifiedTasks to imports.
-                // I will add it to the import block in a separate edit or assume it's available?
-                // I'll assume I update imports too.
-
-                const { fetchUnifiedTasks } = require("@/lib/telesalesTasksStore"); // Hotfix import
-                const data = await fetchUnifiedTasks({
-                    userId: user.id,
-                    startDate,
-                    endDate
-                }, session.access_token);
-
-                setColumnTasks(prev => ({
-                    ...prev,
-                    [colId]: data // RPC returns all, no pagination needed for unified usually
-                }));
-                setColumnHasMore(prev => ({ ...prev, [colId]: false })); // Unified is all-in-one
+                setColumnTasks(prev => ({ ...prev, [colId]: data }));
+                setColumnHasMore(prev => ({ ...prev, [colId]: false }));
                 setTotalCounts(prev => ({ ...prev, [colId]: data.length }));
-            }
-            else {
-                // LEGACY / INBOX / DONE / CUSTOM COLUMNS
-                const filters = {
-                    searchTerm: debouncedSearchQuery,
-                    priority: filterPriority,
-                    dueDate: filterDueDate,
-                    customerType: filterCustomerType
-                };
-
-                const { data, count } = await fetchPaginatedTasks({
-                    userId: user.id,
-                    status: colId,
-                    page: pageNum,
-                    pageSize: 20,
-                    filters,
-                    token: session.access_token
-                });
+            } else if (isPlacementColumn(columnType)) {
+                // PLACEMENT COLUMNS: fetch via RPC get_column_tasks
+                const data = await fetchColumnTasks(colId, 50, isLoadMore ? (pageNum - 1) * 50 : 0, session.access_token);
 
                 setColumnTasks(prev => ({
                     ...prev,
                     [colId]: isLoadMore ? [...(prev[colId] || []), ...data] : data
                 }));
-                setColumnHasMore(prev => ({ ...prev, [colId]: (pageNum * 20) < count }));
+                setColumnHasMore(prev => ({ ...prev, [colId]: data.length >= 50 }));
                 setColumnPages(prev => ({ ...prev, [colId]: pageNum }));
-                setTotalCounts(prev => ({ ...prev, [colId]: count }));
+                setTotalCounts(prev => ({ ...prev, [colId]: isLoadMore ? (prev[colId] || 0) : data.length }));
             }
         } catch (error) {
             console.error(`[loadTasksForColumn] Error for ${colId}:`, error);
         } finally {
             setLoadingColumns(prev => ({ ...prev, [colId]: false }));
         }
-    }, [user, session?.access_token, debouncedSearchQuery, filterPriority, filterDueDate, filterCustomerType]);
+    }, [user, session?.access_token, dbColumns, debouncedSearchQuery, filterPriority, filterDueDate, filterCustomerType]);
 
     const refreshData = useCallback(async () => {
         if (!user) return;
         setIsLoading(true);
 
-        // Fetch profiles once
-        const { data: profileData } = await supabase.from('profiles').select('id, full_name, email');
+        // Fetch profiles + columns from DB in parallel
+        const [{ data: profileData }, fetchedDbCols] = await Promise.all([
+            supabase.from('profiles').select('id, full_name, email'),
+            fetchUserColumns(session?.access_token)
+        ]);
         if (profileData) setProfiles(profileData);
 
-        const loadedCols = loadColumns().sort((a, b) => a.order - b.order);
-        setColumns(loadedCols);
+        // Convert DB columns to UI format
+        setDbColumns(fetchedDbCols);
+        const uiCols = fetchedDbCols.map(dbColToUiCol);
+        setColumns(uiCols);
 
         // Load each visible column independently
-        const visibleCols = loadedCols.filter(c => c.isVisible !== false);
-        await Promise.all(visibleCols.map(col => loadTasksForColumn(col.id, 1, false)));
+        const visibleCols = fetchedDbCols.filter(c => c.is_visible !== false);
+        await Promise.all(visibleCols.map(col => loadTasksForColumn(col.id, 1, false, col.column_type)));
 
         setIsLoading(false);
     }, [user, loadTasksForColumn]);
@@ -624,7 +592,7 @@ export default function TelesalesTasksPage() {
             setIsLoading(false);
         }
 
-        const handleColumnUpdate = () => setColumns(loadColumns().sort((a, b) => a.order - b.order));
+        const handleColumnUpdate = () => refreshData();
 
         window.addEventListener("telesales-columns-updated", handleColumnUpdate);
 
@@ -642,35 +610,13 @@ export default function TelesalesTasksPage() {
 
                         // Handle INSERT
                         if (payload.eventType === 'INSERT') {
-                            const newTask = payload.new as any;
-
-                            // Check relevance (Owner, Assignee, Leader, or explicitly Assigned)
-                            const userId = user.id;
-                            const isRelevant =
-                                newTask.user_id === userId ||
-                                newTask.owner_id === userId ||
-                                newTask.assigned_to === userId ||
-                                newTask.leader_id === userId ||
-                                (newTask.assignee_ids && Array.isArray(newTask.assignee_ids) && newTask.assignee_ids.includes(userId));
-
-                            if (isRelevant) {
-                                let targetCol = newTask.status;
-                                // Basic mapping fallback
-                                if (!targetCol) targetCol = 'inbox';
-
-                                setColumnTasks(prev => {
-                                    // If we already have it, don't duplicate
-                                    for (const col in prev) {
-                                        if (prev[col].some(t => t.id === newTask.id)) return prev;
-                                    }
-
-                                    const tasks = prev[targetCol] || [];
-                                    return {
-                                        ...prev,
-                                        [targetCol]: [newTask, ...tasks]
-                                    };
-                                });
+                            // Skip INSERT handling if we just saved (refreshData will handle it)
+                            if (savingRef.current) {
+                                console.log('[Realtime] Skipping INSERT (save in progress)');
+                                return;
                             }
+                            // For new column system, just refresh to get correct placements
+                            refreshData();
                         }
 
                         // Handle UPDATE
@@ -951,9 +897,9 @@ export default function TelesalesTasksPage() {
     }, [editingColumnId]);
 
     // Handle Open Create/Edit
-    const openCreateModal = (status: TaskStatus = "today") => {
+    const openCreateModal = (status: TaskStatus = "inbox") => {
         setCreateModalInitialStatus(status);
-        setEditingTask(null); // Clear editing task
+        setEditingTask(null);
         setIsCreateModalOpen(true);
     };
 
@@ -967,12 +913,23 @@ export default function TelesalesTasksPage() {
     // Handle Save (Create or Update)
     const handleSaveTask = async (taskData: any) => {
         setIsLoading(true);
+        savingRef.current = true;
         try {
-            if (taskData.id) { // Trust the ID if present to prevent duplication
+            if (taskData.id) {
                 await updateTaskSupabase(taskData.id, taskData, session?.access_token);
             } else {
-                // Create mode
-                await createTaskSupabase(taskData, session?.access_token);
+                // Create mode - then create placements for all assignees
+                const created = await createTaskSupabase(taskData, session?.access_token);
+                if (created && (Array.isArray(created) ? created[0]?.id : created?.id)) {
+                    const taskId = Array.isArray(created) ? created[0].id : created.id;
+                    // Collect all user IDs: owner + assignees
+                    const allUserIds = new Set<string>();
+                    if (user?.id) allUserIds.add(user.id);
+                    if (taskData.assignee_ids) taskData.assignee_ids.forEach((id: string) => allUserIds.add(id));
+                    if (taskData.assigned_to) allUserIds.add(taskData.assigned_to);
+                    if (taskData.leader_id) allUserIds.add(taskData.leader_id);
+                    await createTaskPlacements(taskId, Array.from(allUserIds), session?.access_token);
+                }
             }
             await refreshData();
             setIsCreateModalOpen(false);
@@ -981,6 +938,7 @@ export default function TelesalesTasksPage() {
             console.error("Failed to save task", error);
             alert(`Không thể lưu công việc: ${error?.message || JSON.stringify(error)}`);
         } finally {
+            savingRef.current = false;
             setIsLoading(false);
         }
     };
@@ -1056,70 +1014,53 @@ export default function TelesalesTasksPage() {
         if (draggedTaskIdData) {
             const allTasks = Object.values(columnTasks).flat();
             const draggedTask = allTasks.find(t => t.id === draggedTaskIdData);
-
             if (!draggedTask) return;
 
-            // Determine New State based on Target Column
-            let newDueDate = draggedTask.due_date;
-            let newStatus = targetColId;
+            // Find target column type
+            const targetCol = dbColumns.find(c => c.id === targetColId);
+            const targetColType = targetCol?.column_type || 'custom';
 
-            const today = new Date(); // Local time
-            const msOneDay = 24 * 60 * 60 * 1000;
-
-            if (targetColId === 'inbox') {
-                newDueDate = null as any;
-                newStatus = 'inbox';
-            } else if (targetColId === 'today') {
-                newDueDate = new Date().toISOString();
-                newStatus = 'today';
-            } else if (targetColId === 'tomorrow') {
-                const tmr = new Date(today.getTime() + msOneDay);
-                newDueDate = tmr.toISOString();
-                newStatus = 'tomorrow';
-            } else if (targetColId === 'this_week') {
-                // Check if current date is effectively this week, if not set to +3 days default?
-                // Existing logic was fuzzy. Let's set to +2 days as default placement
-                const d = new Date(today.getTime() + (2 * msOneDay));
-                newDueDate = d.toISOString();
-                newStatus = 'this_week';
-            } else if (targetColId === 'later') {
-                const d = new Date(today.getTime() + (7 * msOneDay));
-                newDueDate = d.toISOString();
-                newStatus = 'later';
-            }
-
-            // Keep done as done status
-            if (targetColId === 'done') {
-                newStatus = 'done';
-                // Don't change date if moving to done, keep record
-            }
-
-            // Optimistic Update
-            const updatedTask = { ...draggedTask, status: newStatus as TaskStatus, due_date: newDueDate };
+            // Optimistic: move task between columns in UI
             setColumnTasks(prev => {
                 const newColumnTasks = { ...prev };
-                // Remove from old column
                 for (const colId in newColumnTasks) {
                     if (Array.isArray(newColumnTasks[colId])) {
                         newColumnTasks[colId] = newColumnTasks[colId].filter(t => t.id !== draggedTaskIdData);
                     }
                 }
-                // Add to new column
-                newColumnTasks[newStatus] = [...(Array.isArray(newColumnTasks[newStatus]) ? newColumnTasks[newStatus] : []), updatedTask];
+                newColumnTasks[targetColId] = [...(Array.isArray(newColumnTasks[targetColId]) ? newColumnTasks[targetColId] : []), draggedTask];
                 return newColumnTasks;
             });
 
-            await updateTaskSupabase(draggedTaskIdData, {
-                status: newStatus as TaskStatus,
-                due_date: newDueDate
-            });
+            // Handle based on target column type
+            if (isDateColumn(targetColType)) {
+                // Date column: update due_date on the task
+                const today = new Date();
+                const msOneDay = 24 * 60 * 60 * 1000;
+                let newDueDate: string | null = null;
 
-            // No refresh needed if optimistic is correct, but let's refresh for sort order consistency occasionally?
-            // For now, let's skip refresh to avoid jumpiness, or only refresh if needed.
-            // refreshData(); 
+                if (targetColType === 'date_today') newDueDate = new Date().toISOString();
+                else if (targetColType === 'date_tomorrow') newDueDate = new Date(today.getTime() + msOneDay).toISOString();
+                else if (targetColType === 'date_this_week') newDueDate = new Date(today.getTime() + 2 * msOneDay).toISOString();
+                else if (targetColType === 'date_overdue') newDueDate = draggedTask.due_date || null; // Keep existing
+
+                await updateTaskSupabase(draggedTaskIdData, { due_date: newDueDate } as any);
+            } else if (isPlacementColumn(targetColType)) {
+                // Placement column: move task placement
+                await moveTaskToColumn(draggedTaskIdData, targetColId, session?.access_token);
+                // If moving to 'done' column, also update task status
+                if (targetColType === 'system_done') {
+                    await updateTaskSupabase(draggedTaskIdData, { status: 'done' as TaskStatus });
+                } else if (targetColType === 'system_inbox') {
+                    await updateTaskSupabase(draggedTaskIdData, { status: 'active' as TaskStatus });
+                }
+            }
+
+            // Refresh to sync
+            setTimeout(() => refreshData(), 500);
         }
 
-        // 2. Handle Column Drop
+        // 2. Handle Column Drop (reorder)
         if (draggedColId && draggedColId !== targetColId) {
             const currentCols = [...columns];
             const sourceIndex = currentCols.findIndex(c => c.id === draggedColId);
@@ -1128,46 +1069,45 @@ export default function TelesalesTasksPage() {
             if (sourceIndex >= 0 && targetIndex >= 0) {
                 const [movedCol] = currentCols.splice(sourceIndex, 1);
                 currentCols.splice(targetIndex, 0, movedCol);
-
                 setColumns(currentCols);
-                reorderColumns(currentCols);
+                // Save order to DB
+                reorderUserColumns(currentCols.map((c, i) => ({ id: c.id, position: i })), session?.access_token);
             }
         }
     };
 
     // --- Column Management ---
 
-    const handleAddColumn = () => {
-        addColumn();
-        setColumns(loadColumns());
+    const handleAddColumn = async () => {
+        const newCol = await createUserColumn({ label: 'Cột mới' }, session?.access_token);
+        if (newCol) {
+            await refreshData();
+        }
     };
 
-    const deleteColumnHandler = (id: string, isDefault?: boolean) => {
-        if (isDefault && (id === 'inbox' || id === 'done')) {
-            alert("Không thể xóa cột mặc định này.");
+    const deleteColumnHandler = async (id: string, isDefault?: boolean) => {
+        const col = dbColumns.find(c => c.id === id);
+        if (col && (col.column_type === 'system_inbox' || col.column_type === 'system_done')) {
+            alert("Không thể xóa cột hệ thống.");
+            return;
+        }
+        if (col && col.column_type.startsWith('date_')) {
+            alert("Không thể xóa cột ngày hệ thống.");
             return;
         }
         const hasTasks = (columnTasks[id] || []).length > 0;
         if (hasTasks) {
-            if (!window.confirm("Cột này đang có việc cần làm. Nếu xóa, các việc này sẽ chuyển về Hộp thư đến. Bạn chắc chắn chứ?")) {
-                return;
-            }
+            if (!window.confirm("Cột này đang có việc. Nếu xóa, các việc sẽ chuyển về Hộp thư đến. Bạn chắc chắn chứ?")) return;
         } else {
             if (!window.confirm("Bạn có chắc chắn muốn xóa cột này?")) return;
         }
-        deleteColumn(id);
-        setColumns(loadColumns());
-        // Also clear tasks for this column from state
-        setColumnTasks(prev => {
-            const newTasks = { ...prev };
-            delete newTasks[id];
-            return newTasks;
-        });
+        await deleteUserColumn(id, session?.access_token);
+        await refreshData();
     };
 
-    const toggleColumnVisibility = (colId: string, currentVisible: boolean) => {
-        updateColumn(colId, { isVisible: !currentVisible });
-        setColumns(loadColumns());
+    const toggleColumnVisibility = async (colId: string, currentVisible: boolean) => {
+        await updateUserColumn(colId, { is_visible: !currentVisible }, session?.access_token);
+        await refreshData();
     };
 
     const startEditing = (col: TelesalesColumn) => {
@@ -1175,14 +1115,14 @@ export default function TelesalesTasksPage() {
         setEditingTitle(col.label);
     };
 
-    const saveEditing = (id: string) => {
+    const saveEditing = async (id: string) => {
         const safeTitle = (editingTitle ?? "").trim();
         if (safeTitle) {
-            updateColumn(id, { label: safeTitle });
+            await updateUserColumn(id, { label: safeTitle }, session?.access_token);
         }
         setEditingColumnId(null);
         setEditingTitle("");
-        setColumns(loadColumns());
+        await refreshData();
     };
 
     const cancelEditing = () => {
@@ -1375,9 +1315,15 @@ export default function TelesalesTasksPage() {
                                         <Plus className="w-4 h-4" /> Thêm cột mới
                                     </button>
                                     <button
-                                        onClick={() => {
-                                            resetColumns();
-                                            setColumns(loadColumns()); // Reload immediately
+                                        onClick={async () => {
+                                            if (window.confirm('Khôi phục tất cả cột về mặc định? Cột tùy chỉnh sẽ bị xóa.')) {
+                                                // Delete all custom columns, refresh will reload defaults
+                                                const customCols = dbColumns.filter(c => c.column_type === 'custom');
+                                                for (const col of customCols) {
+                                                    await deleteUserColumn(col.id, session?.access_token);
+                                                }
+                                                await refreshData();
+                                            }
                                             setIsSettingsOpen(false);
                                         }}
                                         className="w-full flex items-center justify-center gap-2 text-sm text-slate-500 hover:bg-slate-50 py-2 rounded font-medium hover:text-red-600 mt-1"
@@ -1474,9 +1420,10 @@ export default function TelesalesTasksPage() {
                 <div className="flex-1 overflow-x-auto pb-4">
                     <div className="flex gap-4 min-w-[100%] h-full items-start">
                         {visibleColumns.length > 0 && visibleColumns.map(col => {
-                            // FIX: Use filteredTasks to ensure Search/Priority filters apply to Kanban columns!
-                            // Previously it used columnTasks[col.id] directly, ignoring user filters on the frontend.
-                            const tasks = filteredTasks.filter(t => t.status === col.id);
+                            // FIX: Use columnTasks directly because unified columns rely on RPC 'due_date' logic, NOT the string 'status' field!
+                            // We intersect with `filteredTasks` to apply search and priority filters correctly.
+                            const colList = columnTasks[col.id] || [];
+                            const tasks = colList.filter(t => filteredTasks.some(ft => ft.id === t.id));
 
                             const isLoadingCol = loadingColumns[col.id];
                             const hasMore = columnHasMore[col.id];
@@ -1568,7 +1515,7 @@ export default function TelesalesTasksPage() {
                                                 const [movedCol] = currentCols.splice(sourceIndex, 1);
                                                 currentCols.splice(targetIndex, 0, movedCol);
                                                 setColumns(currentCols);
-                                                reorderColumns(currentCols);
+                                                reorderUserColumns(currentCols.map((c, i) => ({ id: c.id, position: i })), session?.access_token);
                                             }
                                         }
                                     }}
@@ -1732,6 +1679,7 @@ export default function TelesalesTasksPage() {
                 onClose={() => setIsCreateModalOpen(false)}
                 onSave={handleSaveTask}
                 onDelete={editingTask ? () => handleDeleteTask(editingTask.id) : undefined}
+                columns={columns}
             />
 
             {/* Log Call Modal */}
