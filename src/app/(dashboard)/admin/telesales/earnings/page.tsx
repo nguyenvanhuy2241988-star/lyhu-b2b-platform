@@ -274,7 +274,7 @@ export default function AdminTelesalesKpiPage() {
 
             {/* Team Overview Component */}
             <div className="mb-2">
-                <TelesalesKpiDashboard userId="ALL" date={from.toISOString().split('T')[0]} toDate={to.toISOString().split('T')[0]} />
+                <TelesalesKpiDashboard userId="ALL" date={`${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, '0')}-${String(from.getDate()).padStart(2, '0')}`} toDate={`${to.getFullYear()}-${String(to.getMonth() + 1).padStart(2, '0')}-${String(to.getDate()).padStart(2, '0')}`} />
             </div>
 
             <div className="mb-8 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
@@ -292,7 +292,7 @@ export default function AdminTelesalesKpiPage() {
                     </select>
                 </div>
                 {selectedUserId ? (
-                    <TelesalesKpiDashboard userId={selectedUserId} date={from.toISOString().split('T')[0]} toDate={to.toISOString().split('T')[0]} />
+                    <TelesalesKpiDashboard userId={selectedUserId} date={`${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, '0')}-${String(from.getDate()).padStart(2, '0')}`} toDate={`${to.getFullYear()}-${String(to.getMonth() + 1).padStart(2, '0')}-${String(to.getDate()).padStart(2, '0')}`} />
                 ) : (
                     <div className="text-center py-8 text-slate-400 bg-slate-50 rounded-lg border border-dashed border-slate-200">
                         Vui lòng chọn một nhân sự để xem chi tiết tiến độ.

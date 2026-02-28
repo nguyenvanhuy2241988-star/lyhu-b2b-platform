@@ -104,14 +104,21 @@ export async function getKpiSummaryByUser(from: Date, to: Date, token?: string):
             .select('*');
         const defaultCommission = 0.03;
 
-        // 4. Fetch Daily Activities (Calls & Self Sourced Data)
-        const fromStr = from.toISOString().split('T')[0];
-        const toStr = to.toISOString().split('T')[0];
-        const { data: dailyActs } = await supabase
-            .from('telesales_daily_activities')
-            .select('user_id, calls_completed')
-            .gte('report_date', fromStr)
-            .lte('report_date', toStr);
+        // 4. Fetch Calls directly from CRM activities (source of truth)
+        const fromStr = `${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, '0')}-${String(from.getDate()).padStart(2, '0')}`;
+        const toStr = `${to.getFullYear()}-${String(to.getMonth() + 1).padStart(2, '0')}-${String(to.getDate()).padStart(2, '0')}`;
+        const dayStart = new Date(`${fromStr}T00:00:00`);
+        const dayEnd = new Date(`${toStr}T23:59:59.999`);
+
+        const teleUserIds = teleUsers.map(u => u.id);
+        const { data: answeredCalls } = await supabase
+            .from('crm_activities')
+            .select('deal_id, user_id')
+            .in('user_id', teleUserIds)
+            .eq('type', 'call')
+            .eq('call_result', 'answered')
+            .gte('created_at', dayStart.toISOString())
+            .lte('created_at', dayEnd.toISOString());
 
         // Map data by User
         const rows: AdminTeleKpiRow[] = teleUsers.map(user => {
@@ -125,9 +132,10 @@ export async function getKpiSummaryByUser(from: Date, to: Date, token?: string):
             const uTotalOrders = userOrders.length;
             const uTotalRevenue = userOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
 
-            // Filter daily activities to get total calls
-            const uActivities = (dailyActs || []).filter((a: any) => a.user_id === user.id);
-            const uTotalCalls = uActivities.reduce((sum: number, a: any) => sum + (a.calls_completed || 0), 0);
+            // Count answered calls from CRM activities (unique deal_id per user)
+            const userCalls = (answeredCalls || []).filter((c: any) => c.user_id === user.id);
+            const uniqueCallDeals = new Set(userCalls.map((c: any) => c.deal_id));
+            const uTotalCalls = uniqueCallDeals.size;
 
             // Target Settings
             const tSetting = (targetsData || []).find((t: any) => t.user_id === user.id);
