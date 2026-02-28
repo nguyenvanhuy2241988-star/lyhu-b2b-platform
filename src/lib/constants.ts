@@ -137,6 +137,7 @@ export const NAV_ITEMS = {
         { label: "Khách hàng", href: "/admin/customers", icon: UserCheck },
         { label: "Sản phẩm", href: "/admin/products", icon: Package },
         { label: "Báo cáo Telesales", href: "/admin/telesales/earnings", icon: Phone },
+        { label: "Cài đặt KPI", href: "/admin/telesales/kpi-settings", icon: Settings },
         { label: "Hiệu suất CTV", href: "/admin/ctv", icon: TrendingUp },
         { label: "Hiệu quả Tuyển dụng", href: "/recruitment/performance", icon: Trophy },
         { label: "Báo cáo Tuyển dụng", href: "/recruitment/reports", icon: ClipboardList },

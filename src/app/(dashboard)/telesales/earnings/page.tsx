@@ -23,6 +23,7 @@ import {
 } from "@/lib/payrollStore";
 import { supabase, getRealtimeClient } from "@/lib/supabaseClient";
 import { KPI_TEMPLATES, formatKpiValue } from "@/lib/kpi_config";
+import { KpiSalaryResult, calculateKpiSalary } from "@/lib/kpiSalaryStore";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -43,6 +44,7 @@ export default function TelesalesEarningsPage() {
     const [viewMode, setViewMode] = useState<'finance' | 'orders'>('finance');
     const [kpiSettings, setKpiSettings] = useState<any>(null);
     const [kpiTracking, setKpiTracking] = useState<any>(null);
+    const [kpiSalary, setKpiSalary] = useState<KpiSalaryResult | null>(null);
 
     const { user, session } = useAuth();
 
@@ -87,6 +89,12 @@ export default function TelesalesEarningsPage() {
             setPayrollConfig(trackingRes[3]);
             if (trackingRes[4].data) setKpiSettings(trackingRes[4].data);
             if (trackingRes[5].data) setKpiTracking(trackingRes[5].data);
+
+            // Calculate KPI-based salary
+            const baseSalary = trackingRes[3]?.baseSalaryMonthly || (trackingRes[4].data?.base_salary_monthly) || 0;
+            const now = new Date();
+            const salaryResult = await calculateKpiSalary(user.id, now.getMonth() + 1, now.getFullYear(), baseSalary);
+            setKpiSalary(salaryResult);
 
         } catch (error) {
             console.error("loadData error:", error);
@@ -145,6 +153,14 @@ export default function TelesalesEarningsPage() {
                 { event: '*', schema: 'public', table: 'user_kpi_settings', filter: `user_id=eq.${user.id}` },
                 (payload: any) => {
                     console.log("[Realtime] KPI Settings changed:", payload);
+                    loadData();
+                }
+            )
+            .on(
+                'postgres_changes',
+                { event: '*', schema: 'public', table: 'kpi_metric_definitions' },
+                (payload: any) => {
+                    console.log("[Realtime] KPI Metric Definitions changed:", payload);
                     loadData();
                 }
             )
@@ -260,7 +276,8 @@ export default function TelesalesEarningsPage() {
             .reduce((sum, t) => sum + t.amount, 0);
 
         const baseSalary = payrollConfig?.baseSalaryMonthly || 0;
-        const totalNetSalary = baseSalary + bonusTotal + currentMetrics.totalCommission - penaltyTotal;
+        const kpiBasedSalary = kpiSalary?.totalKpiSalary ?? baseSalary;
+        const totalNetSalary = kpiBasedSalary + bonusTotal + currentMetrics.totalCommission - penaltyTotal;
 
         return {
             bonusTotal,
@@ -269,7 +286,7 @@ export default function TelesalesEarningsPage() {
             baseSalary,
             totalNetSalary
         };
-    }, [transactions, payrollConfig, currentMetrics.totalCommission]);
+    }, [transactions, payrollConfig, currentMetrics.totalCommission, kpiSalary]);
 
     const getDateRangeText = () => {
         switch (dateRange) {
@@ -484,13 +501,41 @@ export default function TelesalesEarningsPage() {
                         <div className="p-6">
                             {viewMode === 'finance' ? (
                                 <div className="space-y-4">
-                                    <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                                        <span className="text-slate-600 flex items-center gap-2">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div>
-                                            Lương cố định tháng
-                                        </span>
-                                        <span className="font-semibold text-slate-900">{formatPrice(payrollMetrics.baseSalary)}</span>
-                                    </div>
+                                    {/* KPI-Based Salary Breakdown */}
+                                    {kpiSalary && kpiSalary.items.length > 0 ? (
+                                        <div className="space-y-1">
+                                            <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                                                <span className="text-slate-800 font-bold flex items-center gap-2">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
+                                                    📊 Lương theo KPI (Cơ bản: {formatPrice(kpiSalary.baseSalary)})
+                                                </span>
+                                                <span className="font-bold text-primary-700">{formatPrice(kpiSalary.totalKpiSalary)}</span>
+                                            </div>
+                                            {kpiSalary.items.map(item => (
+                                                <div key={item.key} className="flex justify-between items-center py-1.5 pl-6 text-sm">
+                                                    <span className="text-slate-500 flex items-center gap-2">
+                                                        <span className="text-xs">{item.label}</span>
+                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${item.completionPercent >= 100 ? 'bg-green-50 text-green-600' :
+                                                            item.completionPercent >= 50 ? 'bg-amber-50 text-amber-600' :
+                                                                'bg-red-50 text-red-600'
+                                                            }`}>
+                                                            {item.completionPercent.toFixed(0)}%
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-400">×{item.salaryPercent}%</span>
+                                                    </span>
+                                                    <span className="font-medium text-slate-700">{formatPrice(item.salaryAmount)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="flex justify-between items-center py-2 border-b border-slate-50">
+                                            <span className="text-slate-600 flex items-center gap-2">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div>
+                                                Lương cố định tháng
+                                            </span>
+                                            <span className="font-semibold text-slate-900">{formatPrice(payrollMetrics.baseSalary)}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between items-center py-2 border-b border-slate-50 text-green-600">
                                         <span className="flex items-center gap-2">
                                             <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
