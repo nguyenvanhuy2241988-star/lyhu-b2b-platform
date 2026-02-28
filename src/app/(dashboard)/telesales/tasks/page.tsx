@@ -1083,6 +1083,11 @@ export default function TelesalesTasksPage() {
                 else if (targetColType === 'date_overdue') newDueDate = draggedTask.due_date || null; // Keep existing
 
                 await updateTaskSupabase(draggedTaskIdData, { due_date: newDueDate } as any);
+                // Also move placement to inbox (inbox filters out tasks with due_date, so no duplication)
+                const inboxCol = dbColumns.find(c => c.column_type === 'system_inbox');
+                if (inboxCol) {
+                    await moveTaskToColumn(draggedTaskIdData, inboxCol.id, session?.access_token);
+                }
             } else if (isPlacementColumn(targetColType)) {
                 // Placement column: move task placement
                 await moveTaskToColumn(draggedTaskIdData, targetColId, session?.access_token);
