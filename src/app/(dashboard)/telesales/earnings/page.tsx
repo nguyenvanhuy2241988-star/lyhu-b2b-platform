@@ -45,6 +45,7 @@ export default function TelesalesEarningsPage() {
     const [kpiSettings, setKpiSettings] = useState<any>(null);
     const [kpiTracking, setKpiTracking] = useState<any>(null);
     const [kpiSalary, setKpiSalary] = useState<KpiSalaryResult | null>(null);
+    const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
     const { user, session } = useAuth();
 
@@ -95,6 +96,7 @@ export default function TelesalesEarningsPage() {
             const now = new Date();
             const salaryResult = await calculateKpiSalary(user.id, now.getMonth() + 1, now.getFullYear(), baseSalary);
             setKpiSalary(salaryResult);
+            setLastUpdated(new Date());
 
         } catch (error) {
             console.error("loadData error:", error);
@@ -464,61 +466,81 @@ export default function TelesalesEarningsPage() {
                                         Đơn hàng
                                     </button>
                                 </div>
-                                <span className="text-[10px] text-slate-400">Cập nhật lúc: {new Date().toLocaleTimeString()}</span>
+                                <span className="text-[10px] text-slate-400">Cập nhật lúc: {lastUpdated ? lastUpdated.toLocaleTimeString('vi-VN') : '--:--'}</span>
                             </div>
                         </div>
                         <div className="p-5">
                             {viewMode === 'finance' ? (
-                                <div className="space-y-3">
+                                <div className="space-y-4">
                                     {/* KPI-Based Salary Breakdown */}
                                     {kpiSalary && kpiSalary.items.length > 0 ? (
-                                        <div className="space-y-1">
-                                            <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                                                <span className="text-sm text-slate-800 font-semibold">
-                                                    Lương theo KPI (Cơ bản: {formatPrice(kpiSalary.baseSalary)})
-                                                </span>
-                                                <span className="text-sm font-bold text-primary-600">{formatPrice(kpiSalary.totalKpiSalary)}</span>
-                                            </div>
-                                            {kpiSalary.items.map(item => (
-                                                <div key={item.key} className="flex justify-between items-center py-1.5 pl-4 text-sm">
-                                                    <span className="text-slate-500 flex items-center gap-2">
-                                                        <span className="text-xs">{item.label}</span>
-                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${item.completionPercent >= 100 ? 'bg-emerald-50 text-emerald-600' :
-                                                            item.completionPercent >= 50 ? 'bg-amber-50 text-amber-600' :
-                                                                'bg-red-50 text-red-600'
-                                                            }`}>
-                                                            {item.completionPercent.toFixed(0)}%
-                                                        </span>
-                                                        <span className="text-[10px] text-slate-400">×{item.salaryPercent}%</span>
-                                                    </span>
-                                                    <span className="text-sm text-slate-700">{formatPrice(item.salaryAmount)}</span>
+                                        <div>
+                                            <div className="flex justify-between items-center pb-3 mb-3 border-b border-slate-200">
+                                                <div>
+                                                    <div className="text-sm font-bold text-slate-900">Lương theo KPI</div>
+                                                    <div className="text-xs text-slate-400 mt-0.5">Lương cơ bản: {formatPrice(kpiSalary.baseSalary)}</div>
                                                 </div>
-                                            ))}
+                                                <div className="text-right">
+                                                    <div className="text-base font-bold text-primary-600">{formatPrice(kpiSalary.totalKpiSalary)}</div>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-3">
+                                                {kpiSalary.items.map(item => {
+                                                    const pct = Math.min(item.completionPercent, 100);
+                                                    const barColor = pct >= 100 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-400' : 'bg-rose-400';
+                                                    const badgeClass = pct >= 100 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : pct >= 50 ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-rose-50 text-rose-600 border-rose-200';
+                                                    return (
+                                                        <div key={item.key} className="bg-slate-50 rounded-lg p-3">
+                                                            <div className="flex justify-between items-center mb-2">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-sm font-medium text-slate-700">{item.label}</span>
+                                                                    <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${badgeClass}`}>
+                                                                        {item.completionPercent.toFixed(0)}%
+                                                                    </span>
+                                                                </div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-[10px] text-slate-400">×{item.salaryPercent}%</span>
+                                                                    <span className="text-sm font-bold text-slate-900">{formatPrice(item.salaryAmount)}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                                                <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${pct}%` }} />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                     ) : (
-                                        <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                                        <div className="flex justify-between items-center py-3 border-b border-slate-200">
                                             <span className="text-sm text-slate-600">Lương cố định tháng</span>
-                                            <span className="text-sm font-medium text-slate-900">{formatPrice(payrollMetrics.baseSalary)}</span>
+                                            <span className="text-sm font-bold text-slate-900">{formatPrice(payrollMetrics.baseSalary)}</span>
                                         </div>
                                     )}
-                                    <div className="flex justify-between items-center py-2 border-b border-slate-100 text-emerald-600">
-                                        <span className="text-sm">Thưởng mở mới & Sáng kiến (Chốt)</span>
-                                        <span className="text-sm font-medium">+{formatPrice(payrollMetrics.bonusTotal)}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center py-2 border-b border-slate-100 text-blue-600">
-                                        <span className="text-sm">Hoa hồng doanh số (Dự kiến)</span>
-                                        <span className="text-sm font-medium">+{formatPrice(currentMetrics.totalCommission)}</span>
-                                    </div>
-                                    <div className="flex justify-between items-center py-2 border-b border-slate-100 text-red-500">
-                                        <span className="text-sm">Các khoản phạt & Vi phạm</span>
-                                        <span className="text-sm font-medium">-{formatPrice(payrollMetrics.penaltyTotal)}</span>
-                                    </div>
-                                    <div className="pt-3 flex justify-between items-center">
-                                        <span className="text-sm font-bold text-slate-900">TỔNG THU NHẬP</span>
-                                        <div className="text-right">
-                                            <span className="text-lg font-bold text-primary-600">{formatPrice(payrollMetrics.totalNetSalary)}</span>
-                                            <p className="text-[10px] text-slate-400 mt-0.5">Ước tính thực nhận tháng này</p>
+
+                                    {/* Summary Items */}
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-100">
+                                            <div className="text-[10px] font-medium text-emerald-600 uppercase tracking-wide mb-1">Thưởng chốt</div>
+                                            <div className="text-sm font-bold text-emerald-700">+{formatPrice(payrollMetrics.bonusTotal)}</div>
                                         </div>
+                                        <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+                                            <div className="text-[10px] font-medium text-blue-600 uppercase tracking-wide mb-1">Hoa hồng</div>
+                                            <div className="text-sm font-bold text-blue-700">+{formatPrice(currentMetrics.totalCommission)}</div>
+                                        </div>
+                                        <div className="bg-rose-50 rounded-lg p-3 border border-rose-100">
+                                            <div className="text-[10px] font-medium text-rose-600 uppercase tracking-wide mb-1">Phạt</div>
+                                            <div className="text-sm font-bold text-rose-700">-{formatPrice(payrollMetrics.penaltyTotal)}</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Total */}
+                                    <div className="bg-primary-50 border border-primary-100 rounded-lg p-4 flex justify-between items-center">
+                                        <div>
+                                            <div className="text-xs font-semibold text-primary-700 uppercase tracking-wide">Tổng thu nhập</div>
+                                            <div className="text-[10px] text-primary-500 mt-0.5">Ước tính thực nhận tháng này</div>
+                                        </div>
+                                        <div className="text-xl font-bold text-primary-700">{formatPrice(payrollMetrics.totalNetSalary)}</div>
                                     </div>
                                 </div>
                             ) : (
