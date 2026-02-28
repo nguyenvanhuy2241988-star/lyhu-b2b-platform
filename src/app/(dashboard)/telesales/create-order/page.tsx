@@ -124,7 +124,7 @@ function TelesalesCreateOrderContent() {
                 // Handle Edit Mode
                 if (editOrderId) {
                     // Use RPC to bypass RLS permissions
-                    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/get_orders_v2`, {
+                    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/rpc/get_orders_v3`, {
                         method: 'POST',
                         headers: {
                             'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
@@ -177,8 +177,9 @@ function TelesalesCreateOrderContent() {
                             }));
                             setOrderItems(mappedItems);
 
-                            // Set Other Info
-                            setVatRate(((order.vat || 0) / (order.total_amount - (order.vat || 0))) * 100 || 0); // Approx
+                            // Set Other Info - use stored rates directly
+                            setVatRate(order.vat_rate || 0);
+                            setOrderDiscountPercent(order.order_discount_percent || 0);
                             setOrderNote(order.note || "");
                             setPaymentMethod(order.payment_method || "COD");
 
@@ -417,6 +418,7 @@ function TelesalesCreateOrderContent() {
                 })),
                 totalAmount: total,
                 vat: totalVAT,
+                vat_rate: vatRate,
                 order_discount_percent: orderDiscountPercent,
                 notes: orderNote,
                 paymentMethod: paymentMethod
@@ -452,6 +454,7 @@ function TelesalesCreateOrderContent() {
                 status: "pending",
                 notes: orderNote || (dealInfo ? `Đơn hàng từ cơ hội: ${dealInfo.title}` : "Đơn hàng tạo bởi Telesales"),
                 vat: totalVAT,
+                vat_rate: vatRate,
                 order_discount_percent: orderDiscountPercent,
                 paymentMethod: paymentMethod
             }, session?.access_token);

@@ -366,6 +366,7 @@ export const fetchOrders = async (token?: string, filters?: { userId?: string, s
             paymentMethod: o.payment_method,
             notes: o.note,
             vat: o.vat,
+            vat_rate: o.vat_rate || 0,
             order_discount_percent: o.order_discount_percent || 0,
             receiverPhone: o.receiver_phone || o.customer?.phone,
             receiverAddress: o.receiver_address || o.customer?.address,
@@ -420,6 +421,7 @@ export const addOrderSupabase = async (orderData: any, token?: string) => {
             total_amount: orderData.totalAmount,
             source: orderData.source || 'CUSTOMER',
             vat: orderData.vat || 0,
+            vat_rate: orderData.vat_rate || 0,
             note: orderData.notes || orderData.note || null,
             payment_method: orderData.paymentMethod || 'COD',
             order_discount_percent: orderData.order_discount_percent || 0
@@ -592,6 +594,7 @@ export const updateOrderSupabase = async (orderId: string, updateData: any, toke
         const updatePayload = {
             total_amount: updateData.totalAmount,
             vat: updateData.vat || 0,
+            vat_rate: updateData.vat_rate || 0,
             note: updateData.notes || updateData.note || null,
             payment_method: updateData.paymentMethod || 'COD',
             customer_name: updateData.customerName,

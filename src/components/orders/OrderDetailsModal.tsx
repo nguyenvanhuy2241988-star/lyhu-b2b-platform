@@ -345,7 +345,7 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                                             const totalAllDiscounts = totalItemDiscount + orderDiscountAmt;
                                             const discountPct = totalListPrice > 0 ? (totalAllDiscounts / totalListPrice * 100) : 0;
                                             const vatAmt = order.vat || 0;
-                                            const vatPct = afterAllDiscounts > 0 ? (vatAmt / afterAllDiscounts * 100) : 0;
+                                            const vatPct = order.vat_rate || (afterAllDiscounts > 0 ? (vatAmt / afterAllDiscounts * 100) : 0);
                                             return (
                                                 <>
                                                     <tr>

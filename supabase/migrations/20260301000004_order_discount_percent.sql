@@ -1,10 +1,17 @@
--- Add order-level discount percent column to orders table
--- and update RPCs to handle it
+-- Add order-level discount percent and vat_rate columns to orders table
+-- and update all RPCs to handle them
 
--- 1. Add column
+-- 1. Add columns
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_discount_percent numeric DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS vat_rate numeric DEFAULT 0;
 
--- 2. Update create_order_v2 to include order_discount_percent
+-- 2. Backfill vat_rate for existing orders (approximate from stored vat amount)
+UPDATE orders SET vat_rate = CASE 
+    WHEN total_amount > 0 AND vat > 0 THEN ROUND((vat / (total_amount - vat)) * 100, 0)
+    ELSE 0 
+END WHERE vat_rate IS NULL OR vat_rate = 0;
+
+-- 3. Update create_order_v2
 CREATE OR REPLACE FUNCTION public.create_order_v2(
     p_order jsonb,
     p_items jsonb
@@ -28,6 +35,7 @@ BEGIN
         total_amount,
         source,
         vat,
+        vat_rate,
         note,
         payment_method,
         order_discount_percent
@@ -41,6 +49,7 @@ BEGIN
         COALESCE((p_order->>'total_amount')::numeric, 0),
         COALESCE(p_order->>'source', 'CUSTOMER'),
         COALESCE((p_order->>'vat')::numeric, 0),
+        COALESCE((p_order->>'vat_rate')::numeric, 0),
         p_order->>'note',
         COALESCE(p_order->>'payment_method', 'COD'),
         COALESCE((p_order->>'order_discount_percent')::numeric, 0)
@@ -81,7 +90,7 @@ GRANT EXECUTE ON FUNCTION public.create_order_v2 TO service_role;
 
 NOTIFY pgrst, 'reload schema';
 
--- Also update get_orders_v3 to include order_discount_percent
+-- 4. Update get_orders_v3 to include order_discount_percent and vat_rate
 DROP FUNCTION IF EXISTS public.get_orders_v3(uuid, uuid, text, timestamptz, timestamptz, int);
 
 CREATE OR REPLACE FUNCTION public.get_orders_v3(
@@ -108,6 +117,7 @@ RETURNS TABLE (
     payment_method text,
     note text,
     vat numeric,
+    vat_rate numeric,
     order_discount_percent numeric,
     creator_name text
 )
@@ -166,6 +176,7 @@ BEGIN
         o.payment_method,
         o.note,
         o.vat,
+        COALESCE(o.vat_rate, 0) as vat_rate,
         COALESCE(o.order_discount_percent, 0) as order_discount_percent,
         creator.full_name as creator_name
     FROM orders o
@@ -193,3 +204,66 @@ $$;
 GRANT EXECUTE ON FUNCTION public.get_orders_v3 TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_orders_v3 TO anon;
 GRANT EXECUTE ON FUNCTION public.get_orders_v3 TO service_role;
+
+NOTIFY pgrst, 'reload schema';
+
+-- 5. Update update_order_v2 to handle vat_rate and order_discount_percent
+CREATE OR REPLACE FUNCTION public.update_order_v2(
+    p_order_id uuid,
+    p_update_data jsonb,
+    p_items jsonb
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, auth, extensions
+AS $$
+DECLARE
+    _updated_order orders%ROWTYPE;
+BEGIN
+    UPDATE orders
+    SET 
+        total_amount = COALESCE((p_update_data->>'total_amount')::numeric, total_amount),
+        vat = COALESCE((p_update_data->>'vat')::numeric, vat),
+        vat_rate = COALESCE((p_update_data->>'vat_rate')::numeric, vat_rate),
+        order_discount_percent = COALESCE((p_update_data->>'order_discount_percent')::numeric, order_discount_percent),
+        note = COALESCE(p_update_data->>'note', note),
+        payment_method = COALESCE(p_update_data->>'payment_method', payment_method),
+        customer_name = COALESCE(p_update_data->>'customer_name', customer_name),
+        customer_id = COALESCE((p_update_data->>'customer_id')::uuid, customer_id),
+        status = COALESCE(p_update_data->>'status', status)
+    WHERE id = p_order_id
+    RETURNING * INTO _updated_order;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Order not found';
+    END IF;
+
+    IF p_items IS NOT NULL AND jsonb_array_length(p_items) >= 0 THEN
+        DELETE FROM order_items WHERE order_id = p_order_id;
+        
+        IF jsonb_array_length(p_items) > 0 THEN
+            INSERT INTO order_items (
+                order_id, product_id, quantity, price, discount, discount_type, is_gift
+            )
+            SELECT 
+                p_order_id,
+                (item->>'product_id')::uuid,
+                (item->>'quantity')::int,
+                (item->>'price')::numeric,
+                COALESCE((item->>'discount')::numeric, 0),
+                COALESCE(item->>'discount_type', 'amount'),
+                COALESCE((item->>'is_gift')::boolean, false)
+            FROM jsonb_array_elements(p_items) AS item;
+        END IF;
+    END IF;
+
+    RETURN to_jsonb(_updated_order);
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.update_order_v2 TO authenticated;
+GRANT EXECUTE ON FUNCTION public.update_order_v2 TO anon;
+GRANT EXECUTE ON FUNCTION public.update_order_v2 TO service_role;
+
+NOTIFY pgrst, 'reload schema';

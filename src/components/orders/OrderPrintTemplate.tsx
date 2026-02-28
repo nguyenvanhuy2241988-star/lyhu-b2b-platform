@@ -149,7 +149,7 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, s
                         const totalAllDiscounts = totalItemDiscount + orderDiscountAmt;
                         const discountPct = totalListPrice > 0 ? (totalAllDiscounts / totalListPrice * 100) : 0;
                         const vatAmt = order.vat || 0;
-                        const vatPct = afterAllDiscounts > 0 ? (vatAmt / afterAllDiscounts * 100) : 0;
+                        const vatPct = (order as any).vat_rate || (afterAllDiscounts > 0 ? (vatAmt / afterAllDiscounts * 100) : 0);
                         return (
                             <>
                                 <div className="flex justify-between py-1">
