@@ -83,9 +83,10 @@ export const TaskSimpleModal = ({ isOpen, onClose, onSave, currentUser }: TaskSi
                 assigned_to: assignedTo || currentUser?.id,
                 assignee_ids: assigneeIds,
                 leader_id: leaderId,
-                attachments: attachments // FIX: Include attachments in save payload
+                attachments: attachments
             });
-            // Form is reset by useEffect on next open or we can close
+            // FIX: Close modal after successful save to trigger reset on next open
+            onClose();
         } catch (error) {
             console.error("Error saving task:", error);
             alert("Có lỗi xảy ra khi tạo công việc. Vui lòng thử lại.");
