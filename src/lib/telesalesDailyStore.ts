@@ -328,13 +328,50 @@ export const getTelesalesKpiStats = async (userId: string, date: string, toDate?
         };
     }
 
-    // Single day query
+    // Single day query - compute calls & self-sourced directly from CRM tables
     const report = await getDailyReportTelesales(date, userId);
+
+    // Compute calls_count directly from crm_activities (source of truth)
+    const dayStart = new Date(`${date}T00:00:00`);
+    const dayEnd = new Date(`${date}T23:59:59.999`);
+
+    const { data: answeredCalls } = await supabase
+        .from('crm_activities')
+        .select('deal_id')
+        .eq('user_id', userId)
+        .eq('type', 'call')
+        .eq('call_result', 'answered')
+        .gte('created_at', dayStart.toISOString())
+        .lte('created_at', dayEnd.toISOString());
+
+    const uniqueCallDeals = new Set((answeredCalls || []).map((c: any) => c.deal_id));
+    const liveCallsCount = uniqueCallDeals.size;
+
+    // Compute self_sourced_data directly from crm_deals + customers (source of truth)
+    const { data: selfFoundDeals } = await supabase
+        .from('crm_deals')
+        .select('customer_id')
+        .eq('owner_user_id', userId)
+        .eq('source_category', 'SELF_FOUND')
+        .gte('created_at', dayStart.toISOString())
+        .lte('created_at', dayEnd.toISOString());
+
+    let liveSelfSourcedCount = 0;
+    const customerIds = Array.from(new Set((selfFoundDeals || []).map((d: any) => d.customer_id).filter(Boolean)));
+    if (customerIds.length > 0) {
+        const { data: newCustomers } = await supabase
+            .from('customers')
+            .select('id')
+            .in('id', customerIds)
+            .gte('created_at', dayStart.toISOString())
+            .lte('created_at', dayEnd.toISOString());
+        liveSelfSourcedCount = (newCustomers || []).length;
+    }
 
     const stats: TelesalesKpiStats = {
         ...settings,
-        calls_count: report?.calls_completed || 0,
-        self_sourced_data_count: report?.self_sourced_data || 0,
+        calls_count: liveCallsCount,
+        self_sourced_data_count: liveSelfSourcedCount,
         fb_group_posts_count: report?.fb_group_posts || 0,
         fb_comments_count: report?.fb_comments || 0,
         fb_friends_count: report?.fb_friends || 0,
