@@ -369,153 +369,121 @@ export default function TelesalesEarningsPage() {
 
     return (
         <div className="space-y-6">
+            {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold text-slate-900">Thu nhập & KPI</h1>
-
-                <div className="flex items-center gap-3">
-                    {/* Filters */}
-                    <div className="flex items-center gap-2 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
-                        <div className="relative group">
-                            <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 rounded-md">
-                                <Calendar className="w-4 h-4 text-slate-500" />
-                                {getDateRangeText()}
-                                <ChevronDown className="w-3 h-3 text-slate-400" />
-                            </button>
-                            <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-lg shadow-lg py-1 z-10 hidden group-hover:block">
-                                <button onClick={() => setDateRange('today')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'today' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>Hôm nay</button>
-                                <button onClick={() => setDateRange('last_7_days')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'last_7_days' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>7 ngày gần đây</button>
-                                <button onClick={() => setDateRange('this_month')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'this_month' ? 'text-primary-600 font-medium' : 'text-slate-700'}`}>Tháng này</button>
-                            </div>
+                <h1 className="text-xl font-bold text-slate-900">Thu nhập & KPI</h1>
+                <div className="flex items-center gap-2">
+                    <div className="relative group">
+                        <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                            <Calendar className="w-4 h-4 text-slate-400" />
+                            {getDateRangeText()}
+                            <ChevronDown className="w-3 h-3 text-slate-400" />
+                        </button>
+                        <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-lg shadow-md py-1 z-10 hidden group-hover:block">
+                            <button onClick={() => setDateRange('today')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'today' ? 'text-primary-600 font-medium' : 'text-slate-600'}`}>Hôm nay</button>
+                            <button onClick={() => setDateRange('last_7_days')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'last_7_days' ? 'text-primary-600 font-medium' : 'text-slate-600'}`}>7 ngày gần đây</button>
+                            <button onClick={() => setDateRange('this_month')} className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-50 ${dateRange === 'this_month' ? 'text-primary-600 font-medium' : 'text-slate-600'}`}>Tháng này</button>
                         </div>
                     </div>
-
-                    {/* Export Button */}
                     <button
                         onClick={handleExportCsv}
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50"
+                        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
                     >
-                        <Download className="w-4 h-4 text-slate-500" />
+                        <Download className="w-4 h-4 text-slate-400" />
                         Xuất báo cáo
                     </button>
                 </div>
             </div>
 
-            {/* KPI Cards Grid */}
-            {/* NEW KPI Dashboard Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-4">
+            {/* KPI Progress Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {kpiTracking && KPI_TEMPLATES['telesales'].fields.map((field) => {
                     const actual = kpiTracking.metrics?.[field.key] || 0;
                     const target = kpiTracking.targets?.[field.key] || 0;
                     const percent = target > 0 ? (actual / target) * 100 : (actual > 0 ? 100 : 0);
 
-                    let statusColor = "bg-primary-500";
-                    let statusText = "text-primary-600";
-                    let statusBg = "bg-primary-50";
+                    let barColor = "bg-primary-500";
+                    let badgeClass = "text-primary-600 bg-primary-50";
 
                     if (percent >= 100) {
-                        statusColor = "bg-purple-500";
-                        statusText = "text-purple-600";
-                        statusBg = "bg-purple-50";
+                        barColor = "bg-emerald-500";
+                        badgeClass = "text-emerald-700 bg-emerald-50";
                     } else if (percent >= 80) {
-                        statusColor = "bg-emerald-500";
-                        statusText = "text-emerald-600";
-                        statusBg = "bg-emerald-50";
+                        barColor = "bg-emerald-500";
+                        badgeClass = "text-emerald-600 bg-emerald-50";
                     } else if (percent < 50) {
-                        statusColor = "bg-rose-500";
-                        statusText = "text-rose-600";
-                        statusBg = "bg-rose-50";
+                        barColor = "bg-rose-400";
+                        badgeClass = "text-rose-600 bg-rose-50";
                     } else {
-                        statusColor = "bg-amber-500";
-                        statusText = "text-amber-600";
-                        statusBg = "bg-amber-50";
+                        barColor = "bg-amber-400";
+                        badgeClass = "text-amber-600 bg-amber-50";
                     }
 
                     return (
-                        <div key={field.key} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all group">
-                            <div className="flex justify-between items-start mb-3">
-                                <div>
-                                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">{field.label}</h3>
-                                    <div className="flex items-baseline gap-1 mt-1">
-                                        <span className="text-2xl font-black text-slate-900 group-hover:scale-105 transition-transform">{formatKpiValue(actual, field.type)}</span>
-                                        <span className="text-xs font-semibold text-slate-400">/ {formatKpiValue(target, field.type)}</span>
-                                    </div>
-                                </div>
-                                <div className={`px-2 py-1 rounded-lg text-[10px] font-black ${statusBg} ${statusText}`}>
+                        <div key={field.key} className="bg-white p-4 rounded-lg border border-slate-200">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs font-medium text-slate-500">{field.label}</span>
+                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${badgeClass}`}>
                                     {percent.toFixed(0)}%
-                                </div>
-                            </div>
-
-                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                <div
-                                    className={`h-full rounded-full transition-all duration-1000 ease-out ${statusColor}`}
-                                    style={{ width: `${Math.min(percent, 100)}%` }}
-                                />
-                            </div>
-
-                            <div className="mt-3 flex justify-between items-center">
-                                <span className="text-[10px] text-slate-400 italic leading-tight max-w-[80%]">
-                                    {field.description}
                                 </span>
-                                {percent >= 100 && (
-                                    <Award className="w-4 h-4 text-purple-500" />
-                                )}
+                            </div>
+                            <div className="flex items-baseline gap-1 mb-2">
+                                <span className="text-lg font-bold text-slate-900">{formatKpiValue(actual, field.type)}</span>
+                                <span className="text-xs text-slate-400">/ {formatKpiValue(target, field.type)}</span>
+                            </div>
+                            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div className={`h-full rounded-full transition-all duration-500 ${barColor}`} style={{ width: `${Math.min(percent, 100)}%` }} />
                             </div>
                         </div>
                     );
                 })}
             </div>
 
-            {/* Legacy Charts (Hidden for now or moved) */}
-            {/* The rest of the page logic (Payroll) remains useful */}
-
-            {/* Payroll Detailed Breakdown */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Payroll Breakdown */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 {/* Left: Salary Summary */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-primary-50 rounded-lg">
-                                    <Receipt className="w-5 h-5 text-primary-600" />
-                                </div>
-                                <h3 className="text-lg font-bold text-slate-900">Chi tiết Bảng lương {rangeLabel}</h3>
-                            </div>
-                            <div className="flex items-center gap-4">
-                                <div className="flex bg-slate-100 p-1 rounded-lg">
+                <div className="lg:col-span-2 space-y-4">
+                    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                        <div className="p-4 border-b border-slate-200 flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <Receipt className="w-4 h-4 text-primary-500" />
+                                Chi tiết Bảng lương {rangeLabel}
+                            </h3>
+                            <div className="flex items-center gap-2">
+                                <div className="flex bg-slate-100 p-0.5 rounded-md">
                                     <button
                                         onClick={() => setViewMode('finance')}
-                                        className={`px-3 py-1 text-[10px] font-black uppercase rounded transition-all ${viewMode === 'finance' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        className={`px-3 py-1 text-xs font-medium rounded transition-colors ${viewMode === 'finance' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500'}`}
                                     >
                                         Tài chính
                                     </button>
                                     <button
                                         onClick={() => setViewMode('orders')}
-                                        className={`px-3 py-1 text-[10px] font-black uppercase rounded transition-all ${viewMode === 'orders' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        className={`px-3 py-1 text-xs font-medium rounded transition-colors ${viewMode === 'orders' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500'}`}
                                     >
                                         Đơn hàng
                                     </button>
                                 </div>
-                                <span className="text-xs text-slate-500 italic">Cập nhật lúc: {new Date().toLocaleTimeString()}</span>
+                                <span className="text-[10px] text-slate-400">Cập nhật lúc: {new Date().toLocaleTimeString()}</span>
                             </div>
                         </div>
-                        <div className="p-6">
+                        <div className="p-5">
                             {viewMode === 'finance' ? (
-                                <div className="space-y-4">
+                                <div className="space-y-3">
                                     {/* KPI-Based Salary Breakdown */}
                                     {kpiSalary && kpiSalary.items.length > 0 ? (
                                         <div className="space-y-1">
                                             <div className="flex justify-between items-center py-2 border-b border-slate-100">
-                                                <span className="text-slate-800 font-bold flex items-center gap-2">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-primary-500"></div>
-                                                    📊 Lương theo KPI (Cơ bản: {formatPrice(kpiSalary.baseSalary)})
+                                                <span className="text-sm text-slate-800 font-semibold">
+                                                    Lương theo KPI (Cơ bản: {formatPrice(kpiSalary.baseSalary)})
                                                 </span>
-                                                <span className="font-bold text-primary-700">{formatPrice(kpiSalary.totalKpiSalary)}</span>
+                                                <span className="text-sm font-bold text-primary-600">{formatPrice(kpiSalary.totalKpiSalary)}</span>
                                             </div>
                                             {kpiSalary.items.map(item => (
-                                                <div key={item.key} className="flex justify-between items-center py-1.5 pl-6 text-sm">
+                                                <div key={item.key} className="flex justify-between items-center py-1.5 pl-4 text-sm">
                                                     <span className="text-slate-500 flex items-center gap-2">
                                                         <span className="text-xs">{item.label}</span>
-                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${item.completionPercent >= 100 ? 'bg-green-50 text-green-600' :
+                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${item.completionPercent >= 100 ? 'bg-emerald-50 text-emerald-600' :
                                                             item.completionPercent >= 50 ? 'bg-amber-50 text-amber-600' :
                                                                 'bg-red-50 text-red-600'
                                                             }`}>
@@ -523,45 +491,33 @@ export default function TelesalesEarningsPage() {
                                                         </span>
                                                         <span className="text-[10px] text-slate-400">×{item.salaryPercent}%</span>
                                                     </span>
-                                                    <span className="font-medium text-slate-700">{formatPrice(item.salaryAmount)}</span>
+                                                    <span className="text-sm text-slate-700">{formatPrice(item.salaryAmount)}</span>
                                                 </div>
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="flex justify-between items-center py-2 border-b border-slate-50">
-                                            <span className="text-slate-600 flex items-center gap-2">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div>
-                                                Lương cố định tháng
-                                            </span>
-                                            <span className="font-semibold text-slate-900">{formatPrice(payrollMetrics.baseSalary)}</span>
+                                        <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                                            <span className="text-sm text-slate-600">Lương cố định tháng</span>
+                                            <span className="text-sm font-medium text-slate-900">{formatPrice(payrollMetrics.baseSalary)}</span>
                                         </div>
                                     )}
-                                    <div className="flex justify-between items-center py-2 border-b border-slate-50 text-green-600">
-                                        <span className="flex items-center gap-2">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                                            Thưởng mở mới & Sáng kiến (Chốt)
-                                        </span>
-                                        <span className="font-bold">+{formatPrice(payrollMetrics.bonusTotal)}</span>
+                                    <div className="flex justify-between items-center py-2 border-b border-slate-100 text-emerald-600">
+                                        <span className="text-sm">Thưởng mở mới & Sáng kiến (Chốt)</span>
+                                        <span className="text-sm font-medium">+{formatPrice(payrollMetrics.bonusTotal)}</span>
                                     </div>
-                                    <div className="flex justify-between items-center py-2 border-b border-slate-50 text-blue-600">
-                                        <span className="flex items-center gap-2">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                                            Hoa hồng doanh số (Dự kiến)
-                                        </span>
-                                        <span className="font-bold">+{formatPrice(currentMetrics.totalCommission)}</span>
+                                    <div className="flex justify-between items-center py-2 border-b border-slate-100 text-blue-600">
+                                        <span className="text-sm">Hoa hồng doanh số (Dự kiến)</span>
+                                        <span className="text-sm font-medium">+{formatPrice(currentMetrics.totalCommission)}</span>
                                     </div>
-                                    <div className="flex justify-between items-center py-2 border-b border-slate-50 text-red-500">
-                                        <span className="flex items-center gap-2">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
-                                            Các khoản phạt & Vi phạm
-                                        </span>
-                                        <span className="font-bold">-{formatPrice(payrollMetrics.penaltyTotal)}</span>
+                                    <div className="flex justify-between items-center py-2 border-b border-slate-100 text-red-500">
+                                        <span className="text-sm">Các khoản phạt & Vi phạm</span>
+                                        <span className="text-sm font-medium">-{formatPrice(payrollMetrics.penaltyTotal)}</span>
                                     </div>
-                                    <div className="pt-4 flex justify-between items-center text-xl">
-                                        <span className="font-bold text-slate-900">TỔNG THU NHẬP</span>
+                                    <div className="pt-3 flex justify-between items-center">
+                                        <span className="text-sm font-bold text-slate-900">TỔNG THU NHẬP</span>
                                         <div className="text-right">
-                                            <span className="font-black text-primary-600">{formatPrice(payrollMetrics.totalNetSalary)}</span>
-                                            <p className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider">Ước tính thực nhận tháng này</p>
+                                            <span className="text-lg font-bold text-primary-600">{formatPrice(payrollMetrics.totalNetSalary)}</span>
+                                            <p className="text-[10px] text-slate-400 mt-0.5">Ước tính thực nhận tháng này</p>
                                         </div>
                                     </div>
                                 </div>
@@ -570,33 +526,33 @@ export default function TelesalesEarningsPage() {
                                     <table className="w-full text-sm">
                                         <thead>
                                             <tr className="bg-slate-50 text-slate-500 text-left border-b border-slate-100">
-                                                <th className="p-3 font-medium">Mã đơn</th>
-                                                <th className="p-3 font-medium">Khách hàng</th>
-                                                <th className="p-3 font-medium text-right">Giá trị</th>
-                                                <th className="p-3 font-medium text-center">Trạng thái</th>
+                                                <th className="p-3 text-xs font-medium">Mã đơn</th>
+                                                <th className="p-3 text-xs font-medium">Khách hàng</th>
+                                                <th className="p-3 text-xs font-medium text-right">Giá trị</th>
+                                                <th className="p-3 text-xs font-medium text-center">Trạng thái</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
                                             {orders.filter(o => {
                                                 const d = new Date(o.createdAt);
-                                                return d.getMonth() === 11 && d.getFullYear() === 2025;
+                                                return d >= currentRange.from && d <= currentRange.to;
                                             }).length === 0 ? (
                                                 <tr>
-                                                    <td colSpan={4} className="p-8 text-center text-slate-400 italic">Chưa có đơn hàng nào trong tháng 12.</td>
+                                                    <td colSpan={4} className="p-8 text-center text-slate-400 text-sm">Chưa có đơn hàng nào.</td>
                                                 </tr>
                                             ) : (
                                                 orders
                                                     .filter(o => {
                                                         const d = new Date(o.createdAt);
-                                                        return d.getMonth() === 11 && d.getFullYear() === 2025;
+                                                        return d >= currentRange.from && d <= currentRange.to;
                                                     })
                                                     .map((o) => (
-                                                        <tr key={o.id} className="hover:bg-slate-50/50 transition-colors">
+                                                        <tr key={o.id} className="hover:bg-slate-50 transition-colors">
                                                             <td className="p-3 font-mono text-xs text-slate-400">#{o.readableId || o.id.slice(0, 8)}</td>
-                                                            <td className="p-3 font-bold text-slate-900">{o.customerName}</td>
-                                                            <td className="p-3 text-right font-black text-primary-600">{formatPrice(o.totalAmount || 0)}</td>
+                                                            <td className="p-3 font-medium text-slate-800">{o.customerName}</td>
+                                                            <td className="p-3 text-right font-medium text-primary-600">{formatPrice(o.totalAmount || 0)}</td>
                                                             <td className="p-3 text-center">
-                                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${o.status === 'delivered' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                                <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${o.status === 'delivered' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
                                                                     {o.status === 'delivered' ? 'Thành công' : 'Đang xử lý'}
                                                                 </span>
                                                             </td>
@@ -608,22 +564,22 @@ export default function TelesalesEarningsPage() {
                                 </div>
                             )}
                         </div>
-                        {/* Incentive Notice */}
-                        <div className="bg-slate-50 p-4 border-t border-slate-100 flex items-start gap-3">
-                            <Info className="w-5 h-5 text-slate-400 mt-0.5" />
-                            <div className="text-xs text-slate-500 leading-relaxed">
-                                <p><strong>Lưu ý:</strong> Thưởng NPP/Đại lý sẽ ở trạng thái <b>Dự kiến</b> cho đến khi đơn hàng được giao thành công. Hoa hồng doanh số cũng có thể thay đổi nếu đơn hàng bị hủy hoặc hoàn trả.</p>
-                            </div>
+                        {/* Notice */}
+                        <div className="bg-slate-50 px-5 py-3 border-t border-slate-100 flex items-start gap-2">
+                            <Info className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                            <p className="text-[11px] text-slate-500 leading-relaxed">
+                                <strong>Lưu ý:</strong> Thưởng NPP/Đại lý sẽ ở trạng thái Dự kiến cho đến khi đơn hàng được giao thành công.
+                            </p>
                         </div>
                     </div>
 
-                    {/* Transaction History Sub-table */}
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                        <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex items-center justify-between">
-                            <h4 className="font-semibold text-slate-800 text-sm">Biến động số dư mới nhất</h4>
-                            <Award className="w-4 h-4 text-primary-500" />
+                    {/* Transaction History */}
+                    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                        <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+                            <h4 className="text-sm font-semibold text-slate-800">Biến động số dư mới nhất</h4>
+                            <Award className="w-4 h-4 text-slate-400" />
                         </div>
-                        <div className="max-h-[300px] overflow-y-auto">
+                        <div className="max-h-[280px] overflow-y-auto">
                             <table className="w-full text-xs">
                                 <thead>
                                     <tr className="bg-slate-50 text-slate-500 text-left border-b border-slate-100">
@@ -636,11 +592,11 @@ export default function TelesalesEarningsPage() {
                                 <tbody className="divide-y divide-slate-50">
                                     {transactions.length === 0 ? (
                                         <tr>
-                                            <td colSpan={4} className="p-8 text-center text-slate-400 italic">Chưa có biến động tài chính.</td>
+                                            <td colSpan={4} className="p-6 text-center text-slate-400 text-sm">Chưa có biến động tài chính.</td>
                                         </tr>
                                     ) : (
                                         transactions.map((t) => (
-                                            <tr key={t.id} className="hover:bg-slate-50/50 transition-colors">
+                                            <tr key={t.id} className="hover:bg-slate-50 transition-colors">
                                                 <td className="p-3 text-slate-400">
                                                     {new Date(t.createdAt).toLocaleDateString('vi-VN')}
                                                 </td>
@@ -648,13 +604,13 @@ export default function TelesalesEarningsPage() {
                                                     <div className="font-medium text-slate-700">{t.category}</div>
                                                     {t.note && <div className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">{t.note}</div>}
                                                 </td>
-                                                <td className={`p-3 text-right font-bold ${t.type === 'penalty' ? 'text-red-500' : 'text-primary-600'}`}>
+                                                <td className={`p-3 text-right font-medium ${t.type === 'penalty' ? 'text-red-500' : 'text-primary-600'}`}>
                                                     {t.type === 'penalty' ? '-' : '+'}{formatPrice(t.amount)}
                                                 </td>
                                                 <td className="p-3 text-center">
-                                                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${t.status === 'finalized'
-                                                        ? 'bg-green-100 text-green-700'
-                                                        : 'bg-orange-100 text-orange-700'
+                                                    <span className={`px-2 py-0.5 rounded text-[9px] font-medium ${t.status === 'finalized'
+                                                        ? 'bg-emerald-50 text-emerald-600'
+                                                        : 'bg-orange-50 text-orange-600'
                                                         }`}>
                                                         {t.status === 'finalized' ? 'Đã chốt' : 'Dự kiến'}
                                                     </span>
@@ -669,18 +625,17 @@ export default function TelesalesEarningsPage() {
                 </div>
 
                 {/* Right Area */}
-                <div className="space-y-6">
+                <div className="space-y-4">
                     {/* Pending Bonuses Card */}
-                    <div className="bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl shadow-lg p-6 text-white overflow-hidden relative">
-                        <Award className="absolute -bottom-4 -right-4 w-24 h-24 opacity-10 rotate-12" />
-                        <h4 className="text-white/80 text-xs font-bold uppercase tracking-wider mb-2">Đang chờ xử lý</h4>
-                        <div className="text-3xl font-black mb-1">{formatPrice(payrollMetrics.estimatedBonuses)}</div>
-                        <p className="text-white/60 text-[10px] leading-relaxed">
+                    <div className="bg-primary-50 border border-primary-100 rounded-lg p-5">
+                        <h4 className="text-xs font-semibold text-primary-700 uppercase tracking-wide mb-2">Đang chờ xử lý</h4>
+                        <div className="text-2xl font-bold text-primary-700 mb-1">{formatPrice(payrollMetrics.estimatedBonuses)}</div>
+                        <p className="text-xs text-primary-600/70 leading-relaxed">
                             Tổng thưởng dự kiến từ các đơn hàng mở mới đang vận chuyển.
                         </p>
-                        <div className="mt-4 pt-4 border-t border-white/20">
-                            <div className="flex items-center gap-2 text-xs font-medium">
-                                <div className="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></div>
+                        <div className="mt-3 pt-3 border-t border-primary-200/50">
+                            <div className="flex items-center gap-2 text-xs text-primary-600">
+                                <div className="w-1.5 h-1.5 rounded-full bg-primary-400"></div>
                                 <span>Chờ đơn hàng "Đã giao" để chốt</span>
                             </div>
                         </div>
@@ -688,11 +643,11 @@ export default function TelesalesEarningsPage() {
 
                     {/* Penalties Notice */}
                     {payrollMetrics.penaltyTotal > 0 && (
-                        <div className="bg-red-50 border border-red-100 rounded-xl p-5 flex gap-4">
-                            <ShieldAlert className="w-6 h-6 text-red-500 shrink-0" />
+                        <div className="bg-red-50 border border-red-100 rounded-lg p-4 flex gap-3">
+                            <ShieldAlert className="w-5 h-5 text-red-500 shrink-0" />
                             <div>
-                                <h4 className="text-sm font-bold text-red-900 mb-1">Cảnh báo Vi phạm</h4>
-                                <p className="text-xs text-red-700 leading-normal">
+                                <h4 className="text-sm font-semibold text-red-800 mb-1">Cảnh báo Vi phạm</h4>
+                                <p className="text-xs text-red-600 leading-relaxed">
                                     Anh/Chị có các khoản phạt do vi phạm nội quy (đi muộn, đồng phục...). Vui lòng liên hệ Admin nếu có thắc mắc.
                                 </p>
                             </div>
@@ -700,14 +655,14 @@ export default function TelesalesEarningsPage() {
                     )}
 
                     {/* Quick Rules Link */}
-                    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">
-                        <h4 className="font-bold text-slate-800 text-sm">Chính sách Lương Thưởng</h4>
-                        <p className="text-xs text-slate-500 leading-relaxed">
+                    <div className="bg-white rounded-lg border border-slate-200 p-4">
+                        <h4 className="font-semibold text-slate-800 text-sm mb-2">Chính sách Lương Thưởng</h4>
+                        <p className="text-xs text-slate-500 leading-relaxed mb-3">
                             Tìm hiểu chi tiết về các định mức thưởng mở mới NPP (300k), Đại lý (100k) và các quy định xử phạt tại đây.
                         </p>
                         <a
                             href="/telesales/rules"
-                            className="block w-full py-2 bg-slate-900 text-white text-center rounded-lg text-xs font-bold hover:bg-slate-800 transition-colors"
+                            className="block w-full py-2 bg-slate-800 text-white text-center rounded-lg text-xs font-medium hover:bg-slate-700 transition-colors"
                         >
                             Xem Quy định Chi tiết
                         </a>
@@ -715,82 +670,73 @@ export default function TelesalesEarningsPage() {
                 </div>
             </div>
 
-            {/* Weekly Comparison Block */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">So sánh Tuần này vs Tuần trước</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-
+            {/* Weekly Comparison */}
+            <div className="bg-white rounded-lg border border-slate-200 p-5">
+                <h3 className="text-sm font-bold text-slate-900 mb-4">So sánh Tuần này vs Tuần trước</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* This Week */}
-                    <div className="space-y-4">
-                        <h4 className="font-medium text-slate-700 border-b pb-2">Tuần này</h4>
+                    <div>
+                        <h4 className="text-xs font-medium text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2 mb-3">Tuần này</h4>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <p className="text-xs text-slate-500 uppercase">Cuộc gọi</p>
+                                <p className="text-[10px] text-slate-400 uppercase mb-1">Cuộc gọi</p>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-lg font-semibold">{weeklyMetrics.thisWeek.totalCalls}</span>
-                                    <span className="text-xs text-slate-500 flex items-center">
+                                    <span className="text-base font-semibold text-slate-900">{weeklyMetrics.thisWeek.totalCalls}</span>
+                                    <span className="text-xs flex items-center">
                                         {getTrendIcon(weeklyMetrics.thisWeek.totalCalls, weeklyMetrics.lastWeek.totalCalls)}
-                                        <span className={weeklyMetrics.thisWeek.totalCalls >= weeklyMetrics.lastWeek.totalCalls ? "text-green-600" : "text-red-600"}>
+                                        <span className={weeklyMetrics.thisWeek.totalCalls >= weeklyMetrics.lastWeek.totalCalls ? "text-emerald-600 text-[10px]" : "text-red-500 text-[10px]"}>
                                             {getTrendPercent(weeklyMetrics.thisWeek.totalCalls, weeklyMetrics.lastWeek.totalCalls)}
                                         </span>
                                     </span>
                                 </div>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-500 uppercase">Doanh số</p>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-lg font-semibold">{formatPrice(weeklyMetrics.thisWeek.totalRevenue)}</span>
-                                </div>
-                                <span className="text-xs flex items-center gap-1 mt-1">
+                                <p className="text-[10px] text-slate-400 uppercase mb-1">Doanh số</p>
+                                <span className="text-base font-semibold text-slate-900">{formatPrice(weeklyMetrics.thisWeek.totalRevenue)}</span>
+                                <div className="text-xs flex items-center gap-1 mt-0.5">
                                     {getTrendIcon(weeklyMetrics.thisWeek.totalRevenue, weeklyMetrics.lastWeek.totalRevenue)}
-                                    <span className={weeklyMetrics.thisWeek.totalRevenue >= weeklyMetrics.lastWeek.totalRevenue ? "text-green-600" : "text-red-600"}>
+                                    <span className={weeklyMetrics.thisWeek.totalRevenue >= weeklyMetrics.lastWeek.totalRevenue ? "text-emerald-600 text-[10px]" : "text-red-500 text-[10px]"}>
                                         {getTrendPercent(weeklyMetrics.thisWeek.totalRevenue, weeklyMetrics.lastWeek.totalRevenue)}
                                     </span>
-                                </span>
+                                </div>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-500 uppercase">Đơn hàng</p>
+                                <p className="text-[10px] text-slate-400 uppercase mb-1">Đơn hàng</p>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-lg font-semibold">{weeklyMetrics.thisWeek.totalOrders}</span>
-                                    <span className="text-xs text-slate-500 flex items-center">
+                                    <span className="text-base font-semibold text-slate-900">{weeklyMetrics.thisWeek.totalOrders}</span>
+                                    <span className="text-xs flex items-center">
                                         {getTrendIcon(weeklyMetrics.thisWeek.totalOrders, weeklyMetrics.lastWeek.totalOrders)}
-                                        <span className={weeklyMetrics.thisWeek.totalOrders >= weeklyMetrics.lastWeek.totalOrders ? "text-green-600" : "text-red-600"}>
+                                        <span className={weeklyMetrics.thisWeek.totalOrders >= weeklyMetrics.lastWeek.totalOrders ? "text-emerald-600 text-[10px]" : "text-red-500 text-[10px]"}>
                                             {getTrendPercent(weeklyMetrics.thisWeek.totalOrders, weeklyMetrics.lastWeek.totalOrders)}
                                         </span>
                                     </span>
                                 </div>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-500 uppercase">Tỷ lệ chốt</p>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-lg font-semibold">{weeklyMetrics.thisWeek.conversionRate.toFixed(1)}%</span>
-                                    <span className="text-xs text-slate-500 flex items-center">
-                                        {getTrendIcon(weeklyMetrics.thisWeek.conversionRate, weeklyMetrics.lastWeek.conversionRate)}
-                                    </span>
-                                </div>
+                                <p className="text-[10px] text-slate-400 uppercase mb-1">Tỷ lệ chốt</p>
+                                <span className="text-base font-semibold text-slate-900">{weeklyMetrics.thisWeek.conversionRate.toFixed(1)}%</span>
                             </div>
                         </div>
                     </div>
-
                     {/* Last Week */}
-                    <div className="space-y-4 opacity-75">
-                        <h4 className="font-medium text-slate-700 border-b pb-2">Tuần trước</h4>
+                    <div className="opacity-60">
+                        <h4 className="text-xs font-medium text-slate-500 uppercase tracking-wide border-b border-slate-100 pb-2 mb-3">Tuần trước</h4>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <p className="text-xs text-slate-500 uppercase">Cuộc gọi</p>
-                                <p className="text-lg font-semibold text-slate-600">{weeklyMetrics.lastWeek.totalCalls}</p>
+                                <p className="text-[10px] text-slate-400 uppercase mb-1">Cuộc gọi</p>
+                                <p className="text-base font-semibold text-slate-600">{weeklyMetrics.lastWeek.totalCalls}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-500 uppercase">Doanh số</p>
-                                <p className="text-lg font-semibold text-slate-600">{formatPrice(weeklyMetrics.lastWeek.totalRevenue)}</p>
+                                <p className="text-[10px] text-slate-400 uppercase mb-1">Doanh số</p>
+                                <p className="text-base font-semibold text-slate-600">{formatPrice(weeklyMetrics.lastWeek.totalRevenue)}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-500 uppercase">Đơn hàng</p>
-                                <p className="text-lg font-semibold text-slate-600">{weeklyMetrics.lastWeek.totalOrders}</p>
+                                <p className="text-[10px] text-slate-400 uppercase mb-1">Đơn hàng</p>
+                                <p className="text-base font-semibold text-slate-600">{weeklyMetrics.lastWeek.totalOrders}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-500 uppercase">Tỷ lệ chốt</p>
-                                <p className="text-lg font-semibold text-slate-600">{weeklyMetrics.lastWeek.conversionRate.toFixed(1)}%</p>
+                                <p className="text-[10px] text-slate-400 uppercase mb-1">Tỷ lệ chốt</p>
+                                <p className="text-base font-semibold text-slate-600">{weeklyMetrics.lastWeek.conversionRate.toFixed(1)}%</p>
                             </div>
                         </div>
                     </div>
@@ -798,44 +744,34 @@ export default function TelesalesEarningsPage() {
             </div>
 
             {/* History Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-6 border-b border-slate-200">
-                    <h3 className="text-lg font-semibold text-slate-900">Lịch sử hiệu quả</h3>
+            <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+                <div className="px-5 py-3 border-b border-slate-200">
+                    <h3 className="text-sm font-bold text-slate-900">Lịch sử hiệu quả</h3>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
                             <tr>
-                                <th className="px-6 py-3 font-medium">Ngày</th>
-                                <th className="px-6 py-3 font-medium text-center">Cuộc gọi</th>
-                                <th className="px-6 py-3 font-medium text-center">Đơn thành công</th>
-                                <th className="px-6 py-3 font-medium text-right">Doanh số</th>
-                                <th className="px-6 py-3 font-medium text-right">Hoa hồng ({COMMISSION_RATE * 100}%)</th>
+                                <th className="px-5 py-3 font-medium">Ngày</th>
+                                <th className="px-5 py-3 font-medium text-center">Cuộc gọi</th>
+                                <th className="px-5 py-3 font-medium text-center">Đơn thành công</th>
+                                <th className="px-5 py-3 font-medium text-right">Doanh số</th>
+                                <th className="px-5 py-3 font-medium text-right">Hoa hồng ({COMMISSION_RATE * 100}%)</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {history.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-8 text-center text-slate-500">Chưa có dữ liệu trong khoảng này.</td>
+                                    <td colSpan={5} className="px-5 py-6 text-center text-slate-400 text-sm">Chưa có dữ liệu trong khoảng này.</td>
                                 </tr>
                             ) : (
                                 history.map((row, index) => (
-                                    <tr key={index} className="hover:bg-slate-50">
-                                        <td className="px-6 py-4 font-medium text-slate-900">
-                                            {row.dateLabel}
-                                        </td>
-                                        <td className="px-6 py-4 text-center text-slate-600">
-                                            {row.calls}
-                                        </td>
-                                        <td className="px-6 py-4 text-center text-slate-600">
-                                            {row.orders}
-                                        </td>
-                                        <td className="px-6 py-4 text-right font-medium text-slate-900">
-                                            {formatPrice(row.revenue)}
-                                        </td>
-                                        <td className="px-6 py-4 text-right font-medium text-green-600">
-                                            {formatPrice(row.commission)}
-                                        </td>
+                                    <tr key={index} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-5 py-3 font-medium text-slate-800">{row.dateLabel}</td>
+                                        <td className="px-5 py-3 text-center text-slate-600">{row.calls}</td>
+                                        <td className="px-5 py-3 text-center text-slate-600">{row.orders}</td>
+                                        <td className="px-5 py-3 text-right font-medium text-slate-800">{formatPrice(row.revenue)}</td>
+                                        <td className="px-5 py-3 text-right font-medium text-emerald-600">{formatPrice(row.commission)}</td>
                                     </tr>
                                 ))
                             )}

@@ -304,7 +304,7 @@ export default function AdminPayrollPage() {
     return (
         <div className="flex flex-col lg:flex-row h-[calc(100vh-120px)] gap-6">
             {/* Sidebar: Staff List */}
-            <div className="w-full lg:w-80 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
+            <div className="w-full lg:w-80 bg-white rounded-lg border border-slate-200 flex flex-col overflow-hidden">
                 <div className="p-4 border-b border-slate-100 space-y-4">
                     <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                         <Users className="w-5 h-5 text-primary-500" />
@@ -315,7 +315,7 @@ export default function AdminPayrollPage() {
                         <input
                             type="text"
                             placeholder="Tìm nhân viên..."
-                            className="w-full pl-9 pr-4 py-2 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary-500 transition-all"
+                            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
@@ -327,12 +327,12 @@ export default function AdminPayrollPage() {
                         <button
                             key={user.id}
                             onClick={() => setSelectedUserId(user.id)}
-                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all mb-1 ${selectedUserId === user.id
-                                ? 'bg-primary-50 text-primary-700 border-l-4 border-primary-500'
+                            className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors mb-1 ${selectedUserId === user.id
+                                ? 'bg-primary-50 text-primary-700 border-l-3 border-primary-500'
                                 : 'hover:bg-slate-50 text-slate-600'
                                 }`}
                         >
-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shadow-sm transition-all ${selectedUserId === user.id ? 'bg-primary-500 text-white' : 'bg-slate-100 text-slate-500'
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${selectedUserId === user.id ? 'bg-primary-500 text-white' : 'bg-slate-100 text-slate-500'
                                 }`}>
                                 {(user.name || "?").charAt(0)}
                             </div>
@@ -350,9 +350,9 @@ export default function AdminPayrollPage() {
                 {selectedUserId ? (
                     <>
                         {/* Selected User Header & Stats */}
-                        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                        <div className="bg-white rounded-lg p-5 border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                             <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center text-slate-700 text-xl font-bold">
+                                <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center text-slate-700 text-lg font-bold">
                                     {(staff.find(s => s.id === selectedUserId)?.name || "?").charAt(0)}
                                 </div>
                                 <div>
@@ -361,12 +361,12 @@ export default function AdminPayrollPage() {
                                             {staff.find(s => s.id === selectedUserId)?.name || "Chưa đặt tên"}
                                         </h1>
                                         {isMonthLocked(12) ? (
-                                            <span className="px-2.5 py-0.5 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-lg flex items-center gap-1 uppercase tracking-wider border border-rose-100">
+                                            <span className="px-2 py-0.5 bg-rose-50 text-rose-600 text-[10px] font-medium rounded flex items-center gap-1 uppercase border border-rose-100">
                                                 <Lock className="w-3 h-3" />
                                                 Đã khóa
                                             </span>
                                         ) : (
-                                            <span className="px-2.5 py-0.5 bg-primary-50 text-primary-600 text-[10px] font-bold rounded-lg flex items-center gap-1 uppercase tracking-wider border border-primary-100">
+                                            <span className="px-2 py-0.5 bg-primary-50 text-primary-600 text-[10px] font-medium rounded flex items-center gap-1 uppercase border border-primary-100">
                                                 <ShieldCheck className="w-3 h-3" />
                                                 Đang mở
                                             </span>
@@ -380,7 +380,7 @@ export default function AdminPayrollPage() {
                                 {!isMonthLocked(12) && (
                                     <button
                                         onClick={() => handleLockMonth(12)}
-                                        className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-sm"
+                                        className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors"
                                     >
                                         <Lock className="w-4 h-4" />
                                         Chốt lương
@@ -388,14 +388,14 @@ export default function AdminPayrollPage() {
                                 )}
                                 <button
                                     onClick={handleOpenKpiConfig}
-                                    className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
+                                    className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
                                 >
                                     <Settings className="w-4 h-4" />
                                     Cấu hình KPI
                                 </button>
                                 <button
                                     onClick={() => setIsModalOpen(true)}
-                                    className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-95 shadow-sm"
+                                    className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
                                 >
                                     <Plus className="w-4 h-4" />
                                     Thêm khoản chi
@@ -405,46 +405,46 @@ export default function AdminPayrollPage() {
 
                         {/* Summary Cards */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                            <div className="bg-white p-4 rounded-lg border border-slate-200">
                                 <div className="flex justify-between items-center mb-4">
                                     <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
                                         <Award className="w-5 h-5" />
                                     </div>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Thưởng chốt</span>
+                                    <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wide">Thưởng chốt</span>
                                 </div>
-                                <div className="text-2xl font-bold text-slate-900">{formatPrice(stats.bonus)}</div>
+                                <div className="text-xl font-bold text-slate-900">{formatPrice(stats.bonus)}</div>
                             </div>
-                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                            <div className="bg-white p-4 rounded-lg border border-slate-200">
                                 <div className="flex justify-between items-center mb-4">
                                     <div className="p-2 bg-rose-50 rounded-lg text-rose-600">
                                         <ShieldAlert className="w-5 h-5" />
                                     </div>
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Phạt chốt</span>
                                 </div>
-                                <div className="text-2xl font-bold text-slate-900">{formatPrice(stats.penalty)}</div>
+                                <div className="text-xl font-bold text-slate-900">{formatPrice(stats.penalty)}</div>
                             </div>
-                            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                            <div className="bg-white p-4 rounded-lg border border-slate-200">
                                 <div className="flex justify-between items-center mb-4">
                                     <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
                                         <Clock className="w-5 h-5" />
                                     </div>
                                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ước tính (T12)</span>
                                 </div>
-                                <div className="text-2xl font-bold text-slate-900">{formatPrice(stats.estimated)}</div>
+                                <div className="text-xl font-bold text-slate-900">{formatPrice(stats.estimated)}</div>
                             </div>
-                            <div className="bg-primary-50 border border-primary-100 p-5 rounded-xl shadow-sm relative overflow-hidden group">
+                            <div className="bg-primary-50 border border-primary-100 p-4 rounded-lg">
                                 <div className="flex justify-between items-center mb-4">
-                                    <div className="p-2 bg-primary-600 rounded-lg text-white">
+                                    <div className="p-2 bg-primary-500 rounded-lg text-white">
                                         <DollarSign className="w-5 h-5" />
                                     </div>
-                                    <span className="text-[10px] font-bold text-primary-700 uppercase tracking-widest">Thực lĩnh</span>
+                                    <span className="text-[10px] font-medium text-primary-700 uppercase tracking-wide">Thực lĩnh</span>
                                 </div>
-                                <div className="text-2xl font-bold text-primary-900 tracking-tight">{formatPrice(stats.total)}</div>
+                                <div className="text-xl font-bold text-primary-800">{formatPrice(stats.total)}</div>
                             </div>
                         </div>
 
                         {/* Lists Section */}
-                        <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                        <div className="flex-1 bg-white rounded-lg border border-slate-200 overflow-hidden flex flex-col">
                             {viewMode === 'finance' ? (
                                 <>
                                     <div className="p-4 border-b border-slate-100 flex items-center justify-between">
@@ -458,7 +458,7 @@ export default function AdminPayrollPage() {
                                     </div>
                                     <div className="flex-1 overflow-y-auto">
                                         <table className="w-full text-sm text-left">
-                                            <thead className="sticky top-0 bg-slate-50 border-b border-slate-100 text-slate-500 text-[10px] font-black uppercase tracking-widest z-10">
+                                            <thead className="sticky top-0 bg-slate-50 border-b border-slate-100 text-slate-500 text-[10px] font-medium uppercase tracking-wide z-10">
                                                 <tr>
                                                     <th className="px-6 py-4">Ngày giao dịch</th>
                                                     <th className="px-6 py-4">Loại & Danh mục</th>
@@ -483,21 +483,21 @@ export default function AdminPayrollPage() {
                                                                 })}
                                                             </td>
                                                             <td className="px-6 py-4">
-                                                                <div className={`text-[10px] font-black uppercase mb-0.5 ${t.type === 'penalty' ? 'text-red-500' : 'text-green-600'}`}>
+                                                                <div className={`text-[10px] font-medium uppercase mb-0.5 ${t.type === 'penalty' ? 'text-red-500' : 'text-green-600'}`}>
                                                                     {t.type === 'penalty' ? 'Khấu trừ' : 'Thưởng'}
                                                                 </div>
-                                                                <div className="font-bold text-slate-900">{t.category}</div>
+                                                                <div className="font-medium text-slate-900">{t.category}</div>
                                                             </td>
                                                             <td className="px-6 py-4 text-slate-500 text-xs italic">
                                                                 {t.note || '-'}
                                                             </td>
-                                                            <td className={`px-6 py-4 text-right font-black ${t.type === 'penalty' ? 'text-red-500' : 'text-slate-900'}`}>
+                                                            <td className={`px-6 py-4 text-right font-medium ${t.type === 'penalty' ? 'text-red-500' : 'text-slate-900'}`}>
                                                                 {t.type === 'penalty' ? '-' : '+'}{formatPrice(t.amount)}
                                                             </td>
                                                             <td className="px-6 py-4 text-center">
-                                                                <span className={`px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${t.status === 'finalized'
-                                                                    ? 'bg-green-100 text-green-700'
-                                                                    : 'bg-amber-100 text-amber-700'
+                                                                <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${t.status === 'finalized'
+                                                                    ? 'bg-emerald-50 text-emerald-600'
+                                                                    : 'bg-amber-50 text-amber-600'
                                                                     }`}>
                                                                     {t.status === 'finalized' ? 'Đã chốt' : 'Dự kiến'}
                                                                 </span>
@@ -524,7 +524,7 @@ export default function AdminPayrollPage() {
                                     </div>
                                     <div className="flex-1 overflow-y-auto">
                                         <table className="w-full text-sm text-left">
-                                            <thead className="sticky top-0 bg-slate-50 border-b border-slate-100 text-slate-500 text-[10px] font-black uppercase tracking-widest z-10">
+                                            <thead className="sticky top-0 bg-slate-50 border-b border-slate-100 text-slate-500 text-[10px] font-medium uppercase tracking-wide z-10">
                                                 <tr>
                                                     <th className="px-6 py-4">Ngày tạo</th>
                                                     <th className="px-6 py-4">Khách hàng</th>
@@ -550,15 +550,15 @@ export default function AdminPayrollPage() {
                                                                 {o.customerName}
                                                             </td>
                                                             <td className="px-6 py-4">
-                                                                <span className="text-[10px] font-black uppercase bg-slate-100 px-2 py-0.5 rounded text-slate-500">
+                                                                <span className="text-[10px] font-medium uppercase bg-slate-100 px-2 py-0.5 rounded text-slate-500">
                                                                     {o.source}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-6 py-4 text-right font-black text-slate-900">
+                                                            <td className="px-6 py-4 text-right font-medium text-slate-900">
                                                                 {formatPrice(o.totalAmount || 0)}
                                                             </td>
                                                             <td className="px-6 py-4 text-center">
-                                                                <span className={`px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${o.status === 'delivered' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                                <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${o.status === 'delivered' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-500'}`}>
                                                                     {o.status === 'delivered' ? 'Thành công' : 'Đang xử lý'}
                                                                 </span>
                                                             </td>
@@ -573,7 +573,7 @@ export default function AdminPayrollPage() {
                         </div>
                     </>
                 ) : (
-                    <div className="flex-1 bg-white rounded-2xl border border-slate-200 border-dashed flex flex-col items-center justify-center text-slate-400">
+                    <div className="flex-1 bg-white rounded-lg border border-slate-200 border-dashed flex flex-col items-center justify-center text-slate-400">
                         <UserIcon className="w-16 h-16 mb-4 opacity-20" />
                         <p className="font-medium">Vui lòng chọn nhân viên để xem chi tiết bảng lương</p>
                     </div>
@@ -582,18 +582,18 @@ export default function AdminPayrollPage() {
 
             {/* Modal: KPI Configuration */}
             {isKpiModalOpen && kpiSettings && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-lg w-full max-w-2xl shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                        <div className="p-5 border-b border-slate-200 flex justify-between items-center">
                             <div>
-                                <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                                    <Settings className="w-5 h-5 text-primary-600" />
+                                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                    <Settings className="w-5 h-5 text-primary-500" />
                                     Cấu hình Lương & KPI
                                 </h2>
                                 <p className="text-xs text-slate-500 mt-1">Thiết lập chỉ tiêu cho nhân sự {staff.find(s => s.id === selectedUserId)?.name}</p>
                             </div>
-                            <button onClick={() => setIsKpiModalOpen(false)} className="p-2 hover:bg-white rounded-full text-slate-400 transition-colors">
-                                <Plus className="w-6 h-6 rotate-45" />
+                            <button onClick={() => setIsKpiModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400 transition-colors">
+                                <Plus className="w-5 h-5 rotate-45" />
                             </button>
                         </div>
 
@@ -604,10 +604,10 @@ export default function AdminPayrollPage() {
                                 <>
                                     {/* Section 1: Base Salary & Commission */}
                                     <div className="space-y-4">
-                                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest border-l-4 border-primary-500 pl-3">
+                                        <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide border-l-3 border-primary-500 pl-3">
                                             1. Cơ chế Lương & Thưởng
                                         </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg border border-slate-100">
                                             <div>
                                                 <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Lương cứng (VNĐ/Tháng)</label>
                                                 <div className="relative">
@@ -640,7 +640,7 @@ export default function AdminPayrollPage() {
 
                                     {/* Section 2: KPI Targets + Salary Weights */}
                                     <div className="space-y-4">
-                                        <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest border-l-4 border-rose-500 pl-3">
+                                        <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide border-l-3 border-rose-500 pl-3">
                                             2. Chỉ tiêu KPI & Trọng số Lương
                                         </h3>
                                         {(() => {
@@ -668,7 +668,7 @@ export default function AdminPayrollPage() {
                                             }))).map((metric) => {
                                                 const metricDef = metric as KpiMetricDefinition;
                                                 return (
-                                                    <div key={metricDef.key} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:border-primary-200 transition-colors">
+                                                    <div key={metricDef.key} className="bg-white p-4 rounded-lg border border-slate-200 hover:border-primary-200 transition-colors">
                                                         <div className="flex items-center justify-between mb-2">
                                                             <label className="text-xs font-bold text-slate-700">{metricDef.label}</label>
                                                             <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${metricDef.data_source === 'auto' ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500'
@@ -681,7 +681,7 @@ export default function AdminPayrollPage() {
                                                                 <span className="text-[10px] text-slate-400 font-semibold block mb-1">Target /tháng</span>
                                                                 <input
                                                                     type="number"
-                                                                    className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-black text-slate-900 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                                                                    className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-900 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none"
                                                                     value={kpiSettings.kpi_targets?.[metricDef.key] || 0}
                                                                     onChange={(e) => {
                                                                         const val = parseFloat(e.target.value) || 0;
@@ -700,7 +700,7 @@ export default function AdminPayrollPage() {
                                                                 <div className="flex items-center gap-1">
                                                                     <input
                                                                         type="number"
-                                                                        className="w-full py-2 px-3 bg-primary-50 border border-primary-200 rounded-lg text-sm font-black text-primary-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                                                                        className="w-full py-2 px-3 bg-primary-50 border border-primary-200 rounded-lg text-sm font-medium text-primary-700 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none"
                                                                         value={metricDef.salary_percent || 0}
                                                                         onChange={(e) => {
                                                                             const val = parseFloat(e.target.value) || 0;
@@ -725,17 +725,17 @@ export default function AdminPayrollPage() {
                             )}
                         </div>
 
-                        <div className="p-4 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                        <div className="p-4 border-t border-slate-200 flex justify-end gap-3">
                             <button
                                 onClick={() => setIsKpiModalOpen(false)}
-                                className="px-5 py-2.5 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-200 transition-colors"
+                                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-100 transition-colors"
                             >
                                 Hủy bỏ
                             </button>
                             <button
                                 onClick={handleSaveKpiConfigs}
                                 disabled={isLoadingKpi}
-                                className="px-6 py-2.5 rounded-xl text-sm font-bold bg-primary-600 text-white shadow-lg shadow-primary-200 hover:bg-primary-700 hover:shadow-xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                                className="px-5 py-2 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                             >
                                 {isLoadingKpi ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <SaveIcon className="w-4 h-4" />}
                                 Lưu cấu hình
@@ -743,38 +743,39 @@ export default function AdminPayrollPage() {
                         </div>
                     </div>
                 </div>
-            )}
+            )
+            }
             {/* Modal: Add Transaction */}
-            {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-                        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                            <h2 className="text-xl font-black text-slate-900">Ghi nhận Thưởng/Phạt</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-50 rounded-full text-slate-400">
-                                <Plus className="w-6 h-6 rotate-45" />
-                            </button>
-                        </div>
-
-                        <div className="p-6 space-y-5">
-                            <div className="grid grid-cols-2 gap-3 p-1 bg-slate-100 rounded-xl">
-                                <button
-                                    onClick={() => setNewTx({ ...newTx, type: 'bonus' })}
-                                    className={`py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${newTx.type === 'bonus' ? 'bg-white shadow text-green-600' : 'text-slate-500 hover:bg-white/50'}`}
-                                >
-                                    Thưởng
-                                </button>
-                                <button
-                                    onClick={() => setNewTx({ ...newTx, type: 'penalty' })}
-                                    className={`py-2 text-xs font-black uppercase tracking-widest rounded-lg transition-all ${newTx.type === 'penalty' ? 'bg-white shadow text-red-600' : 'text-slate-500 hover:bg-white/50'}`}
-                                >
-                                    Phạt
+            {
+                isModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+                        <div className="bg-white rounded-lg w-full max-w-md shadow-lg overflow-hidden">
+                            <div className="p-5 border-b border-slate-200 flex justify-between items-center">
+                                <h2 className="text-lg font-bold text-slate-900">Ghi nhận Thưởng/Phạt</h2>
+                                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400">
+                                    <Plus className="w-5 h-5 rotate-45" />
                                 </button>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Danh mục</label>
+                            <div className="p-5 space-y-4">
+                                <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-lg">
+                                    <button
+                                        onClick={() => setNewTx({ ...newTx, type: 'bonus' })}
+                                        className={`py-2 text-xs font-medium uppercase rounded transition-colors ${newTx.type === 'bonus' ? 'bg-white shadow-sm text-green-600' : 'text-slate-500 hover:bg-white/50'}`}
+                                    >
+                                        Thưởng
+                                    </button>
+                                    <button
+                                        onClick={() => setNewTx({ ...newTx, type: 'penalty' })}
+                                        className={`py-2 text-xs font-medium uppercase rounded transition-colors ${newTx.type === 'penalty' ? 'bg-white shadow-sm text-red-600' : 'text-slate-500 hover:bg-white/50'}`}
+                                    >
+                                        Phạt
+                                    </button>
+                                </div>
+
+                                <label className="text-[10px] font-medium text-slate-400 uppercase px-1">Danh mục</label>
                                 <select
-                                    className="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-primary-500"
+                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none"
                                     value={newTx.category}
                                     onChange={(e) => setNewTx({ ...newTx, category: e.target.value })}
                                 >
@@ -799,42 +800,48 @@ export default function AdminPayrollPage() {
                                 </select>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Số tiền (VNĐ)</label>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-medium text-slate-400 uppercase px-1">Số tiền (VNĐ)</label>
                                 <input
                                     type="number"
-                                    className="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-lg font-black focus:ring-2 focus:ring-primary-500 text-primary-600"
+                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-base font-bold focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none text-primary-600"
                                     value={newTx.amount}
                                     onChange={(e) => setNewTx({ ...newTx, amount: parseInt(e.target.value) || 0 })}
                                 />
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Ghi chú chi tiết</label>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-medium text-slate-400 uppercase px-1">Ghi chú chi tiết</label>
                                 <textarea
                                     rows={3}
                                     placeholder="Lý do cụ thể..."
-                                    className="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary-500"
+                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none"
                                     value={newTx.note}
                                     onChange={(e) => setNewTx({ ...newTx, note: e.target.value })}
                                 />
                             </div>
 
-                            <div className="pt-4">
+                            <div className="pt-2">
                                 <button
                                     onClick={handleAddTransaction}
-                                    className="w-full bg-primary-600 text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary-100 hover:bg-primary-500 transition-all active:scale-[0.98]"
+                                    className="w-full bg-primary-600 text-white py-3 rounded-lg font-medium text-sm hover:bg-primary-700 transition-colors"
                                 >
                                     Xác nhận ghi nhận
                                 </button>
-                                <p className="text-[10px] text-center text-slate-400 mt-4 leading-relaxed px-4">
+                                <p className="text-[10px] text-center text-slate-400 mt-3 leading-relaxed px-4">
                                     Mọi giao dịch sau khi xác nhận sẽ được hiển thị ngay lập tức lên Dashboard của nhân viên.
                                 </p>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
         </div>
     );
 }
+
+
+
+
+
+
+
