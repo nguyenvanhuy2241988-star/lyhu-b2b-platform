@@ -166,15 +166,26 @@ function TelesalesCreateOrderContent() {
 
                             // Set Items
                             // RPC returns items in 'items' field, ensuring structure matches
-                            const mappedItems: OrderItem[] = (order.items || []).map((item: any) => ({
-                                product: item.product,
-                                quantity: item.quantity,
-                                discount: item.discount,
-                                discountType: item.discount_type,
-                                discountValue: item.discount, // Assuming simple case for now
-                                isGift: item.is_gift,
-                                price: item.price
-                            }));
+                            const mappedItems: OrderItem[] = (order.items || []).map((item: any) => {
+                                const price = item.price || 0;
+                                const qty = item.quantity || 1;
+                                const discAmount = item.discount || 0;
+                                const dType = item.discount_type || 'amount';
+                                // Restore discountValue: if percent type, reverse-calculate the %
+                                let dValue = discAmount;
+                                if (dType === 'percent' && price * qty > 0) {
+                                    dValue = Math.round((discAmount / (price * qty)) * 100 * 100) / 100;
+                                }
+                                return {
+                                    product: item.product,
+                                    quantity: qty,
+                                    discount: discAmount,
+                                    discountType: dType,
+                                    discountValue: dValue,
+                                    isGift: item.is_gift,
+                                    price: price
+                                };
+                            });
                             setOrderItems(mappedItems);
 
                             // Set Other Info - use stored rates directly

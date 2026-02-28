@@ -86,6 +86,7 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, s
                             <th className="border border-gray-300 px-2 py-2 text-center w-16">ĐVT</th>
                             <th className="border border-gray-300 px-2 py-2 text-center w-16">SL</th>
                             <th className="border border-gray-300 px-2 py-2 text-right w-24">Đơn giá</th>
+                            <th className="border border-gray-300 px-2 py-2 text-center w-14">CK %</th>
                             <th className="border border-gray-300 px-2 py-2 text-right w-24">Chiết khấu</th>
                             <th className="border border-gray-300 px-2 py-2 text-right w-28">Thành tiền</th>
                         </tr>
@@ -102,6 +103,18 @@ export const OrderPrintTemplate: React.FC<OrderPrintTemplateProps> = ({ order, s
                                 <td className="border border-gray-300 px-2 py-2 text-center">{item.unit || item.product?.unit || 'Cái'}</td>
                                 <td className="border border-gray-300 px-2 py-2 text-center font-semibold">{item.quantity}</td>
                                 <td className="border border-gray-300 px-2 py-2 text-right">{formatPrice(item.price || item.unitPrice || 0)}</td>
+                                <td className="border border-gray-300 px-2 py-2 text-center text-red-600 text-xs">
+                                    {(() => {
+                                        const p = item.price || item.unitPrice || 0;
+                                        const q = item.quantity || 1;
+                                        const d = item.discount || 0;
+                                        const isGift = item.isGift || item.is_gift;
+                                        if (d > 0 && p * q > 0 && !isGift) {
+                                            return `${((d / (p * q)) * 100).toFixed(1)}%`;
+                                        }
+                                        return '-';
+                                    })()}
+                                </td>
                                 <td className="border border-gray-300 px-2 py-2 text-right text-red-600">
                                     {(item.discount || 0) > 0 ? `-${formatPrice(item.discount || 0)}` : '-'}
                                 </td>

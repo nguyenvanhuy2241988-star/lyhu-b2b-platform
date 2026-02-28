@@ -306,6 +306,7 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                                             <th className="px-4 py-2 font-medium">Sản phẩm</th>
                                             <th className="px-4 py-2 font-medium text-center">SL</th>
                                             <th className="px-4 py-2 font-medium text-right">Đơn giá</th>
+                                            <th className="px-4 py-2 font-medium text-center">Giảm %</th>
                                             <th className="px-4 py-2 font-medium text-right">Giảm giá</th>
                                             <th className="px-4 py-2 font-medium text-right">Thành tiền</th>
                                         </tr>
@@ -322,6 +323,17 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                                                     <td className="px-4 py-3 text-center">{item.quantity}</td>
                                                     <td className="px-4 py-3 text-right text-slate-600">
                                                         {formatPrice(item.price || item.unitPrice || 0)}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-center text-red-500 text-xs font-medium">
+                                                        {(() => {
+                                                            const p = item.price || item.unitPrice || 0;
+                                                            const q = item.quantity || 1;
+                                                            const d = item.discount || 0;
+                                                            if (d > 0 && p * q > 0 && !isGiftItem) {
+                                                                return `${((d / (p * q)) * 100).toFixed(1)}%`;
+                                                            }
+                                                            return '-';
+                                                        })()}
                                                     </td>
                                                     <td className="px-4 py-3 text-right text-red-500 font-medium">
                                                         {(item.discount || 0) > 0 ? `-${formatPrice(item.discount)}` : '-'}
@@ -353,7 +365,7 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                                                         <td className="px-4 py-2 text-right font-medium text-slate-700">{formatPrice(totalListPrice)}</td>
                                                     </tr>
                                                     <tr>
-                                                        <td colSpan={4} className="px-4 py-2 text-right text-slate-500 text-xs uppercase tracking-wide">
+                                                        <td colSpan={5} className="px-4 py-2 text-right text-slate-500 text-xs uppercase tracking-wide">
                                                             Chiết khấu dòng {discountPct > 0 && <span className="text-red-500">({discountPct.toFixed(1)}%)</span>}
                                                         </td>
                                                         <td className="px-4 py-2 text-right font-medium text-red-600">-{formatPrice(totalItemDiscount)}</td>
