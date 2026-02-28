@@ -404,6 +404,7 @@ export default function TelesalesTasksPage() {
     const [isCreateLeadModalOpen, setIsCreateLeadModalOpen] = useState(false); // New Lead Modal
 
     const [createModalInitialStatus, setCreateModalInitialStatus] = useState<TaskStatus>("inbox");
+    const [createFromColumnId, setCreateFromColumnId] = useState<string | null>(null); // Track which column's "+" was clicked
     const savingRef = useRef(false); // Prevent Realtime duplication during save
     const [editingTask, setEditingTask] = useState<TelesalesTask | null>(null); // New state for editing
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -922,8 +923,9 @@ export default function TelesalesTasksPage() {
     }, [editingColumnId]);
 
     // Handle Open Create/Edit
-    const openCreateModal = (status: TaskStatus = "inbox") => {
+    const openCreateModal = (status: TaskStatus = "inbox", columnId?: string) => {
         setCreateModalInitialStatus(status);
+        setCreateFromColumnId(columnId || null);
         setEditingTask(null);
         setIsCreateModalOpen(true);
     };
@@ -961,6 +963,10 @@ export default function TelesalesTasksPage() {
                     if (taskData.assigned_to) allUserIds.add(taskData.assigned_to);
                     if (taskData.leader_id) allUserIds.add(taskData.leader_id);
                     await createTaskPlacements(taskId, Array.from(allUserIds), session?.access_token);
+                    // If creating from a specific column (not inbox), move creator's placement there
+                    if (createFromColumnId && user?.id) {
+                        await moveTaskToColumn(taskId, createFromColumnId, session?.access_token);
+                    }
                 }
             }
             await refreshData();
@@ -1522,7 +1528,7 @@ export default function TelesalesTasksPage() {
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </button>
                                             <button
-                                                onClick={() => openCreateModal(col.id as TaskStatus)}
+                                                onClick={() => openCreateModal('inbox' as TaskStatus, col.id)}
                                                 className="text-slate-400 hover:text-slate-600 p-1 hover:bg-slate-200 rounded ml-1"
                                                 title="Thêm việc"
                                             >
