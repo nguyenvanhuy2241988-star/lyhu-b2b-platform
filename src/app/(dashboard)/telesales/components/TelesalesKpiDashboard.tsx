@@ -11,9 +11,10 @@ import { useRouter } from "next/navigation";
 interface TelesalesKpiDashboardProps {
     date: string;
     userId: string;
+    toDate?: string;
 }
 
-export default function TelesalesKpiDashboard({ date, userId }: TelesalesKpiDashboardProps) {
+export default function TelesalesKpiDashboard({ date, userId, toDate }: TelesalesKpiDashboardProps) {
     const { user, role } = useAuth();
     const router = useRouter();
     const [stats, setStats] = useState<TelesalesKpiStats | null>(null);
@@ -39,7 +40,7 @@ export default function TelesalesKpiDashboard({ date, userId }: TelesalesKpiDash
     const loadStats = async () => {
         if (!userId) return;
         try {
-            const data = await (userId === 'ALL' ? getTeamTelesalesKpiStats(date) : getTelesalesKpiStats(userId, date));
+            const data = await (userId === 'ALL' ? getTeamTelesalesKpiStats(date, toDate) : getTelesalesKpiStats(userId, date, toDate));
             setStats(data);
             setTargets({
                 calls: data.calls_target,
@@ -101,7 +102,7 @@ export default function TelesalesKpiDashboard({ date, userId }: TelesalesKpiDash
             supabase.removeChannel(channel);
             supabase.removeChannel(settingsChannel);
         };
-    }, [userId, date]);
+    }, [userId, date, toDate]);
 
     const handleSaveSettings = async () => {
         if (!userId || !isAdmin) return;

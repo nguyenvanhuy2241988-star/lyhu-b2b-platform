@@ -103,29 +103,50 @@ export const upsertDailyReportTelesales = async (reportData: Partial<TelesalesDa
 };
 
 /**
- * Increment calls_completed by 1 for a given user and date.
- * Used when a CRM call is logged with result 'answered' (Nghe máy).
- * Other call results (no_answer, busy, wrong_number, callback, voicemail) are NOT counted for KPI.
+ * Sync calls_completed from actual CRM activity records.
+ * Counts DISTINCT deals with at least one 'answered' call today.
+ * This ensures each deal is only counted once per day for KPI.
  */
-export const incrementCallsCompleted = async (userId: string, date: string) => {
+export const syncCallsFromCRM = async (userId: string, date: string) => {
     try {
+        // Count distinct deals with 'answered' calls on this date
+        const startOfDay = `${date}T00:00:00.000Z`;
+        const endOfDay = `${date}T23:59:59.999Z`;
+
+        const { data: answeredCalls, error: callsError } = await supabase
+            .from('crm_activities')
+            .select('deal_id')
+            .eq('user_id', userId)
+            .eq('type', 'call')
+            .eq('call_result', 'answered')
+            .gte('created_at', startOfDay)
+            .lte('created_at', endOfDay);
+
+        if (callsError) {
+            console.error("Error fetching CRM calls:", callsError);
+            return;
+        }
+
+        // Count unique deals (1 call per deal per day)
+        const uniqueDeals = new Set((answeredCalls || []).map((c: any) => c.deal_id));
+        const callCount = uniqueDeals.size;
+
+        // Sync to daily activities
         const existing = await getDailyReportTelesales(date, userId);
 
         if (existing) {
-            // Increment existing counter
             const { error } = await supabase
                 .from('telesales_daily_activities')
-                .update({ calls_completed: (existing.calls_completed || 0) + 1 })
+                .update({ calls_completed: callCount })
                 .eq('id', existing.id);
-            if (error) console.error("Error incrementing calls_completed:", error);
-        } else {
-            // Create new row with calls_completed = 1
+            if (error) console.error("Error syncing calls_completed:", error);
+        } else if (callCount > 0) {
             const { error } = await supabase
                 .from('telesales_daily_activities')
                 .insert([{
                     user_id: userId,
                     report_date: date,
-                    calls_completed: 1,
+                    calls_completed: callCount,
                     fb_group_posts: 0,
                     fb_comments: 0,
                     fb_friends: 0,
@@ -136,9 +157,12 @@ export const incrementCallsCompleted = async (userId: string, date: string) => {
             if (error) console.error("Error creating daily activity for call:", error);
         }
     } catch (err) {
-        console.error("incrementCallsCompleted error:", err);
+        console.error("syncCallsFromCRM error:", err);
     }
 };
+
+// Backward compatibility alias
+export const incrementCallsCompleted = syncCallsFromCRM;
 
 export interface TelesalesKpiSettings {
     user_id: string;
@@ -161,7 +185,7 @@ export interface TelesalesKpiStats extends TelesalesKpiSettings {
     zalo_posts_count: number;
 }
 
-export const getTelesalesKpiStats = async (userId: string, date: string): Promise<TelesalesKpiStats> => {
+export const getTelesalesKpiStats = async (userId: string, date: string, toDate?: string): Promise<TelesalesKpiStats> => {
     // 1. Get Settings
     const { data: settingsData, error: settingsError } = await supabase
         .from('telesales_kpi_settings')
@@ -186,7 +210,43 @@ export const getTelesalesKpiStats = async (userId: string, date: string): Promis
 
     const settings: TelesalesKpiSettings = settingsData || defaultSettings;
 
-    // 2. Get Today's Report
+    // 2. Get reports for date range
+    if (toDate && toDate !== date) {
+        // Date range query - aggregate across days
+        const { data: reports } = await supabase
+            .from('telesales_daily_activities')
+            .select('*')
+            .eq('user_id', userId)
+            .gte('report_date', date)
+            .lte('report_date', toDate);
+
+        const agg = { calls_count: 0, self_sourced_data_count: 0, fb_group_posts_count: 0, fb_comments_count: 0, fb_friends_count: 0, fb_personal_posts_count: 0, zalo_posts_count: 0 };
+        for (const r of (reports as any[] || [])) {
+            agg.calls_count += r.calls_completed || 0;
+            agg.self_sourced_data_count += r.self_sourced_data || 0;
+            agg.fb_group_posts_count += r.fb_group_posts || 0;
+            agg.fb_comments_count += r.fb_comments || 0;
+            agg.fb_friends_count += r.fb_friends || 0;
+            agg.fb_personal_posts_count += r.fb_personal_posts || 0;
+            agg.zalo_posts_count += r.zalo_posts || 0;
+        }
+
+        // Scale targets by number of days
+        const daysDiff = Math.max(1, Math.ceil((new Date(toDate).getTime() - new Date(date).getTime()) / 86400000) + 1);
+        return {
+            ...settings,
+            calls_target: settings.calls_target * daysDiff,
+            self_sourced_data_target: settings.self_sourced_data_target * daysDiff,
+            fb_group_posts_target: settings.fb_group_posts_target * daysDiff,
+            fb_comments_target: settings.fb_comments_target * daysDiff,
+            fb_friends_target: settings.fb_friends_target * daysDiff,
+            fb_personal_posts_target: settings.fb_personal_posts_target * daysDiff,
+            zalo_posts_target: settings.zalo_posts_target * daysDiff,
+            ...agg
+        };
+    }
+
+    // Single day query
     const report = await getDailyReportTelesales(date, userId);
 
     const stats: TelesalesKpiStats = {
@@ -203,7 +263,7 @@ export const getTelesalesKpiStats = async (userId: string, date: string): Promis
     return stats;
 };
 
-export const getTeamTelesalesKpiStats = async (date: string): Promise<TelesalesKpiStats> => {
+export const getTeamTelesalesKpiStats = async (date: string, toDate?: string): Promise<TelesalesKpiStats> => {
     // 1. Lấy danh sách nhân sự Telesales
     const { data: usersData } = await supabase
         .from('profiles')
@@ -245,12 +305,32 @@ export const getTeamTelesalesKpiStats = async (date: string): Promise<TelesalesK
         aggregatedTargets.zalo_posts_target += s.zalo_posts_target || 0;
     }
 
-    // 3. Lấy báo cáo hàng ngày
-    const { data: reports } = await supabase
+    // Scale targets by number of days in range
+    const endDate = toDate || date;
+    const daysDiff = Math.max(1, Math.ceil((new Date(endDate).getTime() - new Date(date).getTime()) / 86400000) + 1);
+    if (daysDiff > 1) {
+        aggregatedTargets.calls_target *= daysDiff;
+        aggregatedTargets.self_sourced_data_target *= daysDiff;
+        aggregatedTargets.fb_group_posts_target *= daysDiff;
+        aggregatedTargets.fb_comments_target *= daysDiff;
+        aggregatedTargets.fb_friends_target *= daysDiff;
+        aggregatedTargets.fb_personal_posts_target *= daysDiff;
+        aggregatedTargets.zalo_posts_target *= daysDiff;
+    }
+
+    // 3. Lấy báo cáo hàng ngày (date range)
+    let query = supabase
         .from('telesales_daily_activities')
         .select('*')
-        .eq('report_date', date)
         .in('user_id', telesalesUserIds);
+
+    if (toDate && toDate !== date) {
+        query = query.gte('report_date', date).lte('report_date', toDate);
+    } else {
+        query = query.eq('report_date', date);
+    }
+
+    const { data: reports } = await query;
 
     const aggregatedCounts = { calls_count: 0, self_sourced_data_count: 0, fb_group_posts_count: 0, fb_comments_count: 0, fb_friends_count: 0, fb_personal_posts_count: 0, zalo_posts_count: 0 };
 

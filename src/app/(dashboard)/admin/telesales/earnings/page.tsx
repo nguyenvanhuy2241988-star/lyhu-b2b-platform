@@ -274,12 +274,12 @@ export default function AdminTelesalesKpiPage() {
 
             {/* Team Overview Component */}
             <div className="mb-2">
-                <TelesalesKpiDashboard userId="ALL" date={new Date().toISOString().split('T')[0]} />
+                <TelesalesKpiDashboard userId="ALL" date={from.toISOString().split('T')[0]} toDate={to.toISOString().split('T')[0]} />
             </div>
 
             <div className="mb-8 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-                    <h3 className="text-lg font-bold text-slate-800">Tiến độ KPI Cá nhân (Hôm nay)</h3>
+                    <h3 className="text-lg font-bold text-slate-800">Tiến độ KPI Cá nhân ({label})</h3>
                     <select
                         className="bg-slate-50 border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2"
                         value={selectedUserId}
@@ -292,7 +292,7 @@ export default function AdminTelesalesKpiPage() {
                     </select>
                 </div>
                 {selectedUserId ? (
-                    <TelesalesKpiDashboard userId={selectedUserId} date={new Date().toISOString().split('T')[0]} />
+                    <TelesalesKpiDashboard userId={selectedUserId} date={from.toISOString().split('T')[0]} toDate={to.toISOString().split('T')[0]} />
                 ) : (
                     <div className="text-center py-8 text-slate-400 bg-slate-50 rounded-lg border border-dashed border-slate-200">
                         Vui lòng chọn một nhân sự để xem chi tiết tiến độ.

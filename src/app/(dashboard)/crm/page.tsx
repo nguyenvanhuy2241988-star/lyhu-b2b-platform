@@ -440,6 +440,9 @@ export default function CRMPage() {
     const [isLostModalOpen, setIsLostModalOpen] = useState(false);
     const [dealToMarkLost, setDealToMarkLost] = useState<CRMDeal | null>(null);
 
+    // KPI Date Picker for self-tracking
+    const [kpiDate, setKpiDate] = useState(new Date().toISOString().split('T')[0]);
+
     // Inline column editing
     const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
     const [editingTitle, setEditingTitle] = useState("");
@@ -1135,7 +1138,50 @@ export default function CRMPage() {
         <div className="p-4 sm:p-6 space-y-6 h-full flex flex-col relative" onClick={() => setIsSettingsOpen(false)}>
             {/* KPI Dashboard */}
             {isMounted && userInfo.id && (
-                <TelesalesKpiDashboard date={new Date().toISOString().split('T')[0]} userId={userInfo.id} />
+                <div>
+                    <div className="flex items-center justify-between mb-1">
+                        <div></div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => {
+                                    const d = new Date(kpiDate);
+                                    d.setDate(d.getDate() - 1);
+                                    setKpiDate(d.toISOString().split('T')[0]);
+                                }}
+                                className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
+                                title="Ngày trước"
+                            >
+                                ‹
+                            </button>
+                            <input
+                                type="date"
+                                value={kpiDate}
+                                onChange={(e) => setKpiDate(e.target.value)}
+                                className="px-2 py-1 text-xs border border-slate-200 rounded-lg bg-white shadow-sm focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none"
+                            />
+                            <button
+                                onClick={() => {
+                                    const d = new Date(kpiDate);
+                                    d.setDate(d.getDate() + 1);
+                                    setKpiDate(d.toISOString().split('T')[0]);
+                                }}
+                                className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
+                                title="Ngày sau"
+                            >
+                                ›
+                            </button>
+                            {kpiDate !== new Date().toISOString().split('T')[0] && (
+                                <button
+                                    onClick={() => setKpiDate(new Date().toISOString().split('T')[0])}
+                                    className="text-xs text-primary-600 hover:underline ml-1"
+                                >
+                                    Hôm nay
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                    <TelesalesKpiDashboard date={kpiDate} userId={userInfo.id} />
+                </div>
             )}
 
             <CRMBanner />
