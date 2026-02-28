@@ -990,6 +990,7 @@ export async function createDeal(deal: {
     tags?: string[];
     expected_value?: number;
     owner_user_id: string;
+    is_new_customer?: boolean;
 }, token?: string): Promise<CRMDeal> {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -1037,7 +1038,8 @@ export async function createDeal(deal: {
                     tags: deal.tags || [],
                     expected_value: deal.expected_value,
                     owner_user_id: deal.owner_user_id,
-                    status: 'open'
+                    status: 'open',
+                    is_new_customer: deal.is_new_customer || false
                 })
             }
         );

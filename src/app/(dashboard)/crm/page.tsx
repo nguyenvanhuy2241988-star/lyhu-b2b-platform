@@ -889,7 +889,8 @@ export default function CRMPage() {
                     source_category: dealData.source_category,
                     source_detail: dealData.source_detail,
                     potential_level: dealData.potential_level,
-                    owner_user_id: userInfo.id
+                    owner_user_id: userInfo.id,
+                    is_new_customer: !!dealData.isNewCustomer
                 }, session?.access_token);
             }
 

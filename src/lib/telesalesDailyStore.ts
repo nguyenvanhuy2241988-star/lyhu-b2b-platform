@@ -347,26 +347,18 @@ export const getTelesalesKpiStats = async (userId: string, date: string, toDate?
     const uniqueCallDeals = new Set((answeredCalls || []).map((c: any) => c.deal_id));
     const liveCallsCount = uniqueCallDeals.size;
 
-    // Compute self_sourced_data directly from crm_deals + customers (source of truth)
+    // Compute self_sourced_data: deals with is_new_customer=true AND source_category=SELF_FOUND
     const { data: selfFoundDeals } = await supabase
         .from('crm_deals')
-        .select('customer_id')
+        .select('id')
         .eq('owner_user_id', userId)
         .eq('source_category', 'SELF_FOUND')
+        .eq('is_new_customer', true)
         .gte('created_at', dayStart.toISOString())
         .lte('created_at', dayEnd.toISOString());
 
-    let liveSelfSourcedCount = 0;
-    const customerIds = Array.from(new Set((selfFoundDeals || []).map((d: any) => d.customer_id).filter(Boolean)));
-    if (customerIds.length > 0) {
-        const { data: newCustomers } = await supabase
-            .from('customers')
-            .select('id')
-            .in('id', customerIds)
-            .gte('created_at', dayStart.toISOString())
-            .lte('created_at', dayEnd.toISOString());
-        liveSelfSourcedCount = (newCustomers || []).length;
-    }
+    // Count distinct deals (each new customer deal = 1 self-sourced)
+    const liveSelfSourcedCount = (selfFoundDeals || []).length;
 
     const stats: TelesalesKpiStats = {
         ...settings,
@@ -437,7 +429,37 @@ export const getTeamTelesalesKpiStats = async (date: string, toDate?: string): P
         aggregatedTargets.zalo_posts_target *= daysDiff;
     }
 
-    // 3. Lấy báo cáo hàng ngày (date range)
+    // 3. Compute calls & self-sourced directly from CRM tables (source of truth)
+    const queryEndDate = toDate || date;
+    const dayStart = new Date(`${date}T00:00:00`);
+    const dayEnd = new Date(`${queryEndDate}T23:59:59.999`);
+
+    // Count answered calls (unique deal per user per day)
+    const { data: allCalls } = await supabase
+        .from('crm_activities')
+        .select('deal_id, user_id')
+        .in('user_id', telesalesUserIds)
+        .eq('type', 'call')
+        .eq('call_result', 'answered')
+        .gte('created_at', dayStart.toISOString())
+        .lte('created_at', dayEnd.toISOString());
+
+    const uniqueCallKeys = new Set((allCalls || []).map((c: any) => `${c.user_id}:${c.deal_id}`));
+    const totalCallsCount = uniqueCallKeys.size;
+
+    // Count self-sourced deals (is_new_customer=true AND source_category=SELF_FOUND)
+    const { data: allSelfFound } = await supabase
+        .from('crm_deals')
+        .select('id')
+        .in('owner_user_id', telesalesUserIds)
+        .eq('source_category', 'SELF_FOUND')
+        .eq('is_new_customer', true)
+        .gte('created_at', dayStart.toISOString())
+        .lte('created_at', dayEnd.toISOString());
+
+    const totalSelfSourcedCount = (allSelfFound || []).length;
+
+    // 4. Get other KPI counts from telesales_daily_activities (manual input fields)
     let query = supabase
         .from('telesales_daily_activities')
         .select('*')
@@ -451,22 +473,21 @@ export const getTeamTelesalesKpiStats = async (date: string, toDate?: string): P
 
     const { data: reports } = await query;
 
-    const aggregatedCounts = { calls_count: 0, self_sourced_data_count: 0, fb_group_posts_count: 0, fb_comments_count: 0, fb_friends_count: 0, fb_personal_posts_count: 0, zalo_posts_count: 0 };
-
+    const otherCounts = { fb_group_posts_count: 0, fb_comments_count: 0, fb_friends_count: 0, fb_personal_posts_count: 0, zalo_posts_count: 0 };
     for (const r of (reports as any[] || [])) {
-        aggregatedCounts.calls_count += r.calls_completed || 0;
-        aggregatedCounts.self_sourced_data_count += r.self_sourced_data || 0;
-        aggregatedCounts.fb_group_posts_count += r.fb_group_posts || 0;
-        aggregatedCounts.fb_comments_count += r.fb_comments || 0;
-        aggregatedCounts.fb_friends_count += r.fb_friends || 0;
-        aggregatedCounts.fb_personal_posts_count += r.fb_personal_posts || 0;
-        aggregatedCounts.zalo_posts_count += r.zalo_posts || 0;
+        otherCounts.fb_group_posts_count += r.fb_group_posts || 0;
+        otherCounts.fb_comments_count += r.fb_comments || 0;
+        otherCounts.fb_friends_count += r.fb_friends || 0;
+        otherCounts.fb_personal_posts_count += r.fb_personal_posts || 0;
+        otherCounts.zalo_posts_count += r.zalo_posts || 0;
     }
 
     return {
         user_id: 'ALL',
         ...aggregatedTargets,
-        ...aggregatedCounts
+        calls_count: totalCallsCount,
+        self_sourced_data_count: totalSelfSourcedCount,
+        ...otherCounts
     };
 };
 
