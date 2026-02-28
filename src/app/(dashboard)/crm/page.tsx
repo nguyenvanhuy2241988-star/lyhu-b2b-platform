@@ -859,6 +859,20 @@ export default function CRMPage() {
                     }
                 }
 
+                // Check for existing open deals with same customer
+                if (customerId && !dealData.isNewCustomer) {
+                    const existingDeal = deals.find(d => d.customer_id === customerId && d.status === 'open');
+                    if (existingDeal) {
+                        const proceed = confirm(
+                            `⚠️ Khách hàng này đã có cơ hội đang mở: "${existingDeal.title}"\n\nBạn có muốn tạo thêm cơ hội mới không?`
+                        );
+                        if (!proceed) {
+                            setIsDataLoading(false);
+                            return;
+                        }
+                    }
+                }
+
                 await createDeal({
                     title: dealData.title,
                     customer_id: customerId,

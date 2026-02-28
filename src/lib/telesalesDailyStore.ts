@@ -168,17 +168,22 @@ export const syncCallsFromCRM = async (userId: string, date: string) => {
 export const incrementCallsCompleted = syncCallsFromCRM;
 
 /**
- * Sync self_sourced_data count from CRM deals created by user today.
- * Counts deals with source_category = 'SELF_FOUND' or source = 'data_moi'.
+ * Sync self_sourced_data count from CRM deals.
+ * Counts DISTINCT customers that:
+ * 1. Were CREATED TODAY by this user (new customers only, not old data)
+ * 2. Have at least one deal with source_category = 'SELF_FOUND'
+ * Multiple deals for the same new customer = 1 count.
+ * Old customers (created before today) selecting "Tự tìm" = 0.
  */
 export const syncSelfSourcedFromCRM = async (userId: string, date: string) => {
     try {
         const dayStart = new Date(`${date}T00:00:00`);
         const dayEnd = new Date(`${date}T23:59:59.999`);
 
+        // Step 1: Get deals with SELF_FOUND created today by this user
         const { data: deals, error } = await supabase
             .from('crm_deals')
-            .select('id')
+            .select('customer_id')
             .eq('owner_user_id', userId)
             .eq('source_category', 'SELF_FOUND')
             .gte('created_at', dayStart.toISOString())
@@ -189,18 +194,39 @@ export const syncSelfSourcedFromCRM = async (userId: string, date: string) => {
             return;
         }
 
-        const count = (deals || []).length;
+        // Get unique customer IDs from these deals
+        const customerIds = Array.from(new Set((deals || []).map((d: any) => d.customer_id).filter(Boolean)));
 
+        let count = 0;
+
+        if (customerIds.length > 0) {
+            // Step 2: Check which of these customers were ALSO created today (= new customers)
+            const { data: newCustomers, error: custError } = await supabase
+                .from('customers')
+                .select('id')
+                .in('id', customerIds)
+                .gte('created_at', dayStart.toISOString())
+                .lte('created_at', dayEnd.toISOString());
+
+            if (custError) {
+                console.error("Error checking customer creation dates:", custError);
+                return;
+            }
+
+            count = (newCustomers || []).length;
+        }
+
+        // Sync to daily activities
         const existing = await getDailyReportTelesales(date, userId);
 
         if (existing) {
-            const { err } = await supabase
+            const { error: upErr } = await supabase
                 .from('telesales_daily_activities')
                 .update({ self_sourced_data: count })
-                .eq('id', existing.id) as any;
-            if (err) console.error("Error syncing self_sourced_data:", err);
+                .eq('id', existing.id);
+            if (upErr) console.error("Error syncing self_sourced_data:", upErr);
         } else if (count > 0) {
-            const { err } = await supabase
+            const { error: insErr } = await supabase
                 .from('telesales_daily_activities')
                 .insert([{
                     user_id: userId,
@@ -212,8 +238,8 @@ export const syncSelfSourcedFromCRM = async (userId: string, date: string) => {
                     fb_personal_posts: 0,
                     zalo_posts: 0,
                     self_sourced_data: count
-                }]) as any;
-            if (err) console.error("Error creating daily activity for self-sourced:", err);
+                }]);
+            if (insErr) console.error("Error creating daily activity for self-sourced:", insErr);
         }
     } catch (err) {
         console.error("syncSelfSourcedFromCRM error:", err);
