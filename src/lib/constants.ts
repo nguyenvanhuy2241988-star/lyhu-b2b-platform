@@ -137,6 +137,7 @@ export const NAV_ITEMS = {
     [ROLES.ADMIN]: [
         { label: "Tổng quan", href: "/admin", icon: LayoutDashboard },
         { label: "CRM", href: PATH_LEADS, icon: TrendingUp },
+        { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
         { label: "Việc cần làm", href: "/admin/tasks", icon: ListTodo },
         { label: "Đơn hàng", href: PATH_ORDERS_ADMIN, icon: FileText },
         { label: "Người dùng", href: "/admin/users", icon: Users },
@@ -148,12 +149,8 @@ export const NAV_ITEMS = {
         { label: "Báo cáo Tuyển dụng", href: "/recruitment/reports", icon: ClipboardList },
         { label: "Mối quan hệ", href: "/recruitment/networking", icon: UserPlus },
         { label: "Nền tảng & Tài nguyên", href: "/recruitment/platforms", icon: Globe },
-        { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
         { label: "------------", href: "#", icon: List }, // Separator
         { label: "Hồ sơ Nhân sự", href: "/hr/directory", icon: Users },
-        { label: "Sự kiện", href: "/events", icon: Calendar },
-        { label: "Xếp lịch (Coming)", href: "#", icon: Calendar },
-        { label: "Văn hóa & Quỹ", href: "#", icon: Gift },
         { label: "------------", href: "#", icon: List }, // Separator
         { label: "Góc Giải Trí", href: "/entertainment", icon: Gamepad2 },
         { label: "Lương & Thưởng", href: "/admin/payroll", icon: DollarSign },
