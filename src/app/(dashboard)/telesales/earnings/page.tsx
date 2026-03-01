@@ -341,17 +341,23 @@ export default function TelesalesEarningsPage() {
     // History Table
     const history = useMemo(() => calculateKpiHistory(tasks, currentRange.from, currentRange.to, orders, rate), [tasks, orders, currentRange, rate]);
 
-    // Financial calculations
+    // Financial calculations - filter transactions by selected date range
     const payrollMetrics = useMemo(() => {
-        const bonusTotal = transactions
+        // Filter transactions to the selected date range (day/week/month)
+        const rangeFiltered = transactions.filter(t => {
+            const txDate = new Date(t.createdAt);
+            return txDate >= currentRange.from && txDate <= currentRange.to;
+        });
+
+        const bonusTotal = rangeFiltered
             .filter(t => t.type === 'bonus' && t.status === 'finalized')
             .reduce((sum, t) => sum + t.amount, 0);
 
-        const penaltyTotal = transactions
+        const penaltyTotal = rangeFiltered
             .filter(t => t.type === 'penalty' && t.status === 'finalized')
             .reduce((sum, t) => sum + t.amount, 0);
 
-        const estimatedBonuses = transactions
+        const estimatedBonuses = rangeFiltered
             .filter(t => t.type === 'bonus' && t.status === 'estimated')
             .reduce((sum, t) => sum + t.amount, 0);
 
@@ -366,7 +372,7 @@ export default function TelesalesEarningsPage() {
             baseSalary,
             totalNetSalary
         };
-    }, [transactions, payrollConfig, currentMetrics.totalCommission, kpiSalary]);
+    }, [transactions, payrollConfig, currentMetrics.totalCommission, kpiSalary, currentRange]);
 
     const getDateRangeText = () => {
         const monthNames = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
