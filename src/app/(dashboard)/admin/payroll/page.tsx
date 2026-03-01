@@ -21,7 +21,8 @@ import {
     ShieldCheck,
     Mail,
     Settings,
-    Save as SaveIcon
+    Save as SaveIcon,
+    GripVertical
 } from "lucide-react";
 import { User, fetchUsers } from "@/lib/usersStore";
 import { Order, fetchOrders } from "@/lib/ordersStore";
@@ -80,6 +81,7 @@ export default function AdminPayrollPage() {
     const [kpiSettings, setKpiSettings] = useState<UserKpiSettings | null>(null);
     const [isLoadingKpi, setIsLoadingKpi] = useState(false);
     const [kpiMetrics, setKpiMetrics] = useState<KpiMetricDefinition[]>([]);
+    const [dragIdx, setDragIdx] = useState<number | null>(null);
 
     // Income Policy State
     const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
@@ -298,11 +300,12 @@ export default function AdminPayrollPage() {
                 fetchKpiMetrics()
             ]);
             setKpiSettings(settings);
-            // Normalize sort_order: assign index if all are same value (e.g., all 0)
-            const allSameOrder = metrics.length > 1 && metrics.filter(m => m.is_active).every(m => (m.sort_order || 0) === (metrics.filter(mm => mm.is_active)[0]?.sort_order || 0));
+            // Normalize sort_order: assign unique index if all values are the same
+            const activeMetrics = metrics.filter((m: any) => m.is_active);
+            const allSameOrder = activeMetrics.length > 1 && activeMetrics.every((m: any) => (m.sort_order || 0) === (activeMetrics[0]?.sort_order || 0));
             if (allSameOrder) {
-                const active = metrics.filter(m => m.is_active);
-                active.forEach((m, i) => { m.sort_order = i; });
+                let activeIdx = 0;
+                metrics = metrics.map((m: any) => m.is_active ? { ...m, sort_order: activeIdx++ } : m);
             }
             setKpiMetrics(metrics);
         } catch (e) {
@@ -853,51 +856,31 @@ export default function AdminPayrollPage() {
                                             }))).map((metric, idx, arr) => {
                                                 const metricDef = metric as KpiMetricDefinition;
                                                 return (
-                                                    <div key={metricDef.key} className="bg-white p-4 rounded-lg border border-slate-200 hover:border-primary-200 transition-colors group">
+                                                    <div key={metricDef.key}
+                                                        draggable
+                                                        onDragStart={() => setDragIdx(idx)}
+                                                        onDragOver={(e) => { e.preventDefault(); }}
+                                                        onDrop={() => {
+                                                            if (dragIdx === null || dragIdx === idx) return;
+                                                            // Reorder: move dragIdx item to idx position
+                                                            const sorted = kpiMetrics.filter(m => m.is_active).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+                                                            const reordered = [...sorted];
+                                                            const [moved] = reordered.splice(dragIdx, 1);
+                                                            reordered.splice(idx, 0, moved);
+                                                            // Assign new sort_order
+                                                            const updatedIds = new Map(reordered.map((m, i) => [m.id, i]));
+                                                            setKpiMetrics(kpiMetrics.map(m => updatedIds.has(m.id) ? { ...m, sort_order: updatedIds.get(m.id)! } : m));
+                                                            setDragIdx(null);
+                                                        }}
+                                                        onDragEnd={() => setDragIdx(null)}
+                                                        className={`bg-white p-4 rounded-lg border transition-all group ${dragIdx === idx ? 'border-primary-400 shadow-md opacity-50' : 'border-slate-200 hover:border-primary-200'
+                                                            }`}
+                                                    >
                                                         <div className="flex items-center justify-between mb-2">
                                                             <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                                {/* Reorder Buttons */}
-                                                                <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                    <button
-                                                                        disabled={idx === 0}
-                                                                        onClick={() => {
-                                                                            const sorted = kpiMetrics.filter(m => m.is_active).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-                                                                            if (idx === 0) return;
-                                                                            const prev = sorted[idx - 1];
-                                                                            const curr = sorted[idx];
-                                                                            const prevOrder = prev.sort_order;
-                                                                            const currOrder = curr.sort_order;
-                                                                            setKpiMetrics(kpiMetrics.map(m => {
-                                                                                if (m.id === prev.id) return { ...m, sort_order: currOrder };
-                                                                                if (m.id === curr.id) return { ...m, sort_order: prevOrder };
-                                                                                return m;
-                                                                            }));
-                                                                        }}
-                                                                        className="p-0.5 text-slate-300 hover:text-slate-600 disabled:opacity-20 rounded"
-                                                                        title="Di chuyển lên"
-                                                                    >
-                                                                        <ChevronUp className="w-3 h-3" />
-                                                                    </button>
-                                                                    <button
-                                                                        disabled={idx === arr.length - 1}
-                                                                        onClick={() => {
-                                                                            const sorted = kpiMetrics.filter(m => m.is_active).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-                                                                            if (idx === arr.length - 1) return;
-                                                                            const next = sorted[idx + 1];
-                                                                            const curr = sorted[idx];
-                                                                            const nextOrder = next.sort_order;
-                                                                            const currOrder = curr.sort_order;
-                                                                            setKpiMetrics(kpiMetrics.map(m => {
-                                                                                if (m.id === next.id) return { ...m, sort_order: currOrder };
-                                                                                if (m.id === curr.id) return { ...m, sort_order: nextOrder };
-                                                                                return m;
-                                                                            }));
-                                                                        }}
-                                                                        className="p-0.5 text-slate-300 hover:text-slate-600 disabled:opacity-20 rounded"
-                                                                        title="Di chuyển xuống"
-                                                                    >
-                                                                        <ChevronDown className="w-3 h-3" />
-                                                                    </button>
+                                                                {/* Drag Handle */}
+                                                                <div className="cursor-grab active:cursor-grabbing p-1 text-slate-300 hover:text-slate-500 transition-colors" title="Kéo để sắp xếp">
+                                                                    <GripVertical className="w-4 h-4" />
                                                                 </div>
                                                                 {/* Editable Label */}
                                                                 <input

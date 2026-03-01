@@ -311,20 +311,20 @@ export default function TelesalesKpiDashboard({ date, userId, toDate, targetDivi
                     return (
                         <div key={item.key} className="border border-slate-100 rounded-lg p-3 relative overflow-hidden flex flex-col justify-between min-h-[100px] hover:border-blue-100 hover:shadow-sm transition-all">
                             <div className="flex justify-between items-start mb-2">
-                                <div className={cn("p-1.5 rounded-lg", item.bg)}>
-                                    <item.icon className={cn("w-3.5 h-3.5", item.color)} />
+                                <div className={cn("p-2 rounded-lg", item.bg)}>
+                                    <item.icon className={cn("w-4 h-4", item.color)} />
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-lg font-bold text-slate-900 leading-none">
+                                    <div className="text-xl font-bold text-slate-900 leading-none">
                                         {item.fieldType === 'currency'
                                             ? formatValue(item.count, item.fieldType)
                                             : item.count
                                         }
-                                        <span className="text-[10px] font-normal text-slate-400 ml-0.5">
+                                        <span className="text-[11px] font-normal text-slate-400 ml-1">
                                             /{item.fieldType === 'currency' ? formatValue(item.target, item.fieldType) : item.target}
                                         </span>
                                     </div>
-                                    <p className={cn("text-[10px] font-bold mt-0.5",
+                                    <p className={cn("text-[11px] font-bold mt-1",
                                         percent >= 100 ? "text-green-600" : "text-slate-500"
                                     )}>
                                         {percent}%
@@ -332,7 +332,7 @@ export default function TelesalesKpiDashboard({ date, userId, toDate, targetDivi
                                 </div>
                             </div>
                             <div>
-                                <p className="text-[10px] text-slate-600 font-semibold mb-1.5 line-clamp-2 leading-tight" title={item.label}>{item.label}</p>
+                                <p className="text-[11px] text-slate-600 font-semibold mb-1.5 line-clamp-2 leading-tight" title={item.label}>{item.label}</p>
                                 <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                                     <div
                                         className={cn("h-full rounded-full transition-all duration-700 ease-out", item.bar)}
