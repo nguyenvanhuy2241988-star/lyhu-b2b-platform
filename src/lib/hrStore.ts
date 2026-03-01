@@ -356,3 +356,95 @@ export const addFundTransaction = async (transaction: Omit<FundTransaction, 'id'
     if (error) throw error;
     return data;
 };
+
+// -- FUND CONTRIBUTIONS --
+
+export interface FundContribution {
+    id: string;
+    user_id: string;
+    month: number;
+    year: number;
+    amount: number;
+    status: 'pending' | 'paid' | 'confirmed';
+    confirmed_by?: string;
+    confirmed_at?: string;
+    note?: string;
+    created_at: string;
+    user?: {
+        full_name: string;
+        avatar_url?: string;
+    };
+}
+
+export const getFundContributions = async (month: number, year: number): Promise<FundContribution[]> => {
+    const { data, error } = await supabase
+        .from('fund_contributions')
+        .select('*, user:profiles!fund_contributions_user_id_fkey(full_name, avatar_url)')
+        .eq('month', month)
+        .eq('year', year)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return (data || []) as FundContribution[];
+};
+
+export const upsertFundContribution = async (userId: string, month: number, year: number, status: string = 'paid') => {
+    const { data, error } = await supabase
+        .from('fund_contributions')
+        .upsert({
+            user_id: userId,
+            month,
+            year,
+            amount: 50000,
+            status
+        }, { onConflict: 'user_id,month,year' })
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const confirmFundContribution = async (contributionId: string, adminId: string) => {
+    const { data, error } = await supabase
+        .from('fund_contributions')
+        .update({
+            status: 'confirmed',
+            confirmed_by: adminId,
+            confirmed_at: new Date().toISOString()
+        })
+        .eq('id', contributionId)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const getFundMonthlyReport = async (month: number, year: number) => {
+    const startDate = new Date(year, month - 1, 1).toISOString();
+    const endDate = new Date(year, month, 0, 23, 59, 59).toISOString();
+
+    const { data, error } = await supabase
+        .from('fund_transactions')
+        .select('*')
+        .gte('created_at', startDate)
+        .lte('created_at', endDate)
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    const transactions = (data || []) as FundTransaction[];
+    const totalIncome = transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
+    const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+
+    // Group by category
+    const byCategory: Record<string, { income: number; expense: number }> = {};
+    transactions.forEach(t => {
+        const cat = t.category || 'Khác';
+        if (!byCategory[cat]) byCategory[cat] = { income: 0, expense: 0 };
+        byCategory[cat][t.type] += Number(t.amount);
+    });
+
+    return { transactions, totalIncome, totalExpense, byCategory };
+};
