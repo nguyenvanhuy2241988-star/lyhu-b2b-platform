@@ -632,6 +632,10 @@ export default function AdminPayrollPage() {
                                                                         onClick={async () => {
                                                                             if (!confirm('Xoá giao dịch này?')) return;
                                                                             await deleteFinancialTransactions(t.referenceId || t.id, session?.access_token);
+                                                                            // Also try by id if different from referenceId
+                                                                            if (t.id && t.id !== t.referenceId) {
+                                                                                await deleteFinancialTransactions(t.id, session?.access_token);
+                                                                            }
                                                                             const txs = await fetchUserTransactions(selectedUserId!, session?.access_token);
                                                                             setTransactions(txs);
                                                                         }}
@@ -837,7 +841,15 @@ export default function AdminPayrollPage() {
                                             );
                                         })()}
                                         <div className="space-y-3">
-                                            {(kpiMetrics.length > 0 ? kpiMetrics.filter(m => m.is_active).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)) : getKpiTemplate(staff.find(s => s.id === selectedUserId)?.role).fields.map(f => ({
+                                            {(kpiMetrics.length > 0 ? (() => {
+                                                const active = kpiMetrics.filter(m => m.is_active);
+                                                // Normalize sort_order if all are the same (e.g., all 0)
+                                                const allSame = active.every(m => (m.sort_order || 0) === (active[0]?.sort_order || 0));
+                                                if (allSame && active.length > 1) {
+                                                    active.forEach((m, i) => { m.sort_order = i; });
+                                                }
+                                                return active.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+                                            })() : getKpiTemplate(staff.find(s => s.id === selectedUserId)?.role).fields.map(f => ({
                                                 id: f.key, key: f.key, label: f.label, description: f.description || '', data_source: 'manual' as const,
                                                 icon: 'Target', field_type: f.type, is_active: true, sort_order: 0, salary_percent: 0, monthly_target: 0
                                             }))).map((metric, idx, arr) => {
@@ -1187,116 +1199,128 @@ export default function AdminPayrollPage() {
                 )
             }
 
-            {/* Modal: Add Transaction */}
+            {/* Modal: Ghi nhận Thưởng/Phạt — LYHU Minimalist */}
             {
                 isModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-                        <div className="bg-white rounded-lg w-full max-w-md shadow-lg overflow-hidden">
-                            <div className="p-5 border-b border-slate-200 flex justify-between items-center">
-                                <h2 className="text-lg font-bold text-slate-900">Ghi nhận Thưởng/Phạt</h2>
-                                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400">
-                                    <Plus className="w-5 h-5 rotate-45" />
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+                        <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                            {/* Header */}
+                            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-8 h-8 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center shadow-sm">
+                                        <DollarSign className="w-4 h-4 text-white" />
+                                    </div>
+                                    <h2 className="text-sm font-bold text-slate-800">Ghi nhận Thưởng/Phạt</h2>
+                                </div>
+                                <button onClick={() => setIsModalOpen(false)} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-colors">
+                                    <Plus className="w-4 h-4 rotate-45" />
                                 </button>
                             </div>
 
-                            <div className="p-5 space-y-4">
-                                <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-lg">
+                            <div className="p-6 space-y-5">
+                                {/* Toggle Thưởng / Phạt */}
+                                <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl">
                                     <button
                                         onClick={() => setNewTx({ ...newTx, type: 'bonus' })}
-                                        className={`py-2 text-xs font-medium uppercase rounded transition-colors ${newTx.type === 'bonus' ? 'bg-white shadow-sm text-green-600' : 'text-slate-500 hover:bg-white/50'}`}
+                                        className={`py-2 text-xs font-bold uppercase rounded-lg transition-all ${newTx.type === 'bonus' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'}`}
                                     >
                                         Thưởng
                                     </button>
                                     <button
                                         onClick={() => setNewTx({ ...newTx, type: 'penalty' })}
-                                        className={`py-2 text-xs font-medium uppercase rounded transition-colors ${newTx.type === 'penalty' ? 'bg-white shadow-sm text-red-600' : 'text-slate-500 hover:bg-white/50'}`}
+                                        className={`py-2 text-xs font-bold uppercase rounded-lg transition-all ${newTx.type === 'penalty' ? 'bg-white shadow-sm text-rose-500' : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'}`}
                                     >
                                         Phạt
                                     </button>
                                 </div>
 
-                                <label className="text-[10px] font-medium text-slate-400 uppercase px-1">Danh mục</label>
-                                <select
-                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                                    value={newTx.category}
-                                    onChange={(e) => {
-                                        const selected = e.target.value;
-                                        setNewTx({ ...newTx, category: selected });
-                                        // Auto-fill amount from policy if available
-                                        if (policyData) {
-                                            if (newTx.type === 'bonus') {
-                                                const match = (policyData.bonuses || []).find((b: any) => b.title === selected);
-                                                if (match?.amount) {
-                                                    const parsed = parseInt(match.amount.replace(/[^\d]/g, '')) || 0;
-                                                    if (parsed > 0) setNewTx(prev => ({ ...prev, category: selected, amount: parsed }));
-                                                }
-                                            } else {
-                                                const match = (policyData.penalties || []).find((p: any) => p.name === selected);
-                                                if (match?.fine) {
-                                                    const parsed = parseInt(match.fine.replace(/[^\d]/g, '')) || 0;
-                                                    if (parsed > 0) setNewTx(prev => ({ ...prev, category: selected, amount: parsed }));
+                                {/* Danh mục */}
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Danh mục</label>
+                                    <select
+                                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-primary-200 focus:border-primary-400 outline-none transition-all appearance-none cursor-pointer"
+                                        value={newTx.category}
+                                        onChange={(e) => {
+                                            const selected = e.target.value;
+                                            setNewTx({ ...newTx, category: selected });
+                                            if (policyData) {
+                                                if (newTx.type === 'bonus') {
+                                                    const match = (policyData.bonuses || []).find((b: any) => b.title === selected);
+                                                    if (match?.amount) {
+                                                        const parsed = parseInt(match.amount.replace(/[^\d]/g, '')) || 0;
+                                                        if (parsed > 0) setNewTx(prev => ({ ...prev, category: selected, amount: parsed }));
+                                                    }
+                                                } else {
+                                                    const match = (policyData.penalties || []).find((p: any) => p.name === selected);
+                                                    if (match?.fine) {
+                                                        const parsed = parseInt(match.fine.replace(/[^\d]/g, '')) || 0;
+                                                        if (parsed > 0) setNewTx(prev => ({ ...prev, category: selected, amount: parsed }));
+                                                    }
                                                 }
                                             }
-                                        }
-                                    }}
-                                >
-                                    {newTx.type === 'bonus' ? (
-                                        <>
-                                            {(policyData?.bonuses || []).map((b: any, i: number) => (
-                                                <option key={`policy-${i}`} value={b.title}>{b.title} ({b.amount})</option>
-                                            ))}
-                                            <option>Thưởng Sáng kiến</option>
-                                            <option>Thưởng Chốt NPP</option>
-                                            <option>Thưởng Chốt Đại lý</option>
-                                            <option>Thưởng Lễ/Tết</option>
-                                            <option>Thưởng Chuyên cần</option>
-                                            <option>Khác</option>
-                                        </>
-                                    ) : (
-                                        <>
-                                            {(policyData?.penalties || []).map((p: any, i: number) => (
-                                                <option key={`policy-${i}`} value={p.name}>{p.name} ({p.fine})</option>
-                                            ))}
-                                            <option>Phạt Đi muộn</option>
-                                            <option>Phạt Vi phạm Trang phục</option>
-                                            <option>Phạt Nghỉ không phép</option>
-                                            <option>Phạt Thái độ phục vụ</option>
-                                            <option>Khác</option>
-                                        </>
-                                    )}
-                                </select>
+                                        }}
+                                    >
+                                        {newTx.type === 'bonus' ? (
+                                            <>
+                                                {(policyData?.bonuses || []).map((b: any, i: number) => (
+                                                    <option key={`policy-${i}`} value={b.title}>{b.title} ({b.amount})</option>
+                                                ))}
+                                                <option>Thưởng Sáng kiến</option>
+                                                <option>Thưởng Chốt NPP</option>
+                                                <option>Thưởng Chốt Đại lý</option>
+                                                <option>Thưởng Lễ/Tết</option>
+                                                <option>Thưởng Chuyên cần</option>
+                                                <option>Khác</option>
+                                            </>
+                                        ) : (
+                                            <>
+                                                {(policyData?.penalties || []).map((p: any, i: number) => (
+                                                    <option key={`policy-${i}`} value={p.name}>{p.name} ({p.fine})</option>
+                                                ))}
+                                                <option>Phạt Đi muộn</option>
+                                                <option>Phạt Vi phạm Trang phục</option>
+                                                <option>Phạt Nghỉ không phép</option>
+                                                <option>Phạt Thái độ phục vụ</option>
+                                                <option>Khác</option>
+                                            </>
+                                        )}
+                                    </select>
+                                </div>
+
+                                {/* Số tiền */}
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Số tiền (VNĐ)</label>
+                                    <input
+                                        type="number"
+                                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-lg font-bold text-primary-600 focus:ring-2 focus:ring-primary-200 focus:border-primary-400 outline-none transition-all"
+                                        value={newTx.amount}
+                                        onChange={(e) => setNewTx({ ...newTx, amount: parseInt(e.target.value) || 0 })}
+                                    />
+                                </div>
+
+                                {/* Ghi chú */}
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ghi chú</label>
+                                    <textarea
+                                        rows={2}
+                                        placeholder="Lý do cụ thể..."
+                                        className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-200 focus:border-primary-400 outline-none transition-all resize-none"
+                                        value={newTx.note}
+                                        onChange={(e) => setNewTx({ ...newTx, note: e.target.value })}
+                                    />
+                                </div>
                             </div>
 
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-medium text-slate-400 uppercase px-1">Số tiền (VNĐ)</label>
-                                <input
-                                    type="number"
-                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-base font-bold focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none text-primary-600"
-                                    value={newTx.amount}
-                                    onChange={(e) => setNewTx({ ...newTx, amount: parseInt(e.target.value) || 0 })}
-                                />
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-medium text-slate-400 uppercase px-1">Ghi chú chi tiết</label>
-                                <textarea
-                                    rows={3}
-                                    placeholder="Lý do cụ thể..."
-                                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                                    value={newTx.note}
-                                    onChange={(e) => setNewTx({ ...newTx, note: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="pt-2">
+                            {/* Footer */}
+                            <div className="px-6 pb-6">
                                 <button
                                     onClick={handleAddTransaction}
-                                    className="w-full bg-primary-600 text-white py-3 rounded-lg font-medium text-sm hover:bg-primary-700 transition-colors"
+                                    className="w-full bg-gradient-to-r from-primary-500 to-primary-600 text-white py-2.5 rounded-xl font-semibold text-sm hover:from-primary-600 hover:to-primary-700 transition-all shadow-sm hover:shadow-md"
                                 >
                                     Xác nhận ghi nhận
                                 </button>
-                                <p className="text-[10px] text-center text-slate-400 mt-3 leading-relaxed px-4">
-                                    Mọi giao dịch sau khi xác nhận sẽ được hiển thị ngay lập tức lên Dashboard của nhân viên.
+                                <p className="text-[10px] text-center text-slate-400 mt-3 leading-relaxed">
+                                    Giao dịch sẽ xuất hiện ngay trên Dashboard của nhân viên.
                                 </p>
                             </div>
                         </div>

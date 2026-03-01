@@ -184,11 +184,20 @@ export const updateTransactionStatus = async (referenceId: string, status: Trans
 export const deleteFinancialTransactions = async (referenceId: string, token?: string) => {
     try {
         const headers = getHeaders(token);
+        // Try delete by reference_id first
         const res = await fetch(`${SUPABASE_URL}/rest/v1/financial_transactions?reference_id=eq.${referenceId}`, {
+            method: 'DELETE',
+            headers: { ...headers, 'Prefer': 'return=representation' }
+        });
+        const deleted = await res.json().catch(() => []);
+        if (Array.isArray(deleted) && deleted.length > 0) return true;
+
+        // Fallback: try deleting by id column (for manually-added transactions)
+        const res2 = await fetch(`${SUPABASE_URL}/rest/v1/financial_transactions?id=eq.${referenceId}`, {
             method: 'DELETE',
             headers
         });
-        return res.ok;
+        return res2.ok;
     } catch {
         return false;
     }
