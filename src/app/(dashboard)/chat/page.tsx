@@ -108,6 +108,10 @@ export default function ChatPage() {
             // Pass the token explicitly to avoid hangs in the store
             const id = await createDirectConversation(currentUser.id, targetUserId, session?.access_token);
             console.log("[ChatPage] Conversation created:", id);
+            if (!id) {
+                alert('Không thể tạo cuộc hội thoại. Vui lòng thử lại.');
+                return;
+            }
             selectConversation(id, currentUser?.id);
             console.log("[ChatPage] Conversation selected:", id);
         } catch (e: any) {

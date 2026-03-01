@@ -115,7 +115,7 @@ interface ChatState {
     syncMessages: (conversationId: string, isInitial?: boolean, userId?: string) => Promise<void>;
     loadMoreMessages: () => Promise<void>;
     markRead: (conversationId: string, userId: string) => Promise<void>;
-    createDirectConversation: (myId: string, theirId: string, token?: string) => Promise<string>;
+    createDirectConversation: (myId: string, theirId: string, token?: string) => Promise<string | null>;
     createGroupConversation: (myId: string, name: string, members: string[]) => Promise<string>;
     editMessage: (messageId: string, content: string) => Promise<void>;
     deleteMessage: (messageId: string) => Promise<void>;
@@ -215,21 +215,48 @@ export const useChatStore = create<ChatState>((set, get) => ({
         await get().syncMessages(conversationId, true, userId);
         set({ isLoading: false });
 
-        // Enable Realtime
+        // Enable Realtime with auth token for RLS
         const token = await getRealtimeToken();
-        // if (token) supabase.realtime.setAuth(token); // Removed to prevent conflicts
+        if (token) {
+            try { supabase.realtime.setAuth(token); } catch (e) { /* ignore if already set */ }
+        }
 
         const channel = supabase.channel(`room-${conversationId}`)
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'internal_messages' }, (payload: any) => {
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'internal_messages',
+                filter: `conversation_id=eq.${conversationId}`
+            }, (payload: any) => {
+                console.log('[ChatStore] Realtime INSERT received:', payload.new?.id);
                 const newMsg = payload.new as Message;
-                if (newMsg.conversation_id !== conversationId) return;
                 set((state: ChatState) => {
                     if (state.messages.some((m: Message) => m.id === newMsg.id)) return state;
                     return { messages: [...state.messages, newMsg].sort((a: Message, b: Message) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) };
                 });
+                // Also refresh conversations list for sidebar last_message update
+                if (userId) get().fetchConversations(userId);
+            })
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'internal_messages',
+                filter: `conversation_id=eq.${conversationId}`
+            }, (payload: any) => {
+                const updated = payload.new as Message;
+                set((state: ChatState) => ({
+                    messages: state.messages.map((m: Message) => m.id === updated.id ? { ...m, ...updated } : m)
+                }));
             })
             .subscribe((status: any) => {
-                if (status === 'SUBSCRIBED') get().syncMessages(conversationId, false, userId);
+                console.log(`[ChatStore] Realtime channel status: ${status}`);
+                if (status === 'SUBSCRIBED') {
+                    console.log('[ChatStore] ✅ Realtime SUBSCRIBED for conversation:', conversationId);
+                    get().syncMessages(conversationId, false, userId);
+                } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                    console.warn('[ChatStore] ⚠️ Realtime failed, falling back to polling');
+                    get().startPolling(conversationId);
+                }
             });
 
         set({ realtimeChannel: channel });
@@ -348,96 +375,78 @@ export const useChatStore = create<ChatState>((set, get) => ({
                 throw new Error('Invalid user IDs');
             }
 
-            const token = providedToken || await getRealtimeToken();
+            // Strategy: Use get_or_create_direct_conversation RPC (atomic, handles dedup via direct_key)
+            // Fallback: Try find-only RPC, then manual create
+            let convId: string | null = null;
 
-            // 1. Try to find existing DM using RPC first
-            console.log(`${logPrefix} Checking for existing DM via RPC...`);
-            const { data: existingConvs, error: findError } = await supabase.rpc('get_direct_conversation', {
-                user_id_1: myId,
-                user_id_2: theirId
+            // Attempt 1: Atomic get-or-create RPC (preferred)
+            console.log(`${logPrefix} Trying get_or_create_direct_conversation RPC...`);
+            const { data: rpcResult, error: rpcError } = await supabase.rpc('get_or_create_direct_conversation', {
+                target_user_id: theirId
             });
 
-            if (findError) {
-                console.warn(`${logPrefix} RPC failed, trying manual fallback:`, findError);
+            if (!rpcError && rpcResult) {
+                convId = rpcResult as string;
+                console.log(`${logPrefix} ✅ RPC returned conversation:`, convId);
+            } else {
+                console.warn(`${logPrefix} RPC get_or_create failed:`, rpcError?.message);
 
-                // Fallback: Manual query
-                const { data: manualResult, error: manualError } = await supabase
-                    .from('internal_conversations')
-                    .select(`
-                        id,
-                        type,
-                        internal_participants!inner (
-                            user_id
-                        )
-                    `)
-                    .eq('type', 'direct')
-                    .eq('internal_participants.user_id', myId);
-
-                if (manualError) {
-                    console.error(`${logPrefix} Manual query failed:`, manualError);
-                    throw manualError;
-                }
-
-                // Check if any of these conversations also has theirId
-                const dmMatch = manualResult?.find((conv: any) => {
-                    const participants = (conv as any).internal_participants;
-                    // We need a way to check if theirId is among participants.
-                    // Since we filtered by myId, we just need to see if theirId is also there.
-                    // In a more robust implementation, we'd query for both simultaneously.
-                    return false; // Placeholder for logic below as it's complex in multi-nested queries
+                // Attempt 2: Find-only RPC
+                const { data: findResult, error: findError } = await supabase.rpc('get_direct_conversation', {
+                    user_id_1: myId,
+                    user_id_2: theirId
                 });
 
-                // Optimization: Instead of complex array logic, just try to create. 
-                // Unique constraints in DB should prevent duplicates if defined.
-            } else if (existingConvs && existingConvs.length > 0) {
-                const convId = existingConvs[0].id;
-                console.log(`${logPrefix} Found existing DM:`, convId);
-                await get().fetchConversations(myId);
-                get().selectConversation(convId, myId);
-                return convId;
+                if (!findError && findResult && findResult.length > 0) {
+                    convId = findResult[0].id;
+                    console.log(`${logPrefix} Found existing DM via find RPC:`, convId);
+                } else {
+                    // Attempt 3: Manual create (last resort)
+                    console.log(`${logPrefix} Creating DM manually...`);
+
+                    // Create consistent direct_key
+                    const [low, high] = myId < theirId ? [myId, theirId] : [theirId, myId];
+                    const directKey = `${low}_${high}`;
+
+                    const { data: newConv, error: createError } = await supabase
+                        .from('internal_conversations')
+                        .insert({
+                            type: 'direct',
+                            direct_key: directKey,
+                            created_by: myId,
+                            created_at: new Date().toISOString()
+                        })
+                        .select()
+                        .single();
+
+                    if (createError) {
+                        console.error(`${logPrefix} Create conversation error:`, createError);
+                        throw createError;
+                    }
+
+                    convId = newConv.id;
+
+                    // Add participants
+                    const { error: partError } = await supabase
+                        .from('internal_participants')
+                        .insert([
+                            { conversation_id: convId, user_id: myId, joined_at: new Date().toISOString() },
+                            { conversation_id: convId, user_id: theirId, joined_at: new Date().toISOString() }
+                        ]);
+
+                    if (partError) {
+                        console.error(`${logPrefix} Add participants error:`, partError);
+                        await supabase.from('internal_conversations').delete().eq('id', convId);
+                        throw partError;
+                    }
+                }
             }
 
-            // 2. Create new conversation if not found
-            console.log(`${logPrefix} Creating new DM...`);
-            const { data: newConv, error: createError } = await supabase
-                .from('internal_conversations')
-                .insert({
-                    type: 'direct',
-                    created_by: myId,
-                    created_at: new Date().toISOString()
-                })
-                .select()
-                .single();
+            if (!convId) throw new Error('Failed to get or create conversation');
 
-            if (createError) {
-                console.error(`${logPrefix} Create conversation error:`, createError);
-                throw createError;
-            }
+            console.log(`${logPrefix} ✅ Successfully got DM:`, convId);
 
-            const convId = newConv.id;
-            console.log(`${logPrefix} Conversation created:`, convId);
-
-            // 3. Add participants
-            console.log(`${logPrefix} Adding participants...`);
-            const participantData = [
-                { conversation_id: convId, user_id: myId, joined_at: new Date().toISOString() },
-                { conversation_id: convId, user_id: theirId, joined_at: new Date().toISOString() }
-            ];
-
-            const { error: partError } = await supabase
-                .from('internal_participants')
-                .insert(participantData);
-
-            if (partError) {
-                console.error(`${logPrefix} Add participants error:`, partError);
-                // Rollback
-                await supabase.from('internal_conversations').delete().eq('id', convId);
-                throw partError;
-            }
-
-            console.log(`${logPrefix} ✅ Successfully created DM:`, convId);
-
-            // 4. Update UI
+            // Update UI
             await get().fetchConversations(myId);
             get().selectConversation(convId, myId);
             return convId;
