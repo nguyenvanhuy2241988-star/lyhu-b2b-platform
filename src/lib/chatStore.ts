@@ -358,8 +358,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
             };
 
             const [data] = await sendRequest<Message[]>('internal_messages', 'POST', messagePayload);
-            updateStatusInStore(tempId, 'sent');
-            set((state: ChatState) => ({ messages: state.messages.map((m: Message) => m.id === tempId ? { ...data, status: 'sent' } : m) }));
+            // Remove temp message AND any Realtime-delivered duplicate (race condition)
+            set((state: ChatState) => {
+                const finalMsg: Message = { ...data, status: 'sent' as const };
+                const filtered = state.messages.filter((m: Message) => m.id !== tempId && m.id !== data.id);
+                return {
+                    messages: [...filtered, finalMsg].sort(
+                        (a: Message, b: Message) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                    )
+                };
+            });
         } catch (error) {
             console.error("Failed to send message:", error);
             updateStatusInStore(tempId, 'error');
@@ -557,7 +565,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const { globalChannel } = get();
         if (globalChannel) supabase.removeChannel(globalChannel);
 
-        const channel = supabase.channel(`presence-${userId}`, {
+        // IMPORTANT: All users must join the SAME channel to see each other's presence
+        const channel = supabase.channel('presence-chat-global', {
             config: { presence: { key: userId } }
         });
 
@@ -565,15 +574,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
             .on('presence', { event: 'sync' }, () => {
                 const state = channel.presenceState();
                 const users = Object.keys(state);
+                console.log('[Presence] Sync - online users:', users);
                 set({ onlineUsers: users });
             })
-            .on('presence', { event: 'join', key: userId }, ({ newPresences }: any) => {
-                console.log('[Presence] Join:', newPresences);
+            .on('presence', { event: 'join' }, ({ key, newPresences }: any) => {
+                console.log('[Presence] Join:', key, newPresences);
             })
-            .on('presence', { event: 'leave', key: userId }, ({ leftPresences }: any) => {
-                console.log('[Presence] Leave:', leftPresences);
+            .on('presence', { event: 'leave' }, ({ key, leftPresences }: any) => {
+                console.log('[Presence] Leave:', key, leftPresences);
             })
             .subscribe(async (status: string) => {
+                console.log('[Presence] Channel status:', status);
                 if (status === 'SUBSCRIBED') {
                     await channel.track({ online_at: new Date().toISOString() });
                 }
