@@ -303,11 +303,12 @@ export default function AdminPayrollPage() {
             // Normalize sort_order: assign unique index if all values are the same
             const activeMetrics = metrics.filter((m: any) => m.is_active);
             const allSameOrder = activeMetrics.length > 1 && activeMetrics.every((m: any) => (m.sort_order || 0) === (activeMetrics[0]?.sort_order || 0));
+            let normalizedMetrics = metrics;
             if (allSameOrder) {
                 let activeIdx = 0;
-                metrics = metrics.map((m: any) => m.is_active ? { ...m, sort_order: activeIdx++ } : m);
+                normalizedMetrics = metrics.map((m: any) => m.is_active ? { ...m, sort_order: activeIdx++ } : m);
             }
-            setKpiMetrics(metrics);
+            setKpiMetrics(normalizedMetrics);
         } catch (e) {
             console.error(e);
         } finally {
