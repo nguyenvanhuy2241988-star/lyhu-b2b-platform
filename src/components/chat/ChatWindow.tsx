@@ -224,9 +224,9 @@ export function ChatWindow(props: ChatWindowProps) {
         >
             {/* Drag Overlay */}
             {isDragging && (
-                <div className="absolute inset-0 z-50 bg-blue-500/10 border-4 border-blue-500 border-dashed m-4 rounded-xl flex items-center justify-center backdrop-blur-sm pointer-events-none">
+                <div className="absolute inset-0 z-50 bg-primary-500/10 border-4 border-primary-500 border-dashed m-4 rounded-xl flex items-center justify-center backdrop-blur-sm pointer-events-none">
                     <div className="bg-white p-6 rounded-full shadow-xl">
-                        <UploadCloud className="w-10 h-10 text-blue-600 animate-bounce" />
+                        <UploadCloud className="w-10 h-10 text-primary-600 animate-bounce" />
                     </div>
                 </div>
             )}
@@ -247,7 +247,7 @@ export function ChatWindow(props: ChatWindowProps) {
                     {onBack && (
                         <button
                             onClick={onBack}
-                            className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-full font-medium shadow-lg shadow-blue-200"
+                            className="mt-6 bg-primary-600 text-white px-6 py-2 rounded-full font-medium shadow-lg shadow-primary-200"
                         >
                             Xem danh sách chat
                         </button>
@@ -268,7 +268,7 @@ export function ChatWindow(props: ChatWindowProps) {
 
                             {activeTargetUser ? (
                                 <div className="relative">
-                                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold border border-slate-200">
+                                    <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-bold border border-slate-200">
                                         {getDisplayName(activeConversation).charAt(0).toUpperCase()}
                                     </div>
                                     {onlineUsers.includes(activeTargetUser.id) && <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>}
@@ -299,7 +299,7 @@ export function ChatWindow(props: ChatWindowProps) {
                                     <button onClick={() => { setShowSearch(false); setSearchTerm(""); }} className="ml-1 hover:text-red-500"><X className="w-4 h-4" /></button>
                                 </div>
                             ) : (
-                                <button onClick={() => setShowSearch(true)} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" title="Tìm kiếm tin nhắn">
+                                <button onClick={() => setShowSearch(true)} className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors" title="Tìm kiếm tin nhắn">
                                     <Search className="w-5 h-5" />
                                 </button>
                             )}
@@ -320,7 +320,7 @@ export function ChatWindow(props: ChatWindowProps) {
                             {/* Chat Info Panel Toggle */}
                             <button
                                 onClick={() => setShowInfoPanel(!showInfoPanel)}
-                                className={`p-2 rounded-full transition-colors ${showInfoPanel ? 'bg-blue-100 text-blue-600' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'}`}
+                                className={`p-2 rounded-full transition-colors ${showInfoPanel ? 'bg-primary-100 text-primary-600' : 'text-slate-400 hover:text-primary-600 hover:bg-primary-50'}`}
                                 title="Thông tin hội thoại"
                             >
                                 <Info className="w-5 h-5" />

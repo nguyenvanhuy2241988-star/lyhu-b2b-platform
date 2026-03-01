@@ -165,7 +165,7 @@ export function ChatSidebar({
                 </div>
                 <button
                     onClick={onShowCreateGroup}
-                    className="p-1.5 bg-white border border-slate-200 text-blue-600 rounded-full hover:bg-blue-50 transition-colors shadow-sm"
+                    className="p-1.5 bg-white border border-slate-200 text-primary-600 rounded-full hover:bg-primary-50 transition-colors shadow-sm"
                     title="Tạo nhóm chat"
                 >
                     <Users className="w-4 h-4" />

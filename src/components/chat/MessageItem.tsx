@@ -126,7 +126,7 @@ export const MessageItem = React.memo(({
 
                         {/* Reply Preview */}
                         {repliedMsg && (
-                            <div className={`text-xs border-l-2 pl-2 mb-1 opacity-70 cursor-pointer ${isMe ? 'border-blue-300 text-right' : 'border-slate-300'}`} onClick={() => {
+                            <div className={`text-xs border-l-2 pl-2 mb-1 opacity-70 cursor-pointer ${isMe ? 'border-primary-300 text-right' : 'border-slate-300'}`} onClick={() => {
                                 // With Virtuoso, scrolling to specific item ID works if we map IDs to indexes.
                                 const replyIndex = messages.findIndex(m => m.id === repliedMsg.id);
                                 if (replyIndex !== -1 && virtuosoRef.current) {
@@ -141,13 +141,13 @@ export const MessageItem = React.memo(({
                         <div
                             className={`relative rounded-2xl px-4 py-2 text-sm shadow-sm group-hover:shadow-md transition-shadow
                                 ${isMe
-                                    ? 'bg-blue-600 text-white rounded-br-none'
+                                    ? 'bg-primary-600 text-white rounded-br-none'
                                     : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none'
                                 }
                             `}
                         >
                             {msg.is_forwarded && (
-                                <div className={`text-[10px] italic mb-1 flex items-center gap-1 ${isMe ? 'text-blue-100' : 'text-slate-400'}`}>
+                                <div className={`text-[10px] italic mb-1 flex items-center gap-1 ${isMe ? 'text-primary-100' : 'text-slate-400'}`}>
                                     <Forward className="w-3 h-3" />
                                     Đã chuyển tiếp
                                 </div>
@@ -167,7 +167,7 @@ export const MessageItem = React.memo(({
                                             />
                                         </div>
                                     ) : (
-                                        <div className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-black/5 ${isMe ? 'bg-blue-700/20' : 'bg-slate-100'}`}
+                                        <div className={`flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-black/5 ${isMe ? 'bg-primary-700/20' : 'bg-slate-100'}`}
                                             onClick={() => window.open(msg.attachment_url, '_blank')}
                                         >
                                             <Paperclip className="w-4 h-4" />
@@ -218,8 +218,8 @@ export const MessageItem = React.memo(({
 
                             {/* Actions */}
                             <div className="flex gap-1 ml-2">
-                                <button onClick={() => onReply(msg)} className="text-slate-400 hover:text-blue-500"><Reply className="w-3 h-3" /></button>
-                                <button onClick={() => handleForward(msg)} className="text-slate-400 hover:text-blue-500" title="Chuyển tiếp"><Forward className="w-3 h-3" /></button>
+                                <button onClick={() => onReply(msg)} className="text-slate-400 hover:text-primary-500"><Reply className="w-3 h-3" /></button>
+                                <button onClick={() => handleForward(msg)} className="text-slate-400 hover:text-primary-500" title="Chuyển tiếp"><Forward className="w-3 h-3" /></button>
                                 {isMe && <button onClick={() => onEdit(msg)} className="text-slate-400 hover:text-green-500"><Edit2 className="w-3 h-3" /></button>}
                                 {isMe && <button onClick={() => onDelete(msg.id)} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3 h-3" /></button>}
                                 <button onClick={() => msg.is_pinned ? onUnpin(msg.id) : onPin(msg.id)} className={`${msg.is_pinned ? 'text-amber-500' : 'text-slate-400 hover:text-amber-500'}`}><Pin className="w-3 h-3" /></button>

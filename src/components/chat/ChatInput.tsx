@@ -170,7 +170,7 @@ export function ChatInput({
                                 className="p-2 hover:bg-slate-100 cursor-pointer flex items-center gap-2"
                                 onClick={() => insertMention(u)}
                             >
-                                <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600">
+                                <div className="w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center text-[10px] font-bold text-primary-600">
                                     {(u.full_name || u.email).charAt(0).toUpperCase()}
                                 </div>
                                 <div className="text-sm text-slate-700 truncate">{u.full_name || u.email}</div>
@@ -208,8 +208,8 @@ export function ChatInput({
                 <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleSubmit(e as any, e.target.files[0]); }} />
                 <input type="file" accept="image/*" ref={imageInputRef} className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleSubmit(e as any, e.target.files[0]); }} />
 
-                <button type="button" onClick={() => imageInputRef.current?.click()} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" title="Gửi hình ảnh"><ImageIcon className="w-5 h-5" /></button>
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-colors" title="Gửi tập tin"><Paperclip className="w-5 h-5" /></button>
+                <button type="button" onClick={() => imageInputRef.current?.click()} className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors" title="Gửi hình ảnh"><ImageIcon className="w-5 h-5" /></button>
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-full transition-colors" title="Gửi tập tin"><Paperclip className="w-5 h-5" /></button>
                 <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)} className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors" title="Biểu tượng cảm xúc"><Smile className="w-5 h-5" /></button>
 
                 <input
@@ -235,7 +235,7 @@ export function ChatInput({
                 <button
                     type="submit"
                     disabled={(!input.trim() && !pendingFile) || isSubmitting}
-                    className={`p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none ${isSubmitting ? 'animate-pulse' : ''}`}
+                    className={`p-2 bg-primary-600 text-white rounded-full hover:bg-primary-700 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none ${isSubmitting ? 'animate-pulse' : ''}`}
                 >
                     {editingMessage ? <Edit2 className="w-4 h-4 ml-0.5" /> : <Send className="w-4 h-4 ml-0.5" />}
                 </button>
