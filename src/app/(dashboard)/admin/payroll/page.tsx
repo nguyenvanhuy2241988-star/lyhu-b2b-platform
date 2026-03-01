@@ -33,6 +33,7 @@ import {
     fetchUserTransactions,
     addFinancialTransaction,
     updateTransactionStatus,
+    deleteFinancialTransactions,
     fetchPayrollLocks,
     setPayrollLock,
     UserKpiSettings,
@@ -608,9 +609,34 @@ export default function AdminPayrollPage() {
                                                                 </span>
                                                             </td>
                                                             <td className="px-6 py-4 text-right">
-                                                                <button className="p-2 hover:bg-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                    <MoreVertical className="w-4 h-4 text-slate-400" />
-                                                                </button>
+                                                                <div className="flex items-center justify-end gap-1">
+                                                                    {t.status === 'estimated' && (
+                                                                        <button
+                                                                            onClick={async () => {
+                                                                                if (!confirm('Xác nhận chốt giao dịch này?')) return;
+                                                                                await updateTransactionStatus(t.referenceId || t.id, 'finalized', session?.access_token);
+                                                                                const txs = await fetchUserTransactions(selectedUserId!, session?.access_token);
+                                                                                setTransactions(txs);
+                                                                            }}
+                                                                            className="px-2 py-1 text-[10px] font-medium bg-emerald-50 text-emerald-600 rounded hover:bg-emerald-100 transition-colors"
+                                                                            title="Chốt giao dịch"
+                                                                        >
+                                                                            Chốt
+                                                                        </button>
+                                                                    )}
+                                                                    <button
+                                                                        onClick={async () => {
+                                                                            if (!confirm('Xoá giao dịch này?')) return;
+                                                                            await deleteFinancialTransactions(t.referenceId || t.id, session?.access_token);
+                                                                            const txs = await fetchUserTransactions(selectedUserId!, session?.access_token);
+                                                                            setTransactions(txs);
+                                                                        }}
+                                                                        className="p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded transition-colors"
+                                                                        title="Xoá"
+                                                                    >
+                                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                                    </button>
+                                                                </div>
                                                             </td>
                                                         </tr>
                                                     ))
