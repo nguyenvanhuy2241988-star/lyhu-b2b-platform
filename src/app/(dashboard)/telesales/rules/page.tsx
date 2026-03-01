@@ -56,11 +56,12 @@ export default function TelesalesRulesPage() {
     const loadPolicy = useCallback(async () => {
         const { data } = await supabase
             .from('app_settings')
-            .select('value')
-            .eq('key', 'telesales_income_policy')
+            .select('income_policies')
+            .limit(1)
             .single();
-        if (data?.value) {
-            setPolicy({ ...DEFAULT_POLICY, ...data.value });
+        const policies = data?.income_policies || {};
+        if (policies.telesales) {
+            setPolicy({ ...DEFAULT_POLICY, ...policies.telesales });
         }
     }, []);
 
@@ -71,9 +72,19 @@ export default function TelesalesRulesPage() {
     const handleSave = async () => {
         setIsSaving(true);
         try {
+            // Read-modify-write income_policies
+            const { data: current } = await supabase
+                .from('app_settings')
+                .select('income_policies')
+                .limit(1)
+                .single();
+            const policies = current?.income_policies || {};
+            policies.telesales = editPolicy;
+
             const { error } = await supabase
                 .from('app_settings')
-                .upsert({ key: 'telesales_income_policy', value: editPolicy }, { onConflict: 'key' });
+                .update({ income_policies: policies })
+                .not('id', 'is', null);
             if (!error) {
                 setPolicy(editPolicy);
                 setIsEditing(false);

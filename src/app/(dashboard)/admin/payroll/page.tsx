@@ -40,7 +40,7 @@ import {
     updateUserKpiSettings
 } from "@/lib/payrollStore";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { getRealtimeClient } from "@/lib/supabaseClient";
+import { supabase, getRealtimeClient } from "@/lib/supabaseClient";
 import { KPI_TEMPLATES, KpiFieldType, formatKpiValue } from "@/lib/kpi_config";
 import {
     KpiMetricDefinition,
@@ -49,7 +49,7 @@ import {
     upsertKpiMetric,
     deleteKpiMetric
 } from "@/lib/kpiSalaryStore";
-import { Trash2 } from "lucide-react";
+import { Trash2, FileText } from "lucide-react";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -78,6 +78,12 @@ export default function AdminPayrollPage() {
     const [kpiSettings, setKpiSettings] = useState<UserKpiSettings | null>(null);
     const [isLoadingKpi, setIsLoadingKpi] = useState(false);
     const [kpiMetrics, setKpiMetrics] = useState<KpiMetricDefinition[]>([]);
+
+    // Income Policy State
+    const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
+    const [policyDept, setPolicyDept] = useState('telesales');
+    const [policyData, setPolicyData] = useState<any>(null);
+    const [isSavingPolicy, setIsSavingPolicy] = useState(false);
 
     // Form state
     const [newTx, setNewTx] = useState({
@@ -322,6 +328,71 @@ export default function AdminPayrollPage() {
         }
     };
 
+    // Income Policy Handlers
+    const DEPARTMENTS = [
+        { value: 'telesales', label: 'Telesales' },
+        { value: 'admin', label: 'Admin' },
+        { value: 'sale_admin', label: 'Sale Admin' },
+        { value: 'marketing', label: 'Marketing' },
+        { value: 'hr', label: 'Nhân sự' },
+    ];
+
+    const DEFAULT_POLICY = {
+        baseSalary: 0,
+        paymentDay: 5,
+        hoursPerDay: 8,
+        maxUnexcusedAbsences: 3,
+        allowances: [] as { name: string; amount: string }[],
+        bonuses: [] as { title: string; amount: string; desc: string }[],
+        penalties: [] as { name: string; desc: string; fine: string }[],
+        penaltyNote: '',
+        commissionNote: '',
+        version: 'v1.0'
+    };
+
+    const handleOpenPolicy = () => {
+        setPolicyDept('telesales');
+        handleLoadPolicy('telesales');
+        setIsPolicyModalOpen(true);
+    };
+
+    const handleLoadPolicy = async (dept: string) => {
+        const { data } = await supabase
+            .from('app_settings')
+            .select('income_policies')
+            .limit(1)
+            .single();
+        const policies = data?.income_policies || {};
+        setPolicyData(policies[dept] ? { ...DEFAULT_POLICY, ...policies[dept] } : { ...DEFAULT_POLICY });
+    };
+
+    const handleSavePolicy = async () => {
+        if (!policyData) return;
+        setIsSavingPolicy(true);
+        try {
+            // Read current income_policies first
+            const { data: current } = await supabase
+                .from('app_settings')
+                .select('income_policies')
+                .limit(1)
+                .single();
+            const policies = current?.income_policies || {};
+            policies[policyDept] = policyData;
+
+            const { error } = await supabase
+                .from('app_settings')
+                .update({ income_policies: policies })
+                .not('id', 'is', null); // Update all rows (there's only 1)
+            if (!error) {
+                alert('Đã lưu chính sách thu nhập!');
+            } else {
+                alert('Lỗi: ' + error.message);
+            }
+        } finally {
+            setIsSavingPolicy(false);
+        }
+    };
+
     const getKpiTemplate = (role: string = 'telesales') => {
         return KPI_TEMPLATES[role] || KPI_TEMPLATES['telesales']; // Default to telesales for now
     };
@@ -426,6 +497,13 @@ export default function AdminPayrollPage() {
                                 >
                                     <Plus className="w-4 h-4" />
                                     Thêm khoản chi
+                                </button>
+                                <button
+                                    onClick={handleOpenPolicy}
+                                    className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
+                                >
+                                    <FileText className="w-4 h-4" />
+                                    Chính sách thu nhập
                                 </button>
                             </div>
                         </div>
@@ -865,6 +943,149 @@ export default function AdminPayrollPage() {
                 </div>
             )
             }
+
+            {/* Modal: Income Policy */}
+            {isPolicyModalOpen && policyData && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-lg w-full max-w-2xl shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                        <div className="p-5 border-b border-slate-200 flex justify-between items-center">
+                            <div>
+                                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                    <FileText className="w-5 h-5 text-primary-500" />
+                                    Chính sách Thu nhập
+                                </h2>
+                                <div className="flex items-center gap-2 mt-2">
+                                    <label className="text-xs text-slate-500">Bộ phận:</label>
+                                    <select
+                                        value={policyDept}
+                                        onChange={(e) => { setPolicyDept(e.target.value); handleLoadPolicy(e.target.value); }}
+                                        className="text-sm font-medium border border-slate-200 rounded-lg px-3 py-1.5 focus:ring-primary-500 focus:border-primary-500"
+                                    >
+                                        {DEPARTMENTS.map(d => (
+                                            <option key={d.value} value={d.value}>{d.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                            <button onClick={() => setIsPolicyModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400">
+                                <Plus className="w-5 h-5 rotate-45" />
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                            {/* Base Salary */}
+                            <div className="space-y-3">
+                                <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-primary-500 pl-3">Lương cố định</h3>
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <label className="text-[10px] text-slate-400 block mb-1">Lương cơ bản (VNĐ)</label>
+                                        <input type="text" className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm font-bold"
+                                            value={formatNumber(policyData.baseSalary || 0)}
+                                            onChange={(e) => setPolicyData({ ...policyData, baseSalary: parseFormattedNumber(e.target.value) })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] text-slate-400 block mb-1">Ngày thanh toán</label>
+                                        <input type="number" className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm"
+                                            value={policyData.paymentDay || 5}
+                                            onChange={(e) => setPolicyData({ ...policyData, paymentDay: parseInt(e.target.value) || 5 })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] text-slate-400 block mb-1">Giờ/ngày</label>
+                                        <input type="number" step="0.5" className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm"
+                                            value={policyData.hoursPerDay || 8}
+                                            onChange={(e) => setPolicyData({ ...policyData, hoursPerDay: parseFloat(e.target.value) || 8 })}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Allowances */}
+                            <div className="space-y-3">
+                                <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-emerald-500 pl-3">Phụ cấp & Phúc lợi</h3>
+                                {(policyData.allowances || []).map((a: any, i: number) => (
+                                    <div key={i} className="flex gap-2 items-center">
+                                        <input className="flex-1 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Tên" value={a.name}
+                                            onChange={(e) => { const arr = [...policyData.allowances]; arr[i] = { ...a, name: e.target.value }; setPolicyData({ ...policyData, allowances: arr }); }} />
+                                        <input className="w-36 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Số tiền" value={a.amount}
+                                            onChange={(e) => { const arr = [...policyData.allowances]; arr[i] = { ...a, amount: e.target.value }; setPolicyData({ ...policyData, allowances: arr }); }} />
+                                        <button onClick={() => setPolicyData({ ...policyData, allowances: policyData.allowances.filter((_: any, j: number) => j !== i) })}
+                                            className="p-1 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                                    </div>
+                                ))}
+                                <button onClick={() => setPolicyData({ ...policyData, allowances: [...(policyData.allowances || []), { name: "", amount: "" }] })}
+                                    className="text-xs text-primary-600 flex items-center gap-1 hover:text-primary-700"><Plus className="w-3 h-3" /> Thêm phụ cấp</button>
+                            </div>
+
+                            {/* Bonuses */}
+                            <div className="space-y-3">
+                                <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-amber-500 pl-3">Hệ thống thưởng</h3>
+                                {(policyData.bonuses || []).map((b: any, i: number) => (
+                                    <div key={i} className="flex gap-2 items-center">
+                                        <input className="w-36 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Tên" value={b.title}
+                                            onChange={(e) => { const arr = [...policyData.bonuses]; arr[i] = { ...b, title: e.target.value }; setPolicyData({ ...policyData, bonuses: arr }); }} />
+                                        <input className="w-28 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Số tiền" value={b.amount}
+                                            onChange={(e) => { const arr = [...policyData.bonuses]; arr[i] = { ...b, amount: e.target.value }; setPolicyData({ ...policyData, bonuses: arr }); }} />
+                                        <input className="flex-1 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Mô tả" value={b.desc}
+                                            onChange={(e) => { const arr = [...policyData.bonuses]; arr[i] = { ...b, desc: e.target.value }; setPolicyData({ ...policyData, bonuses: arr }); }} />
+                                        <button onClick={() => setPolicyData({ ...policyData, bonuses: policyData.bonuses.filter((_: any, j: number) => j !== i) })}
+                                            className="p-1 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                                    </div>
+                                ))}
+                                <button onClick={() => setPolicyData({ ...policyData, bonuses: [...(policyData.bonuses || []), { title: "", amount: "", desc: "" }] })}
+                                    className="text-xs text-primary-600 flex items-center gap-1 hover:text-primary-700"><Plus className="w-3 h-3" /> Thêm mục thưởng</button>
+                            </div>
+
+                            {/* Penalties */}
+                            <div className="space-y-3">
+                                <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-rose-500 pl-3">Chế tài & Kỷ luật</h3>
+                                {(policyData.penalties || []).map((p: any, i: number) => (
+                                    <div key={i} className="flex gap-2 items-center">
+                                        <input className="w-36 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Tên" value={p.name}
+                                            onChange={(e) => { const arr = [...policyData.penalties]; arr[i] = { ...p, name: e.target.value }; setPolicyData({ ...policyData, penalties: arr }); }} />
+                                        <input className="w-28 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Phạt" value={p.fine}
+                                            onChange={(e) => { const arr = [...policyData.penalties]; arr[i] = { ...p, fine: e.target.value }; setPolicyData({ ...policyData, penalties: arr }); }} />
+                                        <input className="flex-1 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Mô tả" value={p.desc}
+                                            onChange={(e) => { const arr = [...policyData.penalties]; arr[i] = { ...p, desc: e.target.value }; setPolicyData({ ...policyData, penalties: arr }); }} />
+                                        <button onClick={() => setPolicyData({ ...policyData, penalties: policyData.penalties.filter((_: any, j: number) => j !== i) })}
+                                            className="p-1 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                                    </div>
+                                ))}
+                                <button onClick={() => setPolicyData({ ...policyData, penalties: [...(policyData.penalties || []), { name: "", desc: "", fine: "" }] })}
+                                    className="text-xs text-primary-600 flex items-center gap-1 hover:text-primary-700"><Plus className="w-3 h-3" /> Thêm chế tài</button>
+                            </div>
+
+                            {/* Notes */}
+                            <div className="space-y-3">
+                                <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-blue-500 pl-3">Ghi chú hoa hồng</h3>
+                                <textarea className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={2}
+                                    placeholder="VD: Hoa hồng tính trên phần doanh số VƯỢT target..."
+                                    value={policyData.commissionNote || ''}
+                                    onChange={(e) => setPolicyData({ ...policyData, commissionNote: e.target.value })} />
+                            </div>
+
+                            <div className="space-y-3">
+                                <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-slate-400 pl-3">Ghi chú phạt</h3>
+                                <textarea className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={2}
+                                    placeholder="VD: Mọi khoản phí phạt được gom vào quỹ Bonding..."
+                                    value={policyData.penaltyNote || ''}
+                                    onChange={(e) => setPolicyData({ ...policyData, penaltyNote: e.target.value })} />
+                            </div>
+                        </div>
+
+                        <div className="p-4 border-t border-slate-200 flex justify-end gap-3">
+                            <button onClick={() => setIsPolicyModalOpen(false)} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-100">Hủy</button>
+                            <button onClick={handleSavePolicy} disabled={isSavingPolicy}
+                                className="px-5 py-2 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2">
+                                {isSavingPolicy ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <SaveIcon className="w-4 h-4" />}
+                                Lưu chính sách
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Modal: Add Transaction */}
             {
                 isModalOpen && (
