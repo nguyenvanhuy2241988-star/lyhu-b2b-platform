@@ -293,6 +293,8 @@ export const getTelesalesKpiStats = async (userId: string, date: string, toDate?
     let settings: TelesalesKpiSettings = settingsData || defaultSettings;
 
     // 1b. Override targets from user_kpi_settings (payroll module) if available
+    // Payroll targets are MONTHLY values, legacy telesales_kpi_settings are DAILY
+    let isMonthlyTargets = false;
     const { data: payrollKpi } = await supabase
         .from('user_kpi_settings')
         .select('kpi_targets')
@@ -311,6 +313,20 @@ export const getTelesalesKpiStats = async (userId: string, date: string, toDate?
             fb_personal_posts_target: pt.fb_personal_posts || pt.fb_personal_posts_target || settings.fb_personal_posts_target,
             zalo_posts_target: pt.zalo_posts || pt.zalo_posts_target || settings.zalo_posts_target,
         };
+        isMonthlyTargets = true;
+    } else {
+        // Legacy targets are daily — convert to monthly (×26 working days)
+        settings = {
+            ...settings,
+            calls_target: settings.calls_target * 26,
+            self_sourced_data_target: settings.self_sourced_data_target * 26,
+            fb_group_posts_target: settings.fb_group_posts_target * 26,
+            fb_comments_target: settings.fb_comments_target * 26,
+            fb_friends_target: settings.fb_friends_target * 26,
+            fb_personal_posts_target: settings.fb_personal_posts_target * 26,
+            zalo_posts_target: settings.zalo_posts_target * 26,
+        };
+        isMonthlyTargets = true;
     }
 
     // 2. Get reports for date range
@@ -334,17 +350,9 @@ export const getTelesalesKpiStats = async (userId: string, date: string, toDate?
             agg.zalo_posts_count += r.zalo_posts || 0;
         }
 
-        // Scale targets by number of days
-        const daysDiff = Math.max(1, Math.ceil((new Date(toDate).getTime() - new Date(date).getTime()) / 86400000) + 1);
+        // Targets are already monthly — return as-is (no daysDiff scaling)
         return {
             ...settings,
-            calls_target: settings.calls_target * daysDiff,
-            self_sourced_data_target: settings.self_sourced_data_target * daysDiff,
-            fb_group_posts_target: settings.fb_group_posts_target * daysDiff,
-            fb_comments_target: settings.fb_comments_target * daysDiff,
-            fb_friends_target: settings.fb_friends_target * daysDiff,
-            fb_personal_posts_target: settings.fb_personal_posts_target * daysDiff,
-            zalo_posts_target: settings.zalo_posts_target * daysDiff,
             ...agg
         };
     }
@@ -434,32 +442,25 @@ export const getTeamTelesalesKpiStats = async (date: string, toDate?: string): P
 
     const aggregatedTargets = { calls_target: 0, self_sourced_data_target: 0, fb_group_posts_target: 0, fb_comments_target: 0, fb_friends_target: 0, fb_personal_posts_target: 0, zalo_posts_target: 0 };
 
+    // Convert legacy daily targets to monthly (×26)
     for (const uid of telesalesUserIds) {
         const s: any = settingsMap.get(uid) || defaultSettings;
         const pt = (payrollMap.get(uid) || {}) as Record<string, number>;
 
-        // Priority: payroll targets > telesales_kpi_settings > default
-        aggregatedTargets.calls_target += pt.calls || pt.calls_target || s.calls_target || 0;
-        aggregatedTargets.self_sourced_data_target += pt.self_sourced || pt.self_sourced_data || pt.self_sourced_data_target || s.self_sourced_data_target || 0;
-        aggregatedTargets.fb_group_posts_target += pt.fb_group_posts || pt.fb_group_posts_target || s.fb_group_posts_target || 0;
-        aggregatedTargets.fb_comments_target += pt.fb_comments || pt.fb_comments_target || s.fb_comments_target || 0;
-        aggregatedTargets.fb_friends_target += pt.fb_friends || pt.fb_friends_target || s.fb_friends_target || 0;
-        aggregatedTargets.fb_personal_posts_target += pt.fb_personal_posts || pt.fb_personal_posts_target || s.fb_personal_posts_target || 0;
-        aggregatedTargets.zalo_posts_target += pt.zalo_posts || pt.zalo_posts_target || s.zalo_posts_target || 0;
+        // Priority: payroll targets (monthly) > telesales_kpi_settings×26 (daily→monthly) > default×26
+        const hasPayroll = Object.keys(pt).length > 0;
+        const mul = hasPayroll ? 1 : 26; // convert daily to monthly if no payroll targets
+
+        aggregatedTargets.calls_target += (pt.calls || pt.calls_target || s.calls_target || 0) * mul;
+        aggregatedTargets.self_sourced_data_target += (pt.self_sourced || pt.self_sourced_data || pt.self_sourced_data_target || s.self_sourced_data_target || 0) * mul;
+        aggregatedTargets.fb_group_posts_target += (pt.fb_group_posts || pt.fb_group_posts_target || s.fb_group_posts_target || 0) * mul;
+        aggregatedTargets.fb_comments_target += (pt.fb_comments || pt.fb_comments_target || s.fb_comments_target || 0) * mul;
+        aggregatedTargets.fb_friends_target += (pt.fb_friends || pt.fb_friends_target || s.fb_friends_target || 0) * mul;
+        aggregatedTargets.fb_personal_posts_target += (pt.fb_personal_posts || pt.fb_personal_posts_target || s.fb_personal_posts_target || 0) * mul;
+        aggregatedTargets.zalo_posts_target += (pt.zalo_posts || pt.zalo_posts_target || s.zalo_posts_target || 0) * mul;
     }
 
-    // Scale targets by number of days in range
-    const endDate = toDate || date;
-    const daysDiff = Math.max(1, Math.ceil((new Date(endDate).getTime() - new Date(date).getTime()) / 86400000) + 1);
-    if (daysDiff > 1) {
-        aggregatedTargets.calls_target *= daysDiff;
-        aggregatedTargets.self_sourced_data_target *= daysDiff;
-        aggregatedTargets.fb_group_posts_target *= daysDiff;
-        aggregatedTargets.fb_comments_target *= daysDiff;
-        aggregatedTargets.fb_friends_target *= daysDiff;
-        aggregatedTargets.fb_personal_posts_target *= daysDiff;
-        aggregatedTargets.zalo_posts_target *= daysDiff;
-    }
+    // Targets are now monthly — no daysDiff scaling needed
 
     // 3. Compute calls & self-sourced directly from CRM tables (source of truth)
     const queryEndDate = toDate || date;

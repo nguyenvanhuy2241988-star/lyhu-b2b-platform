@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getTelesalesKpiStats, getTeamTelesalesKpiStats, TelesalesKpiStats, updateTelesalesKpiSettings } from "@/lib/telesalesDailyStore";
 import { supabase } from "@/lib/supabaseClient";
@@ -38,7 +38,10 @@ export default function TelesalesKpiDashboard({ date, userId, toDate, targetDivi
 
     const isAdmin = role === 'admin' || role === 'manager' || role === 'telesales_manager';
 
-    const loadStats = async () => {
+    // Use ref to avoid stale closure in realtime callbacks
+    const loadStatsRef = useRef<() => Promise<void>>();
+
+    const loadStats = useCallback(async () => {
         if (!userId) return;
         try {
             const data = await (userId === 'ALL' ? getTeamTelesalesKpiStats(date, toDate) : getTelesalesKpiStats(userId, date, toDate));
@@ -68,14 +71,19 @@ export default function TelesalesKpiDashboard({ date, userId, toDate, targetDivi
         } finally {
             setLoading(false);
         }
-    };
+    }, [userId, date, toDate, targetDivisor]);
+
+    // Keep ref in sync with latest loadStats
+    useEffect(() => {
+        loadStatsRef.current = loadStats;
+    }, [loadStats]);
 
     useEffect(() => {
         loadStats();
 
-        // Realtime Subscription
+        // Realtime Subscription — uses ref to avoid stale closure
         const channel = supabase
-            .channel(`telesales-kpi-act-${userId}`)
+            .channel(`telesales-kpi-act-${userId}-${date}`)
             .on(
                 'postgres_changes',
                 {
@@ -86,14 +94,14 @@ export default function TelesalesKpiDashboard({ date, userId, toDate, targetDivi
                 },
                 () => {
                     console.log("Realtime update received for activities!");
-                    loadStats(); // Re-fetch stats on any change
+                    loadStatsRef.current?.();
                 }
             )
             .subscribe();
 
         // Subscribe to Settings changes (if Admin updates targets)
         const settingsChannel = supabase
-            .channel(`telesales-kpi-set-${userId}`)
+            .channel(`telesales-kpi-set-${userId}-${date}`)
             .on(
                 'postgres_changes',
                 {
@@ -104,7 +112,7 @@ export default function TelesalesKpiDashboard({ date, userId, toDate, targetDivi
                 },
                 () => {
                     console.log("Settings update received!");
-                    loadStats();
+                    loadStatsRef.current?.();
                 }
             )
             .subscribe();
@@ -113,7 +121,7 @@ export default function TelesalesKpiDashboard({ date, userId, toDate, targetDivi
             supabase.removeChannel(channel);
             supabase.removeChannel(settingsChannel);
         };
-    }, [userId, date, toDate]);
+    }, [userId, date, toDate, targetDivisor, loadStats]);
 
     const handleSaveSettings = async () => {
         if (!userId || !isAdmin) return;
