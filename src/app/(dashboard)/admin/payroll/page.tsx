@@ -58,6 +58,9 @@ const formatPrice = (price: number) => {
     }).format(price);
 };
 
+const formatNumber = (n: number) => new Intl.NumberFormat('vi-VN').format(n);
+const parseFormattedNumber = (s: string) => parseInt(s.replace(/\./g, '').replace(/,/g, '')) || 0;
+
 export default function AdminPayrollPage() {
     const [staff, setStaff] = useState<User[]>([]);
     const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -637,10 +640,10 @@ export default function AdminPayrollPage() {
                                                 <div className="relative">
                                                     <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                                     <input
-                                                        type="number"
+                                                        type="text"
                                                         className="w-full pl-9 pr-4 py-2 rounded-lg border-slate-200 text-sm font-bold focus:ring-primary-500 focus:border-primary-500"
-                                                        value={kpiSettings.base_salary_monthly || 0}
-                                                        onChange={(e) => setKpiSettings({ ...kpiSettings, base_salary_monthly: parseInt(e.target.value) || 0 })}
+                                                        value={formatNumber(kpiSettings.base_salary_monthly || 0)}
+                                                        onChange={(e) => setKpiSettings({ ...kpiSettings, base_salary_monthly: parseFormattedNumber(e.target.value) })}
                                                     />
                                                 </div>
                                                 <p className="text-[10px] text-slate-400 mt-1 italic">Mức lương cứng riêng cho nhân sự này.</p>
@@ -757,11 +760,11 @@ export default function AdminPayrollPage() {
                                                             <div>
                                                                 <span className="text-[10px] text-slate-400 font-semibold block mb-1">Target /tháng</span>
                                                                 <input
-                                                                    type="number"
+                                                                    type="text"
                                                                     className="w-full py-2 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium text-slate-900 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                                                                    value={kpiSettings.kpi_targets?.[metricDef.key] || 0}
+                                                                    value={metricDef.field_type === 'currency' ? formatNumber(kpiSettings.kpi_targets?.[metricDef.key] || 0) : (kpiSettings.kpi_targets?.[metricDef.key] || 0)}
                                                                     onChange={(e) => {
-                                                                        const val = parseFloat(e.target.value) || 0;
+                                                                        const val = metricDef.field_type === 'currency' ? parseFormattedNumber(e.target.value) : (parseFloat(e.target.value) || 0);
                                                                         setKpiSettings({
                                                                             ...kpiSettings,
                                                                             kpi_targets: {

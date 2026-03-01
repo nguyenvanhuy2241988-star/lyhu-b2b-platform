@@ -140,7 +140,8 @@ export async function getKpiSummaryByUser(from: Date, to: Date, token?: string):
             // Target Settings
             const tSetting = (targetsData || []).find((t: any) => t.user_id === user.id);
             const cRate = tSetting?.commission_rate !== undefined ? tSetting.commission_rate : defaultCommission;
-            const uTotalCommission = uTotalRevenue * cRate;
+            const revenueTarget = tSetting?.kpi_targets?.revenue || (tSetting?.daily_revenue_target ? tSetting.daily_revenue_target * 30 : 0);
+            const uTotalCommission = Math.max(0, uTotalRevenue - revenueTarget) * cRate;
 
             const uConversionRate = uTotalCalls > 0 ? (uTotalOrders / uTotalCalls) * 100 : 0;
 
@@ -193,7 +194,7 @@ export function getWeeklyRanges() {
 // Additional missing exports for telesales earnings page
 export const COMMISSION_RATE = 0.03; // 3% (Default fallback)
 
-export function calculateCombinedMetrics(tasksLike: any[], ordersLike: any[], from: Date, to: Date, commissionRate: number = COMMISSION_RATE) {
+export function calculateCombinedMetrics(tasksLike: any[], ordersLike: any[], from: Date, to: Date, commissionRate: number = COMMISSION_RATE, revenueTarget: number = 0) {
     const tasks = asArray<TelesalesTask>(tasksLike);
     const orders = asArray<any>(ordersLike);
     const fromTime = from.getTime();
@@ -215,7 +216,8 @@ export function calculateCombinedMetrics(tasksLike: any[], ordersLike: any[], fr
     const totalCalls = filteredTasks.length;
     const totalOrders = filteredOrders.length;
     const totalRevenue = filteredOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
-    const totalCommission = totalRevenue * commissionRate;
+    const surplusRevenue = Math.max(0, totalRevenue - revenueTarget);
+    const totalCommission = surplusRevenue * commissionRate;
     const conversionRate = totalCalls === 0 ? 0 : (totalOrders / totalCalls) * 100;
 
     return {
@@ -223,6 +225,7 @@ export function calculateCombinedMetrics(tasksLike: any[], ordersLike: any[], fr
         totalOrders,
         totalRevenue,
         totalCommission,
+        surplusRevenue,
         conversionRate
     };
 }

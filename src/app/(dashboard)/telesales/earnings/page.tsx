@@ -305,12 +305,13 @@ export default function TelesalesEarningsPage() {
     const isCurrentMonth = selectedMonth === new Date().getMonth() && selectedYear === new Date().getFullYear();
 
     const rate = kpiSettings?.commission_rate !== undefined ? kpiSettings.commission_rate : (payrollConfig?.commissionRate || 0.03);
+    const revenueTarget = kpiSettings?.kpi_targets?.revenue || kpiSettings?.daily_revenue_target || 0;
 
     // Metrics
-    const currentMetrics = useMemo(() => calculateCombinedMetrics(tasks, orders, currentRange.from, currentRange.to, rate), [tasks, orders, currentRange, rate]);
+    const currentMetrics = useMemo(() => calculateCombinedMetrics(tasks, orders, currentRange.from, currentRange.to, rate, revenueTarget), [tasks, orders, currentRange, rate, revenueTarget]);
 
     // Today & Target Metrics
-    const todayMetrics = useMemo(() => calculateCombinedMetrics(tasks, orders, todayRange.from, todayRange.to, rate), [tasks, orders, todayRange, rate]);
+    const todayMetrics = useMemo(() => calculateCombinedMetrics(tasks, orders, todayRange.from, todayRange.to, rate, 0), [tasks, orders, todayRange, rate]);
     const todayTarget = useMemo(() => {
         if (kpiSettings) {
             return {
@@ -325,7 +326,7 @@ export default function TelesalesEarningsPage() {
     const { status: todayKpiStatus, percentage: todayKpiPercent } = useMemo(() => calculateKpiProgress(todayMetrics), [todayMetrics]);
 
     // Comparison for Filtered Data
-    const prevMetrics = useMemo(() => calculateCombinedMetrics(tasks, orders, prevRange.from, prevRange.to, rate), [tasks, orders, prevRange, rate]);
+    const prevMetrics = useMemo(() => calculateCombinedMetrics(tasks, orders, prevRange.from, prevRange.to, rate, revenueTarget), [tasks, orders, prevRange, rate, revenueTarget]);
     const revenueGrowth = prevMetrics.totalRevenue > 0
         ? ((currentMetrics.totalRevenue - prevMetrics.totalRevenue) / prevMetrics.totalRevenue) * 100
         : (currentMetrics.totalRevenue > 0 ? 100 : 0);
@@ -333,8 +334,8 @@ export default function TelesalesEarningsPage() {
     // Weekly Comparison Metrics
     const weeklyMetrics = useMemo(() => {
         const ranges = getWeeklyRanges();
-        const thisWeek = calculateCombinedMetrics(tasks, orders, ranges.thisWeek.from, ranges.thisWeek.to, rate);
-        const lastWeek = calculateCombinedMetrics(tasks, orders, ranges.lastWeek.from, ranges.lastWeek.to, rate);
+        const thisWeek = calculateCombinedMetrics(tasks, orders, ranges.thisWeek.from, ranges.thisWeek.to, rate, 0);
+        const lastWeek = calculateCombinedMetrics(tasks, orders, ranges.lastWeek.from, ranges.lastWeek.to, rate, 0);
         return { thisWeek, lastWeek };
     }, [tasks, orders, rate]);
 
