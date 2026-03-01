@@ -323,3 +323,152 @@ export const calculateKpiSalary = async (
         totalSalaryPercent
     };
 };
+
+/**
+ * Get KPI actuals for an arbitrary date range.
+ * Same queries as getMonthlyKpiActuals but with explicit start/end dates.
+ */
+export const getKpiActualsForRange = async (
+    userId: string,
+    startDate: Date,
+    endDate: Date
+): Promise<Record<string, number>> => {
+    const startStr = startDate.toISOString();
+    const endStr = endDate.toISOString();
+
+    // Format for daily activity queries (YYYY-MM-DD)
+    const startDateStr = startDate.toISOString().slice(0, 10);
+    const endDateStr = endDate.toISOString().slice(0, 10);
+
+    const actuals: Record<string, number> = {};
+
+    // 1. Calls
+    const { data: callsData } = await supabase
+        .from('crm_activities')
+        .select('deal_id')
+        .eq('user_id', userId)
+        .eq('type', 'call')
+        .eq('call_result', 'answered')
+        .gte('created_at', startStr)
+        .lte('created_at', endStr);
+
+    const uniqueCallDeals = new Set((callsData || []).map((c: any) => c.deal_id));
+    actuals['calls'] = uniqueCallDeals.size;
+
+    // 2. Self-sourced data
+    const { data: selfData } = await supabase
+        .from('crm_deals')
+        .select('id')
+        .eq('owner_user_id', userId)
+        .eq('source_category', 'SELF_FOUND')
+        .eq('is_new_customer', true)
+        .gte('created_at', startStr)
+        .lte('created_at', endStr);
+
+    actuals['self_sourced'] = (selfData || []).length;
+
+    // 3. Manual KPIs from daily activities
+    const { data: dailyData } = await supabase
+        .from('telesales_daily_activities')
+        .select('fb_group_posts, fb_comments, fb_friends, fb_personal_posts, zalo_posts')
+        .eq('user_id', userId)
+        .gte('report_date', startDateStr)
+        .lte('report_date', endDateStr);
+
+    let fbGroupPosts = 0, fbComments = 0, fbFriends = 0, fbPersonalPosts = 0, zaloPosts = 0;
+    for (const r of (dailyData || [])) {
+        fbGroupPosts += (r as any).fb_group_posts || 0;
+        fbComments += (r as any).fb_comments || 0;
+        fbFriends += (r as any).fb_friends || 0;
+        fbPersonalPosts += (r as any).fb_personal_posts || 0;
+        zaloPosts += (r as any).zalo_posts || 0;
+    }
+    actuals['fb_group_posts'] = fbGroupPosts;
+    actuals['fb_comments'] = fbComments;
+    actuals['fb_friends'] = fbFriends;
+    actuals['fb_personal_posts'] = fbPersonalPosts;
+    actuals['zalo_posts'] = zaloPosts;
+
+    // 4. Revenue
+    const { data: ordersData } = await supabase
+        .from('orders')
+        .select('total_amount')
+        .eq('telesales_user_id', userId)
+        .eq('status', 'delivered')
+        .gte('created_at', startStr)
+        .lte('created_at', endStr);
+
+    actuals['revenue'] = (ordersData || []).reduce((sum: number, o: any) => sum + (o.total_amount || 0), 0);
+
+    // 5. New outlets
+    const { data: newOutlets } = await supabase.rpc('count_new_outlets', {
+        p_user_id: userId,
+        p_start: startStr,
+        p_end: endStr
+    }).maybeSingle();
+
+    actuals['new_outlets'] = (newOutlets as any)?.count || 0;
+
+    return actuals;
+};
+
+/**
+ * Calculate KPI salary for a specific date range with proportional scaling.
+ * @param divisor - How to scale targets & salary: 1 = month, ~4 = week, ~26 = day
+ */
+export const calculateKpiSalaryForRange = async (
+    userId: string,
+    startDate: Date,
+    endDate: Date,
+    baseSalary: number,
+    divisor: number = 1
+): Promise<KpiSalaryResult> => {
+    const metrics = await fetchActiveKpiMetrics();
+
+    const { data: userKpiSettings } = await supabase
+        .rpc('get_user_kpi_settings', { p_user_id: userId });
+    const userTargetsJson: Record<string, number> = (userKpiSettings as any)?.kpi_targets || {};
+
+    const userTargets = await fetchUserTargets(userId);
+    const userTargetMap = new Map(userTargets.map(t => [t.metric_key, t.monthly_target]));
+
+    // Get actuals for the specified date range
+    const actuals = await getKpiActualsForRange(userId, startDate, endDate);
+
+    const scaledBaseSalary = Math.round(baseSalary / divisor);
+    const items: KpiSalaryLineItem[] = [];
+    let totalKpiSalary = 0;
+    let totalSalaryPercent = 0;
+
+    for (const metric of metrics) {
+        if (metric.salary_percent <= 0) continue;
+
+        const monthlyTarget = userTargetsJson[metric.key] || userTargetMap.get(metric.key) || metric.monthly_target;
+        const scaledTarget = Math.round(monthlyTarget / divisor);
+        const actual = actuals[metric.key] || 0;
+
+        const completion = scaledTarget > 0 ? Math.min(actual / scaledTarget, 1) : (actual > 0 ? 1 : 0);
+        const salaryAmount = scaledBaseSalary * (metric.salary_percent / 100) * completion;
+
+        items.push({
+            key: metric.key,
+            label: metric.label,
+            target: scaledTarget,
+            actual,
+            completionPercent: completion * 100,
+            salaryPercent: metric.salary_percent,
+            salaryAmount: Math.round(salaryAmount),
+            field_type: metric.field_type
+        });
+
+        totalKpiSalary += Math.round(salaryAmount);
+        totalSalaryPercent += metric.salary_percent;
+    }
+
+    return {
+        baseSalary: scaledBaseSalary,
+        items,
+        totalKpiSalary,
+        totalSalaryPercent
+    };
+};

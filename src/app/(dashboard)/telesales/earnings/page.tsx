@@ -23,7 +23,7 @@ import {
 } from "@/lib/payrollStore";
 import { supabase, getRealtimeClient } from "@/lib/supabaseClient";
 import { KPI_TEMPLATES, formatKpiValue } from "@/lib/kpi_config";
-import { KpiSalaryResult, calculateKpiSalary } from "@/lib/kpiSalaryStore";
+import { KpiSalaryResult, calculateKpiSalary, calculateKpiSalaryForRange } from "@/lib/kpiSalaryStore";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -48,6 +48,7 @@ export default function TelesalesEarningsPage() {
     const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth()); // 0-indexed
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+    const [baseSalaryMonthly, setBaseSalaryMonthly] = useState(0);
 
     const { user, session } = useAuth();
 
@@ -93,6 +94,7 @@ export default function TelesalesEarningsPage() {
 
             // Calculate KPI-based salary for the selected month
             const baseSalary = trackingRes[3]?.baseSalaryMonthly || (trackingRes[4].data?.base_salary_monthly) || 0;
+            setBaseSalaryMonthly(baseSalary);
             const salaryResult = await calculateKpiSalary(user.id, selectedMonth + 1, selectedYear, baseSalary);
             setKpiSalary(salaryResult);
             setLastUpdated(new Date());
@@ -105,6 +107,48 @@ export default function TelesalesEarningsPage() {
             setIsLoading(false);
         }
     }, [user, session?.access_token, selectedMonth, selectedYear]);
+
+    // Recalculate KPI salary when dateRange changes (day/week/month scaling)
+    useEffect(() => {
+        if (!user || baseSalaryMonthly <= 0) return;
+
+        if (dateRange === 'this_month') {
+            // Already showing monthly data, recalculate from scratch
+            const recalc = async () => {
+                const result = await calculateKpiSalary(user.id, selectedMonth + 1, selectedYear, baseSalaryMonthly);
+                setKpiSalary(result);
+            };
+            recalc();
+        } else {
+            // Scale to daily or weekly
+            const divisor = dateRange === 'today' ? 26 : 4;
+            const now = new Date();
+            let rangeStart: Date, rangeEnd: Date;
+
+            if (dateRange === 'today') {
+                rangeStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+                rangeEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+            } else {
+                const dayOfWeek = now.getDay();
+                const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+                rangeStart = new Date(now);
+                rangeStart.setDate(now.getDate() + mondayOffset);
+                rangeStart.setHours(0, 0, 0, 0);
+                rangeEnd = new Date(rangeStart);
+                rangeEnd.setDate(rangeStart.getDate() + 6);
+                rangeEnd.setHours(23, 59, 59, 999);
+            }
+
+            const recalc = async () => {
+                const result = await calculateKpiSalaryForRange(
+                    user.id, rangeStart, rangeEnd, baseSalaryMonthly, divisor
+                );
+                setKpiSalary(result);
+            };
+            recalc();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dateRange]);
 
     // Reload when month changes
     useEffect(() => {
@@ -551,8 +595,14 @@ export default function TelesalesEarningsPage() {
                                         <div>
                                             <div className="flex justify-between items-center pb-3 mb-3 border-b border-slate-200">
                                                 <div>
-                                                    <div className="text-sm font-bold text-slate-900">Lương theo KPI</div>
-                                                    <div className="text-xs text-slate-400 mt-0.5">Lương cơ bản: {formatPrice(kpiSalary.baseSalary)}</div>
+                                                    <div className="text-sm font-bold text-slate-900">
+                                                        {dateRange === 'today' ? 'Lương ngày hôm nay' : dateRange === 'this_week' ? 'Lương tuần này' : 'Lương theo KPI'}
+                                                    </div>
+                                                    <div className="text-xs text-slate-400 mt-0.5">
+                                                        {dateRange === 'today' ? `Lương cơ bản ngày: ${formatPrice(kpiSalary.baseSalary)} (${formatPrice(baseSalaryMonthly)}/tháng ÷26)` :
+                                                            dateRange === 'this_week' ? `Lương cơ bản tuần: ${formatPrice(kpiSalary.baseSalary)} (${formatPrice(baseSalaryMonthly)}/tháng ÷4)` :
+                                                                `Lương cơ bản: ${formatPrice(kpiSalary.baseSalary)}`}
+                                                    </div>
                                                 </div>
                                                 <div className="text-right">
                                                     <div className="text-base font-bold text-primary-600">{formatPrice(kpiSalary.totalKpiSalary)}</div>
@@ -616,8 +666,12 @@ export default function TelesalesEarningsPage() {
                                     {/* Total */}
                                     <div className="bg-primary-50 border border-primary-100 rounded-lg p-4 flex justify-between items-center">
                                         <div>
-                                            <div className="text-xs font-semibold text-primary-700 uppercase tracking-wide">Tổng thu nhập</div>
-                                            <div className="text-[10px] text-primary-500 mt-0.5">Ước tính thực nhận tháng này</div>
+                                            <div className="text-xs font-semibold text-primary-700 uppercase tracking-wide">
+                                                {dateRange === 'today' ? 'Thu nhập hôm nay' : dateRange === 'this_week' ? 'Thu nhập tuần này' : 'Tổng thu nhập'}
+                                            </div>
+                                            <div className="text-[10px] text-primary-500 mt-0.5">
+                                                {dateRange === 'today' ? 'Ước tính thu nhập ngày hôm nay' : dateRange === 'this_week' ? 'Ước tính thu nhập tuần này' : 'Ước tính thực nhận tháng này'}
+                                            </div>
                                         </div>
                                         <div className="text-xl font-bold text-primary-700">{formatPrice(payrollMetrics.totalNetSalary)}</div>
                                     </div>
