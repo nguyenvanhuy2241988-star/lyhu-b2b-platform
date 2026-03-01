@@ -1,0 +1,58 @@
+-- Add created_by to get_conversations_with_unread RPC
+-- This allows the frontend to show group leader/admin badges
+
+DROP FUNCTION IF EXISTS get_conversations_with_unread(UUID);
+
+CREATE OR REPLACE FUNCTION get_conversations_with_unread(p_user_id UUID)
+RETURNS TABLE (
+    id UUID,
+    type TEXT,
+    name TEXT,
+    created_by UUID,
+    last_message TEXT,
+    last_message_at TIMESTAMPTZ,
+    unread_count BIGINT,
+    participants JSONB
+) 
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        c.id,
+        c.type,
+        c.name,
+        c.created_by,
+        c.last_message,
+        c.last_message_at,
+        (
+            SELECT count(*)
+            FROM internal_messages m
+            JOIN internal_participants p_sub ON m.conversation_id = p_sub.conversation_id
+            WHERE p_sub.user_id = p_user_id
+              AND m.conversation_id = c.id
+              AND m.created_at > COALESCE(p_sub.last_read_at, '1970-01-01'::timestamptz)
+              AND m.sender_id != p_user_id
+        ) as unread_count,
+        COALESCE(
+            (
+                SELECT jsonb_agg(
+                    jsonb_build_object(
+                        'user_id', p1.user_id,
+                        'full_name', prof.full_name,
+                        'email', prof.email
+                    )
+                )
+                FROM internal_participants p1
+                LEFT JOIN profiles prof ON p1.user_id = prof.id
+                WHERE p1.conversation_id = c.id
+            ),
+            '[]'::jsonb
+        ) as participants
+    FROM internal_conversations c
+    JOIN internal_participants p ON c.id = p.conversation_id
+    WHERE p.user_id = p_user_id
+    ORDER BY c.last_message_at DESC NULLS LAST;
+END;
+$$;

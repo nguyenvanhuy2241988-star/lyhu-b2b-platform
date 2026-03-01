@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useChatStore, Conversation } from '@/lib/chatStore';
-import { X, Users, UserPlus, LogOut, Check, Trash2, Edit2 } from 'lucide-react';
+import { X, Users, UserPlus, LogOut, Check, Trash2, Edit2, Crown } from 'lucide-react';
 import { useToast } from "@/components/ui/toast";
 
 interface ChatSettingsModalProps {
@@ -11,7 +11,8 @@ interface ChatSettingsModalProps {
 }
 
 export function ChatSettingsModal({ conversation, currentUser, users, onClose }: ChatSettingsModalProps) {
-    const { updateConversationName, addParticipants, leaveConversation } = useChatStore();
+    const { updateConversationName, addParticipants, leaveConversation, deleteConversation } = useChatStore();
+    const isCreator = conversation.created_by === currentUser?.id;
     const { showToast } = useToast();
 
     // State
@@ -66,9 +67,24 @@ export function ChatSettingsModal({ conversation, currentUser, users, onClose }:
         try {
             await leaveConversation(conversation.id, currentUser.id);
             showToast('Đã rời nhóm', 'info');
-            onClose(); // Close modal and likely redirect handled by store/page
+            onClose();
         } catch (error) {
             showToast('Lỗi khi rời nhóm', 'error');
+            console.error(error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleDeleteGroup = async () => {
+        if (!confirm('Bạn có chắc chắn muốn xóa nhóm chat này? Tất cả tin nhắn sẽ bị mất vĩnh viễn.')) return;
+        setIsLoading(true);
+        try {
+            await deleteConversation(conversation.id);
+            showToast('Đã xóa nhóm chat', 'info');
+            onClose();
+        } catch (error) {
+            showToast('Lỗi khi xóa nhóm', 'error');
             console.error(error);
         } finally {
             setIsLoading(false);
@@ -183,18 +199,27 @@ export function ChatSettingsModal({ conversation, currentUser, users, onClose }:
                         {/* Member List */}
                         <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
                             {conversation.internal_participants?.map((p: any) => {
-                                const user = users.find(u => u.id === p.user_id);
+                                const member = users.find(u => u.id === p.user_id);
                                 const isMe = p.user_id === currentUser.id;
+                                const isOwner = p.user_id === conversation.created_by;
                                 return (
                                     <div key={p.user_id} className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded-lg">
-                                        <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600">
-                                            {user?.email?.charAt(0).toUpperCase() || "?"}
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${isOwner ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-600'}`}>
+                                            {(member?.full_name || member?.email || '?').charAt(0).toUpperCase()}
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <div className="text-sm font-medium text-slate-800 truncate">
-                                                {user?.full_name || user?.email || "Unknown"} {isMe && "(Bạn)"}
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-sm font-medium text-slate-800 truncate">
+                                                    {member?.full_name || member?.email || 'Unknown'} {isMe && '(Bạn)'}
+                                                </span>
+                                                {isOwner && (
+                                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-semibold rounded-full whitespace-nowrap">
+                                                        <Crown className="w-2.5 h-2.5" />
+                                                        Trưởng nhóm
+                                                    </span>
+                                                )}
                                             </div>
-                                            <div className="text-[10px] text-slate-500">Thành viên</div>
+                                            <div className="text-[10px] text-slate-500">{isOwner ? 'Quản trị viên' : 'Thành viên'}</div>
                                         </div>
                                     </div>
                                 );
@@ -204,17 +229,29 @@ export function ChatSettingsModal({ conversation, currentUser, users, onClose }:
                 </div>
 
                 {/* Footer - Danger Zone */}
-                <div className="p-4 border-t border-slate-200 bg-slate-50">
-                    <button
-                        onClick={handleLeave}
-                        disabled={isLoading}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-300 transition-colors font-medium text-sm"
-                    >
-                        <LogOut className="w-4 h-4" />
-                        Rời nhóm
-                    </button>
-                    <p className="text-[10px] text-center text-slate-400 mt-2">
-                        Chỉ thành viên nhóm mới có thể xem tin nhắn cũ.
+                <div className="p-4 border-t border-slate-200 bg-slate-50 space-y-2">
+                    {!isCreator && (
+                        <button
+                            onClick={handleLeave}
+                            disabled={isLoading}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-orange-200 text-orange-600 rounded-lg hover:bg-orange-50 hover:border-orange-300 transition-colors font-medium text-sm"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Rời nhóm
+                        </button>
+                    )}
+                    {isCreator && (
+                        <button
+                            onClick={handleDeleteGroup}
+                            disabled={isLoading}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-300 transition-colors font-medium text-sm"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Xóa nhóm chat
+                        </button>
+                    )}
+                    <p className="text-[10px] text-center text-slate-400">
+                        {isCreator ? 'Xóa nhóm sẽ xóa toàn bộ tin nhắn.' : 'Chỉ thành viên nhóm mới có thể xem tin nhắn cũ.'}
                     </p>
                 </div>
             </div>

@@ -92,6 +92,7 @@ export interface Conversation {
     last_message_at?: string;
     unread_count?: number;
     internal_participants?: any[];
+    created_by?: string;
     is_joined?: boolean;
 }
 
