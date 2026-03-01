@@ -12,9 +12,10 @@ interface TelesalesKpiDashboardProps {
     date: string;
     userId: string;
     toDate?: string;
+    targetDivisor?: number; // Divide targets by this value (e.g. 26 for daily from monthly)
 }
 
-export default function TelesalesKpiDashboard({ date, userId, toDate }: TelesalesKpiDashboardProps) {
+export default function TelesalesKpiDashboard({ date, userId, toDate, targetDivisor = 1 }: TelesalesKpiDashboardProps) {
     const { user, role } = useAuth();
     const router = useRouter();
     const [stats, setStats] = useState<TelesalesKpiStats | null>(null);
@@ -41,6 +42,16 @@ export default function TelesalesKpiDashboard({ date, userId, toDate }: Telesale
         if (!userId) return;
         try {
             const data = await (userId === 'ALL' ? getTeamTelesalesKpiStats(date, toDate) : getTelesalesKpiStats(userId, date, toDate));
+            // Apply target divisor if provided (for showing monthly targets as daily/weekly)
+            if (targetDivisor > 1) {
+                data.calls_target = Math.round(data.calls_target / targetDivisor);
+                data.self_sourced_data_target = Math.round(data.self_sourced_data_target / targetDivisor);
+                data.fb_group_posts_target = Math.round(data.fb_group_posts_target / targetDivisor);
+                data.fb_comments_target = Math.round(data.fb_comments_target / targetDivisor);
+                data.fb_friends_target = Math.round(data.fb_friends_target / targetDivisor);
+                data.fb_personal_posts_target = Math.round(data.fb_personal_posts_target / targetDivisor);
+                data.zalo_posts_target = Math.round(data.zalo_posts_target / targetDivisor);
+            }
             setStats(data);
             setTargets({
                 calls: data.calls_target,

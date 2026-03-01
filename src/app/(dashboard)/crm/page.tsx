@@ -1181,53 +1181,118 @@ export default function CRMPage() {
         );
     }
 
+    // KPI view mode for daily/weekly/monthly scaling
+    const [kpiViewMode, setKpiViewMode] = useState<'day' | 'week' | 'month'>('day');
+
+    // Compute kpiDate range based on view mode
+    const kpiDateRange = useMemo(() => {
+        const now = new Date();
+        const baseDate = new Date(kpiDate + 'T12:00:00');
+
+        if (kpiViewMode === 'day') {
+            return { from: kpiDate, to: kpiDate, divisor: 26 };
+        } else if (kpiViewMode === 'week') {
+            const dayOfWeek = baseDate.getDay();
+            const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+            const monday = new Date(baseDate);
+            monday.setDate(baseDate.getDate() + mondayOffset);
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            return { from: fmt(monday), to: fmt(sunday), divisor: 4 };
+        } else {
+            const firstDay = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+            const lastDay = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0);
+            const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            return { from: fmt(firstDay), to: fmt(lastDay), divisor: 1 };
+        }
+    }, [kpiDate, kpiViewMode]);
+
+    // Month navigation for KPI
+    const kpiGoToPrevMonth = () => {
+        const d = new Date(kpiDate + 'T12:00:00');
+        d.setMonth(d.getMonth() - 1);
+        d.setDate(1);
+        setKpiDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+    };
+    const kpiGoToNextMonth = () => {
+        const d = new Date(kpiDate + 'T12:00:00');
+        const now = new Date();
+        if (d.getFullYear() === now.getFullYear() && d.getMonth() >= now.getMonth()) return;
+        d.setMonth(d.getMonth() + 1);
+        d.setDate(1);
+        setKpiDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+    };
+    const kpiIsCurrentMonth = (() => {
+        const d = new Date(kpiDate + 'T12:00:00');
+        const now = new Date();
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    })();
+    const kpiMonthLabel = (() => {
+        const d = new Date(kpiDate + 'T12:00:00');
+        const monthNames = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
+        return `${monthNames[d.getMonth()]}, ${d.getFullYear()}`;
+    })();
+
     return (
         <div className="p-4 sm:p-6 space-y-6 h-full flex flex-col relative" onClick={() => setIsSettingsOpen(false)}>
             {/* KPI Dashboard */}
             {isMounted && userInfo.id && (
                 <div>
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center justify-between mb-2">
                         <div></div>
                         <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => {
-                                    const d = new Date(kpiDate + 'T12:00:00');
-                                    d.setDate(d.getDate() - 1);
-                                    setKpiDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
-                                }}
-                                className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
-                                title="Ngày trước"
-                            >
-                                ‹
-                            </button>
-                            <input
-                                type="date"
-                                value={kpiDate}
-                                onChange={(e) => setKpiDate(e.target.value)}
-                                className="px-2 py-1 text-xs border border-slate-200 rounded-lg bg-white shadow-sm focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                            />
-                            <button
-                                onClick={() => {
-                                    const d = new Date(kpiDate + 'T12:00:00');
-                                    d.setDate(d.getDate() + 1);
-                                    setKpiDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
-                                }}
-                                className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
-                                title="Ngày sau"
-                            >
-                                ›
-                            </button>
-                            {kpiDate !== getLocalDateStr() && (
+                            {/* Month Navigator */}
+                            <div className="flex items-center bg-white border border-slate-200 rounded-lg overflow-hidden">
                                 <button
-                                    onClick={() => setKpiDate(getLocalDateStr())}
-                                    className="text-xs text-primary-600 hover:underline ml-1"
+                                    onClick={kpiGoToPrevMonth}
+                                    className="px-2 py-1.5 hover:bg-slate-50 transition-colors text-slate-400 hover:text-slate-600"
                                 >
-                                    Hôm nay
+                                    <ChevronLeft className="w-3.5 h-3.5" />
                                 </button>
-                            )}
+                                <button
+                                    onClick={() => { setKpiDate(getLocalDateStr()); setKpiViewMode('day'); }}
+                                    className={`px-3 py-1.5 text-xs font-medium transition-colors min-w-[120px] text-center ${kpiIsCurrentMonth ? 'text-primary-600' : 'text-slate-700 hover:text-primary-600'}`}
+                                >
+                                    {kpiMonthLabel}
+                                </button>
+                                <button
+                                    onClick={kpiGoToNextMonth}
+                                    className={`px-2 py-1.5 transition-colors ${kpiIsCurrentMonth ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
+                                    disabled={kpiIsCurrentMonth}
+                                >
+                                    <ChevronRight className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                            {/* Quick Filters */}
+                            <div className="flex bg-slate-100 p-0.5 rounded-lg">
+                                <button
+                                    onClick={() => { setKpiViewMode('day'); setKpiDate(getLocalDateStr()); }}
+                                    className={`px-2 py-1 text-[11px] font-medium rounded transition-colors ${kpiViewMode === 'day' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    Ngày
+                                </button>
+                                <button
+                                    onClick={() => setKpiViewMode('week')}
+                                    className={`px-2 py-1 text-[11px] font-medium rounded transition-colors ${kpiViewMode === 'week' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    Tuần
+                                </button>
+                                <button
+                                    onClick={() => setKpiViewMode('month')}
+                                    className={`px-2 py-1 text-[11px] font-medium rounded transition-colors ${kpiViewMode === 'month' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                >
+                                    Tháng
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <TelesalesKpiDashboard date={kpiDate} userId={userInfo.id} />
+                    <TelesalesKpiDashboard
+                        date={kpiDateRange.from}
+                        toDate={kpiDateRange.to !== kpiDateRange.from ? kpiDateRange.to : undefined}
+                        userId={userInfo.id}
+                        targetDivisor={kpiDateRange.divisor}
+                    />
                 </div>
             )}
 
