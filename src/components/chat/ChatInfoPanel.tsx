@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X, Image as ImageIcon, FileText, Download } from "lucide-react";
+import { X, Image as ImageIcon, FileText, Download, Users, Crown, Trash2, LogOut } from "lucide-react";
 import Image from "next/image";
 import { useChatStore } from "@/lib/chatStore";
 import { format } from "date-fns";
@@ -11,11 +11,14 @@ interface ChatInfoPanelProps {
     conversation: any;
     onClose: () => void;
     users: any[];
+    currentUserId?: string;
+    onDeleteGroup?: () => void;
+    onLeaveGroup?: () => void;
 }
 
-export function ChatInfoPanel({ conversation, onClose, users }: ChatInfoPanelProps) {
+export function ChatInfoPanel({ conversation, onClose, users, currentUserId, onDeleteGroup, onLeaveGroup }: ChatInfoPanelProps) {
     const { getChatMedia } = useChatStore();
-    const [activeTab, setActiveTab] = useState<'images' | 'files'>('images');
+    const [activeTab, setActiveTab] = useState<'members' | 'images' | 'files'>('members');
     const [mediaItems, setMediaItems] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -36,7 +39,23 @@ export function ChatInfoPanel({ conversation, onClose, users }: ChatInfoPanelPro
     }, [conversation?.id, getChatMedia]);
 
     const images = mediaItems.filter(m => m.attachment_type === 'image');
-    const files = mediaItems.filter(m => m.attachment_type !== 'image'); // 'file' or undefined but has url
+    const files = mediaItems.filter(m => m.attachment_type !== 'image');
+
+    const isGroup = conversation?.type === 'group';
+    const createdBy = conversation?.created_by;
+    const isCreator = currentUserId && createdBy === currentUserId;
+
+    // Get members from internal_participants
+    const members = conversation?.internal_participants || [];
+
+    // Default to members tab for groups, images for DMs
+    useEffect(() => {
+        if (isGroup) {
+            setActiveTab('members');
+        } else {
+            setActiveTab('images');
+        }
+    }, [conversation?.id, isGroup]);
 
     return (
         <div className="absolute inset-0 md:static md:w-80 md:inset-auto z-30 bg-white border-l border-slate-200 flex flex-col shadow-xl animate-in slide-in-from-right duration-300">
@@ -48,7 +67,7 @@ export function ChatInfoPanel({ conversation, onClose, users }: ChatInfoPanelPro
                 </button>
             </div>
 
-            {/* Conversation Info (Optional summary) */}
+            {/* Conversation Info */}
             <div className="p-6 flex flex-col items-center border-b border-slate-100 shrink-0">
                 <div className="w-20 h-20 mx-auto rounded-full bg-slate-200 overflow-hidden mb-3 relative">
                     {conversation.image_url ? (
@@ -60,7 +79,7 @@ export function ChatInfoPanel({ conversation, onClose, users }: ChatInfoPanelPro
                         />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center text-slate-400 text-2xl font-semibold">
-                            {conversation.name?.[0].toUpperCase()}
+                            {isGroup ? <Users className="w-8 h-8" /> : conversation.name?.[0]?.toUpperCase()}
                         </div>
                     )}
                 </div>
@@ -68,33 +87,79 @@ export function ChatInfoPanel({ conversation, onClose, users }: ChatInfoPanelPro
                     {conversation.name || "Cuộc trò chuyện"}
                 </h4>
                 <p className="text-sm text-slate-500">
-                    {conversation.type === 'group' ? 'Nhóm trò chuyện' : 'Tin nhắn trực tiếp'}
+                    {isGroup ? `Nhóm • ${members.length} thành viên` : 'Tin nhắn trực tiếp'}
                 </p>
+                {isGroup && createdBy && (
+                    <p className="text-xs text-amber-600 flex items-center gap-1 mt-1">
+                        <Crown className="w-3 h-3" />
+                        Tạo bởi: {users.find(u => u.id === createdBy)?.full_name || 'Unknown'}
+                    </p>
+                )}
             </div>
 
             {/* Tabs */}
             <div className="flex border-b border-slate-200 shrink-0">
+                {isGroup && (
+                    <button
+                        onClick={() => setActiveTab('members')}
+                        className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${activeTab === 'members' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-slate-500 hover:text-slate-800'}`}
+                    >
+                        <Users className="w-4 h-4" />
+                        {members.length}
+                    </button>
+                )}
                 <button
                     onClick={() => setActiveTab('images')}
-                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'images' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800'}`}
+                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${activeTab === 'images' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-slate-500 hover:text-slate-800'}`}
                 >
                     <ImageIcon className="w-4 h-4" />
-                    Ảnh ({images.length})
+                    {images.length}
                 </button>
                 <button
                     onClick={() => setActiveTab('files')}
-                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-2 transition-colors ${activeTab === 'files' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-500 hover:text-slate-800'}`}
+                    className={`flex-1 py-3 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${activeTab === 'files' ? 'text-primary-600 border-b-2 border-primary-600' : 'text-slate-500 hover:text-slate-800'}`}
                 >
                     <FileText className="w-4 h-4" />
-                    File ({files.length})
+                    {files.length}
                 </button>
             </div>
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4 custom-scrollbar bg-slate-50">
-                {loading ? (
+                {activeTab === 'members' && isGroup ? (
+                    <div className="space-y-1">
+                        {members.map((p: any) => {
+                            const member = users.find(u => u.id === p.user_id);
+                            const isOwner = p.user_id === createdBy;
+                            const displayName = p.full_name || p.email?.split('@')[0] || member?.full_name || member?.email?.split('@')[0] || 'User';
+
+                            return (
+                                <div key={p.user_id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white transition-colors">
+                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold uppercase ${isOwner ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-600'}`}>
+                                        {displayName.charAt(0)}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-sm font-medium text-slate-800 truncate">{displayName}</span>
+                                            {isOwner && (
+                                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-semibold rounded-full">
+                                                    <Crown className="w-2.5 h-2.5" />
+                                                    Trưởng nhóm
+                                                </span>
+                                            )}
+                                            {p.user_id === currentUserId && !isOwner && (
+                                                <span className="text-[10px] text-slate-400">Bạn</span>
+                                            )}
+                                        </div>
+                                        <span className="text-xs text-slate-400">{member?.role || 'Thành viên'}</span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : loading ? (
                     <div className="flex justify-center py-8">
-                        <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                        <div className="animate-spin w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full"></div>
                     </div>
                 ) : activeTab === 'images' ? (
                     images.length > 0 ? (
@@ -150,6 +215,30 @@ export function ChatInfoPanel({ conversation, onClose, users }: ChatInfoPanelPro
                     )
                 )}
             </div>
+
+            {/* Group Actions */}
+            {isGroup && (
+                <div className="p-3 border-t border-slate-200 shrink-0 space-y-2">
+                    {!isCreator && (
+                        <button
+                            onClick={onLeaveGroup}
+                            className="w-full flex items-center justify-center gap-2 text-sm text-orange-600 hover:bg-orange-50 py-2.5 rounded-lg transition-colors"
+                        >
+                            <LogOut className="w-4 h-4" />
+                            Rời nhóm
+                        </button>
+                    )}
+                    {isCreator && (
+                        <button
+                            onClick={onDeleteGroup}
+                            className="w-full flex items-center justify-center gap-2 text-sm text-red-600 hover:bg-red-50 py-2.5 rounded-lg transition-colors font-medium"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                            Xóa nhóm chat
+                        </button>
+                    )}
+                </div>
+            )}
         </div>
     );
 }

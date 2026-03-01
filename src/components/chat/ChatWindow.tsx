@@ -35,6 +35,8 @@ interface ChatWindowProps {
     markRead: (convId: string, userId: string) => void;
     onBack?: () => void;
     searchMessages: (query: string, conversationId?: string, signal?: AbortSignal) => Promise<Message[]>;
+    onDeleteGroup?: () => void;
+    onLeaveGroup?: () => void;
 }
 
 export function ChatWindow(props: ChatWindowProps) {
@@ -57,7 +59,9 @@ export function ChatWindow(props: ChatWindowProps) {
         sendTyping,
         onBack,
         markRead,
-        searchMessages
+        searchMessages,
+        onDeleteGroup,
+        onLeaveGroup
     } = props;
 
     const messageListRef = useRef<MessageListRef>(null);
@@ -443,7 +447,10 @@ export function ChatWindow(props: ChatWindowProps) {
                             <ChatInfoPanel
                                 conversation={activeConversation}
                                 users={users}
+                                currentUserId={currentUser?.id}
                                 onClose={() => setShowInfoPanel(false)}
+                                onDeleteGroup={onDeleteGroup}
+                                onLeaveGroup={onLeaveGroup}
                             />
                         )}
                     </div>

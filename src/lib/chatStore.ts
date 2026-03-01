@@ -125,6 +125,7 @@ interface ChatState {
     forwardMessage: (message: Message, conversationIds: string[]) => Promise<void>;
     updateConversationName: (conversationId: string, name: string) => Promise<void>;
     addParticipants: (conversationId: string, userIds: string[]) => Promise<void>;
+    deleteConversation: (conversationId: string) => Promise<void>;
     leaveConversation: (conversationId: string, userId: string) => Promise<void>;
     addReaction: (messageId: string, emoji: string) => Promise<void>;
     removeReaction: (messageId: string, emoji: string) => Promise<void>;

@@ -23,7 +23,8 @@ export default function ChatPage() {
         loadMoreMessages, hasMore, isLoadingMore,
         searchMessages,
         startPolling, stopPolling,
-        subscribeToNewConversations, unsubscribeFromNewConversations
+        subscribeToNewConversations, unsubscribeFromNewConversations,
+        deleteConversation, leaveConversation
     } = useChatStore();
 
     // Use user directly from context instead of duplicate state
@@ -261,6 +262,16 @@ export default function ChatPage() {
                     markRead={markRead}
                     onBack={() => setShowMobileSidebar(true)}
                     searchMessages={searchMessages}
+                    onDeleteGroup={async () => {
+                        if (!activeConversationId) return;
+                        if (!confirm("Bạn có chắc chắn muốn xóa nhóm chat này?")) return;
+                        await deleteConversation(activeConversationId);
+                    }}
+                    onLeaveGroup={async () => {
+                        if (!activeConversationId || !currentUser) return;
+                        if (!confirm("Bạn có chắc chắn muốn rời nhóm?")) return;
+                        await leaveConversation(activeConversationId, currentUser.id);
+                    }}
                 />
             </div>
         </div>

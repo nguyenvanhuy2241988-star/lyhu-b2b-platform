@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { MessageCircle, X, Minimize2, Maximize2, ChevronLeft, Users } from "lucide-react";
+import { MessageCircle, X, Minimize2, Maximize2, ChevronLeft, Users, Check } from "lucide-react";
 import { useChatStore } from "@/lib/chatStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { usePathname } from "next/navigation";
@@ -18,6 +18,9 @@ export default function QuickChatWidget() {
     const [mounted, setMounted] = useState(false);
     const [newMessageAlert, setNewMessageAlert] = useState<{ convId: string; senderName: string; content: string } | null>(null);
     const alertTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const [showCreateGroup, setShowCreateGroup] = useState(false);
+    const [groupName, setGroupName] = useState("");
+    const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
     const {
         conversations, messages, activeConversationId,
@@ -30,6 +33,8 @@ export default function QuickChatWidget() {
         subscribeToNewConversations, unsubscribeFromNewConversations,
         subscribeToGlobalMessages, unsubscribeFromGlobalMessages,
         getTotalUnreadCount,
+        deleteConversation,
+        leaveConversation,
     } = useChatStore();
 
     const unreadCount = getTotalUnreadCount();
@@ -137,6 +142,48 @@ export default function QuickChatWidget() {
     const handleQuickSwitch = (convId: string) => {
         selectConversation(convId, user?.id);
         setShowSidebar(false);
+    };
+
+    const toggleUserSelection = (userId: string) => {
+        setSelectedUsers(prev => prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]);
+    };
+
+    const handleCreateGroup = async () => {
+        if (!user || !groupName.trim() || selectedUsers.length === 0) return;
+        try {
+            const id = await createGroupConversation(user.id, groupName, selectedUsers);
+            if (id) {
+                selectConversation(id, user.id);
+                setShowSidebar(false);
+            }
+            setShowCreateGroup(false);
+            setGroupName("");
+            setSelectedUsers([]);
+        } catch (e) {
+            console.error("[QuickChat] Create group error:", e);
+        }
+    };
+
+    const handleDeleteGroup = async () => {
+        if (!activeConversationId) return;
+        if (!confirm("Bạn có chắc chắn muốn xóa nhóm chat này? Tất cả tin nhắn sẽ bị mất.")) return;
+        try {
+            await deleteConversation(activeConversationId);
+            setShowSidebar(true);
+        } catch (e) {
+            console.error("[QuickChat] Delete group error:", e);
+        }
+    };
+
+    const handleLeaveGroup = async () => {
+        if (!activeConversationId || !user) return;
+        if (!confirm("Bạn có chắc chắn muốn rời nhóm chat này?")) return;
+        try {
+            await leaveConversation(activeConversationId, user.id);
+            setShowSidebar(true);
+        } catch (e) {
+            console.error("[QuickChat] Leave group error:", e);
+        }
     };
 
     const dismissAlert = () => {
@@ -351,7 +398,7 @@ export default function QuickChatWidget() {
                                 onlineUsers={onlineUsers}
                                 onSelectConversation={handleSelectConversation}
                                 onStartChat={handleStartChat}
-                                onShowCreateGroup={() => { }}
+                                onShowCreateGroup={() => setShowCreateGroup(true)}
                                 className={`${isExpanded ? 'w-64 flex-shrink-0' : 'w-full'} border-r border-slate-200`}
                             />
                         )}
@@ -380,9 +427,72 @@ export default function QuickChatWidget() {
                                     markRead={markRead}
                                     onBack={isExpanded ? undefined : () => setShowSidebar(true)}
                                     searchMessages={searchMessages}
+                                    onDeleteGroup={handleDeleteGroup}
+                                    onLeaveGroup={handleLeaveGroup}
                                 />
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* Create Group Modal */}
+            {showCreateGroup && (
+                <div className="fixed inset-0 z-[10000] bg-black/50 flex items-center justify-center">
+                    <div className="bg-white rounded-xl shadow-2xl w-[360px] max-h-[70vh] flex flex-col animate-in zoom-in-95 fade-in duration-200">
+                        <div className="p-4 border-b border-slate-100 flex items-center justify-between">
+                            <h3 className="font-bold text-slate-800">Tạo nhóm chat mới</h3>
+                            <button onClick={() => { setShowCreateGroup(false); setGroupName(""); setSelectedUsers([]); }}>
+                                <X className="w-5 h-5 text-slate-400 hover:text-slate-600" />
+                            </button>
+                        </div>
+                        <div className="p-4 overflow-y-auto flex-1 custom-scrollbar">
+                            <label className="block text-xs font-bold text-slate-600 mb-1">Tên nhóm</label>
+                            <input
+                                value={groupName}
+                                onChange={(e) => setGroupName(e.target.value)}
+                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm mb-4 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                                placeholder="Nhập tên nhóm..."
+                            />
+                            <label className="block text-xs font-bold text-slate-600 mb-2">
+                                Chọn thành viên ({selectedUsers.length})
+                            </label>
+                            <div className="space-y-1">
+                                {users.filter(u => u.id !== user?.id).map(u => {
+                                    const isSelected = selectedUsers.includes(u.id);
+                                    return (
+                                        <div
+                                            key={u.id}
+                                            onClick={() => toggleUserSelection(u.id)}
+                                            className={`flex items-center gap-2.5 p-2 rounded-lg cursor-pointer border transition-colors ${isSelected ? 'border-primary-500 bg-primary-50' : 'border-transparent hover:bg-slate-50'}`}
+                                        >
+                                            <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-primary-500 border-primary-500' : 'border-slate-300 bg-white'}`}>
+                                                {isSelected && <Check className="w-3 h-3 text-white" />}
+                                            </div>
+                                            <div className="w-7 h-7 rounded-full bg-slate-200 flex items-center justify-center text-[10px] uppercase font-bold text-slate-600">
+                                                {(u.full_name || u.email || "?").charAt(0)}
+                                            </div>
+                                            <div className="text-sm truncate flex-1 text-slate-700">{u.full_name || u.email}</div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        <div className="p-4 border-t border-slate-100 flex justify-end gap-2">
+                            <button
+                                onClick={() => { setShowCreateGroup(false); setGroupName(""); setSelectedUsers([]); }}
+                                className="px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-100 rounded-lg"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={handleCreateGroup}
+                                disabled={!groupName.trim() || selectedUsers.length === 0}
+                                className="px-4 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Tạo nhóm
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
