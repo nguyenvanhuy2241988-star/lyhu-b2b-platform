@@ -300,16 +300,21 @@ export default function TelesalesKpiDashboard({ date, userId, toDate, targetDivi
                 </div>
             </div>
 
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-200">
+            <div className={cn(
+                "grid gap-3",
+                items.length <= 4 ? "grid-cols-2 md:grid-cols-4" :
+                    items.length <= 7 ? "grid-cols-2 md:grid-cols-4 lg:grid-cols-7" :
+                        "grid-cols-2 md:grid-cols-4 lg:grid-cols-9"
+            )}>
                 {items.map((item, idx) => {
                     const percent = item.target > 0 ? Math.min(100, Math.round((item.count / item.target) * 100)) : 0;
                     return (
-                        <div key={item.key} className="border border-slate-100 rounded-lg p-3 relative overflow-hidden flex flex-col justify-between min-h-[100px] min-w-[140px] max-w-[180px] flex-shrink-0 hover:border-blue-100 hover:shadow-sm transition-all">
+                        <div key={item.key} className="border border-slate-100 rounded-lg p-3 relative overflow-hidden flex flex-col justify-between min-h-[100px] hover:border-blue-100 hover:shadow-sm transition-all">
                             <div className="flex justify-between items-start mb-2">
                                 <div className={cn("p-1.5 rounded-lg", item.bg)}>
                                     <item.icon className={cn("w-3.5 h-3.5", item.color)} />
                                 </div>
-                                <div className="text-right ml-1">
+                                <div className="text-right">
                                     <div className="text-lg font-bold text-slate-900 leading-none">
                                         {item.fieldType === 'currency'
                                             ? formatValue(item.count, item.fieldType)

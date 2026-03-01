@@ -298,6 +298,12 @@ export default function AdminPayrollPage() {
                 fetchKpiMetrics()
             ]);
             setKpiSettings(settings);
+            // Normalize sort_order: assign index if all are same value (e.g., all 0)
+            const allSameOrder = metrics.length > 1 && metrics.filter(m => m.is_active).every(m => (m.sort_order || 0) === (metrics.filter(mm => mm.is_active)[0]?.sort_order || 0));
+            if (allSameOrder) {
+                const active = metrics.filter(m => m.is_active);
+                active.forEach((m, i) => { m.sort_order = i; });
+            }
             setKpiMetrics(metrics);
         } catch (e) {
             console.error(e);
@@ -841,15 +847,7 @@ export default function AdminPayrollPage() {
                                             );
                                         })()}
                                         <div className="space-y-3">
-                                            {(kpiMetrics.length > 0 ? (() => {
-                                                const active = kpiMetrics.filter(m => m.is_active);
-                                                // Normalize sort_order if all are the same (e.g., all 0)
-                                                const allSame = active.every(m => (m.sort_order || 0) === (active[0]?.sort_order || 0));
-                                                if (allSame && active.length > 1) {
-                                                    active.forEach((m, i) => { m.sort_order = i; });
-                                                }
-                                                return active.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
-                                            })() : getKpiTemplate(staff.find(s => s.id === selectedUserId)?.role).fields.map(f => ({
+                                            {(kpiMetrics.length > 0 ? kpiMetrics.filter(m => m.is_active).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)) : getKpiTemplate(staff.find(s => s.id === selectedUserId)?.role).fields.map(f => ({
                                                 id: f.key, key: f.key, label: f.label, description: f.description || '', data_source: 'manual' as const,
                                                 icon: 'Target', field_type: f.type, is_active: true, sort_order: 0, salary_percent: 0, monthly_target: 0
                                             }))).map((metric, idx, arr) => {
