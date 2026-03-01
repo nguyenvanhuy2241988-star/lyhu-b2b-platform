@@ -492,7 +492,7 @@ export default function AdminPayrollPage() {
                                     Cấu hình KPI
                                 </button>
                                 <button
-                                    onClick={() => setIsModalOpen(true)}
+                                    onClick={() => { setIsModalOpen(true); handleLoadPolicy('telesales'); }}
                                     className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
                                 >
                                     <Plus className="w-4 h-4" />
@@ -1118,10 +1118,32 @@ export default function AdminPayrollPage() {
                                 <select
                                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none"
                                     value={newTx.category}
-                                    onChange={(e) => setNewTx({ ...newTx, category: e.target.value })}
+                                    onChange={(e) => {
+                                        const selected = e.target.value;
+                                        setNewTx({ ...newTx, category: selected });
+                                        // Auto-fill amount from policy if available
+                                        if (policyData) {
+                                            if (newTx.type === 'bonus') {
+                                                const match = (policyData.bonuses || []).find((b: any) => b.title === selected);
+                                                if (match?.amount) {
+                                                    const parsed = parseInt(match.amount.replace(/[^\d]/g, '')) || 0;
+                                                    if (parsed > 0) setNewTx(prev => ({ ...prev, category: selected, amount: parsed }));
+                                                }
+                                            } else {
+                                                const match = (policyData.penalties || []).find((p: any) => p.name === selected);
+                                                if (match?.fine) {
+                                                    const parsed = parseInt(match.fine.replace(/[^\d]/g, '')) || 0;
+                                                    if (parsed > 0) setNewTx(prev => ({ ...prev, category: selected, amount: parsed }));
+                                                }
+                                            }
+                                        }
+                                    }}
                                 >
                                     {newTx.type === 'bonus' ? (
                                         <>
+                                            {(policyData?.bonuses || []).map((b: any, i: number) => (
+                                                <option key={`policy-${i}`} value={b.title}>{b.title} ({b.amount})</option>
+                                            ))}
                                             <option>Thưởng Sáng kiến</option>
                                             <option>Thưởng Chốt NPP</option>
                                             <option>Thưởng Chốt Đại lý</option>
@@ -1131,6 +1153,9 @@ export default function AdminPayrollPage() {
                                         </>
                                     ) : (
                                         <>
+                                            {(policyData?.penalties || []).map((p: any, i: number) => (
+                                                <option key={`policy-${i}`} value={p.name}>{p.name} ({p.fine})</option>
+                                            ))}
                                             <option>Phạt Đi muộn</option>
                                             <option>Phạt Vi phạm Trang phục</option>
                                             <option>Phạt Nghỉ không phép</option>
