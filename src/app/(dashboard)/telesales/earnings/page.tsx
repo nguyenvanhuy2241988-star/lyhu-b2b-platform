@@ -463,11 +463,29 @@ export default function TelesalesEarningsPage() {
                             <ChevronDown className="w-4 h-4 rotate-90" />
                         </button>
                         <button
-                            onClick={goToCurrentMonth}
-                            className={`px-3 py-2 text-sm font-medium transition-colors min-w-[140px] text-center ${isCurrentMonth ? 'text-primary-600' : 'text-slate-700 hover:text-primary-600'}`}
+                            onClick={() => {
+                                const input = document.getElementById('earnings-month-picker') as HTMLInputElement;
+                                if (input) input.showPicker();
+                            }}
+                            className={`px-3 py-2 text-sm font-medium transition-colors min-w-[140px] text-center relative ${isCurrentMonth ? 'text-primary-600' : 'text-slate-700 hover:text-primary-600'}`}
                         >
                             <Calendar className="w-3.5 h-3.5 inline-block mr-1.5 -mt-0.5" />
                             {getDateRangeText()}
+                            <input
+                                id="earnings-month-picker"
+                                type="month"
+                                value={`${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`}
+                                onChange={(e) => {
+                                    const [y, m] = e.target.value.split('-').map(Number);
+                                    if (y && m) {
+                                        setSelectedYear(y);
+                                        setSelectedMonth(m - 1);
+                                        setDateRange('this_month');
+                                    }
+                                }}
+                                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                                style={{ pointerEvents: 'none' }}
+                            />
                         </button>
                         <button
                             onClick={goToNextMonth}

@@ -1248,10 +1248,30 @@ export default function CRMPage() {
                                     <ChevronLeft className="w-3.5 h-3.5" />
                                 </button>
                                 <button
-                                    onClick={() => { setKpiDate(getLocalDateStr()); setKpiViewMode('day'); }}
-                                    className={`px-3 py-1.5 text-xs font-medium transition-colors min-w-[120px] text-center ${kpiIsCurrentMonth ? 'text-primary-600' : 'text-slate-700 hover:text-primary-600'}`}
+                                    onClick={() => {
+                                        const input = document.getElementById('crm-month-picker') as HTMLInputElement;
+                                        if (input) input.showPicker();
+                                    }}
+                                    className={`px-3 py-1.5 text-xs font-medium transition-colors min-w-[120px] text-center relative ${kpiIsCurrentMonth ? 'text-primary-600' : 'text-slate-700 hover:text-primary-600'}`}
                                 >
                                     {kpiMonthLabel}
+                                    <input
+                                        id="crm-month-picker"
+                                        type="month"
+                                        value={(() => {
+                                            const d = new Date(kpiDate + 'T12:00:00');
+                                            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                                        })()}
+                                        onChange={(e) => {
+                                            const [y, m] = e.target.value.split('-').map(Number);
+                                            if (y && m) {
+                                                setKpiDate(`${y}-${String(m).padStart(2, '0')}-01`);
+                                                setKpiViewMode('month');
+                                            }
+                                        }}
+                                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                                        style={{ pointerEvents: 'none' }}
+                                    />
                                 </button>
                                 <button
                                     onClick={kpiGoToNextMonth}
