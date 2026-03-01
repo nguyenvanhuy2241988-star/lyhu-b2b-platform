@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { MessageCircle, X, Minimize2, Maximize2 } from "lucide-react";
+import { MessageCircle, X, Minimize2, Maximize2, ChevronLeft, Users } from "lucide-react";
 import { useChatStore } from "@/lib/chatStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { usePathname } from "next/navigation";
@@ -13,7 +13,7 @@ export default function QuickChatWidget() {
     const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
-    const [showSidebar, setShowSidebar] = useState(true); // For compact mode: sidebar vs chat toggle
+    const [showSidebar, setShowSidebar] = useState(true);
     const [users, setUsers] = useState<any[]>([]);
     const [mounted, setMounted] = useState(false);
     const [newMessageAlert, setNewMessageAlert] = useState<{ convId: string; senderName: string; content: string } | null>(null);
@@ -61,7 +61,7 @@ export default function QuickChatWidget() {
         }
     }, [session?.access_token]);
 
-    // Initialize data when widget opens
+    // Initialize data
     useEffect(() => {
         if (!user?.id || !mounted) return;
         fetchConversations(user.id);
@@ -115,19 +115,28 @@ export default function QuickChatWidget() {
         }
     }, [messages, activeConversationId, user, markRead, conversations, isOpen]);
 
+    // --- Handlers ---
     const handleSelectConversation = (id: string) => {
         selectConversation(id, user?.id);
-        setShowSidebar(false); // In compact mode, switch to chat view
+        setShowSidebar(false);
     };
 
     const handleStartChat = async (targetUserId: string) => {
         if (!user) return;
         try {
             const id = await createDirectConversation(user.id, targetUserId, session?.access_token);
-            if (id) selectConversation(id, user.id);
+            if (id) {
+                selectConversation(id, user.id);
+                setShowSidebar(false);
+            }
         } catch (e) {
             console.error("[QuickChat] Start chat error:", e);
         }
+    };
+
+    const handleQuickSwitch = (convId: string) => {
+        selectConversation(convId, user?.id);
+        setShowSidebar(false);
     };
 
     const dismissAlert = () => {
@@ -138,12 +147,42 @@ export default function QuickChatWidget() {
     const openFromAlert = () => {
         if (newMessageAlert) {
             selectConversation(newMessageAlert.convId, user?.id);
+            setShowSidebar(false);
         }
         dismissAlert();
         setIsOpen(true);
     };
 
+    // --- Derived data ---
     const activeConversation = conversations.find(c => c.id === activeConversationId);
+
+    // Recent conversations for quick-switch tabs (top 8, sorted by last_message_at)
+    const recentConvs = [...conversations]
+        .filter(c => c.last_message_at)
+        .sort((a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime())
+        .slice(0, 8);
+
+    // Helper to get display name for a conversation
+    const getConvDisplayName = (conv: any): string => {
+        if (conv.name) return conv.name;
+        if (conv.type === 'group') return conv.name || 'Nhóm';
+        const other = conv.internal_participants?.find((p: any) => p.user_id !== user?.id);
+        if (other) {
+            const u = users.find(u => u.id === other.user_id);
+            return other.full_name || other.email?.split('@')[0] || u?.full_name || u?.email?.split('@')[0] || 'User';
+        }
+        return 'Chat';
+    };
+
+    const getConvInitial = (conv: any): string => {
+        return getConvDisplayName(conv).charAt(0).toUpperCase();
+    };
+
+    const isConvOnline = (conv: any): boolean => {
+        if (conv.type === 'group') return false;
+        const other = conv.internal_participants?.find((p: any) => p.user_id !== user?.id);
+        return other ? onlineUsers.includes(other.user_id) : false;
+    };
 
     // Don't show on /chat page
     if (isOnChatPage) return null;
@@ -197,10 +236,25 @@ export default function QuickChatWidget() {
             {isOpen && (
                 <div className={`fixed bottom-24 right-6 z-[9998] ${panelWidth} ${panelHeight} bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in slide-in-from-bottom-3 zoom-in-95 fade-in duration-200`}>
                     {/* Panel Header */}
-                    <div className="bg-gradient-to-r from-teal-500 to-emerald-500 px-4 py-3 flex items-center justify-between flex-shrink-0">
+                    <div className="bg-gradient-to-r from-teal-500 to-emerald-500 px-3 py-2.5 flex items-center justify-between flex-shrink-0">
                         <div className="flex items-center gap-2">
-                            <MessageCircle className="w-5 h-5 text-white" />
-                            <span className="text-white font-semibold text-sm">Tin nhắn nội bộ</span>
+                            {/* Back button when in chat view (compact mode) */}
+                            {!isExpanded && !showSidebar && (
+                                <button
+                                    onClick={() => setShowSidebar(true)}
+                                    className="p-1 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                                    title="Quay lại danh sách"
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                </button>
+                            )}
+                            <MessageCircle className="w-4 h-4 text-white" />
+                            <span className="text-white font-semibold text-sm">
+                                {!isExpanded && !showSidebar && activeConversation
+                                    ? getConvDisplayName(activeConversation)
+                                    : 'Tin nhắn nội bộ'
+                                }
+                            </span>
                             {unreadCount > 0 && (
                                 <span className="min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                                     {unreadCount > 9 ? '9+' : unreadCount}
@@ -225,6 +279,63 @@ export default function QuickChatWidget() {
                         </div>
                     </div>
 
+                    {/* Quick Switch Tabs (compact mode, when in chat view) */}
+                    {!isExpanded && !showSidebar && recentConvs.length > 1 && (
+                        <div className="bg-white border-b border-slate-200 px-2 py-1.5 flex items-center gap-1 overflow-x-auto flex-shrink-0 custom-scrollbar">
+                            {/* Back to list button */}
+                            <button
+                                onClick={() => setShowSidebar(true)}
+                                className="flex-shrink-0 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"
+                                title="Tất cả tin nhắn"
+                            >
+                                <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+                                </svg>
+                            </button>
+
+                            <div className="w-px h-6 bg-slate-200 flex-shrink-0 mx-0.5"></div>
+
+                            {/* Recent conversation avatars */}
+                            {recentConvs.map(conv => {
+                                const isActive = conv.id === activeConversationId;
+                                const isGroup = conv.type === 'group';
+                                const online = isConvOnline(conv);
+                                const convUnread = conv.unread_count || 0;
+
+                                return (
+                                    <button
+                                        key={conv.id}
+                                        onClick={() => handleQuickSwitch(conv.id)}
+                                        className={`relative flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${isActive
+                                                ? 'ring-2 ring-teal-500 ring-offset-1 scale-110'
+                                                : 'hover:scale-105'
+                                            } ${isGroup
+                                                ? 'bg-teal-100 text-teal-600'
+                                                : 'bg-slate-200 text-slate-600'
+                                            }`}
+                                        title={getConvDisplayName(conv)}
+                                    >
+                                        {isGroup ? (
+                                            <Users className="w-3.5 h-3.5" />
+                                        ) : (
+                                            <span className="uppercase">{getConvInitial(conv)}</span>
+                                        )}
+                                        {/* Online indicator */}
+                                        {online && !isGroup && (
+                                            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-white"></span>
+                                        )}
+                                        {/* Unread badge */}
+                                        {convUnread > 0 && !isActive && (
+                                            <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-0.5 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center border border-white">
+                                                {convUnread > 9 ? '9+' : convUnread}
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+
                     {/* Chat Content */}
                     <div className="flex-1 flex overflow-hidden min-h-0">
                         {/* Sidebar */}
@@ -237,10 +348,9 @@ export default function QuickChatWidget() {
                                 onSelectConversation={handleSelectConversation}
                                 onStartChat={handleStartChat}
                                 onShowCreateGroup={() => { }}
-                                className={`${isExpanded ? 'w-64' : 'w-full'} border-r border-slate-200`}
+                                className={`${isExpanded ? 'w-64 flex-shrink-0' : 'w-full'} border-r border-slate-200`}
                             />
-                        )
-                        }
+                        )}
 
                         {/* Chat Window */}
                         {activeConversationId && (isExpanded || !showSidebar) && (
@@ -281,8 +391,8 @@ export default function QuickChatWidget() {
                         dismissAlert();
                     }}
                     className={`relative w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all ${isOpen
-                        ? 'bg-slate-600 shadow-slate-600/30'
-                        : 'bg-gradient-to-br from-teal-500 to-emerald-500 shadow-teal-500/30'
+                            ? 'bg-slate-600 shadow-slate-600/30'
+                            : 'bg-gradient-to-br from-teal-500 to-emerald-500 shadow-teal-500/30'
                         }`}
                     title="Tin nhắn nội bộ"
                 >
