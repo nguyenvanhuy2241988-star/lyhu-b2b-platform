@@ -247,7 +247,7 @@ export function ChatWindow(props: ChatWindowProps) {
                     {onBack && (
                         <button
                             onClick={onBack}
-                            className="mt-6 md:hidden bg-blue-600 text-white px-6 py-2 rounded-full font-medium shadow-lg shadow-blue-200"
+                            className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-full font-medium shadow-lg shadow-blue-200"
                         >
                             Xem danh sách chat
                         </button>
@@ -259,10 +259,12 @@ export function ChatWindow(props: ChatWindowProps) {
                 <>
                     <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-white z-10 h-16 shadow-sm shrink-0">
                         <div className="flex items-center gap-3">
-                            {/* Back Button (Mobile) */}
-                            <button onClick={onBack} className="md:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-full">
-                                <ChevronLeft className="w-5 h-5" />
-                            </button>
+                            {/* Back Button */}
+                            {onBack && (
+                                <button onClick={onBack} className="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-full">
+                                    <ChevronLeft className="w-5 h-5" />
+                                </button>
+                            )}
 
                             {activeTargetUser ? (
                                 <div className="relative">
