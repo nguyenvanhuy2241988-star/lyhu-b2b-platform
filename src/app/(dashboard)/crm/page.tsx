@@ -1249,12 +1249,28 @@ export default function CRMPage() {
                                 </button>
                                 <button
                                     onClick={() => {
-                                        const input = document.getElementById('crm-month-picker') as HTMLInputElement;
+                                        const pickerId = kpiViewMode === 'month' ? 'crm-month-picker' : 'crm-date-picker';
+                                        const input = document.getElementById(pickerId) as HTMLInputElement;
                                         if (input) input.showPicker();
                                     }}
                                     className={`px-3 py-1.5 text-xs font-medium transition-colors min-w-[120px] text-center relative ${kpiIsCurrentMonth ? 'text-primary-600' : 'text-slate-700 hover:text-primary-600'}`}
                                 >
                                     {kpiMonthLabel}
+                                    {/* Date picker for day/week modes */}
+                                    <input
+                                        id="crm-date-picker"
+                                        type="date"
+                                        value={kpiDate}
+                                        onChange={(e) => {
+                                            if (e.target.value) {
+                                                setKpiDate(e.target.value);
+                                                if (kpiViewMode === 'month') setKpiViewMode('day');
+                                            }
+                                        }}
+                                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                                        style={{ pointerEvents: 'none' }}
+                                    />
+                                    {/* Month picker for month mode */}
                                     <input
                                         id="crm-month-picker"
                                         type="month"

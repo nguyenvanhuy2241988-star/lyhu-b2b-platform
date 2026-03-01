@@ -464,13 +464,34 @@ export default function TelesalesEarningsPage() {
                         </button>
                         <button
                             onClick={() => {
-                                const input = document.getElementById('earnings-month-picker') as HTMLInputElement;
+                                const pickerId = dateRange === 'this_month' ? 'earnings-month-picker' : 'earnings-date-picker';
+                                const input = document.getElementById(pickerId) as HTMLInputElement;
                                 if (input) input.showPicker();
                             }}
                             className={`px-3 py-2 text-sm font-medium transition-colors min-w-[140px] text-center relative ${isCurrentMonth ? 'text-primary-600' : 'text-slate-700 hover:text-primary-600'}`}
                         >
                             <Calendar className="w-3.5 h-3.5 inline-block mr-1.5 -mt-0.5" />
                             {getDateRangeText()}
+                            {/* Date picker for day/week modes */}
+                            <input
+                                id="earnings-date-picker"
+                                type="date"
+                                value={(() => {
+                                    const now = new Date();
+                                    return `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                                })()}
+                                onChange={(e) => {
+                                    const d = new Date(e.target.value + 'T12:00:00');
+                                    if (!isNaN(d.getTime())) {
+                                        setSelectedYear(d.getFullYear());
+                                        setSelectedMonth(d.getMonth());
+                                        setDateRange('today');
+                                    }
+                                }}
+                                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                                style={{ pointerEvents: 'none' }}
+                            />
+                            {/* Month picker for month mode */}
                             <input
                                 id="earnings-month-picker"
                                 type="month"
