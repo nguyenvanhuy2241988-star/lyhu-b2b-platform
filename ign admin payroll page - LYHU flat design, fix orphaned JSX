@@ -1,0 +1,87 @@
+[1mdiff --git a/src/app/(dashboard)/admin/payroll/page.tsx b/src/app/(dashboard)/admin/payroll/page.tsx[m
+[1mindex cde6300..55a6c27 100644[m
+[1m--- a/src/app/(dashboard)/admin/payroll/page.tsx[m
+[1m+++ b/src/app/(dashboard)/admin/payroll/page.tsx[m
+[36m@@ -304,7 +304,7 @@[m [mexport default function AdminPayrollPage() {[m
+     return ([m
+         <div className="flex flex-col lg:flex-row h-[calc(100vh-120px)] gap-6">[m
+             {/* Sidebar: Staff List */}[m
+[31m-            <div className="w-full lg:w-80 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">[m
+[32m+[m[32m            <div className="w-full lg:w-80 bg-white rounded-lg border border-slate-200 flex flex-col overflow-hidden">[m
+                 <div className="p-4 border-b border-slate-100 space-y-4">[m
+                     <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">[m
+                         <Users className="w-5 h-5 text-primary-500" />[m
+[36m@@ -315,7 +315,7 @@[m [mexport default function AdminPayrollPage() {[m
+                         <input[m
+                             type="text"[m
+                             placeholder="Tìm nhân viên..."[m
+[31m-                            className="w-full pl-9 pr-4 py-2 bg-slate-50 border-none rounded-xl text-sm focus:ring-2 focus:ring-primary-500 transition-all"[m
+[32m+[m[32m                            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-1 focus:ring-primary-500 focus:border-primary-500 outline-none"[m
+                             value={searchTerm}[m
+                             onChange={(e) => setSearchTerm(e.target.value)}[m
+                         />[m
+[36m@@ -327,12 +327,12 @@[m [mexport default function AdminPayrollPage() {[m
+                         <button[m
+                             key={user.id}[m
+                             onClick={() => setSelectedUserId(user.id)}[m
+[31m-                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all mb-1 ${selectedUserId === user.id[m
+[31m-                                ? 'bg-primary-50 text-primary-700 border-l-4 border-primary-500'[m
+[32m+[m[32m                            className={`w-full flex items-center gap-3 p-3 rounded-lg transition-colors mb-1 ${selectedUserId === user.id[m
+[32m+[m[32m                                ? 'bg-primary-50 text-primary-700 border-l-3 border-primary-500'[m
+                                 : 'hover:bg-slate-50 text-slate-600'[m
+                                 }`}[m
+                         >[m
+[31m-                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shadow-sm transition-all ${selectedUserId === user.id ? 'bg-primary-500 text-white' : 'bg-slate-100 text-slate-500'[m
+[32m+[m[32m                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${selectedUserId === user.id ? 'bg-primary-500 text-white' : 'bg-slate-100 text-slate-500'[m
+                                 }`}>[m
+                                 {(user.name || "?").charAt(0)}[m
+                             </div>[m
+[36m@@ -350,9 +350,9 @@[m [mexport default function AdminPayrollPage() {[m
+                 {selectedUserId ? ([m
+                     <>[m
+                         {/* Selected User Header & Stats */}[m
+[31m-                        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">[m
+[32m+[m[32m                        <div className="bg-white rounded-lg p-5 border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">[m
+                             <div className="flex items-center gap-4">[m
+[31m-                                <div className="w-14 h-14 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center text-slate-700 text-xl font-bold">[m
+[32m+[m[32m                                <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center text-slate-700 text-lg font-bold">[m
+                                     {(staff.find(s => s.id === selectedUserId)?.name || "?").charAt(0)}[m
+                                 </div>[m
+                                 <div>[m
+[36m@@ -361,12 +361,12 @@[m [mexport default function AdminPayrollPage() {[m
+                                             {staff.find(s => s.id === selectedUserId)?.name || "Chưa đặt tên"}[m
+                                         </h1>[m
+                                         {isMonthLocked(12) ? ([m
+[31m-                                            <span className="px-2.5 py-0.5 bg-rose-50 text-rose-600 text-[10px] font-bold rounded-lg flex items-center gap-1 uppercase tracking-wider border border-rose-100">[m
+[32m+[m[32m                                            <span className="px-2 py-0.5 bg-rose-50 text-rose-600 text-[10px] font-medium rounded flex items-center gap-1 uppercase border border-rose-100">[m
+                                                 <Lock className="w-3 h-3" />[m
+                                                 Đã khóa[m
+                                             </span>[m
+                                         ) : ([m
+[31m-                                            <span className="px-2.5 py-0.5 bg-primary-50 text-primary-600 text-[10px] font-bold rounded-lg flex items-center gap-1 uppercase tracking-wider border border-primary-100">[m
+[32m+[m[32m                                            <span className="px-2 py-0.5 bg-primary-50 text-primary-600 text-[10px] font-medium rounded flex items-center gap-1 uppercase border border-primary-100">[m
+                                                 <ShieldCheck className="w-3 h-3" />[m
+                                                 Đang mở[m
+                                             </span>[m
+[36m@@ -380,7 +380,7 @@[m [mexport default function AdminPayrollPage() {[m
+                                 {!isMonthLocked(12) && ([m
+                                     <button[m
+                                         onClick={() => handleLockMonth(12)}[m
+[31m-                                        className="flex items-center gap-2 bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-800 transition-all active:scale-95 shadow-sm"[m
+[32m+[m[32m                                        className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors"[m
+                                     >[m
+                                         <Lock className="w-4 h-4" />[m
+                                         Chốt lương[m
+[36m@@ -388,14 +388,14 @@[m [mexport default function AdminPayrollPage() {[m
+                                 )}[m
+                                 <button[m
+                                     onClick={handleOpenKpiConfig}[m
+[31m-                                    className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-50 transition-all active:scale-95 shadow-sm"[m
+[32m+[m[32m                                    className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"[m
+                                 >[m
+                                     <Settings className="w-4 h-4" />[m
+                                     Cấu hình KPI[m
+                                 </button>[m
+                                 <button[m
+                                     onClick={() => setIsModalOpen(true)}[m
+[31m-                                    className="flex items-center gap-2 bg-white border border-slate-300 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-slate-50 transition-
