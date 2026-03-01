@@ -231,88 +231,100 @@ export function ChatSidebar({
                     ) : null;
                 })()}
 
-                {/* All Users - flat list */}
-                <div className={`${!searchTerm ? 'pt-3 border-t border-slate-100' : ''}`}>
-                    <div className="space-y-0.5">
-                        {(searchTerm ? searchResults : users.filter(u => u.id !== currentUser?.id)).map(u => {
-                            const isOnline = isUserOnline(u.id);
-                            return (
-                                <div
-                                    key={u.id}
-                                    onClick={() => onStartChat(u.id)}
-                                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-slate-100 text-sm text-slate-600 transition-colors"
-                                >
-                                    <div className="relative flex-shrink-0">
-                                        <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-[10px] text-slate-500 uppercase font-bold border border-slate-200">
-                                            {(u.full_name || u.email || "?").charAt(0).toUpperCase()}
-                                        </div>
-                                        <span className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 border-[1.5px] border-white rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
-                                    </div>
-                                    <span className="truncate flex-1">{u.full_name || u.email}</span>
-                                </div>
-                            );
-                        })}
-                    </div>
+                {/* All Users - flat list (exclude users already in DM list above) */}
+                {(() => {
+                    // Collect user IDs that are already shown in the conversations list as DMs
+                    const dmUserIds = new Set(
+                        directMessages.flatMap(c =>
+                            (c.internal_participants || [])
+                                .filter((p: any) => p.user_id !== currentUser?.id)
+                                .map((p: any) => p.user_id)
+                        )
+                    );
 
-                    {!searchTerm && users.filter(u => u.id !== currentUser?.id).length === 0 && (
-                        <div className="px-4 py-3 text-center">
-                            <p className="text-xs text-slate-400 italic">Chọn một người để bắt đầu trò chuyện</p>
-                        </div>
-                    )}
-                </div>
+                    const userList = (searchTerm ? searchResults : users.filter(u => u.id !== currentUser?.id))
+                        .filter(u => !dmUserIds.has(u.id));
 
-                {/* Message Search Results */}
-                {searchTerm && (
-                    <div>
-                        <div className="flex items-center justify-between px-2 mb-1 mt-2 border-t border-slate-100 pt-2">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Tin nhắn</h4>
-                        </div>
-                        {isSearchingMessages ? (
-                            <div className="px-2 text-xs text-slate-400 italic">Đang tìm kiếm...</div>
-                        ) : messageSearchResults.length > 0 ? (
+                    return userList.length > 0 ? (
+                        <div className={`${!searchTerm ? 'pt-3 border-t border-slate-100' : ''}`}>
                             <div className="space-y-0.5">
-                                {messageSearchResults.map((msg) => {
-                                    const conv = conversations.find(c => c.id === msg.conversation_id);
-                                    if (!conv) return null;
-
-                                    const sender = users.find(u => u.id === msg.sender_id);
-                                    const senderName = sender?.full_name || sender?.email || "Người dùng";
-                                    const isMe = currentUser?.id === msg.sender_id;
-                                    const displayName = isMe ? "Bạn" : senderName;
-
-                                    let convName = conv.name;
-                                    if (!convName && (conv.type === 'direct' || !conv.type)) {
-                                        convName = getDisplayNameForDM(conv);
-                                    }
-
+                                {userList.map(u => {
+                                    const isOnline = isUserOnline(u.id);
                                     return (
                                         <div
-                                            key={msg.id}
-                                            onClick={() => onSelectConversation(conv.id)}
-                                            className="flex flex-col gap-1 px-2 py-2 rounded cursor-pointer hover:bg-slate-100 text-sm text-slate-600 hover:text-slate-900 transition-colors border-b border-slate-50 last:border-0"
+                                            key={u.id}
+                                            onClick={() => onStartChat(u.id)}
+                                            className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-slate-100 text-sm text-slate-600 transition-colors"
                                         >
-                                            <div className="flex justify-between items-center">
-                                                <span className="font-bold text-[11px] text-slate-500 truncate max-w-[70%]">{convName}</span>
-                                                <span className="text-[10px] text-slate-400">
-                                                    {(() => {
-                                                        const d = new Date(msg.created_at);
-                                                        return isNaN(d.getTime()) ? new Date().toLocaleDateString() : d.toLocaleDateString();
-                                                    })()}
-                                                </span>
+                                            <div className="relative flex-shrink-0">
+                                                <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-[10px] text-slate-500 uppercase font-bold border border-slate-200">
+                                                    {(u.full_name || u.email || "?").charAt(0).toUpperCase()}
+                                                </div>
+                                                <span className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 border-[1.5px] border-white rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
                                             </div>
-                                            <div className="text-xs truncate">
-                                                <span className="font-semibold">{displayName}: </span>
-                                                {msg.content}
-                                            </div>
+                                            <span className="truncate flex-1">{u.full_name || u.email}</span>
                                         </div>
                                     );
                                 })}
                             </div>
-                        ) : (
-                            <div className="px-2 text-xs text-slate-400 italic">Không tìm thấy tin nhắn nào.</div>
-                        )}
-                    </div>
-                )}
+                        </div>
+                    ) : null;
+                })()}
+
+                {/* Message Search Results */}
+                {
+                    searchTerm && (
+                        <div>
+                            <div className="flex items-center justify-between px-2 mb-1 mt-2 border-t border-slate-100 pt-2">
+                                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Tin nhắn</h4>
+                            </div>
+                            {isSearchingMessages ? (
+                                <div className="px-2 text-xs text-slate-400 italic">Đang tìm kiếm...</div>
+                            ) : messageSearchResults.length > 0 ? (
+                                <div className="space-y-0.5">
+                                    {messageSearchResults.map((msg) => {
+                                        const conv = conversations.find(c => c.id === msg.conversation_id);
+                                        if (!conv) return null;
+
+                                        const sender = users.find(u => u.id === msg.sender_id);
+                                        const senderName = sender?.full_name || sender?.email || "Người dùng";
+                                        const isMe = currentUser?.id === msg.sender_id;
+                                        const displayName = isMe ? "Bạn" : senderName;
+
+                                        let convName = conv.name;
+                                        if (!convName && (conv.type === 'direct' || !conv.type)) {
+                                            convName = getDisplayNameForDM(conv);
+                                        }
+
+                                        return (
+                                            <div
+                                                key={msg.id}
+                                                onClick={() => onSelectConversation(conv.id)}
+                                                className="flex flex-col gap-1 px-2 py-2 rounded cursor-pointer hover:bg-slate-100 text-sm text-slate-600 hover:text-slate-900 transition-colors border-b border-slate-50 last:border-0"
+                                            >
+                                                <div className="flex justify-between items-center">
+                                                    <span className="font-bold text-[11px] text-slate-500 truncate max-w-[70%]">{convName}</span>
+                                                    <span className="text-[10px] text-slate-400">
+                                                        {(() => {
+                                                            const d = new Date(msg.created_at);
+                                                            return isNaN(d.getTime()) ? new Date().toLocaleDateString() : d.toLocaleDateString();
+                                                        })()}
+                                                    </span>
+                                                </div>
+                                                <div className="text-xs truncate">
+                                                    <span className="font-semibold">{displayName}: </span>
+                                                    {msg.content}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="px-2 text-xs text-slate-400 italic">Không tìm thấy tin nhắn nào.</div>
+                            )}
+                        </div>
+                    )
+                }
             </div>
         </div>
     );
