@@ -6,12 +6,13 @@ import { ROLES } from "@/lib/constants";
 import {
     CultureEvent, FundTransaction, FundContribution,
     getCultureEvents, getFundTransactions, getFundBalance, getUpcomingBirthdays,
-    addFundTransaction, getFundContributions, upsertFundContribution, confirmFundContribution,
+    addFundTransaction, updateFundTransaction, deleteFundTransaction,
+    getFundContributions, upsertFundContribution, confirmFundContribution,
     getFundMonthlyReport, getHRProfiles
 } from "@/lib/hrStore";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
-import { Calendar, TrendingUp, TrendingDown, Wallet, Users, X, Cake, Plus, QrCode, ChevronLeft, ChevronRight, Check, Clock, Receipt, Settings } from "lucide-react";
+import { Calendar, TrendingUp, TrendingDown, Wallet, X, Cake, Plus, QrCode, ChevronLeft, ChevronRight, Check, Clock, Receipt, Settings, Pencil, Trash2 } from "lucide-react";
 
 import { supabase } from "@/lib/supabaseClient";
 
@@ -49,12 +50,20 @@ export default function HRCulturePage() {
     const [reportYear, setReportYear] = useState(new Date().getFullYear());
     const [monthlyReport, setMonthlyReport] = useState<any>(null);
 
+    // Overview time filter
+    const [overviewMonth, setOverviewMonth] = useState(new Date().getMonth() + 1);
+    const [overviewYear, setOverviewYear] = useState(new Date().getFullYear());
+
     // QR Modal
     const [showQr, setShowQr] = useState(false);
 
-    // Transaction Modal
+    // Transaction Modal (add/edit)
     const [isTransModalOpen, setIsTransModalOpen] = useState(false);
+    const [editingTrans, setEditingTrans] = useState<FundTransaction | null>(null);
     const [newTrans, setNewTrans] = useState({ description: '', amount: '', type: 'expense', category: 'Ăn uống' });
+
+    // Delete confirmation
+    const [deletingTransId, setDeletingTransId] = useState<string | null>(null);
 
     // Active tab
     const [activeTab, setActiveTab] = useState<'overview' | 'contributions' | 'report'>('overview');
@@ -73,7 +82,6 @@ export default function HRCulturePage() {
         getUpcomingBirthdays().then(setBirthdays);
     }, []);
 
-    // Load bank config from app_settings
     const loadBankConfig = useCallback(async () => {
         try {
             const { data, error } = await supabase
@@ -81,7 +89,6 @@ export default function HRCulturePage() {
                 .select('id, fund_bank_config')
                 .limit(1)
                 .single();
-
             if (!error && data) {
                 setSettingsId(data.id);
                 if (data.fund_bank_config) {
@@ -91,7 +98,6 @@ export default function HRCulturePage() {
         } catch (e) { console.error(e); }
     }, []);
 
-    // Save bank config
     const saveBankConfig = async () => {
         if (!settingsId) return;
         try {
@@ -99,7 +105,6 @@ export default function HRCulturePage() {
                 .from('app_settings')
                 .update({ fund_bank_config: editBank })
                 .eq('id', settingsId);
-
             if (error) throw error;
             setBankConfig(editBank);
             setShowBankSettings(false);
@@ -145,6 +150,8 @@ export default function HRCulturePage() {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'fund_transactions' }, () => {
                 refreshTransactions();
                 refreshBalance();
+                // Refresh report if on report tab
+                getFundMonthlyReport(reportMonth, reportYear).then(setMonthlyReport).catch(console.error);
             })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'fund_contributions' }, () => {
                 getFundContributions(contribMonth, contribYear).then(setContributions);
@@ -155,7 +162,7 @@ export default function HRCulturePage() {
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
-    }, [refreshBalance, refreshTransactions, refreshProfiles, loadBankConfig, contribMonth, contribYear]);
+    }, [refreshBalance, refreshTransactions, refreshProfiles, loadBankConfig, contribMonth, contribYear, reportMonth, reportYear]);
 
     // Load contributions when month changes
     useEffect(() => {
@@ -167,25 +174,73 @@ export default function HRCulturePage() {
         getFundMonthlyReport(reportMonth, reportYear).then(setMonthlyReport).catch(console.error);
     }, [reportMonth, reportYear]);
 
-    const handleAddTransaction = async () => {
+    // Filter transactions by overview month
+    const filteredTransactions = useMemo(() => {
+        return transactions.filter(t => {
+            const d = new Date(t.created_at);
+            return d.getMonth() + 1 === overviewMonth && d.getFullYear() === overviewYear;
+        });
+    }, [transactions, overviewMonth, overviewYear]);
+
+    // Overview balance for selected month
+    const overviewIncome = useMemo(() => filteredTransactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0), [filteredTransactions]);
+    const overviewExpense = useMemo(() => filteredTransactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0), [filteredTransactions]);
+
+    // ADD / EDIT transaction
+    const openAddTransaction = () => {
+        setEditingTrans(null);
+        setNewTrans({ description: '', amount: '', type: 'expense', category: 'Ăn uống' });
+        setIsTransModalOpen(true);
+    };
+
+    const openEditTransaction = (t: FundTransaction) => {
+        setEditingTrans(t);
+        setNewTrans({
+            description: t.description,
+            amount: String(t.amount),
+            type: t.type,
+            category: t.category || 'Khác'
+        });
+        setIsTransModalOpen(true);
+    };
+
+    const handleSaveTransaction = async () => {
         if (!newTrans.description || !newTrans.amount) return;
         try {
-            await addFundTransaction({
-                description: newTrans.description,
-                amount: Number(newTrans.amount),
-                type: newTrans.type as 'income' | 'expense',
-                category: newTrans.category
-            });
+            if (editingTrans) {
+                await updateFundTransaction(editingTrans.id, {
+                    description: newTrans.description,
+                    amount: Number(newTrans.amount),
+                    type: newTrans.type as 'income' | 'expense',
+                    category: newTrans.category
+                });
+            } else {
+                await addFundTransaction({
+                    description: newTrans.description,
+                    amount: Number(newTrans.amount),
+                    type: newTrans.type as 'income' | 'expense',
+                    category: newTrans.category
+                });
+            }
             refreshTransactions();
             refreshBalance();
             setIsTransModalOpen(false);
-            setNewTrans({ description: '', amount: '', type: 'expense', category: 'Ăn uống' });
-            if (reportMonth === new Date().getMonth() + 1 && reportYear === new Date().getFullYear()) {
-                getFundMonthlyReport(reportMonth, reportYear).then(setMonthlyReport);
-            }
+            setEditingTrans(null);
         } catch (error) {
             console.error(error);
-            alert("Lỗi thêm giao dịch");
+            alert("Lỗi lưu giao dịch");
+        }
+    };
+
+    const handleDeleteTransaction = async (id: string) => {
+        try {
+            await deleteFundTransaction(id);
+            refreshTransactions();
+            refreshBalance();
+            setDeletingTransId(null);
+        } catch (e) {
+            console.error(e);
+            alert("Lỗi xóa giao dịch");
         }
     };
 
@@ -211,7 +266,6 @@ export default function HRCulturePage() {
     const monthlyPerPerson = bankConfig.monthlyAmount || 50000;
     const monthlyCompany = monthlyPerPerson * employeeCount;
 
-    // Merge profiles with contributions for tracking
     const contributionList = useMemo(() => {
         return allProfiles.map(p => {
             const contrib = contributions.find(c => c.user_id === p.id);
@@ -230,18 +284,32 @@ export default function HRCulturePage() {
 
     const monthNames = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
 
-    // QR URL
     const qrMemo = `Dong quy T${contribMonth}/${contribYear}`;
     const qrUrl = bankConfig.accountNo
         ? `https://img.vietqr.io/image/${bankConfig.bankId}-${bankConfig.accountNo}-compact.png?amount=${monthlyPerPerson}&addInfo=${encodeURIComponent(qrMemo)}&accountName=${encodeURIComponent(bankConfig.accountName)}`
         : '';
 
-    // Bank name mapping
     const bankNames: Record<string, string> = {
         'MB': 'MB Bank', 'VCB': 'Vietcombank', 'TCB': 'Techcombank', 'ACB': 'ACB',
         'BIDV': 'BIDV', 'VTB': 'VietinBank', 'TPB': 'TPBank', 'VPB': 'VPBank',
         'STB': 'Sacombank', 'MSB': 'MSB', 'SHB': 'SHB', 'EIB': 'Eximbank',
     };
+
+    const MonthNav = ({ month, year, setMonth, setYear }: { month: number; year: number; setMonth: (m: number | ((p: number) => number)) => void; setYear: (y: number | ((p: number) => number)) => void }) => (
+        <div className="flex items-center gap-2">
+            <button onClick={() => { if (month === 1) { setMonth(12); setYear((y: number) => y - 1); } else setMonth((m: number) => m - 1); }}
+                className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
+                <ChevronLeft className="w-4 h-4 text-slate-400" />
+            </button>
+            <span className="text-sm font-semibold text-slate-900 min-w-[120px] text-center">
+                {monthNames[month - 1]}, {year}
+            </span>
+            <button onClick={() => { if (month === 12) { setMonth(1); setYear((y: number) => y + 1); } else setMonth((m: number) => m + 1); }}
+                className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+            </button>
+        </div>
+    );
 
     return (
         <div className="max-w-5xl mx-auto py-6 px-4 space-y-6">
@@ -252,10 +320,8 @@ export default function HRCulturePage() {
                     <p className="text-sm text-slate-500 mt-0.5">Cập nhật sự kiện và minh bạch tài chính nội bộ</p>
                 </div>
                 {isAdmin && (
-                    <button
-                        onClick={() => { setEditBank(bankConfig); setShowBankSettings(true); }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-                    >
+                    <button onClick={() => { setEditBank(bankConfig); setShowBankSettings(true); }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors">
                         <Settings className="w-4 h-4" /> Cài đặt
                     </button>
                 )}
@@ -268,12 +334,8 @@ export default function HRCulturePage() {
                     { key: 'contributions', label: 'Đóng quỹ' },
                     { key: 'report', label: 'Báo cáo tháng' },
                 ].map(tab => (
-                    <button
-                        key={tab.key}
-                        onClick={() => setActiveTab(tab.key as any)}
-                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === tab.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                            }`}
-                    >
+                    <button key={tab.key} onClick={() => setActiveTab(tab.key as any)}
+                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${activeTab === tab.key ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
                         {tab.label}
                     </button>
                 ))}
@@ -281,128 +343,146 @@ export default function HRCulturePage() {
 
             {/* ===================== TAB: OVERVIEW ===================== */}
             {activeTab === 'overview' && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-2 space-y-6">
-                        {/* Events */}
-                        <section className="bg-white rounded-xl border border-slate-200">
-                            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2.5">
-                                <Calendar className="w-4 h-4 text-slate-400" />
-                                <h2 className="text-sm font-semibold text-slate-900">Sự kiện sắp tới</h2>
-                            </div>
-                            <div className="p-5">
-                                {loading ? (
-                                    <p className="text-sm text-slate-400 text-center py-6">Đang tải...</p>
-                                ) : events.length === 0 ? (
-                                    <p className="text-sm text-slate-400 text-center py-6">Chưa có sự kiện nào sắp diễn ra.</p>
-                                ) : (
-                                    <div className="divide-y divide-slate-100">
-                                        {events.map(event => (
-                                            <div key={event.id} className="flex gap-4 py-3 first:pt-0 last:pb-0">
-                                                <div className="w-12 h-12 shrink-0 bg-slate-50 rounded-lg border border-slate-200 flex flex-col items-center justify-center">
-                                                    <span className="text-[10px] text-slate-400 uppercase font-medium">
-                                                        {format(new Date(event.start_time), 'MMM', { locale: vi })}
-                                                    </span>
-                                                    <span className="text-lg font-bold text-slate-900 leading-tight">
-                                                        {format(new Date(event.start_time), 'dd')}
-                                                    </span>
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-sm font-medium text-slate-900 truncate">{event.title}</p>
-                                                    <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">{event.description}</p>
-                                                    <div className="flex items-center gap-2 mt-1.5">
-                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${event.type === 'party' ? 'bg-pink-50 text-pink-600' :
-                                                                event.type === 'holiday' ? 'bg-red-50 text-red-600' :
-                                                                    'bg-blue-50 text-blue-600'
-                                                            }`}>{event.type}</span>
-                                                        <span className="text-[10px] text-slate-400">{format(new Date(event.start_time), 'HH:mm')}</span>
+                <div className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2 space-y-6">
+                            {/* Events */}
+                            <section className="bg-white rounded-xl border border-slate-200">
+                                <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2.5">
+                                    <Calendar className="w-4 h-4 text-slate-400" />
+                                    <h2 className="text-sm font-semibold text-slate-900">Sự kiện sắp tới</h2>
+                                </div>
+                                <div className="p-5">
+                                    {loading ? (
+                                        <p className="text-sm text-slate-400 text-center py-6">Đang tải...</p>
+                                    ) : events.length === 0 ? (
+                                        <p className="text-sm text-slate-400 text-center py-6">Chưa có sự kiện nào sắp diễn ra.</p>
+                                    ) : (
+                                        <div className="divide-y divide-slate-100">
+                                            {events.map(event => (
+                                                <div key={event.id} className="flex gap-4 py-3 first:pt-0 last:pb-0">
+                                                    <div className="w-12 h-12 shrink-0 bg-slate-50 rounded-lg border border-slate-200 flex flex-col items-center justify-center">
+                                                        <span className="text-[10px] text-slate-400 uppercase font-medium">
+                                                            {format(new Date(event.start_time), 'MMM', { locale: vi })}
+                                                        </span>
+                                                        <span className="text-lg font-bold text-slate-900 leading-tight">
+                                                            {format(new Date(event.start_time), 'dd')}
+                                                        </span>
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-medium text-slate-900 truncate">{event.title}</p>
+                                                        <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">{event.description}</p>
+                                                        <div className="flex items-center gap-2 mt-1.5">
+                                                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${event.type === 'party' ? 'bg-pink-50 text-pink-600' :
+                                                                    event.type === 'holiday' ? 'bg-red-50 text-red-600' :
+                                                                        'bg-blue-50 text-blue-600'
+                                                                }`}>{event.type}</span>
+                                                            <span className="text-[10px] text-slate-400">{format(new Date(event.start_time), 'HH:mm')}</span>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </section>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </section>
 
-                        {/* Birthdays */}
-                        <section className="bg-white rounded-xl border border-slate-200">
-                            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2.5">
-                                <Cake className="w-4 h-4 text-slate-400" />
-                                <h2 className="text-sm font-semibold text-slate-900">Sinh nhật tháng này</h2>
-                            </div>
-                            <div className="p-5">
-                                {birthdays.length === 0 ? (
-                                    <p className="text-sm text-slate-400 text-center py-4">Không có sinh nhật nào trong tháng này.</p>
-                                ) : (
-                                    <div className="divide-y divide-slate-100">
-                                        {birthdays.map((b) => (
-                                            <div key={b.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
-                                                <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden">
-                                                    {b.avatar_url ? <img src={b.avatar_url} className="w-full h-full object-cover" alt="" /> : <span className="text-xs font-semibold text-slate-500">{b.full_name?.charAt(0)}</span>}
+                            {/* Birthdays */}
+                            <section className="bg-white rounded-xl border border-slate-200">
+                                <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2.5">
+                                    <Cake className="w-4 h-4 text-slate-400" />
+                                    <h2 className="text-sm font-semibold text-slate-900">Sinh nhật tháng này</h2>
+                                </div>
+                                <div className="p-5">
+                                    {birthdays.length === 0 ? (
+                                        <p className="text-sm text-slate-400 text-center py-4">Không có sinh nhật nào trong tháng này.</p>
+                                    ) : (
+                                        <div className="divide-y divide-slate-100">
+                                            {birthdays.map((b) => (
+                                                <div key={b.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
+                                                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0 overflow-hidden">
+                                                        {b.avatar_url ? <img src={b.avatar_url} className="w-full h-full object-cover" alt="" /> : <span className="text-xs font-semibold text-slate-500">{b.full_name?.charAt(0)}</span>}
+                                                    </div>
+                                                    <p className="text-sm font-medium text-slate-900 truncate flex-1">{b.full_name}</p>
+                                                    <span className="text-xs text-slate-400 shrink-0">{String(b.day).padStart(2, '0')}/{String(b.month + 1).padStart(2, '0')}</span>
                                                 </div>
-                                                <p className="text-sm font-medium text-slate-900 truncate flex-1">{b.full_name}</p>
-                                                <span className="text-xs text-slate-400 shrink-0">{String(b.day).padStart(2, '0')}/{String(b.month + 1).padStart(2, '0')}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </section>
-                    </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </section>
+                        </div>
 
-                    {/* Right: Fund */}
-                    <div className="space-y-6">
-                        <section className="bg-white rounded-xl border border-slate-200">
-                            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2.5">
-                                <Wallet className="w-4 h-4 text-slate-400" />
-                                <h2 className="text-sm font-semibold text-slate-900">Quỹ Công ty</h2>
-                            </div>
-                            <div className="p-5">
-                                <p className="text-xs text-slate-400 mb-1">Số dư hiện tại</p>
-                                <p className={`text-2xl font-bold ${balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{fmt(balance)}</p>
-                                <div className="mt-4 grid grid-cols-2 gap-3">
-                                    <div className="px-3 py-2 bg-slate-50 rounded-lg">
-                                        <p className="text-[10px] text-slate-400">Nhân sự đóng</p>
-                                        <p className="text-sm font-semibold text-slate-900">{fmt(monthlyPerPerson)}/người</p>
-                                    </div>
-                                    <div className="px-3 py-2 bg-slate-50 rounded-lg">
-                                        <p className="text-[10px] text-slate-400">Công ty đóng</p>
-                                        <p className="text-sm font-semibold text-slate-900">{fmt(monthlyCompany)}</p>
+                        {/* Right: Fund */}
+                        <div className="space-y-6">
+                            <section className="bg-white rounded-xl border border-slate-200">
+                                <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2.5">
+                                    <Wallet className="w-4 h-4 text-slate-400" />
+                                    <h2 className="text-sm font-semibold text-slate-900">Quỹ Công ty</h2>
+                                </div>
+                                <div className="p-5">
+                                    <p className="text-xs text-slate-400 mb-1">Số dư hiện tại</p>
+                                    <p className={`text-2xl font-bold ${balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{fmt(balance)}</p>
+                                    <div className="mt-4 grid grid-cols-2 gap-3">
+                                        <div className="px-3 py-2 bg-slate-50 rounded-lg">
+                                            <p className="text-[10px] text-slate-400">Nhân sự đóng</p>
+                                            <p className="text-sm font-semibold text-slate-900">{fmt(monthlyPerPerson)}/người</p>
+                                        </div>
+                                        <div className="px-3 py-2 bg-slate-50 rounded-lg">
+                                            <p className="text-[10px] text-slate-400">Công ty đóng</p>
+                                            <p className="text-sm font-semibold text-slate-900">{fmt(monthlyCompany)}</p>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </section>
+                            </section>
 
-                        <section className="bg-white rounded-xl border border-slate-200">
-                            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                                <h3 className="text-sm font-semibold text-slate-900">Hoạt động gần đây</h3>
-                                {isAdmin && (
-                                    <button onClick={() => setIsTransModalOpen(true)} className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 font-medium">
-                                        <Plus className="w-3.5 h-3.5" /> Thêm
-                                    </button>
-                                )}
-                            </div>
-                            <div className="divide-y divide-slate-100 max-h-[400px] overflow-auto">
-                                {transactions.length === 0 ? (
-                                    <p className="text-sm text-slate-400 text-center py-6">Chưa có giao dịch nào.</p>
-                                ) : transactions.map(t => (
-                                    <div key={t.id} className="px-5 py-3 flex items-start justify-between gap-3">
-                                        <div className="flex items-start gap-3 min-w-0">
-                                            <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${t.type === 'income' ? 'bg-emerald-50 text-emerald-500' : 'bg-rose-50 text-rose-500'}`}>
-                                                {t.type === 'income' ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                            {/* Recent Transactions with time filter */}
+                            <section className="bg-white rounded-xl border border-slate-200">
+                                <div className="px-5 py-4 border-b border-slate-100 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-semibold text-slate-900">Hoạt động gần đây</h3>
+                                        {isAdmin && (
+                                            <button onClick={openAddTransaction} className="flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 font-medium">
+                                                <Plus className="w-3.5 h-3.5" /> Thêm
+                                            </button>
+                                        )}
+                                    </div>
+                                    <MonthNav month={overviewMonth} year={overviewYear} setMonth={setOverviewMonth} setYear={setOverviewYear} />
+                                    <div className="flex items-center gap-3 text-xs text-slate-400">
+                                        <span>Thu: <strong className="text-emerald-600">{fmt(overviewIncome)}</strong></span>
+                                        <span>Chi: <strong className="text-rose-600">{fmt(overviewExpense)}</strong></span>
+                                    </div>
+                                </div>
+                                <div className="divide-y divide-slate-100 max-h-[400px] overflow-auto">
+                                    {filteredTransactions.length === 0 ? (
+                                        <p className="text-sm text-slate-400 text-center py-6">Không có giao dịch nào trong tháng này.</p>
+                                    ) : filteredTransactions.map(t => (
+                                        <div key={t.id} className="px-5 py-3 flex items-start justify-between gap-3 group">
+                                            <div className="flex items-start gap-3 min-w-0">
+                                                <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${t.type === 'income' ? 'bg-emerald-50 text-emerald-500' : 'bg-rose-50 text-rose-500'}`}>
+                                                    {t.type === 'income' ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-sm text-slate-900 truncate">{t.description}</p>
+                                                    <p className="text-[11px] text-slate-400">{format(new Date(t.created_at), 'dd/MM/yyyy HH:mm')} · {t.category}</p>
+                                                </div>
                                             </div>
-                                            <div className="min-w-0">
-                                                <p className="text-sm text-slate-900 truncate">{t.description}</p>
-                                                <p className="text-[11px] text-slate-400">{format(new Date(t.created_at), 'dd/MM/yyyy HH:mm')} · {t.category}</p>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <span className={`text-sm font-semibold whitespace-nowrap ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-700'}`}>
+                                                    {t.type === 'income' ? '+' : '-'}{fmt(t.amount)}
+                                                </span>
+                                                {isAdmin && (
+                                                    <div className="hidden group-hover:flex items-center gap-1">
+                                                        <button onClick={() => openEditTransaction(t)} className="p-1 text-slate-400 hover:text-primary-600 rounded"><Pencil className="w-3 h-3" /></button>
+                                                        <button onClick={() => setDeletingTransId(t.id)} className="p-1 text-slate-400 hover:text-rose-600 rounded"><Trash2 className="w-3 h-3" /></button>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
-                                        <span className={`text-sm font-semibold whitespace-nowrap ${t.type === 'income' ? 'text-emerald-600' : 'text-slate-700'}`}>
-                                            {t.type === 'income' ? '+' : '-'}{fmt(t.amount)}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
+                                    ))}
+                                </div>
+                            </section>
+                        </div>
                     </div>
                 </div>
             )}
@@ -411,19 +491,7 @@ export default function HRCulturePage() {
             {activeTab === 'contributions' && (
                 <div className="space-y-6">
                     <div className="flex items-center justify-between flex-wrap gap-4">
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => { if (contribMonth === 1) { setContribMonth(12); setContribYear(y => y - 1); } else setContribMonth(m => m - 1); }}
-                                className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
-                                <ChevronLeft className="w-4 h-4 text-slate-400" />
-                            </button>
-                            <span className="text-sm font-semibold text-slate-900 min-w-[120px] text-center">
-                                {monthNames[contribMonth - 1]}, {contribYear}
-                            </span>
-                            <button onClick={() => { if (contribMonth === 12) { setContribMonth(1); setContribYear(y => y + 1); } else setContribMonth(m => m + 1); }}
-                                className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
-                                <ChevronRight className="w-4 h-4 text-slate-400" />
-                            </button>
-                        </div>
+                        <MonthNav month={contribMonth} year={contribYear} setMonth={setContribMonth} setYear={setContribYear} />
                         <div className="flex items-center gap-3">
                             <span className="text-sm text-slate-500">
                                 <strong className="text-emerald-600">{paidCount}</strong>/{employeeCount} đã đóng
@@ -502,19 +570,7 @@ export default function HRCulturePage() {
             {/* ===================== TAB: MONTHLY REPORT ===================== */}
             {activeTab === 'report' && (
                 <div className="space-y-6">
-                    <div className="flex items-center gap-2">
-                        <button onClick={() => { if (reportMonth === 1) { setReportMonth(12); setReportYear(y => y - 1); } else setReportMonth(m => m - 1); }}
-                            className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
-                            <ChevronLeft className="w-4 h-4 text-slate-400" />
-                        </button>
-                        <span className="text-sm font-semibold text-slate-900 min-w-[120px] text-center">
-                            {monthNames[reportMonth - 1]}, {reportYear}
-                        </span>
-                        <button onClick={() => { if (reportMonth === 12) { setReportMonth(1); setReportYear(y => y + 1); } else setReportMonth(m => m + 1); }}
-                            className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors">
-                            <ChevronRight className="w-4 h-4 text-slate-400" />
-                        </button>
-                    </div>
+                    <MonthNav month={reportMonth} year={reportYear} setMonth={setReportMonth} setYear={setReportYear} />
 
                     {monthlyReport && (
                         <>
@@ -580,11 +636,12 @@ export default function HRCulturePage() {
                                                     <th className="px-5 py-2.5 text-xs font-medium text-slate-400">Danh mục</th>
                                                     <th className="px-5 py-2.5 text-xs font-medium text-slate-400">Loại</th>
                                                     <th className="px-5 py-2.5 text-xs font-medium text-slate-400 text-right">Số tiền</th>
+                                                    {isAdmin && <th className="px-3 py-2.5 text-xs font-medium text-slate-400 w-16"></th>}
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-50">
                                                 {monthlyReport.transactions.map((t: FundTransaction) => (
-                                                    <tr key={t.id} className="hover:bg-slate-50/50">
+                                                    <tr key={t.id} className="hover:bg-slate-50/50 group">
                                                         <td className="px-5 py-2.5 text-slate-500 whitespace-nowrap">{format(new Date(t.created_at), 'dd/MM/yyyy')}</td>
                                                         <td className="px-5 py-2.5 text-slate-900">{t.description}</td>
                                                         <td className="px-5 py-2.5">
@@ -598,6 +655,14 @@ export default function HRCulturePage() {
                                                         <td className={`px-5 py-2.5 text-right font-semibold whitespace-nowrap ${t.type === 'income' ? 'text-emerald-600' : 'text-rose-600'}`}>
                                                             {t.type === 'income' ? '+' : '-'}{fmt(t.amount)}
                                                         </td>
+                                                        {isAdmin && (
+                                                            <td className="px-3 py-2.5">
+                                                                <div className="hidden group-hover:flex items-center gap-1 justify-center">
+                                                                    <button onClick={() => openEditTransaction(t)} className="p-1 text-slate-400 hover:text-primary-600 rounded"><Pencil className="w-3 h-3" /></button>
+                                                                    <button onClick={() => setDeletingTransId(t.id)} className="p-1 text-slate-400 hover:text-rose-600 rounded"><Trash2 className="w-3 h-3" /></button>
+                                                                </div>
+                                                            </td>
+                                                        )}
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -607,6 +672,7 @@ export default function HRCulturePage() {
                                                     <td className={`px-5 py-2.5 text-right font-bold ${monthlyReport.totalIncome - monthlyReport.totalExpense >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                                                         {fmt(monthlyReport.totalIncome - monthlyReport.totalExpense)}
                                                     </td>
+                                                    {isAdmin && <td></td>}
                                                 </tr>
                                             </tfoot>
                                         </table>
@@ -615,6 +681,20 @@ export default function HRCulturePage() {
                             </section>
                         </>
                     )}
+                </div>
+            )}
+
+            {/* ===================== DELETE CONFIRM ===================== */}
+            {deletingTransId && (
+                <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setDeletingTransId(null)}>
+                    <div className="bg-white rounded-xl w-full max-w-xs p-5 space-y-4" onClick={e => e.stopPropagation()}>
+                        <p className="text-sm font-semibold text-slate-900">Xác nhận xóa giao dịch?</p>
+                        <p className="text-xs text-slate-400">Thao tác này không thể hoàn tác. Số dư quỹ sẽ được cập nhật lại.</p>
+                        <div className="flex gap-2">
+                            <button onClick={() => setDeletingTransId(null)} className="flex-1 py-2 rounded-lg text-sm font-medium border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors">Hủy</button>
+                            <button onClick={() => handleDeleteTransaction(deletingTransId)} className="flex-1 py-2 rounded-lg text-sm font-medium bg-rose-600 text-white hover:bg-rose-700 transition-colors">Xóa</button>
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -652,7 +732,7 @@ export default function HRCulturePage() {
                 </div>
             )}
 
-            {/* ===================== BANK SETTINGS MODAL (ADMIN) ===================== */}
+            {/* ===================== BANK SETTINGS MODAL ===================== */}
             {showBankSettings && (
                 <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowBankSettings(false)}>
                     <div className="bg-white rounded-xl w-full max-w-md" onClick={e => e.stopPropagation()}>
@@ -663,71 +743,44 @@ export default function HRCulturePage() {
                         <div className="p-5 space-y-4">
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1.5">Ngân hàng</label>
-                                <select
-                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
-                                    value={editBank.bankId}
-                                    onChange={e => setEditBank({ ...editBank, bankId: e.target.value })}
-                                >
-                                    <option value="MB">MB Bank</option>
-                                    <option value="VCB">Vietcombank</option>
-                                    <option value="TCB">Techcombank</option>
-                                    <option value="ACB">ACB</option>
-                                    <option value="BIDV">BIDV</option>
-                                    <option value="VTB">VietinBank</option>
-                                    <option value="TPB">TPBank</option>
-                                    <option value="VPB">VPBank</option>
-                                    <option value="STB">Sacombank</option>
-                                    <option value="MSB">MSB</option>
-                                    <option value="SHB">SHB</option>
-                                    <option value="EIB">Eximbank</option>
+                                <select className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
+                                    value={editBank.bankId} onChange={e => setEditBank({ ...editBank, bankId: e.target.value })}>
+                                    <option value="MB">MB Bank</option><option value="VCB">Vietcombank</option><option value="TCB">Techcombank</option>
+                                    <option value="ACB">ACB</option><option value="BIDV">BIDV</option><option value="VTB">VietinBank</option>
+                                    <option value="TPB">TPBank</option><option value="VPB">VPBank</option><option value="STB">Sacombank</option>
+                                    <option value="MSB">MSB</option><option value="SHB">SHB</option><option value="EIB">Eximbank</option>
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1.5">Số tài khoản</label>
-                                <input
-                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
-                                    placeholder="VD: 0388123456"
-                                    value={editBank.accountNo}
-                                    onChange={e => setEditBank({ ...editBank, accountNo: e.target.value })}
-                                />
+                                <input className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
+                                    placeholder="VD: 0388123456" value={editBank.accountNo} onChange={e => setEditBank({ ...editBank, accountNo: e.target.value })} />
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1.5">Tên chủ tài khoản <span className="text-slate-300">(không dấu)</span></label>
-                                <input
-                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
-                                    placeholder="VD: CONG TY TNHH LYHU"
-                                    value={editBank.accountName}
-                                    onChange={e => setEditBank({ ...editBank, accountName: e.target.value })}
-                                />
+                                <input className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
+                                    placeholder="VD: CONG TY TNHH LYHU" value={editBank.accountName} onChange={e => setEditBank({ ...editBank, accountName: e.target.value })} />
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1.5">Mức đóng quỹ / tháng / người</label>
-                                <input
-                                    type="number"
-                                    className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
-                                    placeholder="50000"
-                                    value={editBank.monthlyAmount}
-                                    onChange={e => setEditBank({ ...editBank, monthlyAmount: Number(e.target.value) })}
-                                />
+                                <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
+                                    placeholder="50000" value={editBank.monthlyAmount} onChange={e => setEditBank({ ...editBank, monthlyAmount: Number(e.target.value) })} />
                             </div>
                         </div>
                         <div className="px-5 pb-5">
-                            <button onClick={saveBankConfig}
-                                className="w-full py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors">
-                                Lưu cài đặt
-                            </button>
+                            <button onClick={saveBankConfig} className="w-full py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors">Lưu cài đặt</button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* ===================== TRANSACTION MODAL ===================== */}
+            {/* ===================== TRANSACTION MODAL (ADD/EDIT) ===================== */}
             {isTransModalOpen && (
-                <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setIsTransModalOpen(false)}>
+                <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { setIsTransModalOpen(false); setEditingTrans(null); }}>
                     <div className="bg-white rounded-xl w-full max-w-sm" onClick={e => e.stopPropagation()}>
                         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-slate-900">Thêm giao dịch quỹ</h3>
-                            <button onClick={() => setIsTransModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
+                            <h3 className="text-sm font-semibold text-slate-900">{editingTrans ? 'Sửa giao dịch' : 'Thêm giao dịch quỹ'}</h3>
+                            <button onClick={() => { setIsTransModalOpen(false); setEditingTrans(null); }} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
                         </div>
                         <div className="p-5 space-y-4">
                             <div>
@@ -762,9 +815,9 @@ export default function HRCulturePage() {
                             </div>
                         </div>
                         <div className="px-5 pb-5">
-                            <button onClick={handleAddTransaction}
+                            <button onClick={handleSaveTransaction}
                                 className="w-full py-2.5 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors">
-                                Xác nhận
+                                {editingTrans ? 'Cập nhật' : 'Xác nhận'}
                             </button>
                         </div>
                     </div>

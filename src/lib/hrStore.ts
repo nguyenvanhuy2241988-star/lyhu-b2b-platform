@@ -357,6 +357,27 @@ export const addFundTransaction = async (transaction: Omit<FundTransaction, 'id'
     return data;
 };
 
+export const updateFundTransaction = async (id: string, updates: Partial<Omit<FundTransaction, 'id' | 'created_at'>>) => {
+    const { data, error } = await supabase
+        .from('fund_transactions')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const deleteFundTransaction = async (id: string) => {
+    const { error } = await supabase
+        .from('fund_transactions')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+};
+
 // -- FUND CONTRIBUTIONS --
 
 export interface FundContribution {
