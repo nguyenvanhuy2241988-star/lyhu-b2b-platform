@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Product } from "@/mocks/data";
 import { fetchCustomers, Customer, fetchDealItems } from "@/lib/crmDealsStore";
 import { loadProducts } from "@/lib/supabase/products";
-import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, User, ArrowLeft, Building, Gift, Tag, FileText, Percent, Search } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, User, Building, Gift, Tag, FileText, Search } from "lucide-react";
 import { addOrderSupabase, updateOrderSupabase } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { createClient } from "@/lib/supabaseClient";
@@ -637,7 +637,7 @@ function TelesalesCreateOrderContent() {
                 </div>
             )}
 
-            {/* Step 2: Select Products */}
+            {/* Step 2: Select Products — Split-Panel Layout */}
             {currentStep >= 2 && selectedCustomer && (
                 <>
                     {/* Selected Customer Info */}
@@ -659,383 +659,427 @@ function TelesalesCreateOrderContent() {
                         </button>
                     </div>
 
-                    {/* Product Selection */}
-                    <div className="bg-white p-6 rounded-xl border border-slate-200">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-semibold text-slate-900">Chọn sản phẩm</h3>
-                            {/* Product Search Input */}
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Tìm tên hoặc SKU..."
-                                    className="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-64"
-                                    value={productSearchTerm}
-                                    onChange={(e) => setProductSearchTerm(e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            {products
-                                .filter(p => {
-                                    const term = productSearchTerm.toLowerCase();
-                                    return p.name.toLowerCase().includes(term) || (p.sku && p.sku.toLowerCase().includes(term));
-                                })
-                                .map((product) => {
-                                    // Simple check: is there any item of this product?
-                                    const inOrderCount = orderItems.reduce((sum, item) => item.product.id === product.id ? sum + item.quantity : sum, 0);
-
-                                    const brandColors: Record<string, string> = {
-                                        UHI: "bg-orange-500",
-                                        BOYO: "bg-purple-500",
-                                        CVT: "bg-blue-500",
-                                        LYHU: "bg-indigo-500",
-                                    };
-                                    const brandColor = brandColors[product.brand || "LHU"] || "bg-indigo-500";
-                                    const inputValue = productQuantities[product.id] || 1;
-
-                                    return (
-                                        <div
-                                            key={product.id}
-                                            className={`p-4 border rounded-lg ${inOrderCount > 0 ? "border-indigo-500 bg-indigo-50" : "border-slate-200"
-                                                }`}
-                                        >
-                                            <span className={`inline-block ${brandColor} text-white text-xs font-semibold px-2 py-1 rounded mb-2`}>
-                                                {product.brand || "LHU"}
-                                            </span>
-                                            <h4 className="font-medium text-slate-900 text-sm mb-2 line-clamp-2 min-h-[2.5rem]">
-                                                {product.name}
-                                            </h4>
-                                            <p className="text-xs text-slate-500 mb-2">SKU: {product.sku}</p>
-                                            <p className="text-lg font-bold text-slate-900 mb-1">
-                                                {formatPrice(product.wholesalePrice || 0)}
-                                            </p>
-                                            <p className={`text-xs font-semibold mb-3 ${(inventory[product.id] ?? 0) > 0 ? 'text-green-600' : 'text-red-600'
-                                                }`}>
-                                                {(inventory[product.id] ?? 0) > 0
-                                                    ? `Sẵn hàng: ${inventory[product.id]}`
-                                                    : 'Hết hàng'}
-                                            </p>
-
-                                            {/* Quantity Input on Card */}
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <span className="text-xs text-slate-500">SL:</span>
-                                                <div className="flex items-center border border-slate-200 rounded bg-white w-full">
-                                                    <button
-                                                        onClick={() => setProductQuantities(prev => ({ ...prev, [product.id]: Math.max(1, (prev[product.id] || 1) - 1) }))}
-                                                        className="px-2 py-1 hover:bg-slate-100 transition-colors border-r border-slate-200"
-                                                    >
-                                                        <Minus className="w-3 h-3 text-slate-500" />
-                                                    </button>
-                                                    <input
-                                                        type="number"
-                                                        className="w-full text-center text-sm font-medium py-1 focus:outline-none"
-                                                        value={inputValue}
-                                                        onChange={(e) => {
-                                                            const val = parseInt(e.target.value) || 0;
-                                                            // Allow 0 temporarily while typing, but logical min is 1
-                                                            setProductQuantities(prev => ({ ...prev, [product.id]: Math.max(1, val) }));
-                                                        }}
-                                                        min="1"
-                                                    />
-                                                    <button
-                                                        onClick={() => setProductQuantities(prev => ({ ...prev, [product.id]: (prev[product.id] || 1) + 1 }))}
-                                                        className="px-2 py-1 hover:bg-slate-100 transition-colors border-l border-slate-200"
-                                                    >
-                                                        <Plus className="w-3 h-3 text-slate-500" />
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            <button
-                                                onClick={() => handleAddProduct(product, inputValue)}
-                                                disabled={(inventory[product.id] ?? 0) <= 0}
-                                                className={`w-full py-2 rounded-lg font-medium text-sm flex items-center justify-center gap-2 transition-colors ${(inventory[product.id] ?? 0) <= 0
-                                                    ? "bg-slate-100 text-slate-400 cursor-not-allowed" // Disabled style
-                                                    : inOrderCount > 0
-                                                        ? "bg-indigo-600 text-white hover:bg-indigo-700"
-                                                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                                                    }`}
-                                            >
-                                                <Plus className="w-4 h-4" />
-                                                {inOrderCount > 0 ? `Thêm nữa (${inputValue})` : "Thêm vào đơn"}
-                                            </button>
-                                        </div>
-                                    );
-                                })}
-                        </div>
-                    </div>
-
-                    {/* Order Summary */}
-                    {orderItems.length > 0 && (
-                        <div className="bg-white p-6 rounded-xl border border-slate-200">
-                            <h3 className="font-semibold text-slate-900 mb-4">Đơn hàng ({orderItems.length} dòng)</h3>
-
-                            <div className="space-y-3 mb-6">
-                                {orderItems.map((item, index) => (
-                                    <div
-                                        key={`${item.product.id}-${index}`}
-                                        className={`flex flex-col gap-3 p-4 border rounded-lg transition-colors ${item.isGift ? 'bg-indigo-50 border-indigo-200' : 'bg-white border-slate-200'}`}
-                                    >
-                                        {/* Top Row: Info + Actions */}
-                                        <div className="flex items-start justify-between gap-4">
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    {item.isGift && <span className="px-1.5 py-0.5 bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase rounded">Quà tặng</span>}
-                                                    <h4 className="font-medium text-slate-900 text-sm">{item.product.name}</h4>
-                                                </div>
-
-                                                {/* Price Edit Input */}
-                                                <div className="flex items-center gap-1">
-                                                    <span className="text-xs text-slate-500">Đơn giá:</span>
-                                                    {item.isGift ? (
-                                                        <span className="text-sm font-medium text-slate-400">0 đ</span>
-                                                    ) : (
-                                                        <div className="relative w-28">
-                                                            <input
-                                                                type="number"
-                                                                className="w-full pl-2 pr-5 py-0.5 text-sm font-medium text-slate-900 border border-slate-200 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-                                                                value={item.price}
-                                                                onChange={(e) => handleUpdatePrice(index, Number(e.target.value))}
-                                                            />
-                                                            <span className="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">đ</span>
-                                                        </div>
-                                                    )}
-                                                    {item.price !== (item.product.wholesalePrice || 0) && !item.isGift && (
-                                                        <span className="text-[10px] text-slate-400 line-through ml-1">
-                                                            {formatPrice(item.product.wholesalePrice || 0)}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            <div className="text-right">
-                                                <p className={`font-semibold ${item.isGift ? 'text-indigo-600' : 'text-slate-900'}`}>
-                                                    {formatPrice(calculateItemSubtotal(item))}
-                                                </p>
-                                                {item.discount > 0 && !item.isGift && (
-                                                    <p className="text-xs text-red-500">
-                                                        - {formatPrice(item.discount)}
-                                                    </p>
-                                                )}
-                                            </div>
-
-                                            <button
-                                                onClick={() => handleRemoveItem(index)}
-                                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-
-                                        {/* Bottom Row: Controls */}
-                                        <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100">
-                                            {/* Quantity */}
-                                            <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-1">
-                                                <button
-                                                    onClick={() => handleUpdateQuantity(index, -1)}
-                                                    disabled={item.quantity <= 1}
-                                                    className="p-1 hover:bg-white rounded transition-colors disabled:opacity-50"
-                                                >
-                                                    <Minus className="w-3.5 h-3.5" />
-                                                </button>
-                                                <input
-                                                    type="number"
-                                                    className="w-12 text-center text-sm font-semibold bg-white border border-slate-200 rounded focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 py-0.5"
-                                                    value={item.quantity}
-                                                    onChange={(e) => handleSetQuantity(index, parseInt(e.target.value) || 1)}
-                                                    min={1}
-                                                />
-                                                <button
-                                                    onClick={() => handleUpdateQuantity(index, 1)}
-                                                    className="p-1 hover:bg-white rounded transition-colors"
-                                                >
-                                                    <Plus className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
-
-                                            {/* Options */}
-                                            <div className="flex items-center gap-3">
-                                                {/* Gift Toggle */}
-                                                <label className="flex items-center gap-1.5 cursor-pointer text-xs font-medium text-slate-600 select-none">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={item.isGift}
-                                                        onChange={() => handleToggleGift(index)}
-                                                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                                                    />
-                                                    <Gift className="w-3.5 h-3.5" />
-                                                    <span>Tặng</span>
-                                                </label>
-
-                                                <div className="w-px h-4 bg-slate-200"></div>
-
-                                                {/* Discount Input */}
-                                                <div className={`flex items-center gap-1.5 ${item.isGift ? 'opacity-50 pointer-events-none' : ''}`}>
-                                                    <Tag className="w-3.5 h-3.5 text-slate-400" />
-                                                    <div className="flex items-center border border-slate-200 rounded overflow-hidden">
-                                                        <input
-                                                            type="number"
-                                                            placeholder="Giảm..."
-                                                            className="w-20 pl-2 pr-1 py-1 text-xs outline-none text-right"
-                                                            value={item.discountValue || ""}
-                                                            onChange={(e) => handleUpdateDiscount(index, Number(e.target.value), item.discountType)}
-                                                            min={0}
-                                                        />
-                                                        <button
-                                                            onClick={() => handleUpdateDiscount(index, item.discountValue, item.discountType === 'amount' ? 'percent' : 'amount')}
-                                                            className="px-1.5 py-1 bg-slate-50 border-l border-slate-200 text-[10px] text-slate-600 font-bold hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-                                                            title="Đổi đơn vị (đ / %)"
-                                                        >
-                                                            {item.discountType === 'amount' ? 'đ' : '%'}
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className="border-t border-slate-200 pt-4">
-                                <div className="space-y-3 mb-4">
-                                    {/* Note */}
-                                    <div>
-                                        <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1">
-                                            <FileText className="w-4 h-4" /> Ghi chú đơn hàng
-                                        </label>
-                                        <textarea
-                                            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[60px]"
-                                            placeholder="Ghi chú thêm..."
-                                            value={orderNote}
-                                            onChange={(e) => setOrderNote(e.target.value)}
+                    {/* Split-Panel: Product Catalog (left) + Order Cart (right) */}
+                    <div className="flex flex-col lg:flex-row gap-6">
+                        {/* LEFT PANEL: Product Catalog — Compact Table */}
+                        <div className="flex-[3] min-w-0">
+                            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                                {/* Header with search */}
+                                <div className="flex items-center justify-between p-4 border-b border-slate-100">
+                                    <h3 className="font-semibold text-slate-900">Chọn sản phẩm</h3>
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <input
+                                            type="text"
+                                            placeholder="Tìm tên hoặc SKU..."
+                                            className="pl-9 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-64"
+                                            value={productSearchTerm}
+                                            onChange={(e) => setProductSearchTerm(e.target.value)}
                                         />
                                     </div>
-
-                                    {/* Payment Method */}
-                                    <div>
-                                        <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-1">
-                                            <Building className="w-4 h-4" /> Phương thức thanh toán
-                                        </label>
-                                        <div className="grid grid-cols-3 gap-3">
-                                            {[
-                                                { id: 'COD', label: 'Tiền mặt (COD/Ship)' },
-                                                { id: 'BANKING', label: 'Chuyển khoản' },
-                                                { id: 'DEBT', label: 'Công nợ' }
-                                            ].map((method) => (
-                                                <button
-                                                    key={method.id}
-                                                    onClick={() => setPaymentMethod(method.id)}
-                                                    className={`py-2 px-3 text-sm rounded-lg border text-center transition-colors ${paymentMethod === method.id
-                                                        ? 'bg-indigo-50 border-indigo-500 text-indigo-700 font-medium'
-                                                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-                                                        }`}
-                                                >
-                                                    {method.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-
-                                    {/* Summary Stats */}
-                                    <div className="bg-slate-50 p-4 rounded-lg space-y-2 text-sm">
-                                        <div className="flex items-center justify-between text-slate-600">
-                                            <span>Tổng tiền hàng (Niêm yết):</span>
-                                            <span>{formatPrice(totalListPrice)}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between text-slate-600">
-                                            <span>Chiết khấu theo dòng:</span>
-                                            <span className="text-red-600">-{formatPrice(totalItemDiscount)}</span>
-                                        </div>
-                                        <div className="flex items-center justify-between text-slate-600">
-                                            <span>Thành tiền (sau CK dòng):</span>
-                                            <span className="font-medium">{formatPrice(itemsSubtotal)}</span>
-                                        </div>
-
-                                        <div className="border-t border-slate-200 my-2"></div>
-
-                                        {/* Order-level discount % */}
-                                        <div className="flex items-center justify-between text-slate-600">
-                                            <div className="flex items-center gap-1.5">
-                                                <Percent className="w-3.5 h-3.5" />
-                                                <span>Chiết khấu đơn (%):</span>
-                                                <input
-                                                    type="number"
-                                                    className="w-14 px-1 py-0.5 text-center border border-slate-300 rounded focus:border-indigo-500 text-xs"
-                                                    placeholder="0"
-                                                    min={0}
-                                                    max={100}
-                                                    value={orderDiscountPercent || ""}
-                                                    onChange={(e) => setOrderDiscountPercent(Math.min(100, Math.max(0, Number(e.target.value))))}
-                                                />
-                                            </div>
-                                            <span className="text-red-600">-{formatPrice(orderDiscountAmount)}</span>
-                                        </div>
-
-                                        <div className="flex items-center justify-between text-slate-700 font-medium">
-                                            <span>Thành tiền (Trước VAT):</span>
-                                            <span>{formatPrice(afterAllDiscounts)}</span>
-                                        </div>
-
-                                        {/* Total discount summary */}
-                                        <div className="flex items-center justify-between text-slate-500 text-xs">
-                                            <span>Tổng chiết khấu:</span>
-                                            <div>
-                                                <span className="text-red-600 mr-1">-{formatPrice(totalAllDiscounts)}</span>
-                                                <span className="bg-red-100 text-red-700 px-1.5 py-0.5 rounded">
-                                                    {discountPercent.toFixed(1)}%
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className="border-t border-slate-200 my-2"></div>
-
-                                        {/* VAT */}
-                                        <div className="flex items-center justify-between text-slate-600">
-                                            <div className="flex items-center gap-1.5">
-                                                <Percent className="w-3.5 h-3.5" />
-                                                <span>Thuế VAT (%):</span>
-                                                <input
-                                                    type="number"
-                                                    className="w-12 px-1 py-0.5 text-center border border-slate-300 rounded focus:border-indigo-500 text-xs"
-                                                    placeholder="0"
-                                                    min={0}
-                                                    max={100}
-                                                    value={vatRate || ""}
-                                                    onChange={(e) => setVatRate(Number(e.target.value))}
-                                                />
-                                            </div>
-                                            <span>+{formatPrice(totalVAT)}</span>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-between pt-2">
-                                        <span className="text-lg font-bold text-slate-900">Tổng thanh toán:</span>
-                                        <span className="text-2xl font-bold text-indigo-600">
-                                            {formatPrice(finalTotal)}
-                                        </span>
-                                    </div>
                                 </div>
 
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={handleReset}
-                                        className="flex-1 px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold transition-colors"
-                                    >
-                                        Hủy
-                                    </button>
-                                    <button
-                                        onClick={handleCreateOrder}
-                                        className="flex-1 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <ShoppingCart className="w-5 h-5" />
-                                        {editOrderId ? "Cập nhật đơn" : "Tạo đơn"}
-                                    </button>
+                                {/* Product Table */}
+                                <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 280px)' }}>
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-slate-50 sticky top-0 z-10">
+                                            <tr className="text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+                                                <th className="px-4 py-3">Sản phẩm</th>
+                                                <th className="px-3 py-3 text-right whitespace-nowrap">Giá sỉ</th>
+                                                <th className="px-3 py-3 text-center">Kho</th>
+                                                <th className="px-3 py-3 text-center">Số lượng</th>
+                                                <th className="px-3 py-3 text-center w-28"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {products
+                                                .filter(p => {
+                                                    const term = productSearchTerm.toLowerCase();
+                                                    return p.name.toLowerCase().includes(term) || (p.sku && p.sku.toLowerCase().includes(term));
+                                                })
+                                                .map((product) => {
+                                                    const inOrderCount = orderItems.reduce((sum, item) => item.product.id === product.id ? sum + item.quantity : sum, 0);
+                                                    const brandColors: Record<string, string> = {
+                                                        UHI: "bg-orange-500",
+                                                        BOYO: "bg-purple-500",
+                                                        CVT: "bg-blue-500",
+                                                        LYHU: "bg-indigo-500",
+                                                    };
+                                                    const brandColor = brandColors[product.brand || "LHU"] || "bg-indigo-500";
+                                                    const inputValue = productQuantities[product.id] || 1;
+                                                    const stock = inventory[product.id] ?? 0;
+                                                    const isOutOfStock = stock <= 0;
+
+                                                    return (
+                                                        <tr
+                                                            key={product.id}
+                                                            className={`group transition-colors ${inOrderCount > 0
+                                                                ? "bg-indigo-50/60 border-l-[3px] border-l-indigo-500"
+                                                                : "hover:bg-slate-50 border-l-[3px] border-l-transparent"
+                                                                }`}
+                                                        >
+                                                            {/* Product Info */}
+                                                            <td className="px-4 py-3">
+                                                                <div className="flex items-center gap-2.5">
+                                                                    <span className={`${brandColor} text-white text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0`}>
+                                                                        {product.brand || "LHU"}
+                                                                    </span>
+                                                                    <div className="min-w-0">
+                                                                        <p className="font-medium text-slate-900 text-sm truncate max-w-[260px]" title={product.name}>
+                                                                            {product.name}
+                                                                        </p>
+                                                                        <p className="text-[11px] text-slate-400">SKU: {product.sku}</p>
+                                                                    </div>
+                                                                    {inOrderCount > 0 && (
+                                                                        <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                                                                            ×{inOrderCount}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+
+                                                            {/* Price */}
+                                                            <td className="px-3 py-3 text-right font-semibold text-slate-900 whitespace-nowrap">
+                                                                {formatPrice(product.wholesalePrice || 0)}
+                                                            </td>
+
+                                                            {/* Stock */}
+                                                            <td className="px-3 py-3 text-center">
+                                                                <span className={`text-xs font-semibold ${isOutOfStock ? 'text-red-500' : 'text-green-600'}`}>
+                                                                    {isOutOfStock ? 'Hết' : stock}
+                                                                </span>
+                                                            </td>
+
+                                                            {/* Quantity Input */}
+                                                            <td className="px-3 py-3">
+                                                                <div className="flex items-center justify-center">
+                                                                    <div className="flex items-center border border-slate-200 rounded-md bg-white">
+                                                                        <button
+                                                                            onClick={() => setProductQuantities(prev => ({ ...prev, [product.id]: Math.max(1, (prev[product.id] || 1) - 1) }))}
+                                                                            className="px-1.5 py-1 hover:bg-slate-100 transition-colors border-r border-slate-200"
+                                                                        >
+                                                                            <Minus className="w-3 h-3 text-slate-400" />
+                                                                        </button>
+                                                                        <input
+                                                                            type="number"
+                                                                            className="w-10 text-center text-sm font-medium py-1 focus:outline-none"
+                                                                            value={inputValue}
+                                                                            onChange={(e) => {
+                                                                                const val = parseInt(e.target.value) || 0;
+                                                                                setProductQuantities(prev => ({ ...prev, [product.id]: Math.max(1, val) }));
+                                                                            }}
+                                                                            min="1"
+                                                                        />
+                                                                        <button
+                                                                            onClick={() => setProductQuantities(prev => ({ ...prev, [product.id]: (prev[product.id] || 1) + 1 }))}
+                                                                            className="px-1.5 py-1 hover:bg-slate-100 transition-colors border-l border-slate-200"
+                                                                        >
+                                                                            <Plus className="w-3 h-3 text-slate-400" />
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+
+                                                            {/* Add Button */}
+                                                            <td className="px-3 py-3 text-center">
+                                                                <button
+                                                                    onClick={() => handleAddProduct(product, inputValue)}
+                                                                    disabled={isOutOfStock}
+                                                                    className={`px-3 py-1.5 rounded-md font-medium text-xs flex items-center gap-1 mx-auto transition-all ${isOutOfStock
+                                                                        ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                                                                        : inOrderCount > 0
+                                                                            ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm"
+                                                                            : "bg-slate-100 text-slate-700 hover:bg-indigo-50 hover:text-indigo-700"
+                                                                        }`}
+                                                                >
+                                                                    <Plus className="w-3.5 h-3.5" />
+                                                                    Thêm
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                        </tbody>
+                                    </table>
+                                    {products.length === 0 && (
+                                        <p className="text-slate-500 text-center py-8">Chưa có sản phẩm nào.</p>
+                                    )}
                                 </div>
                             </div>
                         </div>
-                    )}
+
+                        {/* RIGHT PANEL: Sticky Order Cart */}
+                        <div className="flex-[2] min-w-0">
+                            <div className="lg:sticky lg:top-4">
+                                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                                    {/* Cart Header */}
+                                    <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-white">
+                                        <div className="flex items-center gap-2">
+                                            <ShoppingCart className="w-5 h-5 text-indigo-600" />
+                                            <h3 className="font-semibold text-slate-900">Đơn hàng</h3>
+                                            {orderItems.length > 0 && (
+                                                <span className="bg-indigo-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
+                                                    {orderItems.length}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {orderItems.length > 0 && (
+                                            <span className="text-lg font-bold text-indigo-600">
+                                                {formatPrice(finalTotal)}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {/* Cart Items — Scrollable */}
+                                    <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 520px)' }}>
+                                        {orderItems.length === 0 ? (
+                                            <div className="p-8 text-center">
+                                                <ShoppingCart className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                                                <p className="text-sm text-slate-400">Chưa có sản phẩm nào</p>
+                                                <p className="text-xs text-slate-400 mt-1">Thêm từ danh sách bên trái</p>
+                                            </div>
+                                        ) : (
+                                            <div className="divide-y divide-slate-100">
+                                                {orderItems.map((item, index) => (
+                                                    <div
+                                                        key={`${item.product.id}-${index}`}
+                                                        className={`p-3 transition-colors ${item.isGift ? 'bg-indigo-50/50' : ''}`}
+                                                    >
+                                                        {/* Item header: name + subtotal + delete */}
+                                                        <div className="flex items-start justify-between gap-2 mb-2">
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center gap-1.5">
+                                                                    {item.isGift && <span className="px-1 py-0.5 bg-indigo-100 text-indigo-700 text-[9px] font-bold uppercase rounded">Tặng</span>}
+                                                                    <h4 className="font-medium text-slate-900 text-xs truncate">{item.product.name}</h4>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                                <span className={`text-sm font-semibold ${item.isGift ? 'text-indigo-600' : 'text-slate-900'}`}>
+                                                                    {formatPrice(calculateItemSubtotal(item))}
+                                                                </span>
+                                                                <button
+                                                                    onClick={() => handleRemoveItem(index)}
+                                                                    className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                                >
+                                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Controls row: qty, price, gift, discount */}
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            {/* Quantity */}
+                                                            <div className="flex items-center bg-slate-100 rounded-md">
+                                                                <button
+                                                                    onClick={() => handleUpdateQuantity(index, -1)}
+                                                                    disabled={item.quantity <= 1}
+                                                                    className="p-1 hover:bg-white rounded-l-md transition-colors disabled:opacity-40"
+                                                                >
+                                                                    <Minus className="w-3 h-3" />
+                                                                </button>
+                                                                <input
+                                                                    type="number"
+                                                                    className="w-9 text-center text-xs font-semibold bg-white border-x border-slate-200 py-1 focus:outline-none"
+                                                                    value={item.quantity}
+                                                                    onChange={(e) => handleSetQuantity(index, parseInt(e.target.value) || 1)}
+                                                                    min={1}
+                                                                />
+                                                                <button
+                                                                    onClick={() => handleUpdateQuantity(index, 1)}
+                                                                    className="p-1 hover:bg-white rounded-r-md transition-colors"
+                                                                >
+                                                                    <Plus className="w-3 h-3" />
+                                                                </button>
+                                                            </div>
+
+                                                            {/* Price edit */}
+                                                            {!item.isGift && (
+                                                                <div className="relative">
+                                                                    <input
+                                                                        type="number"
+                                                                        className="w-20 pl-1.5 pr-4 py-1 text-xs font-medium text-slate-900 border border-slate-200 rounded-md focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-right"
+                                                                        value={item.price}
+                                                                        onChange={(e) => handleUpdatePrice(index, Number(e.target.value))}
+                                                                    />
+                                                                    <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[9px] text-slate-400">đ</span>
+                                                                </div>
+                                                            )}
+
+                                                            {/* Gift toggle */}
+                                                            <label className="flex items-center gap-1 cursor-pointer text-[11px] font-medium text-slate-500 select-none ml-auto">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={item.isGift}
+                                                                    onChange={() => handleToggleGift(index)}
+                                                                    className="w-3.5 h-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                                />
+                                                                <Gift className="w-3 h-3" />
+                                                            </label>
+
+                                                            {/* Discount */}
+                                                            {!item.isGift && (
+                                                                <div className="flex items-center border border-slate-200 rounded-md overflow-hidden">
+                                                                    <input
+                                                                        type="number"
+                                                                        placeholder="CK"
+                                                                        className="w-14 pl-1.5 pr-0.5 py-1 text-[11px] outline-none text-right"
+                                                                        value={item.discountValue || ""}
+                                                                        onChange={(e) => handleUpdateDiscount(index, Number(e.target.value), item.discountType)}
+                                                                        min={0}
+                                                                    />
+                                                                    <button
+                                                                        onClick={() => handleUpdateDiscount(index, item.discountValue, item.discountType === 'amount' ? 'percent' : 'amount')}
+                                                                        className="px-1 py-1 bg-slate-50 border-l border-slate-200 text-[9px] text-slate-600 font-bold hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                                                                    >
+                                                                        {item.discountType === 'amount' ? 'đ' : '%'}
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        {/* Discount info */}
+                                                        {item.discount > 0 && !item.isGift && (
+                                                            <p className="text-[10px] text-red-500 mt-1 text-right">CK: -{formatPrice(item.discount)}</p>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Cart Footer: Note, Payment, Summary, Actions */}
+                                    {orderItems.length > 0 && (
+                                        <div className="border-t border-slate-200 p-4 space-y-3">
+                                            {/* Note */}
+                                            <div>
+                                                <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1">
+                                                    <FileText className="w-3.5 h-3.5" /> Ghi chú
+                                                </label>
+                                                <textarea
+                                                    className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 min-h-[40px] resize-none"
+                                                    placeholder="Ghi chú thêm..."
+                                                    value={orderNote}
+                                                    onChange={(e) => setOrderNote(e.target.value)}
+                                                />
+                                            </div>
+
+                                            {/* Payment Method */}
+                                            <div>
+                                                <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1">
+                                                    <Building className="w-3.5 h-3.5" /> Thanh toán
+                                                </label>
+                                                <div className="grid grid-cols-3 gap-1.5">
+                                                    {[
+                                                        { id: 'COD', label: 'COD' },
+                                                        { id: 'BANKING', label: 'CK' },
+                                                        { id: 'DEBT', label: 'Công nợ' }
+                                                    ].map((method) => (
+                                                        <button
+                                                            key={method.id}
+                                                            onClick={() => setPaymentMethod(method.id)}
+                                                            className={`py-1.5 px-2 text-xs rounded-md border text-center transition-colors ${paymentMethod === method.id
+                                                                ? 'bg-indigo-50 border-indigo-500 text-indigo-700 font-medium'
+                                                                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                                                                }`}
+                                                        >
+                                                            {method.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Summary */}
+                                            <div className="bg-slate-50 p-3 rounded-lg space-y-1.5 text-xs">
+                                                <div className="flex items-center justify-between text-slate-600">
+                                                    <span>Tiền hàng:</span>
+                                                    <span>{formatPrice(totalListPrice)}</span>
+                                                </div>
+                                                {totalItemDiscount > 0 && (
+                                                    <div className="flex items-center justify-between text-slate-600">
+                                                        <span>CK dòng:</span>
+                                                        <span className="text-red-600">-{formatPrice(totalItemDiscount)}</span>
+                                                    </div>
+                                                )}
+
+                                                <div className="flex items-center justify-between text-slate-600">
+                                                    <div className="flex items-center gap-1">
+                                                        <span>CK đơn:</span>
+                                                        <input
+                                                            type="number"
+                                                            className="w-10 px-1 py-0.5 text-center border border-slate-300 rounded focus:border-indigo-500 text-[11px]"
+                                                            placeholder="0"
+                                                            min={0}
+                                                            max={100}
+                                                            value={orderDiscountPercent || ""}
+                                                            onChange={(e) => setOrderDiscountPercent(Math.min(100, Math.max(0, Number(e.target.value))))}
+                                                        />
+                                                        <span className="text-slate-400">%</span>
+                                                    </div>
+                                                    <span className="text-red-600">-{formatPrice(orderDiscountAmount)}</span>
+                                                </div>
+
+                                                {(totalAllDiscounts > 0) && (
+                                                    <div className="flex items-center justify-between text-slate-500">
+                                                        <span>Tổng CK:</span>
+                                                        <div>
+                                                            <span className="text-red-600 mr-1">-{formatPrice(totalAllDiscounts)}</span>
+                                                            <span className="bg-red-100 text-red-700 px-1 py-0.5 rounded text-[10px]">
+                                                                {discountPercent.toFixed(1)}%
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                <div className="border-t border-slate-200 my-1"></div>
+
+                                                <div className="flex items-center justify-between text-slate-600">
+                                                    <div className="flex items-center gap-1">
+                                                        <span>VAT:</span>
+                                                        <input
+                                                            type="number"
+                                                            className="w-9 px-1 py-0.5 text-center border border-slate-300 rounded focus:border-indigo-500 text-[11px]"
+                                                            placeholder="0"
+                                                            min={0}
+                                                            max={100}
+                                                            value={vatRate || ""}
+                                                            onChange={(e) => setVatRate(Number(e.target.value))}
+                                                        />
+                                                        <span className="text-slate-400">%</span>
+                                                    </div>
+                                                    <span>+{formatPrice(totalVAT)}</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Total */}
+                                            <div className="flex items-center justify-between pt-1">
+                                                <span className="text-sm font-bold text-slate-900">Tổng:</span>
+                                                <span className="text-xl font-bold text-indigo-600">
+                                                    {formatPrice(finalTotal)}
+                                                </span>
+                                            </div>
+
+                                            {/* Actions */}
+                                            <div className="flex gap-2 pt-1">
+                                                <button
+                                                    onClick={handleReset}
+                                                    className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-sm transition-colors"
+                                                >
+                                                    Hủy
+                                                </button>
+                                                <button
+                                                    onClick={handleCreateOrder}
+                                                    className="flex-[2] px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-sm transition-colors flex items-center justify-center gap-2"
+                                                >
+                                                    <ShoppingCart className="w-4 h-4" />
+                                                    {editOrderId ? "Cập nhật đơn" : "Tạo đơn"}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </>
             )}
         </div>
