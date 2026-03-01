@@ -7,6 +7,7 @@ import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import { UserRole } from "@/lib/auth";
 import { WelcomeGreeting } from "@/components/common/WelcomeGreeting";
+import QuickChatWidget from "@/components/chat/QuickChatWidget";
 
 interface DashboardShellProps {
     role?: UserRole;
@@ -49,6 +50,7 @@ export default function DashboardShell({ children, role, allowedRoles, title }: 
                     {children}
                 </main>
                 <WelcomeGreeting />
+                <QuickChatWidget />
             </div>
         </div>
     );

@@ -10,6 +10,7 @@ import { UserRole } from "@/lib/auth";
 import { useEffect, useState } from "react";
 import { getMyTasks } from "@/lib/telesalesTasksStore";
 import { calculateKpiMetrics, calculateKpiProgress } from "@/lib/telesalesKpiSelectors";
+import { useChatStore } from "@/lib/chatStore";
 
 interface SidebarProps {
     role: UserRole;
@@ -22,6 +23,8 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
     const items = NAV_ITEMS[role] || [];
     const [showKpiBadge, setShowKpiBadge] = useState(false);
+    const { getTotalUnreadCount } = useChatStore();
+    const chatUnread = getTotalUnreadCount();
 
     useEffect(() => {
         // Only check for Telesales role or if the link exists
@@ -87,6 +90,7 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
                         const Icon = item.icon as LucideIcon;
                         const isActive = pathname === item.href;
                         const isKpiLink = item.href === '/telesales/earnings';
+                        const isChatLink = item.href === '/chat';
 
                         return (
                             <Link
@@ -104,6 +108,11 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
                                 <span>{item.label}</span>
                                 {isKpiLink && showKpiBadge && (
                                     <span className="absolute right-2 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white" />
+                                )}
+                                {isChatLink && chatUnread > 0 && (
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center ring-2 ring-white">
+                                        {chatUnread > 9 ? '9+' : chatUnread}
+                                    </span>
                                 )}
                             </Link>
                         );

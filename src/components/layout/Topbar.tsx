@@ -1,10 +1,9 @@
-import { Menu, MessageCircle, LogOut, Settings, UserCircle, Bell, ChevronDown } from "lucide-react";
+import { Menu, LogOut, Settings, UserCircle, ChevronDown } from "lucide-react";
 import NotificationBell from "../ui/NotificationBell";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useEffect, useState, useRef } from "react";
 import { useChatStore } from "@/lib/chatStore";
-import { useToast } from "@/components/ui/toast";
 
 interface TopbarProps {
     onMenuClick: () => void;
@@ -17,16 +16,10 @@ export default function Topbar({ onMenuClick, title = "Dashboard" }: TopbarProps
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const router = useRouter();
-    const pathname = usePathname();
     const {
-        subscribeToGlobalMessages,
-        unsubscribeFromGlobalMessages,
         getTotalUnreadCount,
         fetchConversations
     } = useChatStore();
-    const { showToast } = useToast();
-
-    const unreadCount = getTotalUnreadCount();
 
     const userName = user?.full_name || user?.name || user?.email?.split('@')[0] || "User";
     const userEmail = user?.email || "";
@@ -34,25 +27,10 @@ export default function Topbar({ onMenuClick, title = "Dashboard" }: TopbarProps
 
     useEffect(() => {
         if (user?.id) {
-            // Initial fetch to get unread counts
+            // Initial fetch to get unread counts (QuickChatWidget handles global message popup)
             fetchConversations(user.id);
-
-            // Subscribe to chat notifications
-            subscribeToGlobalMessages(user.id, (msg) => {
-                if (pathname === '/chat') return;
-                const isMentioned = msg.content.includes(`@${user.email?.split('@')[0]}`) || msg.content.includes(`@${user.name}`);
-                showToast(
-                    `${isMentioned ? '🔴 Bạn được nhắc đến: ' : 'Tin nhắn mới: '} ${msg.content}`,
-                    'info',
-                    4000
-                );
-            });
         }
-
-        return () => {
-            unsubscribeFromGlobalMessages();
-        }
-    }, [user?.id, user?.email, user?.name, subscribeToGlobalMessages, unsubscribeFromGlobalMessages, pathname, showToast, fetchConversations]);
+    }, [user?.id, fetchConversations]);
 
     // Close dropdown on click outside
     useEffect(() => {
@@ -87,19 +65,7 @@ export default function Topbar({ onMenuClick, title = "Dashboard" }: TopbarProps
             </div>
 
             <div className="flex items-center gap-2 sm:gap-4">
-                {/* Internal Chat Link with Real Unread Badge */}
-                <button
-                    onClick={() => router.push('/chat')}
-                    className="p-2.5 hover:bg-slate-100 rounded-full transition-all relative group active:scale-95"
-                    title="Tin nhắn nội bộ"
-                >
-                    <MessageCircle className="w-5 h-5 text-slate-500 group-hover:text-primary-600 transition-colors" />
-                    {unreadCount > 0 && (
-                        <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white animate-pulse">
-                            {unreadCount > 9 ? '9+' : unreadCount}
-                        </span>
-                    )}
-                </button>
+                {/* Chat notification subscription is kept in useEffect above for toast alerts */}
 
                 <NotificationBell />
 
