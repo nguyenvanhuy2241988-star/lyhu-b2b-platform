@@ -156,9 +156,9 @@ export default function QuickChatWidget() {
     // --- Derived data ---
     const activeConversation = conversations.find(c => c.id === activeConversationId);
 
-    // Recent conversations for quick-switch tabs (top 8, sorted by last_message_at)
+    // Recent conversations for quick-switch tabs (top 8, no channels, sorted by last_message_at)
     const recentConvs = [...conversations]
-        .filter(c => c.last_message_at)
+        .filter(c => c.last_message_at && c.type !== 'channel')
         .sort((a, b) => {
             const timeA = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
             const timeB = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;

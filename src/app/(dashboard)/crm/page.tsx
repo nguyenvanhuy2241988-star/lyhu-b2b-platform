@@ -1766,20 +1766,8 @@ export default function CRMPage() {
                 )
             }
 
-            {/* DEBUG CONSOLE (Temporary) */}
-            <div className="fixed bottom-4 right-4 bg-black/80 text-white p-4 rounded-lg z-[99999] max-w-md max-h-[300px] overflow-auto font-mono text-xs shadow-xl border border-white/20">
-                <div className="flex justify-between items-center mb-2 border-b border-white/20 pb-1">
-                    <span className="font-bold text-yellow-400">DEBUG CONSOLE</span>
-                    <button onClick={() => setDebugLogs([])} className="text-gray-400 hover:text-white">Clear</button>
-                </div>
-                {debugLogs.length === 0 ? <div className="text-gray-500 italic">Waiting for actions...</div> : (
-                    debugLogs.map((log, i) => (
-                        <div key={i} className={`mb-1 border-b border-white/10 pb-1 ${log.type === 'error' ? 'text-red-400' : 'text-green-400'}`}>
-                            <span className="text-gray-500">[{log.time}]</span> {log.msg}
-                        </div>
-                    ))
-                )}
-            </div>
+
+
             {/* Lost Reason Modal */}
             <LostReasonModal
                 isOpen={isLostModalOpen}
