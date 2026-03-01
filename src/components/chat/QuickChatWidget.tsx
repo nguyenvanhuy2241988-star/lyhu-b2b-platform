@@ -159,7 +159,11 @@ export default function QuickChatWidget() {
     // Recent conversations for quick-switch tabs (top 8, sorted by last_message_at)
     const recentConvs = [...conversations]
         .filter(c => c.last_message_at)
-        .sort((a, b) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime())
+        .sort((a, b) => {
+            const timeA = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
+            const timeB = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
+            return timeB - timeA;
+        })
         .slice(0, 8);
 
     // Helper to get display name for a conversation
@@ -307,8 +311,8 @@ export default function QuickChatWidget() {
                                         key={conv.id}
                                         onClick={() => handleQuickSwitch(conv.id)}
                                         className={`relative flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${isActive
-                                                ? 'ring-2 ring-teal-500 ring-offset-1 scale-110'
-                                                : 'hover:scale-105'
+                                            ? 'ring-2 ring-teal-500 ring-offset-1 scale-110'
+                                            : 'hover:scale-105'
                                             } ${isGroup
                                                 ? 'bg-teal-100 text-teal-600'
                                                 : 'bg-slate-200 text-slate-600'
@@ -391,8 +395,8 @@ export default function QuickChatWidget() {
                         dismissAlert();
                     }}
                     className={`relative w-14 h-14 rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all ${isOpen
-                            ? 'bg-slate-600 shadow-slate-600/30'
-                            : 'bg-gradient-to-br from-teal-500 to-emerald-500 shadow-teal-500/30'
+                        ? 'bg-slate-600 shadow-slate-600/30'
+                        : 'bg-gradient-to-br from-teal-500 to-emerald-500 shadow-teal-500/30'
                         }`}
                     title="Tin nhắn nội bộ"
                 >
