@@ -65,11 +65,26 @@ export function ChatSidebar({
     const channels = conversations.filter(c => c.type === 'channel');
     const groupChats = conversations.filter(c => c.type === 'group');
 
-    // DMs: Show if (type=direct OR null) AND (current user is participant)
-    const directMessages = conversations.filter(c => {
-        const isDM = c.type === 'direct' || !c.type;
-        return isDM;
-    });
+    // DMs: Show if (type=direct OR null), deduplicated by other participant
+    const directMessages = (() => {
+        const allDMs = conversations.filter(c => c.type === 'direct' || !c.type);
+        // Dedup: keep only one DM per other-user (the most recently active one)
+        const seen = new Map<string, any>();
+        for (const dm of allDMs) {
+            const otherP = dm.internal_participants?.find((p: any) => p.user_id !== currentUser?.id);
+            const key = otherP?.user_id || dm.id; // fallback to id if no other participant (self-chat)
+            const existing = seen.get(key);
+            if (!existing) {
+                seen.set(key, dm);
+            } else {
+                // Keep the one with more recent activity
+                const existingTime = existing.last_message_at ? new Date(existing.last_message_at).getTime() : 0;
+                const newTime = dm.last_message_at ? new Date(dm.last_message_at).getTime() : 0;
+                if (newTime > existingTime) seen.set(key, dm);
+            }
+        }
+        return Array.from(seen.values());
+    })();
 
     // Helper: Display Name for DMs
     function getDisplayNameForDM(conv: any) {
