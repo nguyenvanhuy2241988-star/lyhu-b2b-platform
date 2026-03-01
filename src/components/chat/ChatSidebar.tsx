@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Users, Hash, Plus, Check } from "lucide-react";
+import { Search, Users } from "lucide-react";
 import { useChatStore } from "@/lib/chatStore";
 
 interface ChatSidebarProps {
@@ -158,186 +158,113 @@ export function ChatSidebar({
             </div>
 
             {/* Content List */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-4">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-3">
 
-                {/* Default View (No search or Search People) */}
+                {/* Active Conversations (Groups + DMs merged, no channels) */}
+                {(() => {
+                    const activeConvs = [...filteredGroups, ...filteredDMs]
+                        .sort((a, b) => {
+                            const timeA = a.last_message_at ? new Date(a.last_message_at).getTime() : 0;
+                            const timeB = b.last_message_at ? new Date(b.last_message_at).getTime() : 0;
+                            return timeB - timeA;
+                        });
 
-                {/* Channels */}
-                {filteredChannels.length > 0 && (
-                    <div>
-                        <div className="flex items-center justify-between px-2 mb-1">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Kênh</h4>
-                        </div>
+                    return activeConvs.length > 0 ? (
                         <div className="space-y-0.5">
-                            {filteredChannels.map(ch => {
-                                const isActive = ch.id === activeConversationId;
-                                const unread = ch.unread_count || 0;
-                                return (
-                                    <div
-                                        key={ch.id}
-                                        onClick={() => onSelectConversation(ch.id)}
-                                        className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors text-sm ${isActive ? 'bg-blue-100 text-blue-700 font-medium' : 'hover:bg-slate-200/50 text-slate-600 hover:text-slate-900'
-                                            }`}
-                                    >
-                                        <Hash className={`w-4 h-4 ${isActive ? 'text-blue-500' : 'text-slate-400'}`} />
-                                        <div className="min-w-0 flex-1 flex justify-between items-center">
-                                            <span className={`truncate ${unread > 0 ? 'font-bold text-slate-900' : ''}`}>{ch.name || 'Channel'}</span>
-                                            {unread > 0 && (
-                                                <span className="min-w-[1.25rem] h-5 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center ml-1">
-                                                    {unread > 99 ? '99+' : unread}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-
-                {/* Groups */}
-                {filteredGroups.length > 0 && (
-                    <div>
-                        <div className="flex items-center justify-between px-2 mb-1">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Nhóm</h4>
-                        </div>
-                        <div className="space-y-0.5">
-                            {filteredGroups.map(ch => {
-                                const isActive = ch.id === activeConversationId;
-                                return (
-                                    <div
-                                        key={ch.id}
-                                        onClick={() => onSelectConversation(ch.id)}
-                                        className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors text-sm ${isActive ? 'bg-blue-100 text-blue-700 font-medium' : 'hover:bg-slate-200/50 text-slate-600 hover:text-slate-900'
-                                            }`}
-                                    >
-                                        {/* Stacked Avatars V6 */}
-                                        <div className="relative w-8 h-8 flex -space-x-2 overflow-hidden flex-shrink-0">
-                                            {ch.internal_participants?.slice(0, 3).map((p: any, i: number) => {
-                                                const pUser = users.find(u => u.id === p.user_id);
-                                                return (
-                                                    <div key={p.user_id} className={`w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-[8px] font-bold text-white uppercase ${i === 0 ? 'bg-blue-500 z-30' : i === 1 ? 'bg-indigo-500 z-20' : 'bg-slate-400 z-10'}`}>
-                                                        {pUser?.email?.charAt(0) || "?"}
-                                                    </div>
-                                                );
-                                            })}
-                                            {(!ch.internal_participants || ch.internal_participants.length === 0) && (
-                                                <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center border-2 border-white text-slate-500">
-                                                    <Users className="w-3 h-3" />
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="min-w-0 flex-1 flex justify-between items-center">
-                                            <span className={`truncate ${(ch.unread_count || 0) > 0 ? 'font-bold text-slate-900' : ''}`}>{ch.name || 'Group'}</span>
-                                            {(ch.unread_count || 0) > 0 && (
-                                                <span className="min-w-[1.25rem] h-5 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center ml-1">
-                                                    {(ch.unread_count || 0) > 99 ? '99+' : ch.unread_count}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
-
-                {/* DMs */}
-                {filteredDMs.length > 0 && (
-                    <div>
-                        <div className="flex items-center justify-between px-2 mb-1">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Tin nhắn trực tiếp</h4>
-                        </div>
-                        <div className="space-y-0.5">
-                            {filteredDMs.map((conv: any) => {
+                            {activeConvs.map((conv: any) => {
                                 const isActive = conv.id === activeConversationId;
-                                const displayName = getDisplayNameForDM(conv);
-                                const isOnline = conv.internal_participants?.some((p: any) => p.user_id !== currentUser?.id && isUserOnline(p.user_id));
+                                const isGroup = conv.type === 'group';
+                                const displayName = isGroup ? (conv.name || 'Nhóm') : getDisplayNameForDM(conv);
+                                const unread = conv.unread_count || 0;
+                                const isOnline = !isGroup && conv.internal_participants?.some((p: any) => p.user_id !== currentUser?.id && isUserOnline(p.user_id));
 
                                 return (
                                     <div
                                         key={conv.id}
                                         onClick={() => onSelectConversation(conv.id)}
-                                        className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors text-sm ${isActive ? 'bg-blue-100 text-blue-700 font-medium' : 'hover:bg-slate-200/50 text-slate-600 hover:text-slate-900'
+                                        className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer transition-all text-sm ${isActive
+                                            ? 'bg-teal-50 text-teal-700 font-medium border border-teal-200'
+                                            : 'hover:bg-slate-100 text-slate-700'
                                             }`}
                                     >
-                                        <div className="relative">
-                                            <div className={`w-6 h-6 rounded flex items-center justify-center text-[10px] uppercase font-bold ${isActive ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-600'}`}>
-                                                {(displayName || "?").charAt(0).toUpperCase()}
-                                            </div>
-                                            <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 border-2 border-white rounded-full ${isOnline ? 'bg-green-500' : 'bg-slate-300'}`}></span>
+                                        {/* Avatar */}
+                                        <div className="relative flex-shrink-0">
+                                            {isGroup ? (
+                                                <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center">
+                                                    <Users className={`w-4 h-4 ${isActive ? 'text-teal-600' : 'text-teal-500'}`} />
+                                                </div>
+                                            ) : (
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs uppercase font-bold ${isActive ? 'bg-teal-600 text-white' : 'bg-slate-200 text-slate-600'
+                                                    }`}>
+                                                    {(displayName || "?").charAt(0).toUpperCase()}
+                                                </div>
+                                            )}
+                                            {!isGroup && (
+                                                <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 border-2 border-white rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
+                                            )}
                                         </div>
-                                        <span className={`truncate flex-1 ${(conv.unread_count || 0) > 0 ? 'font-bold text-slate-900' : ''}`}>{displayName}</span>
-                                        {(conv.unread_count || 0) > 0 && (
-                                            <span className="min-w-[1.25rem] h-5 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                                                {(conv.unread_count || 0) > 99 ? '99+' : conv.unread_count}
-                                            </span>
-                                        )}
+
+                                        {/* Name + last message preview */}
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex justify-between items-center">
+                                                <span className={`truncate text-sm ${unread > 0 ? 'font-bold text-slate-900' : ''}`}>
+                                                    {displayName}
+                                                </span>
+                                                {unread > 0 && (
+                                                    <span className="min-w-[1.25rem] h-5 px-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center ml-1">
+                                                        {unread > 99 ? '99+' : unread}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {conv.last_message && (
+                                                <p className="text-xs text-slate-400 truncate mt-0.5">{conv.last_message}</p>
+                                            )}
+                                        </div>
                                     </div>
                                 );
                             })}
                         </div>
-                    </div>
-                )}
-
-                {/* Always Visible: Colleague List (Simplified) */}
-                {!searchTerm && (
-                    <div className="mt-4 pt-4 border-t border-slate-100">
-                        <div className="px-2 mb-2 flex items-center justify-between">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Đồng nghiệp</h4>
-                            <Plus className="w-3 h-3 text-slate-300" />
+                    ) : !searchTerm ? (
+                        <div className="px-4 py-6 text-center">
+                            <p className="text-xs text-slate-400 italic">Chưa có cuộc trò chuyện nào</p>
                         </div>
-                        <div className="space-y-1">
-                            {users.filter(u => u.id !== currentUser?.id).slice(0, 15).map(u => (
-                                <div key={u.id} onClick={() => onStartChat(u.id)} className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer hover:bg-slate-100 Group text-sm text-slate-600 transition-colors">
-                                    <div className="w-6 h-6 rounded bg-blue-50 flex items-center justify-center text-[10px] text-blue-500 uppercase font-bold border border-blue-100">
-                                        {(u.full_name || u.email || "?").charAt(0).toUpperCase()}
+                    ) : null;
+                })()}
+
+                {/* All Users - flat list */}
+                <div className={`${!searchTerm ? 'pt-3 border-t border-slate-100' : ''}`}>
+                    <div className="space-y-0.5">
+                        {(searchTerm ? searchResults : users.filter(u => u.id !== currentUser?.id)).map(u => {
+                            const isOnline = isUserOnline(u.id);
+                            return (
+                                <div
+                                    key={u.id}
+                                    onClick={() => onStartChat(u.id)}
+                                    className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-slate-100 text-sm text-slate-600 transition-colors"
+                                >
+                                    <div className="relative flex-shrink-0">
+                                        <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-[10px] text-slate-500 uppercase font-bold border border-slate-200">
+                                            {(u.full_name || u.email || "?").charAt(0).toUpperCase()}
+                                        </div>
+                                        <span className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 border-[1.5px] border-white rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
                                     </div>
                                     <span className="truncate flex-1">{u.full_name || u.email}</span>
-                                    <div className={`w-1.5 h-1.5 rounded-full ${isUserOnline(u.id) ? 'bg-green-500' : 'bg-slate-200'}`}></div>
                                 </div>
-                            ))}
-                        </div>
-
-                        {filteredChannels.length === 0 && filteredGroups.length === 0 && filteredDMs.length === 0 && (
-                            <div className="mt-8 px-4 text-center">
-                                <p className="text-[11px] text-slate-400 italic">Chọn một đồng nghiệp để bắt đầu trò chuyện</p>
-                            </div>
-                        )}
+                            );
+                        })}
                     </div>
-                )}
 
-                {/* Global Search Results (Other Users) */}
-                {searchTerm && searchResults.length > 0 && (
-                    <div>
-                        <div className="flex items-center justify-between px-2 mb-1 mt-4 border-t border-slate-100 pt-2">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Kết quả tìm kiếm</h4>
+                    {!searchTerm && users.filter(u => u.id !== currentUser?.id).length === 0 && (
+                        <div className="px-4 py-3 text-center">
+                            <p className="text-xs text-slate-400 italic">Chọn một người để bắt đầu trò chuyện</p>
                         </div>
-                        <div className="space-y-0.5">
-                            {searchResults.map((u) => {
-                                const displayName = u.full_name || u.email || "No Name";
-                                const isOnline = isUserOnline(u.id);
-                                return (
-                                    <div key={u.id} onClick={() => onStartChat(u.id)} className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer hover:bg-slate-100/80 text-sm text-slate-600 transition-colors">
-                                        <div className="relative">
-                                            <div className="w-6 h-6 rounded bg-blue-100 flex items-center justify-center text-[10px] text-blue-600 uppercase font-bold border border-blue-200">
-                                                {displayName.charAt(0).toUpperCase()}
-                                            </div>
-                                            {isOnline && <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>}
-                                        </div>
-                                        <span className="truncate flex-1 font-medium">{displayName}</span>
-                                        <Plus className="w-3 h-3 text-slate-400" />
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
+                    )}
+                </div>
 
                 {/* Message Search Results */}
                 {searchTerm && (
                     <div>
-                        <div className="flex items-center justify-between px-2 mb-1 mt-4 border-t border-slate-100 pt-2">
+                        <div className="flex items-center justify-between px-2 mb-1 mt-2 border-t border-slate-100 pt-2">
                             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Tin nhắn</h4>
                         </div>
                         {isSearchingMessages ? (
@@ -346,14 +273,13 @@ export function ChatSidebar({
                             <div className="space-y-0.5">
                                 {messageSearchResults.map((msg) => {
                                     const conv = conversations.find(c => c.id === msg.conversation_id);
-                                    if (!conv) return null; // Skip if conversation not found locally
+                                    if (!conv) return null;
 
                                     const sender = users.find(u => u.id === msg.sender_id);
                                     const senderName = sender?.full_name || sender?.email || "Người dùng";
                                     const isMe = currentUser?.id === msg.sender_id;
                                     const displayName = isMe ? "Bạn" : senderName;
 
-                                    // Conv Name
                                     let convName = conv.name;
                                     if (!convName && (conv.type === 'direct' || !conv.type)) {
                                         convName = getDisplayNameForDM(conv);
