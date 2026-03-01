@@ -94,13 +94,27 @@ export const upsertKpiMetric = async (metric: Partial<KpiMetricDefinition>): Pro
 };
 
 export const deleteKpiMetric = async (id: string): Promise<boolean> => {
+    // Soft delete: set is_active = false instead of deleting
     const { error } = await supabase
         .from('kpi_metric_definitions')
-        .delete()
+        .update({ is_active: false, updated_at: new Date().toISOString() })
         .eq('id', id);
 
     if (error) {
         console.error('[deleteKpiMetric] error:', error);
+        return false;
+    }
+    return true;
+};
+
+export const restoreKpiMetric = async (id: string): Promise<boolean> => {
+    const { error } = await supabase
+        .from('kpi_metric_definitions')
+        .update({ is_active: true, updated_at: new Date().toISOString() })
+        .eq('id', id);
+
+    if (error) {
+        console.error('[restoreKpiMetric] error:', error);
         return false;
     }
     return true;

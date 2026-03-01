@@ -48,7 +48,8 @@ import {
     fetchKpiMetrics,
     updateKpiMetricsBatch,
     upsertKpiMetric,
-    deleteKpiMetric
+    deleteKpiMetric,
+    restoreKpiMetric
 } from "@/lib/kpiSalaryStore";
 import { Trash2, FileText } from "lucide-react";
 
@@ -849,12 +850,27 @@ export default function AdminPayrollPage() {
                                                                 </span>
                                                                 <button
                                                                     onClick={async () => {
-                                                                        if (!confirm(`Xóa chỉ tiêu "${metricDef.label}"?`)) return;
-                                                                        await deleteKpiMetric(metricDef.id);
-                                                                        setKpiMetrics(prev => prev.filter(m => m.id !== metricDef.id));
+                                                                        // Block deletion of auto-sync metrics
+                                                                        if (metricDef.data_source === 'auto') {
+                                                                            alert(`"${metricDef.label}" là chỉ tiêu tự động, không thể xóa.`);
+                                                                            return;
+                                                                        }
+                                                                        if (!confirm(`⚠️ Ẩn chỉ tiêu "${metricDef.label}"?\n\nChỉ tiêu sẽ bị ẩn khỏi bảng KPI và không tính lương.\nBạn có thể khôi phục lại sau.`)) return;
+                                                                        const ok = await deleteKpiMetric(metricDef.id);
+                                                                        if (ok) {
+                                                                            setKpiMetrics(prev => prev.filter(m => m.id !== metricDef.id));
+                                                                            // Show undo option
+                                                                            const undo = confirm(`Đã ẩn "${metricDef.label}".\nBấm OK để hoàn tác, Cancel để giữ nguyên.`);
+                                                                            if (undo) {
+                                                                                await restoreKpiMetric(metricDef.id);
+                                                                                const refreshed = await fetchKpiMetrics();
+                                                                                setKpiMetrics(refreshed);
+                                                                            }
+                                                                        }
                                                                     }}
                                                                     className="p-1 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all rounded"
-                                                                    title="Xóa chỉ tiêu"
+                                                                    title={metricDef.data_source === 'auto' ? 'Không thể xóa chỉ tiêu tự động' : 'Ẩn chỉ tiêu'}
+                                                                    disabled={metricDef.data_source === 'auto'}
                                                                 >
                                                                     <Trash2 className="w-3.5 h-3.5" />
                                                                 </button>
