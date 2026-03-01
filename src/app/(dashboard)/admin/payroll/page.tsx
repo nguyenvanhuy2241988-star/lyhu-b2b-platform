@@ -45,8 +45,11 @@ import { KPI_TEMPLATES, KpiFieldType, formatKpiValue } from "@/lib/kpi_config";
 import {
     KpiMetricDefinition,
     fetchKpiMetrics,
-    updateKpiMetricsBatch
+    updateKpiMetricsBatch,
+    upsertKpiMetric,
+    deleteKpiMetric
 } from "@/lib/kpiSalaryStore";
+import { Trash2 } from "lucide-react";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -214,19 +217,33 @@ export default function AdminPayrollPage() {
         const decOrderTotal = userOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
 
         const commissionRate = payrollConfig?.commissionRate || 0.03;
-        const totalCommission = decOrderTotal * commissionRate;
+        const revenueTarget = kpiSettings?.kpi_targets?.revenue || kpiSettings?.daily_revenue_target || 0;
+        const surplusRevenue = Math.max(0, decOrderTotal - revenueTarget);
+        const totalCommission = surplusRevenue * commissionRate;
+
+        // Working days pro-rata
+        const workingDaysStandard = kpiSettings?.working_days_standard || 26;
+        const workingDaysActual = kpiSettings?.working_days_actual ?? kpiSettings?.auto_working_days ?? workingDaysStandard;
+        const baseSalary = kpiSettings?.base_salary_monthly || payrollConfig?.baseSalaryMonthly || 0;
+        const proRataBase = baseSalary * (workingDaysActual / workingDaysStandard);
 
         return {
             bonus,
             penalty,
             estimated,
             totalCommission,
-            total: bonus - penalty + totalCommission + (payrollConfig?.baseSalaryMonthly || 0),
+            surplusRevenue,
+            revenueTarget,
+            total: proRataBase + bonus - penalty + totalCommission,
             decOrderCount,
             decOrderTotal,
-            commissionRate
+            commissionRate,
+            baseSalary,
+            proRataBase,
+            workingDaysStandard,
+            workingDaysActual
         };
-    }, [transactions, userOrders, payrollConfig]);
+    }, [transactions, userOrders, payrollConfig, kpiSettings]);
 
     const handleAddTransaction = async () => {
         if (!selectedUserId) return;
@@ -609,7 +626,7 @@ export default function AdminPayrollPage() {
                                 <div className="text-center py-12 text-slate-400">Đang tải dữ liệu...</div>
                             ) : (
                                 <>
-                                    {/* Section 1: Base Salary & Commission */}
+                                    {/* Section 1: Base Salary, Commission & Working Days */}
                                     <div className="space-y-4">
                                         <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide border-l-3 border-primary-500 pl-3">
                                             1. Cơ chế Lương & Thưởng
@@ -629,7 +646,7 @@ export default function AdminPayrollPage() {
                                                 <p className="text-[10px] text-slate-400 mt-1 italic">Mức lương cứng riêng cho nhân sự này.</p>
                                             </div>
                                             <div>
-                                                <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Hoa hồng (% Doanh thu)</label>
+                                                <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Hoa hồng (% Doanh thu VƯỢT target)</label>
                                                 <div className="relative">
                                                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-bold">%</span>
                                                     <input
@@ -640,7 +657,47 @@ export default function AdminPayrollPage() {
                                                         onChange={(e) => setKpiSettings({ ...kpiSettings, commission_rate: parseFloat(e.target.value) / 100 })}
                                                     />
                                                 </div>
-                                                <p className="text-[10px] text-slate-400 mt-1 italic">VD: Nhập 3 là 3%.</p>
+                                                <p className="text-[10px] text-slate-400 mt-1 italic">Chỉ tính trên phần doanh số vượt mục tiêu.</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Working Days */}
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-blue-50/50 p-4 rounded-lg border border-blue-100">
+                                            <div>
+                                                <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">Ngày công chuẩn / tháng</label>
+                                                <input
+                                                    type="number"
+                                                    className="w-full py-2 px-3 rounded-lg border-slate-200 text-sm font-bold focus:ring-primary-500 focus:border-primary-500"
+                                                    value={kpiSettings.working_days_standard || 26}
+                                                    onChange={(e) => setKpiSettings({ ...kpiSettings, working_days_standard: parseInt(e.target.value) || 26 })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-bold text-slate-500 uppercase mb-1 block">
+                                                    Ngày công thực tế
+                                                    {kpiSettings.auto_working_days !== undefined && (
+                                                        <span className="text-blue-500 ml-1">(Tự đếm: {kpiSettings.auto_working_days})</span>
+                                                    )}
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    className="w-full py-2 px-3 rounded-lg border-blue-200 bg-white text-sm font-bold focus:ring-primary-500 focus:border-primary-500"
+                                                    value={kpiSettings.working_days_actual ?? ''}
+                                                    placeholder={String(kpiSettings.auto_working_days || kpiSettings.working_days_standard || 26)}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value === '' ? null : parseInt(e.target.value);
+                                                        setKpiSettings({ ...kpiSettings, working_days_actual: val });
+                                                    }}
+                                                />
+                                                <p className="text-[10px] text-slate-400 mt-1 italic">Để trống = tự đếm từ ca đăng ký. Nhập số = override.</p>
+                                            </div>
+                                            <div className="flex items-end">
+                                                <div className="w-full py-2 px-3 bg-white rounded-lg border border-slate-200 text-center">
+                                                    <p className="text-[10px] text-slate-400 mb-0.5">Tỉ lệ lương</p>
+                                                    <p className="text-sm font-bold text-primary-600">
+                                                        {Math.round(((kpiSettings.working_days_actual ?? kpiSettings.auto_working_days ?? kpiSettings.working_days_standard ?? 26) / (kpiSettings.working_days_standard || 26)) * 100)}%
+                                                    </p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -675,13 +732,26 @@ export default function AdminPayrollPage() {
                                             }))).map((metric) => {
                                                 const metricDef = metric as KpiMetricDefinition;
                                                 return (
-                                                    <div key={metricDef.key} className="bg-white p-4 rounded-lg border border-slate-200 hover:border-primary-200 transition-colors">
+                                                    <div key={metricDef.key} className="bg-white p-4 rounded-lg border border-slate-200 hover:border-primary-200 transition-colors group">
                                                         <div className="flex items-center justify-between mb-2">
                                                             <label className="text-xs font-bold text-slate-700">{metricDef.label}</label>
-                                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${metricDef.data_source === 'auto' ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500'
-                                                                }`}>
-                                                                {metricDef.data_source === 'auto' ? '🤖 Tự động' : '📝 Nhập tay'}
-                                                            </span>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${metricDef.data_source === 'auto' ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500'
+                                                                    }`}>
+                                                                    {metricDef.data_source === 'auto' ? '🤖 Tự động' : '📝 Nhập tay'}
+                                                                </span>
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        if (!confirm(`Xóa chỉ tiêu "${metricDef.label}"?`)) return;
+                                                                        await deleteKpiMetric(metricDef.id);
+                                                                        setKpiMetrics(prev => prev.filter(m => m.id !== metricDef.id));
+                                                                    }}
+                                                                    className="p-1 text-slate-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all rounded"
+                                                                    title="Xóa chỉ tiêu"
+                                                                >
+                                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                         <div className="grid grid-cols-2 gap-3">
                                                             <div>
@@ -726,6 +796,46 @@ export default function AdminPayrollPage() {
                                                     </div>
                                                 );
                                             })}
+
+                                            {/* Add New Metric */}
+                                            <div className="border-2 border-dashed border-slate-200 rounded-lg p-4 hover:border-primary-300 transition-colors">
+                                                <button
+                                                    onClick={async () => {
+                                                        const label = prompt("Tên chỉ tiêu mới:");
+                                                        if (!label) return;
+                                                        const key = label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+                                                        const salaryPercent = parseInt(prompt("Trọng số % lương (VD: 5):") || "0");
+                                                        const target = parseInt(prompt("Target / tháng (VD: 100):") || "0");
+                                                        const dataSource = confirm("Dữ liệu tự động? (OK = Tự động, Cancel = Nhập tay)") ? 'auto' : 'manual';
+
+                                                        const newMetric: Partial<KpiMetricDefinition> = {
+                                                            key,
+                                                            label,
+                                                            description: '',
+                                                            data_source: dataSource as 'auto' | 'manual',
+                                                            icon: 'Target',
+                                                            field_type: 'number',
+                                                            is_active: true,
+                                                            sort_order: kpiMetrics.length,
+                                                            salary_percent: salaryPercent,
+                                                            monthly_target: target
+                                                        };
+
+                                                        const success = await upsertKpiMetric(newMetric);
+                                                        if (success) {
+                                                            // Reload metrics
+                                                            const metrics = await fetchKpiMetrics();
+                                                            setKpiMetrics(metrics);
+                                                        } else {
+                                                            alert("Lỗi thêm chỉ tiêu. Key có thể đã tồn tại.");
+                                                        }
+                                                    }}
+                                                    className="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium text-slate-500 hover:text-primary-600 transition-colors"
+                                                >
+                                                    <Plus className="w-4 h-4" />
+                                                    Thêm chỉ tiêu mới
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </>

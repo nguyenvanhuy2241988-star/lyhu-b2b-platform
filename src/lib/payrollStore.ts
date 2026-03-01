@@ -204,6 +204,9 @@ export interface UserKpiSettings {
     commission_rate: number;
     base_salary_monthly: number;
     kpi_targets: Record<string, any>; // JSONB
+    working_days_standard: number;
+    working_days_actual: number | null;
+    auto_working_days?: number;
 }
 
 export const fetchUserKpiSettings = async (userId: string, token?: string): Promise<UserKpiSettings | null> => {
@@ -229,7 +232,9 @@ export const updateUserKpiSettings = async (settings: UserKpiSettings, token?: s
             p_daily_revenue_target: settings.daily_revenue_target,
             p_commission_rate: settings.commission_rate,
             p_base_salary_monthly: settings.base_salary_monthly,
-            p_kpi_targets: settings.kpi_targets
+            p_kpi_targets: settings.kpi_targets,
+            p_working_days_standard: settings.working_days_standard || 26,
+            p_working_days_actual: settings.working_days_actual
         });
 
         if (error) {
