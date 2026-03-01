@@ -51,7 +51,7 @@ import {
     deleteKpiMetric,
     restoreKpiMetric
 } from "@/lib/kpiSalaryStore";
-import { Trash2, FileText } from "lucide-react";
+import { Trash2, FileText, ChevronUp, ChevronDown, Edit3 } from "lucide-react";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -404,10 +404,10 @@ export default function AdminPayrollPage() {
     return (
         <div className="flex flex-col lg:flex-row h-[calc(100vh-120px)] gap-6">
             {/* Sidebar: Staff List */}
-            <div className="w-full lg:w-80 bg-white rounded-lg border border-slate-200 flex flex-col overflow-hidden">
-                <div className="p-4 border-b border-slate-100 space-y-4">
-                    <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <Users className="w-5 h-5 text-primary-500" />
+            <div className="w-full lg:w-72 bg-white rounded-xl border border-slate-100 shadow-sm flex flex-col overflow-hidden">
+                <div className="p-4 border-b border-slate-50 space-y-3">
+                    <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                        <Users className="w-4 h-4 text-primary-500" />
                         Đội ngũ Telesales
                     </h2>
                     <div className="relative">
@@ -450,103 +450,106 @@ export default function AdminPayrollPage() {
                 {selectedUserId ? (
                     <>
                         {/* Selected User Header & Stats */}
-                        <div className="bg-white rounded-lg p-5 border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                            <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-center text-slate-700 text-lg font-bold">
-                                    {(staff.find(s => s.id === selectedUserId)?.name || "?").charAt(0)}
-                                </div>
-                                <div>
-                                    <div className="flex items-center gap-3">
-                                        <h1 className="text-xl font-bold text-slate-900 tracking-tight">
-                                            {staff.find(s => s.id === selectedUserId)?.name || "Chưa đặt tên"}
-                                        </h1>
-                                        {isMonthLocked(12) ? (
-                                            <span className="px-2 py-0.5 bg-rose-50 text-rose-600 text-[10px] font-medium rounded flex items-center gap-1 uppercase border border-rose-100">
-                                                <Lock className="w-3 h-3" />
-                                                Đã khóa
-                                            </span>
-                                        ) : (
-                                            <span className="px-2 py-0.5 bg-primary-50 text-primary-600 text-[10px] font-medium rounded flex items-center gap-1 uppercase border border-primary-100">
-                                                <ShieldCheck className="w-3 h-3" />
-                                                Đang mở
-                                            </span>
-                                        )}
+                        {/* Selected User Header — LYHU Minimalist */}
+                        <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+                            <div className="px-5 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-primary-400 to-primary-600 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-sm">
+                                        {(staff.find(s => s.id === selectedUserId)?.name || "?").charAt(0)}
                                     </div>
-                                    <p className="text-sm text-slate-500 font-medium">{staff.find(s => s.id === selectedUserId)?.email}</p>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h1 className="text-base font-bold text-slate-900">
+                                                {staff.find(s => s.id === selectedUserId)?.name || "Chưa đặt tên"}
+                                            </h1>
+                                            {isMonthLocked(12) ? (
+                                                <span className="px-1.5 py-0.5 bg-rose-50 text-rose-500 text-[9px] font-bold rounded-md flex items-center gap-0.5 border border-rose-100">
+                                                    <Lock className="w-2.5 h-2.5" />
+                                                    Đã khóa
+                                                </span>
+                                            ) : (
+                                                <span className="px-1.5 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-bold rounded-md flex items-center gap-0.5 border border-emerald-100">
+                                                    <ShieldCheck className="w-2.5 h-2.5" />
+                                                    Đang mở
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-slate-400">{staff.find(s => s.id === selectedUserId)?.email}</p>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div className="flex gap-3">
-                                {!isMonthLocked(12) && (
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    {!isMonthLocked(12) && (
+                                        <button
+                                            onClick={() => handleLockMonth(12)}
+                                            className="flex items-center gap-1.5 bg-slate-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-700 transition-colors shadow-sm"
+                                        >
+                                            <Lock className="w-3 h-3" />
+                                            Chốt lương
+                                        </button>
+                                    )}
                                     <button
-                                        onClick={() => handleLockMonth(12)}
-                                        className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors"
+                                        onClick={handleOpenKpiConfig}
+                                        className="flex items-center gap-1.5 bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-50 hover:border-slate-300 transition-colors"
                                     >
-                                        <Lock className="w-4 h-4" />
-                                        Chốt lương
+                                        <Settings className="w-3 h-3" />
+                                        Cấu hình KPI
                                     </button>
-                                )}
-                                <button
-                                    onClick={handleOpenKpiConfig}
-                                    className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
-                                >
-                                    <Settings className="w-4 h-4" />
-                                    Cấu hình KPI
-                                </button>
-                                <button
-                                    onClick={() => { setIsModalOpen(true); handleLoadPolicy('telesales'); }}
-                                    className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    Thêm khoản chi
-                                </button>
-                                <button
-                                    onClick={handleOpenPolicy}
-                                    className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
-                                >
-                                    <FileText className="w-4 h-4" />
-                                    Chính sách thu nhập
-                                </button>
+                                    <button
+                                        onClick={() => { setIsModalOpen(true); handleLoadPolicy('telesales'); }}
+                                        className="flex items-center gap-1.5 bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-50 hover:border-slate-300 transition-colors"
+                                    >
+                                        <Plus className="w-3 h-3" />
+                                        Ghi nhận Thưởng/Phạt
+                                    </button>
+                                    <button
+                                        onClick={handleOpenPolicy}
+                                        className="flex items-center gap-1.5 bg-white border border-slate-200 text-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-slate-50 hover:border-slate-300 transition-colors"
+                                    >
+                                        <FileText className="w-3 h-3" />
+                                        Chính sách
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Summary Cards */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div className="bg-white p-4 rounded-lg border border-slate-200">
-                                <div className="flex justify-between items-center mb-4">
-                                    <div className="p-2 bg-emerald-50 rounded-lg text-emerald-600">
-                                        <Award className="w-5 h-5" />
+                        {/* Summary Cards — Clean & Compact */}
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-7 h-7 bg-emerald-50 rounded-lg flex items-center justify-center">
+                                        <Award className="w-3.5 h-3.5 text-emerald-500" />
                                     </div>
-                                    <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wide">Thưởng chốt</span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Thưởng</span>
                                 </div>
-                                <div className="text-xl font-bold text-slate-900">{formatPrice(stats.bonus)}</div>
+                                <div className="text-lg font-bold text-slate-900">{formatPrice(stats.bonus)}</div>
                             </div>
-                            <div className="bg-white p-4 rounded-lg border border-slate-200">
-                                <div className="flex justify-between items-center mb-4">
-                                    <div className="p-2 bg-rose-50 rounded-lg text-rose-600">
-                                        <ShieldAlert className="w-5 h-5" />
+                            <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-7 h-7 bg-rose-50 rounded-lg flex items-center justify-center">
+                                        <ShieldAlert className="w-3.5 h-3.5 text-rose-500" />
                                     </div>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Phạt chốt</span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Phạt</span>
                                 </div>
-                                <div className="text-xl font-bold text-slate-900">{formatPrice(stats.penalty)}</div>
+                                <div className="text-lg font-bold text-slate-900">{formatPrice(stats.penalty)}</div>
                             </div>
-                            <div className="bg-white p-4 rounded-lg border border-slate-200">
-                                <div className="flex justify-between items-center mb-4">
-                                    <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
-                                        <Clock className="w-5 h-5" />
+                            <div className="bg-white rounded-xl border border-slate-100 p-4 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center">
+                                        <Clock className="w-3.5 h-3.5 text-blue-500" />
                                     </div>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Ước tính (T12)</span>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ước tính</span>
                                 </div>
-                                <div className="text-xl font-bold text-slate-900">{formatPrice(stats.estimated)}</div>
+                                <div className="text-lg font-bold text-slate-900">{formatPrice(stats.estimated)}</div>
                             </div>
-                            <div className="bg-primary-50 border border-primary-100 p-4 rounded-lg">
-                                <div className="flex justify-between items-center mb-4">
-                                    <div className="p-2 bg-primary-500 rounded-lg text-white">
-                                        <DollarSign className="w-5 h-5" />
+                            <div className="bg-gradient-to-br from-primary-50 to-primary-100/50 rounded-xl border border-primary-100 p-4 shadow-sm hover:shadow-md transition-shadow">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <div className="w-7 h-7 bg-primary-500 rounded-lg flex items-center justify-center shadow-sm">
+                                        <DollarSign className="w-3.5 h-3.5 text-white" />
                                     </div>
-                                    <span className="text-[10px] font-medium text-primary-700 uppercase tracking-wide">Thực lĩnh</span>
+                                    <span className="text-[10px] font-bold text-primary-600 uppercase tracking-wider">Thực lĩnh</span>
                                 </div>
-                                <div className="text-xl font-bold text-primary-800">{formatPrice(stats.total)}</div>
+                                <div className="text-lg font-bold text-primary-800">{formatPrice(stats.total)}</div>
                             </div>
                         </div>
 
@@ -834,15 +837,71 @@ export default function AdminPayrollPage() {
                                             );
                                         })()}
                                         <div className="space-y-3">
-                                            {(kpiMetrics.length > 0 ? kpiMetrics.filter(m => m.is_active) : getKpiTemplate(staff.find(s => s.id === selectedUserId)?.role).fields.map(f => ({
+                                            {(kpiMetrics.length > 0 ? kpiMetrics.filter(m => m.is_active).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)) : getKpiTemplate(staff.find(s => s.id === selectedUserId)?.role).fields.map(f => ({
                                                 id: f.key, key: f.key, label: f.label, description: f.description || '', data_source: 'manual' as const,
                                                 icon: 'Target', field_type: f.type, is_active: true, sort_order: 0, salary_percent: 0, monthly_target: 0
-                                            }))).map((metric) => {
+                                            }))).map((metric, idx, arr) => {
                                                 const metricDef = metric as KpiMetricDefinition;
                                                 return (
                                                     <div key={metricDef.key} className="bg-white p-4 rounded-lg border border-slate-200 hover:border-primary-200 transition-colors group">
                                                         <div className="flex items-center justify-between mb-2">
-                                                            <label className="text-xs font-bold text-slate-700">{metricDef.label}</label>
+                                                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                                {/* Reorder Buttons */}
+                                                                <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                    <button
+                                                                        disabled={idx === 0}
+                                                                        onClick={() => {
+                                                                            const sorted = kpiMetrics.filter(m => m.is_active).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+                                                                            if (idx === 0) return;
+                                                                            const prev = sorted[idx - 1];
+                                                                            const curr = sorted[idx];
+                                                                            const prevOrder = prev.sort_order;
+                                                                            const currOrder = curr.sort_order;
+                                                                            setKpiMetrics(kpiMetrics.map(m => {
+                                                                                if (m.id === prev.id) return { ...m, sort_order: currOrder };
+                                                                                if (m.id === curr.id) return { ...m, sort_order: prevOrder };
+                                                                                return m;
+                                                                            }));
+                                                                        }}
+                                                                        className="p-0.5 text-slate-300 hover:text-slate-600 disabled:opacity-20 rounded"
+                                                                        title="Di chuyển lên"
+                                                                    >
+                                                                        <ChevronUp className="w-3 h-3" />
+                                                                    </button>
+                                                                    <button
+                                                                        disabled={idx === arr.length - 1}
+                                                                        onClick={() => {
+                                                                            const sorted = kpiMetrics.filter(m => m.is_active).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+                                                                            if (idx === arr.length - 1) return;
+                                                                            const next = sorted[idx + 1];
+                                                                            const curr = sorted[idx];
+                                                                            const nextOrder = next.sort_order;
+                                                                            const currOrder = curr.sort_order;
+                                                                            setKpiMetrics(kpiMetrics.map(m => {
+                                                                                if (m.id === next.id) return { ...m, sort_order: currOrder };
+                                                                                if (m.id === curr.id) return { ...m, sort_order: nextOrder };
+                                                                                return m;
+                                                                            }));
+                                                                        }}
+                                                                        className="p-0.5 text-slate-300 hover:text-slate-600 disabled:opacity-20 rounded"
+                                                                        title="Di chuyển xuống"
+                                                                    >
+                                                                        <ChevronDown className="w-3 h-3" />
+                                                                    </button>
+                                                                </div>
+                                                                {/* Editable Label */}
+                                                                <input
+                                                                    type="text"
+                                                                    className="text-xs font-bold text-slate-700 bg-transparent border-b border-transparent hover:border-slate-300 focus:border-primary-400 outline-none py-0.5 px-1 -ml-1 flex-1 min-w-0 transition-colors"
+                                                                    value={metricDef.label}
+                                                                    onChange={(e) => {
+                                                                        setKpiMetrics(prev => prev.map(m =>
+                                                                            m.id === metricDef.id ? { ...m, label: e.target.value } : m
+                                                                        ));
+                                                                    }}
+                                                                    title='Click để sửa tên chỉ tiêu'
+                                                                />
+                                                            </div>
                                                             <div className="flex items-center gap-2">
                                                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${metricDef.data_source === 'auto' ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-500'
                                                                     }`}>
@@ -850,7 +909,6 @@ export default function AdminPayrollPage() {
                                                                 </span>
                                                                 <button
                                                                     onClick={async () => {
-                                                                        // Block deletion of auto-sync metrics
                                                                         if (metricDef.data_source === 'auto') {
                                                                             alert(`"${metricDef.label}" là chỉ tiêu tự động, không thể xóa.`);
                                                                             return;
@@ -859,7 +917,6 @@ export default function AdminPayrollPage() {
                                                                         const ok = await deleteKpiMetric(metricDef.id);
                                                                         if (ok) {
                                                                             setKpiMetrics(prev => prev.filter(m => m.id !== metricDef.id));
-                                                                            // Show undo option
                                                                             const undo = confirm(`Đã ẩn "${metricDef.label}".\nBấm OK để hoàn tác, Cancel để giữ nguyên.`);
                                                                             if (undo) {
                                                                                 await restoreKpiMetric(metricDef.id);
@@ -987,146 +1044,148 @@ export default function AdminPayrollPage() {
             }
 
             {/* Modal: Income Policy */}
-            {isPolicyModalOpen && policyData && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-lg w-full max-w-2xl shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
-                        <div className="p-5 border-b border-slate-200 flex justify-between items-center">
-                            <div>
-                                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                                    <FileText className="w-5 h-5 text-primary-500" />
-                                    Chính sách Thu nhập
-                                </h2>
-                                <div className="flex items-center gap-2 mt-2">
-                                    <label className="text-xs text-slate-500">Bộ phận:</label>
-                                    <select
-                                        value={policyDept}
-                                        onChange={(e) => { setPolicyDept(e.target.value); handleLoadPolicy(e.target.value); }}
-                                        className="text-sm font-medium border border-slate-200 rounded-lg px-3 py-1.5 focus:ring-primary-500 focus:border-primary-500"
-                                    >
-                                        {DEPARTMENTS.map(d => (
-                                            <option key={d.value} value={d.value}>{d.label}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                            <button onClick={() => setIsPolicyModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400">
-                                <Plus className="w-5 h-5 rotate-45" />
-                            </button>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                            {/* Base Salary */}
-                            <div className="space-y-3">
-                                <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-primary-500 pl-3">Lương cố định</h3>
-                                <div className="grid grid-cols-3 gap-3">
-                                    <div>
-                                        <label className="text-[10px] text-slate-400 block mb-1">Lương cơ bản (VNĐ)</label>
-                                        <input type="text" className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm font-bold"
-                                            value={formatNumber(policyData.baseSalary || 0)}
-                                            onChange={(e) => setPolicyData({ ...policyData, baseSalary: parseFormattedNumber(e.target.value) })}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] text-slate-400 block mb-1">Ngày thanh toán</label>
-                                        <input type="number" className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm"
-                                            value={policyData.paymentDay || 5}
-                                            onChange={(e) => setPolicyData({ ...policyData, paymentDay: parseInt(e.target.value) || 5 })}
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-[10px] text-slate-400 block mb-1">Giờ/ngày</label>
-                                        <input type="number" step="0.5" className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm"
-                                            value={policyData.hoursPerDay || 8}
-                                            onChange={(e) => setPolicyData({ ...policyData, hoursPerDay: parseFloat(e.target.value) || 8 })}
-                                        />
+            {
+                isPolicyModalOpen && policyData && (
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+                        <div className="bg-white rounded-lg w-full max-w-2xl shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
+                            <div className="p-5 border-b border-slate-200 flex justify-between items-center">
+                                <div>
+                                    <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                                        <FileText className="w-5 h-5 text-primary-500" />
+                                        Chính sách Thu nhập
+                                    </h2>
+                                    <div className="flex items-center gap-2 mt-2">
+                                        <label className="text-xs text-slate-500">Bộ phận:</label>
+                                        <select
+                                            value={policyDept}
+                                            onChange={(e) => { setPolicyDept(e.target.value); handleLoadPolicy(e.target.value); }}
+                                            className="text-sm font-medium border border-slate-200 rounded-lg px-3 py-1.5 focus:ring-primary-500 focus:border-primary-500"
+                                        >
+                                            {DEPARTMENTS.map(d => (
+                                                <option key={d.value} value={d.value}>{d.label}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
+                                <button onClick={() => setIsPolicyModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400">
+                                    <Plus className="w-5 h-5 rotate-45" />
+                                </button>
                             </div>
 
-                            {/* Allowances */}
-                            <div className="space-y-3">
-                                <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-emerald-500 pl-3">Phụ cấp & Phúc lợi</h3>
-                                {(policyData.allowances || []).map((a: any, i: number) => (
-                                    <div key={i} className="flex gap-2 items-center">
-                                        <input className="flex-1 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Tên" value={a.name}
-                                            onChange={(e) => { const arr = [...policyData.allowances]; arr[i] = { ...a, name: e.target.value }; setPolicyData({ ...policyData, allowances: arr }); }} />
-                                        <input className="w-36 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Số tiền" value={a.amount}
-                                            onChange={(e) => { const arr = [...policyData.allowances]; arr[i] = { ...a, amount: e.target.value }; setPolicyData({ ...policyData, allowances: arr }); }} />
-                                        <button onClick={() => setPolicyData({ ...policyData, allowances: policyData.allowances.filter((_: any, j: number) => j !== i) })}
-                                            className="p-1 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                                {/* Base Salary */}
+                                <div className="space-y-3">
+                                    <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-primary-500 pl-3">Lương cố định</h3>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div>
+                                            <label className="text-[10px] text-slate-400 block mb-1">Lương cơ bản (VNĐ)</label>
+                                            <input type="text" className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm font-bold"
+                                                value={formatNumber(policyData.baseSalary || 0)}
+                                                onChange={(e) => setPolicyData({ ...policyData, baseSalary: parseFormattedNumber(e.target.value) })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] text-slate-400 block mb-1">Ngày thanh toán</label>
+                                            <input type="number" className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm"
+                                                value={policyData.paymentDay || 5}
+                                                onChange={(e) => setPolicyData({ ...policyData, paymentDay: parseInt(e.target.value) || 5 })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] text-slate-400 block mb-1">Giờ/ngày</label>
+                                            <input type="number" step="0.5" className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm"
+                                                value={policyData.hoursPerDay || 8}
+                                                onChange={(e) => setPolicyData({ ...policyData, hoursPerDay: parseFloat(e.target.value) || 8 })}
+                                            />
+                                        </div>
                                     </div>
-                                ))}
-                                <button onClick={() => setPolicyData({ ...policyData, allowances: [...(policyData.allowances || []), { name: "", amount: "" }] })}
-                                    className="text-xs text-primary-600 flex items-center gap-1 hover:text-primary-700"><Plus className="w-3 h-3" /> Thêm phụ cấp</button>
+                                </div>
+
+                                {/* Allowances */}
+                                <div className="space-y-3">
+                                    <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-emerald-500 pl-3">Phụ cấp & Phúc lợi</h3>
+                                    {(policyData.allowances || []).map((a: any, i: number) => (
+                                        <div key={i} className="flex gap-2 items-center">
+                                            <input className="flex-1 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Tên" value={a.name}
+                                                onChange={(e) => { const arr = [...policyData.allowances]; arr[i] = { ...a, name: e.target.value }; setPolicyData({ ...policyData, allowances: arr }); }} />
+                                            <input className="w-36 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Số tiền" value={a.amount}
+                                                onChange={(e) => { const arr = [...policyData.allowances]; arr[i] = { ...a, amount: e.target.value }; setPolicyData({ ...policyData, allowances: arr }); }} />
+                                            <button onClick={() => setPolicyData({ ...policyData, allowances: policyData.allowances.filter((_: any, j: number) => j !== i) })}
+                                                className="p-1 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                                        </div>
+                                    ))}
+                                    <button onClick={() => setPolicyData({ ...policyData, allowances: [...(policyData.allowances || []), { name: "", amount: "" }] })}
+                                        className="text-xs text-primary-600 flex items-center gap-1 hover:text-primary-700"><Plus className="w-3 h-3" /> Thêm phụ cấp</button>
+                                </div>
+
+                                {/* Bonuses */}
+                                <div className="space-y-3">
+                                    <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-amber-500 pl-3">Hệ thống thưởng</h3>
+                                    {(policyData.bonuses || []).map((b: any, i: number) => (
+                                        <div key={i} className="flex gap-2 items-center">
+                                            <input className="w-36 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Tên" value={b.title}
+                                                onChange={(e) => { const arr = [...policyData.bonuses]; arr[i] = { ...b, title: e.target.value }; setPolicyData({ ...policyData, bonuses: arr }); }} />
+                                            <input className="w-28 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Số tiền" value={b.amount}
+                                                onChange={(e) => { const arr = [...policyData.bonuses]; arr[i] = { ...b, amount: e.target.value }; setPolicyData({ ...policyData, bonuses: arr }); }} />
+                                            <input className="flex-1 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Mô tả" value={b.desc}
+                                                onChange={(e) => { const arr = [...policyData.bonuses]; arr[i] = { ...b, desc: e.target.value }; setPolicyData({ ...policyData, bonuses: arr }); }} />
+                                            <button onClick={() => setPolicyData({ ...policyData, bonuses: policyData.bonuses.filter((_: any, j: number) => j !== i) })}
+                                                className="p-1 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                                        </div>
+                                    ))}
+                                    <button onClick={() => setPolicyData({ ...policyData, bonuses: [...(policyData.bonuses || []), { title: "", amount: "", desc: "" }] })}
+                                        className="text-xs text-primary-600 flex items-center gap-1 hover:text-primary-700"><Plus className="w-3 h-3" /> Thêm mục thưởng</button>
+                                </div>
+
+                                {/* Penalties */}
+                                <div className="space-y-3">
+                                    <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-rose-500 pl-3">Chế tài & Kỷ luật</h3>
+                                    {(policyData.penalties || []).map((p: any, i: number) => (
+                                        <div key={i} className="flex gap-2 items-center">
+                                            <input className="w-36 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Tên" value={p.name}
+                                                onChange={(e) => { const arr = [...policyData.penalties]; arr[i] = { ...p, name: e.target.value }; setPolicyData({ ...policyData, penalties: arr }); }} />
+                                            <input className="w-28 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Phạt" value={p.fine}
+                                                onChange={(e) => { const arr = [...policyData.penalties]; arr[i] = { ...p, fine: e.target.value }; setPolicyData({ ...policyData, penalties: arr }); }} />
+                                            <input className="flex-1 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Mô tả" value={p.desc}
+                                                onChange={(e) => { const arr = [...policyData.penalties]; arr[i] = { ...p, desc: e.target.value }; setPolicyData({ ...policyData, penalties: arr }); }} />
+                                            <button onClick={() => setPolicyData({ ...policyData, penalties: policyData.penalties.filter((_: any, j: number) => j !== i) })}
+                                                className="p-1 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                                        </div>
+                                    ))}
+                                    <button onClick={() => setPolicyData({ ...policyData, penalties: [...(policyData.penalties || []), { name: "", desc: "", fine: "" }] })}
+                                        className="text-xs text-primary-600 flex items-center gap-1 hover:text-primary-700"><Plus className="w-3 h-3" /> Thêm chế tài</button>
+                                </div>
+
+                                {/* Notes */}
+                                <div className="space-y-3">
+                                    <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-blue-500 pl-3">Ghi chú hoa hồng</h3>
+                                    <textarea className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={2}
+                                        placeholder="VD: Hoa hồng tính trên phần doanh số VƯỢT target..."
+                                        value={policyData.commissionNote || ''}
+                                        onChange={(e) => setPolicyData({ ...policyData, commissionNote: e.target.value })} />
+                                </div>
+
+                                <div className="space-y-3">
+                                    <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-slate-400 pl-3">Ghi chú phạt</h3>
+                                    <textarea className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={2}
+                                        placeholder="VD: Mọi khoản phí phạt được gom vào quỹ Bonding..."
+                                        value={policyData.penaltyNote || ''}
+                                        onChange={(e) => setPolicyData({ ...policyData, penaltyNote: e.target.value })} />
+                                </div>
                             </div>
 
-                            {/* Bonuses */}
-                            <div className="space-y-3">
-                                <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-amber-500 pl-3">Hệ thống thưởng</h3>
-                                {(policyData.bonuses || []).map((b: any, i: number) => (
-                                    <div key={i} className="flex gap-2 items-center">
-                                        <input className="w-36 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Tên" value={b.title}
-                                            onChange={(e) => { const arr = [...policyData.bonuses]; arr[i] = { ...b, title: e.target.value }; setPolicyData({ ...policyData, bonuses: arr }); }} />
-                                        <input className="w-28 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Số tiền" value={b.amount}
-                                            onChange={(e) => { const arr = [...policyData.bonuses]; arr[i] = { ...b, amount: e.target.value }; setPolicyData({ ...policyData, bonuses: arr }); }} />
-                                        <input className="flex-1 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Mô tả" value={b.desc}
-                                            onChange={(e) => { const arr = [...policyData.bonuses]; arr[i] = { ...b, desc: e.target.value }; setPolicyData({ ...policyData, bonuses: arr }); }} />
-                                        <button onClick={() => setPolicyData({ ...policyData, bonuses: policyData.bonuses.filter((_: any, j: number) => j !== i) })}
-                                            className="p-1 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>
-                                    </div>
-                                ))}
-                                <button onClick={() => setPolicyData({ ...policyData, bonuses: [...(policyData.bonuses || []), { title: "", amount: "", desc: "" }] })}
-                                    className="text-xs text-primary-600 flex items-center gap-1 hover:text-primary-700"><Plus className="w-3 h-3" /> Thêm mục thưởng</button>
+                            <div className="p-4 border-t border-slate-200 flex justify-end gap-3">
+                                <button onClick={() => setIsPolicyModalOpen(false)} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-100">Hủy</button>
+                                <button onClick={handleSavePolicy} disabled={isSavingPolicy}
+                                    className="px-5 py-2 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2">
+                                    {isSavingPolicy ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <SaveIcon className="w-4 h-4" />}
+                                    Lưu chính sách
+                                </button>
                             </div>
-
-                            {/* Penalties */}
-                            <div className="space-y-3">
-                                <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-rose-500 pl-3">Chế tài & Kỷ luật</h3>
-                                {(policyData.penalties || []).map((p: any, i: number) => (
-                                    <div key={i} className="flex gap-2 items-center">
-                                        <input className="w-36 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Tên" value={p.name}
-                                            onChange={(e) => { const arr = [...policyData.penalties]; arr[i] = { ...p, name: e.target.value }; setPolicyData({ ...policyData, penalties: arr }); }} />
-                                        <input className="w-28 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Phạt" value={p.fine}
-                                            onChange={(e) => { const arr = [...policyData.penalties]; arr[i] = { ...p, fine: e.target.value }; setPolicyData({ ...policyData, penalties: arr }); }} />
-                                        <input className="flex-1 py-1.5 px-3 rounded border border-slate-200 text-sm" placeholder="Mô tả" value={p.desc}
-                                            onChange={(e) => { const arr = [...policyData.penalties]; arr[i] = { ...p, desc: e.target.value }; setPolicyData({ ...policyData, penalties: arr }); }} />
-                                        <button onClick={() => setPolicyData({ ...policyData, penalties: policyData.penalties.filter((_: any, j: number) => j !== i) })}
-                                            className="p-1 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>
-                                    </div>
-                                ))}
-                                <button onClick={() => setPolicyData({ ...policyData, penalties: [...(policyData.penalties || []), { name: "", desc: "", fine: "" }] })}
-                                    className="text-xs text-primary-600 flex items-center gap-1 hover:text-primary-700"><Plus className="w-3 h-3" /> Thêm chế tài</button>
-                            </div>
-
-                            {/* Notes */}
-                            <div className="space-y-3">
-                                <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-blue-500 pl-3">Ghi chú hoa hồng</h3>
-                                <textarea className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={2}
-                                    placeholder="VD: Hoa hồng tính trên phần doanh số VƯỢT target..."
-                                    value={policyData.commissionNote || ''}
-                                    onChange={(e) => setPolicyData({ ...policyData, commissionNote: e.target.value })} />
-                            </div>
-
-                            <div className="space-y-3">
-                                <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-slate-400 pl-3">Ghi chú phạt</h3>
-                                <textarea className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={2}
-                                    placeholder="VD: Mọi khoản phí phạt được gom vào quỹ Bonding..."
-                                    value={policyData.penaltyNote || ''}
-                                    onChange={(e) => setPolicyData({ ...policyData, penaltyNote: e.target.value })} />
-                            </div>
-                        </div>
-
-                        <div className="p-4 border-t border-slate-200 flex justify-end gap-3">
-                            <button onClick={() => setIsPolicyModalOpen(false)} className="px-4 py-2 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-100">Hủy</button>
-                            <button onClick={handleSavePolicy} disabled={isSavingPolicy}
-                                className="px-5 py-2 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2">
-                                {isSavingPolicy ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <SaveIcon className="w-4 h-4" />}
-                                Lưu chính sách
-                            </button>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Modal: Add Transaction */}
             {
@@ -1242,8 +1301,9 @@ export default function AdminPayrollPage() {
                             </div>
                         </div>
                     </div>
-                )}
-        </div>
+                )
+            }
+        </div >
     );
 }
 
