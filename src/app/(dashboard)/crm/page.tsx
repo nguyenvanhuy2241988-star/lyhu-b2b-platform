@@ -446,6 +446,56 @@ export default function CRMPage() {
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     };
     const [kpiDate, setKpiDate] = useState(getLocalDateStr());
+    const [kpiViewMode, setKpiViewMode] = useState<'day' | 'week' | 'month'>('day');
+
+    // Compute kpiDate range based on view mode
+    const kpiDateRange = useMemo(() => {
+        const baseDate = new Date(kpiDate + 'T12:00:00');
+
+        if (kpiViewMode === 'day') {
+            return { from: kpiDate, to: kpiDate, divisor: 26 };
+        } else if (kpiViewMode === 'week') {
+            const dayOfWeek = baseDate.getDay();
+            const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+            const monday = new Date(baseDate);
+            monday.setDate(baseDate.getDate() + mondayOffset);
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            return { from: fmt(monday), to: fmt(sunday), divisor: 4 };
+        } else {
+            const firstDay = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+            const lastDay = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0);
+            const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            return { from: fmt(firstDay), to: fmt(lastDay), divisor: 1 };
+        }
+    }, [kpiDate, kpiViewMode]);
+
+    // Month navigation for KPI
+    const kpiGoToPrevMonth = () => {
+        const d = new Date(kpiDate + 'T12:00:00');
+        d.setMonth(d.getMonth() - 1);
+        d.setDate(1);
+        setKpiDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+    };
+    const kpiGoToNextMonth = () => {
+        const d = new Date(kpiDate + 'T12:00:00');
+        const now = new Date();
+        if (d.getFullYear() === now.getFullYear() && d.getMonth() >= now.getMonth()) return;
+        d.setMonth(d.getMonth() + 1);
+        d.setDate(1);
+        setKpiDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+    };
+    const kpiIsCurrentMonth = (() => {
+        const d = new Date(kpiDate + 'T12:00:00');
+        const now = new Date();
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+    })();
+    const kpiMonthLabel = (() => {
+        const d = new Date(kpiDate + 'T12:00:00');
+        const monthNames = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
+        return `${monthNames[d.getMonth()]}, ${d.getFullYear()}`;
+    })();
 
     // Inline column editing
     const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
@@ -1180,59 +1230,6 @@ export default function CRMPage() {
             </div>
         );
     }
-
-    // KPI view mode for daily/weekly/monthly scaling
-    const [kpiViewMode, setKpiViewMode] = useState<'day' | 'week' | 'month'>('day');
-
-    // Compute kpiDate range based on view mode
-    const kpiDateRange = useMemo(() => {
-        const now = new Date();
-        const baseDate = new Date(kpiDate + 'T12:00:00');
-
-        if (kpiViewMode === 'day') {
-            return { from: kpiDate, to: kpiDate, divisor: 26 };
-        } else if (kpiViewMode === 'week') {
-            const dayOfWeek = baseDate.getDay();
-            const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-            const monday = new Date(baseDate);
-            monday.setDate(baseDate.getDate() + mondayOffset);
-            const sunday = new Date(monday);
-            sunday.setDate(monday.getDate() + 6);
-            const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-            return { from: fmt(monday), to: fmt(sunday), divisor: 4 };
-        } else {
-            const firstDay = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
-            const lastDay = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 0);
-            const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-            return { from: fmt(firstDay), to: fmt(lastDay), divisor: 1 };
-        }
-    }, [kpiDate, kpiViewMode]);
-
-    // Month navigation for KPI
-    const kpiGoToPrevMonth = () => {
-        const d = new Date(kpiDate + 'T12:00:00');
-        d.setMonth(d.getMonth() - 1);
-        d.setDate(1);
-        setKpiDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
-    };
-    const kpiGoToNextMonth = () => {
-        const d = new Date(kpiDate + 'T12:00:00');
-        const now = new Date();
-        if (d.getFullYear() === now.getFullYear() && d.getMonth() >= now.getMonth()) return;
-        d.setMonth(d.getMonth() + 1);
-        d.setDate(1);
-        setKpiDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
-    };
-    const kpiIsCurrentMonth = (() => {
-        const d = new Date(kpiDate + 'T12:00:00');
-        const now = new Date();
-        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-    })();
-    const kpiMonthLabel = (() => {
-        const d = new Date(kpiDate + 'T12:00:00');
-        const monthNames = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
-        return `${monthNames[d.getMonth()]}, ${d.getFullYear()}`;
-    })();
 
     return (
         <div className="p-4 sm:p-6 space-y-6 h-full flex flex-col relative" onClick={() => setIsSettingsOpen(false)}>
