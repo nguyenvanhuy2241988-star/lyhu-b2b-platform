@@ -79,11 +79,6 @@ export default function AdminCustomersPage() {
     const [customFrom, setCustomFrom] = useState('');
     const [customTo, setCustomTo] = useState('');
 
-    // Pagination
-    const PAGE_SIZE = 50;
-    const [currentPage, setCurrentPage] = useState(1);
-    const totalPages = Math.ceil(filteredCustomers.length / PAGE_SIZE);
-    const paginatedCustomers = filteredCustomers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
     const getDashDateRange = useCallback((): DateRange => {
         const now = new Date();
@@ -226,6 +221,12 @@ export default function AdminCustomersPage() {
     // Removed filteredCustomers useMemo, use customers directly (as it is now filtered from server)
     const filteredCustomers = customers;
 
+    // Pagination
+    const PAGE_SIZE = 50;
+    const [currentPage, setCurrentPage] = useState(1);
+    const totalPages = Math.ceil(filteredCustomers.length / PAGE_SIZE);
+    const paginatedCustomers = filteredCustomers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
     const handleEditClick = (customer: Customer) => {
         setEditingCustomer(customer);
         setEditForm({
@@ -312,8 +313,8 @@ export default function AdminCustomersPage() {
                             key={p.key}
                             onClick={() => setTimePreset(p.key)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${timePreset === p.key
-                                    ? 'bg-primary-600 text-white shadow-sm'
-                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                ? 'bg-primary-600 text-white shadow-sm'
+                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                 }`}
                         >
                             {p.label}
@@ -667,107 +668,108 @@ export default function AdminCustomersPage() {
                         <p className="text-slate-500">Không tìm thấy khách hàng nào phù hợp.</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm min-w-[1000px]">
-                            <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-medium">
-                                <tr>
-                                    <th className="px-6 py-4">Tên khách hàng</th>
-                                    <th className="px-6 py-4">Loại hình</th>
-                                    <th className="px-6 py-4">Địa chỉ / Khu vực</th>
-                                    <th className="px-6 py-4">Liên hệ</th>
-                                    <th className="px-6 py-4">Người phụ trách</th>
-                                    <th className="px-6 py-4 text-right">Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-200">
-                                {paginatedCustomers.map((customer) => (
-                                    <tr key={customer.id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-6 py-4">
-                                            <div className="font-semibold text-slate-900">{customer.name}</div>
-                                            <div className="text-[10px] text-slate-400 font-mono mt-0.5 uppercase tracking-wider">{customer.id.split('-')[0]}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-bold uppercase">
-                                                {typeMap[customer.type || ''] || customer.type || '-'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-slate-600">
-                                            <div className="max-w-[250px] truncate leading-relaxed">
-                                                {customer.address || "Chưa cập nhật"}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col gap-1">
-                                                <div className="flex items-center gap-1.5 text-slate-700">
-                                                    <Phone className="w-3.5 h-3.5 text-slate-400" />
-                                                    <span className="font-medium">{customer.phone}</span>
-                                                </div>
-                                                {customer.email && (
-                                                    <div className="flex items-center gap-1.5 text-slate-500 text-xs">
-                                                        <Mail className="w-3.5 h-3.5 text-slate-400" />
-                                                        <span>{customer.email}</span>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                                                    <UserCircle className="w-5 h-5" />
-                                                </div>
-                                                <span className="text-slate-700 font-medium">{getOwnerName(customer.owner_user_id)}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex justify-end gap-1">
-                                                <button
-                                                    onClick={() => handleEditClick(customer)}
-                                                    className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                                                    title="Sửa"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(customer.id, customer.name)}
-                                                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Xóa"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
+                    <>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm min-w-[1000px]">
+                                <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-medium">
+                                    <tr>
+                                        <th className="px-6 py-4">Tên khách hàng</th>
+                                        <th className="px-6 py-4">Loại hình</th>
+                                        <th className="px-6 py-4">Địa chỉ / Khu vực</th>
+                                        <th className="px-6 py-4">Liên hệ</th>
+                                        <th className="px-6 py-4">Người phụ trách</th>
+                                        <th className="px-6 py-4 text-right">Hành động</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-
-                    {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
-                        <span className="text-xs text-slate-500">
-                            Hiển thị {((currentPage - 1) * PAGE_SIZE) + 1}-{Math.min(currentPage * PAGE_SIZE, filteredCustomers.length)} / {filteredCustomers.length} KH
-                        </span>
-                        <div className="flex items-center gap-1">
-                            <button
-                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                disabled={currentPage === 1}
-                                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                            >
-                                ← Trước
-                            </button>
-                            <span className="px-3 py-1.5 text-xs font-bold text-slate-700">
-                                Trang {currentPage}/{totalPages}
-                            </span>
-                            <button
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}
-                                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                            >
-                                Sau →
-                            </button>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200">
+                                    {paginatedCustomers.map((customer) => (
+                                        <tr key={customer.id} className="hover:bg-slate-50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="font-semibold text-slate-900">{customer.name}</div>
+                                                <div className="text-[10px] text-slate-400 font-mono mt-0.5 uppercase tracking-wider">{customer.id.split('-')[0]}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-bold uppercase">
+                                                    {typeMap[customer.type || ''] || customer.type || '-'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-600">
+                                                <div className="max-w-[250px] truncate leading-relaxed">
+                                                    {customer.address || "Chưa cập nhật"}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col gap-1">
+                                                    <div className="flex items-center gap-1.5 text-slate-700">
+                                                        <Phone className="w-3.5 h-3.5 text-slate-400" />
+                                                        <span className="font-medium">{customer.phone}</span>
+                                                    </div>
+                                                    {customer.email && (
+                                                        <div className="flex items-center gap-1.5 text-slate-500 text-xs">
+                                                            <Mail className="w-3.5 h-3.5 text-slate-400" />
+                                                            <span>{customer.email}</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                                                        <UserCircle className="w-5 h-5" />
+                                                    </div>
+                                                    <span className="text-slate-700 font-medium">{getOwnerName(customer.owner_user_id)}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex justify-end gap-1">
+                                                    <button
+                                                        onClick={() => handleEditClick(customer)}
+                                                        className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                                                        title="Sửa"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(customer.id, customer.name)}
+                                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Xóa"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
-                    </div>
+                        {totalPages > 1 && (
+                            <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
+                                <span className="text-xs text-slate-500">
+                                    Hiển thị {((currentPage - 1) * PAGE_SIZE) + 1}-{Math.min(currentPage * PAGE_SIZE, filteredCustomers.length)} / {filteredCustomers.length} KH
+                                </span>
+                                <div className="flex items-center gap-1">
+                                    <button
+                                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                        disabled={currentPage === 1}
+                                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        ← Trước
+                                    </button>
+                                    <span className="px-3 py-1.5 text-xs font-bold text-slate-700">
+                                        Trang {currentPage}/{totalPages}
+                                    </span>
+                                    <button
+                                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                        disabled={currentPage === totalPages}
+                                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        Sau →
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
 
