@@ -251,6 +251,18 @@ export const getMonthlyKpiActuals = async (
     actuals['fb_personal_posts'] = fbPersonalPosts;
     actuals['zalo_posts'] = zaloPosts;
 
+    // 3b. Zalo outreach (auto - count distinct customers messaged via Zalo)
+    const { data: zaloOutreach1 } = await supabase
+        .from('crm_activities')
+        .select('customer_id')
+        .eq('user_id', userId)
+        .eq('type', 'zalo_message')
+        .gte('created_at', startStr)
+        .lte('created_at', endStr);
+
+    const uniqueZaloCust1 = new Set((zaloOutreach1 || []).map((z: any) => z.customer_id).filter(Boolean));
+    actuals['zalo_outreach'] = uniqueZaloCust1.size;
+
     // 4. Revenue (delivered orders)
     const { data: ordersData } = await supabase
         .from('orders')
@@ -402,6 +414,18 @@ export const getKpiActualsForRange = async (
     actuals['fb_friends'] = fbFriends;
     actuals['fb_personal_posts'] = fbPersonalPosts;
     actuals['zalo_posts'] = zaloPosts;
+
+    // 3b. Zalo outreach (auto - count distinct customers messaged via Zalo)
+    const { data: zaloOutreach2 } = await supabase
+        .from('crm_activities')
+        .select('customer_id')
+        .eq('user_id', userId)
+        .eq('type', 'zalo_message')
+        .gte('created_at', startStr)
+        .lte('created_at', endStr);
+
+    const uniqueZaloCust2 = new Set((zaloOutreach2 || []).map((z: any) => z.customer_id).filter(Boolean));
+    actuals['zalo_outreach'] = uniqueZaloCust2.size;
 
     // 4. Revenue
     const { data: ordersData } = await supabase

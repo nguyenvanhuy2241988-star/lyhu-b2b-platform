@@ -5,13 +5,13 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { supabase } from "@/lib/supabaseClient";
 import { fetchActiveKpiMetrics, KpiMetricDefinition, getKpiActualsForRange } from "@/lib/kpiSalaryStore";
 import { updateTelesalesKpiSettings } from "@/lib/telesalesDailyStore";
-import { Settings, X, Save, TrendingUp, Phone, Users, MessageSquare, Share2, Database, PlusCircle, DollarSign, ShoppingCart, Store, Target, BarChart3, type LucideIcon } from "lucide-react";
+import { Settings, X, Save, TrendingUp, Phone, Users, MessageSquare, MessageCircle, Share2, Database, PlusCircle, DollarSign, ShoppingCart, Store, Target, BarChart3, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 
 // Map icon key strings from DB to Lucide components
 const ICON_MAP: Record<string, LucideIcon> = {
-    Phone, Users, MessageSquare, Share2, Database, PlusCircle,
+    Phone, Users, MessageSquare, MessageCircle, Share2, Database, PlusCircle,
     DollarSign, ShoppingCart, Store, Target, BarChart3, TrendingUp, Settings, Save,
 };
 

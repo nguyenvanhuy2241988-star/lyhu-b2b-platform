@@ -110,7 +110,7 @@ export const DEAL_PRIORITY_LABELS: Record<DealPriority, string> = {
     urgent: 'Khẩn cấp',
 };
 
-export type ActivityType = 'call' | 'note' | 'email' | 'meeting' | 'task' | 'deadline';
+export type ActivityType = 'call' | 'note' | 'email' | 'meeting' | 'task' | 'deadline' | 'zalo_message';
 
 export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
     call: 'Cuộc gọi',
@@ -119,6 +119,7 @@ export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
     note: 'Ghi chú',
     task: 'Nhiệm vụ',
     deadline: 'Hạn chót',
+    zalo_message: 'Nhắn tin Zalo',
 };
 
 export type CallResult = 'answered' | 'no_answer' | 'busy' | 'wrong_number' | 'callback_later' | 'voicemail';

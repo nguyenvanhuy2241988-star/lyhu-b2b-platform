@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import {
     ArrowLeft, Phone, Building, Calendar, Clock, Edit2, Trash2, Plus,
-    CheckCircle2, XCircle, MessageSquare, FileText, Tag, ShoppingCart, Package
+    CheckCircle2, XCircle, MessageSquare, MessageCircle, FileText, Tag, ShoppingCart, Package
 } from "lucide-react";
 import {
     CRMDeal, CRMActivity, CRMDealItem,
@@ -14,6 +14,7 @@ import {
 } from "@/lib/crmDealsStore";
 import { CreateDealModal } from "@/components/telesales/CreateDealModal";
 import { LogCallModal } from "@/components/telesales/LogCallModal";
+import { LogZaloModal } from "@/components/telesales/LogZaloModal";
 import { LostReasonModal } from "@/components/telesales/LostReasonModal";
 import DealProducts from "@/components/telesales/DealProducts";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -48,6 +49,7 @@ export default function DealDetailPage() {
 
     // Modal states
     const [isLogCallOpen, setIsLogCallOpen] = useState(false);
+    const [isLogZaloOpen, setIsLogZaloOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isLostModalOpen, setIsLostModalOpen] = useState(false);
 
@@ -132,6 +134,27 @@ export default function DealDetailPage() {
         await syncCallsFromCRM(user.id, localDate);
 
         setIsLogCallOpen(false);
+    };
+
+    const handleLogZalo = async (data: any) => {
+        if (!deal || !user?.id) return;
+
+        const description = data.description || '';
+
+        const activity = await createActivity({
+            deal_id: deal.id,
+            customer_id: deal.customer_id,
+            type: 'zalo_message',
+            subject: 'Nhắn tin Zalo',
+            description: description,
+            user_id: user.id
+        }, session?.access_token);
+
+        if (activity) {
+            setActivities(prev => [activity, ...prev]);
+        }
+
+        setIsLogZaloOpen(false);
     };
 
     const handleMarkWon = async () => {
@@ -345,13 +368,22 @@ export default function DealDetailPage() {
                             </div>
                         </div>
 
-                        <button
-                            onClick={() => setIsLogCallOpen(true)}
-                            className="w-full mt-4 flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
-                        >
-                            <Phone className="w-4 h-4" />
-                            Ghi cuộc gọi
-                        </button>
+                        <div className="flex gap-2 mt-4">
+                            <button
+                                onClick={() => setIsLogCallOpen(true)}
+                                className="flex-1 flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                            >
+                                <Phone className="w-4 h-4" />
+                                Ghi cuộc gọi
+                            </button>
+                            <button
+                                onClick={() => setIsLogZaloOpen(true)}
+                                className="flex-1 flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                            >
+                                <MessageCircle className="w-4 h-4" />
+                                Nhắn Zalo
+                            </button>
+                        </div>
                     </div>
 
                     {/* Deal Info Card */}
@@ -452,11 +484,12 @@ export default function DealDetailPage() {
                                     <div className="space-y-3">
                                         {activities.map(activity => (
                                             <div key={activity.id} className="flex gap-3 p-3 bg-slate-50 rounded-lg">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${activity.call_result === 'answered' ? 'bg-green-100 text-green-600' :
-                                                    activity.call_result === 'no_answer' ? 'bg-red-100 text-red-600' :
-                                                        'bg-slate-200 text-slate-600'
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${activity.type === 'zalo_message' ? 'bg-blue-100 text-blue-600' :
+                                                    activity.call_result === 'answered' ? 'bg-green-100 text-green-600' :
+                                                        activity.call_result === 'no_answer' ? 'bg-red-100 text-red-600' :
+                                                            'bg-slate-200 text-slate-600'
                                                     }`}>
-                                                    <Phone className="w-4 h-4" />
+                                                    {activity.type === 'zalo_message' ? <MessageCircle className="w-4 h-4" /> : <Phone className="w-4 h-4" />}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center justify-between">
@@ -516,6 +549,15 @@ export default function DealDetailPage() {
                 isOpen={isLogCallOpen}
                 onClose={() => setIsLogCallOpen(false)}
                 onSave={handleLogCall}
+                customerName={deal.customer?.name}
+                customerPhone={deal.customer?.phone}
+            />
+
+            {/* Log Zalo Modal */}
+            <LogZaloModal
+                isOpen={isLogZaloOpen}
+                onClose={() => setIsLogZaloOpen(false)}
+                onSave={handleLogZalo}
                 customerName={deal.customer?.name}
                 customerPhone={deal.customer?.phone}
             />
