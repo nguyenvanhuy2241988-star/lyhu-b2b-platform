@@ -6,12 +6,14 @@ import { fetchUsers, User } from "@/lib/usersStore";
 import {
     Phone, Mail, MapPin, Loader2, Building2,
     Search, Filter, Pencil, Trash2, X, Save,
-    UserCircle, AlertCircle, Users, UserPlus, PhoneCall, ShoppingCart, Snowflake, TrendingUp, Crown
+    UserCircle, AlertCircle, Users, UserPlus, PhoneCall, ShoppingCart, Snowflake, TrendingUp, Crown,
+    MapPinned, UserCog, Tag, Calendar, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import {
     fetchCustomerDashboardStats, fetchPipelineStats, fetchTopCustomers,
-    CustomerDashboardStats, PipelineItem, TopCustomer
+    fetchProvinceDistribution, fetchOwnerDistribution, fetchTypeDistribution,
+    CustomerDashboardStats, PipelineItem, TopCustomer, DistributionItem, DateRange
 } from "@/lib/customerDashboardStore";
 
 import { PROVINCES, fetchDistricts, fetchWards, LocationOption } from "@/lib/vn-locations";
@@ -66,7 +68,15 @@ export default function AdminCustomersPage() {
     const [dashStats, setDashStats] = useState<CustomerDashboardStats | null>(null);
     const [pipeline, setPipeline] = useState<PipelineItem[]>([]);
     const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([]);
+    const [provinceDist, setProvinceDist] = useState<DistributionItem[]>([]);
+    const [ownerDist, setOwnerDist] = useState<DistributionItem[]>([]);
+    const [typeDist, setTypeDist] = useState<DistributionItem[]>([]);
     const [dashLoading, setDashLoading] = useState(true);
+
+    // Time filter for dashboard
+    const now = new Date();
+    const [dashMonth, setDashMonth] = useState(now.getMonth() + 1);
+    const [dashYear, setDashYear] = useState(now.getFullYear());
 
     // Load districts when province changes
     useEffect(() => {
@@ -152,19 +162,29 @@ export default function AdminCustomersPage() {
         return () => clearTimeout(timer);
     }, [loadData]);
 
-    // Load dashboard data once
+    // Load dashboard data when month/year changes
     useEffect(() => {
         const loadDashboard = async () => {
             setDashLoading(true);
             try {
-                const [stats, pipe, top] = await Promise.all([
-                    fetchCustomerDashboardStats(),
+                const range: DateRange = {
+                    startDate: new Date(dashYear, dashMonth - 1, 1),
+                    endDate: new Date(dashYear, dashMonth, 0, 23, 59, 59, 999),
+                };
+                const [stats, pipe, top, prov, owner, type] = await Promise.all([
+                    fetchCustomerDashboardStats(range),
                     fetchPipelineStats(),
-                    fetchTopCustomers(10)
+                    fetchTopCustomers(10, range),
+                    fetchProvinceDistribution(),
+                    fetchOwnerDistribution(),
+                    fetchTypeDistribution(),
                 ]);
                 setDashStats(stats);
                 setPipeline(pipe);
                 setTopCustomers(top);
+                setProvinceDist(prov);
+                setOwnerDist(owner);
+                setTypeDist(type);
             } catch (err) {
                 console.error('Dashboard load error:', err);
             } finally {
@@ -172,7 +192,7 @@ export default function AdminCustomersPage() {
             }
         };
         loadDashboard();
-    }, []);
+    }, [dashMonth, dashYear]);
 
     // Removed filteredCustomers useMemo, use customers directly (as it is now filtered from server)
     const filteredCustomers = customers;
@@ -243,9 +263,24 @@ export default function AdminCustomersPage() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-slate-900">Quản lý khách hàng</h1>
-                <p className="text-sm text-slate-600 mt-1">Danh sách khách hàng toàn hệ thống (Admin)</p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900">Quản lý khách hàng</h1>
+                    <p className="text-sm text-slate-600 mt-1">Danh sách khách hàng toàn hệ thống (Admin)</p>
+                </div>
+                {/* Time Filter */}
+                <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-sm">
+                    <Calendar className="w-4 h-4 text-slate-400" />
+                    <button onClick={() => { if (dashMonth === 1) { setDashMonth(12); setDashYear(y => y - 1); } else setDashMonth(m => m - 1); }} className="p-1 hover:bg-slate-100 rounded transition-colors">
+                        <ChevronLeft className="w-4 h-4 text-slate-500" />
+                    </button>
+                    <span className="text-sm font-bold text-slate-800 min-w-[110px] text-center">
+                        Tháng {dashMonth}/{dashYear}
+                    </span>
+                    <button onClick={() => { if (dashMonth === 12) { setDashMonth(1); setDashYear(y => y + 1); } else setDashMonth(m => m + 1); }} className="p-1 hover:bg-slate-100 rounded transition-colors">
+                        <ChevronRight className="w-4 h-4 text-slate-500" />
+                    </button>
+                </div>
             </div>
 
             {/* ===== DASHBOARD ===== */}
@@ -329,9 +364,9 @@ export default function AdminCustomersPage() {
                                                 <tr key={c.id} className="border-b border-slate-50 hover:bg-slate-50">
                                                     <td className="py-2 pr-2">
                                                         <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${idx === 0 ? 'bg-amber-100 text-amber-700' :
-                                                                idx === 1 ? 'bg-slate-100 text-slate-600' :
-                                                                    idx === 2 ? 'bg-orange-100 text-orange-600' :
-                                                                        'bg-slate-50 text-slate-400'
+                                                            idx === 1 ? 'bg-slate-100 text-slate-600' :
+                                                                idx === 2 ? 'bg-orange-100 text-orange-600' :
+                                                                    'bg-slate-50 text-slate-400'
                                                             }`}>{idx + 1}</span>
                                                     </td>
                                                     <td className="py-2">
@@ -349,6 +384,87 @@ export default function AdminCustomersPage() {
                                             ))}
                                         </tbody>
                                     </table>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Row 3: Khu vực + NV phụ trách + Loại hình */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Phân bổ theo Khu vực */}
+                        {provinceDist.length > 0 && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+                                <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                    <MapPinned className="w-4 h-4 text-teal-600" />
+                                    Phân bổ Khu vực
+                                </h3>
+                                <div className="space-y-1.5">
+                                    {provinceDist.map(item => {
+                                        const maxCount = provinceDist[0]?.count || 1;
+                                        const w = Math.max(10, Math.round((item.count / maxCount) * 100));
+                                        return (
+                                            <div key={item.key} className="flex items-center gap-2">
+                                                <div className="w-20 text-[11px] text-slate-600 font-medium truncate" title={item.label}>{item.label}</div>
+                                                <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
+                                                    <div className={`h-full rounded-full ${item.color} flex items-center justify-end pr-1.5`} style={{ width: `${w}%` }}>
+                                                        <span className="text-[9px] font-bold text-white">{item.count}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Phân bổ NV phụ trách */}
+                        {ownerDist.length > 0 && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+                                <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                    <UserCog className="w-4 h-4 text-indigo-600" />
+                                    Phân bổ NV phụ trách
+                                </h3>
+                                <div className="space-y-1.5">
+                                    {ownerDist.map(item => {
+                                        const maxCount = ownerDist[0]?.count || 1;
+                                        const w = Math.max(10, Math.round((item.count / maxCount) * 100));
+                                        return (
+                                            <div key={item.key} className="flex items-center gap-2">
+                                                <div className="w-20 text-[11px] text-slate-600 font-medium truncate" title={item.label}>{item.label}</div>
+                                                <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
+                                                    <div className={`h-full rounded-full ${item.color} flex items-center justify-end pr-1.5`} style={{ width: `${w}%` }}>
+                                                        <span className="text-[9px] font-bold text-white">{item.count}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Phân loại KH */}
+                        {typeDist.length > 0 && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+                                <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                    <Tag className="w-4 h-4 text-purple-600" />
+                                    Phân loại khách hàng
+                                </h3>
+                                <div className="space-y-1.5">
+                                    {typeDist.map(item => {
+                                        const maxCount = typeDist[0]?.count || 1;
+                                        const w = Math.max(10, Math.round((item.count / maxCount) * 100));
+                                        return (
+                                            <div key={item.key} className="flex items-center gap-2">
+                                                <div className="w-20 text-[11px] text-slate-600 font-medium truncate" title={item.label}>{item.label}</div>
+                                                <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
+                                                    <div className={`h-full rounded-full ${item.color} flex items-center justify-end pr-1.5`} style={{ width: `${w}%` }}>
+                                                        <span className="text-[9px] font-bold text-white">{item.count}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
