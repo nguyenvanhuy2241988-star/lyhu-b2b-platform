@@ -2,10 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus, MapPin, Phone, Mail, MoreHorizontal, Building, UserPlus, Loader2, X, Save, Filter } from "lucide-react";
-import { fetchCustomers, createCustomer, deleteCustomer, Customer } from "@/lib/crmDealsStore";
+import { Search, Plus, MapPin, Phone, Mail, MoreHorizontal, Building, UserPlus, Loader2, X, Save, Filter, TrendingUp, Trophy, Map, Tag, Calendar } from "lucide-react";
+import { fetchCustomers, createCustomer, deleteCustomer, Customer, DEAL_STAGE_LABELS } from "@/lib/crmDealsStore";
 import { createClient } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
+import {
+    PipelineItem, TopCustomer, DistributionItem, DateRange,
+    fetchPipelineStats, fetchTopCustomers, fetchProvinceDistribution, fetchTypeDistribution
+} from "@/lib/customerDashboardStore";
 
 import { PROVINCES, fetchDistricts, fetchWards, LocationOption } from "@/lib/vn-locations";
 
@@ -63,6 +67,14 @@ export default function TelesalesCustomersPage() {
     const [wards, setWards] = useState<LocationOption[]>([]);
     const [loadingDistricts, setLoadingDistricts] = useState(false);
     const [loadingWards, setLoadingWards] = useState(false);
+
+    // Dashboard state
+    const [pipeline, setPipeline] = useState<PipelineItem[]>([]);
+    const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([]);
+    const [provinceDist, setProvinceDist] = useState<DistributionItem[]>([]);
+    const [typeDist, setTypeDist] = useState<DistributionItem[]>([]);
+    const [dashLoading, setDashLoading] = useState(true);
+    const [showDashboard, setShowDashboard] = useState(true);
 
     // Location Effects
     useEffect(() => {
@@ -176,6 +188,42 @@ export default function TelesalesCustomersPage() {
 
     // Removed client-side filtering
     const filteredCustomers = customers;
+
+    // Dashboard data
+    useEffect(() => {
+        if (!user?.id) return;
+        const loadDash = async () => {
+            setDashLoading(true);
+            try {
+                const now = new Date();
+                const yearRange: DateRange = { startDate: new Date(now.getFullYear(), 0, 1), endDate: now };
+                const [pipe, top, prov, type] = await Promise.all([
+                    fetchPipelineStats(user.id),
+                    fetchTopCustomers(5, yearRange, user.id),
+                    fetchProvinceDistribution(user.id),
+                    fetchTypeDistribution(user.id),
+                ]);
+                setPipeline(pipe);
+                setTopCustomers(top);
+                setProvinceDist(prov);
+                setTypeDist(type);
+            } catch (e) { console.error('Dashboard load error:', e); }
+            finally { setDashLoading(false); }
+        };
+        loadDash();
+    }, [user?.id]);
+
+    const formatCurrency = (amount: number) => {
+        if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}tr`;
+        if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}k`;
+        return amount.toLocaleString('vi-VN');
+    };
+
+    const typeLabelsMap: Record<string, string> = {
+        tap_hoa: 'Tạp hóa', mini_mart: 'Mini mart', dai_ly: 'Đại lý', npp: 'NPP', sieu_thi: 'Siêu thị'
+    };
+
+    const maxPipelineCount = Math.max(...pipeline.map(p => p.count), 1);
 
     const handleEditClick = (customer: Customer) => {
         setEditingCustomer(customer);
@@ -359,6 +407,134 @@ export default function TelesalesCustomersPage() {
                     <div className="text-sm text-slate-500">NPP/Đại lý</div>
                 </div>
             </div>
+
+            {/* Dashboard Toggle */}
+            <div className="flex justify-end">
+                <button onClick={() => setShowDashboard(!showDashboard)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showDashboard ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                    <TrendingUp className="w-3.5 h-3.5" /> Dashboard
+                </button>
+            </div>
+
+            {/* Dashboard Sections */}
+            {showDashboard && (
+                <div className="space-y-4">
+                    {dashLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                            <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
+                        </div>
+                    ) : (
+                        <>
+                            {/* Row 1: Pipeline + Top KH */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                {/* Pipeline CRM */}
+                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                                    <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                        <TrendingUp className="w-4 h-4 text-indigo-500" /> Pipeline CRM (Deal đang mở)
+                                    </h3>
+                                    {pipeline.length === 0 ? (
+                                        <p className="text-xs text-slate-400 py-4 text-center">Chưa có deal nào</p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {pipeline.map(item => {
+                                                const w = Math.max((item.count / maxPipelineCount) * 100, 8);
+                                                return (
+                                                    <div key={item.stage} className="flex items-center gap-2">
+                                                        <div className="w-24 text-[11px] text-slate-600 font-medium truncate" title={item.label}>{item.label}</div>
+                                                        <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
+                                                            <div className={`h-full rounded-full ${item.color}`} style={{ width: `${w}%` }}></div>
+                                                        </div>
+                                                        <span className="text-[11px] font-bold text-slate-700 min-w-[28px] text-right">{item.count}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Top KH */}
+                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                                    <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                        <Trophy className="w-4 h-4 text-amber-500" /> Top KH quan trọng (Năm nay)
+                                    </h3>
+                                    {topCustomers.length === 0 ? (
+                                        <p className="text-xs text-slate-400 py-4 text-center">Chưa có dữ liệu</p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {topCustomers.map((c, idx) => (
+                                                <div key={c.id} className="flex items-center gap-3 py-1.5">
+                                                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${idx === 0 ? 'bg-amber-100 text-amber-700' : idx === 1 ? 'bg-slate-200 text-slate-600' : idx === 2 ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-500'
+                                                        }`}>{idx + 1}</span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="text-xs font-semibold text-slate-800 truncate">{c.name}</div>
+                                                        <div className="text-[10px] text-slate-400">{c.totalOrders} đơn</div>
+                                                    </div>
+                                                    <span className="text-xs font-bold text-emerald-600">{formatCurrency(c.totalRevenue)}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Row 2: Khu vực + Phân loại */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                {/* Phân bổ Khu vực */}
+                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                                    <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                        <Map className="w-4 h-4 text-teal-500" /> Phân bổ Khu vực
+                                    </h3>
+                                    {provinceDist.length === 0 ? (
+                                        <p className="text-xs text-slate-400 py-4 text-center">Chưa có dữ liệu</p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {provinceDist.map(item => {
+                                                const maxCount = Math.max(...provinceDist.map(d => d.count), 1);
+                                                const w = Math.max((item.count / maxCount) * 100, 8);
+                                                return (
+                                                    <div key={item.key} className="flex items-center gap-2">
+                                                        <div className="w-24 text-[11px] text-slate-600 font-medium truncate" title={item.label}>{item.label}</div>
+                                                        <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
+                                                            <div className={`h-full rounded-full ${item.color}`} style={{ width: `${w}%` }}></div>
+                                                        </div>
+                                                        <span className="text-[11px] font-bold text-slate-700 min-w-[28px] text-right">{item.count}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Phân loại KH */}
+                                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                                    <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                        <Tag className="w-4 h-4 text-violet-500" /> Phân loại khách hàng
+                                    </h3>
+                                    {typeDist.length === 0 ? (
+                                        <p className="text-xs text-slate-400 py-4 text-center">Chưa có dữ liệu</p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {typeDist.map(item => {
+                                                const maxCount = Math.max(...typeDist.map(d => d.count), 1);
+                                                const w = Math.max((item.count / maxCount) * 100, 8);
+                                                return (
+                                                    <div key={item.key} className="flex items-center gap-2">
+                                                        <div className="w-24 text-[11px] text-slate-600 font-medium truncate" title={item.label}>{item.label}</div>
+                                                        <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
+                                                            <div className={`h-full rounded-full ${item.color}`} style={{ width: `${w}%` }}></div>
+                                                        </div>
+                                                        <span className="text-[11px] font-bold text-slate-700 min-w-[28px] text-right">{item.count}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
 
             {/* Customers Table */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200">

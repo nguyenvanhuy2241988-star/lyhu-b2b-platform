@@ -117,11 +117,13 @@ export const fetchCustomerDashboardStats = async (range?: DateRange): Promise<Cu
 /**
  * Fetch pipeline funnel with Vietnamese labels.
  */
-export const fetchPipelineStats = async (): Promise<PipelineItem[]> => {
-    const { data: deals } = await supabase
+export const fetchPipelineStats = async (ownerId?: string): Promise<PipelineItem[]> => {
+    let query = supabase
         .from('crm_deals')
         .select('stage, customer_id')
         .eq('status', 'open');
+    if (ownerId) query = query.eq('owner_user_id', ownerId);
+    const { data: deals } = await query;
 
     const stageMap = new Map<string, Set<string>>();
     for (const deal of (deals || [])) {
@@ -144,12 +146,13 @@ export const fetchPipelineStats = async (): Promise<PipelineItem[]> => {
 /**
  * Fetch top customers by delivered order revenue.
  */
-export const fetchTopCustomers = async (limit: number = 10, range?: DateRange): Promise<TopCustomer[]> => {
+export const fetchTopCustomers = async (limit: number = 10, range?: DateRange, ownerId?: string): Promise<TopCustomer[]> => {
     let query = supabase
         .from('orders')
         .select('customer_id, customer_name, total_amount')
         .eq('status', 'delivered')
         .not('customer_id', 'is', null);
+    if (ownerId) query = query.eq('created_by', ownerId);
 
     if (range) {
         query = query
@@ -208,10 +211,12 @@ export const fetchTopCustomers = async (limit: number = 10, range?: DateRange): 
 /**
  * Fetch customer distribution by province (top 10).
  */
-export const fetchProvinceDistribution = async (): Promise<DistributionItem[]> => {
-    const { data: customers } = await supabase
+export const fetchProvinceDistribution = async (ownerId?: string): Promise<DistributionItem[]> => {
+    let query = supabase
         .from('customers')
         .select('province');
+    if (ownerId) query = query.eq('owner_user_id', ownerId);
+    const { data: customers } = await query;
 
     const provinceMap = new Map<string, number>();
     for (const c of (customers || [])) {
@@ -265,10 +270,12 @@ export const fetchOwnerDistribution = async (): Promise<DistributionItem[]> => {
 /**
  * Fetch customer distribution by type (Loại hình).
  */
-export const fetchTypeDistribution = async (): Promise<DistributionItem[]> => {
-    const { data: customers } = await supabase
+export const fetchTypeDistribution = async (ownerId?: string): Promise<DistributionItem[]> => {
+    let query = supabase
         .from('customers')
         .select('type');
+    if (ownerId) query = query.eq('owner_user_id', ownerId);
+    const { data: customers } = await query;
 
     const typeMap = new Map<string, number>();
     for (const c of (customers || [])) {
