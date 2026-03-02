@@ -6,9 +6,13 @@ import { fetchUsers, User } from "@/lib/usersStore";
 import {
     Phone, Mail, MapPin, Loader2, Building2,
     Search, Filter, Pencil, Trash2, X, Save,
-    UserCircle, AlertCircle
+    UserCircle, AlertCircle, Users, UserPlus, PhoneCall, ShoppingCart, Snowflake, TrendingUp, Crown
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
+import {
+    fetchCustomerDashboardStats, fetchPipelineStats, fetchTopCustomers,
+    CustomerDashboardStats, PipelineItem, TopCustomer
+} from "@/lib/customerDashboardStore";
 
 import { PROVINCES, fetchDistricts, fetchWards, LocationOption } from "@/lib/vn-locations";
 
@@ -57,6 +61,12 @@ export default function AdminCustomersPage() {
     // Edit state
     const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
     const [editForm, setEditForm] = useState<Partial<Customer>>({});
+
+    // Dashboard state
+    const [dashStats, setDashStats] = useState<CustomerDashboardStats | null>(null);
+    const [pipeline, setPipeline] = useState<PipelineItem[]>([]);
+    const [topCustomers, setTopCustomers] = useState<TopCustomer[]>([]);
+    const [dashLoading, setDashLoading] = useState(true);
 
     // Load districts when province changes
     useEffect(() => {
@@ -142,6 +152,28 @@ export default function AdminCustomersPage() {
         return () => clearTimeout(timer);
     }, [loadData]);
 
+    // Load dashboard data once
+    useEffect(() => {
+        const loadDashboard = async () => {
+            setDashLoading(true);
+            try {
+                const [stats, pipe, top] = await Promise.all([
+                    fetchCustomerDashboardStats(),
+                    fetchPipelineStats(),
+                    fetchTopCustomers(10)
+                ]);
+                setDashStats(stats);
+                setPipeline(pipe);
+                setTopCustomers(top);
+            } catch (err) {
+                console.error('Dashboard load error:', err);
+            } finally {
+                setDashLoading(false);
+            }
+        };
+        loadDashboard();
+    }, []);
+
     // Removed filteredCustomers useMemo, use customers directly (as it is now filtered from server)
     const filteredCustomers = customers;
 
@@ -197,12 +229,132 @@ export default function AdminCustomersPage() {
         return user ? user.name : "Không xác định";
     };
 
+    const formatCurrency = (amount: number) => {
+        if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}tr`;
+        if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}k`;
+        return amount.toLocaleString('vi-VN');
+    };
+
+    const typeLabels: Record<string, string> = {
+        tap_hoa: 'Tạp hóa', mini_mart: 'Mini mart', dai_ly: 'Đại lý', npp: 'NPP', sieu_thi: 'Siêu thị'
+    };
+
+    const maxPipelineCount = Math.max(...pipeline.map(p => p.count), 1);
+
     return (
         <div className="space-y-6">
             <div>
                 <h1 className="text-2xl font-bold text-slate-900">Quản lý khách hàng</h1>
                 <p className="text-sm text-slate-600 mt-1">Danh sách khách hàng toàn hệ thống (Admin)</p>
             </div>
+
+            {/* ===== DASHBOARD ===== */}
+            {dashLoading ? (
+                <div className="h-32 bg-slate-50 rounded-xl animate-pulse"></div>
+            ) : (
+                <div className="space-y-4">
+                    {/* Row 1: Summary Cards */}
+                    {dashStats && (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                            {[
+                                { label: 'Tổng KH', value: dashStats.totalCustomers, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+                                { label: 'Mới tháng này', value: dashStats.newThisMonth, icon: UserPlus, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                                { label: 'Đã liên hệ', value: dashStats.contacted, icon: PhoneCall, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+                                { label: 'Đã mua hàng', value: dashStats.withOrders, icon: ShoppingCart, color: 'text-amber-600', bg: 'bg-amber-50' },
+                                { label: 'Chưa liên hệ', value: dashStats.cold, icon: Snowflake, color: 'text-slate-500', bg: 'bg-slate-50' },
+                            ].map(card => (
+                                <div key={card.label} className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow">
+                                    <div className={`p-2.5 rounded-lg ${card.bg}`}>
+                                        <card.icon className={`w-5 h-5 ${card.color}`} />
+                                    </div>
+                                    <div>
+                                        <div className="text-2xl font-bold text-slate-900">{card.value.toLocaleString()}</div>
+                                        <div className="text-xs text-slate-500 font-medium">{card.label}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Row 2: Pipeline + Top Customers */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        {/* Pipeline Funnel */}
+                        {pipeline.length > 0 && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+                                <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <TrendingUp className="w-4 h-4 text-blue-600" />
+                                    Pipeline CRM (Deal đang mở)
+                                </h3>
+                                <div className="space-y-2.5">
+                                    {pipeline.map(item => {
+                                        const widthPercent = Math.max(8, Math.round((item.count / maxPipelineCount) * 100));
+                                        return (
+                                            <div key={item.stage} className="flex items-center gap-3">
+                                                <div className="w-24 text-xs text-slate-600 font-medium truncate" title={item.label}>{item.label}</div>
+                                                <div className="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
+                                                    <div
+                                                        className={`h-full rounded-full ${item.color} transition-all duration-700 flex items-center justify-end pr-2`}
+                                                        style={{ width: `${widthPercent}%` }}
+                                                    >
+                                                        <span className="text-[10px] font-bold text-white">{item.count}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Top Customers */}
+                        {topCustomers.length > 0 && (
+                            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+                                <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <Crown className="w-4 h-4 text-amber-500" />
+                                    Top KH quan trọng (Doanh thu)
+                                </h3>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-xs">
+                                        <thead>
+                                            <tr className="text-slate-500 border-b">
+                                                <th className="text-left pb-2 font-semibold">#</th>
+                                                <th className="text-left pb-2 font-semibold">Khách hàng</th>
+                                                <th className="text-left pb-2 font-semibold">Loại</th>
+                                                <th className="text-right pb-2 font-semibold">Đơn</th>
+                                                <th className="text-right pb-2 font-semibold">Doanh thu</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {topCustomers.map((c, idx) => (
+                                                <tr key={c.id} className="border-b border-slate-50 hover:bg-slate-50">
+                                                    <td className="py-2 pr-2">
+                                                        <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-bold ${idx === 0 ? 'bg-amber-100 text-amber-700' :
+                                                                idx === 1 ? 'bg-slate-100 text-slate-600' :
+                                                                    idx === 2 ? 'bg-orange-100 text-orange-600' :
+                                                                        'bg-slate-50 text-slate-400'
+                                                            }`}>{idx + 1}</span>
+                                                    </td>
+                                                    <td className="py-2">
+                                                        <div className="font-semibold text-slate-800 truncate max-w-[180px]">{c.name}</div>
+                                                        {c.ownerName && <div className="text-[10px] text-slate-400">NV: {c.ownerName}</div>}
+                                                    </td>
+                                                    <td className="py-2">
+                                                        <span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[10px] font-bold uppercase">
+                                                            {typeLabels[c.type] || c.type || '-'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-2 text-right font-medium text-slate-700">{c.totalOrders}</td>
+                                                    <td className="py-2 text-right font-bold text-emerald-600">{formatCurrency(c.totalRevenue)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
 
             {/* Advanced Filters */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
