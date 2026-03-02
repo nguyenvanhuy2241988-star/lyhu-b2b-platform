@@ -381,7 +381,7 @@ export async function fetchCustomers(
 
         // Limit to prevent huge payloads if no filters
         if (!filters?.search && !filters?.province && !filters?.district && !filters?.fromDate) {
-            url += `&limit=100`;
+            url += `&limit=1000`;
         } else {
             url += `&limit=500`;
         }

@@ -74,9 +74,41 @@ export default function AdminCustomersPage() {
     const [dashLoading, setDashLoading] = useState(true);
 
     // Time filter for dashboard
-    const now = new Date();
-    const [dashMonth, setDashMonth] = useState(now.getMonth() + 1);
-    const [dashYear, setDashYear] = useState(now.getFullYear());
+    type TimePreset = 'today' | '7days' | 'month' | 'quarter' | 'year' | 'custom';
+    const [timePreset, setTimePreset] = useState<TimePreset>('year');
+    const [customFrom, setCustomFrom] = useState('');
+    const [customTo, setCustomTo] = useState('');
+
+    // Pagination
+    const PAGE_SIZE = 50;
+    const [currentPage, setCurrentPage] = useState(1);
+    const totalPages = Math.ceil(filteredCustomers.length / PAGE_SIZE);
+    const paginatedCustomers = filteredCustomers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+    const getDashDateRange = useCallback((): DateRange => {
+        const now = new Date();
+        switch (timePreset) {
+            case 'today':
+                return { startDate: new Date(now.getFullYear(), now.getMonth(), now.getDate()), endDate: now };
+            case '7days':
+                return { startDate: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), endDate: now };
+            case 'month':
+                return { startDate: new Date(now.getFullYear(), now.getMonth(), 1), endDate: now };
+            case 'quarter': {
+                const qMonth = Math.floor(now.getMonth() / 3) * 3;
+                return { startDate: new Date(now.getFullYear(), qMonth, 1), endDate: now };
+            }
+            case 'year':
+                return { startDate: new Date(now.getFullYear(), 0, 1), endDate: now };
+            case 'custom':
+                return {
+                    startDate: customFrom ? new Date(customFrom) : new Date(now.getFullYear(), 0, 1),
+                    endDate: customTo ? new Date(customTo + 'T23:59:59') : now,
+                };
+            default:
+                return { startDate: new Date(now.getFullYear(), 0, 1), endDate: now };
+        }
+    }, [timePreset, customFrom, customTo]);
 
     // Load districts when province changes
     useEffect(() => {
@@ -162,15 +194,12 @@ export default function AdminCustomersPage() {
         return () => clearTimeout(timer);
     }, [loadData]);
 
-    // Load dashboard data when month/year changes
+    // Load dashboard data when time changes
     useEffect(() => {
         const loadDashboard = async () => {
             setDashLoading(true);
             try {
-                const range: DateRange = {
-                    startDate: new Date(dashYear, dashMonth - 1, 1),
-                    endDate: new Date(dashYear, dashMonth, 0, 23, 59, 59, 999),
-                };
+                const range = getDashDateRange();
                 const [stats, pipe, top, prov, owner, type] = await Promise.all([
                     fetchCustomerDashboardStats(range),
                     fetchPipelineStats(),
@@ -192,7 +221,7 @@ export default function AdminCustomersPage() {
             }
         };
         loadDashboard();
-    }, [dashMonth, dashYear]);
+    }, [getDashDateRange]);
 
     // Removed filteredCustomers useMemo, use customers directly (as it is now filtered from server)
     const filteredCustomers = customers;
@@ -269,17 +298,36 @@ export default function AdminCustomersPage() {
                     <p className="text-sm text-slate-600 mt-1">Danh sách khách hàng toàn hệ thống (Admin)</p>
                 </div>
                 {/* Time Filter */}
-                <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-sm">
+                <div className="flex flex-wrap items-center gap-2">
                     <Calendar className="w-4 h-4 text-slate-400" />
-                    <button onClick={() => { if (dashMonth === 1) { setDashMonth(12); setDashYear(y => y - 1); } else setDashMonth(m => m - 1); }} className="p-1 hover:bg-slate-100 rounded transition-colors">
-                        <ChevronLeft className="w-4 h-4 text-slate-500" />
-                    </button>
-                    <span className="text-sm font-bold text-slate-800 min-w-[110px] text-center">
-                        Tháng {dashMonth}/{dashYear}
-                    </span>
-                    <button onClick={() => { if (dashMonth === 12) { setDashMonth(1); setDashYear(y => y + 1); } else setDashMonth(m => m + 1); }} className="p-1 hover:bg-slate-100 rounded transition-colors">
-                        <ChevronRight className="w-4 h-4 text-slate-500" />
-                    </button>
+                    {[
+                        { key: 'today' as TimePreset, label: 'Hôm nay' },
+                        { key: '7days' as TimePreset, label: '7 ngày' },
+                        { key: 'month' as TimePreset, label: 'Tháng này' },
+                        { key: 'quarter' as TimePreset, label: 'Quý này' },
+                        { key: 'year' as TimePreset, label: 'Năm nay' },
+                        { key: 'custom' as TimePreset, label: 'Tùy chọn' },
+                    ].map(p => (
+                        <button
+                            key={p.key}
+                            onClick={() => setTimePreset(p.key)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${timePreset === p.key
+                                    ? 'bg-primary-600 text-white shadow-sm'
+                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                }`}
+                        >
+                            {p.label}
+                        </button>
+                    ))}
+                    {timePreset === 'custom' && (
+                        <div className="flex items-center gap-2 ml-2">
+                            <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
+                                className="px-2 py-1 border border-slate-200 rounded-lg text-xs" />
+                            <span className="text-xs text-slate-400">→</span>
+                            <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
+                                className="px-2 py-1 border border-slate-200 rounded-lg text-xs" />
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -293,7 +341,7 @@ export default function AdminCustomersPage() {
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                             {[
                                 { label: 'Tổng KH', value: dashStats.totalCustomers, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-                                { label: 'Mới tháng này', value: dashStats.newThisMonth, icon: UserPlus, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                                { label: 'Mới trong kỳ', value: dashStats.newThisMonth, icon: UserPlus, color: 'text-emerald-600', bg: 'bg-emerald-50' },
                                 { label: 'Đã liên hệ', value: dashStats.contacted, icon: PhoneCall, color: 'text-indigo-600', bg: 'bg-indigo-50' },
                                 { label: 'Đã mua hàng', value: dashStats.withOrders, icon: ShoppingCart, color: 'text-amber-600', bg: 'bg-amber-50' },
                                 { label: 'Chưa liên hệ', value: dashStats.cold, icon: Snowflake, color: 'text-slate-500', bg: 'bg-slate-50' },
@@ -406,10 +454,9 @@ export default function AdminCustomersPage() {
                                             <div key={item.key} className="flex items-center gap-2">
                                                 <div className="w-20 text-[11px] text-slate-600 font-medium truncate" title={item.label}>{item.label}</div>
                                                 <div className="flex-1 bg-slate-100 rounded-full h-4 overflow-hidden">
-                                                    <div className={`h-full rounded-full ${item.color} flex items-center justify-end pr-1.5`} style={{ width: `${w}%` }}>
-                                                        <span className="text-[9px] font-bold text-white">{item.count}</span>
-                                                    </div>
+                                                    <div className={`h-full rounded-full ${item.color}`} style={{ width: `${w}%` }}></div>
                                                 </div>
+                                                <span className="text-[11px] font-bold text-slate-700 min-w-[28px] text-right">{item.count}</span>
                                             </div>
                                         );
                                     })}
@@ -633,7 +680,7 @@ export default function AdminCustomersPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-200">
-                                {filteredCustomers.map((customer) => (
+                                {paginatedCustomers.map((customer) => (
                                     <tr key={customer.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="font-semibold text-slate-900">{customer.name}</div>
@@ -693,6 +740,33 @@ export default function AdminCustomersPage() {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
+                        <span className="text-xs text-slate-500">
+                            Hiển thị {((currentPage - 1) * PAGE_SIZE) + 1}-{Math.min(currentPage * PAGE_SIZE, filteredCustomers.length)} / {filteredCustomers.length} KH
+                        </span>
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                                ← Trước
+                            </button>
+                            <span className="px-3 py-1.5 text-xs font-bold text-slate-700">
+                                Trang {currentPage}/{totalPages}
+                            </span>
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                                Sau →
+                            </button>
+                        </div>
                     </div>
                 )}
             </div>
