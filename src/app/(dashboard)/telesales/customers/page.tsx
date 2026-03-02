@@ -76,6 +76,37 @@ export default function TelesalesCustomersPage() {
     const [dashLoading, setDashLoading] = useState(true);
     const [showDashboard, setShowDashboard] = useState(true);
 
+    // Dashboard time filter
+    type TimePreset = 'today' | '7days' | 'month' | 'quarter' | 'year' | 'custom';
+    const [timePreset, setTimePreset] = useState<TimePreset>('year');
+    const [customFrom, setCustomFrom] = useState('');
+    const [customTo, setCustomTo] = useState('');
+
+    const getDashDateRange = useCallback((): DateRange => {
+        const now = new Date();
+        switch (timePreset) {
+            case 'today':
+                return { startDate: new Date(now.getFullYear(), now.getMonth(), now.getDate()), endDate: now };
+            case '7days':
+                return { startDate: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000), endDate: now };
+            case 'month':
+                return { startDate: new Date(now.getFullYear(), now.getMonth(), 1), endDate: now };
+            case 'quarter': {
+                const qMonth = Math.floor(now.getMonth() / 3) * 3;
+                return { startDate: new Date(now.getFullYear(), qMonth, 1), endDate: now };
+            }
+            case 'year':
+                return { startDate: new Date(now.getFullYear(), 0, 1), endDate: now };
+            case 'custom':
+                return {
+                    startDate: customFrom ? new Date(customFrom) : new Date(now.getFullYear(), 0, 1),
+                    endDate: customTo ? new Date(customTo + 'T23:59:59') : now,
+                };
+            default:
+                return { startDate: new Date(now.getFullYear(), 0, 1), endDate: now };
+        }
+    }, [timePreset, customFrom, customTo]);
+
     // Location Effects
     useEffect(() => {
         if (selectedProvince) {
@@ -195,11 +226,10 @@ export default function TelesalesCustomersPage() {
         const loadDash = async () => {
             setDashLoading(true);
             try {
-                const now = new Date();
-                const yearRange: DateRange = { startDate: new Date(now.getFullYear(), 0, 1), endDate: now };
+                const range = getDashDateRange();
                 const [pipe, top, prov, type] = await Promise.all([
                     fetchPipelineStats(user.id),
-                    fetchTopCustomers(5, yearRange, user.id),
+                    fetchTopCustomers(5, range, user.id),
                     fetchProvinceDistribution(user.id),
                     fetchTypeDistribution(user.id),
                 ]);
@@ -211,7 +241,7 @@ export default function TelesalesCustomersPage() {
             finally { setDashLoading(false); }
         };
         loadDash();
-    }, [user?.id]);
+    }, [user?.id, getDashDateRange]);
 
     const formatCurrency = (amount: number) => {
         if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}tr`;
@@ -408,8 +438,39 @@ export default function TelesalesCustomersPage() {
                 </div>
             </div>
 
-            {/* Dashboard Toggle */}
-            <div className="flex justify-end">
+            {/* Dashboard Toggle + Time Filter */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                    <Calendar className="w-4 h-4 text-slate-400" />
+                    {[
+                        { key: 'today' as TimePreset, label: 'Hôm nay' },
+                        { key: '7days' as TimePreset, label: '7 ngày' },
+                        { key: 'month' as TimePreset, label: 'Tháng này' },
+                        { key: 'quarter' as TimePreset, label: 'Quý này' },
+                        { key: 'year' as TimePreset, label: 'Năm nay' },
+                        { key: 'custom' as TimePreset, label: 'Tùy chọn' },
+                    ].map(p => (
+                        <button
+                            key={p.key}
+                            onClick={() => setTimePreset(p.key)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${timePreset === p.key
+                                    ? 'bg-primary-600 text-white shadow-sm'
+                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                }`}
+                        >
+                            {p.label}
+                        </button>
+                    ))}
+                    {timePreset === 'custom' && (
+                        <div className="flex items-center gap-2 ml-2">
+                            <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
+                                className="px-2 py-1 border border-slate-200 rounded-lg text-xs" />
+                            <span className="text-xs text-slate-400">→</span>
+                            <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
+                                className="px-2 py-1 border border-slate-200 rounded-lg text-xs" />
+                        </div>
+                    )}
+                </div>
                 <button onClick={() => setShowDashboard(!showDashboard)}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showDashboard ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                     <TrendingUp className="w-3.5 h-3.5" /> Dashboard
