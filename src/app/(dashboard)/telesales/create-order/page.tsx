@@ -723,8 +723,8 @@ function TelesalesCreateOrderContent() {
                                                 <button
                                                     onClick={() => setBrandFilter("ALL")}
                                                     className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${brandFilter === "ALL"
-                                                            ? "bg-teal-600 text-white shadow-sm"
-                                                            : "text-slate-600 hover:bg-white"
+                                                        ? "bg-teal-600 text-white shadow-sm"
+                                                        : "text-slate-600 hover:bg-white"
                                                         }`}
                                                 >
                                                     Tất cả
@@ -734,8 +734,8 @@ function TelesalesCreateOrderContent() {
                                                         key={brand}
                                                         onClick={() => setBrandFilter(brand)}
                                                         className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${brandFilter === brand
-                                                                ? "bg-teal-600 text-white shadow-sm"
-                                                                : "text-slate-600 hover:bg-white"
+                                                            ? "bg-teal-600 text-white shadow-sm"
+                                                            : "text-slate-600 hover:bg-white"
                                                             }`}
                                                     >
                                                         {brand}
@@ -750,8 +750,8 @@ function TelesalesCreateOrderContent() {
                                         <button
                                             onClick={() => setHideOutOfStock(!hideOutOfStock)}
                                             className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border transition-colors ${hideOutOfStock
-                                                    ? "bg-emerald-50 border-emerald-300 text-emerald-700"
-                                                    : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
+                                                ? "bg-emerald-50 border-emerald-300 text-emerald-700"
+                                                : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
                                                 }`}
                                         >
                                             {hideOutOfStock ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
@@ -859,7 +859,7 @@ function TelesalesCreateOrderContent() {
                                                                         </button>
                                                                         <input
                                                                             type="number"
-                                                                            className="w-10 text-center text-sm font-medium py-1 focus:outline-none"
+                                                                            className="w-20 text-center text-sm font-medium py-1 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                                             value={inputValue}
                                                                             onChange={(e) => {
                                                                                 const val = parseInt(e.target.value) || 0;
@@ -983,7 +983,7 @@ function TelesalesCreateOrderContent() {
                                                                 </button>
                                                                 <input
                                                                     type="number"
-                                                                    className="w-9 text-center text-xs font-semibold bg-white border-x border-slate-200 py-1 focus:outline-none"
+                                                                    className="w-16 text-center text-xs font-semibold bg-white border-x border-slate-200 py-1 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                                     value={item.quantity}
                                                                     onChange={(e) => handleSetQuantity(index, parseInt(e.target.value) || 1)}
                                                                     min={1}
