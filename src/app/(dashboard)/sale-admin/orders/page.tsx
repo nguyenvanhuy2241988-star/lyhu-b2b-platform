@@ -5,8 +5,8 @@ import OrderList from "@/components/orders/OrderList";
 export default function SaleAdminOrdersPage() {
     return (
         <OrderList
-            readOnly={true}
-            maskSensitiveData={true}
+            readOnly={false}
+            maskSensitiveData={false}
             hideRevenue={false}
         />
     );

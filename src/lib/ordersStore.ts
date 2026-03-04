@@ -72,6 +72,28 @@ export interface Order {
         address?: string;
     };
     creatorName?: string;
+
+    // Shipping & Packing
+    shippingCarrier?: string;
+    trackingCode?: string;
+    packedBy?: string;
+    packedByName?: string;
+    packedAt?: string;
+    shippingBoxes?: ShippingBox[];
+    totalBoxes?: number;
+    totalWeightKg?: number;
+    shippingFee?: number;
+    shippingNote?: string;
+    approvedBy?: string;
+    approvedByName?: string;
+    approvedAt?: string;
+}
+
+export interface ShippingBox {
+    weight_kg: number;
+    length_cm: number;
+    width_cm: number;
+    height_cm: number;
 }
 
 export type FulfillmentMode = 'SELF_SHIP' | 'LYHU_SHIP';
@@ -171,7 +193,8 @@ export const updateOrderStatus = async (
                 headers,
                 body: JSON.stringify({
                     p_order_id: orderId,
-                    p_status: newStatus
+                    p_status: newStatus,
+                    p_approved_by: userId || null
                 }),
                 cache: 'no-store',
                 signal: controller.signal
@@ -362,7 +385,7 @@ export const fetchOrders = async (token?: string, filters?: { userId?: string, s
             items: o.items,
             customerId: o.customer_id,
             leadId: o.lead_id,
-            customer: o.customer, // Map joined customer data
+            customer: o.customer,
             paymentMethod: o.payment_method,
             notes: o.note,
             vat: o.vat,
@@ -370,7 +393,21 @@ export const fetchOrders = async (token?: string, filters?: { userId?: string, s
             order_discount_percent: o.order_discount_percent || 0,
             receiverPhone: o.receiver_phone || o.customer?.phone,
             receiverAddress: o.receiver_address || o.customer?.address,
-            creatorName: o.creator_name
+            creatorName: o.creator_name,
+            // Shipping & Packing
+            shippingCarrier: o.shipping_carrier,
+            trackingCode: o.tracking_code,
+            packedBy: o.packed_by,
+            packedByName: o.packed_by_name,
+            packedAt: o.packed_at,
+            shippingBoxes: o.shipping_boxes,
+            totalBoxes: o.total_boxes,
+            totalWeightKg: o.total_weight_kg,
+            shippingFee: o.shipping_fee,
+            shippingNote: o.shipping_note,
+            approvedBy: o.approved_by,
+            approvedByName: o.approved_by_name,
+            approvedAt: o.approved_at,
         }));
     } catch (err) {
         console.error("[fetchOrders] Exception:", err);
@@ -666,3 +703,63 @@ export const deleteOrder = async (orderId: string) => {
         return false;
     }
 };
+
+export const SHIPPING_CARRIERS = [
+    { value: 'GHTK', label: 'Giao Hàng Tiết Kiệm' },
+    { value: 'GHN', label: 'Giao Hàng Nhanh' },
+    { value: 'VIETTEL_POST', label: 'Viettel Post' },
+    { value: 'JT', label: 'J&T Express' },
+    { value: 'NINJA_VAN', label: 'Ninja Van' },
+    { value: 'SPX', label: 'Shopee Express' },
+    { value: 'BEST', label: 'BEST Express' },
+    { value: 'SELF', label: 'Tự giao' },
+    { value: 'OTHER', label: 'Khác' },
+];
+
+export const updateOrderShipping = async (
+    orderId: string,
+    data: {
+        shippingCarrier?: string;
+        trackingCode?: string;
+        packedBy?: string;
+        shippingBoxes?: ShippingBox[];
+        totalBoxes?: number;
+        totalWeightKg?: number;
+        shippingFee?: number;
+        shippingNote?: string;
+    },
+    token?: string
+): Promise<{ success: boolean; error?: string }> => {
+    try {
+        const headers = getHeaders(token);
+        const response = await fetch(
+            `${SUPABASE_URL}/rest/v1/rpc/update_order_shipping`,
+            {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    p_order_id: orderId,
+                    p_shipping_carrier: data.shippingCarrier || null,
+                    p_tracking_code: data.trackingCode || null,
+                    p_packed_by: data.packedBy || null,
+                    p_shipping_boxes: data.shippingBoxes ? JSON.stringify(data.shippingBoxes) : null,
+                    p_total_boxes: data.totalBoxes ?? null,
+                    p_total_weight_kg: data.totalWeightKg ?? null,
+                    p_shipping_fee: data.shippingFee ?? null,
+                    p_shipping_note: data.shippingNote || null,
+                }),
+                cache: 'no-store',
+            }
+        );
+        if (!response.ok) {
+            const errText = await response.text();
+            console.error("[updateOrderShipping] Failed:", errText);
+            return { success: false, error: errText };
+        }
+        return { success: true };
+    } catch (e: any) {
+        console.error("[updateOrderShipping] Exception:", e);
+        return { success: false, error: e.message };
+    }
+};
+

@@ -5,6 +5,7 @@ import {
     fetchOrders,
     updateOrderStatus,
     ORDER_STATUS_LABELS,
+    SHIPPING_CARRIERS,
     type Order,
     type OrderStatus,
     FRAUD_STATUS_LABELS,
@@ -477,6 +478,17 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                                                     <StatusIcon className="w-3.5 h-3.5" />
                                                     {statusConfig.label}
                                                 </span>
+                                                {order.shippingCarrier && (
+                                                    <div className="mt-1 text-[10px] text-slate-500">
+                                                        <span className="inline-flex items-center gap-1">
+                                                            <Truck className="w-3 h-3" />
+                                                            {SHIPPING_CARRIERS.find(c => c.value === order.shippingCarrier)?.label || order.shippingCarrier}
+                                                        </span>
+                                                        {order.trackingCode && (
+                                                            <span className="block text-blue-600 font-medium truncate max-w-[120px] mx-auto">{order.trackingCode}</span>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { X, Calendar, User, MapPin, ShoppingBag, CreditCard, Printer, Image as ImageIcon, RefreshCw, CheckCircle2, AlertOctagon } from "lucide-react";
+import { X, Calendar, User, MapPin, ShoppingBag, CreditCard, Printer, Image as ImageIcon, RefreshCw, CheckCircle2, AlertOctagon, Truck } from "lucide-react";
 import { Order } from "@/lib/ordersStore";
 import { OrderPrintTemplate } from "./OrderPrintTemplate";
+import { ShippingInfoPanel } from "./ShippingInfoPanel";
 import html2canvas from "html2canvas";
 
 interface OrderDetailsModalProps {
@@ -396,6 +397,15 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
                                     </tfoot>
                                 </table>
                             </div>
+                        </div>
+
+                        {/* Shipping & Packing Info */}
+                        <div className="bg-white p-4 rounded-lg border border-slate-100 shadow-sm">
+                            <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-50">
+                                <Truck className="w-4 h-4 text-slate-400" />
+                                <h3 className="font-semibold text-sm text-slate-900">Thông tin vận chuyển & đóng hàng</h3>
+                            </div>
+                            <ShippingInfoPanel order={order} readOnly={true} />
                         </div>
                     </div>
 

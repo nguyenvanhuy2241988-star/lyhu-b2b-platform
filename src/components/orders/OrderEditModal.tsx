@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Save, Loader2, Plus, Trash2, Search, Package } from "lucide-react";
-import { Order, OrderItem, updateOrderSupabase } from "@/lib/ordersStore"; // Ensure export
+import { X, Save, Loader2, Plus, Trash2, Search, Package, Truck } from "lucide-react";
+import { Order, OrderItem, updateOrderSupabase } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Product } from "@/mocks/data";
 import { loadProducts } from "@/lib/supabase/products";
+import { ShippingInfoPanel } from "./ShippingInfoPanel";
 
 interface OrderEditModalProps {
     order: Order | null;
@@ -216,6 +217,15 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
                                 </div>
                             ))}
                         </div>
+                    </div>
+
+                    {/* Shipping & Packing Section */}
+                    <div className="bg-slate-50 p-4 rounded-lg">
+                        <div className="flex items-center gap-2 mb-3">
+                            <Truck className="w-4 h-4 text-slate-500" />
+                            <h3 className="font-semibold text-sm">Thông tin vận chuyển & đóng hàng</h3>
+                        </div>
+                        <ShippingInfoPanel order={order} readOnly={false} onSaved={() => onSuccess()} />
                     </div>
                 </div>
 
