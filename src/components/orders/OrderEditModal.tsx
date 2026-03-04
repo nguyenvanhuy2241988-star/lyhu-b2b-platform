@@ -95,7 +95,7 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess, shippingOnly
 
         setIsSaving(true);
         try {
-            let orderResult = { success: true, error: '' };
+            let orderResult: { success: boolean; error?: string } = { success: true };
 
             // 1. Save order info (customer + items) - only if not shippingOnly
             if (!shippingOnly) {
