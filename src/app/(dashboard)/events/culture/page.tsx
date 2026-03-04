@@ -25,7 +25,7 @@ const DEFAULT_BANK_CONFIG = {
 
 export default function EventsCulturePage() {
     const { role, user } = useAuth();
-    const isAdmin = role === ROLES.ADMIN;
+    const isAdmin = role === ROLES.ADMIN || role === ROLES.ACCOUNTANT;
 
     const [transactions, setTransactions] = useState<FundTransaction[]>([]);
     const [balance, setBalance] = useState(0);
