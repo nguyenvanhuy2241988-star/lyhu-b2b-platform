@@ -1,6 +1,6 @@
 -- =============================================
 -- Migration: Add shipping & packing info to orders
--- Date: 2026-03-04
+-- Date: 2026-03-04 (FIXED v3)
 -- =============================================
 
 -- 1. Add shipping & packing columns
@@ -16,11 +16,11 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_note text;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS approved_by uuid REFERENCES profiles(id);
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS approved_at timestamptz;
 
--- 2. Drop old get_orders_v3 overloads to avoid ambiguity
+-- 2. Drop ALL old get_orders_v3 overloads
 DROP FUNCTION IF EXISTS public.get_orders_v3(text, uuid);
 DROP FUNCTION IF EXISTS public.get_orders_v3(uuid, uuid, text, timestamptz, timestamptz, int);
 
--- 3. Recreate get_orders_v3 with CORRECT 6-param signature + shipping fields
+-- 3. Recreate get_orders_v3 with correct 6-param signature + shipping fields
 CREATE OR REPLACE FUNCTION public.get_orders_v3(
     p_id uuid DEFAULT NULL,
     p_user_id uuid DEFAULT NULL,
@@ -48,7 +48,7 @@ RETURNS TABLE (
     vat_rate numeric,
     order_discount_percent numeric,
     creator_name text,
-    -- NEW: Shipping fields
+    -- Shipping fields
     shipping_carrier text,
     tracking_code text,
     packed_by uuid,
@@ -61,10 +61,7 @@ RETURNS TABLE (
     approved_by uuid,
     approved_at timestamptz,
     packed_by_name text,
-    approved_by_name text,
-    -- Existing fields that were missing from RETURNS
-    receiver_phone text,
-    receiver_address text
+    approved_by_name text
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -124,7 +121,7 @@ BEGIN
         COALESCE(o.vat_rate, 0) as vat_rate,
         COALESCE(o.order_discount_percent, 0) as order_discount_percent,
         creator.full_name as creator_name,
-        -- NEW: Shipping fields
+        -- Shipping fields
         o.shipping_carrier,
         o.tracking_code,
         o.packed_by,
@@ -137,9 +134,7 @@ BEGIN
         o.approved_by,
         o.approved_at,
         COALESCE(packer.full_name, '') as packed_by_name,
-        COALESCE(approver.full_name, '') as approved_by_name,
-        o.receiver_phone,
-        o.receiver_address
+        COALESCE(approver.full_name, '') as approved_by_name
     FROM orders o
     LEFT JOIN customers c ON o.customer_id = c.id
     LEFT JOIN profiles creator ON o.telesales_user_id = creator.id
@@ -192,38 +187,6 @@ BEGIN
         total_weight_kg = COALESCE(p_total_weight_kg, total_weight_kg),
         shipping_fee = COALESCE(p_shipping_fee, shipping_fee),
         shipping_note = COALESCE(p_shipping_note, shipping_note)
-    WHERE id = p_order_id;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- 5. Update update_order_status to record approver
--- First check if the existing function has the old signature
-DO $$
-BEGIN
-    -- Try to drop old 2-param version
-    DROP FUNCTION IF EXISTS public.update_order_status(uuid, text);
-EXCEPTION WHEN OTHERS THEN
-    NULL;
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION update_order_status(
-    p_order_id uuid,
-    p_status text,
-    p_approved_by uuid DEFAULT NULL
-)
-RETURNS void AS $$
-BEGIN
-    UPDATE orders SET
-        status = p_status,
-        approved_by = CASE
-            WHEN p_status = 'processing' AND p_approved_by IS NOT NULL THEN p_approved_by
-            ELSE approved_by
-        END,
-        approved_at = CASE
-            WHEN p_status = 'processing' AND p_approved_by IS NOT NULL AND approved_at IS NULL THEN NOW()
-            ELSE approved_at
-        END
     WHERE id = p_order_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
