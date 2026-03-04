@@ -608,6 +608,183 @@ export const deleteTelesalesPostLog = async (id: string) => {
     return true;
 };
 
+// ==========================================
+// FACEBOOK GROUP MANAGEMENT FOR TELESALES
+// ==========================================
+
+export interface TelesalesFbGroup {
+    id: string;
+    name: string;
+    link?: string;
+    platform: string;
+    category: string;
+    status: string;
+    quality_rating: number;
+    best_post_time?: string;
+    member_count: number;
+    notes?: string;
+    added_by?: string;
+    created_at?: string;
+    updated_at?: string;
+    // Joined fields
+    added_by_name?: string;
+    post_count?: number;
+}
+
+export const FB_GROUP_CATEGORIES = [
+    { key: 'food_market', label: 'Chợ thực phẩm / Tạp hóa', color: 'bg-orange-100 text-orange-700' },
+    { key: 'distributor', label: 'Đại lý / Nhà phân phối', color: 'bg-blue-100 text-blue-700' },
+    { key: 'spice_seasoning', label: 'Chợ gia vị / Nước chấm', color: 'bg-amber-100 text-amber-700' },
+    { key: 'horeca', label: 'Nhà hàng / Đầu bếp', color: 'bg-purple-100 text-purple-700' },
+    { key: 'farm_product', label: 'Nông sản / Thực phẩm tươi', color: 'bg-green-100 text-green-700' },
+    { key: 'local_community', label: 'Hội nhóm địa phương', color: 'bg-cyan-100 text-cyan-700' },
+    { key: 'b2b_wholesale', label: 'Bán buôn / Sỉ', color: 'bg-indigo-100 text-indigo-700' },
+    { key: 'other', label: 'Khác', color: 'bg-gray-100 text-gray-700' },
+];
+
+export const FB_GROUP_STATUSES = [
+    { key: 'active', label: 'Đang hoạt động', color: 'bg-green-100 text-green-700' },
+    { key: 'archived', label: 'Đã lưu trữ', color: 'bg-gray-100 text-gray-600' },
+    { key: 'banned', label: 'Bị cấm đăng', color: 'bg-red-100 text-red-700' },
+];
+
+export const getTelesalesFbGroups = async (filters?: { category?: string; status?: string; search?: string }) => {
+    let query = supabase
+        .from('telesales_fb_groups')
+        .select('*, profiles:added_by(full_name)')
+        .order('updated_at', { ascending: false });
+
+    if (filters?.category && filters.category !== 'all') {
+        query = query.eq('category', filters.category);
+    }
+    if (filters?.status && filters.status !== 'all') {
+        query = query.eq('status', filters.status);
+    }
+    if (filters?.search) {
+        query = query.ilike('name', `%${filters.search}%`);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    return (data || []).map((g: any) => ({
+        ...g,
+        added_by_name: g.profiles?.full_name || null,
+        profiles: undefined,
+    })) as TelesalesFbGroup[];
+};
+
+export const createTelesalesFbGroup = async (groupData: Partial<TelesalesFbGroup>) => {
+    const { error } = await supabase
+        .from('telesales_fb_groups')
+        .insert([{
+            name: groupData.name,
+            link: groupData.link || null,
+            platform: groupData.platform || 'facebook_group',
+            category: groupData.category || 'other',
+            status: groupData.status || 'active',
+            quality_rating: groupData.quality_rating || 0,
+            best_post_time: groupData.best_post_time || null,
+            member_count: groupData.member_count || 0,
+            notes: groupData.notes || null,
+            added_by: groupData.added_by || null,
+        }]);
+
+    if (error) throw error;
+    return true;
+};
+
+export const updateTelesalesFbGroup = async (id: string, groupData: Partial<TelesalesFbGroup>) => {
+    const { error } = await supabase
+        .from('telesales_fb_groups')
+        .update({
+            ...groupData,
+            updated_at: new Date().toISOString(),
+        })
+        .eq('id', id);
+
+    if (error) throw error;
+    return true;
+};
+
+export const deleteTelesalesFbGroup = async (id: string) => {
+    const { error } = await supabase
+        .from('telesales_fb_groups')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+    return true;
+};
+
+/**
+ * Auto-sync a group from TelesalesPostLogManager.
+ * If a group with this name already exists, update its link and timestamp.
+ * If not, create a new entry.
+ */
+export const syncGroupFromPostLog = async (groupName: string, groupLink?: string, addedBy?: string) => {
+    if (!groupName || groupName.trim() === '') return;
+
+    const trimmedName = groupName.trim();
+
+    // Check if group already exists
+    const { data: existing } = await supabase
+        .from('telesales_fb_groups')
+        .select('id, link')
+        .eq('name', trimmedName)
+        .maybeSingle();
+
+    if (existing) {
+        // Update link and timestamp if needed
+        const updates: any = { updated_at: new Date().toISOString() };
+        if (groupLink && !existing.link) {
+            updates.link = groupLink;
+        }
+        await supabase
+            .from('telesales_fb_groups')
+            .update(updates)
+            .eq('id', existing.id);
+    } else {
+        // Create new group
+        await supabase
+            .from('telesales_fb_groups')
+            .insert([{
+                name: trimmedName,
+                link: groupLink || null,
+                platform: 'facebook_group',
+                category: 'other',
+                status: 'active',
+                added_by: addedBy || null,
+            }]);
+    }
+};
+
+/**
+ * Get post count per group name from telesales_post_logs.
+ * Returns a map of group_name → count.
+ */
+export const getGroupPostCounts = async (): Promise<Record<string, number>> => {
+    const { data, error } = await supabase
+        .from('telesales_post_logs')
+        .select('group_name')
+        .eq('platform', 'facebook_group')
+        .not('group_name', 'is', null);
+
+    if (error) {
+        console.error('Error fetching group post counts:', error);
+        return {};
+    }
+
+    const counts: Record<string, number> = {};
+    for (const row of (data || [])) {
+        const name = (row as any).group_name;
+        if (name) {
+            counts[name] = (counts[name] || 0) + 1;
+        }
+    }
+    return counts;
+};
+
 // Sync Post Logs count back to Daily Report
 export const syncTelesalesLogsToDailyReport = async (userId: string, date: string) => {
     try {

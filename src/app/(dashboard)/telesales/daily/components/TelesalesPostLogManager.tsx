@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Loader2, Plus, Trash2, Link as LinkIcon, Image as ImageIcon, ExternalLink, Pencil, MessageSquare, Share2, UserPlus, Phone } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
-import { getTelesalesPostLogs, createTelesalesPostLog, deleteTelesalesPostLog, updateTelesalesPostLog, TelesalesPostLog, syncTelesalesLogsToDailyReport } from "@/lib/telesalesDailyStore";
+import { getTelesalesPostLogs, createTelesalesPostLog, deleteTelesalesPostLog, updateTelesalesPostLog, TelesalesPostLog, syncTelesalesLogsToDailyReport, syncGroupFromPostLog, getTelesalesFbGroups, TelesalesFbGroup } from "@/lib/telesalesDailyStore";
 import { cn } from "@/lib/utils";
 
 interface TelesalesPostLogManagerProps {
@@ -19,6 +19,7 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
     const [uploading, setUploading] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [editingLogId, setEditingLogId] = useState<string | null>(null);
+    const [savedGroups, setSavedGroups] = useState<TelesalesFbGroup[]>([]);
 
     const [newLog, setNewLog] = useState<{
         platform: string;
@@ -40,7 +41,17 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
 
     useEffect(() => {
         loadLogs();
+        loadSavedGroups();
     }, [userId, date]);
+
+    const loadSavedGroups = async () => {
+        try {
+            const groups = await getTelesalesFbGroups({ status: 'active' });
+            setSavedGroups(groups || []);
+        } catch (e) {
+            console.error('Error loading saved groups:', e);
+        }
+    };
 
     const loadLogs = async () => {
         setLoading(true);
@@ -128,6 +139,15 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
 
             // Sync with Daily Report for correct history counts
             await syncTelesalesLogsToDailyReport(userId, date);
+
+            // Auto-sync group to telesales_fb_groups if it's a facebook_group post
+            if ((newLog.platform === 'facebook_group' || newLog.platform === 'facebook_page') && newLog.group_name.trim()) {
+                try {
+                    await syncGroupFromPostLog(newLog.group_name, newLog.group_link, userId);
+                } catch (e) {
+                    console.error('Error syncing group:', e);
+                }
+            }
 
             handleCancel();
             loadLogs();
@@ -312,11 +332,27 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
                                     <label className="text-xs font-medium text-slate-600 block mb-1">Tên Nhóm / Page lấy data</label>
                                     <input
                                         type="text"
+                                        list="saved-groups-list"
                                         className="w-full px-3 py-2 text-sm border rounded-md"
-                                        placeholder="Vd: Chợ thuốc HN..."
+                                        placeholder="Vd: Chợ thực phẩm HN..."
                                         value={newLog.group_name}
-                                        onChange={(e) => setNewLog({ ...newLog, group_name: e.target.value })}
+                                        onChange={(e) => {
+                                            const selectedGroup = savedGroups.find(g => g.name === e.target.value);
+                                            if (selectedGroup) {
+                                                setNewLog({ ...newLog, group_name: selectedGroup.name, group_link: selectedGroup.link || newLog.group_link });
+                                            } else {
+                                                setNewLog({ ...newLog, group_name: e.target.value });
+                                            }
+                                        }}
                                     />
+                                    <datalist id="saved-groups-list">
+                                        {savedGroups.map(g => (
+                                            <option key={g.id} value={g.name}>{g.name}{g.status === 'banned' ? ' ⛔ Bị cấm' : ''}</option>
+                                        ))}
+                                    </datalist>
+                                    {newLog.group_name && savedGroups.find(g => g.name === newLog.group_name && g.status === 'banned') && (
+                                        <p className="text-xs text-red-600 mt-1 font-medium">⚠️ Nhóm này đã bị đánh dấu CẤM ĐĂNG!</p>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="text-xs font-medium text-slate-600 block mb-1">Link Nhóm / Nguồn</label>

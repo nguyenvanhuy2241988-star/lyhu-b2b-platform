@@ -198,6 +198,7 @@ export const NAV_ITEMS = {
         { label: "Tạo đơn hàng", href: "/telesales/create-order", icon: ShoppingCart },
         { label: "Đơn hàng", href: PATH_ORDERS_TELESALES, icon: Package },
         { label: "Khách hàng", href: "/telesales/customers", icon: Users },
+        { label: "Nhóm FB đăng bài", href: "/telesales/fb-groups", icon: Globe },
         { label: "Thu nhập & KPI", href: "/telesales/earnings", icon: DollarSign },
         { label: "Quy định & Chính sách", href: "/telesales/rules", icon: Book },
         { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
