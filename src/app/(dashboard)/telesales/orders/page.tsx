@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Filter, Eye, FileText, MessageCircle, Pencil, Trash2, Clock, Package, CheckCircle, XCircle, Truck, RotateCcw } from "lucide-react";
-import { fetchOrders } from "@/lib/ordersStore";
+import { Search, Filter, Eye, FileText, MessageCircle, Pencil, Trash2, Clock, Package, CheckCircle, XCircle, Truck, RotateCcw, Scale, UserCheck, StickyNote } from "lucide-react";
+import { fetchOrders, SHIPPING_CARRIERS } from "@/lib/ordersStore";
 import { supabase } from "@/lib/supabaseClient"
 import type { Order } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -224,72 +224,125 @@ export default function TelesalesOrdersPage() {
                                 const statusConfig = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
                                 const StatusIcon = statusConfig.icon;
 
+                                const hasShippingData = order.shippingCarrier || order.trackingCode || order.packedByName || (order.totalBoxes && order.totalBoxes > 0) || order.shippingFee || order.shippingNote;
                                 return (
-                                    <tr key={order.id} className="hover:bg-slate-50">
-                                        <td className="px-6 py-4 font-medium text-slate-900">
-                                            ORD-{order.readableId}
-                                        </td>
-                                        <td className="px-6 py-4 text-slate-600">
-                                            {formatDate(order.createdAt)}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="font-medium text-slate-900">{order.customerName}</div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right font-medium text-slate-900">
-                                            {formatPrice(order.totalAmount)}
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            <span
-                                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}
-                                            >
-                                                {StatusIcon && <StatusIcon className="w-3.5 h-3.5" />}
-                                                {statusConfig.label}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <button
-                                                    onClick={() => setChatOrder({ id: order.id, readableId: String(order.readableId || order.id.slice(0, 8)) })}
-                                                    className="relative text-slate-400 hover:text-primary-600 transition-colors bg-slate-50 hover:bg-primary-50 p-2 rounded-lg"
-                                                    title="Chat"
+                                    <React.Fragment key={order.id}>
+                                        <tr className="hover:bg-slate-50">
+                                            <td className="px-6 py-4 font-medium text-slate-900">
+                                                ORD-{order.readableId}
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-600">
+                                                {formatDate(order.createdAt)}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="font-medium text-slate-900">{order.customerName}</div>
+                                            </td>
+                                            <td className="px-6 py-4 text-right font-medium text-slate-900">
+                                                {formatPrice(order.totalAmount)}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span
+                                                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${statusConfig.color}`}
                                                 >
-                                                    <MessageCircle className="w-4 h-4" />
-                                                    {unreadOrders.has(order.id) && (
-                                                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
-                                                    )}
-                                                </button>
-                                                <button
-                                                    onClick={() => setSelectedOrder(order)}
-                                                    className="text-slate-400 hover:text-indigo-600 transition-colors bg-slate-50 hover:bg-slate-100 p-2 rounded-lg"
-                                                    title="Xem chi tiết"
-                                                >
-                                                    <Eye className="w-4 h-4" />
-                                                </button>
-                                                {order.status === 'pending' && (
+                                                    {StatusIcon && <StatusIcon className="w-3.5 h-3.5" />}
+                                                    {statusConfig.label}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-2">
                                                     <button
-                                                        onClick={() => router.push(`/telesales/create-order?edit=${order.id}`)}
-                                                        className="text-slate-400 hover:text-blue-600 transition-colors bg-slate-50 hover:bg-blue-50 p-2 rounded-lg"
-                                                        title="Sửa đơn hàng"
+                                                        onClick={() => setChatOrder({ id: order.id, readableId: String(order.readableId || order.id.slice(0, 8)) })}
+                                                        className="relative text-slate-400 hover:text-primary-600 transition-colors bg-slate-50 hover:bg-primary-50 p-2 rounded-lg"
+                                                        title="Chat"
                                                     >
-                                                        <Pencil className="w-4 h-4" />
+                                                        <MessageCircle className="w-4 h-4" />
+                                                        {unreadOrders.has(order.id) && (
+                                                            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
+                                                        )}
                                                     </button>
-                                                )}
-                                                <button
-                                                    onClick={async () => {
-                                                        if (window.confirm("Bạn có chắc chắn muốn xóa đơn hàng này không?")) {
-                                                            const { deleteOrder } = await import("@/lib/ordersStore");
-                                                            const success = await deleteOrder(order.id);
-                                                            // Realtime will auto-update the list
-                                                        }
-                                                    }}
-                                                    className="text-slate-400 hover:text-red-600 transition-colors bg-slate-50 hover:bg-red-50 p-2 rounded-lg"
-                                                    title="Xóa đơn hàng"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                                    <button
+                                                        onClick={() => setSelectedOrder(order)}
+                                                        className="text-slate-400 hover:text-indigo-600 transition-colors bg-slate-50 hover:bg-slate-100 p-2 rounded-lg"
+                                                        title="Xem chi tiết"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+                                                    {order.status === 'pending' && (
+                                                        <button
+                                                            onClick={() => router.push(`/telesales/create-order?edit=${order.id}`)}
+                                                            className="text-slate-400 hover:text-blue-600 transition-colors bg-slate-50 hover:bg-blue-50 p-2 rounded-lg"
+                                                            title="Sửa đơn hàng"
+                                                        >
+                                                            <Pencil className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={async () => {
+                                                            if (window.confirm("Bạn có chắc chắn muốn xóa đơn hàng này không?")) {
+                                                                const { deleteOrder } = await import("@/lib/ordersStore");
+                                                                const success = await deleteOrder(order.id);
+                                                            }
+                                                        }}
+                                                        className="text-slate-400 hover:text-red-600 transition-colors bg-slate-50 hover:bg-red-50 p-2 rounded-lg"
+                                                        title="Xóa đơn hàng"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {hasShippingData && (
+                                            <tr className="bg-blue-50/40 border-b border-slate-100">
+                                                <td colSpan={6} className="px-6 py-2">
+                                                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-xs">
+                                                        {order.shippingCarrier && (
+                                                            <span className="inline-flex items-center gap-1 text-slate-600">
+                                                                <Truck className="w-3 h-3 text-blue-500" />
+                                                                <strong>{SHIPPING_CARRIERS.find((c: any) => c.value === order.shippingCarrier)?.label || order.shippingCarrier}</strong>
+                                                                {order.trackingCode && (
+                                                                    <span className="text-blue-600 font-mono font-medium ml-1">{order.trackingCode}</span>
+                                                                )}
+                                                            </span>
+                                                        )}
+                                                        {order.packedByName && (
+                                                            <span className="inline-flex items-center gap-1 text-slate-600">
+                                                                <UserCheck className="w-3 h-3 text-emerald-500" />
+                                                                Đóng: <strong>{order.packedByName}</strong>
+                                                            </span>
+                                                        )}
+                                                        {order.totalBoxes && order.totalBoxes > 0 ? (
+                                                            <span className="inline-flex items-center gap-1 text-slate-600">
+                                                                <Package className="w-3 h-3 text-amber-500" />
+                                                                {order.totalBoxes} thùng
+                                                                {order.shippingBoxes && order.shippingBoxes.length > 0 && (
+                                                                    <span className="text-slate-400 ml-0.5">
+                                                                        ({order.shippingBoxes.map((b: any, i: number) => `${b.qty && b.qty > 1 ? b.qty + '× ' : ''}${b.length_cm || 0}x${b.width_cm || 0}x${b.height_cm || 0}cm`).join(', ')})
+                                                                    </span>
+                                                                )}
+                                                            </span>
+                                                        ) : null}
+                                                        {order.totalWeightKg && order.totalWeightKg > 0 ? (
+                                                            <span className="inline-flex items-center gap-1 text-slate-600">
+                                                                <Scale className="w-3 h-3 text-purple-500" />
+                                                                {order.totalWeightKg} kg
+                                                            </span>
+                                                        ) : null}
+                                                        {order.shippingFee && order.shippingFee > 0 ? (
+                                                            <span className="inline-flex items-center gap-1 text-slate-600 font-semibold">
+                                                                Phí VC: {formatPrice(order.shippingFee)}
+                                                            </span>
+                                                        ) : null}
+                                                        {order.shippingNote && (
+                                                            <span className="inline-flex items-center gap-1 text-slate-500 italic">
+                                                                <StickyNote className="w-3 h-3 text-slate-400" />
+                                                                {order.shippingNote}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
                                 );
                             })}
                             {filteredOrders.length === 0 && (
