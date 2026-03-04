@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import DashboardShell from "@/components/layout/DashboardShell";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { ROLES } from "@/lib/constants";
-import { Calendar, LayoutDashboard, Heart, ChevronRight, List } from "lucide-react";
+import { Calendar, LayoutDashboard, Heart, ChevronRight, List, Wallet } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function EventsLayout({ children }: { children: React.ReactNode }) {
@@ -30,6 +30,12 @@ export default function EventsLayout({ children }: { children: React.ReactNode }
             href: "/events?view=calendar",
             icon: Calendar,
             isActive: currentView === 'calendar'
+        },
+        {
+            label: "Văn hóa & Quỹ",
+            href: "/events/culture",
+            icon: Wallet,
+            isActive: pathname === "/events/culture"
         },
         // { 
         //     label: "Sự kiện của tôi", 
