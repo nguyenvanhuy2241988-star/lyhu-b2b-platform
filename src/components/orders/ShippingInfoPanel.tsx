@@ -48,10 +48,10 @@ export function ShippingInfoPanel({ order, readOnly = false, onSaved }: Shipping
         setShippingNote(order.shippingNote || '');
     }, [order]);
 
-    const totalBoxes = boxes.length;
-    const totalWeight = useMemo(() => boxes.reduce((s, b) => s + (b.weight_kg || 0), 0), [boxes]);
+    const totalBoxes = useMemo(() => boxes.reduce((s, b) => s + (b.qty || 1), 0), [boxes]);
+    const totalWeight = useMemo(() => boxes.reduce((s, b) => s + ((b.qty || 1) * (b.weight_kg || 0)), 0), [boxes]);
 
-    const addBox = () => setBoxes([...boxes, { weight_kg: 0, length_cm: 0, width_cm: 0, height_cm: 0 }]);
+    const addBox = () => setBoxes([...boxes, { qty: 1, weight_kg: 0, length_cm: 0, width_cm: 0, height_cm: 0 }]);
     const removeBox = (idx: number) => setBoxes(boxes.filter((_, i) => i !== idx));
     const updateBox = (idx: number, field: keyof ShippingBox, value: number) => {
         const updated = [...boxes];
