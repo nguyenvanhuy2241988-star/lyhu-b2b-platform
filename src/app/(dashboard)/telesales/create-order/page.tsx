@@ -176,8 +176,16 @@ function TelesalesCreateOrderContent() {
                                 if (dType === 'percent' && price * qty > 0) {
                                     dValue = Math.round((discAmount / (price * qty)) * 100 * 100) / 100;
                                 }
+                                // Fix: RPC returns product as {name, sku, unit} without id
+                                // We need to look up the full product or at least include product_id
+                                const fullProduct = prods.find(p => p.id === item.product_id);
+                                const productObj = fullProduct || {
+                                    ...item.product,
+                                    id: item.product_id,
+                                    wholesalePrice: price,
+                                } as Product;
                                 return {
-                                    product: item.product,
+                                    product: productObj,
                                     quantity: qty,
                                     discount: discAmount,
                                     discountType: dType,

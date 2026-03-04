@@ -632,9 +632,10 @@ export const updateOrderSupabase = async (orderId: string, updateData: any, toke
         if (warehouseId && currentOrder.telesales_user_id) {
             for (const item of updateData.items) {
                 try {
+                    const pid = item.productId || item.product_id || item.product?.id;
                     await reserveStock(
                         warehouseId,
-                        item.productId || item.product.id,
+                        pid,
                         item.quantity,
                         orderId,
                         currentOrder.telesales_user_id,
