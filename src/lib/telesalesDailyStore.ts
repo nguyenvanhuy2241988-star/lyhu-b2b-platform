@@ -651,7 +651,7 @@ export const FB_GROUP_STATUSES = [
 export const getTelesalesFbGroups = async (filters?: { category?: string; status?: string; search?: string }) => {
     let query = supabase
         .from('telesales_fb_groups')
-        .select('*, profiles:added_by(full_name)')
+        .select('*')
         .order('updated_at', { ascending: false });
 
     if (filters?.category && filters.category !== 'all') {
@@ -667,11 +667,26 @@ export const getTelesalesFbGroups = async (filters?: { category?: string; status
     const { data, error } = await query;
     if (error) throw error;
 
-    return (data || []).map((g: any) => ({
+    const groups = (data || []) as TelesalesFbGroup[];
+
+    // Fetch added_by names separately (avoid FK join issues)
+    const addedByIds = groups.map(g => g.added_by).filter(Boolean) as string[];
+    let profilesMap: Record<string, string> = {};
+    if (addedByIds.length > 0) {
+        const uniqueIds = Array.from(new Set(addedByIds));
+        const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, full_name')
+            .in('id', uniqueIds);
+        for (const p of (profiles || []) as any[]) {
+            profilesMap[p.id] = p.full_name;
+        }
+    }
+
+    return groups.map(g => ({
         ...g,
-        added_by_name: g.profiles?.full_name || null,
-        profiles: undefined,
-    })) as TelesalesFbGroup[];
+        added_by_name: g.added_by ? (profilesMap[g.added_by] || null) : null,
+    }));
 };
 
 export const createTelesalesFbGroup = async (groupData: Partial<TelesalesFbGroup>) => {
