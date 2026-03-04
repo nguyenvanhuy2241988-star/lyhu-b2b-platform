@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Loader2, Plus, Trash2, Link as LinkIcon, Image as ImageIcon, ExternalLink, Pencil, MessageSquare, Share2, UserPlus, Phone } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
-import { getTelesalesPostLogs, createTelesalesPostLog, deleteTelesalesPostLog, updateTelesalesPostLog, TelesalesPostLog, syncTelesalesLogsToDailyReport, syncGroupFromPostLog, getTelesalesFbGroups, TelesalesFbGroup } from "@/lib/telesalesDailyStore";
+import { getTelesalesPostLogs, createTelesalesPostLog, deleteTelesalesPostLog, updateTelesalesPostLog, TelesalesPostLog, syncTelesalesLogsToDailyReport, syncGroupFromPostLog, getTelesalesFbGroups, TelesalesFbGroup, FB_GROUP_CATEGORIES } from "@/lib/telesalesDailyStore";
 import { cn } from "@/lib/utils";
 
 interface TelesalesPostLogManagerProps {
@@ -20,6 +20,8 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
     const [showForm, setShowForm] = useState(false);
     const [editingLogId, setEditingLogId] = useState<string | null>(null);
     const [savedGroups, setSavedGroups] = useState<TelesalesFbGroup[]>([]);
+    const [showGroupDropdown, setShowGroupDropdown] = useState(false);
+    const groupDropdownRef = useRef<HTMLDivElement>(null);
 
     const [newLog, setNewLog] = useState<{
         platform: string;
@@ -43,6 +45,17 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
         loadLogs();
         loadSavedGroups();
     }, [userId, date]);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (groupDropdownRef.current && !groupDropdownRef.current.contains(e.target as Node)) {
+                setShowGroupDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     const loadSavedGroups = async () => {
         try {
@@ -328,28 +341,65 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
                         {/* Optional Info based on platform */}
                         {(newLog.platform === 'facebook_group' || newLog.platform === 'facebook_page') && (
                             <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div>
+                                <div className="relative" ref={groupDropdownRef}>
                                     <label className="text-xs font-medium text-slate-600 block mb-1">Tên Nhóm / Page lấy data</label>
                                     <input
                                         type="text"
-                                        list="saved-groups-list"
                                         className="w-full px-3 py-2 text-sm border rounded-md"
-                                        placeholder="Vd: Chợ thực phẩm HN..."
+                                        placeholder="Gõ tên nhóm để tìm..."
                                         value={newLog.group_name}
+                                        onFocus={() => setShowGroupDropdown(true)}
                                         onChange={(e) => {
-                                            const selectedGroup = savedGroups.find(g => g.name === e.target.value);
-                                            if (selectedGroup) {
-                                                setNewLog({ ...newLog, group_name: selectedGroup.name, group_link: selectedGroup.link || newLog.group_link });
-                                            } else {
-                                                setNewLog({ ...newLog, group_name: e.target.value });
-                                            }
+                                            setNewLog({ ...newLog, group_name: e.target.value });
+                                            setShowGroupDropdown(true);
                                         }}
                                     />
-                                    <datalist id="saved-groups-list">
-                                        {savedGroups.map(g => (
-                                            <option key={g.id} value={g.name}>{g.name}{g.status === 'banned' ? ' ⛔ Bị cấm' : ''}</option>
-                                        ))}
-                                    </datalist>
+                                    {/* Custom searchable dropdown */}
+                                    {showGroupDropdown && (
+                                        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                            {savedGroups
+                                                .filter(g => !newLog.group_name || g.name.toLowerCase().includes(newLog.group_name.toLowerCase()))
+                                                .map(g => {
+                                                    const catInfo = FB_GROUP_CATEGORIES.find((c: any) => c.key === g.category);
+                                                    return (
+                                                        <button
+                                                            key={g.id}
+                                                            type="button"
+                                                            className={`w-full text-left px-3 py-2 hover:bg-blue-50 flex items-center justify-between gap-2 text-sm border-b border-gray-50 last:border-0 transition-colors ${g.status === 'banned' ? 'bg-red-50/50' : ''
+                                                                }`}
+                                                            onClick={() => {
+                                                                setNewLog({
+                                                                    ...newLog,
+                                                                    group_name: g.name,
+                                                                    group_link: g.link || newLog.group_link,
+                                                                });
+                                                                setShowGroupDropdown(false);
+                                                            }}
+                                                        >
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="font-medium text-gray-800 truncate">{g.name}</div>
+                                                                {g.link && <div className="text-[10px] text-gray-400 truncate">{g.link}</div>}
+                                                            </div>
+                                                            <div className="flex items-center gap-1 shrink-0">
+                                                                {catInfo && (
+                                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${catInfo.color}`}>
+                                                                        {catInfo.label}
+                                                                    </span>
+                                                                )}
+                                                                {g.status === 'banned' && (
+                                                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-red-100 text-red-700">⛔ Cấm</span>
+                                                                )}
+                                                            </div>
+                                                        </button>
+                                                    );
+                                                })}
+                                            {savedGroups.filter(g => !newLog.group_name || g.name.toLowerCase().includes(newLog.group_name.toLowerCase())).length === 0 && (
+                                                <div className="px-3 py-3 text-xs text-gray-400 text-center">
+                                                    {newLog.group_name ? `Không tìm thấy "${newLog.group_name}" — nhóm mới sẽ được tạo tự động` : 'Chưa có nhóm nào'}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                     {newLog.group_name && savedGroups.find(g => g.name === newLog.group_name && g.status === 'banned') && (
                                         <p className="text-xs text-red-600 mt-1 font-medium">⚠️ Nhóm này đã bị đánh dấu CẤM ĐĂNG!</p>
                                     )}
