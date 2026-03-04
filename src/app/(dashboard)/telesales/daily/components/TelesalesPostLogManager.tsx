@@ -214,97 +214,9 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
                 )}
             </div>
 
-            {/* List Existing Logs */}
-            <div className="space-y-3 mb-4">
-                {loading ? (
-                    <div className="text-center py-4 text-slate-400"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></div>
-                ) : logs.length === 0 ? (
-                    <div className="text-center py-6 border border-dashed border-slate-200 rounded-lg bg-slate-50">
-                        <p className="text-slate-500 text-sm">Chưa có tương tác / mồi chài / ảnh Zalo nào được lưu hôm nay.</p>
-                        {showForm && <p className="text-xs text-blue-600 mt-1">Điền thông tin bên dưới để thêm.</p>}
-                    </div>
-                ) : (
-                    logs.map((log) => (
-                        <div key={log.id} className="flex gap-4 p-3 rounded-lg border border-slate-100 hover:border-slate-300 transition-colors group">
-                            {/* Image Preview */}
-                            <div className="w-20 h-20 bg-slate-100 rounded-md flex-shrink-0 overflow-hidden border border-slate-200 relative group/img">
-                                {log.image_url ? (
-                                    <>
-                                        <img src={log.image_url} alt="Evidence" className="w-full h-full object-cover" />
-                                        <a href={log.image_url} target="_blank" rel="noreferrer" className="absolute inset-0 bg-black/40 hidden group-hover/img:flex items-center justify-center text-white transition-all">
-                                            <ExternalLink className="w-4 h-4" />
-                                        </a>
-                                    </>
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-slate-400">
-                                        <ImageIcon className="w-6 h-6" />
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Content */}
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className={cn(
-                                        "text-xs px-2 py-0.5 rounded-full font-medium capitalize flex items-center gap-1 w-max",
-                                        log.activity_type === 'comment' ? "bg-orange-100 text-orange-700" :
-                                            log.activity_type === 'message' ? "bg-green-100 text-green-700" :
-                                                log.activity_type === 'friend' ? "bg-purple-100 text-purple-700" :
-                                                    "bg-blue-100 text-blue-700"
-                                    )}>
-                                        {log.activity_type === 'comment' && <MessageSquare className="w-3 h-3" />}
-                                        {log.activity_type === 'message' && <Phone className="w-3 h-3" />}
-                                        {log.activity_type === 'friend' && <UserPlus className="w-3 h-3" />}
-                                        {log.activity_type === 'friend' ? 'Kết bạn' : (
-                                            log.activity_type === 'message' ? 'Nhắn tin CSKH' : (log.activity_type || 'post')
-                                        )}
-                                    </span>
-                                    <span className={cn(
-                                        "text-xs px-2 py-0.5 rounded-full font-medium capitalize w-max",
-                                        log.platform.includes('facebook') ? "bg-blue-100 text-blue-700" :
-                                            log.platform === 'zalo' ? "bg-sky-100 text-sky-700" : "bg-slate-100 text-slate-700"
-                                    )}>
-                                        {log.platform.replace('_', ' ')}
-                                    </span>
-                                    {log.group_name && (
-                                        <span className="text-sm font-medium text-slate-900 truncate block">
-                                            {log.group_name}
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="space-y-1">
-                                    {log.post_link && (
-                                        <a href={log.post_link} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-blue-600 hover:underline font-medium truncate w-fit max-w-[200px] sm:max-w-[400px]">
-                                            <ExternalLink className="w-3 h-3 min-w-[12px]" /> Xem link
-                                        </a>
-                                    )}
-                                    {log.group_note && (
-                                        <p className="text-xs text-slate-500 italic truncate w-full">
-                                            {log.group_note}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Actions */}
-                            {!readOnly && (
-                                <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all self-center">
-                                    <button onClick={() => handleEdit(log)} className="p-2 text-slate-400 hover:text-blue-600" title="Sửa">
-                                        <Pencil className="w-4 h-4" />
-                                    </button>
-                                    <button onClick={() => handleDelete(log.id)} className="p-2 text-slate-400 hover:text-red-600" title="Xóa">
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    ))
-                )}
-            </div>
-
-            {/* Add/Edit Form */}
+            {/* Add/Edit Form — placed above list for convenience */}
             {showForm && !readOnly && (
-                <div className="bg-slate-50 p-4 rounded-lg border border-blue-100 animate-in fade-in slide-in-from-top-2">
+                <div className="bg-slate-50 p-4 rounded-lg border border-blue-100 animate-in fade-in slide-in-from-top-2 mb-4">
                     <h3 className="text-sm font-bold text-slate-800 mb-3">
                         {editingLogId ? "Chỉnh sửa minh chứng" : "Thêm minh chứng mới"}
                     </h3>
@@ -471,6 +383,94 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
                     </div>
                 </div>
             )}
+
+            {/* List Existing Logs */}
+            <div className="space-y-3 mb-4">
+                {loading ? (
+                    <div className="text-center py-4 text-slate-400"><Loader2 className="w-5 h-5 animate-spin mx-auto" /></div>
+                ) : logs.length === 0 ? (
+                    <div className="text-center py-6 border border-dashed border-slate-200 rounded-lg bg-slate-50">
+                        <p className="text-slate-500 text-sm">Chưa có tương tác / mồi chài / ảnh Zalo nào được lưu hôm nay.</p>
+                        {showForm && <p className="text-xs text-blue-600 mt-1">Điền thông tin bên trên để thêm.</p>}
+                    </div>
+                ) : (
+                    logs.map((log) => (
+                        <div key={log.id} className="flex gap-4 p-3 rounded-lg border border-slate-100 hover:border-slate-300 transition-colors group">
+                            {/* Image Preview */}
+                            <div className="w-20 h-20 bg-slate-100 rounded-md flex-shrink-0 overflow-hidden border border-slate-200 relative group/img">
+                                {log.image_url ? (
+                                    <>
+                                        <img src={log.image_url} alt="Evidence" className="w-full h-full object-cover" />
+                                        <a href={log.image_url} target="_blank" rel="noreferrer" className="absolute inset-0 bg-black/40 hidden group-hover/img:flex items-center justify-center text-white transition-all">
+                                            <ExternalLink className="w-4 h-4" />
+                                        </a>
+                                    </>
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-slate-400">
+                                        <ImageIcon className="w-6 h-6" />
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className={cn(
+                                        "text-xs px-2 py-0.5 rounded-full font-medium capitalize flex items-center gap-1 w-max",
+                                        log.activity_type === 'comment' ? "bg-orange-100 text-orange-700" :
+                                            log.activity_type === 'message' ? "bg-green-100 text-green-700" :
+                                                log.activity_type === 'friend' ? "bg-purple-100 text-purple-700" :
+                                                    "bg-blue-100 text-blue-700"
+                                    )}>
+                                        {log.activity_type === 'comment' && <MessageSquare className="w-3 h-3" />}
+                                        {log.activity_type === 'message' && <Phone className="w-3 h-3" />}
+                                        {log.activity_type === 'friend' && <UserPlus className="w-3 h-3" />}
+                                        {log.activity_type === 'friend' ? 'Kết bạn' : (
+                                            log.activity_type === 'message' ? 'Nhắn tin CSKH' : (log.activity_type || 'post')
+                                        )}
+                                    </span>
+                                    <span className={cn(
+                                        "text-xs px-2 py-0.5 rounded-full font-medium capitalize w-max",
+                                        log.platform.includes('facebook') ? "bg-blue-100 text-blue-700" :
+                                            log.platform === 'zalo' ? "bg-sky-100 text-sky-700" : "bg-slate-100 text-slate-700"
+                                    )}>
+                                        {log.platform.replace('_', ' ')}
+                                    </span>
+                                    {log.group_name && (
+                                        <span className="text-sm font-medium text-slate-900 truncate block">
+                                            {log.group_name}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="space-y-1">
+                                    {log.post_link && (
+                                        <a href={log.post_link} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-blue-600 hover:underline font-medium truncate w-fit max-w-[200px] sm:max-w-[400px]">
+                                            <ExternalLink className="w-3 h-3 min-w-[12px]" /> Xem link
+                                        </a>
+                                    )}
+                                    {log.group_note && (
+                                        <p className="text-xs text-slate-500 italic truncate w-full">
+                                            {log.group_note}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Actions */}
+                            {!readOnly && (
+                                <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all self-center">
+                                    <button onClick={() => handleEdit(log)} className="p-2 text-slate-400 hover:text-blue-600" title="Sửa">
+                                        <Pencil className="w-4 h-4" />
+                                    </button>
+                                    <button onClick={() => handleDelete(log.id)} className="p-2 text-slate-400 hover:text-red-600" title="Xóa">
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    ))
+                )}
+            </div>
         </div>
     );
 }
