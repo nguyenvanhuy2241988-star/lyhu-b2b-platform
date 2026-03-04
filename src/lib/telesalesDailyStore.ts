@@ -685,7 +685,7 @@ export const getTelesalesFbGroups = async (filters?: { category?: string; status
 
     return groups.map(g => ({
         ...g,
-        added_by_name: g.added_by ? (profilesMap[g.added_by] || null) : null,
+        added_by_name: g.added_by ? (profilesMap[g.added_by] || undefined) : undefined,
     }));
 };
 
