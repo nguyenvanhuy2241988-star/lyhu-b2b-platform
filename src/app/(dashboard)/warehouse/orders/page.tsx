@@ -8,6 +8,7 @@ export default function WarehouseOrdersPage() {
             readOnly={true}
             maskSensitiveData={true}
             hideRevenue={true}
+            canEditShipping={true}
         />
     );
 }

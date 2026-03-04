@@ -90,6 +90,7 @@ export interface Order {
 }
 
 export interface ShippingBox {
+    qty: number;
     weight_kg: number;
     length_cm: number;
     width_cm: number;
@@ -713,6 +714,7 @@ export const SHIPPING_CARRIERS = [
     { value: 'SPX', label: 'Shopee Express' },
     { value: 'BEST', label: 'BEST Express' },
     { value: 'SELF', label: 'Tự giao' },
+    { value: 'GOI_SHIP', label: 'Gọi Ship ngoài' },
     { value: 'OTHER', label: 'Khác' },
 ];
 

@@ -13,9 +13,10 @@ interface OrderEditModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
+    shippingOnly?: boolean; // Only show shipping section (for warehouse role)
 }
 
-export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditModalProps) {
+export function OrderEditModal({ order, isOpen, onClose, onSuccess, shippingOnly = false }: OrderEditModalProps) {
     const { session, user } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
 
@@ -52,7 +53,7 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
             setCarrier(order.shippingCarrier || '');
             setTrackingCode(order.trackingCode || '');
             setPackedBy(order.packedBy || '');
-            setBoxes(order.shippingBoxes || []);
+            setBoxes((order.shippingBoxes || []).map((b: any) => ({ ...b, qty: b.qty || 1 })));
             setShippingFee(order.shippingFee || 0);
             setShippingNote(order.shippingNote || '');
         }
@@ -73,10 +74,10 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
         }
     }, [isOpen, session?.access_token]);
 
-    const totalBoxes = boxes.length;
-    const totalWeight = useMemo(() => boxes.reduce((s, b) => s + (b.weight_kg || 0), 0), [boxes]);
+    const totalBoxes = useMemo(() => boxes.reduce((s, b) => s + (b.qty || 1), 0), [boxes]);
+    const totalWeight = useMemo(() => boxes.reduce((s, b) => s + ((b.qty || 1) * (b.weight_kg || 0)), 0), [boxes]);
 
-    const addBox = () => setBoxes([...boxes, { weight_kg: 0, length_cm: 0, width_cm: 0, height_cm: 0 }]);
+    const addBox = () => setBoxes([...boxes, { qty: 1, weight_kg: 0, length_cm: 0, width_cm: 0, height_cm: 0 }]);
     const removeBox = (idx: number) => setBoxes(boxes.filter((_, i) => i !== idx));
     const updateBox = (idx: number, field: keyof ShippingBox, value: number) => {
         const updated = [...boxes];
@@ -87,36 +88,31 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
     if (!isOpen || !order) return null;
 
     const handleSave = async () => {
-        if (!items.length) {
+        if (!shippingOnly && !items.length) {
             alert("Đơn hàng phải có ít nhất 1 sản phẩm");
             return;
         }
 
         setIsSaving(true);
         try {
-            const totalAmount = items.reduce((sum, item) => {
-                const price = item.price || item.unitPrice || 0;
-                const discount = item.discount || 0;
-                return sum + (price * item.quantity) - discount;
-            }, 0);
+            let orderResult = { success: true, error: '' };
 
-            const updateData = {
-                customerName,
-                receiverPhone,
-                receiverAddress,
-                note,
-                items,
-                totalAmount
-            };
+            // 1. Save order info (customer + items) - only if not shippingOnly
+            if (!shippingOnly) {
+                const totalAmount = items.reduce((sum, item) => {
+                    const price = item.price || item.unitPrice || 0;
+                    const discount = item.discount || 0;
+                    return sum + (price * item.quantity) - discount;
+                }, 0);
 
-            // 1. Save order info (customer + items)
-            const result = await updateOrderSupabase(
-                order.id,
-                updateData,
-                session?.access_token
-            );
+                orderResult = await updateOrderSupabase(
+                    order.id,
+                    { customerName, receiverPhone, receiverAddress, note, items, totalAmount },
+                    session?.access_token
+                );
+            }
 
-            // 2. Save shipping info
+            // 2. Save shipping info (always)
             const shippingResult = await updateOrderShipping(order.id, {
                 shippingCarrier: carrier,
                 trackingCode,
@@ -128,13 +124,13 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
                 shippingNote,
             }, session?.access_token);
 
-            if (result.success && shippingResult.success) {
-                alert("✅ Cập nhật đơn hàng thành công!");
+            if (orderResult.success && shippingResult.success) {
+                alert("✅ Cập nhật thành công!");
                 onSuccess();
                 onClose();
             } else {
                 const errors = [];
-                if (!result.success) errors.push("Thông tin đơn: " + result.error);
+                if (!orderResult.success) errors.push("Thông tin đơn: " + orderResult.error);
                 if (!shippingResult.success) errors.push("Vận chuyển: " + shippingResult.error);
                 alert("Lỗi:\n" + errors.join("\n"));
             }
@@ -172,84 +168,90 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
             <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
                 {/* Header */}
                 <div className="flex justify-between items-center p-4 border-b">
-                    <h2 className="text-xl font-bold">Sửa đơn hàng #{order.readableId}</h2>
+                    <h2 className="text-xl font-bold">
+                        {shippingOnly ? `Vận chuyển #${order.readableId}` : `Sửa đơn hàng #${order.readableId}`}
+                    </h2>
                     <button onClick={onClose}><X className="w-5 h-5" /></button>
                 </div>
 
                 {/* Body */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {/* Customer Info */}
-                    <div className="bg-slate-50 p-4 rounded-lg flex flex-col gap-3">
-                        <h3 className="font-semibold text-sm">Thông tin khách hàng</h3>
-                        <div className="grid grid-cols-2 gap-3">
-                            <div>
-                                <label className="text-xs font-medium text-slate-500">Tên khách</label>
-                                <input className="w-full p-2 border rounded" value={customerName} onChange={e => setCustomerName(e.target.value)} />
-                            </div>
-                            <div>
-                                <label className="text-xs font-medium text-slate-500">Số điện thoại</label>
-                                <input className="w-full p-2 border rounded" value={receiverPhone} onChange={e => setReceiverPhone(e.target.value)} />
-                            </div>
-                            <div className="col-span-2">
-                                <label className="text-xs font-medium text-slate-500">Địa chỉ</label>
-                                <input className="w-full p-2 border rounded" value={receiverAddress} onChange={e => setReceiverAddress(e.target.value)} />
-                            </div>
-                            <div className="col-span-2">
-                                <label className="text-xs font-medium text-slate-500">Ghi chú</label>
-                                <textarea className="w-full p-2 border rounded" rows={2} value={note} onChange={e => setNote(e.target.value)} />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Items */}
-                    <div>
-                        <div className="flex justify-between items-center mb-2">
-                            <h3 className="font-semibold text-sm">Sản phẩm</h3>
-                            <button onClick={() => setIsAddingProduct(!isAddingProduct)} className="text-sm text-blue-600 font-medium flex items-center gap-1">
-                                <Plus className="w-4 h-4" /> Thêm
-                            </button>
-                        </div>
-
-                        {isAddingProduct && (
-                            <div className="mb-3 p-3 bg-white border rounded-lg shadow-sm">
-                                <input
-                                    autoFocus
-                                    placeholder="Tìm món..."
-                                    className="w-full p-2 border rounded mb-2"
-                                    value={searchTerm}
-                                    onChange={e => setSearchTerm(e.target.value)}
-                                />
-                                <div className="max-h-40 overflow-y-auto">
-                                    {products
-                                        .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                                        .map(p => (
-                                            <div key={p.id} onClick={() => handleAddItem(p)} className="p-2 hover:bg-slate-50 cursor-pointer text-sm">
-                                                {p.name} - {new Intl.NumberFormat('vi-VN').format(p.wholesalePrice || 0)}đ
-                                            </div>
-                                        ))}
+                    {/* Customer Info - hide in shippingOnly mode */}
+                    {!shippingOnly && (
+                        <div className="bg-slate-50 p-4 rounded-lg flex flex-col gap-3">
+                            <h3 className="font-semibold text-sm">Thông tin khách hàng</h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-medium text-slate-500">Tên khách</label>
+                                    <input className="w-full p-2 border rounded" value={customerName} onChange={e => setCustomerName(e.target.value)} />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-medium text-slate-500">Số điện thoại</label>
+                                    <input className="w-full p-2 border rounded" value={receiverPhone} onChange={e => setReceiverPhone(e.target.value)} />
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="text-xs font-medium text-slate-500">Địa chỉ</label>
+                                    <input className="w-full p-2 border rounded" value={receiverAddress} onChange={e => setReceiverAddress(e.target.value)} />
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="text-xs font-medium text-slate-500">Ghi chú</label>
+                                    <textarea className="w-full p-2 border rounded" rows={2} value={note} onChange={e => setNote(e.target.value)} />
                                 </div>
                             </div>
-                        )}
-
-                        <div className="space-y-2">
-                            {items.map((item, idx) => (
-                                <div key={idx} className="flex gap-2 items-center p-2 border rounded bg-white">
-                                    <div className="flex-1">
-                                        <div className="font-medium text-sm">{item.name || "Sản phẩm"}</div>
-                                        <div className="text-xs text-slate-500">{new Intl.NumberFormat('vi-VN').format(item.price || item.unitPrice || 0)}đ</div>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={() => setItems(items.map((i, k) => k === idx ? { ...i, quantity: Math.max(1, i.quantity - 1) } : i))} className="px-2 bg-slate-100 rounded">-</button>
-                                        <span className="w-4 text-center text-sm">{item.quantity}</span>
-                                        <button onClick={() => setItems(items.map((i, k) => k === idx ? { ...i, quantity: i.quantity + 1 } : i))} className="px-2 bg-slate-100 rounded">+</button>
-                                    </div>
-                                    <button onClick={() => setItems(items.filter((_, k) => k !== idx))} className="text-red-500 p-1"><Trash2 className="w-4 h-4" /></button>
-                                </div>
-                            ))}
                         </div>
-                    </div>
+                    )}
 
-                    {/* Shipping & Packing Section - Inline */}
+                    {/* Items - hide in shippingOnly mode */}
+                    {!shippingOnly && (
+                        <div>
+                            <div className="flex justify-between items-center mb-2">
+                                <h3 className="font-semibold text-sm">Sản phẩm</h3>
+                                <button onClick={() => setIsAddingProduct(!isAddingProduct)} className="text-sm text-blue-600 font-medium flex items-center gap-1">
+                                    <Plus className="w-4 h-4" /> Thêm
+                                </button>
+                            </div>
+
+                            {isAddingProduct && (
+                                <div className="mb-3 p-3 bg-white border rounded-lg shadow-sm">
+                                    <input
+                                        autoFocus
+                                        placeholder="Tìm món..."
+                                        className="w-full p-2 border rounded mb-2"
+                                        value={searchTerm}
+                                        onChange={e => setSearchTerm(e.target.value)}
+                                    />
+                                    <div className="max-h-40 overflow-y-auto">
+                                        {products
+                                            .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                                            .map(p => (
+                                                <div key={p.id} onClick={() => handleAddItem(p)} className="p-2 hover:bg-slate-50 cursor-pointer text-sm">
+                                                    {p.name} - {new Intl.NumberFormat('vi-VN').format(p.wholesalePrice || 0)}đ
+                                                </div>
+                                            ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="space-y-2">
+                                {items.map((item, idx) => (
+                                    <div key={idx} className="flex gap-2 items-center p-2 border rounded bg-white">
+                                        <div className="flex-1">
+                                            <div className="font-medium text-sm">{item.name || "Sản phẩm"}</div>
+                                            <div className="text-xs text-slate-500">{new Intl.NumberFormat('vi-VN').format(item.price || item.unitPrice || 0)}đ</div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button onClick={() => setItems(items.map((i, k) => k === idx ? { ...i, quantity: Math.max(1, i.quantity - 1) } : i))} className="px-2 bg-slate-100 rounded">-</button>
+                                            <span className="w-4 text-center text-sm">{item.quantity}</span>
+                                            <button onClick={() => setItems(items.map((i, k) => k === idx ? { ...i, quantity: i.quantity + 1 } : i))} className="px-2 bg-slate-100 rounded">+</button>
+                                        </div>
+                                        <button onClick={() => setItems(items.filter((_, k) => k !== idx))} className="text-red-500 p-1"><Trash2 className="w-4 h-4" /></button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Shipping & Packing Section */}
                     <div className="bg-slate-50 p-4 rounded-lg space-y-4">
                         <div className="flex items-center gap-2">
                             <Truck className="w-4 h-4 text-slate-500" />
@@ -290,7 +292,7 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
                             </div>
                         </div>
 
-                        {/* Boxes */}
+                        {/* Boxes with QTY */}
                         <div>
                             <div className="flex items-center justify-between mb-2">
                                 <label className="text-xs font-medium text-slate-500 flex items-center gap-1">
@@ -299,18 +301,25 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
                                     {totalBoxes > 0 && <span className="text-slate-400 font-normal ml-1">({totalBoxes} thùng · {totalWeight.toFixed(1)} kg)</span>}
                                 </label>
                                 <button onClick={addBox} className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium">
-                                    <Plus className="w-3 h-3" /> Thêm thùng
+                                    <Plus className="w-3 h-3" /> Thêm loại thùng
                                 </button>
                             </div>
                             {boxes.length === 0 ? (
                                 <div className="text-center py-3 border border-dashed border-slate-200 rounded-lg text-xs text-slate-400">
-                                    Chưa có thùng nào. Nhấn &quot;Thêm thùng&quot; để bắt đầu.
+                                    Chưa có thùng nào. Nhấn &quot;Thêm loại thùng&quot; để bắt đầu.
                                 </div>
                             ) : (
                                 <div className="space-y-2">
                                     {boxes.map((box, idx) => (
                                         <div key={idx} className="flex items-center gap-2 bg-white p-2 rounded-lg border">
-                                            <span className="text-xs font-semibold text-slate-500 w-14 shrink-0">Thùng {idx + 1}</span>
+                                            {/* QTY */}
+                                            <div className="flex items-center gap-1 shrink-0">
+                                                <label className="text-[10px] text-slate-400">SL</label>
+                                                <input type="number" min="1" className="w-12 px-1 py-1 border rounded text-xs text-center font-semibold"
+                                                    value={box.qty || 1} onChange={e => updateBox(idx, 'qty', Math.max(1, Number(e.target.value)))} />
+                                            </div>
+                                            <span className="text-slate-300">×</span>
+                                            {/* Weight + Dimensions */}
                                             <div className="flex items-center gap-1.5 flex-1 flex-wrap">
                                                 <div className="flex items-center gap-1">
                                                     <Scale className="w-3 h-3 text-slate-400" />
@@ -331,7 +340,7 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
                                                     <span className="text-[10px] text-slate-400">cm</span>
                                                 </div>
                                             </div>
-                                            <button onClick={() => removeBox(idx)} className="p-1 text-slate-400 hover:text-rose-600"><Trash2 className="w-3 h-3" /></button>
+                                            <button onClick={() => removeBox(idx)} className="p-1 text-slate-400 hover:text-rose-600 shrink-0"><Trash2 className="w-3 h-3" /></button>
                                         </div>
                                     ))}
                                 </div>
@@ -354,7 +363,7 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
                     </div>
                 </div>
 
-                {/* Footer - Single Save Button */}
+                {/* Footer */}
                 <div className="p-4 border-t flex justify-end gap-2 text-sm bg-slate-50">
                     <button onClick={onClose} className="px-4 py-2 border rounded bg-white hover:bg-slate-50">Hủy</button>
                     <button

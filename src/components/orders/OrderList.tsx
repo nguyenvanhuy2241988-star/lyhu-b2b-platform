@@ -85,9 +85,10 @@ interface OrderListProps {
     readOnly?: boolean;
     maskSensitiveData?: boolean;
     hideRevenue?: boolean;
+    canEditShipping?: boolean;
 }
 
-export default function OrderList({ readOnly = false, maskSensitiveData = false, hideRevenue = false }: OrderListProps) {
+export default function OrderList({ readOnly = false, maskSensitiveData = false, hideRevenue = false, canEditShipping = false }: OrderListProps) {
     const { user, session, role } = useAuth();
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -96,8 +97,9 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
     const [chatOrder, setChatOrder] = useState<{ id: string; readableId: string } | null>(null);
-    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null); // Added state
-    const [editOrder, setEditOrder] = useState<Order | null>(null); // Edit state
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [editOrder, setEditOrder] = useState<Order | null>(null);
+    const [shippingEditOrder, setShippingEditOrder] = useState<Order | null>(null);
     const [unreadOrders, setUnreadOrders] = useState<Set<string>>(new Set());
 
     // User Filter State
@@ -479,17 +481,6 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                                                         <StatusIcon className="w-3.5 h-3.5" />
                                                         {statusConfig.label}
                                                     </span>
-                                                    {order.shippingCarrier && (
-                                                        <div className="mt-1 text-[10px] text-slate-500">
-                                                            <span className="inline-flex items-center gap-1">
-                                                                <Truck className="w-3 h-3" />
-                                                                {SHIPPING_CARRIERS.find(c => c.value === order.shippingCarrier)?.label || order.shippingCarrier}
-                                                            </span>
-                                                            {order.trackingCode && (
-                                                                <span className="block text-blue-600 font-medium truncate max-w-[120px] mx-auto">{order.trackingCode}</span>
-                                                            )}
-                                                        </div>
-                                                    )}
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
                                                     <div className="flex items-center justify-end gap-2">
@@ -526,9 +517,19 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                                                         )}
 
                                                         {readOnly ? (
-                                                            <div className="px-2 py-1 bg-slate-100 text-slate-400 text-xs rounded">
-                                                                Chỉ xem
-                                                            </div>
+                                                            canEditShipping ? (
+                                                                <button
+                                                                    onClick={() => setShippingEditOrder(order)}
+                                                                    className="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded hover:bg-blue-100 flex items-center gap-1 font-medium"
+                                                                    title="Sửa thông tin vận chuyển"
+                                                                >
+                                                                    <Truck className="w-3 h-3" /> Sửa VC
+                                                                </button>
+                                                            ) : (
+                                                                <div className="px-2 py-1 bg-slate-100 text-slate-400 text-xs rounded">
+                                                                    Chỉ xem
+                                                                </div>
+                                                            )
                                                         ) : (
                                                             <select
                                                                 value={order.status}
@@ -561,6 +562,14 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                                                                 title="Xóa đơn hàng"
                                                             >
                                                                 <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        )}
+                                                        {canEditShipping && (
+                                                            <button
+                                                                onClick={() => setShippingEditOrder(order)}
+                                                                className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium"
+                                                            >
+                                                                <Edit className="w-3 h-3" /> Sửa
                                                             </button>
                                                         )}
                                                     </div>
@@ -638,6 +647,15 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                 order={editOrder}
                 onClose={() => setEditOrder(null)}
                 onSuccess={() => loadData(true)}
+            />
+
+            {/* Shipping-only Edit Modal (warehouse) */}
+            <OrderEditModal
+                isOpen={!!shippingEditOrder}
+                order={shippingEditOrder}
+                onClose={() => setShippingEditOrder(null)}
+                onSuccess={() => loadData(true)}
+                shippingOnly={true}
             />
 
             {/* Chat Modal */}
