@@ -20,6 +20,7 @@ const DEFAULT_BANK_CONFIG = {
     accountNo: '',
     accountName: '',
     monthlyAmount: 50000,
+    companyAmount: 950000,
 };
 
 export default function EventsCulturePage() {
@@ -215,7 +216,7 @@ export default function EventsCulturePage() {
 
     const employeeCount = allProfiles.length;
     const monthlyPerPerson = bankConfig.monthlyAmount || 50000;
-    const monthlyCompany = monthlyPerPerson * employeeCount;
+    const monthlyCompany = bankConfig.companyAmount || (monthlyPerPerson * employeeCount);
 
     const contributionList = useMemo(() => {
         return allProfiles.map(p => {
@@ -622,9 +623,14 @@ export default function EventsCulturePage() {
                                     placeholder="VD: CONG TY TNHH LYHU" value={editBank.accountName} onChange={e => setEditBank({ ...editBank, accountName: e.target.value })} />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-slate-500 mb-1.5">Mức đóng quỹ / tháng / người</label>
+                                <label className="block text-xs font-medium text-slate-500 mb-1.5">Nhân sự đóng / tháng / người</label>
                                 <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-400 transition-colors"
                                     placeholder="50000" value={editBank.monthlyAmount} onChange={e => setEditBank({ ...editBank, monthlyAmount: Number(e.target.value) })} />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1.5">Công ty đóng / tháng</label>
+                                <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-teal-400 transition-colors"
+                                    placeholder="950000" value={editBank.companyAmount} onChange={e => setEditBank({ ...editBank, companyAmount: Number(e.target.value) })} />
                             </div>
                         </div>
                         <div className="px-5 pb-5">

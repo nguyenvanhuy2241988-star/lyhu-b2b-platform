@@ -21,6 +21,7 @@ const DEFAULT_BANK_CONFIG = {
     accountNo: '',
     accountName: '',
     monthlyAmount: 50000,
+    companyAmount: 950000,
 };
 
 export default function HRCulturePage() {
@@ -264,7 +265,7 @@ export default function HRCulturePage() {
 
     const employeeCount = allProfiles.length;
     const monthlyPerPerson = bankConfig.monthlyAmount || 50000;
-    const monthlyCompany = monthlyPerPerson * employeeCount;
+    const monthlyCompany = bankConfig.companyAmount || (monthlyPerPerson * employeeCount);
 
     const contributionList = useMemo(() => {
         return allProfiles.map(p => {
@@ -374,8 +375,8 @@ export default function HRCulturePage() {
                                                         <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">{event.description}</p>
                                                         <div className="flex items-center gap-2 mt-1.5">
                                                             <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${event.type === 'party' ? 'bg-pink-50 text-pink-600' :
-                                                                    event.type === 'holiday' ? 'bg-red-50 text-red-600' :
-                                                                        'bg-blue-50 text-blue-600'
+                                                                event.type === 'holiday' ? 'bg-red-50 text-red-600' :
+                                                                    'bg-blue-50 text-blue-600'
                                                                 }`}>{event.type}</span>
                                                             <span className="text-[10px] text-slate-400">{format(new Date(event.start_time), 'HH:mm')}</span>
                                                         </div>
@@ -424,11 +425,11 @@ export default function HRCulturePage() {
                                     <p className="text-xs text-slate-400 mb-1">Số dư hiện tại</p>
                                     <p className={`text-2xl font-bold ${balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>{fmt(balance)}</p>
                                     <div className="mt-4 grid grid-cols-2 gap-3">
-                                        <div className="px-3 py-2 bg-slate-50 rounded-lg">
+                                        <div className="px-3 py-2 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => isAdmin && setShowBankSettings(true)}>
                                             <p className="text-[10px] text-slate-400">Nhân sự đóng</p>
                                             <p className="text-sm font-semibold text-slate-900">{fmt(monthlyPerPerson)}/người</p>
                                         </div>
-                                        <div className="px-3 py-2 bg-slate-50 rounded-lg">
+                                        <div className="px-3 py-2 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => isAdmin && setShowBankSettings(true)}>
                                             <p className="text-[10px] text-slate-400">Công ty đóng</p>
                                             <p className="text-sm font-semibold text-slate-900">{fmt(monthlyCompany)}</p>
                                         </div>
@@ -762,9 +763,14 @@ export default function HRCulturePage() {
                                     placeholder="VD: CONG TY TNHH LYHU" value={editBank.accountName} onChange={e => setEditBank({ ...editBank, accountName: e.target.value })} />
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-slate-500 mb-1.5">Mức đóng quỹ / tháng / người</label>
+                                <label className="block text-xs font-medium text-slate-500 mb-1.5">Nhân sự đóng / tháng / người</label>
                                 <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
                                     placeholder="50000" value={editBank.monthlyAmount} onChange={e => setEditBank({ ...editBank, monthlyAmount: Number(e.target.value) })} />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-500 mb-1.5">Công ty đóng / tháng</label>
+                                <input type="number" className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm outline-none focus:border-primary-400 transition-colors"
+                                    placeholder="950000" value={editBank.companyAmount} onChange={e => setEditBank({ ...editBank, companyAmount: Number(e.target.value) })} />
                             </div>
                         </div>
                         <div className="px-5 pb-5">
