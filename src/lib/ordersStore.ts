@@ -742,7 +742,7 @@ export const updateOrderShipping = async (
                     p_shipping_carrier: data.shippingCarrier || null,
                     p_tracking_code: data.trackingCode || null,
                     p_packed_by: data.packedBy || null,
-                    p_shipping_boxes: data.shippingBoxes ? JSON.stringify(data.shippingBoxes) : null,
+                    p_shipping_boxes: data.shippingBoxes || null,
                     p_total_boxes: data.totalBoxes ?? null,
                     p_total_weight_kg: data.totalWeightKg ?? null,
                     p_shipping_fee: data.shippingFee ?? null,

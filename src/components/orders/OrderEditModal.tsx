@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { X, Save, Loader2, Plus, Trash2, Search, Package, Truck } from "lucide-react";
-import { Order, OrderItem, updateOrderSupabase } from "@/lib/ordersStore";
+import { useState, useEffect, useMemo } from "react";
+import { X, Save, Loader2, Plus, Trash2, Search, Package, Truck, Scale, Ruler, UserCheck, QrCode, CheckCircle } from "lucide-react";
+import { Order, OrderItem, ShippingBox, SHIPPING_CARRIERS, updateOrderSupabase, updateOrderShipping } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Product } from "@/mocks/data";
 import { loadProducts } from "@/lib/supabase/products";
-import { ShippingInfoPanel } from "./ShippingInfoPanel";
+import { fetchUsers, type User } from "@/lib/usersStore";
 
 interface OrderEditModalProps {
     order: Order | null;
@@ -32,14 +32,29 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoadingProducts, setIsLoadingProducts] = useState(false);
 
+    // Shipping State
+    const [carrier, setCarrier] = useState('');
+    const [trackingCode, setTrackingCode] = useState('');
+    const [packedBy, setPackedBy] = useState('');
+    const [boxes, setBoxes] = useState<ShippingBox[]>([]);
+    const [shippingFee, setShippingFee] = useState(0);
+    const [shippingNote, setShippingNote] = useState('');
+    const [users, setUsers] = useState<User[]>([]);
+
     useEffect(() => {
         if (order) {
             setCustomerName(order.customerName || "");
             setReceiverPhone(order.receiverPhone || "");
             setReceiverAddress(order.receiverAddress || "");
             setNote(order.note || order.notes || "");
-            // Deep copy items to avoid mutating props
             setItems(JSON.parse(JSON.stringify(order.items || [])));
+            // Shipping
+            setCarrier(order.shippingCarrier || '');
+            setTrackingCode(order.trackingCode || '');
+            setPackedBy(order.packedBy || '');
+            setBoxes(order.shippingBoxes || []);
+            setShippingFee(order.shippingFee || 0);
+            setShippingNote(order.shippingNote || '');
         }
     }, [order]);
 
@@ -49,6 +64,25 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
             loadProducts(session?.access_token).then(setProducts).finally(() => setIsLoadingProducts(false));
         }
     }, [isAddingProduct, session?.access_token]);
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchUsers(session?.access_token).then((all: User[]) => {
+                setUsers(all.filter((u: User) => ['admin', 'warehouse', 'sale_admin', 'telesales', 'sales', 'shipper'].includes(u.role)));
+            });
+        }
+    }, [isOpen, session?.access_token]);
+
+    const totalBoxes = boxes.length;
+    const totalWeight = useMemo(() => boxes.reduce((s, b) => s + (b.weight_kg || 0), 0), [boxes]);
+
+    const addBox = () => setBoxes([...boxes, { weight_kg: 0, length_cm: 0, width_cm: 0, height_cm: 0 }]);
+    const removeBox = (idx: number) => setBoxes(boxes.filter((_, i) => i !== idx));
+    const updateBox = (idx: number, field: keyof ShippingBox, value: number) => {
+        const updated = [...boxes];
+        updated[idx] = { ...updated[idx], [field]: value };
+        setBoxes(updated);
+    };
 
     if (!isOpen || !order) return null;
 
@@ -60,7 +94,6 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
 
         setIsSaving(true);
         try {
-            // Calculate new total
             const totalAmount = items.reduce((sum, item) => {
                 const price = item.price || item.unitPrice || 0;
                 const discount = item.discount || 0;
@@ -76,36 +109,34 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
                 totalAmount
             };
 
-            // Call Store Function
-            // Note: updateOrderSupabase might require specific args. We'll adapt.
-            // Looking at the view_file output, we need to check if updateOrderSupabase is exported.
-            // If not, we might need to add it or use a standardized update function.
-            // Assuming we added `updateOrderDetails` or using `updateOrderSupabase` if exported.
-
-            // For now, let's assume we use the function I proposed earlier `updateOrderDetails` 
-            // OR `updateOrderSupabase` if I can confirm its export.
-            // I'll assume `updateOrderDetails` for safety as `updateOrderSupabase` seemed complex/internal.
-            // Wait, I couldn't write `updateOrderDetails` because file existed.
-            // I will use `updateOrderSupabase` if lines 500+ show it exported.
-
-            // Placeholder: Check console for implementation
-            // const result = await updateOrderSupabase(...) 
-
-            // I will implement the logic inside this component if needed or call the store.
-            // Let's use `updateOrderSupabase` if available, passing `null` for warehouse if not applicable.
-
+            // 1. Save order info (customer + items)
             const result = await updateOrderSupabase(
                 order.id,
                 updateData,
                 session?.access_token
             );
 
-            if (result.success) {
-                alert("Cập nhật đơn hàng thành công!");
+            // 2. Save shipping info
+            const shippingResult = await updateOrderShipping(order.id, {
+                shippingCarrier: carrier,
+                trackingCode,
+                packedBy: packedBy || undefined,
+                shippingBoxes: boxes,
+                totalBoxes,
+                totalWeightKg: totalWeight,
+                shippingFee,
+                shippingNote,
+            }, session?.access_token);
+
+            if (result.success && shippingResult.success) {
+                alert("✅ Cập nhật đơn hàng thành công!");
                 onSuccess();
                 onClose();
             } else {
-                alert("Lỗi: " + result.error);
+                const errors = [];
+                if (!result.success) errors.push("Thông tin đơn: " + result.error);
+                if (!shippingResult.success) errors.push("Vận chuyển: " + shippingResult.error);
+                alert("Lỗi:\n" + errors.join("\n"));
             }
 
         } catch (e: any) {
@@ -116,7 +147,6 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
         }
     };
 
-    // ... Helper functions for items (add, remove, update qty) ...
     const handleAddItem = (product: Product) => {
         setItems(prev => {
             const existing = prev.find(i => i.productId === product.id);
@@ -128,7 +158,7 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
                 name: product.name,
                 sku: product.sku,
                 quantity: 1,
-                price: product.wholesalePrice || 0, // Retail price
+                price: product.wholesalePrice || 0,
                 unitPrice: product.wholesalePrice || 0,
                 discount: 0
             }];
@@ -219,17 +249,112 @@ export function OrderEditModal({ order, isOpen, onClose, onSuccess }: OrderEditM
                         </div>
                     </div>
 
-                    {/* Shipping & Packing Section */}
-                    <div className="bg-slate-50 p-4 rounded-lg">
-                        <div className="flex items-center gap-2 mb-3">
+                    {/* Shipping & Packing Section - Inline */}
+                    <div className="bg-slate-50 p-4 rounded-lg space-y-4">
+                        <div className="flex items-center gap-2">
                             <Truck className="w-4 h-4 text-slate-500" />
                             <h3 className="font-semibold text-sm">Thông tin vận chuyển & đóng hàng</h3>
                         </div>
-                        <ShippingInfoPanel order={order} readOnly={false} onSaved={() => onSuccess()} />
+
+                        {/* Carrier + Tracking */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="text-xs font-medium text-slate-500">Đơn vị vận chuyển</label>
+                                <select className="w-full p-2 border rounded text-sm" value={carrier} onChange={e => setCarrier(e.target.value)}>
+                                    <option value="">— Chọn —</option>
+                                    {SHIPPING_CARRIERS.map((c: { value: string; label: string }) => (
+                                        <option key={c.value} value={c.value}>{c.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-xs font-medium text-slate-500">Mã vận đơn</label>
+                                <input className="w-full p-2 border rounded text-sm" placeholder="VD: GHTKXYZ123" value={trackingCode} onChange={e => setTrackingCode(e.target.value)} />
+                            </div>
+                        </div>
+
+                        {/* Packer + Shipping Fee */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="text-xs font-medium text-slate-500">Người đóng hàng</label>
+                                <select className="w-full p-2 border rounded text-sm" value={packedBy} onChange={e => setPackedBy(e.target.value)}>
+                                    <option value="">— Chọn —</option>
+                                    {users.map((u: User) => (
+                                        <option key={u.id} value={u.id}>{u.name} ({u.role})</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-xs font-medium text-slate-500">Phí vận chuyển (VNĐ)</label>
+                                <input type="number" className="w-full p-2 border rounded text-sm" placeholder="0" value={shippingFee || ''} onChange={e => setShippingFee(Number(e.target.value))} />
+                            </div>
+                        </div>
+
+                        {/* Boxes */}
+                        <div>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="text-xs font-medium text-slate-500 flex items-center gap-1">
+                                    <Package className="w-3.5 h-3.5" />
+                                    Thùng hàng
+                                    {totalBoxes > 0 && <span className="text-slate-400 font-normal ml-1">({totalBoxes} thùng · {totalWeight.toFixed(1)} kg)</span>}
+                                </label>
+                                <button onClick={addBox} className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium">
+                                    <Plus className="w-3 h-3" /> Thêm thùng
+                                </button>
+                            </div>
+                            {boxes.length === 0 ? (
+                                <div className="text-center py-3 border border-dashed border-slate-200 rounded-lg text-xs text-slate-400">
+                                    Chưa có thùng nào. Nhấn &quot;Thêm thùng&quot; để bắt đầu.
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {boxes.map((box, idx) => (
+                                        <div key={idx} className="flex items-center gap-2 bg-white p-2 rounded-lg border">
+                                            <span className="text-xs font-semibold text-slate-500 w-14 shrink-0">Thùng {idx + 1}</span>
+                                            <div className="flex items-center gap-1.5 flex-1 flex-wrap">
+                                                <div className="flex items-center gap-1">
+                                                    <Scale className="w-3 h-3 text-slate-400" />
+                                                    <input type="number" step="0.1" placeholder="kg" className="w-14 px-1 py-1 border rounded text-xs text-center"
+                                                        value={box.weight_kg || ''} onChange={e => updateBox(idx, 'weight_kg', Number(e.target.value))} />
+                                                    <span className="text-[10px] text-slate-400">kg</span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <Ruler className="w-3 h-3 text-slate-400" />
+                                                    <input type="number" placeholder="D" className="w-11 px-1 py-1 border rounded text-xs text-center"
+                                                        value={box.length_cm || ''} onChange={e => updateBox(idx, 'length_cm', Number(e.target.value))} />
+                                                    <span className="text-[10px] text-slate-400">×</span>
+                                                    <input type="number" placeholder="R" className="w-11 px-1 py-1 border rounded text-xs text-center"
+                                                        value={box.width_cm || ''} onChange={e => updateBox(idx, 'width_cm', Number(e.target.value))} />
+                                                    <span className="text-[10px] text-slate-400">×</span>
+                                                    <input type="number" placeholder="C" className="w-11 px-1 py-1 border rounded text-xs text-center"
+                                                        value={box.height_cm || ''} onChange={e => updateBox(idx, 'height_cm', Number(e.target.value))} />
+                                                    <span className="text-[10px] text-slate-400">cm</span>
+                                                </div>
+                                            </div>
+                                            <button onClick={() => removeBox(idx)} className="p-1 text-slate-400 hover:text-rose-600"><Trash2 className="w-3 h-3" /></button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Shipping Note */}
+                        <div>
+                            <label className="text-xs font-medium text-slate-500">Ghi chú vận chuyển</label>
+                            <textarea className="w-full p-2 border rounded text-sm mt-1" rows={2} placeholder="VD: Hàng dễ vỡ, cần đóng gói cẩn thận" value={shippingNote} onChange={e => setShippingNote(e.target.value)} />
+                        </div>
+
+                        {/* Approval Info */}
+                        {order.approvedByName && (
+                            <div className="flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg">
+                                <CheckCircle className="w-3.5 h-3.5" />
+                                <span>Duyệt bởi <strong>{order.approvedByName}</strong> lúc {order.approvedAt ? new Date(order.approvedAt).toLocaleString('vi-VN') : ''}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* Footer */}
+                {/* Footer - Single Save Button */}
                 <div className="p-4 border-t flex justify-end gap-2 text-sm bg-slate-50">
                     <button onClick={onClose} className="px-4 py-2 border rounded bg-white hover:bg-slate-50">Hủy</button>
                     <button
