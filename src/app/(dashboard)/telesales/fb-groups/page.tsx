@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Plus, Search, ExternalLink, Edit, Trash2, XCircle, Loader2, Star, Users, Clock, Download, CheckSquare, Filter } from "lucide-react";
 import {
     getTelesalesFbGroups, createTelesalesFbGroup, updateTelesalesFbGroup, deleteTelesalesFbGroup,
-    getGroupPostCounts, TelesalesFbGroup, FB_GROUP_CATEGORIES, FB_GROUP_STATUSES
+    getGroupPostCounts, GroupPostCountDetail, TelesalesFbGroup, FB_GROUP_CATEGORIES, FB_GROUP_STATUSES
 } from "@/lib/telesalesDailyStore";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from "sonner";
@@ -25,7 +25,7 @@ const EMPTY_FORM: Partial<TelesalesFbGroup> = {
 export default function FbGroupsPage() {
     const [groups, setGroups] = useState<TelesalesFbGroup[]>([]);
     const [loading, setLoading] = useState(true);
-    const [postCounts, setPostCounts] = useState<Record<string, number>>({});
+    const [postCounts, setPostCounts] = useState<Record<string, GroupPostCountDetail>>({});
     const [showModal, setShowModal] = useState(false);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [formData, setFormData] = useState<Partial<TelesalesFbGroup>>(EMPTY_FORM);
@@ -171,7 +171,7 @@ export default function FbGroupsPage() {
             getCategoryLabel(g.category),
             getStatusLabel(g.status),
             g.member_count || 0,
-            postCounts[g.name] || 0,
+            postCounts[g.name]?.total || 0,
             g.quality_rating || 0,
             g.best_post_time || "",
             (g.notes || "").replace(/\n/g, " "),
@@ -257,7 +257,7 @@ export default function FbGroupsPage() {
                     <div className="text-xs text-gray-500 mt-1">Bị cấm đăng</div>
                 </div>
                 <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                    <div className="text-2xl font-bold text-blue-600">{Object.values(postCounts).reduce((a, b) => a + b, 0)}</div>
+                    <div className="text-2xl font-bold text-blue-600">{Object.values(postCounts).reduce((a, b) => a + b.total, 0)}</div>
                     <div className="text-xs text-gray-500 mt-1">Tổng bài đã đăng</div>
                 </div>
             </div>
@@ -412,9 +412,29 @@ export default function FbGroupsPage() {
                                             )}
                                         </td>
                                         <td className="px-4 py-3 text-right">
-                                            <span className={`font-semibold ${(postCounts[group.name] || 0) > 0 ? 'text-blue-600' : 'text-gray-400'}`}>
-                                                {postCounts[group.name] || 0}
-                                            </span>
+                                            <div className="relative group/post inline-block cursor-default">
+                                                <span className={`font-semibold ${(postCounts[group.name]?.total || 0) > 0 ? 'text-blue-600' : 'text-gray-400'}`}>
+                                                    {postCounts[group.name]?.total || 0}
+                                                </span>
+                                                {postCounts[group.name]?.byUser && postCounts[group.name].byUser.length > 0 && (
+                                                    <div className="absolute z-50 bottom-full right-0 mb-2 hidden group-hover/post:block">
+                                                        <div className="bg-gray-900 text-white text-xs rounded-lg px-3 py-2 shadow-lg whitespace-nowrap">
+                                                            <div className="font-semibold mb-1 text-gray-300">Chi tiết bài đăng:</div>
+                                                            {postCounts[group.name].byUser.map((u, i) => (
+                                                                <div key={i} className="flex justify-between gap-4">
+                                                                    <span>{u.name}</span>
+                                                                    <span className="font-bold text-blue-300">{u.count}</span>
+                                                                </div>
+                                                            ))}
+                                                            <div className="border-t border-gray-700 mt-1 pt-1 flex justify-between gap-4 font-semibold">
+                                                                <span>Tổng</span>
+                                                                <span className="text-white">{postCounts[group.name].total}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="w-2 h-2 bg-gray-900 rotate-45 absolute -bottom-1 right-4"></div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-4 py-3">
                                             {group.best_post_time ? (

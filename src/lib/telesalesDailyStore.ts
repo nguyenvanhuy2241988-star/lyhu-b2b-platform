@@ -776,12 +776,17 @@ export const syncGroupFromPostLog = async (groupName: string, groupLink?: string
 
 /**
  * Get post count per group name from telesales_post_logs.
- * Returns a map of group_name → count.
+ * Returns a map of group_name → { total, byUser: [{name, count}] }.
  */
-export const getGroupPostCounts = async (): Promise<Record<string, number>> => {
+export interface GroupPostCountDetail {
+    total: number;
+    byUser: { name: string; count: number }[];
+}
+
+export const getGroupPostCounts = async (): Promise<Record<string, GroupPostCountDetail>> => {
     const { data, error } = await supabase
         .from('telesales_post_logs')
-        .select('group_name')
+        .select('group_name, user_id')
         .eq('platform', 'facebook_group')
         .not('group_name', 'is', null);
 
@@ -790,14 +795,51 @@ export const getGroupPostCounts = async (): Promise<Record<string, number>> => {
         return {};
     }
 
-    const counts: Record<string, number> = {};
-    for (const row of (data || [])) {
-        const name = (row as any).group_name;
-        if (name) {
-            counts[name] = (counts[name] || 0) + 1;
+    // Collect user IDs and count per group per user
+    const groupUserCounts: Record<string, Record<string, number>> = {};
+    const allUserIds = new Set<string>();
+
+    for (const row of (data || []) as any[]) {
+        const name = row.group_name;
+        const uid = row.user_id;
+        if (!name) continue;
+        if (!groupUserCounts[name]) groupUserCounts[name] = {};
+        groupUserCounts[name][uid] = (groupUserCounts[name][uid] || 0) + 1;
+        if (uid) allUserIds.add(uid);
+    }
+
+    // Fetch user names
+    const userIds = Array.from(allUserIds);
+    let userNames: Record<string, string> = {};
+    if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, full_name')
+            .in('id', userIds);
+        for (const p of (profiles || []) as any[]) {
+            userNames[p.id] = p.full_name || 'Unknown';
         }
     }
-    return counts;
+
+    // Build result
+    const result: Record<string, GroupPostCountDetail> = {};
+    for (const groupName of Object.keys(groupUserCounts)) {
+        const userCounts = groupUserCounts[groupName];
+        let total = 0;
+        const byUser: { name: string; count: number }[] = [];
+
+        for (const uid of Object.keys(userCounts)) {
+            const count = userCounts[uid];
+            total += count;
+            byUser.push({ name: userNames[uid] || 'Unknown', count });
+        }
+
+        // Sort by count descending
+        byUser.sort((a, b) => b.count - a.count);
+        result[groupName] = { total, byUser };
+    }
+
+    return result;
 };
 
 // Sync Post Logs count back to Daily Report
