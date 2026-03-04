@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Search, ExternalLink, Edit, Trash2, XCircle, Loader2, Star, Users, Clock, Download, CheckSquare, Filter } from "lucide-react";
 import {
     getTelesalesFbGroups, createTelesalesFbGroup, updateTelesalesFbGroup, deleteTelesalesFbGroup,
@@ -149,8 +149,9 @@ export default function FbGroupsPage() {
     const handleBulkCategory = async () => {
         if (!bulkCategory || selectedIds.size === 0) return;
         try {
-            for (const id of selectedIds) {
-                await updateTelesalesFbGroup(id, { category: bulkCategory });
+            const ids = Array.from(selectedIds);
+            for (let i = 0; i < ids.length; i++) {
+                await updateTelesalesFbGroup(ids[i], { category: bulkCategory });
             }
             toast.success(`Đã gán phân loại cho ${selectedIds.size} nhóm`);
             setSelectedIds(new Set());
