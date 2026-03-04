@@ -84,6 +84,7 @@ export const NAV_ITEMS = {
         { label: "Hỗ trợ Sales", href: "/sale-admin/support", icon: Users },
         { label: "Sản phẩm", href: "/sale-admin/products", icon: Package },
         { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
+        { label: "Việc cần làm", href: "/sale-admin/tasks", icon: ListTodo },
         { label: "Sự kiện", href: "/events", icon: Calendar },
         { label: "Tài liệu", href: "/documents", icon: Book },
     ],
