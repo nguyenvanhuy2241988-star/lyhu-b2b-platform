@@ -95,7 +95,14 @@ export default function InboxCustomerSidebar({ conversation, onUpdate, onCreateD
                     <span className="text-xs font-semibold">Tạo Đơn sales</span>
                 </button>
                 <button
-                    onClick={() => window.open(`https://facebook.com/${conversation.external_id}`, '_blank')}
+                    onClick={() => {
+                        // Open conversation in Meta Business Suite inbox (PSID can't be used as profile URL)
+                        const pageId = (conversation as any).page_id;
+                        const url = pageId
+                            ? `https://business.facebook.com/latest/inbox/all?asset_id=${pageId}`
+                            : `https://business.facebook.com/latest/inbox/all`;
+                        window.open(url, '_blank');
+                    }}
                     className="flex flex-col items-center justify-center p-3 rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100 transition"
                 >
                     <ExternalLink className="w-5 h-5 mb-1" />
