@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Loader2, Plus, Trash2, Link as LinkIcon, Image as ImageIcon, ExternalLink, Pencil, MessageSquare, Share2, UserPlus, Phone } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { getTelesalesPostLogs, createTelesalesPostLog, deleteTelesalesPostLog, updateTelesalesPostLog, TelesalesPostLog, syncTelesalesLogsToDailyReport, syncGroupFromPostLog, getTelesalesFbGroups, TelesalesFbGroup, FB_GROUP_CATEGORIES } from "@/lib/telesalesDailyStore";
@@ -21,7 +21,9 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
     const [editingLogId, setEditingLogId] = useState<string | null>(null);
     const [savedGroups, setSavedGroups] = useState<TelesalesFbGroup[]>([]);
     const [showGroupDropdown, setShowGroupDropdown] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
     const groupDropdownRef = useRef<HTMLDivElement>(null);
+    const formRef = useRef<HTMLDivElement>(null);
 
     const [newLog, setNewLog] = useState<{
         platform: string;
@@ -79,17 +81,14 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
         }
     };
 
-    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!e.target.files || e.target.files.length === 0) return;
-
+    // Shared upload helper for file input, paste, and drag-drop
+    const uploadFile = useCallback(async (file: File) => {
         try {
             setUploading(true);
-            const file = e.target.files[0];
-            const fileExt = file.name.split('.').pop();
+            const fileExt = file.name?.split('.').pop() || 'png';
             const fileName = `telesales_${userId}_${Date.now()}.${fileExt}`;
             const filePath = `${fileName}`;
 
-            // Ensure bucket report-images exists or uploading might fail. We use global report-images
             const { error: uploadError } = await supabase.storage
                 .from('report-images')
                 .upload(filePath, file);
@@ -106,7 +105,53 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
         } finally {
             setUploading(false);
         }
+    }, [userId]);
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
+        await uploadFile(e.target.files[0]);
     };
+
+    // Clipboard paste handler
+    const handlePaste = useCallback(async (e: ClipboardEvent) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (const item of Array.from(items)) {
+            if (item.type.startsWith('image/')) {
+                e.preventDefault();
+                const file = item.getAsFile();
+                if (file) await uploadFile(file);
+                return;
+            }
+        }
+    }, [uploadFile]);
+
+    // Drag & drop handlers
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    }, []);
+
+    const handleDragLeave = useCallback((e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    }, []);
+
+    const handleDrop = useCallback(async (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file && file.type.startsWith('image/')) {
+            await uploadFile(file);
+        }
+    }, [uploadFile]);
+
+    // Listen for paste events when form is open
+    useEffect(() => {
+        if (!showForm || readOnly) return;
+        document.addEventListener('paste', handlePaste);
+        return () => document.removeEventListener('paste', handlePaste);
+    }, [showForm, readOnly, handlePaste]);
 
     const handleEdit = (log: TelesalesPostLog) => {
         setNewLog({
@@ -342,16 +387,54 @@ export default function TelesalesPostLogManager({ userId, date, onUpdate, readOn
 
                         <div className="md:col-span-2">
                             <label className="text-xs font-medium text-slate-600 block mb-1">Ảnh minh chứng <span className="text-slate-400 font-normal">(Rất quan trọng cho báo cáo Zalo)</span></label>
-                            <div className="flex items-center gap-4">
-                                <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 border border-dashed border-blue-300 rounded-lg hover:bg-white transition-colors bg-white">
-                                    <ImageIcon className="w-4 h-4 text-blue-500" />
-                                    <span className="text-xs text-slate-600 font-medium">{uploading ? "Đang tải server..." : "Chọn ảnh chụp màn hình"}</span>
-                                    <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
-                                </label>
-                                {newLog.image_url && (
-                                    <div className="text-xs text-green-600 flex items-center gap-2 bg-green-50 px-2 py-1 rounded-md">
-                                        <img src={newLog.image_url} alt="Preview" className="w-10 h-10 rounded object-cover shadow-sm" />
-                                        <span className="font-semibold">Đã nạp ảnh!</span>
+                            <div
+                                className={cn(
+                                    "relative border-2 border-dashed rounded-lg p-4 transition-all",
+                                    isDragging ? "border-blue-500 bg-blue-50" : "border-slate-200 hover:border-blue-300",
+                                    uploading && "opacity-60 pointer-events-none"
+                                )}
+                                onDragOver={handleDragOver}
+                                onDragLeave={handleDragLeave}
+                                onDrop={handleDrop}
+                            >
+                                {uploading ? (
+                                    <div className="flex items-center justify-center gap-2 py-2">
+                                        <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                                        <span className="text-xs text-blue-600 font-medium">Đang tải lên server...</span>
+                                    </div>
+                                ) : newLog.image_url ? (
+                                    <div className="flex items-center gap-3">
+                                        <img src={newLog.image_url} alt="Preview" className="w-16 h-16 rounded-lg object-cover shadow-sm border border-slate-200" />
+                                        <div className="flex-1">
+                                            <p className="text-xs text-green-600 font-semibold">✓ Đã nạp ảnh!</p>
+                                            <p className="text-[10px] text-slate-400 mt-1">Paste ảnh mới (Ctrl+V) hoặc kéo thả để thay thế</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setNewLog(prev => ({ ...prev, image_url: '' }))}
+                                            className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                                            title="Xóa ảnh"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center gap-2 py-2">
+                                        <div className="flex items-center gap-3">
+                                            <label className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 bg-white border border-blue-300 rounded-lg hover:bg-blue-50 transition-colors shadow-sm">
+                                                <ImageIcon className="w-4 h-4 text-blue-500" />
+                                                <span className="text-xs text-slate-700 font-medium">Chọn ảnh</span>
+                                                <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
+                                            </label>
+                                            <span className="text-xs text-slate-400">hoặc</span>
+                                            <div className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg">
+                                                <kbd className="text-[10px] bg-white border border-slate-300 rounded px-1 py-0.5 font-mono text-slate-600 shadow-sm">Ctrl</kbd>
+                                                <span className="text-[10px] text-slate-400">+</span>
+                                                <kbd className="text-[10px] bg-white border border-slate-300 rounded px-1 py-0.5 font-mono text-slate-600 shadow-sm">V</kbd>
+                                                <span className="text-xs text-slate-500 font-medium ml-1">Paste ảnh</span>
+                                            </div>
+                                        </div>
+                                        <p className="text-[10px] text-slate-400">Kéo thả ảnh vào đây cũng được</p>
                                     </div>
                                 )}
                             </div>
