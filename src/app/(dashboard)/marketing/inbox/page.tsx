@@ -481,7 +481,7 @@ export default function SocialInboxPage() {
             {/* Right Customer Sidebar */}
             {selectedConv && (
                 <InboxCustomerSidebar
-                    conversation={selectedConv}
+                    conversation={{ ...selectedConv, fb_page_id: pages.find(p => p.id === selectedConv.page_id)?.page_id || '' } as any}
                     onUpdate={handleUpdateConversation}
                     token={session?.access_token}
                     onCreateDeal={() => setIsCreateDealOpen(true)}

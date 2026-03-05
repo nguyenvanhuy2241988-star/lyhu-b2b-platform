@@ -65,10 +65,10 @@ export default function InboxCustomerSidebar({ conversation, onUpdate, onCreateD
         <div className="w-80 border-l bg-white flex flex-col h-full overflow-y-auto">
             {/* Header / Profile */}
             <div className="p-6 border-b text-center">
-                <div className="w-20 h-20 mx-auto rounded-full overflow-hidden mb-3 flex items-center justify-center" style={{ background: avatarError || !conversation.customer_avatar ? `hsl(${(conversation.customer_name || 'U').charCodeAt(0) * 37 % 360}, 60%, 75%)` : undefined }}>
-                    {conversation.customer_avatar && !avatarError ? (
+                <div className="w-20 h-20 mx-auto rounded-full overflow-hidden mb-3 flex items-center justify-center" style={{ background: avatarError ? `hsl(${(conversation.customer_name || 'U').charCodeAt(0) * 37 % 360}, 60%, 75%)` : '#e2e8f0' }}>
+                    {!avatarError ? (
                         <img
-                            src={conversation.customer_avatar}
+                            src={`/api/facebook/avatar?psid=${conversation.external_id}&page_id=${(conversation as any).fb_page_id || ''}`}
                             alt=""
                             className="w-full h-full object-cover"
                             onError={() => setAvatarError(true)}
