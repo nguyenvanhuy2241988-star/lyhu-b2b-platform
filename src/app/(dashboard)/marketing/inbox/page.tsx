@@ -173,8 +173,22 @@ export default function SocialInboxPage() {
                     console.log("Message Channel Status:", status);
                 });
 
+            // Polling fallback: refresh messages every 5 seconds
+            const pollInterval = setInterval(() => {
+                fetchMessages(selectedConvId, session?.access_token).then(msgs => {
+                    setMessages(prev => {
+                        if (msgs.length !== prev.length) {
+                            setTimeout(scrollToBottom, 100);
+                            return msgs;
+                        }
+                        return prev;
+                    });
+                });
+            }, 5000);
+
             return () => {
                 supabaseClient.removeChannel(channel);
+                clearInterval(pollInterval);
             };
         }
     }, [selectedConvId, supabaseClient]);
