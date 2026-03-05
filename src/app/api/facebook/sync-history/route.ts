@@ -13,7 +13,7 @@ export async function POST(req: Request) {
         const filterPageId = url.searchParams.get('page_id');
 
         // Get all pages (or specific page)
-        let query = supabase.from('facebook_pages').select('id, page_id, page_name, access_token');
+        let query = supabase.from('facebook_pages').select('id, page_id, name, access_token');
         if (filterPageId) {
             query = query.eq('page_id', filterPageId);
         }
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
 
         for (const page of pages) {
             if (!page.access_token) {
-                results.push({ page: page.page_name, error: 'No access token' });
+                results.push({ page: page.name, error: 'No access token' });
                 continue;
             }
 
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
                 const convData = await convRes.json();
 
                 if (convData.error) {
-                    results.push({ page: page.page_name, error: convData.error.message });
+                    results.push({ page: page.name, error: convData.error.message });
                     continue;
                 }
 
@@ -102,13 +102,13 @@ export async function POST(req: Request) {
                 }
 
                 results.push({
-                    page: page.page_name,
+                    page: page.name,
                     conversations: syncedConvs,
                     messages: syncedMsgs,
                     success: true,
                 });
             } catch (e: any) {
-                results.push({ page: page.page_name, error: e.message });
+                results.push({ page: page.name, error: e.message });
             }
         }
 
