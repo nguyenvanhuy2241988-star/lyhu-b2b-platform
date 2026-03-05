@@ -174,6 +174,7 @@ export default function SocialInboxPage() {
         const currentConv = conversations.find(c => c.id === selectedConvId);
         if (!currentConv) return;
 
+        const msgText = replyText.trim();
         setIsSending(true);
         try {
             // Getting sender_id from last message from customer
@@ -181,8 +182,21 @@ export default function SocialInboxPage() {
             const recipientId = lastCustomerMsg?.sender_id || currentConv.external_id;
 
             // Don't send pageToken from client — API will lookup from DB using conversation_id
-            await sendSocialReply(recipientId, replyText, '', selectedConvId);
+            await sendSocialReply(recipientId, msgText, '', selectedConvId);
+
+            // Optimistic UI update — show reply immediately in chat
+            const optimisticMsg = {
+                id: `optimistic_${Date.now()}`,
+                conversation_id: selectedConvId,
+                content: msgText,
+                sender_id: 'page',
+                sender_name: 'Page',
+                is_from_page: true,
+                created_at: new Date().toISOString()
+            } as SocialMessage;
+            setMessages(prev => [...prev, optimisticMsg]);
             setReplyText('');
+            setTimeout(scrollToBottom, 100);
         } catch (error) {
             alert("Lỗi gửi tin nhắn");
         } finally {
