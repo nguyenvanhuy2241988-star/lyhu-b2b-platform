@@ -606,6 +606,10 @@ export async function deleteCustomer(id: string, token?: string): Promise<boolea
 // CRM DEALS FUNCTIONS
 // =====================================================
 
+// Optimized select: only columns needed for CRM kanban/list display
+const CRM_DEAL_SELECT = 'id,title,stage,status,priority,customer_id,owner_user_id,next_action_at,expected_value,source_category,source,created_at,note,potential_level,customer_type,is_new_customer,tags';
+const CRM_CUSTOMER_SELECT = 'id,name,phone,customer_type,address,province';
+
 // Fetch deals for a specific owner (Telesales, Sales use this) - Using PURE FETCH
 export async function fetchDeals(ownerId?: string, token?: string): Promise<CRMDeal[]> {
     if (!ownerId) {
@@ -626,7 +630,7 @@ export async function fetchDeals(ownerId?: string, token?: string): Promise<CRMD
         try {
             // 1. Fetch Deals (Without JOIN profiles to avoid 400 error if FK missing)
             const response = await fetch(
-                `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*)&owner_user_id=eq.${ownerId}&order=created_at.desc`,
+                `${supabaseUrl}/rest/v1/crm_deals?select=${CRM_DEAL_SELECT},customer:customers(${CRM_CUSTOMER_SELECT})&owner_user_id=eq.${ownerId}&order=created_at.desc`,
                 {
                     method: 'GET',
                     headers: {
@@ -704,7 +708,7 @@ export async function fetchAllDeals(token?: string): Promise<CRMDeal[]> {
 
             // 1. Fetch All Deals (Without JOIN profiles)
             const response = await fetch(
-                `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*)&order=created_at.desc`,
+                `${supabaseUrl}/rest/v1/crm_deals?select=${CRM_DEAL_SELECT},customer:customers(${CRM_CUSTOMER_SELECT})&order=created_at.desc`,
                 {
                     method: 'GET',
                     headers: {
@@ -808,8 +812,8 @@ export async function fetchPaginatedDeals(
             'Prefer': 'count=exact'
         };
 
-        // 1. Fetch Deals (Without JOIN profiles)
-        let url = `${supabaseUrl}/rest/v1/crm_deals?select=*,customer:customers(*)&order=created_at.desc`;
+        // 1. Fetch Deals (optimized select)
+        let url = `${supabaseUrl}/rest/v1/crm_deals?select=${CRM_DEAL_SELECT},customer:customers(${CRM_CUSTOMER_SELECT})&order=created_at.desc`;
 
         if (ownerId) {
             url += `&owner_user_id=eq.${ownerId}`;

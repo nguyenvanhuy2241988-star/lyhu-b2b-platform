@@ -38,23 +38,8 @@ export default function BotActivityLog() {
         };
         fetchRecent();
 
-        // Realtime Subscription
-        const channel = supabase
-            .channel('bot-logs')
-            .on(
-                'postgres_changes',
-                { event: 'INSERT', schema: 'public', table: 'marketing_action_logs' },
-                (payload: any) => {
-                    const newLog = payload.new as LogEntry;
-                    setLogs((prev) => [...prev.slice(-49), newLog]); // Keep last 50
-
-                    if (newLog.status === 'success') setStats(s => ({ ...s, sent: s.sent + 1 }));
-                    if (newLog.status === 'error') setStats(s => ({ ...s, errors: s.errors + 1 }));
-                }
-            )
-            .subscribe();
-
-        return () => { supabase.removeChannel(channel); };
+        // NOTE: Realtime disabled to save Supabase egress.
+        // Logs load once on page open. Refresh manually if needed.
     }, []);
 
     // Auto scroll

@@ -195,32 +195,16 @@ export const getLeaderboard = async (startDate: Date, endDate: Date, token?: str
 
 /**
  * Real-time subscription for Bonding Fund
+ * NOTE: Disabled to save Supabase egress. Bonding fund rarely changes.
  */
-export const subscribeToBondingFund = (callback: (fund: BondingFund) => void) => {
-    return supabase
-        .channel('bonding_fund_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'bonding_fund' }, (payload: any) => {
-            if (payload.new) {
-                callback(payload.new as BondingFund);
-            }
-        })
-        .subscribe();
+export const subscribeToBondingFund = (_callback: (fund: BondingFund) => void) => {
+    return null;
 };
 
 /**
  * Real-time subscription for User Achievements
+ * NOTE: Disabled to save Supabase egress. Achievements rarely change.
  */
-export const subscribeToUserAchievements = (userId: string, callback: () => void) => {
-    if (!userId) return null;
-    return supabase
-        .channel(`user_achievements_${userId}`)
-        .on('postgres_changes', {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'user_achievements',
-            filter: `user_id=eq.${userId}`
-        }, () => {
-            callback();
-        })
-        .subscribe();
+export const subscribeToUserAchievements = (_userId: string, _callback: () => void) => {
+    return null;
 };

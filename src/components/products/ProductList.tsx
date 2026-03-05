@@ -111,32 +111,8 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
         fetchProducts();
     }, [fetchProducts]);
 
-    // Realtime Subscription
-    useEffect(() => {
-        const channel = supabase
-            .channel('product_list_realtime')
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'inventory_levels' },
-                () => {
-                    console.log('Inventory changed, refreshing...');
-                    fetchProducts(true);
-                }
-            )
-            .on(
-                'postgres_changes',
-                { event: '*', schema: 'public', table: 'products' },
-                () => {
-                    console.log('Products changed, refreshing...');
-                    fetchProducts(true);
-                }
-            )
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [fetchProducts]);
+    // NOTE: Realtime disabled to save Supabase egress.
+    // Products rarely change — data refreshes on user actions (create/edit/delete).
 
     // --- Filter & Sort Logic ---
     const filteredProducts = useMemo(() => {

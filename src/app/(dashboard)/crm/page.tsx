@@ -405,7 +405,7 @@ export default function CRMPage() {
 
     // Pagination & Stage Filter
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize] = useState(15); // Smaller page size for columns
+    const [pageSize] = useState(10); // Optimized: smaller page size for columns
     const [totalCount, setTotalCount] = useState(0);
     const [stageFilter, setStageFilter] = useState<DealStage | 'all'>('all');
 
@@ -726,7 +726,7 @@ export default function CRMPage() {
             if (viewMode === 'list' || debouncedSearchQuery) {
                 const { data, count } = await fetchPaginatedDeals(
                     currentPage,
-                    25,
+                    20, // Optimized: smaller page size for list view
                     stageFilter,
                     debouncedSearchQuery,
                     isAdminOrSaleAdmin ? (filterUserId === 'all' ? undefined : filterUserId) : userInfo.id,
@@ -769,47 +769,24 @@ export default function CRMPage() {
                     table: 'crm_deals'
                 },
                 (payload: any) => {
+                    // Only refresh when tab is active to save egress
+                    if (document.hidden) return;
                     console.log('[CRM Realtime] Change detected:', payload.eventType);
-                    // Debounce refresh
+                    // Debounce refresh — 5s to reduce rapid re-fetches
                     clearTimeout(refreshTimeout);
                     refreshTimeout = setTimeout(() => {
                         refreshData();
-                    }, 1000); // 1s debounce for stability
+                    }, 5000);
                 }
             )
             .subscribe((status: string) => {
                 console.log('[CRM Realtime] Status:', status);
             });
 
-        // Channel for Column Config (Shared)
-        const settingsChannel = supabase
-            .channel(`crm-settings-realtime`)
-            .on(
-                'postgres_changes',
-                {
-                    event: 'UPDATE',
-                    schema: 'public',
-                    table: 'app_settings',
-                },
-                async (payload: any) => {
-                    // Check if crm_columns changed
-                    if (payload.new && payload.new.crm_columns) {
-                        console.log('[CRM Realtime] Columns updated via Realtime!');
-                        const newCols = payload.new.crm_columns as CRMColumn[];
-                        // Save to local
-                        saveCRMColumns(newCols);
-                        // Update state
-                        setColumns(newCols); // This will trigger re-render
-                    }
-                }
-            )
-            .subscribe();
-
         return () => {
             console.log('[CRM Realtime] Cleanup channel');
             clearTimeout(refreshTimeout);
             supabase.removeChannel(dealsChannel);
-            supabase.removeChannel(settingsChannel);
         };
     }, [userInfo.id, refreshData, isMounted]);
 
