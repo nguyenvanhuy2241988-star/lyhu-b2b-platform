@@ -170,34 +170,19 @@ export default function SocialInboxPage() {
     const handleSend = async () => {
         if (!replyText.trim() || !selectedConvId) return;
 
-        // Find current conversation to get recipient ID (external_id usually sender_id)
+        // Find current conversation to get recipient ID
         const currentConv = conversations.find(c => c.id === selectedConvId);
         if (!currentConv) return;
 
-        // Find Page Token (Assuming first connected page for now, or use mapped page_id)
-        // Ideally fetch page linked to conversation
-        const pageToken = pages.find(p => p.is_connected)?.access_token;
-        if (!pageToken) {
-            alert("Chưa kết nối Fanpage nào có Token!");
-            return;
-        }
-
         setIsSending(true);
         try {
-            // Recipient ID needed. In Conversation, external_id is THREAD ID if Facebook, 
-            // OR sender_psid if it's a direct message object.
-            // Simplified: we assume we can reply to 'external_id' or we need to look up last message sender.
-            // Let's assume external_id IS valid recipient_id for now for simplicity of MVP.
-            // If external_id is thread_id (t_...), we might need sender_id from last message.
-
             // Getting sender_id from last message from customer
             const lastCustomerMsg = [...messages].reverse().find(m => !m.is_from_page);
             const recipientId = lastCustomerMsg?.sender_id || currentConv.external_id;
 
-            await sendSocialReply(recipientId, replyText, pageToken, selectedConvId);
+            // Don't send pageToken from client — API will lookup from DB using conversation_id
+            await sendSocialReply(recipientId, replyText, '', selectedConvId);
             setReplyText('');
-            // Optimistic update handled by Realtime or refetch
-            // For now manual append or wait for Realtime
         } catch (error) {
             alert("Lỗi gửi tin nhắn");
         } finally {
