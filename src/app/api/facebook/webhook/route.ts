@@ -232,7 +232,7 @@ export async function POST(request: Request) {
                             // FIX #1: Fetch real customer name and avatar
                             let customerName = existingConv?.customer_name || 'Facebook User';
                             let customerAvatar = '';
-                            if ((isNewConversation || customerName === 'Facebook User') && pageData.access_token) {
+                            if ((isNewConversation || customerName === 'Facebook User' || customerName === 'Chưa cập nhật') && pageData.access_token) {
                                 // Method 1: Try Conversations API (works with basic page permissions)
                                 try {
                                     const convRes = await fetch(
