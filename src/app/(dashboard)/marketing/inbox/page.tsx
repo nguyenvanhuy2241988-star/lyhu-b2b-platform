@@ -39,6 +39,13 @@ export default function SocialInboxPage() {
 
     // Auto-scroll ref
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    // Ref to track selected conversation for realtime handler (avoids stale closure)
+    const selectedConvIdRef = useRef<string | null>(null);
+
+    // Keep ref in sync with state
+    useEffect(() => {
+        selectedConvIdRef.current = selectedConvId;
+    }, [selectedConvId]);
 
     const loadConversations = async () => {
         setIsLoading(true);
@@ -93,7 +100,7 @@ export default function SocialInboxPage() {
             });
 
             // Auto-reload messages if this is the currently selected conversation
-            if (updated.id === selectedConvId && payload.eventType === 'UPDATE') {
+            if (updated.id === selectedConvIdRef.current && payload.eventType === 'UPDATE') {
                 loadMessages(updated.id);
             }
         }
