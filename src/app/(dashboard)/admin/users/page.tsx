@@ -408,8 +408,8 @@ export default function UsersPage() {
                                 {paginatedUsers.map((user: any) => (
                                     <tr key={user.user_id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleViewDetail(user)}>
                                         <td className="px-6 py-4">
-                                            <div className="font-medium text-slate-900">{user.email}</div>
-                                            <div className="text-xs text-slate-500">{user.full_name || "Chưa đặt tên"}</div>
+                                            <div className="font-medium text-slate-900">{user.full_name || user.email}</div>
+                                            <div className="text-xs text-slate-500">{user.full_name ? user.email : "Chưa đặt tên"}</div>
                                         </td>
                                         <td className="px-6 py-4 text-xs font-mono text-slate-600">
                                             <div>{user.misa_employee_code || "-"}</div>
