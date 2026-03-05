@@ -156,13 +156,22 @@ export async function POST(request: Request) {
                                 continue;
                             }
 
+                            // Check if conversation already exists
+                            const { data: existingConv } = await supabase
+                                .from('social_conversations')
+                                .select('id, customer_name')
+                                .eq('platform', 'facebook')
+                                .eq('external_id', senderId)
+                                .single();
+
+                            const isNewConversation = !existingConv;
+
                             // 1. Get Conversation or Create
                             let referral = (event.message && event.message.referral) || (event.postback && event.postback.referral);
 
-                            // FALLBACK: If no referral in payload, try fetching message from Graph API
-                            if (!referral && mid && !mid.startsWith('postback_') && pageData.access_token) {
+                            // FIX #2: Only fetch referral from Graph API for NEW conversations
+                            if (!referral && isNewConversation && mid && !mid.startsWith('postback_') && pageData.access_token) {
                                 try {
-                                    // Use v21.0 and fetch broader fields if needed
                                     const msgRes = await fetch(`https://graph.facebook.com/v21.0/${mid}?fields=referral,from,message,tags&access_token=${pageData.access_token}`);
                                     const msgData = await msgRes.json();
                                     if (msgData.referral) {
@@ -174,24 +183,37 @@ export async function POST(request: Request) {
                                 }
                             }
 
+                            // FIX #1: Fetch real customer name from Graph API
+                            let customerName = existingConv?.customer_name || 'Facebook User';
+                            if ((isNewConversation || customerName === 'Facebook User') && pageData.access_token) {
+                                try {
+                                    const profileRes = await fetch(`https://graph.facebook.com/v19.0/${senderId}?fields=name,profile_pic&access_token=${pageData.access_token}`);
+                                    const profileData = await profileRes.json();
+                                    if (profileData.name) {
+                                        customerName = profileData.name;
+                                    }
+                                } catch (e) {
+                                    console.error("Failed to fetch sender profile:", e);
+                                }
+                            }
+
                             console.log("Referral Data:", referral);
 
                             const upsertData: any = {
                                 platform: 'facebook',
                                 external_id: senderId,
                                 page_id: pageData.id,
-                                customer_name: 'Facebook User',
+                                customer_name: customerName,
+                                customer_avatar: `https://graph.facebook.com/${senderId}/picture?type=normal`,
                                 snippet: text,
                                 unread_count: 1,
                                 last_message_at: new Date().toISOString()
                             };
 
                             if (referral) {
-                                // Map referral source to referral_source column
                                 upsertData.referral_source = referral.source || 'ADS';
                                 upsertData.ad_id = referral.ad_id;
                                 upsertData.ref_parameter = referral.ref;
-                                // If ad_id exists, explicitly set ad_title as a fallback
                                 if (referral.ad_id) {
                                     upsertData.ad_title = `QC #${referral.ad_id}`;
                                 }

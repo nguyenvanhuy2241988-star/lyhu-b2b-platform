@@ -194,7 +194,7 @@ export default function SocialInboxPage() {
             const lastCustomerMsg = [...messages].reverse().find(m => !m.is_from_page);
             const recipientId = lastCustomerMsg?.sender_id || currentConv.external_id;
 
-            await sendSocialReply(recipientId, replyText, pageToken);
+            await sendSocialReply(recipientId, replyText, pageToken, selectedConvId);
             setReplyText('');
             // Optimistic update handled by Realtime or refetch
             // For now manual append or wait for Realtime

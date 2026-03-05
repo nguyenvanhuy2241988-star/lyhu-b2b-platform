@@ -523,12 +523,17 @@ export const fetchMessages = async (conversationId: string, token?: string): Pro
     }
 };
 
-export const sendSocialReply = async (recipientId: string, message: string, pageToken: string) => {
+export const sendSocialReply = async (recipientId: string, message: string, pageToken: string, conversationId?: string) => {
     try {
         const res = await fetch('/api/facebook/reply', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ recipient_id: recipientId, message, page_token: pageToken })
+            body: JSON.stringify({
+                recipient_id: recipientId,
+                message,
+                page_token: pageToken,
+                conversation_id: conversationId
+            })
         });
         const data = await res.json();
         if (data.error) throw new Error(data.error);
