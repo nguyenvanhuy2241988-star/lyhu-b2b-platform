@@ -229,30 +229,52 @@ export async function POST(request: Request) {
                                 }
                             }
 
-                            // FIX #1: Fetch real customer name and avatar from Graph API
+                            // FIX #1: Fetch real customer name and avatar
                             let customerName = existingConv?.customer_name || 'Facebook User';
                             let customerAvatar = '';
                             if ((isNewConversation || customerName === 'Facebook User') && pageData.access_token) {
+                                // Method 1: Try Conversations API (works with basic page permissions)
                                 try {
-                                    const profileRes = await fetch(`https://graph.facebook.com/v21.0/${senderId}?fields=first_name,last_name,name,profile_pic&access_token=${pageData.access_token}`);
-                                    const profileData = await profileRes.json();
-                                    console.log('Profile API response:', JSON.stringify(profileData));
-                                    if (profileData.first_name) {
-                                        customerName = profileData.last_name
-                                            ? `${profileData.first_name} ${profileData.last_name}`
-                                            : profileData.first_name;
-                                    } else if (profileData.name) {
-                                        customerName = profileData.name;
-                                    }
-                                    if (profileData.profile_pic) {
-                                        customerAvatar = profileData.profile_pic;
+                                    const convRes = await fetch(
+                                        `https://graph.facebook.com/v21.0/${pageId}/conversations?user_id=${senderId}&fields=participants&access_token=${pageData.access_token}`
+                                    );
+                                    const convData = await convRes.json();
+                                    console.log('Conversations API response:', JSON.stringify(convData));
+
+                                    if (convData.data?.[0]?.participants?.data) {
+                                        const participant = convData.data[0].participants.data.find(
+                                            (p: any) => p.id !== pageId
+                                        );
+                                        if (participant?.name) {
+                                            customerName = participant.name;
+                                        }
                                     }
                                 } catch (e) {
-                                    console.error('Failed to fetch sender profile:', e);
+                                    console.error('Conversations API failed:', e);
+                                }
+
+                                // Method 2: Fallback to Profile API (needs Advanced Access)
+                                if (customerName === 'Facebook User') {
+                                    try {
+                                        const profileRes = await fetch(
+                                            `https://graph.facebook.com/v21.0/${senderId}?fields=first_name,last_name,profile_pic&access_token=${pageData.access_token}`
+                                        );
+                                        const profileData = await profileRes.json();
+                                        if (profileData.first_name) {
+                                            customerName = profileData.last_name
+                                                ? `${profileData.first_name} ${profileData.last_name}`
+                                                : profileData.first_name;
+                                        }
+                                        if (profileData.profile_pic) {
+                                            customerAvatar = profileData.profile_pic;
+                                        }
+                                    } catch (e) {
+                                        console.error('Profile API failed:', e);
+                                    }
                                 }
                             }
-                            // Fallback avatar: Graph API picture endpoint with token
-                            if (!customerAvatar) {
+                            // Fallback avatar
+                            if (!customerAvatar && pageData.access_token) {
                                 customerAvatar = `https://graph.facebook.com/${senderId}/picture?type=normal&access_token=${pageData.access_token}`;
                             }
 
