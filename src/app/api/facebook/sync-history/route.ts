@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
             try {
                 // Fetch conversations from Facebook
-                const convUrl = `https://graph.facebook.com/v21.0/${page.page_id}/conversations?fields=participants,updated_time,snippet&limit=50&access_token=${page.access_token}`;
+                const convUrl = `https://graph.facebook.com/v21.0/${page.page_id}/conversations?fields=participants,updated_time,snippet&limit=5&access_token=${page.access_token}`;
                 const convRes = await fetch(convUrl);
                 const convData = await convRes.json();
 
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
                     syncedConvs++;
 
                     // Fetch messages for this conversation
-                    const msgUrl = `https://graph.facebook.com/v21.0/${fbConv.id}/messages?fields=message,from,created_time&limit=100&access_token=${page.access_token}`;
+                    const msgUrl = `https://graph.facebook.com/v21.0/${fbConv.id}/messages?fields=message,from,created_time&limit=20&access_token=${page.access_token}`;
                     const msgRes = await fetch(msgUrl);
                     const msgData = await msgRes.json();
 
