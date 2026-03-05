@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
@@ -18,7 +18,9 @@ import {
     Save,
     MapPin,
     Facebook,
-    Search
+    Search,
+    Filter,
+    Phone
 } from "lucide-react";
 import { createDeal } from "@/lib/crmDealsStore";
 
@@ -66,6 +68,11 @@ export default function MarketingScraperPage() {
     const [isLoadingResults, setIsLoadingResults] = useState(false);
     const [selectedResults, setSelectedResults] = useState<Set<string>>(new Set());
     const [isSaving, setIsSaving] = useState(false);
+
+    // Filter state for results modal
+    const [resultSearch, setResultSearch] = useState("");
+    const [filterHasPhone, setFilterHasPhone] = useState(false);
+    const [filterKeyword, setFilterKeyword] = useState("");
 
     useEffect(() => {
         fetchJobs();
@@ -147,11 +154,36 @@ export default function MarketingScraperPage() {
         }
     };
 
+    // Filtered results memo
+    const filteredResults = useMemo(() => {
+        let filtered = results;
+        if (resultSearch) {
+            const q = resultSearch.toLowerCase();
+            filtered = filtered.filter(r =>
+                r.facebook_name?.toLowerCase().includes(q) ||
+                r.phone?.includes(q) ||
+                r.content?.toLowerCase().includes(q) ||
+                r.address?.toLowerCase().includes(q)
+            );
+        }
+        if (filterHasPhone) {
+            filtered = filtered.filter(r => r.phone && r.phone !== 'N/A' && r.phone.trim() !== '');
+        }
+        if (filterKeyword) {
+            const kw = filterKeyword.toLowerCase();
+            filtered = filtered.filter(r => r.content?.toLowerCase().includes(kw));
+        }
+        return filtered;
+    }, [results, resultSearch, filterHasPhone, filterKeyword]);
+
     const handleViewResults = async (job: ScrapeJob) => {
         setSelectedJob(job);
         setIsLoadingResults(true);
         setResults([]);
         setSelectedResults(new Set());
+        setResultSearch("");
+        setFilterHasPhone(false);
+        setFilterKeyword("");
 
         try {
             const res = await fetch(`/api/marketing/scrape/results?job_id=${job.id}`);
@@ -454,14 +486,57 @@ export default function MarketingScraperPage() {
             {selectedJob && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl max-h-[85vh] flex flex-col">
-                        <div className="p-4 border-b flex justify-between items-center">
-                            <h3 className="font-bold text-lg flex items-center gap-2">
-                                {getJobIcon(selectedJob.job_type)}
-                                Kết quả: {results.length} mục tìm thấy
-                            </h3>
-                            <button onClick={() => setSelectedJob(null)} className="p-1 hover:bg-slate-100 rounded-full">
-                                <X className="w-6 h-6 text-slate-500" />
-                            </button>
+                        <div className="p-4 border-b">
+                            <div className="flex justify-between items-center mb-3">
+                                <h3 className="font-bold text-lg flex items-center gap-2">
+                                    {getJobIcon(selectedJob.job_type)}
+                                    Kết quả: {filteredResults.length}/{results.length} mục
+                                </h3>
+                                <button onClick={() => setSelectedJob(null)} className="p-1 hover:bg-slate-100 rounded-full">
+                                    <X className="w-6 h-6 text-slate-500" />
+                                </button>
+                            </div>
+                            {/* Filter Bar */}
+                            <div className="flex flex-wrap gap-2 items-center">
+                                <div className="flex-1 min-w-[200px] relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Tìm theo tên, SĐT, nội dung..."
+                                        className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={resultSearch}
+                                        onChange={e => setResultSearch(e.target.value)}
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => setFilterHasPhone(!filterHasPhone)}
+                                    className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 border transition-colors ${filterHasPhone
+                                            ? 'bg-green-50 border-green-300 text-green-700'
+                                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                                        }`}
+                                >
+                                    <Phone className="w-3.5 h-3.5" />
+                                    Có SĐT
+                                </button>
+                                <div className="relative min-w-[180px]">
+                                    <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Lọc theo từ khóa nội dung..."
+                                        className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                                        value={filterKeyword}
+                                        onChange={e => setFilterKeyword(e.target.value)}
+                                    />
+                                </div>
+                                {(resultSearch || filterHasPhone || filterKeyword) && (
+                                    <button
+                                        onClick={() => { setResultSearch(""); setFilterHasPhone(false); setFilterKeyword(""); }}
+                                        className="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg border border-red-200"
+                                    >
+                                        Xóa bộ lọc
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-4">
@@ -475,10 +550,10 @@ export default function MarketingScraperPage() {
                                                 <input
                                                     type="checkbox"
                                                     onChange={(e) => {
-                                                        if (e.target.checked) setSelectedResults(new Set(results.map(r => r.id)));
+                                                        if (e.target.checked) setSelectedResults(new Set(filteredResults.map(r => r.id)));
                                                         else setSelectedResults(new Set());
                                                     }}
-                                                    checked={results.length > 0 && selectedResults.size === results.length}
+                                                    checked={filteredResults.length > 0 && filteredResults.every(r => selectedResults.has(r.id))}
                                                 />
                                             </th>
                                             <th className="px-4 py-3 text-left text-sm font-semibold">Tên (Facebook/Địa điểm)</th>
@@ -494,7 +569,7 @@ export default function MarketingScraperPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y text-sm">
-                                        {results.map((r) => (
+                                        {filteredResults.map((r) => (
                                             <tr key={r.id} className="hover:bg-slate-50">
                                                 <td className="px-4 py-2">
                                                     <input
