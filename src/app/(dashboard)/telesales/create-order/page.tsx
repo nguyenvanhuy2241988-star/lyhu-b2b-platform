@@ -387,24 +387,18 @@ function TelesalesCreateOrderContent() {
             const item = newItems[index];
 
             if (!item.isGift) {
-                // Toggling ON: make this line a gift
-                if (item.quantity > 1) {
-                    // Split: gift line gets qty=1, new normal line gets remaining
-                    const remainingQty = item.quantity - 1;
-                    newItems[index] = { ...item, isGift: true, quantity: 1, discount: 0, discountValue: 0 };
-                    // Insert new normal line right after
-                    newItems.splice(index + 1, 0, {
-                        ...item,
-                        isGift: false,
-                        quantity: remainingQty
-                    });
-                } else {
-                    // qty=1, just mark as gift
-                    newItems[index] = { ...item, isGift: true, discount: 0, discountValue: 0 };
-                }
+                // Toggling ON: add a separate gift line for this product (qty=1)
+                // Keep the original item's quantity unchanged
+                newItems.splice(index + 1, 0, {
+                    ...item,
+                    isGift: true,
+                    quantity: 1,
+                    discount: 0,
+                    discountValue: 0
+                });
             } else {
-                // Toggling OFF: resume as normal item
-                newItems[index] = { ...item, isGift: false };
+                // Toggling OFF: remove this gift line entirely
+                newItems.splice(index, 1);
             }
             return newItems;
         });
