@@ -234,10 +234,14 @@ export async function POST(request: Request) {
                             let customerAvatar = '';
                             if ((isNewConversation || customerName === 'Facebook User') && pageData.access_token) {
                                 try {
-                                    const profileRes = await fetch(`https://graph.facebook.com/v19.0/${senderId}?fields=name,profile_pic&access_token=${pageData.access_token}`);
+                                    const profileRes = await fetch(`https://graph.facebook.com/v21.0/${senderId}?fields=first_name,last_name,name,profile_pic&access_token=${pageData.access_token}`);
                                     const profileData = await profileRes.json();
                                     console.log('Profile API response:', JSON.stringify(profileData));
-                                    if (profileData.name) {
+                                    if (profileData.first_name) {
+                                        customerName = profileData.last_name
+                                            ? `${profileData.first_name} ${profileData.last_name}`
+                                            : profileData.first_name;
+                                    } else if (profileData.name) {
                                         customerName = profileData.name;
                                     }
                                     if (profileData.profile_pic) {
