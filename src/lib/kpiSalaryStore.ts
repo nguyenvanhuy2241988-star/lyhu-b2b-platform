@@ -229,6 +229,17 @@ export const getMonthlyKpiActuals = async (
 
     actuals['self_sourced'] = (selfData || []).length;
 
+    // 2b. Self-contact data (customer contacted rep, source_category = SELF_CONTACT)
+    const { data: selfContactData } = await supabase
+        .from('crm_deals')
+        .select('id')
+        .eq('owner_user_id', userId)
+        .eq('source_category', 'SELF_CONTACT')
+        .gte('created_at', startStr)
+        .lte('created_at', endStr);
+
+    actuals['self_contact'] = (selfContactData || []).length;
+
     // 3. Manual KPIs from telesales_daily_activities (aggregated over the month)
     const { data: dailyData } = await supabase
         .from('telesales_daily_activities')
@@ -392,6 +403,17 @@ export const getKpiActualsForRange = async (
         .lte('created_at', endStr);
 
     actuals['self_sourced'] = (selfData || []).length;
+
+    // 2b. Self-contact data (customer contacted rep, source_category = SELF_CONTACT)
+    const { data: selfContactData } = await supabase
+        .from('crm_deals')
+        .select('id')
+        .eq('owner_user_id', userId)
+        .eq('source_category', 'SELF_CONTACT')
+        .gte('created_at', startStr)
+        .lte('created_at', endStr);
+
+    actuals['self_contact'] = (selfContactData || []).length;
 
     // 3. Manual KPIs from daily activities
     const { data: dailyData } = await supabase

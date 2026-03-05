@@ -266,7 +266,7 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
                         <PotentialBadge level={deal.potential_level} />
                         {deal.source_category && (
                             <span className="px-1.5 py-0.5 rounded text-[9px] bg-slate-100 text-slate-600 border border-slate-200">
-                                {deal.source_category === 'SELF_FOUND' ? 'Tự tìm' : deal.source_category === 'MARKETING' ? 'Marketing' : 'Cty cấp'}
+                                {deal.source_category === 'SELF_FOUND' ? 'Tự tìm' : deal.source_category === 'SELF_CONTACT' ? 'Tự liên hệ' : deal.source_category === 'MARKETING' ? 'Marketing' : 'Cty cấp'}
                             </span>
                         )}
                     </div>
@@ -1491,6 +1491,7 @@ export default function CRMPage() {
                         <option value="all">Nguồn khách hàng</option>
                         <option value="COMPANY">Công ty cấp</option>
                         <option value="SELF_FOUND">Tự tìm kiếm</option>
+                        <option value="SELF_CONTACT">Tự liên hệ</option>
                         <option value="MARKETING">Chiến dịch Marketing</option>
                     </select>
                     <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="px-3 py-2 border rounded-lg text-sm">

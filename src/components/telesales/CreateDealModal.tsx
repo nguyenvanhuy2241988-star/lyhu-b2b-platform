@@ -447,6 +447,7 @@ export const CreateDealModal = ({
                                 <select value={sourceCategory} onChange={(e) => setSourceCategory(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-slate-50 focus:outline-none focus:ring-2 focus:ring-primary-500">
                                     <option value="COMPANY">Công ty cấp</option>
                                     <option value="SELF_FOUND">Tự tìm kiếm</option>
+                                    <option value="SELF_CONTACT">Tự liên hệ</option>
                                     <option value="MARKETING">Chiến dịch Marketing</option>
                                 </select>
                             </div>
