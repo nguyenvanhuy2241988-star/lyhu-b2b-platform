@@ -642,8 +642,8 @@ export default function CRMPage() {
     // Get user info from auth or localStorage
     const userInfo = useMemo(() => getUserInfo(), [getUserInfo]);
 
-    // Check if user is Admin or Sale Admin (can see all deals)
-    const isAdminOrSaleAdmin = useMemo(() => userInfo.role === 'admin' || userInfo.role === 'sale_admin', [userInfo.role]);
+    // Check if user is Admin (can see all deals)
+    const isAdminOrSaleAdmin = useMemo(() => userInfo.role === 'admin', [userInfo.role]);
 
     // Only Admin can customize columns
     const isAdmin = useMemo(() => userInfo.role === 'admin', [userInfo.role]);
