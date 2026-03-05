@@ -59,12 +59,10 @@ export default function InboxCustomerSidebar({ conversation, onUpdate, onCreateD
         <div className="w-80 border-l bg-white flex flex-col h-full overflow-y-auto">
             {/* Header / Profile */}
             <div className="p-6 border-b text-center">
-                <div className="w-20 h-20 mx-auto rounded-full bg-slate-200 overflow-hidden mb-3">
-                    {conversation.customer_avatar ? (
-                        <img src={conversation.customer_avatar} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                        <User className="w-10 h-10 text-slate-400 m-5" />
-                    )}
+                <div className="w-20 h-20 mx-auto rounded-full overflow-hidden mb-3 flex items-center justify-center" style={{ background: `hsl(${(conversation.customer_name || 'U').charCodeAt(0) * 37 % 360}, 60%, 75%)` }}>
+                    <span className="text-2xl font-bold text-white">
+                        {(conversation.customer_name || 'U').charAt(0).toUpperCase()}
+                    </span>
                 </div>
                 <h3 className="font-bold text-lg">{conversation.customer_name}</h3>
                 <div className="flex justify-center gap-2 mt-2">
@@ -96,12 +94,14 @@ export default function InboxCustomerSidebar({ conversation, onUpdate, onCreateD
                 </button>
                 <button
                     onClick={() => {
-                        // Open conversation in Meta Business Suite inbox (PSID can't be used as profile URL)
-                        const pageId = (conversation as any).page_id;
-                        const url = pageId
-                            ? `https://business.facebook.com/latest/inbox/all?asset_id=${pageId}`
-                            : `https://business.facebook.com/latest/inbox/all`;
-                        window.open(url, '_blank');
+                        // Search for user on Facebook by name
+                        const name = conversation.customer_name || '';
+                        if (name && name !== 'Facebook User' && name !== 'Chưa cập nhật') {
+                            window.open(`https://www.facebook.com/search/people/?q=${encodeURIComponent(name)}`, '_blank');
+                        } else {
+                            const pageId = (conversation as any).page_id;
+                            window.open(pageId ? `https://business.facebook.com/latest/inbox/all?asset_id=${pageId}` : `https://business.facebook.com/latest/inbox/all`, '_blank');
+                        }
                     }}
                     className="flex flex-col items-center justify-center p-3 rounded-lg bg-slate-50 text-slate-700 hover:bg-slate-100 transition"
                 >
