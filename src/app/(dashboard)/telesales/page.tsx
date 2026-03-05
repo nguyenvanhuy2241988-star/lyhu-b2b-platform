@@ -12,8 +12,6 @@ import {
     getLeaderboard,
     fetchUserAchievements,
     fetchCareerLevels,
-    subscribeToBondingFund,
-    subscribeToUserAchievements,
     type BondingFund,
     type LeaderboardEntry,
     type CareerLevel,
@@ -215,24 +213,8 @@ export default function TelesalesDashboard() {
         };
     }, [user, session, loadAll]);
 
-    // REAL-TIME SUBSCRIPTIONS
-    useEffect(() => {
-        // 1. Subscribe to Bonding Fund
-        const fundSub = subscribeToBondingFund((newFund) => {
-            setBondingFund(newFund);
-        });
-
-        // 2. Subscribe to User Achievements
-        const achievementSub = user?.id ? subscribeToUserAchievements(user.id, async () => {
-            const achievementsData = await fetchUserAchievements(user.id, session?.access_token);
-            setUserAchievements(achievementsData);
-        }) : null;
-
-        return () => {
-            if (fundSub) fundSub.unsubscribe();
-            if (achievementSub) achievementSub.unsubscribe();
-        };
-    }, [user?.id, session?.access_token]); // Fixed: Added session?.access_token
+    // NOTE: Engagement realtime subscriptions disabled to save Supabase egress.
+    // Bonding fund and achievements data is loaded once via loadAll().
 
     // --- KPI CALCULATIONS (Using DB Stats if available, otherwise fallback to local) ---
     // Stop local loading if auth finished and no user found
