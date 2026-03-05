@@ -69,17 +69,9 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: data.error.message }, { status: 400 });
         }
 
-        // FIX #5: Save reply message to DB so it appears in chat
+        // Note: Don't insert message here — echo webhook will save it to avoid duplicates
+        // Just update conversation snippet
         if (finalConversationId) {
-            await supabase.from('social_messages').insert({
-                conversation_id: finalConversationId,
-                external_id: data.message_id || `reply_${Date.now()}`,
-                content: message,
-                sender_id: 'page',
-                sender_name: 'Page',
-                is_from_page: true,
-                created_at: new Date().toISOString()
-            });
 
             // Update conversation snippet
             await supabase
