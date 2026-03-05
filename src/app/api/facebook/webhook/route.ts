@@ -130,7 +130,53 @@ export async function POST(request: Request) {
 
                 if (events.length > 0) {
                     for (const event of events) {
-                        console.log("Webhook Event Received:", JSON.stringify(event, null, 2)); // DEBUG LOG
+                        console.log("Webhook Event Received:", JSON.stringify(event, null, 2));
+
+                        // Handle Message Echoes (messages sent BY the Page)
+                        if (event.message && event.message.is_echo) {
+                            const echoText = event.message.text || '';
+                            const echoMid = event.message.mid;
+                            const recipientId = event.recipient?.id;
+
+                            if (echoText && recipientId) {
+                                const { data: pageData } = await supabase
+                                    .from('facebook_pages')
+                                    .select('id')
+                                    .eq('page_id', pageId)
+                                    .single();
+
+                                if (pageData) {
+                                    // Find the conversation for this recipient
+                                    const { data: conv } = await supabase
+                                        .from('social_conversations')
+                                        .select('id')
+                                        .eq('platform', 'facebook')
+                                        .eq('external_id', recipientId)
+                                        .single();
+
+                                    if (conv) {
+                                        // Save echo as page message (avoid duplicate via upsert)
+                                        await supabase.from('social_messages').upsert({
+                                            conversation_id: conv.id,
+                                            external_id: echoMid || `echo_${Date.now()}`,
+                                            content: echoText,
+                                            sender_id: pageId,
+                                            sender_name: 'Page',
+                                            is_from_page: true,
+                                            created_at: new Date().toISOString()
+                                        }, { onConflict: 'external_id' });
+
+                                        // Update conversation snippet
+                                        await supabase.from('social_conversations').update({
+                                            snippet: echoText,
+                                            last_message_at: new Date().toISOString()
+                                        }).eq('id', conv.id);
+                                    }
+                                }
+                            }
+                            continue; // Skip chatbot logic for echoes
+                        }
+
                         const senderId = event.sender.id;
                         let text = '';
                         let mid = '';
