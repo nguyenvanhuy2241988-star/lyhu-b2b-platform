@@ -91,6 +91,11 @@ export default function SocialInboxPage() {
                 }
                 return [updated, ...prev];
             });
+
+            // Auto-reload messages if this is the currently selected conversation
+            if (updated.id === selectedConvId && payload.eventType === 'UPDATE') {
+                loadMessages(updated.id);
+            }
         }
     };
 
