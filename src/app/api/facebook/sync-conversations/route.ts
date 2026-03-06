@@ -17,8 +17,6 @@ export async function POST(request: Request) {
 
         // 1. Get Page Access Token
         let query = supabase.from('facebook_pages').select('access_token, id, page_id');
-
-        // Simple check: UUIDs contain dashes, FB IDs are numeric
         if (page_id.includes('-')) {
             query = query.eq('id', page_id);
         } else {
@@ -31,15 +29,14 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Page not found or no access token' }, { status: 404 });
         }
 
-        // FIX #3: Keep actual FB page_id for is_from_page comparison
         const fbPageId = pageData.page_id;
 
-        // 2. Fetch Conversations from Facebook (with pagination - FIX #4)
-        const fields = 'id,updated_time,messages{message,created_time,from,to,attachments{file_url,image_data,mime_type,name,size}},senders,snippet_is_read_only,unread_count,snippet,link';
+        // 2. Fetch Conversations from Facebook (with pagination)
+        const fields = 'id,updated_time,messages.limit(100){message,created_time,from,to,attachments{file_url,image_data,mime_type,name,size}},senders,snippet_is_read_only,unread_count,snippet,link';
         let nextUrl: string | null = `https://graph.facebook.com/v19.0/me/conversations?fields=${fields}&limit=${limit}&access_token=${pageData.access_token}`;
         let allConversations: any[] = [];
         let pageCount = 0;
-        const MAX_PAGES = 5; // Safety limit: max 250 conversations
+        const MAX_PAGES = 5;
 
         while (nextUrl && pageCount < MAX_PAGES) {
             const response: Response = await fetch(nextUrl);
@@ -53,7 +50,6 @@ export async function POST(request: Request) {
                 allConversations = [...allConversations, ...data.data];
             }
 
-            // FIX #4: Follow pagination
             nextUrl = data.paging?.next || null;
             pageCount++;
         }
@@ -62,7 +58,6 @@ export async function POST(request: Request) {
 
         // 3. Sync to Database
         for (const conv of allConversations) {
-            // Find the actual customer (not the page) from senders
             const senders = conv.senders?.data || [];
             const customer = senders.find((s: any) => s.id !== fbPageId) || senders[0];
             const customerName = customer?.name || 'Facebook User';
@@ -73,27 +68,76 @@ export async function POST(request: Request) {
                 continue;
             }
 
+            // Detect ad source from messages
+            let isFromAd = false;
+            let adId = '';
+            const messagesData = conv.messages?.data || [];
+
+            // Check first message from page (usually automated ad response)
+            // In Meta, ads create conversations starting with the page's welcome message
+            const firstPageMsg = [...messagesData].reverse().find((m: any) => m.from?.id === fbPageId);
+            if (firstPageMsg) {
+                const msgText = (firstPageMsg.message || '').toLowerCase();
+                // Page's first automated message often contains ad keywords
+                if (msgText.includes('quảng cáo') || msgText.includes('ưu đãi') ||
+                    msgText.includes('khuyến mãi') || msgText.includes('npp') ||
+                    msgText.includes('đại lý') || msgText.includes('tìm đại lý') ||
+                    msgText.includes('nhà phân phối') || msgText.includes('mua 10 tặng')) {
+                    isFromAd = true;
+                }
+            }
+
+            // Also try to detect ad from first message's referral via Graph API
+            const firstMsg = [...messagesData].reverse()[0];
+            if (firstMsg && !isFromAd) {
+                try {
+                    const msgRes = await fetch(
+                        `https://graph.facebook.com/v21.0/${firstMsg.id}?fields=referral&access_token=${pageData.access_token}`
+                    );
+                    const msgData = await msgRes.json();
+                    if (msgData.referral) {
+                        isFromAd = true;
+                        adId = msgData.referral.ad_id || '';
+                    }
+                } catch (e) {
+                    // Silently continue - referral check is optional
+                }
+            }
+
+            // Build upsert data
+            const upsertData: any = {
+                platform: 'facebook',
+                external_id: customerId,
+                page_id: pageData.id,
+                customer_name: customerName,
+                customer_avatar: `https://graph.facebook.com/${customerId}/picture?type=normal`,
+                snippet: conv.snippet,
+                unread_count: conv.unread_count,
+                last_message_at: conv.updated_time,
+                fb_thread_id: conv.id,
+                customer_profile_url: conv.link || null,
+            };
+
+            // Set ad source info
+            if (isFromAd) {
+                upsertData.referral_source = 'ADS';
+                upsertData.source_type = 'ads';
+                if (adId) {
+                    upsertData.ad_id = adId;
+                    upsertData.ad_title = `QC #${adId}`;
+                }
+            }
+
             const { data: insertedConv, error: insertError } = await supabase
                 .from('social_conversations')
-                .upsert({
-                    platform: 'facebook',
-                    external_id: customerId,
-                    page_id: pageData.id,
-                    customer_name: customerName,
-                    customer_avatar: `https://graph.facebook.com/${customerId}/picture?type=normal`,
-                    snippet: conv.snippet,
-                    unread_count: conv.unread_count,
-                    last_message_at: conv.updated_time,
-                    fb_thread_id: conv.id,
-                    customer_profile_url: conv.link || null,
-                }, { onConflict: 'platform, external_id' })
+                .upsert(upsertData, { onConflict: 'platform, external_id' })
                 .select()
                 .single();
 
             if (insertedConv) {
                 count++;
-                if (conv.messages && conv.messages.data) {
-                    const messages = conv.messages.data.map((m: any) => {
+                if (messagesData.length > 0) {
+                    const messages = messagesData.map((m: any) => {
                         // Extract attachments
                         const msgAttachments = m.attachments?.data?.map((a: any) => ({
                             type: a.mime_type?.startsWith('image') ? 'image' : 'file',
