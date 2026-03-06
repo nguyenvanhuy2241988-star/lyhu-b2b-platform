@@ -40,6 +40,7 @@ export default function AutomationPage() {
     const [isSavingSettings, setIsSavingSettings] = useState(false);
     const [pages, setPages] = useState<any[]>([]);
     const [selectedPageId, setSelectedPageId] = useState<string>('');
+    const [userToken, setUserToken] = useState<string>('');
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -234,7 +235,7 @@ export default function AutomationPage() {
             const res = await fetch('/api/facebook/comments', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ page_id: page.page_id, access_token: page.access_token })
+                body: JSON.stringify({ page_id: page.page_id, access_token: page.access_token, user_token: userToken || localStorage.getItem('fb_user_token') || undefined })
             });
             const data = await res.json();
             if (data.success) {
@@ -658,7 +659,13 @@ export default function AutomationPage() {
                                             }
                                         }
 
-                                        // 3. Update local pages state with new tokens
+                                        // 3. Save user_token for reading comments
+                                        if (data.user_token) {
+                                            localStorage.setItem('fb_user_token', data.user_token);
+                                            setUserToken(data.user_token);
+                                        }
+
+                                        // 4. Update local pages state with new page tokens
                                         setPages(prev => prev.map(page => {
                                             const newPage = data.pages.find((p: any) => p.page_id === page.page_id);
                                             if (newPage) {
@@ -668,7 +675,7 @@ export default function AutomationPage() {
                                         }));
 
                                         if (updated > 0) {
-                                            toast.success(`✅ Đã cập nhật token 60 ngày cho ${updated} Page: ${updatedNames.join(', ')}`, { duration: 6000 });
+                                            toast.success(`✅ Đã cập nhật ${updated} Page: ${updatedNames.join(', ')} (token 60 ngày + quyền đọc comment)`, { duration: 6000 });
                                         } else {
                                             toast.error('Không cập nhật được Page nào. Kiểm tra xem Page đã được kết nối chưa.');
                                         }
@@ -710,8 +717,10 @@ export default function AutomationPage() {
                                             }
                                         }
 
-                                        // Update local state
+                                        // Update local state + save as user_token for comments
                                         setPages(prev => prev.map(p => ({ ...p, access_token: token })));
+                                        localStorage.setItem('fb_user_token', token);
+                                        setUserToken(token);
 
                                         if (updated > 0) {
                                             toast.success(`✅ Đã lưu token trực tiếp cho ${updated} Page: ${updatedNames.join(', ')}`, { duration: 6000 });

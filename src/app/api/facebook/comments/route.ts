@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
     try {
-        const { page_id, access_token, action, comment_id, post_id } = await request.json();
+        const { page_id, access_token, user_token, action, comment_id, post_id } = await request.json();
+        // user_token = long-lived user token for reading comments (has pages_read_engagement)
+        // access_token = page token for reading posts (required by NPE pages)
+        const commentToken = user_token || access_token;
 
         if (!page_id || !access_token) {
             return NextResponse.json({ error: 'Missing page_id or access_token' }, { status: 400 });
@@ -55,13 +58,13 @@ export async function POST(request: Request) {
                 let totalCount = 0;
                 try {
                     const commRes = await fetch(
-                        `https://graph.facebook.com/v19.0/${postData.id}/comments?fields=id,message,from,created_time,is_hidden&filter=stream&limit=50&summary=true&access_token=${access_token}`
+                        `https://graph.facebook.com/v19.0/${postData.id}/comments?fields=id,message,from,created_time,is_hidden&filter=stream&limit=50&summary=true&access_token=${commentToken}`
                     );
                     const commData = await commRes.json();
                     if (commData.error) {
                         // Fallback without is_hidden
                         const commRes2 = await fetch(
-                            `https://graph.facebook.com/v19.0/${postData.id}/comments?fields=id,message,from,created_time&filter=stream&limit=50&summary=true&access_token=${access_token}`
+                            `https://graph.facebook.com/v19.0/${postData.id}/comments?fields=id,message,from,created_time&filter=stream&limit=50&summary=true&access_token=${commentToken}`
                         );
                         const commData2 = await commRes2.json();
                         if (!commData2.error) {
@@ -181,14 +184,14 @@ export async function POST(request: Request) {
             let totalCount = 0;
             try {
                 const commRes = await fetch(
-                    `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,created_time,is_hidden&filter=stream&limit=50&summary=true&access_token=${access_token}`
+                    `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,created_time,is_hidden&filter=stream&limit=50&summary=true&access_token=${commentToken}`
                 );
                 const commData = await commRes.json();
                 if (commData.error) {
                     commentErrors.push({ post_id: post.id, error1: commData.error.message });
                     // Fallback: try without is_hidden (may not have permission)
                     const commRes2 = await fetch(
-                        `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,created_time&filter=stream&limit=50&summary=true&access_token=${access_token}`
+                        `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,created_time&filter=stream&limit=50&summary=true&access_token=${commentToken}`
                     );
                     const commData2 = await commRes2.json();
                     if (!commData2.error) {

@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
         const longUserToken = exchangeData.access_token;
 
-        // 2. Get User's Pages (ID, Name, Access Token, Picture)
+        // 2. Get User's Pages (ID, Name, Page Access Token, Picture)
         const pagesUrl = `https://graph.facebook.com/v19.0/me/accounts?access_token=${longUserToken}&fields=id,name,access_token,category,picture{url}`;
 
         const pagesRes = await fetch(pagesUrl);
@@ -37,17 +37,19 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: pagesData.error.message }, { status: 400 });
         }
 
-        // Return list of pages - use long-lived USER token (not page token)
-        // because page tokens from /me/accounts don't always inherit permissions like pages_read_engagement
+        // Return both: page tokens (for posts) + user token (for comments)
         const pages = pagesData.data.map((page: any) => ({
             page_id: page.id,
             name: page.name,
-            access_token: longUserToken,
+            access_token: page.access_token, // Page token for reading posts
             category: page.category,
             avatar_url: page.picture?.data?.url
         }));
 
-        return NextResponse.json({ pages });
+        return NextResponse.json({
+            pages,
+            user_token: longUserToken // User token for reading comments
+        });
 
     } catch (error: any) {
         console.error('Facebook Auth API Error:', error);
