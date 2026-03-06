@@ -3,9 +3,10 @@ import { NextResponse } from 'next/server';
 export async function POST(request: Request) {
     try {
         const { page_id, access_token, user_token, action, comment_id, post_id } = await request.json();
-        // user_token = long-lived user token for reading comments (has pages_read_engagement)
-        // access_token = page token for reading posts (required by NPE pages)
-        const commentToken = user_token || access_token;
+        // NPE pages require Page Token for ALL operations including reading comments
+        // access_token = page token (preferred for NPE pages)
+        // user_token = long-lived user token (fallback only)
+        const commentToken = access_token;
 
         if (!page_id || !access_token) {
             return NextResponse.json({ error: 'Missing page_id or access_token' }, { status: 400 });
@@ -232,7 +233,7 @@ export async function POST(request: Request) {
 
         const tokenInfo = {
             has_user_token: !!user_token,
-            comment_token_type: user_token ? 'user_token' : 'page_token (fallback)',
+            comment_token_type: 'page_token (NPE required)',
             comment_token_prefix: commentToken?.substring(0, 10) + '...',
             page_token_prefix: access_token?.substring(0, 10) + '...',
         };
