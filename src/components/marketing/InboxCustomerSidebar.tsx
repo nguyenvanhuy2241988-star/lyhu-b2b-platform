@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SocialConversation, updateConversationMetadata } from '@/lib/marketingStore';
-import { User, Tag, FileText, ShoppingBag, ExternalLink, X } from 'lucide-react';
+import { User, Tag, FileText, ShoppingBag, ExternalLink, X, Phone, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface InboxCustomerSidebarProps {
@@ -16,6 +16,8 @@ export default function InboxCustomerSidebar({ conversation, onUpdate, onCreateD
     const [newTag, setNewTag] = useState('');
     const [isSavingNote, setIsSavingNote] = useState(false);
     const [avatarError, setAvatarError] = useState(false);
+    const [customerPhone, setCustomerPhone] = useState(conversation.customer_phone || '');
+    const [customerRegion, setCustomerRegion] = useState(conversation.customer_region || '');
 
     // Reset avatar error when conversation changes
     useEffect(() => {
@@ -26,6 +28,8 @@ export default function InboxCustomerSidebar({ conversation, onUpdate, onCreateD
     useEffect(() => {
         setNotes(conversation.notes || '');
         setTags(conversation.tags || []);
+        setCustomerPhone(conversation.customer_phone || '');
+        setCustomerRegion(conversation.customer_region || '');
     }, [conversation.id]);
 
     const handleSaveNote = async () => {
@@ -38,6 +42,16 @@ export default function InboxCustomerSidebar({ conversation, onUpdate, onCreateD
             toast.error("Lỗi lưu ghi chú");
         } finally {
             setIsSavingNote(false);
+        }
+    };
+
+    const handleSaveCustomerInfo = async (field: 'customer_phone' | 'customer_region', value: string) => {
+        try {
+            await updateConversationMetadata(conversation.id, { [field]: value }, token);
+            onUpdate({ [field]: value } as any);
+            toast.success(field === 'customer_phone' ? 'Đã lưu SĐT' : 'Đã lưu khu vực');
+        } catch (e) {
+            toast.error('Lỗi lưu thông tin');
         }
     };
 
@@ -111,7 +125,7 @@ export default function InboxCustomerSidebar({ conversation, onUpdate, onCreateD
                 <button
                     onClick={() => {
                         // Open Meta Business Suite directly to this conversation
-                        const pageId = (conversation as any).page_id;
+                        const pageId = (conversation as any).fb_page_id;
                         const externalId = conversation.external_id;
                         const url = pageId && externalId
                             ? `https://business.facebook.com/latest/inbox/all?asset_id=${pageId}&selected_item_id=${externalId}`
@@ -125,6 +139,36 @@ export default function InboxCustomerSidebar({ conversation, onUpdate, onCreateD
                     <ExternalLink className="w-5 h-5 mb-1" />
                     <span className="text-xs font-semibold">Xem Profile</span>
                 </button>
+            </div>
+
+            {/* Customer Info */}
+            <div className="p-4 border-b space-y-3">
+                <div className="flex items-center gap-2 text-slate-800 font-semibold text-sm">
+                    <User className="w-4 h-4" />
+                    Thông tin khách hàng
+                </div>
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                        <input
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400"
+                            placeholder="Số điện thoại..."
+                            value={customerPhone}
+                            onChange={e => setCustomerPhone(e.target.value)}
+                            onBlur={() => handleSaveCustomerInfo('customer_phone', customerPhone)}
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                        <input
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400"
+                            placeholder="Khu vực (VD: HCM, Hà Nội...)"
+                            value={customerRegion}
+                            onChange={e => setCustomerRegion(e.target.value)}
+                            onBlur={() => handleSaveCustomerInfo('customer_region', customerRegion)}
+                        />
+                    </div>
+                </div>
             </div>
 
             {/* Tags */}

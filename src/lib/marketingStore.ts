@@ -439,6 +439,8 @@ export interface SocialConversation {
     ad_title?: string;
     ref_parameter?: string;
     customer_profile_url?: string;
+    customer_phone?: string;
+    customer_region?: string;
     page_name?: string; // Joined field
     page_avatar?: string; // Joined field
     post_id?: string;
@@ -496,7 +498,7 @@ export const fetchInboxCounts = async (token?: string) => {
     }
 };
 
-export const updateConversationMetadata = async (id: string, updates: { tags?: string[], notes?: string }, token?: string) => {
+export const updateConversationMetadata = async (id: string, updates: { tags?: string[], notes?: string, customer_phone?: string, customer_region?: string }, token?: string) => {
     try {
         const headers = getHeaders(token);
         const res = await fetch(`${SUPABASE_URL}/rest/v1/social_conversations?id=eq.${id}`, {
