@@ -490,17 +490,20 @@ export default function AutomationPage() {
                         </div>
 
                         {/* Scan Old Comments */}
-                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                            <div className="flex items-center justify-between">
+                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 relative z-10">
+                            <div className="flex items-center justify-between gap-4">
                                 <div>
                                     <p className="font-medium text-slate-800">🔄 Xử lý bình luận cũ</p>
                                     <p className="text-xs text-blue-600">Quét các bình luận cũ trên các bài viết và áp dụng quy tắc ẩn/trả lời tự động.</p>
                                 </div>
                                 <button
+                                    type="button"
                                     onClick={async () => {
                                         if (!selectedPageId) return toast.error('Chọn Fanpage trước');
                                         const page = pages.find(p => p.id === selectedPageId);
                                         if (!page) return;
+                                        const btn = document.getElementById('scanBtn');
+                                        if (btn) { btn.textContent = '⏳ Đang quét...'; btn.setAttribute('disabled', 'true'); }
                                         toast.info('Đang quét bình luận cũ...');
                                         try {
                                             const res = await fetch('/api/facebook/scan-comments', {
@@ -516,9 +519,12 @@ export default function AutomationPage() {
                                             }
                                         } catch (e: any) {
                                             toast.error('Lỗi: ' + e.message);
+                                        } finally {
+                                            if (btn) { btn.textContent = '🔍 Quét ngay'; btn.removeAttribute('disabled'); }
                                         }
                                     }}
-                                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center gap-2 whitespace-nowrap"
+                                    id="scanBtn"
+                                    className="bg-blue-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 transition whitespace-nowrap disabled:bg-blue-300 cursor-pointer"
                                 >
                                     🔍 Quét ngay
                                 </button>
