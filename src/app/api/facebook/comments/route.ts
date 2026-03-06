@@ -38,34 +38,56 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: true, comments: data.data || [] });
         }
 
-        // DEFAULT: Fetch recent posts with comment counts
-        // Try ads_posts first, then regular posts
-        let adPostIds = new Set<string>();
+        // DEFAULT: Fetch BOTH regular posts AND ads_posts (dark posts)
+        const allPosts: any[] = [];
+        const seenPostIds = new Set<string>();
+
+        // 1. Fetch ads_posts (includes dark posts NOT on page timeline)
         try {
             const adsRes = await fetch(
-                `https://graph.facebook.com/v19.0/${page_id}/ads_posts?fields=id&limit=50&access_token=${access_token}`
+                `https://graph.facebook.com/v19.0/${page_id}/ads_posts?fields=id,message,created_time,full_picture,permalink_url&limit=25&access_token=${access_token}`
             );
             const adsData = await adsRes.json();
             if (adsData.data) {
-                adsData.data.forEach((p: any) => adPostIds.add(p.id));
+                for (const post of adsData.data) {
+                    if (!seenPostIds.has(post.id)) {
+                        seenPostIds.add(post.id);
+                        allPosts.push({ ...post, _is_ad: true });
+                    }
+                }
             }
         } catch (e) {
-            // ads_posts might not be available
+            console.log('Could not fetch ads_posts:', e);
         }
 
-        // Fetch published posts  
-        const postsRes = await fetch(
-            `https://graph.facebook.com/v19.0/${page_id}/posts?fields=id,message,created_time,full_picture,permalink_url,promotion_status&limit=15&access_token=${access_token}`
-        );
-        const postsData = await postsRes.json();
+        // 2. Fetch regular published posts
+        try {
+            const postsRes = await fetch(
+                `https://graph.facebook.com/v19.0/${page_id}/posts?fields=id,message,created_time,full_picture,permalink_url,promotion_status&limit=15&access_token=${access_token}`
+            );
+            const postsData = await postsRes.json();
+            if (postsData.data) {
+                for (const post of postsData.data) {
+                    if (!seenPostIds.has(post.id)) {
+                        seenPostIds.add(post.id);
+                        const isPromoted = post.promotion_status && post.promotion_status !== 'inactive';
+                        allPosts.push({ ...post, _is_ad: isPromoted });
+                    }
+                }
+            }
+        } catch (e) {
+            console.log('Could not fetch posts:', e);
+        }
 
-        if (!postsData.data) {
+        if (allPosts.length === 0) {
             return NextResponse.json({ success: true, posts: [] });
         }
 
-        // Enrich each post with comment counts and ad status
-        const posts = await Promise.all(postsData.data.map(async (post: any) => {
-            // Get comments count
+        // Sort by created_time descending
+        allPosts.sort((a, b) => new Date(b.created_time).getTime() - new Date(a.created_time).getTime());
+
+        // Enrich each post with comment counts
+        const posts = await Promise.all(allPosts.map(async (post: any) => {
             let comments: any[] = [];
             let hiddenCount = 0;
             let totalCount = 0;
@@ -81,16 +103,13 @@ export async function POST(request: Request) {
                 // ignore
             }
 
-            const isAd = adPostIds.has(post.id) ||
-                (post.promotion_status && post.promotion_status !== 'inactive');
-
             return {
                 id: post.id,
                 message: post.message || '(Không có nội dung)',
                 created_time: post.created_time,
                 full_picture: post.full_picture,
                 permalink_url: post.permalink_url,
-                is_ad: isAd,
+                is_ad: post._is_ad || false,
                 promotion_status: post.promotion_status,
                 total_comments: totalCount,
                 hidden_comments: hiddenCount,

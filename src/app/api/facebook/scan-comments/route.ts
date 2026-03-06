@@ -31,27 +31,48 @@ export async function POST(request: Request) {
             .eq('is_active', true)
             .or(`page_id.is.null,page_id.eq.${db_page_id}`);
 
-        // Fetch recent posts from the page (last 10 posts)
-        const postsRes = await fetch(
-            `https://graph.facebook.com/v19.0/${page_id}/posts?fields=id,promotion_status&limit=10&access_token=${access_token}`
-        );
-        const postsData = await postsRes.json();
+        // Fetch BOTH ads_posts (dark posts) and regular posts
+        const allPosts: any[] = [];
+        const seenPostIds = new Set<string>();
 
-        // Also try to get ad-specific posts
-        let adPostIds = new Set<string>();
+        // 1. Fetch ads_posts (includes dark posts NOT on page timeline)
         try {
             const adsPostsRes = await fetch(
-                `https://graph.facebook.com/v19.0/${page_id}/ads_posts?fields=id&limit=50&access_token=${access_token}`
+                `https://graph.facebook.com/v19.0/${page_id}/ads_posts?fields=id&limit=25&access_token=${access_token}`
             );
             const adsPostsData = await adsPostsRes.json();
             if (adsPostsData.data) {
-                adsPostsData.data.forEach((p: any) => adPostIds.add(p.id));
+                for (const p of adsPostsData.data) {
+                    if (!seenPostIds.has(p.id)) {
+                        seenPostIds.add(p.id);
+                        allPosts.push({ id: p.id, _is_ad: true });
+                    }
+                }
             }
         } catch (e) {
-            console.log('Could not fetch ads_posts, using promotion_status fallback');
+            console.log('Could not fetch ads_posts for scan');
         }
 
-        if (!postsData.data || postsData.data.length === 0) {
+        // 2. Fetch regular published posts
+        try {
+            const postsRes = await fetch(
+                `https://graph.facebook.com/v19.0/${page_id}/posts?fields=id,promotion_status&limit=10&access_token=${access_token}`
+            );
+            const postsData = await postsRes.json();
+            if (postsData.data) {
+                for (const p of postsData.data) {
+                    if (!seenPostIds.has(p.id)) {
+                        seenPostIds.add(p.id);
+                        const isPromoted = p.promotion_status && p.promotion_status !== 'inactive';
+                        allPosts.push({ id: p.id, _is_ad: isPromoted });
+                    }
+                }
+            }
+        } catch (e) {
+            console.log('Could not fetch posts for scan');
+        }
+
+        if (allPosts.length === 0) {
             return NextResponse.json({ success: true, processed: 0, hidden: 0, replied: 0 });
         }
 
@@ -59,10 +80,8 @@ export async function POST(request: Request) {
         let totalHidden = 0;
         let totalReplied = 0;
 
-        for (const post of postsData.data) {
-            // Determine if this is an ad/promoted post
-            const isAdPost = adPostIds.has(post.id) ||
-                (post.promotion_status && post.promotion_status !== 'inactive');
+        for (const post of allPosts) {
+            const isAdPost = post._is_ad;
 
             // Fetch comments for each post (limit 50)
             const commentsRes = await fetch(
