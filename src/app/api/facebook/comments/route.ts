@@ -174,6 +174,7 @@ export async function POST(request: Request) {
         allPosts.sort((a, b) => new Date(b.created_time).getTime() - new Date(a.created_time).getTime());
 
         // Enrich each post with comment counts
+        const commentErrors: any[] = [];
         const posts = await Promise.all(allPosts.map(async (post: any) => {
             let comments: any[] = [];
             let hiddenCount = 0;
@@ -184,6 +185,7 @@ export async function POST(request: Request) {
                 );
                 const commData = await commRes.json();
                 if (commData.error) {
+                    commentErrors.push({ post_id: post.id, error1: commData.error.message });
                     // Fallback: try without is_hidden (may not have permission)
                     const commRes2 = await fetch(
                         `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,created_time&filter=stream&limit=50&summary=true&access_token=${access_token}`
@@ -193,7 +195,7 @@ export async function POST(request: Request) {
                         comments = commData2.data || [];
                         totalCount = commData2.summary?.total_count || comments.length;
                     } else {
-                        console.log(`Comments error for ${post.id}:`, commData2.error?.message);
+                        commentErrors.push({ post_id: post.id, error2: commData2.error.message });
                     }
                 } else {
                     comments = commData.data || [];
@@ -201,7 +203,7 @@ export async function POST(request: Request) {
                     hiddenCount = comments.filter((c: any) => c.is_hidden).length;
                 }
             } catch (e: any) {
-                console.log(`Comments fetch error for ${post.id}:`, e.message);
+                commentErrors.push({ post_id: post.id, exception: e.message });
             }
 
             return {
@@ -225,7 +227,7 @@ export async function POST(request: Request) {
             };
         }));
 
-        return NextResponse.json({ success: true, posts, debug });
+        return NextResponse.json({ success: true, posts, debug: { ...debug, comment_errors: commentErrors } });
 
     } catch (error: any) {
         console.error('Comments API Error:', error);
