@@ -235,7 +235,7 @@ export async function POST(request: Request) {
                             // Check if conversation already exists
                             const { data: existingConv } = await supabase
                                 .from('social_conversations')
-                                .select('id, customer_name')
+                                .select('id, customer_name, ad_id')
                                 .eq('platform', 'facebook')
                                 .eq('external_id', senderId)
                                 .single();
@@ -245,8 +245,11 @@ export async function POST(request: Request) {
                             // 1. Get Conversation or Create
                             let referral = (event.message && event.message.referral) || (event.postback && event.postback.referral);
 
-                            // FIX #2: Only fetch referral from Graph API for NEW conversations
-                            if (!referral && isNewConversation && mid && !mid.startsWith('postback_') && pageData.access_token) {
+                            // Fetch referral from Graph API for:
+                            // 1. NEW conversations (always check)
+                            // 2. EXISTING conversations that don't have ad_id yet (retroactive fix)
+                            const needsReferralCheck = isNewConversation || (existingConv && !existingConv.ad_id);
+                            if (!referral && needsReferralCheck && mid && !mid.startsWith('postback_') && pageData.access_token) {
                                 try {
                                     const msgRes = await fetch(`https://graph.facebook.com/v21.0/${mid}?fields=referral,from,message,tags&access_token=${pageData.access_token}`);
                                     const msgData = await msgRes.json();
