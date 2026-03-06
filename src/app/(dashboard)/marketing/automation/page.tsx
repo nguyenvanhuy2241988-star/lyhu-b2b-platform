@@ -27,6 +27,7 @@ export default function AutomationPage() {
     // Settings State
     const [greetingText, setGreetingText] = useState('');
     const [autoHidePhone, setAutoHidePhone] = useState(false);
+    const [autoHideAll, setAutoHideAll] = useState(false);
     const [autoHideKeywords, setAutoHideKeywords] = useState('');
     const [autoReplyComment, setAutoReplyComment] = useState(false);
     const [autoReplyCommentText, setAutoReplyCommentText] = useState('');
@@ -73,6 +74,7 @@ export default function AutomationPage() {
                 const config = p[0].chatbot_config as any;
                 setGreetingText(config?.greeting_text || '');
                 setAutoHidePhone(config?.auto_hide_phone || false);
+                setAutoHideAll(config?.auto_hide_all || false);
                 setAutoHideKeywords(config?.auto_hide_keywords || '');
                 setAutoReplyComment(config?.auto_reply_comment || false);
                 setAutoReplyCommentText(config?.auto_reply_comment_text || '');
@@ -89,6 +91,7 @@ export default function AutomationPage() {
                 const config = p.chatbot_config as any;
                 setGreetingText(config?.greeting_text || '');
                 setAutoHidePhone(config?.auto_hide_phone || false);
+                setAutoHideAll(config?.auto_hide_all || false);
                 setAutoHideKeywords(config?.auto_hide_keywords || '');
                 setAutoReplyComment(config?.auto_reply_comment || false);
                 setAutoReplyCommentText(config?.auto_reply_comment_text || '');
@@ -123,6 +126,7 @@ export default function AutomationPage() {
             await updateMessengerProfile(page.page_id, page.access_token, {
                 greeting_text: greetingText,
                 auto_hide_phone: autoHidePhone,
+                auto_hide_all: autoHideAll,
                 auto_hide_keywords: autoHideKeywords,
                 auto_reply_comment: autoReplyComment,
                 auto_reply_comment_text: autoReplyCommentText,
@@ -132,7 +136,7 @@ export default function AutomationPage() {
             // Optimistic update
             setPages(prev => prev.map(p => p.id === selectedPageId ? {
                 ...p,
-                chatbot_config: { ...p.chatbot_config, greeting_text: greetingText, auto_hide_phone: autoHidePhone, auto_hide_keywords: autoHideKeywords, auto_reply_comment: autoReplyComment, auto_reply_comment_text: autoReplyCommentText, persistent_menu: persistentMenu }
+                chatbot_config: { ...p.chatbot_config, greeting_text: greetingText, auto_hide_phone: autoHidePhone, auto_hide_all: autoHideAll, auto_hide_keywords: autoHideKeywords, auto_reply_comment: autoReplyComment, auto_reply_comment_text: autoReplyCommentText, persistent_menu: persistentMenu }
             } : p));
             toast.success("Đã cập nhật cấu hình lên Facebook");
         } catch (error) {
@@ -466,6 +470,59 @@ export default function AutomationPage() {
                                     onChange={e => setAutoReplyCommentText(e.target.value)}
                                 />
                             )}
+                        </div>
+
+                        {/* Auto-Hide Comments on Ad Posts */}
+                        <div className="flex items-center gap-3 bg-purple-50 p-4 rounded-lg border border-purple-100">
+                            <input
+                                type="checkbox"
+                                id="autoHideAll"
+                                className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                                checked={autoHideAll}
+                                onChange={e => setAutoHideAll(e.target.checked)}
+                            />
+                            <div>
+                                <label htmlFor="autoHideAll" className="font-medium text-slate-800 cursor-pointer select-none">
+                                    📢 Ẩn bình luận trên bài QUẢNG CÁO
+                                </label>
+                                <p className="text-xs text-purple-600">Tự động ẩn tất cả bình luận trên bài quảng cáo (promoted posts). Bài viết bình thường không bị ảnh hưởng.</p>
+                            </div>
+                        </div>
+
+                        {/* Scan Old Comments */}
+                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <p className="font-medium text-slate-800">🔄 Xử lý bình luận cũ</p>
+                                    <p className="text-xs text-blue-600">Quét các bình luận cũ trên các bài viết và áp dụng quy tắc ẩn/trả lời tự động.</p>
+                                </div>
+                                <button
+                                    onClick={async () => {
+                                        if (!selectedPageId) return toast.error('Chọn Fanpage trước');
+                                        const page = pages.find(p => p.id === selectedPageId);
+                                        if (!page) return;
+                                        toast.info('Đang quét bình luận cũ...');
+                                        try {
+                                            const res = await fetch('/api/facebook/scan-comments', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ page_id: page.page_id, access_token: page.access_token, db_page_id: page.id })
+                                            });
+                                            const data = await res.json();
+                                            if (data.success) {
+                                                toast.success(`Đã xử lý ${data.processed} bình luận, ẩn ${data.hidden}, reply ${data.replied}`);
+                                            } else {
+                                                toast.error(data.error || 'Lỗi quét');
+                                            }
+                                        } catch (e: any) {
+                                            toast.error('Lỗi: ' + e.message);
+                                        }
+                                    }}
+                                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition flex items-center gap-2 whitespace-nowrap"
+                                >
+                                    🔍 Quét ngay
+                                </button>
+                            </div>
                         </div>
                     </div>
 

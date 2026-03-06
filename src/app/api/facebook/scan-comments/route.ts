@@ -1,0 +1,193 @@
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
+export async function POST(request: Request) {
+    try {
+        const { page_id, access_token, db_page_id } = await request.json();
+
+        if (!page_id || !access_token || !db_page_id) {
+            return NextResponse.json({ error: 'Missing page_id, access_token, or db_page_id' }, { status: 400 });
+        }
+
+        const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+        const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+            auth: { persistSession: false }
+        });
+
+        // Get page config
+        const { data: pageData } = await supabase
+            .from('facebook_pages')
+            .select('chatbot_config')
+            .eq('id', db_page_id)
+            .single();
+
+        const config = (pageData?.chatbot_config as any) || {};
+
+        // Get chatbot rules
+        const { data: rules } = await supabase
+            .from('chatbot_rules')
+            .select('*')
+            .eq('is_active', true)
+            .or(`page_id.is.null,page_id.eq.${db_page_id}`);
+
+        // Fetch recent posts from the page (last 10 posts)
+        const postsRes = await fetch(
+            `https://graph.facebook.com/v19.0/${page_id}/posts?fields=id,promotion_status&limit=10&access_token=${access_token}`
+        );
+        const postsData = await postsRes.json();
+
+        // Also try to get ad-specific posts
+        let adPostIds = new Set<string>();
+        try {
+            const adsPostsRes = await fetch(
+                `https://graph.facebook.com/v19.0/${page_id}/ads_posts?fields=id&limit=50&access_token=${access_token}`
+            );
+            const adsPostsData = await adsPostsRes.json();
+            if (adsPostsData.data) {
+                adsPostsData.data.forEach((p: any) => adPostIds.add(p.id));
+            }
+        } catch (e) {
+            console.log('Could not fetch ads_posts, using promotion_status fallback');
+        }
+
+        if (!postsData.data || postsData.data.length === 0) {
+            return NextResponse.json({ success: true, processed: 0, hidden: 0, replied: 0 });
+        }
+
+        let totalProcessed = 0;
+        let totalHidden = 0;
+        let totalReplied = 0;
+
+        for (const post of postsData.data) {
+            // Determine if this is an ad/promoted post
+            const isAdPost = adPostIds.has(post.id) ||
+                (post.promotion_status && post.promotion_status !== 'inactive');
+
+            // Fetch comments for each post (limit 50)
+            const commentsRes = await fetch(
+                `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,is_hidden&limit=50&access_token=${access_token}`
+            );
+            const commentsData = await commentsRes.json();
+
+            if (!commentsData.data) continue;
+
+            for (const comment of commentsData.data) {
+                // Skip page's own comments
+                if (comment.from?.id === page_id) continue;
+                // Skip already hidden
+                if (comment.is_hidden) continue;
+                if (!comment.message) continue;
+
+                totalProcessed++;
+                const msgLower = comment.message.toLowerCase();
+                let shouldHide = false;
+                let shouldReply = false;
+
+                // 1. Check phone hide (applies to ALL posts)
+                if (config.auto_hide_phone) {
+                    const phoneRegex = /(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/g;
+                    if (phoneRegex.test(comment.message)) {
+                        shouldHide = true;
+                    }
+                }
+
+                // 2. Check keyword hide (applies to ALL posts)
+                if (!shouldHide && config.auto_hide_keywords) {
+                    const keywords = (config.auto_hide_keywords as string).split(',').map((k: string) => k.trim().toLowerCase()).filter(Boolean);
+                    for (const kw of keywords) {
+                        if (kw && msgLower.includes(kw)) {
+                            shouldHide = true;
+                            break;
+                        }
+                    }
+                }
+
+                // 3. Check chatbot rules
+                let ruleMatched = false;
+                if (rules) {
+                    for (const rule of rules) {
+                        const applyTo = rule.apply_to || 'comment';
+                        if (applyTo !== 'comment' && applyTo !== 'both') continue;
+
+                        const keywordLower = rule.keyword.toLowerCase();
+                        let isMatch = false;
+                        if (rule.match_type === 'exact') isMatch = msgLower === keywordLower;
+                        else isMatch = msgLower.includes(keywordLower);
+
+                        if (isMatch) {
+                            ruleMatched = true;
+                            const replyMethod = rule.reply_method || 'comment';
+
+                            if (replyMethod === 'comment' || replyMethod === 'both') {
+                                // Check if page already replied to this comment
+                                const repliesRes = await fetch(
+                                    `https://graph.facebook.com/v19.0/${comment.id}/comments?fields=from&limit=5&access_token=${access_token}`
+                                );
+                                const repliesData = await repliesRes.json();
+                                const alreadyReplied = repliesData.data?.some((r: any) => r.from?.id === page_id);
+
+                                if (!alreadyReplied) {
+                                    await fetch(`https://graph.facebook.com/v19.0/${comment.id}/comments?access_token=${access_token}`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ message: rule.response_text })
+                                    });
+                                    totalReplied++;
+                                    shouldReply = true;
+                                }
+                            }
+
+                            if (rule.auto_hide) shouldHide = true;
+                            break;
+                        }
+                    }
+                }
+
+                // 4. Auto-reply ALL (if no rule matched)
+                if (!ruleMatched && !shouldReply && config.auto_reply_comment && config.auto_reply_comment_text) {
+                    const repliesRes = await fetch(
+                        `https://graph.facebook.com/v19.0/${comment.id}/comments?fields=from&limit=5&access_token=${access_token}`
+                    );
+                    const repliesData = await repliesRes.json();
+                    const alreadyReplied = repliesData.data?.some((r: any) => r.from?.id === page_id);
+
+                    if (!alreadyReplied) {
+                        await fetch(`https://graph.facebook.com/v19.0/${comment.id}/comments?access_token=${access_token}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ message: config.auto_reply_comment_text })
+                        });
+                        totalReplied++;
+                    }
+                }
+
+                // 5. Auto-hide on AD POSTS only (not regular posts)
+                if (!shouldHide && config.auto_hide_all && isAdPost) {
+                    shouldHide = true;
+                }
+
+                // Execute hide
+                if (shouldHide) {
+                    await fetch(`https://graph.facebook.com/v19.0/${comment.id}?access_token=${access_token}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ is_hidden: true })
+                    });
+                    totalHidden++;
+                }
+            }
+        }
+
+        return NextResponse.json({
+            success: true,
+            processed: totalProcessed,
+            hidden: totalHidden,
+            replied: totalReplied
+        });
+
+    } catch (error: any) {
+        console.error('Scan Comments Error:', error);
+        return NextResponse.json({ error: error.message || 'Scan failed' }, { status: 500 });
+    }
+}

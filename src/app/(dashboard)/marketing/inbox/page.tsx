@@ -426,6 +426,7 @@ export default function SocialInboxPage() {
                 body: formData
             });
             const uploadData = await uploadRes.json();
+            console.log('[Upload] Response:', uploadData);
             if (!uploadData.success) throw new Error(uploadData.error || 'Đăng tải thất bại');
 
             // 2. Send via Facebook
@@ -433,7 +434,9 @@ export default function SocialInboxPage() {
             const recipientId = lastCustomerMsg?.sender_id || currentConv.external_id;
             const pageToken = pages.find(p => p.id === currentConv.page_id)?.access_token || '';
 
-            await sendSocialReply(recipientId, '', pageToken, selectedConvId, uploadData.url, uploadData.type);
+            console.log('[Send File] recipientId:', recipientId, 'attachmentUrl:', uploadData.url, 'type:', uploadData.type);
+            const sendResult = await sendSocialReply(recipientId, '', pageToken, selectedConvId, uploadData.url, uploadData.type);
+            console.log('[Send File] Result:', sendResult);
 
             // Update optimistic message with real URL
             setMessages(prev => prev.map(m => m.id === optimisticMsg.id
@@ -441,6 +444,7 @@ export default function SocialInboxPage() {
                 : m
             ));
         } catch (error: any) {
+            console.error('[Send File] Error:', error);
             toast.error(`Lỗi gửi: ${error.message}`);
             setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id));
         } finally {

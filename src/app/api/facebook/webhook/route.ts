@@ -546,9 +546,36 @@ export async function POST(request: Request) {
                             }
 
                             // 5. Auto-Reply ALL comments (fallback if no rule matched)
-                            if (!ruleMatched && !commentHidden && config.auto_reply_comment && config.auto_reply_comment_text) {
+                            if (!ruleMatched && config.auto_reply_comment && config.auto_reply_comment_text) {
                                 console.log(`[Auto-Reply] Replying to ALL: ${comment_id}`);
                                 await sendCommentReply(comment_id, { response_text: config.auto_reply_comment_text }, pageData.access_token);
+                            }
+
+                            // 6. Auto-Hide on AD POSTS only (not regular posts)
+                            if (!commentHidden && config.auto_hide_all && post_id) {
+                                try {
+                                    // Check if this post is a promoted/ad post
+                                    const postRes = await fetch(
+                                        `https://graph.facebook.com/v19.0/${post_id}?fields=is_published,promotion_status,is_eligible_for_promotion&access_token=${pageData.access_token}`
+                                    );
+                                    const postInfo = await postRes.json();
+
+                                    // promotion_status: 'active', 'paused', 'deleted', 'archived', 'in_review' = ad post
+                                    // null/undefined = regular post
+                                    const isAdPost = postInfo.promotion_status && postInfo.promotion_status !== 'inactive';
+
+                                    if (isAdPost) {
+                                        console.log(`[Auto-Hide] AD POST comment ${comment_id} on promoted post ${post_id}`);
+                                        await fetch(`https://graph.facebook.com/v19.0/${comment_id}?access_token=${pageData.access_token}`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ is_hidden: true })
+                                        });
+                                        commentHidden = true;
+                                    }
+                                } catch (e) {
+                                    console.error('[Auto-Hide Ad] Error checking post:', e);
+                                }
                             }
 
                             // 6. Save to inbox (optional - for tracking)
