@@ -640,22 +640,41 @@ export default function AutomationPage() {
                                             return;
                                         }
 
-                                        // 2. Update each page in database
+                                        // 2. Update each page in database & local state
                                         const { createClient } = await import('@/lib/supabaseClient');
                                         const supabase = createClient();
                                         let updated = 0;
+                                        const updatedNames: string[] = [];
                                         for (const p of data.pages) {
                                             const { error } = await supabase
                                                 .from('facebook_pages')
                                                 .update({ access_token: p.access_token, name: p.name, avatar_url: p.avatar_url })
                                                 .eq('page_id', p.page_id);
-                                            if (!error) updated++;
+                                            if (!error) {
+                                                updated++;
+                                                updatedNames.push(p.name);
+                                            } else {
+                                                console.error('Update page error:', p.name, error);
+                                            }
                                         }
 
-                                        toast.success(`✅ Đã cập nhật token cho ${updated}/${data.pages.length} Page (60 ngày)`);
+                                        // 3. Update local pages state with new tokens
+                                        setPages(prev => prev.map(page => {
+                                            const newPage = data.pages.find((p: any) => p.page_id === page.page_id);
+                                            if (newPage) {
+                                                return { ...page, access_token: newPage.access_token, name: newPage.name, avatar_url: newPage.avatar_url };
+                                            }
+                                            return page;
+                                        }));
+
+                                        if (updated > 0) {
+                                            toast.success(`✅ Đã cập nhật token 60 ngày cho ${updated} Page: ${updatedNames.join(', ')}`, { duration: 6000 });
+                                        } else {
+                                            toast.error('Không cập nhật được Page nào. Kiểm tra xem Page đã được kết nối chưa.');
+                                        }
                                         input.value = '';
-                                        // Reload comments with new tokens
-                                        setTimeout(() => loadComments(), 500);
+                                        // Reload comments with new tokens (delay to let state update)
+                                        setTimeout(() => loadComments(), 1000);
                                     } catch (e: any) {
                                         toast.error('Lỗi: ' + e.message);
                                     }
