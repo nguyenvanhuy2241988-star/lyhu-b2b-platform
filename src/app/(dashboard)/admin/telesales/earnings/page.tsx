@@ -122,6 +122,35 @@ export default function AdminTelesalesKpiPage() {
         return { from: start, to: end, label: l };
     }, [dateRange, customFrom, customTo]);
 
+    // Calculate targetDivisor based on selected date range
+    // Monthly targets need to be divided proportionally for shorter periods
+    const targetDivisor = useMemo(() => {
+        switch (dateRange) {
+            case 'today':
+            case 'yesterday':
+                return 26; // 26 working days per month
+            case 'this_week':
+            case 'last_7_days':
+                return 4;  // ~4 weeks per month
+            case 'this_month':
+            case 'last_month':
+            case 'this_quarter':
+                return 1;  // Full monthly target
+            case 'custom': {
+                if (customFrom && customTo) {
+                    const diffMs = new Date(customTo).getTime() - new Date(customFrom).getTime();
+                    const diffDays = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)) + 1);
+                    if (diffDays <= 1) return 26;
+                    if (diffDays <= 7) return 4;
+                    return 1;
+                }
+                return 1;
+            }
+            default:
+                return 1;
+        }
+    }, [dateRange, customFrom, customTo]);
+
     // Data State (Async)
     const [teamStats, setTeamStats] = useState<any>({
         totalCalls: 0,
@@ -274,7 +303,7 @@ export default function AdminTelesalesKpiPage() {
 
             {/* Team Overview Component */}
             <div className="mb-2">
-                <TelesalesKpiDashboard userId="ALL" date={`${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, '0')}-${String(from.getDate()).padStart(2, '0')}`} toDate={`${to.getFullYear()}-${String(to.getMonth() + 1).padStart(2, '0')}-${String(to.getDate()).padStart(2, '0')}`} />
+                <TelesalesKpiDashboard userId="ALL" date={`${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, '0')}-${String(from.getDate()).padStart(2, '0')}`} toDate={`${to.getFullYear()}-${String(to.getMonth() + 1).padStart(2, '0')}-${String(to.getDate()).padStart(2, '0')}`} targetDivisor={targetDivisor} />
             </div>
 
             <div className="mb-8 bg-white p-5 rounded-xl shadow-sm border border-slate-200">
@@ -292,7 +321,7 @@ export default function AdminTelesalesKpiPage() {
                     </select>
                 </div>
                 {selectedUserId ? (
-                    <TelesalesKpiDashboard userId={selectedUserId} date={`${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, '0')}-${String(from.getDate()).padStart(2, '0')}`} toDate={`${to.getFullYear()}-${String(to.getMonth() + 1).padStart(2, '0')}-${String(to.getDate()).padStart(2, '0')}`} />
+                    <TelesalesKpiDashboard userId={selectedUserId} date={`${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, '0')}-${String(from.getDate()).padStart(2, '0')}`} toDate={`${to.getFullYear()}-${String(to.getMonth() + 1).padStart(2, '0')}-${String(to.getDate()).padStart(2, '0')}`} targetDivisor={targetDivisor} />
                 ) : (
                     <div className="text-center py-8 text-slate-400 bg-slate-50 rounded-lg border border-dashed border-slate-200">
                         Vui lòng chọn một nhân sự để xem chi tiết tiến độ.

@@ -122,11 +122,13 @@ export default function TelesalesKpiDashboard({ date, userId, toDate, targetDivi
                     .in('role', ['telesales', 'sale_admin']);
 
                 const userIds = (usersData || []).map((u: any) => u.id);
+                const allResults = await Promise.all(
+                    userIds.map((uid: string) => getKpiActualsForRange(uid, startDate, endDate))
+                );
                 const aggActuals: Record<string, number> = {};
-                for (const uid of userIds) {
-                    const acts = await getKpiActualsForRange(uid, startDate, endDate);
+                for (const acts of allResults) {
                     for (const [k, v] of Object.entries(acts)) {
-                        aggActuals[k] = (aggActuals[k] || 0) + (v || 0);
+                        aggActuals[k] = (aggActuals[k] || 0) + (Number(v) || 0);
                     }
                 }
                 setActuals(aggActuals);
