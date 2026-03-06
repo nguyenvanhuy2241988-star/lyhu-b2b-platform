@@ -124,7 +124,12 @@ export default function InboxCustomerSidebar({ conversation, onUpdate, onCreateD
                 </button>
                 <button
                     onClick={() => {
-                        // Open Meta Business Suite directly to this conversation
+                        // Use direct Facebook conversation link if available (most reliable)
+                        if (conversation.customer_profile_url) {
+                            window.open(conversation.customer_profile_url, '_blank');
+                            return;
+                        }
+                        // Fallback: Open Business Suite inbox for this page
                         const pageId = (conversation as any).fb_page_id;
                         const externalId = conversation.external_id;
                         const url = pageId && externalId
