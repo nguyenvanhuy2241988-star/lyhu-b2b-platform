@@ -37,11 +37,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: pagesData.error.message }, { status: 400 });
         }
 
-        // Return list of pages
+        // Return list of pages - use long-lived USER token (not page token)
+        // because page tokens from /me/accounts don't always inherit permissions like pages_read_engagement
         const pages = pagesData.data.map((page: any) => ({
             page_id: page.id,
             name: page.name,
-            access_token: page.access_token,
+            access_token: longUserToken,
             category: page.category,
             avatar_url: page.picture?.data?.url
         }));
