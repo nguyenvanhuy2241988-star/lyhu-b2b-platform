@@ -604,6 +604,71 @@ export default function AutomationPage() {
                         </button>
                     </div>
 
+                    {/* Manual Ad Post Input */}
+                    <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
+                        <p className="text-sm font-medium text-orange-800 mb-2">📢 Thêm bài quảng cáo thủ công</p>
+                        <p className="text-xs text-orange-600 mb-3">Dán link hoặc ID bài quảng cáo (lấy từ Ads Manager). VD: https://facebook.com/123456789/posts/987654321 hoặc 123456789_987654321</p>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                id="manualAdPostInput"
+                                placeholder="Dán link hoặc Post ID..."
+                                className="flex-1 border border-orange-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400"
+                            />
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    const input = document.getElementById('manualAdPostInput') as HTMLInputElement;
+                                    if (!input?.value?.trim()) return toast.error('Nhập link hoặc ID bài viết');
+                                    const page = pages.find(p => p.id === selectedPageId);
+                                    if (!page) return toast.error('Chọn Fanpage trước');
+
+                                    let postId = input.value.trim();
+                                    // Extract post ID from various URL formats
+                                    const urlMatch = postId.match(/(\d+)[\/_]posts[\/_](\d+)/);
+                                    if (urlMatch) {
+                                        postId = `${urlMatch[1]}_${urlMatch[2]}`;
+                                    }
+                                    const pfbidMatch = postId.match(/pfbid\w+/);
+                                    if (pfbidMatch && !postId.includes('_')) {
+                                        postId = `${page.page_id}_${pfbidMatch[0]}`;
+                                    }
+
+                                    toast.info('Đang tải bài viết...');
+                                    try {
+                                        const res = await fetch('/api/facebook/comments', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                page_id: page.page_id,
+                                                access_token: page.access_token,
+                                                action: 'manual_post',
+                                                post_id: postId
+                                            })
+                                        });
+                                        const data = await res.json();
+                                        if (data.success && data.post) {
+                                            setCommentPosts(prev => {
+                                                const exists = prev.some(p => p.id === data.post.id);
+                                                if (exists) return prev;
+                                                return [data.post, ...prev];
+                                            });
+                                            toast.success(`Đã thêm bài QC (${data.post.total_comments} bình luận)`);
+                                            input.value = '';
+                                        } else {
+                                            toast.error(data.error || 'Không tìm thấy bài viết');
+                                        }
+                                    } catch (e: any) {
+                                        toast.error('Lỗi: ' + e.message);
+                                    }
+                                }}
+                                className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-orange-600 transition whitespace-nowrap"
+                            >
+                                + Thêm bài QC
+                            </button>
+                        </div>
+                    </div>
+
                     {loadingComments && commentPosts.length === 0 && (
                         <div className="text-center py-12 text-slate-400">
                             <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2" />

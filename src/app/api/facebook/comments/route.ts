@@ -38,6 +38,57 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: true, comments: data.data || [] });
         }
 
+        // ACTION: Manually add a single post by ID (for ad/dark posts)
+        if (action === 'manual_post' && post_id) {
+            try {
+                const postRes = await fetch(
+                    `https://graph.facebook.com/v19.0/${post_id}?fields=id,message,created_time,full_picture,permalink_url&access_token=${access_token}`
+                );
+                const postData = await postRes.json();
+                if (postData.error) {
+                    return NextResponse.json({ success: false, error: postData.error.message });
+                }
+
+                // Fetch comments for this post
+                let comments: any[] = [];
+                let hiddenCount = 0;
+                let totalCount = 0;
+                try {
+                    const commRes = await fetch(
+                        `https://graph.facebook.com/v19.0/${post_id}/comments?fields=id,message,from,created_time,is_hidden&limit=50&summary=true&access_token=${access_token}`
+                    );
+                    const commData = await commRes.json();
+                    comments = commData.data || [];
+                    totalCount = commData.summary?.total_count || comments.length;
+                    hiddenCount = comments.filter((c: any) => c.is_hidden).length;
+                } catch (e) { }
+
+                return NextResponse.json({
+                    success: true,
+                    post: {
+                        id: postData.id,
+                        message: postData.message || '(Bài quảng cáo)',
+                        created_time: postData.created_time,
+                        full_picture: postData.full_picture,
+                        permalink_url: postData.permalink_url,
+                        is_ad: true,
+                        total_comments: totalCount,
+                        hidden_comments: hiddenCount,
+                        comments: comments.map((c: any) => ({
+                            id: c.id,
+                            message: c.message,
+                            from_name: c.from?.name || 'Unknown',
+                            from_id: c.from?.id,
+                            created_time: c.created_time,
+                            is_hidden: c.is_hidden || false
+                        }))
+                    }
+                });
+            } catch (e: any) {
+                return NextResponse.json({ success: false, error: e.message });
+            }
+        }
+
         // DEFAULT: Fetch BOTH regular posts AND ads/dark posts
         const allPosts: any[] = [];
         const seenPostIds = new Set<string>();
