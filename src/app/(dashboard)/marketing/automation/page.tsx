@@ -11,7 +11,7 @@ import {
     updateMessengerProfile,
     fetchFacebookPages
 } from '@/lib/marketingStore';
-import { Plus, Trash2, Edit, Zap, X, Save, Search, Bot, MessageSquare, EyeOff, Shield } from 'lucide-react';
+import { Plus, Trash2, Edit, Zap, X, Save, Search, Bot, MessageSquare, EyeOff, Shield, Eye, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AutomationPage() {
@@ -22,7 +22,12 @@ export default function AutomationPage() {
     const [search, setSearch] = useState('');
 
     // Tabs State
-    const [activeTab, setActiveTab] = useState<'rules' | 'settings'>('rules');
+    const [activeTab, setActiveTab] = useState<'rules' | 'settings' | 'comments'>('rules');
+
+    // Comments Management State
+    const [commentPosts, setCommentPosts] = useState<any[]>([]);
+    const [loadingComments, setLoadingComments] = useState(false);
+    const [expandedPost, setExpandedPost] = useState<string | null>(null);
 
     // Settings State
     const [greetingText, setGreetingText] = useState('');
@@ -217,6 +222,33 @@ export default function AutomationPage() {
         }
     };
 
+    const loadComments = async () => {
+        if (!selectedPageId || pages.length === 0) {
+            toast.error('Chọn Fanpage trước');
+            return;
+        }
+        const page = pages.find(p => p.id === selectedPageId);
+        if (!page) return;
+        setLoadingComments(true);
+        try {
+            const res = await fetch('/api/facebook/comments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ page_id: page.page_id, access_token: page.access_token })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setCommentPosts(data.posts || []);
+            } else {
+                toast.error(data.error || 'Lỗi tải bình luận');
+            }
+        } catch (e: any) {
+            toast.error('Lỗi: ' + e.message);
+        } finally {
+            setLoadingComments(false);
+        }
+    };
+
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
             <div className="flex justify-between items-center">
@@ -239,6 +271,15 @@ export default function AutomationPage() {
                         className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === 'settings' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
                     >
                         Cấu hình chung
+                    </button>
+                    <button
+                        onClick={() => {
+                            setActiveTab('comments');
+                            if (commentPosts.length === 0) loadComments();
+                        }}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === 'comments' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Quản lý bình luận
                     </button>
                 </div>
             </div>
@@ -542,6 +583,155 @@ export default function AutomationPage() {
                             {isSavingSettings ? 'Đang lưu...' : 'Lưu cấu hình'}
                         </button>
                     </div>
+                </div>
+            )}
+
+            {activeTab === 'comments' && (
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                        <p className="text-slate-500 text-sm">Xem và quản lý bình luận trên các bài viết Facebook</p>
+                        <button
+                            type="button"
+                            onClick={loadComments}
+                            disabled={loadingComments}
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition disabled:bg-blue-300"
+                        >
+                            <RefreshCw className={`w-4 h-4 ${loadingComments ? 'animate-spin' : ''}`} />
+                            {loadingComments ? 'Đang tải...' : 'Tải lại'}
+                        </button>
+                    </div>
+
+                    {loadingComments && commentPosts.length === 0 && (
+                        <div className="text-center py-12 text-slate-400">
+                            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2" />
+                            <p>Đang tải bài viết và bình luận...</p>
+                        </div>
+                    )}
+
+                    {!loadingComments && commentPosts.length === 0 && (
+                        <div className="text-center py-12 text-slate-400">
+                            <MessageSquare className="w-8 h-8 mx-auto mb-2" />
+                            <p>Bấm "Tải lại" để xem bình luận</p>
+                        </div>
+                    )}
+
+                    {commentPosts.map(post => (
+                        <div key={post.id} className="bg-white rounded-xl border shadow-sm overflow-hidden">
+                            <div
+                                className="p-4 cursor-pointer hover:bg-slate-50 transition"
+                                onClick={() => setExpandedPost(expandedPost === post.id ? null : post.id)}
+                            >
+                                <div className="flex items-start gap-3">
+                                    {post.full_picture && (
+                                        <img src={post.full_picture} alt="" className="w-16 h-16 object-cover rounded-lg flex-shrink-0" />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            {post.is_ad && (
+                                                <span className="bg-orange-100 text-orange-700 text-xs px-2 py-0.5 rounded-full font-medium">📢 Quảng cáo</span>
+                                            )}
+                                            <span className="text-xs text-slate-400">{new Date(post.created_time).toLocaleDateString('vi-VN')}</span>
+                                        </div>
+                                        <p className="text-sm text-slate-700 line-clamp-2">{post.message}</p>
+                                        <div className="flex items-center gap-4 mt-2 text-xs">
+                                            <span className="text-blue-600 font-medium">{post.total_comments} bình luận</span>
+                                            <span className="text-red-500">{post.hidden_comments} đã ẩn</span>
+                                            <span className="text-green-600">{post.total_comments - post.hidden_comments} hiển thị</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                        {post.is_ad && post.comments.some((c: any) => !c.is_hidden) && (
+                                            <button
+                                                type="button"
+                                                onClick={async (e) => {
+                                                    e.stopPropagation();
+                                                    const page = pages.find(p => p.id === selectedPageId);
+                                                    if (!page) return toast.error('Chọn Fanpage trước');
+                                                    const visible = post.comments.filter((c: any) => !c.is_hidden && c.from_id !== page.page_id);
+                                                    if (visible.length === 0) return toast.info('Không có comment cần ẩn');
+                                                    toast.info(`Đang ẩn ${visible.length} bình luận...`);
+                                                    let hidden = 0;
+                                                    for (const c of visible) {
+                                                        try {
+                                                            await fetch('/api/facebook/comments', {
+                                                                method: 'POST',
+                                                                headers: { 'Content-Type': 'application/json' },
+                                                                body: JSON.stringify({ page_id: page.page_id, access_token: page.access_token, action: 'hide', comment_id: c.id })
+                                                            });
+                                                            hidden++;
+                                                        } catch (err) { }
+                                                    }
+                                                    toast.success(`Đã ẩn ${hidden}/${visible.length} bình luận`);
+                                                    loadComments();
+                                                }}
+                                                className="bg-red-50 text-red-600 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-red-100 transition whitespace-nowrap"
+                                            >
+                                                <EyeOff className="w-3 h-3 inline mr-1" />
+                                                Ẩn tất cả
+                                            </button>
+                                        )}
+                                        {expandedPost === post.id ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {expandedPost === post.id && (
+                                <div className="border-t">
+                                    {post.comments.length === 0 ? (
+                                        <p className="p-4 text-sm text-slate-400 text-center">Chưa có bình luận</p>
+                                    ) : (
+                                        <div className="divide-y">
+                                            {post.comments.map((comment: any) => (
+                                                <div key={comment.id} className={`p-3 px-4 flex items-center justify-between gap-3 text-sm ${comment.is_hidden ? 'bg-red-50/50' : ''}`}>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-medium text-slate-700">{comment.from_name}</span>
+                                                            {comment.is_hidden && (
+                                                                <span className="text-xs bg-red-100 text-red-600 px-1.5 py-0.5 rounded">Đã ẩn</span>
+                                                            )}
+                                                            <span className="text-xs text-slate-400">{new Date(comment.created_time).toLocaleString('vi-VN')}</span>
+                                                        </div>
+                                                        <p className="text-slate-600 mt-0.5 truncate">{comment.message}</p>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={async () => {
+                                                            const page = pages.find(p => p.id === selectedPageId);
+                                                            if (!page) return toast.error('Chọn Fanpage');
+                                                            const action = comment.is_hidden ? 'unhide' : 'hide';
+                                                            try {
+                                                                await fetch('/api/facebook/comments', {
+                                                                    method: 'POST',
+                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                    body: JSON.stringify({ page_id: page.page_id, access_token: page.access_token, action, comment_id: comment.id })
+                                                                });
+                                                                setCommentPosts(prev => prev.map(p => p.id === post.id ? {
+                                                                    ...p,
+                                                                    hidden_comments: comment.is_hidden ? p.hidden_comments - 1 : p.hidden_comments + 1,
+                                                                    comments: p.comments.map((c: any) => c.id === comment.id ? { ...c, is_hidden: !comment.is_hidden } : c)
+                                                                } : p));
+                                                                toast.success(comment.is_hidden ? 'Đã bỏ ẩn' : 'Đã ẩn bình luận');
+                                                            } catch (err) {
+                                                                toast.error('Lỗi');
+                                                            }
+                                                        }}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap flex-shrink-0 ${comment.is_hidden ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
+                                                    >
+                                                        {comment.is_hidden ? <><Eye className="w-3 h-3 inline mr-1" />Hiện</> : <><EyeOff className="w-3 h-3 inline mr-1" />Ẩn</>}
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {post.permalink_url && (
+                                        <div className="p-3 border-t bg-slate-50 text-center">
+                                            <a href={post.permalink_url} target="_blank" rel="noopener" className="text-xs text-blue-600 hover:underline">Xem trên Facebook ↗</a>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    ))}
                 </div>
             )}
 
