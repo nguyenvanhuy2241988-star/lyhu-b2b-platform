@@ -648,6 +648,17 @@ export default function AutomationPage() {
                                             return;
                                         }
 
+                                        // Show token debug info
+                                        if (data.token_debug) {
+                                            console.log('[Token Debug]', data.token_debug);
+                                            const prm = data.token_debug.has_pages_read_engagement;
+                                            const debugMsg = `📋 Quyền pages_read_engagement: Short=${prm?.short ? '✅' : '❌'} Long=${prm?.long ? '✅' : '❌'} Page=${prm?.page ? '✅' : '❌'}`;
+                                            toast.info(debugMsg);
+                                            console.log('[Token Scopes - Short]', data.token_debug.short_token_scopes);
+                                            console.log('[Token Scopes - Long]', data.token_debug.long_token_scopes);
+                                            console.log('[Token Scopes - Page]', data.token_debug.page_token_scopes);
+                                        }
+
                                         // 2. Update each page in database & local state
                                         const { createClient } = await import('@/lib/supabaseClient');
                                         const supabase = createClient();
