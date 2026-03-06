@@ -55,7 +55,7 @@ export async function POST(request: Request) {
                 let totalCount = 0;
                 try {
                     const commRes = await fetch(
-                        `https://graph.facebook.com/v19.0/${post_id}/comments?fields=id,message,from,created_time,is_hidden&limit=50&summary=true&access_token=${access_token}`
+                        `https://graph.facebook.com/v19.0/${postData.id}/comments?fields=id,message,from,created_time,is_hidden&limit=50&summary=true&access_token=${access_token}`
                     );
                     const commData = await commRes.json();
                     comments = commData.data || [];
