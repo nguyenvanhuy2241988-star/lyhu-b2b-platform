@@ -23,43 +23,31 @@ export async function POST(request: Request) {
 
         // Generate unique filename
         const ext = file.name.split('.').pop() || 'bin';
-        const filename = `chat_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const path = `chat-attachments/${filename}`;
+        const filename = `social_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        const path = `social/${filename}`;
 
         // Convert to Uint8Array (works in both Node.js and Edge runtime)
         const arrayBuffer = await file.arrayBuffer();
         const uint8Array = new Uint8Array(arrayBuffer);
 
-        // Try uploading to 'public-assets' bucket first, then 'public' as fallback
-        let uploadResult = await supabase.storage
-            .from('public-assets')
+        // Use existing 'chat-attachments' bucket (already configured in project)
+        const { data, error } = await supabase.storage
+            .from('chat-attachments')
             .upload(path, uint8Array, {
                 contentType: file.type,
                 upsert: false
             });
 
-        // If bucket doesn't exist, try 'public' bucket
-        if (uploadResult.error && uploadResult.error.message?.includes('not found')) {
-            console.log('public-assets bucket not found, trying public bucket...');
-            uploadResult = await supabase.storage
-                .from('public')
-                .upload(path, uint8Array, {
-                    contentType: file.type,
-                    upsert: false
-                });
-        }
-
-        if (uploadResult.error) {
-            console.error('Upload error:', uploadResult.error);
+        if (error) {
+            console.error('Upload error:', error);
             return NextResponse.json({
-                error: `Upload failed: ${uploadResult.error.message}. Hãy tạo bucket 'public-assets' trong Supabase Storage.`
+                error: `Upload failed: ${error.message}`
             }, { status: 500 });
         }
 
-        // Get public URL from whichever bucket succeeded
-        const bucketName = uploadResult.data?.path?.startsWith('public/') ? 'public' : 'public-assets';
+        // Get public URL
         const { data: urlData } = supabase.storage
-            .from(bucketName)
+            .from('chat-attachments')
             .getPublicUrl(path);
 
         // Determine type

@@ -445,6 +445,9 @@ export async function POST(request: Request) {
                         if (change.field === 'feed' && change.value.item === 'comment' && change.value.verb === 'add') {
                             const { comment_id, message, post_id, sender_id, sender_name } = change.value;
 
+                            // Skip comments from the page itself
+                            if (sender_id === pageId) continue;
+
                             // 1. Fetch Page Config
                             const { data: pageData } = await supabase
                                 .from('facebook_pages')
@@ -452,25 +455,46 @@ export async function POST(request: Request) {
                                 .eq('page_id', pageId)
                                 .single();
 
-                            if (pageData && pageData.access_token && pageData.chatbot_config?.auto_hide_phone) {
-                                // 2. Check for Phone Number (VN Format)
+                            if (!pageData || !pageData.access_token) continue;
+
+                            const config = pageData.chatbot_config as any || {};
+                            let commentHidden = false;
+
+                            // 2. Auto-Hide: Phone numbers
+                            if (config.auto_hide_phone) {
                                 const phoneRegex = /(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/g;
                                 if (message && phoneRegex.test(message)) {
                                     console.log(`[Auto-Hide] Hiding comment ${comment_id} due to phone number.`);
-
-                                    // 3. Call Graph API to Hide
                                     await fetch(`https://graph.facebook.com/v19.0/${comment_id}?access_token=${pageData.access_token}`, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({ is_hidden: true })
                                     });
+                                    commentHidden = true;
                                 }
                             }
 
-                            // 2b. Chatbot Auto-Reply Logic (Comments)
-                            if (pageData && pageData.access_token && message) {
-                                // Fetch Active Rules (Optimize: Cache or Fetch once)
-                                // We fetch rules here.
+                            // 3. Auto-Hide: Keywords
+                            if (!commentHidden && config.auto_hide_keywords && message) {
+                                const keywords = (config.auto_hide_keywords as string).split(',').map((k: string) => k.trim().toLowerCase()).filter(Boolean);
+                                const msgLower = message.toLowerCase();
+                                for (const kw of keywords) {
+                                    if (kw && msgLower.includes(kw)) {
+                                        console.log(`[Auto-Hide] Hiding comment ${comment_id} due to keyword "${kw}".`);
+                                        await fetch(`https://graph.facebook.com/v19.0/${comment_id}?access_token=${pageData.access_token}`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ is_hidden: true })
+                                        });
+                                        commentHidden = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // 4. Chatbot Rules - Keyword matching
+                            let ruleMatched = false;
+                            if (message) {
                                 const { data: rules } = await supabase
                                     .from('chatbot_rules')
                                     .select('*')
@@ -479,6 +503,10 @@ export async function POST(request: Request) {
 
                                 if (rules) {
                                     for (const rule of rules) {
+                                        // Check apply_to scope
+                                        const applyTo = rule.apply_to || 'comment';
+                                        if (applyTo !== 'comment' && applyTo !== 'both') continue;
+
                                         const textLower = message.toLowerCase();
                                         const keywordLower = rule.keyword.toLowerCase();
                                         let isMatch = false;
@@ -487,25 +515,43 @@ export async function POST(request: Request) {
 
                                         if (isMatch) {
                                             console.log(`[Auto-Reply] Comment Match: ${rule.keyword}`);
-                                            // Public Reply
-                                            await sendCommentReply(comment_id, rule, pageData.access_token);
+                                            ruleMatched = true;
 
-                                            // Private Reply (Optional - If configured later, but for now Auto-Reply usually means Public)
-                                            // If you want Private Auto-Reply, maybe check a flag in rule? 
-                                            // For now, let's assume Rules apply to Public Reply for comments.
-                                            // BUT if type is "Auto-Inbox", use private. 
-                                            // My rule schema doesn't have "reply_method".
-                                            // Adding "Auto-Inbox" Logic if implied?
-                                            // Let's do BOTH if Keyword matches? Or just Public?
-                                            // Standard is Public. Private is aggressive.
-                                            // I'll stick to Public for now.
+                                            const replyMethod = rule.reply_method || 'comment';
+
+                                            // Public comment reply
+                                            if (replyMethod === 'comment' || replyMethod === 'both') {
+                                                await sendCommentReply(comment_id, rule, pageData.access_token);
+                                            }
+
+                                            // Private inbox reply
+                                            if (replyMethod === 'inbox' || replyMethod === 'both') {
+                                                await sendPrivateReply(comment_id, rule, pageData.access_token);
+                                            }
+
+                                            // Auto-hide after reply
+                                            if (rule.auto_hide && !commentHidden) {
+                                                await fetch(`https://graph.facebook.com/v19.0/${comment_id}?access_token=${pageData.access_token}`, {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ is_hidden: true })
+                                                });
+                                                commentHidden = true;
+                                            }
+
                                             break;
                                         }
                                     }
                                 }
                             }
 
-                            // Inbox Sync Logic
+                            // 5. Auto-Reply ALL comments (fallback if no rule matched)
+                            if (!ruleMatched && !commentHidden && config.auto_reply_comment && config.auto_reply_comment_text) {
+                                console.log(`[Auto-Reply] Replying to ALL: ${comment_id}`);
+                                await sendCommentReply(comment_id, { response_text: config.auto_reply_comment_text }, pageData.access_token);
+                            }
+
+                            // 6. Save to inbox (optional - for tracking)
                             if (message && pageData) {
                                 const { data: conv } = await supabase
                                     .from('social_conversations')

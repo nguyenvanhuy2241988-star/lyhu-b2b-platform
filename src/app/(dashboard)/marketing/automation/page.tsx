@@ -11,7 +11,7 @@ import {
     updateMessengerProfile,
     fetchFacebookPages
 } from '@/lib/marketingStore';
-import { Plus, Trash2, Edit, Zap, X, Save, Search, Bot } from 'lucide-react';
+import { Plus, Trash2, Edit, Zap, X, Save, Search, Bot, MessageSquare, EyeOff, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AutomationPage() {
@@ -27,6 +27,9 @@ export default function AutomationPage() {
     // Settings State
     const [greetingText, setGreetingText] = useState('');
     const [autoHidePhone, setAutoHidePhone] = useState(false);
+    const [autoHideKeywords, setAutoHideKeywords] = useState('');
+    const [autoReplyComment, setAutoReplyComment] = useState(false);
+    const [autoReplyCommentText, setAutoReplyCommentText] = useState('');
     const [persistentMenu, setPersistentMenu] = useState<any[]>([]);
     const [isSavingSettings, setIsSavingSettings] = useState(false);
     const [pages, setPages] = useState<any[]>([]);
@@ -35,13 +38,16 @@ export default function AutomationPage() {
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingRule, setEditingRule] = useState<ChatbotRule | null>(null);
-    const [formData, setFormData] = useState<Partial<ChatbotRule>>({
+    const [formData, setFormData] = useState<Partial<ChatbotRule> & { reply_method?: string, apply_to?: string, auto_hide?: boolean }>({
         keyword: '',
         match_type: 'contains',
         response_text: '',
         response_type: 'text',
         media_url: '',
-        is_active: true
+        is_active: true,
+        reply_method: 'comment',
+        apply_to: 'comment',
+        auto_hide: false
     });
 
     useEffect(() => {
@@ -64,9 +70,13 @@ export default function AutomationPage() {
         if (p.length > 0) {
             setSelectedPageId(p[0].id);
             if (p[0].chatbot_config) {
-                setGreetingText(p[0].chatbot_config.greeting_text || '');
-                setAutoHidePhone(p[0].chatbot_config.auto_hide_phone || false);
-                setPersistentMenu(p[0].chatbot_config.persistent_menu || []);
+                const config = p[0].chatbot_config as any;
+                setGreetingText(config?.greeting_text || '');
+                setAutoHidePhone(config?.auto_hide_phone || false);
+                setAutoHideKeywords(config?.auto_hide_keywords || '');
+                setAutoReplyComment(config?.auto_reply_comment || false);
+                setAutoReplyCommentText(config?.auto_reply_comment_text || '');
+                setPersistentMenu(config?.persistent_menu || []);
             }
         }
     };
@@ -76,9 +86,13 @@ export default function AutomationPage() {
         if (selectedPageId && pages.length > 0) {
             const p = pages.find(page => page.id === selectedPageId);
             if (p) {
-                setGreetingText(p.chatbot_config?.greeting_text || '');
-                setAutoHidePhone(p.chatbot_config?.auto_hide_phone || false);
-                setPersistentMenu(p.chatbot_config?.persistent_menu || []);
+                const config = p.chatbot_config as any;
+                setGreetingText(config?.greeting_text || '');
+                setAutoHidePhone(config?.auto_hide_phone || false);
+                setAutoHideKeywords(config?.auto_hide_keywords || '');
+                setAutoReplyComment(config?.auto_reply_comment || false);
+                setAutoReplyCommentText(config?.auto_reply_comment_text || '');
+                setPersistentMenu(config?.persistent_menu || []);
             }
         }
     }, [selectedPageId]);
@@ -109,14 +123,16 @@ export default function AutomationPage() {
             await updateMessengerProfile(page.page_id, page.access_token, {
                 greeting_text: greetingText,
                 auto_hide_phone: autoHidePhone,
+                auto_hide_keywords: autoHideKeywords,
+                auto_reply_comment: autoReplyComment,
+                auto_reply_comment_text: autoReplyCommentText,
                 persistent_menu: persistentMenu,
-                // Add persistent_menu logic here later
             });
 
             // Optimistic update
             setPages(prev => prev.map(p => p.id === selectedPageId ? {
                 ...p,
-                chatbot_config: { ...p.chatbot_config, greeting_text: greetingText, auto_hide_phone: autoHidePhone, persistent_menu: persistentMenu }
+                chatbot_config: { ...p.chatbot_config, greeting_text: greetingText, auto_hide_phone: autoHidePhone, auto_hide_keywords: autoHideKeywords, auto_reply_comment: autoReplyComment, auto_reply_comment_text: autoReplyCommentText, persistent_menu: persistentMenu }
             } : p));
             toast.success("Đã cập nhật cấu hình lên Facebook");
         } catch (error) {
@@ -136,7 +152,10 @@ export default function AutomationPage() {
                 response_text: rule.response_text,
                 response_type: rule.response_type,
                 media_url: rule.media_url,
-                is_active: rule.is_active
+                is_active: rule.is_active,
+                reply_method: (rule as any).reply_method || 'comment',
+                apply_to: (rule as any).apply_to || 'comment',
+                auto_hide: (rule as any).auto_hide || false
             });
         } else {
             setEditingRule(null);
@@ -146,7 +165,10 @@ export default function AutomationPage() {
                 response_text: '',
                 response_type: 'text',
                 media_url: '',
-                is_active: true
+                is_active: true,
+                reply_method: 'comment',
+                apply_to: 'comment',
+                auto_hide: false
             });
         }
         setIsModalOpen(true);
@@ -384,7 +406,8 @@ export default function AutomationPage() {
                         </div>
                     </div>
 
-                    <div className="pt-2">
+                    <div className="pt-2 space-y-4">
+                        {/* Auto-Hide Phone */}
                         <div className="flex items-center gap-3 bg-red-50 p-4 rounded-lg border border-red-100">
                             <input
                                 type="checkbox"
@@ -395,10 +418,54 @@ export default function AutomationPage() {
                             />
                             <div>
                                 <label htmlFor="autoHide" className="font-medium text-slate-800 cursor-pointer select-none">
-                                    Ẩn bình luận chứa Số điện thoại
+                                    🔒 Ẩn bình luận chứa Số điện thoại
                                 </label>
                                 <p className="text-xs text-red-500">Bình luận có 10 chữ số sẽ tự động bị ẩn đi để tránh cướp khách.</p>
                             </div>
+                        </div>
+
+                        {/* Auto-Hide by Keywords */}
+                        <div className="bg-orange-50 p-4 rounded-lg border border-orange-100">
+                            <div className="flex items-center gap-2 mb-2">
+                                <EyeOff className="w-4 h-4 text-orange-600" />
+                                <label className="font-medium text-slate-800">Ẩn bình luận chứa từ khóa</label>
+                            </div>
+                            <p className="text-xs text-orange-600 mb-2">Nhập các từ khóa cần ẩn, phân cách bằng dấu phẩy. VD: &quot;zalo, liên hệ, inbox&quot;</p>
+                            <textarea
+                                rows={2}
+                                className="w-full border border-orange-200 rounded-lg p-2 text-sm focus:ring-2 focus:ring-orange-400 outline-none bg-white"
+                                placeholder="zalo, liên hệ, inbox, mua hàng..."
+                                value={autoHideKeywords}
+                                onChange={e => setAutoHideKeywords(e.target.value)}
+                            />
+                        </div>
+
+                        {/* Auto-Reply to All Comments */}
+                        <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+                            <div className="flex items-center gap-3 mb-2">
+                                <input
+                                    type="checkbox"
+                                    id="autoReplyComment"
+                                    className="w-5 h-5 text-green-600 rounded focus:ring-green-500"
+                                    checked={autoReplyComment}
+                                    onChange={e => setAutoReplyComment(e.target.checked)}
+                                />
+                                <div>
+                                    <label htmlFor="autoReplyComment" className="font-medium text-slate-800 cursor-pointer select-none">
+                                        💬 Tự động trả lời TẤT CẢ bình luận
+                                    </label>
+                                    <p className="text-xs text-green-600">Tự động reply mỗi bình luận mới bằng nội dung bên dưới (ngoài các quy tắc từ khóa).</p>
+                                </div>
+                            </div>
+                            {autoReplyComment && (
+                                <textarea
+                                    rows={3}
+                                    className="w-full border border-green-200 rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-400 outline-none bg-white mt-2"
+                                    placeholder="Cảm ơn bạn đã quan tâm! Inbox để được tư vấn chi tiết nhé 🎉"
+                                    value={autoReplyCommentText}
+                                    onChange={e => setAutoReplyCommentText(e.target.value)}
+                                />
+                            )}
                         </div>
                     </div>
 
@@ -493,7 +560,44 @@ export default function AutomationPage() {
                                     onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
                                     className="w-4 h-4 text-blue-600"
                                 />
-                                <label htmlFor="activeCheck" className="text-sm cursor-pointer select-none">Kích hoạt quy tắc nảy ngay</label>
+                                <label htmlFor="activeCheck" className="text-sm cursor-pointer select-none">Kích hoạt quy tắc này ngay</label>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Phạm vi áp dụng</label>
+                                <select
+                                    className="w-full border rounded-lg p-2"
+                                    value={formData.apply_to}
+                                    onChange={e => setFormData({ ...formData, apply_to: e.target.value })}
+                                >
+                                    <option value="comment">Bình luận (Comment)</option>
+                                    <option value="message">Tin nhắn (Message)</option>
+                                    <option value="both">Cả hai</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Cách trả lời</label>
+                                <select
+                                    className="w-full border rounded-lg p-2"
+                                    value={formData.reply_method}
+                                    onChange={e => setFormData({ ...formData, reply_method: e.target.value })}
+                                >
+                                    <option value="comment">Reply công khai (Comment)</option>
+                                    <option value="inbox">Nhắn riêng (Inbox)</option>
+                                    <option value="both">Cả hai (Comment + Inbox)</option>
+                                </select>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="autoHideCheck"
+                                    checked={formData.auto_hide}
+                                    onChange={e => setFormData({ ...formData, auto_hide: e.target.checked })}
+                                    className="w-4 h-4 text-red-600"
+                                />
+                                <label htmlFor="autoHideCheck" className="text-sm cursor-pointer select-none text-red-600">🔒 Ẩn bình luận sau khi trả lời</label>
                             </div>
 
                             <div className="pt-4 flex gap-3">
