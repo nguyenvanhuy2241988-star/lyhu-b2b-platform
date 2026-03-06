@@ -10,7 +10,8 @@ import {
     SocialConversation,
     SocialMessage,
     FacebookPage,
-    fetchInboxCounts
+    fetchInboxCounts,
+    updateConversationMetadata
 } from '@/lib/marketingStore';
 import { MessageSquare, Send, User, Search, RefreshCw, Loader2, DownloadCloud, Filter, Calendar, X } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
@@ -73,6 +74,26 @@ export default function SocialInboxPage() {
         const msgs = await fetchMessages(convId, session?.access_token);
         setMessages(msgs);
         setTimeout(() => scrollToBottom(), 100);
+
+        // Auto-detect phone number from messages if not already saved
+        const conv = conversations.find(c => c.id === convId);
+        if (conv && !conv.customer_phone) {
+            const phoneRegex = /(0[3|5|7|8|9])\d{8}/g;
+            // Scan customer messages (not from page) for phone numbers
+            for (const msg of msgs) {
+                if (!msg.is_from_page && msg.content) {
+                    const match = msg.content.match(phoneRegex);
+                    if (match) {
+                        // Auto-save the first phone found
+                        try {
+                            await updateConversationMetadata(convId, { customer_phone: match[0] }, session?.access_token);
+                            handleUpdateConversation({ customer_phone: match[0] } as any);
+                        } catch (e) { /* silent */ }
+                        break;
+                    }
+                }
+            }
+        }
     };
 
     const scrollToBottom = () => {

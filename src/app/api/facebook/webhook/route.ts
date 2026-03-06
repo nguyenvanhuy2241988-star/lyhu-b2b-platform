@@ -297,6 +297,13 @@ export async function POST(request: Request) {
                                 last_message_at: new Date().toISOString()
                             };
 
+                            // Auto-detect Vietnamese phone numbers from customer messages
+                            const phoneRegex = /(0[3|5|7|8|9])+([0-9]{8})\b/g;
+                            const phoneMatch = text.match(phoneRegex);
+                            if (phoneMatch) {
+                                upsertData.customer_phone = phoneMatch[0];
+                            }
+
                             // Store thread ID if available
                             if (fbThreadId) {
                                 upsertData.fb_thread_id = fbThreadId;
