@@ -98,40 +98,87 @@ export default function SocialInboxPage() {
         const phoneRegex = /(?<!\d)(0[35789]\d{8})(?!\d)/g;
         let detectedPhone = '';
         let detectedRegion = '';
+        let detectedCustomerType = '';
+        const detectedProducts = new Set<string>();
+
+        // Customer type keywords
+        const CUSTOMER_TYPES: Record<string, string> = {
+            'đại lý': 'Đại lý', 'dai ly': 'Đại lý', 'làm đại lý': 'Đại lý', 'đăng ký đại lý': 'Đại lý',
+            'siêu thị': 'Siêu thị', 'sieu thi': 'Siêu thị',
+            'tạp hóa': 'Tạp hóa', 'tap hoa': 'Tạp hóa', 'tạp hoá': 'Tạp hóa',
+            'nhà phân phối': 'Nhà phân phối', 'npp': 'Nhà phân phối', 'phân phối': 'Nhà phân phối',
+            'cửa hàng': 'Cửa hàng', 'shop': 'Cửa hàng',
+            'quán': 'Quán', 'quán ăn': 'Quán ăn',
+            'bán sỉ': 'Bán sỉ', 'mua sỉ': 'Bán sỉ', 'giá sỉ': 'Bán sỉ', 'lấy sỉ': 'Bán sỉ',
+            'bán lẻ': 'Bán lẻ', 'mua lẻ': 'Bán lẻ',
+        };
+
+        // Product keywords (LYHU products)
+        const PRODUCT_KEYWORDS: Record<string, string> = {
+            'khoai môn': 'Khoai môn sấy', 'khoai mon': 'Khoai môn sấy',
+            'cvt': 'CVT', 'chuối viên tẩm': 'CVT',
+            'kẹo dẻo': 'Kẹo dẻo', 'keo deo': 'Kẹo dẻo',
+            'snack': 'Snack', 'đồ ăn vặt': 'Snack',
+            'uhi': 'UHI', 'chua uhi': 'Chua UHI',
+            'báo giá': 'Báo giá chung',
+            'bảng giá': 'Báo giá chung',
+        };
 
         for (const msg of msgs) {
             if (!msg.is_from_page && msg.content) {
+                const contentLower = msg.content.toLowerCase();
+
                 // Phone detection
                 if (!detectedPhone) {
                     const cleaned = msg.content.replace(/[\s\.\-]/g, '');
                     const phoneMatch = cleaned.match(phoneRegex);
                     if (phoneMatch) detectedPhone = phoneMatch[0];
                 }
+
                 // Region detection
                 if (!detectedRegion) {
-                    const contentLower = msg.content.toLowerCase();
                     for (const province of VN_PROVINCES) {
                         if (contentLower.includes(province.toLowerCase())) {
                             detectedRegion = province;
-                            // Normalize common abbreviations
                             if (province === 'HCM' || province === 'SG' || province === 'Sài Gòn') detectedRegion = 'Hồ Chí Minh';
                             if (province === 'HN') detectedRegion = 'Hà Nội';
                             break;
                         }
                     }
                 }
-                if (detectedPhone && detectedRegion) break;
+
+                // Customer type detection
+                if (!detectedCustomerType) {
+                    for (const [keyword, type] of Object.entries(CUSTOMER_TYPES)) {
+                        if (contentLower.includes(keyword)) {
+                            detectedCustomerType = type;
+                            break;
+                        }
+                    }
+                }
+
+                // Product interest detection
+                for (const [keyword, product] of Object.entries(PRODUCT_KEYWORDS)) {
+                    if (contentLower.includes(keyword)) {
+                        detectedProducts.add(product);
+                    }
+                }
             }
         }
 
-        // Auto-save detected info
-        if (detectedPhone || detectedRegion) {
+        // Auto-save all detected info
+        const productsArray = Array.from(detectedProducts);
+        if (detectedPhone || detectedRegion || detectedCustomerType || productsArray.length > 0) {
             setConversations(prev => {
                 const conv = prev.find(c => c.id === convId);
                 if (!conv) return prev;
                 const updates: any = {};
                 if (detectedPhone && !conv.customer_phone) updates.customer_phone = detectedPhone;
                 if (detectedRegion && !conv.customer_region) updates.customer_region = detectedRegion;
+                if (detectedCustomerType && !conv.customer_type) updates.customer_type = detectedCustomerType;
+                if (productsArray.length > 0 && (!conv.interested_products || conv.interested_products.length === 0)) {
+                    updates.interested_products = productsArray;
+                }
 
                 if (Object.keys(updates).length > 0) {
                     updateConversationMetadata(convId, updates, session?.access_token)
@@ -739,7 +786,7 @@ export default function SocialInboxPage() {
             {/* Right Customer Sidebar */}
             {selectedConv && (
                 <InboxCustomerSidebar
-                    conversation={{ ...selectedConv, fb_page_id: pages.find(p => p.id === selectedConv.page_id)?.page_id || '' } as any}
+                    conversation={{ ...selectedConv, fb_page_id: pages.find(p => p.id === selectedConv.page_id)?.page_id || '', page_name: pages.find(p => p.id === selectedConv.page_id)?.name || '' } as any}
                     messages={messages}
                     onUpdate={handleUpdateConversation}
                     token={session?.access_token}

@@ -441,6 +441,8 @@ export interface SocialConversation {
     customer_profile_url?: string;
     customer_phone?: string;
     customer_region?: string;
+    customer_type?: string; // đại lý, siêu thị, tạp hóa, NPP, cá nhân
+    interested_products?: string[]; // ['khoai môn sấy', 'CVT', 'kẹo dẻo']
     fb_thread_id?: string; // Facebook thread ID (t_XXX) for Business Suite linking
     page_name?: string; // Joined field
     page_avatar?: string; // Joined field

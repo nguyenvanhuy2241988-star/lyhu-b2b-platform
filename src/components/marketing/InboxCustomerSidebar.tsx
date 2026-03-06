@@ -177,6 +177,55 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
                             onBlur={() => handleSaveCustomerInfo('customer_region', customerRegion)}
                         />
                     </div>
+
+                    {/* Source Page */}
+                    {conversation.page_name && (
+                        <div className="flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                            <div className="text-sm text-slate-600">
+                                <span className="text-slate-400 text-xs">Fanpage:</span>{' '}
+                                <span className="font-medium text-slate-800">{conversation.page_name}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Customer Type */}
+                    <div className="flex items-center gap-2">
+                        <ShoppingBag className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                        {conversation.customer_type ? (
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${conversation.customer_type === 'Đại lý' ? 'bg-purple-100 text-purple-700' :
+                                    conversation.customer_type === 'Nhà phân phối' ? 'bg-blue-100 text-blue-700' :
+                                        conversation.customer_type === 'Siêu thị' ? 'bg-green-100 text-green-700' :
+                                            conversation.customer_type === 'Tạp hóa' ? 'bg-orange-100 text-orange-700' :
+                                                conversation.customer_type === 'Bán sỉ' ? 'bg-pink-100 text-pink-700' :
+                                                    'bg-slate-100 text-slate-700'
+                                }`}>
+                                {conversation.customer_type === 'Đại lý' && '🏪'}
+                                {conversation.customer_type === 'Nhà phân phối' && '🏢'}
+                                {conversation.customer_type === 'Siêu thị' && '🛒'}
+                                {conversation.customer_type === 'Tạp hóa' && '🏠'}
+                                {conversation.customer_type === 'Bán sỉ' && '📦'}
+                                {conversation.customer_type === 'Cửa hàng' && '🏬'}
+                                {' '}{conversation.customer_type}
+                            </span>
+                        ) : (
+                            <span className="text-xs text-slate-400 italic">Chưa xác định loại KH</span>
+                        )}
+                    </div>
+
+                    {/* Interested Products */}
+                    {conversation.interested_products && conversation.interested_products.length > 0 && (
+                        <div className="space-y-1">
+                            <div className="text-xs text-slate-400">Sản phẩm quan tâm:</div>
+                            <div className="flex flex-wrap gap-1">
+                                {conversation.interested_products.map((p, idx) => (
+                                    <span key={idx} className="px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 text-xs rounded-full">
+                                        🏷️ {p}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
