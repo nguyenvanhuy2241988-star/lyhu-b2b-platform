@@ -100,6 +100,7 @@ export default function SocialInboxPage() {
         let detectedRegion = '';
         let detectedCustomerType = '';
         const detectedProducts = new Set<string>();
+        let detectedAdSource = false;
 
         // Customer type keywords
         const CUSTOMER_TYPES: Record<string, string> = {
@@ -124,10 +125,22 @@ export default function SocialInboxPage() {
             'bảng giá': 'Báo giá chung',
         };
 
-        for (const msg of msgs) {
-            if (!msg.is_from_page && msg.content) {
-                const contentLower = msg.content.toLowerCase();
+        // Ad detection keywords (in page's automated messages)
+        const AD_KEYWORDS = [
+            'ưu đãi', 'khuyến mãi', 'mua 10 tặng', 'mua 5 tặng',
+            'tìm đại lý', 'tìm npp', 'tìm nhà phân phối',
+            'toàn quốc', 'trả lời quảng cáo',
+            'đăng ký đại lý', 'nhận báo giá',
+            'snack nội địa', 'bao bì đẹp', 'siêu dễ bán',
+            'gửi thông tin đăng ký', 'kết nối zalo',
+        ];
 
+        for (const msg of msgs) {
+            if (!msg.content) continue;
+            const contentLower = msg.content.toLowerCase();
+
+            if (!msg.is_from_page) {
+                // === CUSTOMER MESSAGES ===
                 // Phone detection
                 if (!detectedPhone) {
                     const cleaned = msg.content.replace(/[\s\.\-]/g, '');
@@ -163,12 +176,37 @@ export default function SocialInboxPage() {
                         detectedProducts.add(product);
                     }
                 }
+
+                // Customer ad-response patterns (e.g. "nhận báo giá sỉ", "đăng ký đại lý")
+                if (!detectedAdSource) {
+                    if (contentLower.includes('báo giá sỉ') || contentLower.includes('đăng ký đại lý') ||
+                        contentLower.includes('nhận báo giá') || contentLower.includes('giá sỉ')) {
+                        detectedAdSource = true;
+                    }
+                }
+            } else {
+                // === PAGE MESSAGES (including automated ad messages) ===
+                if (!detectedAdSource) {
+                    for (const keyword of AD_KEYWORDS) {
+                        if (contentLower.includes(keyword)) {
+                            detectedAdSource = true;
+                            break;
+                        }
+                    }
+                }
+
+                // Also detect products from page ad messages
+                for (const [keyword, product] of Object.entries(PRODUCT_KEYWORDS)) {
+                    if (contentLower.includes(keyword)) {
+                        detectedProducts.add(product);
+                    }
+                }
             }
         }
 
         // Auto-save all detected info
         const productsArray = Array.from(detectedProducts);
-        if (detectedPhone || detectedRegion || detectedCustomerType || productsArray.length > 0) {
+        if (detectedPhone || detectedRegion || detectedCustomerType || productsArray.length > 0 || detectedAdSource) {
             setConversations(prev => {
                 const conv = prev.find(c => c.id === convId);
                 if (!conv) return prev;
@@ -178,6 +216,11 @@ export default function SocialInboxPage() {
                 if (detectedCustomerType && !conv.customer_type) updates.customer_type = detectedCustomerType;
                 if (productsArray.length > 0 && (!conv.interested_products || conv.interested_products.length === 0)) {
                     updates.interested_products = productsArray;
+                }
+                // Ad source detection
+                if (detectedAdSource && !conv.ad_id && conv.referral_source !== 'ADS' && conv.source_type !== 'ads') {
+                    updates.referral_source = 'ADS';
+                    updates.source_type = 'ads';
                 }
 
                 if (Object.keys(updates).length > 0) {
