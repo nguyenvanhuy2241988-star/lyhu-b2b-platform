@@ -304,6 +304,25 @@ export async function POST(request: Request) {
                                 upsertData.customer_phone = phoneMatch[0];
                             }
 
+                            // Auto-detect Vietnamese region from message
+                            const regionKeywords: Record<string, string> = {
+                                'hà nội': 'Hà Nội', 'ha noi': 'Hà Nội',
+                                'hồ chí minh': 'Hồ Chí Minh', 'ho chi minh': 'Hồ Chí Minh', 'sài gòn': 'Hồ Chí Minh', 'sai gon': 'Hồ Chí Minh',
+                                'đà nẵng': 'Đà Nẵng', 'hải phòng': 'Hải Phòng', 'cần thơ': 'Cần Thơ',
+                                'hà tĩnh': 'Hà Tĩnh', 'nghệ an': 'Nghệ An', 'thanh hóa': 'Thanh Hóa', 'thanh hoá': 'Thanh Hóa',
+                                'đà lạt': 'Đà Lạt', 'nha trang': 'Nha Trang', 'huế': 'Huế',
+                                'bình dương': 'Bình Dương', 'đồng nai': 'Đồng Nai', 'long an': 'Long An',
+                                'quảng ninh': 'Quảng Ninh', 'hải dương': 'Hải Dương', 'bắc ninh': 'Bắc Ninh',
+                                'phú quốc': 'Phú Quốc', 'vũng tàu': 'Vũng Tàu', 'bình thuận': 'Bình Thuận',
+                            };
+                            const textLowerForRegion = text.toLowerCase();
+                            for (const [key, value] of Object.entries(regionKeywords)) {
+                                if (textLowerForRegion.includes(key)) {
+                                    upsertData.customer_region = value;
+                                    break;
+                                }
+                            }
+
                             // Store thread ID if available
                             if (fbThreadId) {
                                 upsertData.fb_thread_id = fbThreadId;

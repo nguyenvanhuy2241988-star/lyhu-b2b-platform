@@ -70,37 +70,71 @@ export default function SocialInboxPage() {
         });
     };
 
+    // Vietnamese provinces/cities for auto-detection
+    const VN_PROVINCES = [
+        'Hà Nội', 'HN', 'Hồ Chí Minh', 'HCM', 'Sài Gòn', 'SG', 'Đà Nẵng', 'Hải Phòng', 'Cần Thơ',
+        'An Giang', 'Bà Rịa', 'Vũng Tàu', 'Bắc Giang', 'Bắc Kạn', 'Bạc Liêu', 'Bắc Ninh',
+        'Bến Tre', 'Bình Định', 'Bình Dương', 'Bình Phước', 'Bình Thuận', 'Cà Mau',
+        'Cao Bằng', 'Đắk Lắk', 'Đắk Nông', 'Điện Biên', 'Đồng Nai', 'Đồng Tháp',
+        'Gia Lai', 'Hà Giang', 'Hà Nam', 'Hà Tĩnh', 'Hải Dương', 'Hậu Giang',
+        'Hòa Bình', 'Hưng Yên', 'Khánh Hòa', 'Nha Trang', 'Kiên Giang', 'Kon Tum',
+        'Lai Châu', 'Lâm Đồng', 'Đà Lạt', 'Lạng Sơn', 'Lào Cai', 'Long An',
+        'Nam Định', 'Nghệ An', 'Ninh Bình', 'Ninh Thuận', 'Phú Thọ', 'Phú Yên',
+        'Quảng Bình', 'Quảng Nam', 'Quảng Ngãi', 'Quảng Ninh', 'Quảng Trị',
+        'Sóc Trăng', 'Sơn La', 'Tây Ninh', 'Thái Bình', 'Thái Nguyên',
+        'Thanh Hóa', 'Thừa Thiên Huế', 'Huế', 'Tiền Giang', 'Trà Vinh', 'Tuyên Quang',
+        'Vĩnh Long', 'Vĩnh Phúc', 'Yên Bái', 'Phú Quốc', 'Bắc Cạn',
+    ];
+
     const loadMessages = async (convId: string) => {
         const msgs = await fetchMessages(convId, session?.access_token);
         setMessages(msgs);
         setTimeout(() => scrollToBottom(), 100);
 
-        // Auto-detect phone number from customer messages
+        // Auto-detect phone and region from customer messages
         const phoneRegex = /(?<!\d)(0[35789]\d{8})(?!\d)/g;
         let detectedPhone = '';
+        let detectedRegion = '';
+
         for (const msg of msgs) {
             if (!msg.is_from_page && msg.content) {
-                // Remove spaces, dots, dashes from content for matching
-                const cleaned = msg.content.replace(/[\s\.\-]/g, '');
-                const match = cleaned.match(phoneRegex);
-                if (match) {
-                    detectedPhone = match[0];
-                    break;
+                // Phone detection
+                if (!detectedPhone) {
+                    const cleaned = msg.content.replace(/[\s\.\-]/g, '');
+                    const phoneMatch = cleaned.match(phoneRegex);
+                    if (phoneMatch) detectedPhone = phoneMatch[0];
                 }
+                // Region detection
+                if (!detectedRegion) {
+                    const contentLower = msg.content.toLowerCase();
+                    for (const province of VN_PROVINCES) {
+                        if (contentLower.includes(province.toLowerCase())) {
+                            detectedRegion = province;
+                            // Normalize common abbreviations
+                            if (province === 'HCM' || province === 'SG' || province === 'Sài Gòn') detectedRegion = 'Hồ Chí Minh';
+                            if (province === 'HN') detectedRegion = 'Hà Nội';
+                            break;
+                        }
+                    }
+                }
+                if (detectedPhone && detectedRegion) break;
             }
         }
 
-        if (detectedPhone) {
-            // Check current state and save if empty
+        // Auto-save detected info
+        if (detectedPhone || detectedRegion) {
             setConversations(prev => {
                 const conv = prev.find(c => c.id === convId);
-                if (conv && !conv.customer_phone) {
-                    // Save to DB (fire and forget)
-                    updateConversationMetadata(convId, { customer_phone: detectedPhone }, session?.access_token)
-                        .then(() => console.log('Auto-saved phone:', detectedPhone))
-                        .catch(e => console.error('Failed to save phone:', e));
-                    // Update state
-                    return prev.map(c => c.id === convId ? { ...c, customer_phone: detectedPhone } : c);
+                if (!conv) return prev;
+                const updates: any = {};
+                if (detectedPhone && !conv.customer_phone) updates.customer_phone = detectedPhone;
+                if (detectedRegion && !conv.customer_region) updates.customer_region = detectedRegion;
+
+                if (Object.keys(updates).length > 0) {
+                    updateConversationMetadata(convId, updates, session?.access_token)
+                        .then(() => console.log('Auto-saved:', updates))
+                        .catch(e => console.error('Failed to save:', e));
+                    return prev.map(c => c.id === convId ? { ...c, ...updates } : c);
                 }
                 return prev;
             });
