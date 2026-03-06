@@ -126,7 +126,10 @@ export default function InboxCustomerSidebar({ conversation, onUpdate, onCreateD
                     onClick={() => {
                         // Use direct Facebook conversation link if available (most reliable)
                         if (conversation.customer_profile_url) {
-                            window.open(conversation.customer_profile_url, '_blank');
+                            const profileUrl = conversation.customer_profile_url.startsWith('http')
+                                ? conversation.customer_profile_url
+                                : `https://www.facebook.com${conversation.customer_profile_url}`;
+                            window.open(profileUrl, '_blank');
                             return;
                         }
                         // Fallback: Open Business Suite inbox for this page

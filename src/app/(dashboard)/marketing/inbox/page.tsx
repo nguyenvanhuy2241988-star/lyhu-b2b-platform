@@ -64,7 +64,7 @@ export default function SocialInboxPage() {
         // Load counts
         fetchInboxCounts(session?.access_token).then(counts => {
             const map: Record<string, number> = {};
-            counts.forEach(c => map[c.page_id] = c.unread_conversations);
+            counts.forEach(c => map[c.page_id] = c.total_conversations);
             setPageCounts(map);
         });
     };
