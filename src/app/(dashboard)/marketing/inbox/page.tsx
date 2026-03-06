@@ -13,7 +13,7 @@ import {
     fetchInboxCounts,
     updateConversationMetadata
 } from '@/lib/marketingStore';
-import { MessageSquare, Send, User, Search, RefreshCw, Loader2, DownloadCloud, Filter, Calendar, X } from 'lucide-react';
+import { MessageSquare, Send, User, Search, RefreshCw, Loader2, DownloadCloud, Filter, Calendar, X, ImageIcon, Paperclip, Smile } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import InboxCustomerSidebar from '@/components/marketing/InboxCustomerSidebar';
@@ -41,7 +41,10 @@ export default function SocialInboxPage() {
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const replyInputRef = useRef<HTMLTextAreaElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const imageInputRef = useRef<HTMLInputElement>(null);
     const selectedConvIdRef = useRef<string | null>(null);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
     // Keep ref in sync with state
     useEffect(() => {
@@ -296,6 +299,77 @@ export default function SocialInboxPage() {
         } finally {
             setIsSending(false);
         }
+    };
+
+    // Handle file/image upload and send
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !selectedConvId) return;
+
+        const currentConv = conversations.find(c => c.id === selectedConvId);
+        if (!currentConv) return;
+
+        const isImage = file.type.startsWith('image/');
+
+        // Optimistic UI
+        const previewUrl = isImage ? URL.createObjectURL(file) : '';
+        const optimisticMsg = {
+            id: `optimistic_${Date.now()}`,
+            conversation_id: selectedConvId,
+            content: isImage ? '' : `[${file.name}]`,
+            attachments: [{ type: isImage ? 'image' : 'file', url: previewUrl, name: file.name }],
+            sender_id: 'page',
+            sender_name: 'Page',
+            is_from_page: true,
+            created_at: new Date().toISOString()
+        } as SocialMessage;
+        setMessages(prev => [...prev, optimisticMsg]);
+        setTimeout(scrollToBottom, 100);
+
+        setIsSending(true);
+        try {
+            // 1. Upload to our server
+            const formData = new FormData();
+            formData.append('file', file);
+            const uploadRes = await fetch('/api/facebook/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const uploadData = await uploadRes.json();
+            if (!uploadData.success) throw new Error(uploadData.error || 'Đăng tải thất bại');
+
+            // 2. Send via Facebook
+            const lastCustomerMsg = [...messages].reverse().find(m => !m.is_from_page);
+            const recipientId = lastCustomerMsg?.sender_id || currentConv.external_id;
+            const pageToken = pages.find(p => p.id === currentConv.page_id)?.access_token || '';
+
+            await sendSocialReply(recipientId, '', pageToken, selectedConvId, uploadData.url, uploadData.type);
+
+            // Update optimistic message with real URL
+            setMessages(prev => prev.map(m => m.id === optimisticMsg.id
+                ? { ...m, attachments: [{ type: uploadData.type, url: uploadData.url, name: file.name }] }
+                : m
+            ));
+        } catch (error: any) {
+            toast.error(`Lỗi gửi: ${error.message}`);
+            setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id));
+        } finally {
+            setIsSending(false);
+            // Reset input
+            e.target.value = '';
+        }
+    };
+
+    const insertEmoji = (emoji: string) => {
+        if (replyInputRef.current) {
+            const start = replyInputRef.current.selectionStart;
+            const end = replyInputRef.current.selectionEnd;
+            const val = replyInputRef.current.value;
+            replyInputRef.current.value = val.substring(0, start) + emoji + val.substring(end);
+            replyInputRef.current.focus();
+            replyInputRef.current.selectionStart = replyInputRef.current.selectionEnd = start + emoji.length;
+        }
+        setShowEmojiPicker(false);
     };
 
     const handleSync = async () => {
@@ -563,22 +637,69 @@ export default function SocialInboxPage() {
                             <div ref={messagesEndRef} />
                         </div>
 
-                        {/* Input - uncontrolled for performance */}
-                        <div className="p-4 bg-white border-t">
-                            <div className="flex gap-2">
+                        {/* Input area with attachment buttons */}
+                        <div className="p-3 bg-white border-t">
+                            {/* Hidden file inputs */}
+                            <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                            <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,.rar,.txt" className="hidden" onChange={handleFileUpload} />
+
+                            <div className="flex items-end gap-2">
+                                {/* Action buttons */}
+                                <div className="flex gap-1 pb-1">
+                                    <button
+                                        onClick={() => imageInputRef.current?.click()}
+                                        disabled={isSending}
+                                        className="p-2 text-slate-500 hover:text-primary-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
+                                        title="Gửi ảnh"
+                                    >
+                                        <ImageIcon className="w-5 h-5" />
+                                    </button>
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={isSending}
+                                        className="p-2 text-slate-500 hover:text-primary-600 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-50"
+                                        title="Gửi file"
+                                    >
+                                        <Paperclip className="w-5 h-5" />
+                                    </button>
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                            className="p-2 text-slate-500 hover:text-primary-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                            title="Emoji"
+                                        >
+                                            <Smile className="w-5 h-5" />
+                                        </button>
+                                        {showEmojiPicker && (
+                                            <div className="absolute bottom-10 left-0 bg-white border rounded-xl shadow-lg p-3 grid grid-cols-8 gap-1 z-50 w-[280px]">
+                                                {['👍', '❤️', '😂', '😍', '🙏', '🎉', '🔥', '✨', '👏', '😊', '🙌', '💪', '👌', '🌟', '😉', '😜', '🤣', '😘', '😇', '🥰', '🥳', '🤩', '🤔', '😱', '💯', '✔️', '❌', '⚠️', '📦', '📱', '💻', '☎️'].map(e => (
+                                                    <button key={e} onClick={() => insertEmoji(e)} className="text-xl hover:bg-slate-100 rounded p-1 transition-colors">{e}</button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Text input */}
                                 <textarea
                                     ref={replyInputRef}
                                     placeholder="Nhập tin nhắn..."
                                     className="flex-1 p-3 border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 h-[50px]"
                                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                                    onFocus={() => setShowEmojiPicker(false)}
                                 />
+
+                                {/* Send button */}
                                 <button
                                     onClick={handleSend}
                                     disabled={isSending}
-                                    className="px-4 bg-primary-600 text-white rounded-xl hover:bg-primary-700 disabled:opacity-50 flex items-center justify-center transition-colors"
+                                    className="px-4 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 disabled:opacity-50 flex items-center justify-center transition-colors"
                                 >
                                     {isSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                                 </button>
+                            </div>
+                            <div className="text-[10px] text-slate-400 mt-1 text-right">
+                                Tự động lưu khi gửi
                             </div>
                         </div>
                     </>

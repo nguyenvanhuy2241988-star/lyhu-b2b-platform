@@ -527,16 +527,21 @@ export const fetchMessages = async (conversationId: string, token?: string): Pro
     }
 };
 
-export const sendSocialReply = async (recipientId: string, message: string, pageToken: string, conversationId?: string) => {
+export const sendSocialReply = async (
+    recipientId: string, message: string, pageToken: string, conversationId?: string,
+    attachmentUrl?: string, attachmentType?: string
+) => {
     try {
         const res = await fetch('/api/facebook/reply', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 recipient_id: recipientId,
-                message,
+                message: message || undefined,
                 page_token: pageToken,
-                conversation_id: conversationId
+                conversation_id: conversationId,
+                attachment_url: attachmentUrl,
+                attachment_type: attachmentType
             })
         });
         const data = await res.json();

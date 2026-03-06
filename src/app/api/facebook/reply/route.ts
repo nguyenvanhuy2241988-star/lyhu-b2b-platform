@@ -3,9 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: Request) {
     try {
-        const { conversation_id, message, page_token, recipient_id } = await request.json();
+        const { conversation_id, message, page_token, recipient_id, attachment_url, attachment_type } = await request.json();
 
-        if (!message || (!conversation_id && !recipient_id)) {
+        if ((!message && !attachment_url) || (!conversation_id && !recipient_id)) {
             return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
         }
 
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
         let finalPageToken = page_token;
         let finalConversationId = conversation_id;
 
-        // FIX #6: If no page_token provided, lookup from DB
+        // If no page_token provided, lookup from DB
         if (!finalPageToken && conversation_id) {
             const { data: conv } = await supabase
                 .from('social_conversations')
@@ -50,12 +50,31 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing recipient_id' }, { status: 400 });
         }
 
-        // Send to Facebook
+        // Build message payload
         const url = `https://graph.facebook.com/v19.0/me/messages?access_token=${finalPageToken}`;
-        const body = {
-            recipient: { id: finalRecipientId },
-            message: { text: message }
-        };
+        let body: any;
+
+        if (attachment_url) {
+            // Send attachment (image, file, video, audio)
+            body = {
+                recipient: { id: finalRecipientId },
+                message: {
+                    attachment: {
+                        type: attachment_type || 'file',
+                        payload: {
+                            url: attachment_url,
+                            is_reusable: true
+                        }
+                    }
+                }
+            };
+        } else {
+            // Send text message
+            body = {
+                recipient: { id: finalRecipientId },
+                message: { text: message }
+            };
+        }
 
         const res = await fetch(url, {
             method: 'POST',
@@ -69,15 +88,16 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: data.error.message }, { status: 400 });
         }
 
-        // Note: Don't insert message here — echo webhook will save it to avoid duplicates
-        // Just update conversation snippet
+        // Update conversation snippet
         if (finalConversationId) {
+            const snippet = attachment_url
+                ? `[${attachment_type === 'image' ? 'Hình ảnh' : 'Tệp tin'}]`
+                : message;
 
-            // Update conversation snippet
             await supabase
                 .from('social_conversations')
                 .update({
-                    snippet: message,
+                    snippet,
                     last_message_at: new Date().toISOString()
                 })
                 .eq('id', finalConversationId);
