@@ -55,12 +55,24 @@ export async function POST(request: Request) {
                 let totalCount = 0;
                 try {
                     const commRes = await fetch(
-                        `https://graph.facebook.com/v19.0/${postData.id}/comments?fields=id,message,from,created_time,is_hidden&limit=50&summary=true&access_token=${access_token}`
+                        `https://graph.facebook.com/v19.0/${postData.id}/comments?fields=id,message,from,created_time,is_hidden&filter=stream&limit=50&summary=true&access_token=${access_token}`
                     );
                     const commData = await commRes.json();
-                    comments = commData.data || [];
-                    totalCount = commData.summary?.total_count || comments.length;
-                    hiddenCount = comments.filter((c: any) => c.is_hidden).length;
+                    if (commData.error) {
+                        // Fallback without is_hidden
+                        const commRes2 = await fetch(
+                            `https://graph.facebook.com/v19.0/${postData.id}/comments?fields=id,message,from,created_time&filter=stream&limit=50&summary=true&access_token=${access_token}`
+                        );
+                        const commData2 = await commRes2.json();
+                        if (!commData2.error) {
+                            comments = commData2.data || [];
+                            totalCount = commData2.summary?.total_count || comments.length;
+                        }
+                    } else {
+                        comments = commData.data || [];
+                        totalCount = commData.summary?.total_count || comments.length;
+                        hiddenCount = comments.filter((c: any) => c.is_hidden).length;
+                    }
                 } catch (e) { }
 
                 return NextResponse.json({
@@ -168,14 +180,28 @@ export async function POST(request: Request) {
             let totalCount = 0;
             try {
                 const commRes = await fetch(
-                    `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,created_time,is_hidden&limit=50&summary=true&access_token=${access_token}`
+                    `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,created_time,is_hidden&filter=stream&limit=50&summary=true&access_token=${access_token}`
                 );
                 const commData = await commRes.json();
-                comments = commData.data || [];
-                totalCount = commData.summary?.total_count || comments.length;
-                hiddenCount = comments.filter((c: any) => c.is_hidden).length;
-            } catch (e) {
-                // ignore
+                if (commData.error) {
+                    // Fallback: try without is_hidden (may not have permission)
+                    const commRes2 = await fetch(
+                        `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,created_time&filter=stream&limit=50&summary=true&access_token=${access_token}`
+                    );
+                    const commData2 = await commRes2.json();
+                    if (!commData2.error) {
+                        comments = commData2.data || [];
+                        totalCount = commData2.summary?.total_count || comments.length;
+                    } else {
+                        console.log(`Comments error for ${post.id}:`, commData2.error?.message);
+                    }
+                } else {
+                    comments = commData.data || [];
+                    totalCount = commData.summary?.total_count || comments.length;
+                    hiddenCount = comments.filter((c: any) => c.is_hidden).length;
+                }
+            } catch (e: any) {
+                console.log(`Comments fetch error for ${post.id}:`, e.message);
             }
 
             return {
