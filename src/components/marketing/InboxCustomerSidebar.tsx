@@ -24,13 +24,13 @@ export default function InboxCustomerSidebar({ conversation, onUpdate, onCreateD
         setAvatarError(false);
     }, [conversation.id]);
 
-    // Sync props to state when conversation changes
+    // Sync props to state when conversation changes or customer info is auto-detected
     useEffect(() => {
         setNotes(conversation.notes || '');
         setTags(conversation.tags || []);
         setCustomerPhone(conversation.customer_phone || '');
         setCustomerRegion(conversation.customer_region || '');
-    }, [conversation.id]);
+    }, [conversation.id, conversation.customer_phone, conversation.customer_region]);
 
     const handleSaveNote = async () => {
         setIsSavingNote(true);
