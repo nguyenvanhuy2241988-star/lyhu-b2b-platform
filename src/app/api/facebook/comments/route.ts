@@ -150,10 +150,10 @@ export async function POST(request: Request) {
             debug.feed = { error: e.message };
         }
 
-        // 3. Fetch regular published posts with NESTED comments (bypasses separate comments endpoint permission)
+        // 3. Fetch regular published posts
         try {
             const postsRes = await fetch(
-                `https://graph.facebook.com/v19.0/${page_id}/posts?fields=id,message,created_time,full_picture,permalink_url,promotion_status,comments.filter(stream).summary(true).limit(50){id,message,from,created_time,is_hidden}&limit=15&access_token=${access_token}`
+                `https://graph.facebook.com/v19.0/${page_id}/posts?fields=id,message,created_time,full_picture,permalink_url,promotion_status&limit=15&access_token=${access_token}`
             );
             const postsData = await postsRes.json();
             debug.posts = { count: postsData.data?.length || 0, error: postsData.error || null };
