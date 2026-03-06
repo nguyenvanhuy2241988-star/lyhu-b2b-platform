@@ -25,7 +25,7 @@ export default function SocialInboxPage() {
     const [conversations, setConversations] = useState<SocialConversation[]>([]);
     const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
     const [messages, setMessages] = useState<SocialMessage[]>([]);
-    const [replyText, setReplyText] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const [pages, setPages] = useState<FacebookPage[]>([]);
@@ -38,9 +38,9 @@ export default function SocialInboxPage() {
     // Create Deal Modal State
     const [isCreateDealOpen, setIsCreateDealOpen] = useState(false);
 
-    // Auto-scroll ref
+    // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    // Ref to track selected conversation for realtime handler (avoids stale closure)
+    const replyInputRef = useRef<HTMLTextAreaElement>(null);
     const selectedConvIdRef = useRef<string | null>(null);
 
     // Keep ref in sync with state
@@ -260,12 +260,11 @@ export default function SocialInboxPage() {
     }, [selectedConvId, supabaseClient]);
 
     const handleSend = async () => {
-        if (!replyText.trim() || !selectedConvId) return;
+        const msgText = replyInputRef.current?.value?.trim() || '';
+        if (!msgText || !selectedConvId) return;
 
         const currentConv = conversations.find(c => c.id === selectedConvId);
         if (!currentConv) return;
-
-        const msgText = replyText.trim();
 
         // Optimistic UI: show message immediately BEFORE API call
         const optimisticMsg = {
@@ -278,7 +277,7 @@ export default function SocialInboxPage() {
             created_at: new Date().toISOString()
         } as SocialMessage;
         setMessages(prev => [...prev, optimisticMsg]);
-        setReplyText('');
+        if (replyInputRef.current) replyInputRef.current.value = '';
         setTimeout(scrollToBottom, 100);
 
         // Send in background (no await blocking UI)
@@ -328,6 +327,18 @@ export default function SocialInboxPage() {
     };
 
     const selectedConv = conversations.find(c => c.id === selectedConvId);
+
+    // Filter conversations by search query
+    const filteredConversations = useMemo(() => {
+        if (!searchQuery.trim()) return conversations;
+        const q = searchQuery.toLowerCase();
+        return conversations.filter(c =>
+            c.customer_name?.toLowerCase().includes(q) ||
+            c.snippet?.toLowerCase().includes(q) ||
+            c.customer_phone?.includes(q) ||
+            c.tags?.some(t => t.toLowerCase().includes(q))
+        );
+    }, [conversations, searchQuery]);
 
     const handleUpdateConversation = (updates: Partial<SocialConversation>) => {
         if (!selectedConvId) return;
@@ -385,7 +396,17 @@ export default function SocialInboxPage() {
                     </select>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <input className="w-full pl-9 pr-4 py-2 bg-slate-100 rounded-lg text-sm outline-none" placeholder="Tìm kiếm..." />
+                        <input
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            className="w-full pl-9 pr-4 py-2 bg-slate-100 rounded-lg text-sm outline-none"
+                            placeholder="Tìm kiếm tên, SĐT, tag..."
+                        />
+                        {searchQuery && (
+                            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                <X className="w-3.5 h-3.5" />
+                            </button>
+                        )}
                     </div>
                 </div>
 
@@ -419,7 +440,7 @@ export default function SocialInboxPage() {
                     {conversations.length === 0 && !isLoading && (
                         <div className="text-center p-8 text-slate-400 text-sm">Chưa có tin nhắn nào</div>
                     )}
-                    {conversations.map(conv => (
+                    {filteredConversations.map(conv => (
                         <div
                             key={conv.id}
                             onClick={() => setSelectedConvId(conv.id)}
@@ -542,19 +563,18 @@ export default function SocialInboxPage() {
                             <div ref={messagesEndRef} />
                         </div>
 
-                        {/* Input */}
+                        {/* Input - uncontrolled for performance */}
                         <div className="p-4 bg-white border-t">
                             <div className="flex gap-2">
                                 <textarea
-                                    value={replyText}
-                                    onChange={e => setReplyText(e.target.value)}
+                                    ref={replyInputRef}
                                     placeholder="Nhập tin nhắn..."
                                     className="flex-1 p-3 border rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-primary-500 h-[50px]"
                                     onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                                 />
                                 <button
                                     onClick={handleSend}
-                                    disabled={!replyText.trim() || isSending}
+                                    disabled={isSending}
                                     className="px-4 bg-primary-600 text-white rounded-xl hover:bg-primary-700 disabled:opacity-50 flex items-center justify-center transition-colors"
                                 >
                                     {isSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
@@ -574,6 +594,7 @@ export default function SocialInboxPage() {
             {selectedConv && (
                 <InboxCustomerSidebar
                     conversation={{ ...selectedConv, fb_page_id: pages.find(p => p.id === selectedConv.page_id)?.page_id || '' } as any}
+                    messages={messages}
                     onUpdate={handleUpdateConversation}
                     token={session?.access_token}
                     onCreateDeal={() => setIsCreateDealOpen(true)}

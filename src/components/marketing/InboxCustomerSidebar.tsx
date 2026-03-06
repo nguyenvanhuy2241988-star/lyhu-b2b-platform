@@ -1,16 +1,17 @@
-import { useState, useEffect } from 'react';
-import { SocialConversation, updateConversationMetadata } from '@/lib/marketingStore';
-import { User, Tag, FileText, ShoppingBag, ExternalLink, X, Phone, MapPin } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { SocialConversation, SocialMessage, updateConversationMetadata } from '@/lib/marketingStore';
+import { User, Tag, FileText, ShoppingBag, ExternalLink, X, Phone, MapPin, Image } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface InboxCustomerSidebarProps {
     conversation: SocialConversation;
+    messages?: SocialMessage[];
     onUpdate: (updates: Partial<SocialConversation>) => void;
     onCreateDeal?: () => void;
     token?: string;
 }
 
-export default function InboxCustomerSidebar({ conversation, onUpdate, onCreateDeal, token }: InboxCustomerSidebarProps) {
+export default function InboxCustomerSidebar({ conversation, messages = [], onUpdate, onCreateDeal, token }: InboxCustomerSidebarProps) {
     const [notes, setNotes] = useState(conversation.notes || '');
     const [tags, setTags] = useState<string[]>(conversation.tags || []);
     const [newTag, setNewTag] = useState('');
@@ -178,6 +179,50 @@ export default function InboxCustomerSidebar({ conversation, onUpdate, onCreateD
                     </div>
                 </div>
             </div>
+
+            {/* Shared Media & Files */}
+            {(() => {
+                const sharedMedia = messages
+                    .filter(m => !m.is_from_page && m.attachments && m.attachments.length > 0)
+                    .flatMap(m => m.attachments || []);
+                const images = sharedMedia.filter(a => a.type === 'image');
+                const files = sharedMedia.filter(a => a.type !== 'image');
+                if (sharedMedia.length === 0) return null;
+                return (
+                    <div className="p-4 border-b space-y-2">
+                        <div className="flex items-center gap-2 text-slate-800 font-semibold text-sm">
+                            <Image className="w-4 h-4" />
+                            Ảnh & Tệp tin ({sharedMedia.length})
+                        </div>
+                        {images.length > 0 && (
+                            <div className="grid grid-cols-3 gap-1">
+                                {images.slice(0, 9).map((img, idx) => (
+                                    <img
+                                        key={idx}
+                                        src={img.url}
+                                        alt={img.name || 'shared'}
+                                        className="w-full h-16 object-cover rounded cursor-pointer hover:opacity-80 transition"
+                                        onClick={() => window.open(img.url, '_blank')}
+                                    />
+                                ))}
+                                {images.length > 9 && (
+                                    <div className="w-full h-16 bg-slate-100 rounded flex items-center justify-center text-xs text-slate-500">+{images.length - 9}</div>
+                                )}
+                            </div>
+                        )}
+                        {files.length > 0 && (
+                            <div className="space-y-1">
+                                {files.slice(0, 5).map((f, idx) => (
+                                    <a key={idx} href={f.url} target="_blank" rel="noopener noreferrer"
+                                        className="flex items-center gap-2 text-xs text-blue-600 hover:underline truncate">
+                                        📎 {f.name || 'Tệp đính kèm'}
+                                    </a>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                );
+            })()}
 
             {/* Tags */}
             <div className="p-4 border-b space-y-3">
