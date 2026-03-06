@@ -230,7 +230,14 @@ export async function POST(request: Request) {
             };
         }));
 
-        return NextResponse.json({ success: true, posts, debug: { ...debug, comment_errors: commentErrors } });
+        const tokenInfo = {
+            has_user_token: !!user_token,
+            comment_token_type: user_token ? 'user_token' : 'page_token (fallback)',
+            comment_token_prefix: commentToken?.substring(0, 10) + '...',
+            page_token_prefix: access_token?.substring(0, 10) + '...',
+        };
+
+        return NextResponse.json({ success: true, posts, debug: { ...debug, comment_errors: commentErrors, token_info: tokenInfo } });
 
     } catch (error: any) {
         console.error('Comments API Error:', error);
