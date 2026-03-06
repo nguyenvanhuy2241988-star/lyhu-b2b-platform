@@ -189,16 +189,33 @@ export default function InboxCustomerSidebar({ conversation, messages = [], onUp
                         </div>
                     )}
 
+                    {/* Customer Source: Ads vs Organic */}
+                    <div className="flex items-center gap-2">
+                        <ExternalLink className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                        <div className="text-sm">
+                            <span className="text-slate-400 text-xs">Nguồn:</span>{' '}
+                            {(conversation.ad_id || conversation.referral_source === 'ADS' || conversation.source_type === 'ads') ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
+                                    📢 Quảng cáo
+                                </span>
+                            ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                                    🌱 Tự nhiên
+                                </span>
+                            )}
+                        </div>
+                    </div>
+
                     {/* Customer Type */}
                     <div className="flex items-center gap-2">
                         <ShoppingBag className="w-4 h-4 text-slate-400 flex-shrink-0" />
                         {conversation.customer_type ? (
                             <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${conversation.customer_type === 'Đại lý' ? 'bg-purple-100 text-purple-700' :
-                                    conversation.customer_type === 'Nhà phân phối' ? 'bg-blue-100 text-blue-700' :
-                                        conversation.customer_type === 'Siêu thị' ? 'bg-green-100 text-green-700' :
-                                            conversation.customer_type === 'Tạp hóa' ? 'bg-orange-100 text-orange-700' :
-                                                conversation.customer_type === 'Bán sỉ' ? 'bg-pink-100 text-pink-700' :
-                                                    'bg-slate-100 text-slate-700'
+                                conversation.customer_type === 'Nhà phân phối' ? 'bg-blue-100 text-blue-700' :
+                                    conversation.customer_type === 'Siêu thị' ? 'bg-green-100 text-green-700' :
+                                        conversation.customer_type === 'Tạp hóa' ? 'bg-orange-100 text-orange-700' :
+                                            conversation.customer_type === 'Bán sỉ' ? 'bg-pink-100 text-pink-700' :
+                                                'bg-slate-100 text-slate-700'
                                 }`}>
                                 {conversation.customer_type === 'Đại lý' && '🏪'}
                                 {conversation.customer_type === 'Nhà phân phối' && '🏢'}
