@@ -683,6 +683,51 @@ export default function AutomationPage() {
                             >
                                 🔄 Đổi token 60 ngày
                             </button>
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    const input = document.getElementById('tokenRefreshInput') as HTMLInputElement;
+                                    const token = input?.value?.trim();
+                                    if (!token) return toast.error('Dán mã truy cập vào ô bên trái');
+
+                                    toast.info('Đang lưu token trực tiếp...');
+                                    try {
+                                        const { createClient } = await import('@/lib/supabaseClient');
+                                        const supabase = createClient();
+
+                                        // Update ALL pages with this token
+                                        const { data: allPages } = await supabase.from('facebook_pages').select('id, page_id, name');
+                                        let updated = 0;
+                                        const updatedNames: string[] = [];
+                                        for (const p of (allPages || [])) {
+                                            const { error } = await supabase
+                                                .from('facebook_pages')
+                                                .update({ access_token: token })
+                                                .eq('id', p.id);
+                                            if (!error) {
+                                                updated++;
+                                                updatedNames.push(p.name);
+                                            }
+                                        }
+
+                                        // Update local state
+                                        setPages(prev => prev.map(p => ({ ...p, access_token: token })));
+
+                                        if (updated > 0) {
+                                            toast.success(`✅ Đã lưu token trực tiếp cho ${updated} Page: ${updatedNames.join(', ')}`, { duration: 6000 });
+                                        } else {
+                                            toast.error('Không tìm thấy Page nào trong DB');
+                                        }
+                                        input.value = '';
+                                        setTimeout(() => loadComments(), 1000);
+                                    } catch (e: any) {
+                                        toast.error('Lỗi: ' + e.message);
+                                    }
+                                }}
+                                className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition whitespace-nowrap"
+                            >
+                                💾 Lưu trực tiếp
+                            </button>
                         </div>
                     </div>
 
