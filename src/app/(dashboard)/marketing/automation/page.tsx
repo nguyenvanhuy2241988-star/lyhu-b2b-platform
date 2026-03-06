@@ -604,6 +604,69 @@ export default function AutomationPage() {
                         </button>
                     </div>
 
+                    {/* Token Refresh */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                        <p className="text-sm font-medium text-blue-800 mb-1">🔑 Làm mới Token Facebook</p>
+                        <p className="text-xs text-blue-600 mb-3">Vào <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener" className="underline font-medium">Graph API Explorer</a> → chọn App LYHU → Generate Access Token → copy "Mã truy cập" dán vào đây. Hệ thống sẽ tự đổi sang token 60 ngày và cập nhật tất cả Page.</p>
+                        <div className="flex gap-2">
+                            <input
+                                type="text"
+                                id="tokenRefreshInput"
+                                placeholder="Dán mã truy cập (Access Token) từ Graph API Explorer..."
+                                className="flex-1 border border-blue-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 font-mono"
+                            />
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    const input = document.getElementById('tokenRefreshInput') as HTMLInputElement;
+                                    const token = input?.value?.trim();
+                                    if (!token) return toast.error('Dán mã truy cập vào ô bên trái');
+
+                                    toast.info('Đang đổi sang token dài hạn...');
+                                    try {
+                                        // 1. Exchange for long-lived token + get page tokens
+                                        const res = await fetch('/api/facebook/auth', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ short_token: token })
+                                        });
+                                        const data = await res.json();
+                                        if (data.error) {
+                                            toast.error('Lỗi: ' + data.error);
+                                            return;
+                                        }
+                                        if (!data.pages?.length) {
+                                            toast.error('Không tìm thấy Page nào');
+                                            return;
+                                        }
+
+                                        // 2. Update each page in database
+                                        const { createClient } = await import('@/utils/supabase/client');
+                                        const supabase = createClient();
+                                        let updated = 0;
+                                        for (const p of data.pages) {
+                                            const { error } = await supabase
+                                                .from('facebook_pages')
+                                                .update({ access_token: p.access_token, name: p.name, avatar_url: p.avatar_url })
+                                                .eq('page_id', p.page_id);
+                                            if (!error) updated++;
+                                        }
+
+                                        toast.success(`✅ Đã cập nhật token cho ${updated}/${data.pages.length} Page (60 ngày)`);
+                                        input.value = '';
+                                        // Reload comments with new tokens
+                                        setTimeout(() => loadComments(), 500);
+                                    } catch (e: any) {
+                                        toast.error('Lỗi: ' + e.message);
+                                    }
+                                }}
+                                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition whitespace-nowrap"
+                            >
+                                🔄 Đổi token 60 ngày
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Manual Ad Post Input */}
                     <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">
                         <p className="text-sm font-medium text-orange-800 mb-2">📢 Thêm bài quảng cáo thủ công</p>
