@@ -641,7 +641,7 @@ export default function AutomationPage() {
                                         }
 
                                         // 2. Update each page in database
-                                        const { createClient } = await import('@/utils/supabase/client');
+                                        const { createClient } = await import('@/lib/supabaseClient');
                                         const supabase = createClient();
                                         let updated = 0;
                                         for (const p of data.pages) {
