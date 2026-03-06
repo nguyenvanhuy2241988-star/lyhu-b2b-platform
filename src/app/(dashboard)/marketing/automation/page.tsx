@@ -239,6 +239,9 @@ export default function AutomationPage() {
             const data = await res.json();
             if (data.success) {
                 setCommentPosts(data.posts || []);
+                const adCount = (data.posts || []).filter((p: any) => p.is_ad).length;
+                console.log('[Comments Debug]', data.debug);
+                toast.success(`Tải ${data.posts?.length || 0} bài (${adCount} bài QC)`);
             } else {
                 toast.error(data.error || 'Lỗi tải bình luận');
             }

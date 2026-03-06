@@ -38,16 +38,18 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: true, comments: data.data || [] });
         }
 
-        // DEFAULT: Fetch BOTH regular posts AND ads_posts (dark posts)
+        // DEFAULT: Fetch BOTH regular posts AND ads/dark posts
         const allPosts: any[] = [];
         const seenPostIds = new Set<string>();
+        const debug: any = { ads_posts: null, feed: null, posts: null };
 
-        // 1. Fetch ads_posts (includes dark posts NOT on page timeline)
+        // 1. Try ads_posts (dark posts NOT on page timeline)
         try {
             const adsRes = await fetch(
                 `https://graph.facebook.com/v19.0/${page_id}/ads_posts?fields=id,message,created_time,full_picture,permalink_url&limit=25&access_token=${access_token}`
             );
             const adsData = await adsRes.json();
+            debug.ads_posts = { count: adsData.data?.length || 0, error: adsData.error || null };
             if (adsData.data) {
                 for (const post of adsData.data) {
                     if (!seenPostIds.has(post.id)) {
@@ -56,16 +58,38 @@ export async function POST(request: Request) {
                     }
                 }
             }
-        } catch (e) {
-            console.log('Could not fetch ads_posts:', e);
+        } catch (e: any) {
+            debug.ads_posts = { error: e.message };
         }
 
-        // 2. Fetch regular published posts
+        // 2. Try feed (includes ALL posts: regular, dark, shared)
+        try {
+            const feedRes = await fetch(
+                `https://graph.facebook.com/v19.0/${page_id}/feed?fields=id,message,created_time,full_picture,permalink_url,is_hidden,status_type,is_published&limit=30&access_token=${access_token}`
+            );
+            const feedData = await feedRes.json();
+            debug.feed = { count: feedData.data?.length || 0, error: feedData.error || null };
+            if (feedData.data) {
+                for (const post of feedData.data) {
+                    if (!seenPostIds.has(post.id)) {
+                        seenPostIds.add(post.id);
+                        // Posts from feed that are NOT published = dark/ad posts
+                        const isDark = post.is_published === false;
+                        allPosts.push({ ...post, _is_ad: isDark });
+                    }
+                }
+            }
+        } catch (e: any) {
+            debug.feed = { error: e.message };
+        }
+
+        // 3. Fetch regular published posts (fallback)
         try {
             const postsRes = await fetch(
                 `https://graph.facebook.com/v19.0/${page_id}/posts?fields=id,message,created_time,full_picture,permalink_url,promotion_status&limit=15&access_token=${access_token}`
             );
             const postsData = await postsRes.json();
+            debug.posts = { count: postsData.data?.length || 0, error: postsData.error || null };
             if (postsData.data) {
                 for (const post of postsData.data) {
                     if (!seenPostIds.has(post.id)) {
@@ -75,12 +99,12 @@ export async function POST(request: Request) {
                     }
                 }
             }
-        } catch (e) {
-            console.log('Could not fetch posts:', e);
+        } catch (e: any) {
+            debug.posts = { error: e.message };
         }
 
         if (allPosts.length === 0) {
-            return NextResponse.json({ success: true, posts: [] });
+            return NextResponse.json({ success: true, posts: [], debug });
         }
 
         // Sort by created_time descending
@@ -124,7 +148,7 @@ export async function POST(request: Request) {
             };
         }));
 
-        return NextResponse.json({ success: true, posts });
+        return NextResponse.json({ success: true, posts, debug });
 
     } catch (error: any) {
         console.error('Comments API Error:', error);
