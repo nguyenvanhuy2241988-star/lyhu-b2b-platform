@@ -126,9 +126,10 @@ export default function InboxCustomerSidebar({ conversation, onUpdate, onCreateD
                     onClick={() => {
                         // Open Meta Business Suite directly to this conversation
                         const pageId = (conversation as any).fb_page_id;
-                        const threadId = conversation.fb_thread_id;
-                        const url = pageId && threadId
-                            ? `https://business.facebook.com/latest/inbox/all?asset_id=${pageId}&selected_item_id=${threadId}&mailbox_id=&thread_type=FB_MESSAGE`
+                        // Prefer fb_thread_id (accurate), fallback to external_id (PSID)
+                        const selectedId = conversation.fb_thread_id || conversation.external_id;
+                        const url = pageId && selectedId
+                            ? `https://business.facebook.com/latest/inbox/all?asset_id=${pageId}&selected_item_id=${selectedId}&mailbox_id=&thread_type=FB_MESSAGE`
                             : pageId
                                 ? `https://business.facebook.com/latest/inbox/all?asset_id=${pageId}`
                                 : `https://business.facebook.com/latest/inbox/all`;

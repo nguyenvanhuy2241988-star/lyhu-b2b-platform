@@ -62,7 +62,9 @@ export async function POST(request: Request) {
 
         // 3. Sync to Database
         for (const conv of allConversations) {
-            const customer = conv.senders?.data?.[0];
+            // Find the actual customer (not the page) from senders
+            const senders = conv.senders?.data || [];
+            const customer = senders.find((s: any) => s.id !== fbPageId) || senders[0];
             const customerName = customer?.name || 'Facebook User';
             const customerId = customer?.id;
 
