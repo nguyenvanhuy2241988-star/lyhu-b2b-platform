@@ -75,24 +75,35 @@ export default function SocialInboxPage() {
         setMessages(msgs);
         setTimeout(() => scrollToBottom(), 100);
 
-        // Auto-detect phone number from messages if not already saved
-        const conv = conversations.find(c => c.id === convId);
-        if (conv && !conv.customer_phone) {
-            const phoneRegex = /(0[3|5|7|8|9])\d{8}/g;
-            // Scan customer messages (not from page) for phone numbers
-            for (const msg of msgs) {
-                if (!msg.is_from_page && msg.content) {
-                    const match = msg.content.match(phoneRegex);
-                    if (match) {
-                        // Auto-save the first phone found
-                        try {
-                            await updateConversationMetadata(convId, { customer_phone: match[0] }, session?.access_token);
-                            handleUpdateConversation({ customer_phone: match[0] } as any);
-                        } catch (e) { /* silent */ }
-                        break;
-                    }
+        // Auto-detect phone number from customer messages
+        const phoneRegex = /(?<!\d)(0[35789]\d{8})(?!\d)/g;
+        let detectedPhone = '';
+        for (const msg of msgs) {
+            if (!msg.is_from_page && msg.content) {
+                // Remove spaces, dots, dashes from content for matching
+                const cleaned = msg.content.replace(/[\s\.\-]/g, '');
+                const match = cleaned.match(phoneRegex);
+                if (match) {
+                    detectedPhone = match[0];
+                    break;
                 }
             }
+        }
+
+        if (detectedPhone) {
+            // Check current state and save if empty
+            setConversations(prev => {
+                const conv = prev.find(c => c.id === convId);
+                if (conv && !conv.customer_phone) {
+                    // Save to DB (fire and forget)
+                    updateConversationMetadata(convId, { customer_phone: detectedPhone }, session?.access_token)
+                        .then(() => console.log('Auto-saved phone:', detectedPhone))
+                        .catch(e => console.error('Failed to save phone:', e));
+                    // Update state
+                    return prev.map(c => c.id === convId ? { ...c, customer_phone: detectedPhone } : c);
+                }
+                return prev;
+            });
         }
     };
 
