@@ -232,6 +232,7 @@ export async function POST(request: Request) {
                             // FIX #1: Fetch real customer name and avatar
                             let customerName = existingConv?.customer_name || 'Facebook User';
                             let customerAvatar = '';
+                            let fbThreadId = '';
                             if ((isNewConversation || customerName === 'Facebook User' || customerName === 'Chưa cập nhật') && pageData.access_token) {
                                 // Method 1: Try Conversations API (works with basic page permissions)
                                 try {
@@ -241,12 +242,17 @@ export async function POST(request: Request) {
                                     const convData = await convRes.json();
                                     console.log('Conversations API response:', JSON.stringify(convData));
 
-                                    if (convData.data?.[0]?.participants?.data) {
-                                        const participant = convData.data[0].participants.data.find(
-                                            (p: any) => p.id !== pageId
-                                        );
-                                        if (participant?.name) {
-                                            customerName = participant.name;
+                                    if (convData.data?.[0]) {
+                                        // Capture Facebook thread ID for Business Suite linking
+                                        fbThreadId = convData.data[0].id || '';
+
+                                        if (convData.data[0].participants?.data) {
+                                            const participant = convData.data[0].participants.data.find(
+                                                (p: any) => p.id !== pageId
+                                            );
+                                            if (participant?.name) {
+                                                customerName = participant.name;
+                                            }
                                         }
                                     }
                                 } catch (e) {
@@ -290,6 +296,11 @@ export async function POST(request: Request) {
                                 unread_count: 1,
                                 last_message_at: new Date().toISOString()
                             };
+
+                            // Store thread ID if available
+                            if (fbThreadId) {
+                                upsertData.fb_thread_id = fbThreadId;
+                            }
 
                             if (referral) {
                                 upsertData.referral_source = referral.source || 'ADS';

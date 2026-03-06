@@ -82,6 +82,7 @@ export async function POST(request: Request) {
                     snippet: conv.snippet,
                     unread_count: conv.unread_count,
                     last_message_at: conv.updated_time,
+                    fb_thread_id: conv.id, // Store Facebook thread ID for Business Suite linking
                 }, { onConflict: 'platform, external_id' })
                 .select()
                 .single();

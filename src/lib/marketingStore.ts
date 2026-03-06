@@ -441,6 +441,7 @@ export interface SocialConversation {
     customer_profile_url?: string;
     customer_phone?: string;
     customer_region?: string;
+    fb_thread_id?: string; // Facebook thread ID (t_XXX) for Business Suite linking
     page_name?: string; // Joined field
     page_avatar?: string; // Joined field
     post_id?: string;
