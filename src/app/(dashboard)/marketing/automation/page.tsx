@@ -12,11 +12,18 @@ import {
     fetchFacebookPages
 } from '@/lib/marketingStore';
 import { Plus, Trash2, Edit, Zap, X, Save, Search, Bot, MessageSquare, EyeOff, Shield, Eye, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/components/ui/toast';
 
 export default function AutomationPage() {
     const { user, session } = useAuth();
     const token = session?.access_token;
+    const { showToast } = useToast();
+    // Adapter so we can use toast.success/error/info syntax
+    const toast = {
+        success: (msg: string, opts?: any) => showToast(msg, 'success', opts?.duration || 4000),
+        error: (msg: string) => showToast(msg, 'error', 5000),
+        info: (msg: string) => showToast(msg, 'info', 3000),
+    };
     const [rules, setRules] = useState<ChatbotRule[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
