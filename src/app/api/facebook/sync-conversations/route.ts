@@ -35,7 +35,7 @@ export async function POST(request: Request) {
         const fbPageId = pageData.page_id;
 
         // 2. Fetch Conversations from Facebook (with pagination - FIX #4)
-        const fields = 'id,updated_time,messages{message,created_time,from,to},senders,snippet_is_read_only,unread_count,snippet,link';
+        const fields = 'id,updated_time,messages{message,created_time,from,to,attachments{file_url,image_data,mime_type,name,size}},senders,snippet_is_read_only,unread_count,snippet,link';
         let nextUrl: string | null = `https://graph.facebook.com/v19.0/me/conversations?fields=${fields}&limit=${limit}&access_token=${pageData.access_token}`;
         let allConversations: any[] = [];
         let pageCount = 0;
@@ -93,16 +93,25 @@ export async function POST(request: Request) {
             if (insertedConv) {
                 count++;
                 if (conv.messages && conv.messages.data) {
-                    const messages = conv.messages.data.map((m: any) => ({
-                        conversation_id: insertedConv.id,
-                        external_id: m.id,
-                        content: m.message,
-                        sender_id: m.from?.id,
-                        sender_name: m.from?.name,
-                        created_at: m.created_time,
-                        // FIX #3: Compare with actual FB page ID, not internal UUID
-                        is_from_page: m.from?.id === fbPageId
-                    }));
+                    const messages = conv.messages.data.map((m: any) => {
+                        // Extract attachments
+                        const msgAttachments = m.attachments?.data?.map((a: any) => ({
+                            type: a.mime_type?.startsWith('image') ? 'image' : 'file',
+                            url: a.image_data?.url || a.file_url || '',
+                            name: a.name || 'attachment'
+                        })).filter((a: any) => a.url) || [];
+
+                        return {
+                            conversation_id: insertedConv.id,
+                            external_id: m.id,
+                            content: m.message || (msgAttachments.length > 0 ? `[${msgAttachments[0].type === 'image' ? 'Hình ảnh' : 'Tệp tin'}]` : ''),
+                            sender_id: m.from?.id,
+                            sender_name: m.from?.name,
+                            created_at: m.created_time,
+                            is_from_page: m.from?.id === fbPageId,
+                            ...(msgAttachments.length > 0 ? { attachments: msgAttachments } : {})
+                        };
+                    });
 
                     if (messages.length > 0) {
                         await supabase.from('social_messages').upsert(messages, { onConflict: 'external_id' });

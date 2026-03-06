@@ -180,16 +180,26 @@ export async function POST(request: Request) {
                         const senderId = event.sender.id;
                         let text = '';
                         let mid = '';
+                        let attachments: any[] = [];
 
-                        if (event.message && event.message.text) {
-                            text = event.message.text;
+                        if (event.message) {
+                            text = event.message.text || '';
                             mid = event.message.mid;
+                            // Extract attachments (images, files, audio, video, stickers)
+                            if (event.message.attachments) {
+                                attachments = event.message.attachments.map((a: any) => ({
+                                    type: a.type || 'file',
+                                    url: a.payload?.url || '',
+                                    name: a.payload?.title || a.type || 'attachment',
+                                    sticker_id: a.payload?.sticker_id
+                                })).filter((a: any) => a.url);
+                            }
                         } else if (event.postback && event.postback.payload) {
                             text = event.postback.payload;
                             mid = `postback_${Date.now()}`;
                         }
 
-                        if (text) {
+                        if (text || attachments.length > 0) {
                             // Retrieve Page Data early (needed for fallback fetch)
                             const { data: pageData } = await supabase
                                 .from('facebook_pages')
@@ -349,14 +359,18 @@ export async function POST(request: Request) {
                                 // Logic simplified.
 
                                 // 2. Insert Message (User's message/postback)
-                                await supabase.from('social_messages').insert({
+                                const msgData: any = {
                                     conversation_id: conv.id,
                                     external_id: mid || `mid_${Date.now()}`,
-                                    content: text,
+                                    content: text || (attachments.length > 0 ? `[${attachments[0].type === 'image' ? 'Hình ảnh' : 'Tệp tin'}]` : ''),
                                     sender_id: senderId,
                                     is_from_page: false,
                                     created_at: new Date().toISOString()
-                                });
+                                };
+                                if (attachments.length > 0) {
+                                    msgData.attachments = attachments;
+                                }
+                                await supabase.from('social_messages').insert(msgData);
 
                                 // 3. Chatbot Logic
                                 if (pageData.access_token) {

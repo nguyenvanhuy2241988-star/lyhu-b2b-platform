@@ -452,6 +452,7 @@ export interface SocialMessage {
     id: string;
     conversation_id: string;
     content: string;
+    attachments?: { type: string; url: string; name?: string }[];
     sender_id: string;
     sender_name?: string;
     is_from_page: boolean;

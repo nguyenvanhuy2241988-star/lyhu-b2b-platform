@@ -262,35 +262,38 @@ export default function SocialInboxPage() {
     const handleSend = async () => {
         if (!replyText.trim() || !selectedConvId) return;
 
-        // Find current conversation to get recipient ID
         const currentConv = conversations.find(c => c.id === selectedConvId);
         if (!currentConv) return;
 
         const msgText = replyText.trim();
+
+        // Optimistic UI: show message immediately BEFORE API call
+        const optimisticMsg = {
+            id: `optimistic_${Date.now()}`,
+            conversation_id: selectedConvId,
+            content: msgText,
+            sender_id: 'page',
+            sender_name: 'Page',
+            is_from_page: true,
+            created_at: new Date().toISOString()
+        } as SocialMessage;
+        setMessages(prev => [...prev, optimisticMsg]);
+        setReplyText('');
+        setTimeout(scrollToBottom, 100);
+
+        // Send in background (no await blocking UI)
         setIsSending(true);
         try {
-            // Getting sender_id from last message from customer
             const lastCustomerMsg = [...messages].reverse().find(m => !m.is_from_page);
             const recipientId = lastCustomerMsg?.sender_id || currentConv.external_id;
 
-            // Don't send pageToken from client — API will lookup from DB using conversation_id
-            await sendSocialReply(recipientId, msgText, '', selectedConvId);
-
-            // Optimistic UI update — show reply immediately in chat
-            const optimisticMsg = {
-                id: `optimistic_${Date.now()}`,
-                conversation_id: selectedConvId,
-                content: msgText,
-                sender_id: 'page',
-                sender_name: 'Page',
-                is_from_page: true,
-                created_at: new Date().toISOString()
-            } as SocialMessage;
-            setMessages(prev => [...prev, optimisticMsg]);
-            setReplyText('');
-            setTimeout(scrollToBottom, 100);
+            // Pass page_token directly to skip DB lookups in reply API
+            const pageToken = pages.find(p => p.id === currentConv.page_id)?.access_token || '';
+            await sendSocialReply(recipientId, msgText, pageToken, selectedConvId);
         } catch (error) {
-            alert("Lỗi gửi tin nhắn");
+            toast.error('Lỗi gửi tin nhắn');
+            // Remove optimistic message on failure
+            setMessages(prev => prev.filter(m => m.id !== optimisticMsg.id));
         } finally {
             setIsSending(false);
         }
@@ -506,7 +509,30 @@ export default function SocialInboxPage() {
                                         ? 'bg-primary-600 text-white rounded-tr-none'
                                         : 'bg-white text-slate-800 rounded-tl-none'
                                         }`}>
-                                        <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
+                                        {/* Attachments: images */}
+                                        {msg.attachments && msg.attachments.length > 0 && (
+                                            <div className="mb-2 space-y-2">
+                                                {msg.attachments.map((att, idx) => (
+                                                    att.type === 'image' ? (
+                                                        <img key={idx} src={att.url} alt={att.name || 'image'}
+                                                            className="max-w-full rounded-lg cursor-pointer hover:opacity-90 transition"
+                                                            onClick={() => window.open(att.url, '_blank')}
+                                                        />
+                                                    ) : att.type === 'video' ? (
+                                                        <video key={idx} src={att.url} controls className="max-w-full rounded-lg" />
+                                                    ) : (
+                                                        <a key={idx} href={att.url} target="_blank" rel="noopener noreferrer"
+                                                            className={`flex items-center gap-2 p-2 rounded-lg border ${msg.is_from_page ? 'border-primary-400 text-primary-100 hover:bg-primary-500' : 'border-slate-200 text-blue-600 hover:bg-slate-50'}`}>
+                                                            📎 {att.name || 'Tệp đính kèm'}
+                                                        </a>
+                                                    )
+                                                ))}
+                                            </div>
+                                        )}
+                                        {/* Text content */}
+                                        {msg.content && msg.content !== '[Hình ảnh]' && msg.content !== '[Tệp tin]' && (
+                                            <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
+                                        )}
                                         <div className={`text-[10px] mt-1 ${msg.is_from_page ? 'text-primary-100' : 'text-slate-400'}`}>
                                             {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </div>
