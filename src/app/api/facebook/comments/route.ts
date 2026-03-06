@@ -150,10 +150,10 @@ export async function POST(request: Request) {
             debug.feed = { error: e.message };
         }
 
-        // 3. Fetch regular published posts (fallback)
+        // 3. Fetch regular published posts with NESTED comments (bypasses separate comments endpoint permission)
         try {
             const postsRes = await fetch(
-                `https://graph.facebook.com/v19.0/${page_id}/posts?fields=id,message,created_time,full_picture,permalink_url,promotion_status&limit=15&access_token=${access_token}`
+                `https://graph.facebook.com/v19.0/${page_id}/posts?fields=id,message,created_time,full_picture,permalink_url,promotion_status,comments.filter(stream).summary(true).limit(50){id,message,from,created_time,is_hidden}&limit=15&access_token=${access_token}`
             );
             const postsData = await postsRes.json();
             debug.posts = { count: postsData.data?.length || 0, error: postsData.error || null };
@@ -178,36 +178,46 @@ export async function POST(request: Request) {
         allPosts.sort((a, b) => new Date(b.created_time).getTime() - new Date(a.created_time).getTime());
 
         // Enrich each post with comment counts
+        // Try to use pre-loaded comments from nested query first (bypasses permission issue)
         const commentErrors: any[] = [];
         const posts = await Promise.all(allPosts.map(async (post: any) => {
             let comments: any[] = [];
             let hiddenCount = 0;
             let totalCount = 0;
-            try {
-                const commRes = await fetch(
-                    `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,created_time,is_hidden&filter=stream&limit=50&summary=true&access_token=${commentToken}`
-                );
-                const commData = await commRes.json();
-                if (commData.error) {
-                    commentErrors.push({ post_id: post.id, error1: commData.error.message });
-                    // Fallback: try without is_hidden (may not have permission)
-                    const commRes2 = await fetch(
-                        `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,created_time&filter=stream&limit=50&summary=true&access_token=${commentToken}`
+
+            // Strategy 1: Use pre-loaded nested comments (from posts query with comments{} field)
+            if (post.comments && post.comments.data) {
+                comments = post.comments.data;
+                totalCount = post.comments.summary?.total_count || comments.length;
+                hiddenCount = comments.filter((c: any) => c.is_hidden).length;
+            } else {
+                // Strategy 2: Fallback to separate endpoint (may fail without pages_read_engagement)
+                try {
+                    const commRes = await fetch(
+                        `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,created_time,is_hidden&filter=stream&limit=50&summary=true&access_token=${commentToken}`
                     );
-                    const commData2 = await commRes2.json();
-                    if (!commData2.error) {
-                        comments = commData2.data || [];
-                        totalCount = commData2.summary?.total_count || comments.length;
+                    const commData = await commRes.json();
+                    if (commData.error) {
+                        commentErrors.push({ post_id: post.id, error1: commData.error.message });
+                        // Fallback 2b: try without is_hidden
+                        const commRes2 = await fetch(
+                            `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,created_time&filter=stream&limit=50&summary=true&access_token=${commentToken}`
+                        );
+                        const commData2 = await commRes2.json();
+                        if (!commData2.error) {
+                            comments = commData2.data || [];
+                            totalCount = commData2.summary?.total_count || comments.length;
+                        } else {
+                            commentErrors.push({ post_id: post.id, error2: commData2.error.message });
+                        }
                     } else {
-                        commentErrors.push({ post_id: post.id, error2: commData2.error.message });
+                        comments = commData.data || [];
+                        totalCount = commData.summary?.total_count || comments.length;
+                        hiddenCount = comments.filter((c: any) => c.is_hidden).length;
                     }
-                } else {
-                    comments = commData.data || [];
-                    totalCount = commData.summary?.total_count || comments.length;
-                    hiddenCount = comments.filter((c: any) => c.is_hidden).length;
+                } catch (e: any) {
+                    commentErrors.push({ post_id: post.id, exception: e.message });
                 }
-            } catch (e: any) {
-                commentErrors.push({ post_id: post.id, exception: e.message });
             }
 
             return {
