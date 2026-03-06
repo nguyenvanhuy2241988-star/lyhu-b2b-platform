@@ -138,7 +138,19 @@ export async function POST(request: Request) {
                             const echoMid = event.message.mid;
                             const recipientId = event.recipient?.id;
 
-                            if (echoText && recipientId) {
+                            // Extract echo attachments
+                            let echoAttachments: any[] = [];
+                            if (event.message.attachments) {
+                                echoAttachments = event.message.attachments.map((a: any) => ({
+                                    type: a.type || 'file',
+                                    url: a.payload?.url || '',
+                                    name: a.payload?.title || a.type || 'attachment',
+                                    sticker_id: a.payload?.sticker_id
+                                })).filter((a: any) => a.url);
+                            }
+
+                            // Process echo if it has text OR attachments
+                            if ((echoText || echoAttachments.length > 0) && recipientId) {
                                 const { data: pageData } = await supabase
                                     .from('facebook_pages')
                                     .select('id')
@@ -155,20 +167,28 @@ export async function POST(request: Request) {
                                         .single();
 
                                     if (conv) {
-                                        // Save echo as page message (avoid duplicate via upsert)
-                                        await supabase.from('social_messages').upsert({
+                                        const snippetText = echoText || (echoAttachments.length > 0
+                                            ? `[${echoAttachments[0].type === 'image' ? 'Hình ảnh' : 'Tệp tin'}]`
+                                            : '');
+
+                                        // Save echo as page message with attachments
+                                        const msgData: any = {
                                             conversation_id: conv.id,
                                             external_id: echoMid || `echo_${Date.now()}`,
-                                            content: echoText,
+                                            content: snippetText,
                                             sender_id: pageId,
                                             sender_name: 'Page',
                                             is_from_page: true,
                                             created_at: new Date().toISOString()
-                                        }, { onConflict: 'external_id' });
+                                        };
+                                        if (echoAttachments.length > 0) {
+                                            msgData.attachments = echoAttachments;
+                                        }
+                                        await supabase.from('social_messages').upsert(msgData, { onConflict: 'external_id' });
 
                                         // Update conversation snippet
                                         await supabase.from('social_conversations').update({
-                                            snippet: echoText,
+                                            snippet: snippetText,
                                             last_message_at: new Date().toISOString()
                                         }).eq('id', conv.id);
                                     }

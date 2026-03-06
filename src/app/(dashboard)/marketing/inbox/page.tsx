@@ -596,6 +596,31 @@ export default function SocialInboxPage() {
                             </div>
                         </div>
 
+                        {/* Ad Context Banner */}
+                        {(selectedConv.ad_id || selectedConv.referral_source === 'ADS') && (
+                            <div className="px-4 py-2.5 bg-blue-50 border-b border-blue-100 flex items-center gap-3 text-sm">
+                                <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <span className="text-blue-600 text-xs font-bold">QC</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <span className="text-blue-800 font-medium">Trả lời quảng cáo</span>
+                                    {selectedConv.ad_id && (
+                                        <a
+                                            href={`https://www.facebook.com/ads/manager/account/campaigns?act=&selected_ad_ids=${selectedConv.ad_id}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="ml-2 text-blue-600 hover:underline text-xs"
+                                        >
+                                            Xem QC #{selectedConv.ad_id.slice(-6)}
+                                        </a>
+                                    )}
+                                </div>
+                                {selectedConv.ad_title && (
+                                    <span className="text-xs text-blue-600 truncate max-w-[200px]">{selectedConv.ad_title}</span>
+                                )}
+                            </div>
+                        )}
+
                         {/* Messages */}
                         <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50">
                             {messages.map(msg => (
