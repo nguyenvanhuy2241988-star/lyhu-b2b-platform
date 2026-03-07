@@ -13,6 +13,7 @@ import {
 } from '@/lib/marketingStore';
 import { Plus, Trash2, Edit, Zap, X, Save, Search, Bot, MessageSquare, EyeOff, Shield, Eye, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
+import LeadDistributionSettings from '@/components/marketing/LeadDistributionSettings';
 
 export default function AutomationPage() {
     const { user, session } = useAuth();
@@ -29,7 +30,7 @@ export default function AutomationPage() {
     const [search, setSearch] = useState('');
 
     // Tabs State
-    const [activeTab, setActiveTab] = useState<'rules' | 'settings' | 'comments'>('rules');
+    const [activeTab, setActiveTab] = useState<'rules' | 'settings' | 'comments' | 'distribution'>('rules');
 
     // Comments Management State
     const [commentPosts, setCommentPosts] = useState<any[]>([]);
@@ -295,10 +296,18 @@ export default function AutomationPage() {
                     >
                         Quản lý bình luận
                     </button>
+                    <button
+                        onClick={() => setActiveTab('distribution')}
+                        className={`px-4 py-2 rounded-md text-sm font-medium transition ${activeTab === 'distribution' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                    >
+                        Phân chia Data
+                    </button>
                 </div>
             </div>
 
-            {activeTab === 'rules' ? (
+            {activeTab === 'distribution' ? (
+                <LeadDistributionSettings />
+            ) : activeTab === 'rules' ? (
                 <>
                     <div className="flex justify-between items-center">
                         <p className="text-slate-500 text-sm">Quản lý các quy tắc trả lời tự động theo từ khóa</p>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getAIResponse, extractPhoneNumber } from '@/lib/geminiService';
+import { createAndAssignLead } from '@/lib/leadDistributionService';
 
 const VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN || 'lyhu_verify_token_123';
 
@@ -267,7 +268,7 @@ export async function POST(request: Request) {
                             // Retrieve Page Data early (needed for fallback fetch)
                             const { data: pageData } = await supabase
                                 .from('facebook_pages')
-                                .select('id, access_token')
+                                .select('id, access_token, page_name')
                                 .eq('page_id', pageId)
                                 .single();
 
@@ -541,12 +542,33 @@ export async function POST(request: Request) {
                                                         });
                                                     }
 
-                                                    // If phone detected, save it
+                                                    // If phone detected, save it + create marketing lead
                                                     if (aiResult.phoneDetected) {
                                                         await supabase.from('social_conversations').update({
                                                             customer_phone: aiResult.phoneDetected
                                                         }).eq('id', conv.id);
                                                         console.log(`[AI] Phone saved: ${aiResult.phoneDetected}`);
+
+                                                        // Auto-create marketing lead and assign to telesales
+                                                        try {
+                                                            const leadResult = await createAndAssignLead({
+                                                                conversationId: conv.id,
+                                                                customerName: customerName,
+                                                                customerPhone: aiResult.phoneDetected,
+                                                                customerAvatar: (conv as any).customer_avatar,
+                                                                region: (conv as any).customer_region,
+                                                                source: 'facebook_messenger',
+                                                                pageName: pageData.page_name,
+                                                                pageId: pageData.id,
+                                                                adId: (conv as any).ad_id,
+                                                                firstMessage: text
+                                                            });
+                                                            if (leadResult.assignedTo) {
+                                                                console.log(`[LeadDist] Lead assigned to ${leadResult.assignedName}`);
+                                                            }
+                                                        } catch (leadErr) {
+                                                            console.error('[LeadDist] Error:', leadErr);
+                                                        }
                                                     }
 
                                                     // Mark needs_followup if no phone yet

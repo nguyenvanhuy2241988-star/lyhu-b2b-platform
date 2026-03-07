@@ -1,0 +1,363 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import { Zap, Users, Loader2, RefreshCw, Check, Clock, Phone, MapPin, MessageSquare, User as UserIcon } from 'lucide-react';
+
+interface TelesalesUser {
+    id: string;
+    full_name: string;
+    email: string;
+    role: string;
+    is_online: boolean;
+    last_seen: string | null;
+}
+
+interface DistConfig {
+    enabled: boolean;
+    eligible_user_ids: string[];
+    only_online: boolean;
+    fallback_delay_minutes: number;
+}
+
+interface MarketingLead {
+    id: string;
+    customer_name: string;
+    customer_phone: string;
+    region: string | null;
+    source: string;
+    page_name: string | null;
+    status: string;
+    assigned_to: string | null;
+    assigned_at: string | null;
+    created_at: string;
+}
+
+export default function LeadDistributionSettings() {
+    const [config, setConfig] = useState<DistConfig>({
+        enabled: true,
+        eligible_user_ids: [],
+        only_online: true,
+        fallback_delay_minutes: 5
+    });
+    const [users, setUsers] = useState<TelesalesUser[]>([]);
+    const [leads, setLeads] = useState<MarketingLead[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [savedRecently, setSavedRecently] = useState(false);
+
+    const loadData = useCallback(async () => {
+        setLoading(true);
+        try {
+            // Load config
+            const { data: cfgData } = await supabase
+                .from('lead_distribution_config')
+                .select('*')
+                .eq('id', 1)
+                .single();
+            if (cfgData) {
+                setConfig({
+                    enabled: cfgData.enabled,
+                    eligible_user_ids: cfgData.eligible_user_ids || [],
+                    only_online: cfgData.only_online,
+                    fallback_delay_minutes: cfgData.fallback_delay_minutes
+                });
+            }
+
+            // Load all telesales users
+            const { data: usersData } = await supabase.rpc('get_users_activity_stats');
+            if (usersData) {
+                const telesales = usersData
+                    .filter((u: any) => u.role === 'telesales' || u.role === 'sale_admin')
+                    .map((u: any) => ({
+                        id: u.user_id,
+                        full_name: u.full_name,
+                        email: u.email,
+                        role: u.role,
+                        is_online: u.is_online,
+                        last_seen: u.last_seen
+                    }));
+                setUsers(telesales);
+            }
+
+            // Load recent leads (last 50)
+            const { data: leadsData } = await supabase
+                .from('marketing_leads')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(50);
+            if (leadsData) setLeads(leadsData);
+
+        } catch (err) {
+            console.error('Load lead dist data error:', err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => { loadData(); }, [loadData]);
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            const { error } = await supabase
+                .from('lead_distribution_config')
+                .upsert({
+                    id: 1,
+                    enabled: config.enabled,
+                    eligible_user_ids: config.eligible_user_ids,
+                    only_online: config.only_online,
+                    fallback_delay_minutes: config.fallback_delay_minutes,
+                    updated_at: new Date().toISOString()
+                });
+            if (error) throw error;
+            setSavedRecently(true);
+            setTimeout(() => setSavedRecently(false), 2000);
+        } catch (err) {
+            console.error('Save config error:', err);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const toggleUser = (userId: string) => {
+        setConfig(prev => ({
+            ...prev,
+            eligible_user_ids: prev.eligible_user_ids.includes(userId)
+                ? prev.eligible_user_ids.filter(id => id !== userId)
+                : [...prev.eligible_user_ids, userId]
+        }));
+    };
+
+    const selectAll = () => {
+        setConfig(prev => ({
+            ...prev,
+            eligible_user_ids: users.map(u => u.id)
+        }));
+    };
+
+    const deselectAll = () => {
+        setConfig(prev => ({ ...prev, eligible_user_ids: [] }));
+    };
+
+    // Stats
+    const todayLeads = leads.filter(l => {
+        const d = new Date(l.created_at);
+        const today = new Date();
+        return d.toDateString() === today.toDateString();
+    });
+    const pendingCount = leads.filter(l => l.status === 'pending').length;
+    const assignedCount = leads.filter(l => l.status === 'assigned').length;
+    const onlineEligible = users.filter(u => config.eligible_user_ids.includes(u.id) && u.is_online).length;
+
+    // Get user name by id
+    const getUserName = (id: string | null) => {
+        if (!id) return '—';
+        const user = users.find(u => u.id === id);
+        return user?.full_name || id.slice(0, 8);
+    };
+
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center p-12">
+                <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-amber-400 flex items-center justify-center">
+                        <Zap className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-slate-800">Phân chia Data tự động</h3>
+                        <p className="text-xs text-slate-500">Data từ Messenger → CRM Telesales</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <button onClick={loadData} className="p-2 text-slate-400 hover:text-blue-600 rounded-lg hover:bg-slate-100 transition-colors">
+                        <RefreshCw className="w-4 h-4" />
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all disabled:opacity-50"
+                    >
+                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : savedRecently ? <Check className="w-4 h-4" /> : null}
+                        {savedRecently ? 'Đã lưu!' : 'Lưu cài đặt'}
+                    </button>
+                </div>
+            </div>
+
+            {/* Toggle + Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {/* Enable Toggle */}
+                <div className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${config.enabled ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-slate-50'}`}
+                    onClick={() => setConfig(prev => ({ ...prev, enabled: !prev.enabled }))}
+                >
+                    <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-medium uppercase text-slate-500">Trạng thái</span>
+                        <div className={`w-10 h-6 rounded-full transition-colors flex items-center px-0.5 ${config.enabled ? 'bg-emerald-500 justify-end' : 'bg-slate-300 justify-start'}`}>
+                            <div className="w-5 h-5 bg-white rounded-full shadow" />
+                        </div>
+                    </div>
+                    <span className={`text-sm font-bold ${config.enabled ? 'text-emerald-700' : 'text-slate-500'}`}>
+                        {config.enabled ? '🟢 Đang hoạt động' : '⏸️ Tạm dừng'}
+                    </span>
+                </div>
+
+                <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
+                    <span className="text-xs font-medium uppercase text-blue-600">Hôm nay</span>
+                    <p className="text-2xl font-bold text-slate-800 mt-1">{todayLeads.length}</p>
+                    <p className="text-[10px] text-slate-400">data mới</p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-amber-50 border border-amber-100">
+                    <span className="text-xs font-medium uppercase text-amber-600">Đang chờ</span>
+                    <p className="text-2xl font-bold text-slate-800 mt-1">{pendingCount}</p>
+                    <p className="text-[10px] text-slate-400">chưa phân chia</p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
+                    <span className="text-xs font-medium uppercase text-emerald-600">Online</span>
+                    <p className="text-2xl font-bold text-slate-800 mt-1">{onlineEligible}/{config.eligible_user_ids.length}</p>
+                    <p className="text-[10px] text-slate-400">telesales sẵn sàng</p>
+                </div>
+            </div>
+
+            {/* Settings */}
+            <div className="bg-white rounded-xl border border-slate-200 p-5">
+                <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <Users className="w-4 h-4 text-blue-600" />
+                    Chọn nhân sự nhận Data
+                </h4>
+
+                <div className="flex gap-3 mb-4">
+                    <button onClick={selectAll} className="text-xs text-blue-600 hover:underline">Chọn tất cả</button>
+                    <button onClick={deselectAll} className="text-xs text-slate-400 hover:underline">Bỏ chọn tất cả</button>
+                    <label className="flex items-center gap-2 ml-auto cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={config.only_online}
+                            onChange={(e) => setConfig(prev => ({ ...prev, only_online: e.target.checked }))}
+                            className="rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-xs text-slate-600">Chỉ chia khi online</span>
+                    </label>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                    {users.map(user => {
+                        const isSelected = config.eligible_user_ids.includes(user.id);
+                        return (
+                            <div
+                                key={user.id}
+                                onClick={() => toggleUser(user.id)}
+                                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${isSelected
+                                        ? 'border-blue-200 bg-blue-50 ring-1 ring-blue-200'
+                                        : 'border-slate-100 bg-white hover:border-slate-200'
+                                    }`}
+                            >
+                                <input type="checkbox" checked={isSelected} readOnly className="rounded border-slate-300 text-blue-600 pointer-events-none" />
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium text-slate-800 truncate">{user.full_name || user.email}</div>
+                                    <div className="text-[10px] text-slate-400">{user.role}</div>
+                                </div>
+                                <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium ${user.is_online ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
+                                    }`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${user.is_online ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                                    {user.is_online ? 'Online' : 'Offline'}
+                                </span>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {users.length === 0 && (
+                    <p className="text-center text-sm text-slate-400 py-6">Chưa có nhân sự telesales nào</p>
+                )}
+            </div>
+
+            {/* Recent Leads Table */}
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <h4 className="font-bold text-slate-800 flex items-center gap-2">
+                        <Phone className="w-4 h-4 text-blue-600" />
+                        Data gần đây ({leads.length})
+                    </h4>
+                </div>
+
+                {leads.length === 0 ? (
+                    <div className="p-8 text-center text-sm text-slate-400">
+                        Chưa có data nào từ Messenger
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm min-w-[700px]">
+                            <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                                <tr>
+                                    <th className="px-4 py-3 font-medium">Khách hàng</th>
+                                    <th className="px-4 py-3 font-medium">SĐT</th>
+                                    <th className="px-4 py-3 font-medium">Khu vực</th>
+                                    <th className="px-4 py-3 font-medium">Nguồn</th>
+                                    <th className="px-4 py-3 font-medium">Trạng thái</th>
+                                    <th className="px-4 py-3 font-medium">Thời gian</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {leads.map(lead => (
+                                    <tr key={lead.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-4 py-3">
+                                            <div className="font-medium text-slate-800">{lead.customer_name || '—'}</div>
+                                        </td>
+                                        <td className="px-4 py-3 font-mono text-slate-700">{lead.customer_phone}</td>
+                                        <td className="px-4 py-3 text-slate-500">
+                                            {lead.region ? (
+                                                <span className="inline-flex items-center gap-1">
+                                                    <MapPin className="w-3 h-3" /> {lead.region}
+                                                </span>
+                                            ) : '—'}
+                                        </td>
+                                        <td className="px-4 py-3 text-xs text-slate-500">
+                                            {lead.page_name || lead.source}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {lead.status === 'assigned' ? (
+                                                <div>
+                                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                                                        <Check className="w-3 h-3" /> Đã phân
+                                                    </span>
+                                                    <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
+                                                        <UserIcon className="w-3 h-3" /> {getUserName(lead.assigned_to)}
+                                                    </div>
+                                                </div>
+                                            ) : lead.status === 'pending' ? (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                                                    <Clock className="w-3 h-3" /> Đang chờ
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-500">
+                                                    {lead.status}
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-4 py-3 text-xs text-slate-500">
+                                            {new Date(lead.created_at).toLocaleString('vi-VN', {
+                                                day: '2-digit', month: '2-digit',
+                                                hour: '2-digit', minute: '2-digit'
+                                            })}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
