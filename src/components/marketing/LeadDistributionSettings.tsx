@@ -31,6 +31,12 @@ interface MarketingLead {
     assigned_to: string | null;
     assigned_at: string | null;
     created_at: string;
+    conversation_id: string | null;
+    social_conversations?: {
+        tags: string[] | null;
+        customer_type: string | null;
+        interested_products: string[] | null;
+    } | null;
 }
 
 interface FollowupConv {
@@ -54,6 +60,10 @@ export default function LeadDistributionSettings() {
     const [followups, setFollowups] = useState<FollowupConv[]>([]);
     const [totalLeads, setTotalLeads] = useState(0);
     const [totalFollowups, setTotalFollowups] = useState(0);
+    const [leadsPage, setLeadsPage] = useState(0);
+    const [leadsPageSize, setLeadsPageSize] = useState(20);
+    const [followupsPage, setFollowupsPage] = useState(0);
+    const [followupsPageSize, setFollowupsPageSize] = useState(20);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [savedRecently, setSavedRecently] = useState(false);
@@ -92,23 +102,27 @@ export default function LeadDistributionSettings() {
                 setUsers(telesales);
             }
 
-            // Load recent leads (all)
+            // Load leads with joined conversation data
+            const leadsFrom = leadsPage * leadsPageSize;
+            const leadsTo = leadsFrom + leadsPageSize - 1;
             const { data: leadsData, count: leadsCount } = await supabase
                 .from('marketing_leads')
-                .select('*', { count: 'exact' })
+                .select('*, social_conversations!conversation_id(tags, customer_type, interested_products)', { count: 'exact' })
                 .order('created_at', { ascending: false })
-                .limit(500);
+                .range(leadsFrom, leadsTo);
             if (leadsData) setLeads(leadsData);
             if (leadsCount !== null) setTotalLeads(leadsCount);
 
-            // Load follow-up conversations (no phone, needs follow-up)
+            // Load follow-up conversations
+            const fuFrom = followupsPage * followupsPageSize;
+            const fuTo = fuFrom + followupsPageSize - 1;
             const { data: followupData, count: followupCount } = await supabase
                 .from('social_conversations')
-                .select('id, customer_name, external_id, followup_count, last_message_at, needs_followup', { count: 'exact' })
+                .select('id, customer_name, external_id, followup_count, last_message_at, needs_followup, tags, interested_products', { count: 'exact' })
                 .eq('needs_followup', true)
                 .is('customer_phone', null)
                 .order('last_message_at', { ascending: true })
-                .limit(500);
+                .range(fuFrom, fuTo);
             if (followupData) setFollowups(followupData);
             if (followupCount !== null) setTotalFollowups(followupCount);
 
@@ -117,9 +131,50 @@ export default function LeadDistributionSettings() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [leadsPage, leadsPageSize, followupsPage, followupsPageSize]);
 
     useEffect(() => { loadData(); }, [loadData]);
+
+    // Pagination helper
+    const PaginationControls = ({ page, setPage, pageSize, setPageSize, total, label }: {
+        page: number; setPage: (p: number) => void;
+        pageSize: number; setPageSize: (s: number) => void;
+        total: number; label: string;
+    }) => {
+        const totalPages = Math.ceil(total / pageSize);
+        return (
+            <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50">
+                <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <span>Hiển thị</span>
+                    <select
+                        value={pageSize}
+                        onChange={(e) => { setPageSize(Number(e.target.value)); setPage(0); }}
+                        className="border border-slate-300 rounded px-2 py-1 text-xs bg-white"
+                    >
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={50}>50</option>
+                    </select>
+                    <span>/ {total} {label}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={() => setPage(Math.max(0, page - 1))}
+                        disabled={page === 0}
+                        className="px-3 py-1 text-xs rounded border border-slate-300 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition"
+                    >← Trước</button>
+                    <span className="px-3 py-1 text-xs text-slate-600">
+                        Trang {page + 1}/{totalPages || 1}
+                    </span>
+                    <button
+                        onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+                        disabled={page >= totalPages - 1}
+                        className="px-3 py-1 text-xs rounded border border-slate-300 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition"
+                    >Sau →</button>
+                </div>
+            </div>
+        );
+    };
 
     const handleSave = async () => {
         setSaving(true);
@@ -340,7 +395,7 @@ export default function LeadDistributionSettings() {
                                     <th className="px-4 py-3 font-medium">Khách hàng</th>
                                     <th className="px-4 py-3 font-medium">SĐT</th>
                                     <th className="px-4 py-3 font-medium">Khu vực</th>
-                                    <th className="px-4 py-3 font-medium">Nguồn</th>
+                                    <th className="px-4 py-3 font-medium">Thông tin KH</th>
                                     <th className="px-4 py-3 font-medium">Trạng thái</th>
                                     <th className="px-4 py-3 font-medium">Phân cho</th>
                                     <th className="px-4 py-3 font-medium">Thời gian</th>
@@ -360,8 +415,27 @@ export default function LeadDistributionSettings() {
                                                 </span>
                                             ) : '—'}
                                         </td>
-                                        <td className="px-4 py-3 text-xs text-slate-500">
-                                            {lead.page_name || lead.source}
+                                        <td className="px-4 py-3">
+                                            <div className="space-y-1">
+                                                {(() => {
+                                                    const conv = (lead as any).social_conversations;
+                                                    const tags = conv?.tags || [];
+                                                    const products = conv?.interested_products || [];
+                                                    const type = conv?.customer_type;
+                                                    return (
+                                                        <>
+                                                            {type && <span className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700 mr-1">{type}</span>}
+                                                            {products.slice(0, 2).map((p: string) => (
+                                                                <span key={p} className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-100 text-orange-700 mr-1 mb-0.5">{p}</span>
+                                                            ))}
+                                                            {tags.slice(0, 2).map((t: string) => (
+                                                                <span key={t} className="inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-700 mr-1 mb-0.5">{t}</span>
+                                                            ))}
+                                                            {(products.length + tags.length) === 0 && !type && <span className="text-xs text-slate-300">—</span>}
+                                                        </>
+                                                    );
+                                                })()}
+                                            </div>
                                         </td>
                                         <td className="px-4 py-3">
                                             {lead.status === 'assigned' ? (
@@ -402,6 +476,7 @@ export default function LeadDistributionSettings() {
                         </table>
                     </div>
                 )}
+                <PaginationControls page={leadsPage} setPage={setLeadsPage} pageSize={leadsPageSize} setPageSize={setLeadsPageSize} total={totalLeads} label="data" />
             </div>
 
             {/* Follow-up Monitoring Section */}
@@ -472,6 +547,7 @@ export default function LeadDistributionSettings() {
                         </table>
                     </div>
                 )}
+                <PaginationControls page={followupsPage} setPage={setFollowupsPage} pageSize={followupsPageSize} setPageSize={setFollowupsPageSize} total={totalFollowups} label="khách" />
             </div>
         </div>
     );
