@@ -162,7 +162,15 @@ export async function POST(request: Request) {
             for (const entry of body.entry) {
                 const pageId = entry.id; // Recipient (The Page)
                 // Handle both messaging (primary) and standby (handover) events
-                const events = [...(entry.messaging || []), ...(entry.standby || [])];
+                // Deduplicate by mid to prevent double processing
+                const allEvents = [...(entry.messaging || []), ...(entry.standby || [])];
+                const seenMids = new Set<string>();
+                const events = allEvents.filter(evt => {
+                    const mid = evt.message?.mid || evt.postback?.mid || `evt_${Date.now()}_${Math.random()}`;
+                    if (seenMids.has(mid)) return false;
+                    seenMids.add(mid);
+                    return true;
+                });
 
                 if (events.length > 0) {
                     for (const event of events) {
@@ -471,7 +479,8 @@ export async function POST(request: Request) {
                                     }
 
                                     // 4. AI Gemini Fallback — if no chatbot rule matched
-                                    if (!ruleMatched && text) {
+                                    // Respond to text messages AND image-only messages (customer sends product photo)
+                                    if (!ruleMatched && (text || attachments.length > 0)) {
                                         // Check if AI is enabled for this page
                                         const { data: pageConfig } = await supabase
                                             .from('facebook_pages')
@@ -500,8 +509,11 @@ export async function POST(request: Request) {
                                                 // Check if customer already has phone in conversation
                                                 const hasPhone = !!(conv as any).customer_phone;
 
+                                                // For image-only messages, create a descriptive text for AI
+                                                const aiText = text || '[Khách gửi hình ảnh sản phẩm/quảng cáo]';
+
                                                 const aiResult = await getAIResponse(
-                                                    text,
+                                                    aiText,
                                                     customerName,
                                                     isNewConversation,
                                                     hasPhone,

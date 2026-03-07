@@ -53,8 +53,32 @@ export function detectGender(fullName: string): string {
         return 'Anh';
     }
 
-    // Use Gemini as fallback for ambiguous names
     return 'Anh/Chị';
+}
+
+/**
+ * Extract a displayable short name from customer name.
+ * For Vietnamese personal names, use the given name (last word).
+ * For business/unrecognizable names, use the full name.
+ */
+function getDisplayName(customerName: string): string {
+    if (!customerName || customerName === 'Facebook User') return '';
+
+    const parts = customerName.trim().split(/\s+/);
+    const lastWord = (parts[parts.length - 1] || '').toLowerCase();
+    const normalized = lastWord.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+    // Check if last word is a recognized Vietnamese name
+    const isVietnameseName =
+        FEMALE_NAMES.some(n => lastWord === n || normalized === n.normalize('NFD').replace(/[\u0300-\u036f]/g, '')) ||
+        MALE_NAMES.some(n => lastWord === n || normalized === n.normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+
+    if (isVietnameseName) {
+        return parts[parts.length - 1]; // Use given name: "Nguyễn Văn Huy" → "Huy"
+    }
+
+    // For business names or unrecognizable names, use full name if short, or skip
+    return customerName.length <= 20 ? customerName : '';
 }
 
 /**
@@ -71,10 +95,13 @@ export function extractPhoneNumber(text: string): string | null {
  * Generate greeting messages (sent sequentially with delays)
  */
 export function generateGreetingMessages(customerName: string, honorific: string): string[] {
-    const shortName = customerName.split(' ').pop() || customerName;
+    const displayName = getDisplayName(customerName);
+    const greeting = displayName
+        ? `Dạ, Em chào ${honorific} ${displayName} ạ 😊`
+        : `Dạ, Em chào ${honorific} ạ 😊`;
     return [
-        `Dạ, Em chào ${honorific} ${shortName} ạ 😊`,
-        `${honorific} đang quan tâm tới sản phẩm bên em ạ`,
+        greeting,
+        `${honorific} đang quan tâm tới sản phẩm bên em ạ?`,
         `${honorific} cho em xin số điện thoại em báo kinh doanh liên hệ mình ạ`
     ];
 }
@@ -94,9 +121,10 @@ export function generatePhoneReceivedMessages(honorific: string): string[] {
  * Generate follow-up messages (sent 1-2 days later)
  */
 export function generateFollowUpMessages(customerName: string, honorific: string): string[] {
-    const shortName = customerName.split(' ').pop() || customerName;
+    const displayName = getDisplayName(customerName);
+    const callout = displayName ? `${honorific} ${displayName} ơi` : `${honorific} ơi`;
     return [
-        `Dạ, ${honorific} ${shortName} ơi`,
+        `Dạ, ${callout}`,
         `${honorific} có muốn để lại số điện thoại để bên em tư vấn thêm không ạ? 😊`
     ];
 }
