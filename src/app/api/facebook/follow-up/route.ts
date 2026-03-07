@@ -77,14 +77,15 @@ export async function GET(request: Request) {
 
         let sent = 0;
         const now = Date.now();
+        const skipped = { no_token: 0, ai_disabled: 0, too_early: 0, ai_failed: 0, send_failed: 0 };
 
         for (const conv of conversations) {
             const page = (conv as any).facebook_pages;
-            if (!page?.access_token) continue;
+            if (!page?.access_token) { skipped.no_token++; continue; }
 
             // Check if AI is enabled
             const config = (page.chatbot_config as any) || {};
-            if (config.ai_enabled === false) continue;
+            if (config.ai_enabled === false) { skipped.ai_disabled++; continue; }
 
             const currentCount = conv.followup_count || 0;
             const tierConfig = FOLLOWUP_TIERS[currentCount];
@@ -95,6 +96,7 @@ export async function GET(request: Request) {
             const hoursSinceLastMsg = (now - lastMsgTime) / (1000 * 60 * 60);
 
             if (hoursSinceLastMsg < tierConfig.minHours) {
+                skipped.too_early++;
                 continue; // Too early for this tier
             }
 
@@ -112,6 +114,7 @@ export async function GET(request: Request) {
 
             if (!aiMessage) {
                 console.log(`[Follow-up] AI failed for ${customerName}, skipping`);
+                skipped.ai_failed++;
                 continue;
             }
 
@@ -188,7 +191,8 @@ export async function GET(request: Request) {
             success: true,
             followups_sent: sent,
             total_checked: conversations.length,
-            expired_marked: expiredCount || 0
+            expired_marked: expiredCount || 0,
+            skipped
         });
 
     } catch (error: any) {
