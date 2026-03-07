@@ -617,7 +617,17 @@ export async function POST(request: Request) {
 
                                             // Auto-create lead for telesales distribution
                                             try {
-                                                await createAndAssignLead(conv.id);
+                                                await createAndAssignLead({
+                                                    conversationId: conv.id,
+                                                    customerName: customerName,
+                                                    customerPhone: aiResult.phoneDetected,
+                                                    customerAvatar: (conv as any).customer_avatar,
+                                                    region: (conv as any).customer_region,
+                                                    pageId: pageData.id,
+                                                    pageName: pageData.name,
+                                                    adId: (conv as any).ad_id,
+                                                    firstMessage: text
+                                                });
                                                 console.log(`[Lead] Auto-created lead for conv ${conv.id}`);
                                             } catch (leadErr) {
                                                 console.error('[Lead] Auto-create failed:', leadErr);
@@ -633,7 +643,17 @@ export async function POST(request: Request) {
 
                                             // Auto-create lead
                                             try {
-                                                await createAndAssignLead(conv.id);
+                                                await createAndAssignLead({
+                                                    conversationId: conv.id,
+                                                    customerName: customerName,
+                                                    customerPhone: detectedPhone,
+                                                    customerAvatar: (conv as any).customer_avatar,
+                                                    region: (conv as any).customer_region,
+                                                    pageId: pageData.id,
+                                                    pageName: pageData.name,
+                                                    adId: (conv as any).ad_id,
+                                                    firstMessage: text
+                                                });
                                                 console.log(`[Lead] Auto-created lead for detected phone in conv ${conv.id}`);
                                             } catch (leadErr) {
                                                 console.error('[Lead] Auto-create failed:', leadErr);
