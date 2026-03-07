@@ -37,6 +37,29 @@ export async function GET(request: Request) {
             { auth: { autoRefreshToken: false, persistSession: false } }
         );
 
+        // Quick Gemini debug test
+        const geminiKey = process.env.GEMINI_API_KEY;
+        let geminiDebug: any = { key_exists: !!geminiKey, key_prefix: geminiKey?.slice(0, 8) || 'MISSING' };
+        try {
+            const testRes = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ role: 'user', parts: [{ text: 'Say hello in Vietnamese, one line only' }] }],
+                        generationConfig: { maxOutputTokens: 20 }
+                    })
+                }
+            );
+            const testData = await testRes.json();
+            geminiDebug.status = testRes.status;
+            geminiDebug.reply = testData.candidates?.[0]?.content?.parts?.[0]?.text || null;
+            geminiDebug.error = testData.error || null;
+        } catch (e: any) {
+            geminiDebug.test_error = e.message;
+        }
+
         // Mark expired conversations (>7 days) as no longer needing follow-up
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
         const { data: expiredData } = await supabase
@@ -192,7 +215,8 @@ export async function GET(request: Request) {
             followups_sent: sent,
             total_checked: conversations.length,
             expired_marked: expiredCount || 0,
-            skipped
+            skipped,
+            gemini_debug: geminiDebug
         });
 
     } catch (error: any) {
