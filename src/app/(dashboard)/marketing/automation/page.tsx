@@ -44,6 +44,7 @@ export default function AutomationPage() {
     const [autoReplyComment, setAutoReplyComment] = useState(false);
     const [autoReplyCommentText, setAutoReplyCommentText] = useState('');
     const [persistentMenu, setPersistentMenu] = useState<any[]>([]);
+    const [aiEnabled, setAiEnabled] = useState(true);
     const [isSavingSettings, setIsSavingSettings] = useState(false);
     const [pages, setPages] = useState<any[]>([]);
     const [selectedPageId, setSelectedPageId] = useState<string>('');
@@ -92,6 +93,7 @@ export default function AutomationPage() {
                 setAutoReplyComment(config?.auto_reply_comment || false);
                 setAutoReplyCommentText(config?.auto_reply_comment_text || '');
                 setPersistentMenu(config?.persistent_menu || []);
+                setAiEnabled(config?.ai_enabled !== false);
             }
         }
     };
@@ -144,12 +146,13 @@ export default function AutomationPage() {
                 auto_reply_comment: autoReplyComment,
                 auto_reply_comment_text: autoReplyCommentText,
                 persistent_menu: persistentMenu,
+                ai_enabled: aiEnabled,
             });
 
             // Optimistic update
             setPages(prev => prev.map(p => p.id === selectedPageId ? {
                 ...p,
-                chatbot_config: { ...p.chatbot_config, greeting_text: greetingText, auto_hide_phone: autoHidePhone, auto_hide_all: autoHideAll, auto_hide_keywords: autoHideKeywords, auto_reply_comment: autoReplyComment, auto_reply_comment_text: autoReplyCommentText, persistent_menu: persistentMenu }
+                chatbot_config: { ...p.chatbot_config, greeting_text: greetingText, auto_hide_phone: autoHidePhone, auto_hide_all: autoHideAll, auto_hide_keywords: autoHideKeywords, auto_reply_comment: autoReplyComment, auto_reply_comment_text: autoReplyCommentText, persistent_menu: persistentMenu, ai_enabled: aiEnabled }
             } : p));
             toast.success("Đã cập nhật cấu hình lên Facebook");
         } catch (error) {
@@ -521,6 +524,47 @@ export default function AutomationPage() {
                                     value={autoReplyCommentText}
                                     onChange={e => setAutoReplyCommentText(e.target.value)}
                                 />
+                            )}
+                        </div>
+
+                        {/* AI Gemini Auto-Reply */}
+                        <div className={`p-4 rounded-lg border ${aiEnabled ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-indigo-200' : 'bg-gray-50 border-gray-200'}`}>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <input
+                                        type="checkbox"
+                                        id="aiEnabled"
+                                        className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500"
+                                        checked={aiEnabled}
+                                        onChange={e => setAiEnabled(e.target.checked)}
+                                    />
+                                    <div>
+                                        <label htmlFor="aiEnabled" className="font-medium text-slate-800 cursor-pointer select-none">
+                                            🤖 AI Gemini tự động trả lời tin nhắn
+                                        </label>
+                                        <p className="text-xs text-indigo-600">
+                                            AI nhận diện giới tính từ tên → chào Anh/Chị → xin SĐT → xác nhận. Gửi tin nhắn lần lượt như người thật.
+                                        </p>
+                                    </div>
+                                </div>
+                                {aiEnabled && (
+                                    <span className="flex items-center gap-1 text-xs font-medium px-3 py-1 rounded-full bg-green-100 text-green-700">
+                                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                        Đang hoạt động
+                                    </span>
+                                )}
+                            </div>
+                            {aiEnabled && (
+                                <div className="mt-3 pl-8 space-y-2">
+                                    <div className="text-xs text-slate-600 bg-white rounded-lg p-3 border border-slate-100">
+                                        <p className="font-semibold mb-1">📋 Quy trình AI:</p>
+                                        <ol className="list-decimal pl-4 space-y-0.5">
+                                            <li>Khách nhắn tin → AI chào + xin số điện thoại</li>
+                                            <li>Khách gửi SĐT → AI xác nhận "kinh doanh sẽ liên hệ"</li>
+                                            <li>Khách không gửi SĐT → AI hỏi lại sau 1 ngày</li>
+                                        </ol>
+                                    </div>
+                                </div>
                             )}
                         </div>
 
