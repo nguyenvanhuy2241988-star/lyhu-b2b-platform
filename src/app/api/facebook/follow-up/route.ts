@@ -1,53 +1,65 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { generateFollowUpMessages, detectGender } from '@/lib/geminiService';
+import { detectGender, callGeminiAI } from '@/lib/geminiService';
 
 /**
- * Cron Job: Follow up with customers who haven't left phone numbers
- * Runs once daily (configured in vercel.json)
- * Sends a gentle follow-up message via Messenger
+ * Cron Job: Multi-tier follow-up for customers who haven't left phone numbers
+ * 
+ * Tier 1 (after 4 hours):  Gentle ask for phone
+ * Tier 2 (after 1 day):    Friendly reminder with value prop
+ * Tier 3 (after 3 days):   Polite final message
+ * 
+ * Uses Gemini AI to generate natural, human-like messages each time.
+ * Max 3 follow-ups per conversation → then stops completely.
  */
+
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
+// Follow-up tier configuration
+const FOLLOWUP_TIERS = [
+    { tier: 1, minHours: 4, prompt: 'Nhắn 1 tin nhắn NGẮN GỌN xin số điện thoại, giọng điệu nhẹ nhàng quan tâm, như nhân viên thật đang nhắn. KHÔNG nhắc rằng đây là lần nhắc nhở.' },
+    { tier: 2, minHours: 24, prompt: 'Nhắn 1 tin nhắn NGẮN GỌN nhắc nhở xin SĐT, thân thiện và tự nhiên hơn, có thể nhắc bên em đang có chương trình tốt. KHÔNG dùng từ "nhắc lại" hay "follow-up".' },
+    { tier: 3, minHours: 72, prompt: 'Nhắn 1 tin nhắn NGẮN GỌN cuối cùng, lịch sự kết thúc, nói khi nào cần tư vấn cứ nhắn em. KHÔNG spam, KHÔNG ép buộc.' },
+];
+
 export async function GET(request: Request) {
     try {
-        // Verify cron secret (optional security)
         const authHeader = request.headers.get('authorization');
         const cronSecret = process.env.CRON_SECRET;
         if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-        const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+        const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            { auth: { autoRefreshToken: false, persistSession: false } }
+        );
 
-        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-            auth: { autoRefreshToken: false, persistSession: false }
-        });
-
-        // Find conversations that need follow-up:
+        // Find conversations needing follow-up:
         // - needs_followup = true
-        // - followup_sent = false
-        // - last_message_at > 1 day ago
-        // - has no customer_phone
-        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
+        // - No customer_phone
+        // - followup_count < 3 (max 3 attempts)
         const { data: conversations } = await supabase
             .from('social_conversations')
             .select(`
                 id, external_id, customer_name, customer_phone,
-                page_id, last_message_at,
+                page_id, last_message_at, followup_count,
                 facebook_pages!inner(page_id, access_token, chatbot_config)
             `)
             .eq('needs_followup', true)
-            .eq('followup_sent', false)
             .is('customer_phone', null)
-            .lt('last_message_at', oneDayAgo)
-            .limit(50);
+            .lt('followup_count', 3)
+            .order('last_message_at', { ascending: true })
+            .limit(30);
 
         if (!conversations || conversations.length === 0) {
-            return NextResponse.json({ success: true, followups_sent: 0 });
+            return NextResponse.json({ success: true, followups_sent: 0, message: 'No pending follow-ups' });
         }
 
         let sent = 0;
+        const now = Date.now();
 
         for (const conv of conversations) {
             const page = (conv as any).facebook_pages;
@@ -57,10 +69,39 @@ export async function GET(request: Request) {
             const config = (page.chatbot_config as any) || {};
             if (config.ai_enabled === false) continue;
 
-            const honorific = detectGender(conv.customer_name || '');
-            const messages = generateFollowUpMessages(conv.customer_name || 'bạn', honorific);
+            const currentCount = conv.followup_count || 0;
+            const tierConfig = FOLLOWUP_TIERS[currentCount];
+            if (!tierConfig) continue;
 
-            // Send follow-up messages with typing delays
+            // Check timing — enough hours passed since last message?
+            const lastMsgTime = new Date(conv.last_message_at).getTime();
+            const hoursSinceLastMsg = (now - lastMsgTime) / (1000 * 60 * 60);
+
+            if (hoursSinceLastMsg < tierConfig.minHours) {
+                continue; // Too early for this tier
+            }
+
+            const honorific = detectGender(conv.customer_name || '');
+            const customerName = conv.customer_name || 'bạn';
+
+            // Use Gemini AI to generate a natural, personalized message
+            const aiMessage = await callGeminiAI(
+                tierConfig.prompt,
+                customerName,
+                honorific,
+                [], // No chat history needed for follow-up
+                false // hasPhone = false, we want phone
+            );
+
+            if (!aiMessage) {
+                console.log(`[Follow-up] AI failed for ${customerName}, skipping`);
+                continue;
+            }
+
+            // Split into short messages if multiline
+            const messages = aiMessage.split('\n').filter(m => m.trim());
+
+            // Send messages with typing simulation
             for (let i = 0; i < messages.length; i++) {
                 // Typing indicator
                 try {
@@ -74,13 +115,13 @@ export async function GET(request: Request) {
                     });
                 } catch (e) { }
 
-                // Delay between messages (2-4 seconds)
-                const wait = i === 0 ? 1000 : 2500 + Math.floor(Math.random() * 1500);
+                // Natural delay
+                const wait = i === 0 ? 1500 : 2500 + Math.floor(Math.random() * 2000);
                 await new Promise(resolve => setTimeout(resolve, wait));
 
                 // Send message
                 try {
-                    await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`, {
+                    const sendRes = await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -88,8 +129,14 @@ export async function GET(request: Request) {
                             message: { text: messages[i] }
                         })
                     });
+                    const sendData = await sendRes.json();
+                    if (sendData.error) {
+                        console.error(`[Follow-up] Send error for ${customerName}:`, sendData.error);
+                        break; // Stop sending more messages if error
+                    }
                 } catch (e) {
-                    console.error(`[Follow-up] Send error for ${conv.customer_name}:`, e);
+                    console.error(`[Follow-up] Send error for ${customerName}:`, e);
+                    break;
                 }
             }
 
@@ -97,27 +144,31 @@ export async function GET(request: Request) {
             for (const msg of messages) {
                 await supabase.from('social_messages').insert({
                     conversation_id: conv.id,
-                    content: `[AI Follow-up]: ${msg}`,
+                    content: `[AI Follow-up #${currentCount + 1}]: ${msg}`,
                     sender_id: page.page_id,
                     is_from_page: true,
                     created_at: new Date().toISOString()
                 });
             }
 
-            // Mark follow-up as sent
+            // Update follow-up count
             await supabase.from('social_conversations').update({
-                followup_sent: true,
+                followup_count: currentCount + 1,
+                followup_sent: currentCount + 1 >= 3,  // Mark done after 3rd
                 last_message_at: new Date().toISOString()
             }).eq('id', conv.id);
 
             sent++;
-            console.log(`[Follow-up] Sent to ${conv.customer_name}`);
+            console.log(`[Follow-up] Tier ${currentCount + 1} sent to ${customerName}`);
+
+            // Small delay between customers to avoid rate limits
+            await new Promise(resolve => setTimeout(resolve, 3000));
         }
 
         return NextResponse.json({
             success: true,
             followups_sent: sent,
-            total_pending: conversations.length
+            total_checked: conversations.length
         });
 
     } catch (error: any) {
