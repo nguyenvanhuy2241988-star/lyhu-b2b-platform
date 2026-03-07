@@ -109,14 +109,29 @@ export async function callGeminiAI(
     customerMessage: string,
     customerName: string,
     honorific: string,
-    chatHistory: { role: string; content: string }[]
+    chatHistory: { role: string; content: string }[],
+    hasPhone: boolean = false
 ): Promise<string> {
     if (!GEMINI_API_KEY) {
         console.error('GEMINI_API_KEY not configured');
         return '';
     }
 
-    const systemPrompt = `Bạn là nhân viên chăm sóc khách hàng của LYHU - công ty phân phối thực phẩm (bánh tráng, khoai môn, snack, đồ ăn vặt).
+    // Different prompts based on whether we already have the customer's phone
+    const systemPrompt = hasPhone
+        ? `Bạn là nhân viên chăm sóc khách hàng của LYHU - công ty phân phối thực phẩm (bánh tráng, khoai môn, snack, đồ ăn vặt).
+
+Quy tắc:
+- Xưng hô: gọi khách là "${honorific}", xưng "em"
+- Khách ĐÃ GỬI SỐ ĐIỆN THOẠI rồi → KHÔNG xin SĐT nữa
+- Trả lời NGẮN GỌN câu hỏi của khách (1-2 câu)
+- Luôn kết thúc bằng: nhân viên kinh doanh sẽ liên hệ ${honorific} để tư vấn chi tiết hơn ạ
+- KHÔNG trả lời về giá cả chi tiết, nói "bộ phận kinh doanh sẽ báo giá cụ thể khi liên hệ ${honorific} ạ"
+- Thân thiện, đúng kiểu nhân viên Việt Nam
+- Dùng emoji vừa phải (1-2 emoji)
+
+Tên khách: ${customerName}`
+        : `Bạn là nhân viên chăm sóc khách hàng của LYHU - công ty phân phối thực phẩm (bánh tráng, khoai môn, snack, đồ ăn vặt).
 
 Quy tắc:
 - Xưng hô: gọi khách là "${honorific}", xưng "em"
@@ -217,13 +232,9 @@ export async function getAIResponse(
         };
     }
 
-    // Customer already has phone in DB → no need to ask again
-    if (hasPhoneInDB) {
-        return { messages: [], phoneDetected: null, state: 'already_has_phone' };
-    }
-
     // For other messages → use Gemini AI to respond naturally
-    const aiReply = await callGeminiAI(customerMessage, customerName, honorific, chatHistory);
+    // Pass hasPhoneInDB so AI knows whether to ask for phone or guide to sales
+    const aiReply = await callGeminiAI(customerMessage, customerName, honorific, chatHistory, hasPhoneInDB);
     if (aiReply) {
         // Split AI reply into multiple short messages if it contains \n
         const parts = aiReply.split('\n').filter(p => p.trim());
@@ -234,9 +245,12 @@ export async function getAIResponse(
         };
     }
 
-    // Fallback if Gemini fails
+    // Fallback if Gemini fails — adapt based on phone state
+    const fallbackMsg = hasPhoneInDB
+        ? `Dạ, bộ phận kinh doanh bên em sẽ liên hệ ${honorific} để tư vấn chi tiết ạ 😊`
+        : `${honorific} cho em xin số điện thoại để kinh doanh liên hệ tư vấn ạ 😊`;
     return {
-        messages: [`${honorific} cho em xin số điện thoại để kinh doanh liên hệ tư vấn ạ 😊`],
+        messages: [fallbackMsg],
         phoneDetected: null,
         state: 'fallback'
     };
