@@ -36,6 +36,10 @@ interface MarketingLead {
         tags: string[] | null;
         customer_type: string | null;
         interested_products: string[] | null;
+        referral_source: string | null;
+        ad_id: string | null;
+        source_type: string | null;
+        facebook_pages?: { name: string } | null;
     } | null;
 }
 
@@ -107,7 +111,7 @@ export default function LeadDistributionSettings() {
             const leadsTo = leadsFrom + leadsPageSize - 1;
             const { data: leadsData, count: leadsCount } = await supabase
                 .from('marketing_leads')
-                .select('*, social_conversations!conversation_id(tags, customer_type, interested_products)', { count: 'exact' })
+                .select('*, social_conversations!conversation_id(tags, customer_type, interested_products, referral_source, ad_id, source_type, facebook_pages!page_id(name))', { count: 'exact' })
                 .order('created_at', { ascending: false })
                 .range(leadsFrom, leadsTo);
             if (leadsData) setLeads(leadsData);
@@ -395,6 +399,8 @@ export default function LeadDistributionSettings() {
                                     <th className="px-4 py-3 font-medium">Khách hàng</th>
                                     <th className="px-4 py-3 font-medium">SĐT</th>
                                     <th className="px-4 py-3 font-medium">Khu vực</th>
+                                    <th className="px-4 py-3 font-medium">Fanpage</th>
+                                    <th className="px-4 py-3 font-medium">Nguồn</th>
                                     <th className="px-4 py-3 font-medium">Thông tin KH</th>
                                     <th className="px-4 py-3 font-medium">Trạng thái</th>
                                     <th className="px-4 py-3 font-medium">Phân cho</th>
@@ -414,6 +420,21 @@ export default function LeadDistributionSettings() {
                                                     <MapPin className="w-3 h-3" /> {lead.region}
                                                 </span>
                                             ) : '—'}
+                                        </td>
+                                        <td className="px-4 py-3 text-xs text-slate-600">
+                                            {(() => {
+                                                const conv = (lead as any).social_conversations;
+                                                return conv?.facebook_pages?.name || lead.page_name || '—';
+                                            })()}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {(() => {
+                                                const conv = (lead as any).social_conversations;
+                                                const isAd = conv?.referral_source === 'ADS' || conv?.ad_id || conv?.source_type === 'ads';
+                                                return isAd
+                                                    ? <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700">📎 Quảng cáo</span>
+                                                    : <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-700">🌿 Tự nhiên</span>;
+                                            })()}
                                         </td>
                                         <td className="px-4 py-3">
                                             <div className="space-y-1">
