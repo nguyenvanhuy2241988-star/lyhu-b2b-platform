@@ -193,8 +193,8 @@ export default function LeadDistributionSettings() {
                                 key={p}
                                 onClick={() => setPage(p)}
                                 className={`min-w-[28px] py-1 text-xs rounded border transition ${p === page
-                                        ? 'bg-blue-600 text-white border-blue-600 font-bold'
-                                        : 'border-slate-300 hover:bg-white text-slate-600'
+                                    ? 'bg-blue-600 text-white border-blue-600 font-bold'
+                                    : 'border-slate-300 hover:bg-white text-slate-600'
                                     }`}
                             >{p + 1}</button>
                         )
@@ -395,6 +395,64 @@ export default function LeadDistributionSettings() {
                     <p className="text-center text-sm text-slate-400 py-6">Chưa có nhân sự telesales nào</p>
                 )}
             </div>
+
+            {/* Stats per Telesales */}
+            {(() => {
+                const assignedLeads = leads.filter(l => l.assigned_to);
+                const allAssigned = totalLeads > 0 ? leads : [];
+                // Count assigned per user from visible leads
+                const statsByUser: Record<string, { name: string; count: number }> = {};
+                users.forEach(u => {
+                    if (config.eligible_user_ids.includes(u.id)) {
+                        statsByUser[u.id] = { name: u.full_name, count: 0 };
+                    }
+                });
+                leads.forEach(l => {
+                    if (l.assigned_to && statsByUser[l.assigned_to]) {
+                        statsByUser[l.assigned_to].count++;
+                    } else if (l.assigned_to) {
+                        const user = users.find(u => u.id === l.assigned_to);
+                        statsByUser[l.assigned_to] = { name: user?.full_name || 'Unknown', count: 1 };
+                    }
+                });
+                const stats = Object.values(statsByUser);
+                const maxCount = Math.max(...stats.map(s => s.count), 1);
+                const totalAssigned = leads.filter(l => l.status === 'assigned').length;
+
+                if (stats.length === 0) return null;
+
+                return (
+                    <div className="bg-white rounded-xl border border-slate-200 p-5">
+                        <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2 text-sm">
+                            📊 Thống kê phân chia Data
+                            <span className="text-[10px] font-normal text-slate-400 ml-auto">
+                                (trang hiện tại: {leads.length} lead)
+                            </span>
+                        </h4>
+                        <div className="space-y-2">
+                            {stats.map(s => (
+                                <div key={s.name} className="flex items-center gap-3">
+                                    <span className="text-xs text-slate-600 w-28 truncate font-medium">{s.name}</span>
+                                    <div className="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-end px-2 transition-all duration-500"
+                                            style={{ width: `${Math.max((s.count / maxCount) * 100, s.count > 0 ? 8 : 0)}%` }}
+                                        >
+                                            {s.count > 0 && <span className="text-[10px] text-white font-bold">{s.count}</span>}
+                                        </div>
+                                    </div>
+                                    <span className="text-xs text-slate-500 w-8 text-right">{s.count}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-3 pt-3 border-t border-slate-100 flex gap-4 text-[10px] text-slate-400">
+                            <span>🟢 Đã phân: <strong className="text-emerald-600">{totalAssigned}</strong></span>
+                            <span>🟡 Đang chờ: <strong className="text-amber-600">{leads.filter(l => l.status === 'pending').length}</strong></span>
+                            <span>📋 Lịch sử: <strong className="text-slate-600">{leads.filter(l => l.status === 'historical').length}</strong></span>
+                        </div>
+                    </div>
+                );
+            })()}
 
             {/* Recent Leads Table */}
             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
