@@ -155,32 +155,72 @@ export async function assignLeadToTelesales(marketingLeadId: string): Promise<{
             })
             .eq('id', marketingLeadId);
 
-        // Create CRM lead for this telesales
+        // Create CRM customer + deal for this telesales
         const regionText = lead.region || 'Chưa rõ';
-        const { error: crmError } = await supabase
-            .from('crm_leads')
-            .insert({
-                user_id: chosen.user_id,
-                assigned_to: chosen.user_id,
-                title: `[FB] ${lead.customer_name} - ${regionText}`,
-                customer_name: lead.customer_name,
-                phone: lead.customer_phone,
-                stage: 'new_data',
-                priority: 'normal',
-                note: [
-                    `📱 SĐT: ${lead.customer_phone}`,
-                    `📍 Khu vực: ${regionText}`,
-                    `📄 Nguồn: ${lead.page_name || 'Facebook Messenger'}`,
-                    lead.ad_id ? `📢 Quảng cáo: ${lead.ad_id}` : null,
-                    lead.first_message ? `💬 Tin nhắn: ${lead.first_message}` : null,
-                ].filter(Boolean).join('\n'),
-                order: 0
-            });
 
-        if (crmError) {
-            console.error('[LeadDist] CRM create error:', crmError);
+        // 1. Find or create customer by phone
+        let customerId: string | null = null;
+        const { data: existingCustomer } = await supabase
+            .from('customers')
+            .select('id')
+            .eq('phone', lead.customer_phone)
+            .maybeSingle();
+
+        if (existingCustomer) {
+            customerId = existingCustomer.id;
         } else {
-            console.log(`[LeadDist] ✅ Assigned to ${chosen.full_name} (${chosen.user_id})`);
+            const { data: newCustomer, error: custError } = await supabase
+                .from('customers')
+                .insert({
+                    name: lead.customer_name || 'Khách FB',
+                    phone: lead.customer_phone,
+                    province: lead.region || null,
+                    owner_user_id: chosen.user_id,
+                    type: 'tap_hoa',
+                    status: 'active'
+                })
+                .select('id')
+                .single();
+
+            if (custError) {
+                console.error('[LeadDist] Customer create error:', custError);
+            } else {
+                customerId = newCustomer.id;
+            }
+        }
+
+        // 2. Create CRM deal
+        if (customerId) {
+            const { error: dealError } = await supabase
+                .from('crm_deals')
+                .insert({
+                    title: `[FB] ${lead.customer_name} - ${regionText}`,
+                    customer_id: customerId,
+                    stage: 'new_data',
+                    priority: 'normal',
+                    source: 'data_moi',
+                    source_category: 'COMPANY',
+                    source_detail: 'Facebook Messenger',
+                    owner_user_id: chosen.user_id,
+                    status: 'open',
+                    is_new_customer: !existingCustomer,
+                    note: [
+                        `📱 SĐT: ${lead.customer_phone}`,
+                        `📍 Khu vực: ${regionText}`,
+                        `📄 Nguồn: ${lead.page_name || 'Facebook Messenger'}`,
+                        lead.ad_id ? `📢 Quảng cáo: ${lead.ad_id}` : null,
+                        lead.first_message ? `💬 Tin nhắn: ${lead.first_message}` : null,
+                    ].filter(Boolean).join('\n'),
+                    tags: ['facebook', 'auto-distributed']
+                });
+
+            if (dealError) {
+                console.error('[LeadDist] CRM deal create error:', dealError);
+            } else {
+                console.log(`[LeadDist] ✅ Assigned to ${chosen.full_name} (${chosen.user_id}) — customer + deal created`);
+            }
+        } else {
+            console.error('[LeadDist] Could not create customer, skipping deal creation');
         }
 
         return { assignedTo: chosen.user_id, assignedName: chosen.full_name };
