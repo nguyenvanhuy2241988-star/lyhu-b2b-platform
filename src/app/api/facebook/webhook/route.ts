@@ -375,8 +375,10 @@ export async function POST(request: Request) {
                             };
 
                             // Auto-detect Vietnamese phone numbers from customer messages
-                            const phoneRegex = /(0[3|5|7|8|9])+([0-9]{8})\b/g;
-                            const phoneMatch = text.match(phoneRegex);
+                            // Strip dots, spaces, dashes for formats like 0933.661.095
+                            const cleanedText = text.replace(/[\.\s\-]/g, '');
+                            const phoneRegex = /(0[35789])([0-9]{8})\b/g;
+                            const phoneMatch = cleanedText.match(phoneRegex);
                             if (phoneMatch) {
                                 upsertData.customer_phone = phoneMatch[0];
                             }

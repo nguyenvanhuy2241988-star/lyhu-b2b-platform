@@ -83,11 +83,14 @@ function getDisplayName(customerName: string): string {
 
 /**
  * Check if message contains a Vietnamese phone number
+ * Handles formats: 0933661095, 0933.661.095, 0933 661 095, 0933-661-095
  */
 export function extractPhoneNumber(text: string): string | null {
     if (!text) return null;
-    const phoneRegex = /(0[3|5|7|8|9])+([0-9]{8})\b/g;
-    const match = text.match(phoneRegex);
+    // Strip dots, spaces, dashes from text before matching
+    const cleaned = text.replace(/[.\s\-]/g, '');
+    const phoneRegex = /(0[35789])([0-9]{8})\b/g;
+    const match = cleaned.match(phoneRegex);
     return match ? match[0] : null;
 }
 
