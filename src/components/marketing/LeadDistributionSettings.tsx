@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { Zap, Users, Loader2, RefreshCw, Check, Clock, Phone, MapPin, MessageSquare, User as UserIcon, Bell, AlertCircle } from 'lucide-react';
 
@@ -74,6 +74,23 @@ export default function LeadDistributionSettings() {
     const [leadsSearch, setLeadsSearch] = useState('');
     const [leadsStatusFilter, setLeadsStatusFilter] = useState('all');
     const [followupsSearch, setFollowupsSearch] = useState('');
+    // Debounced search values — only trigger API after 500ms pause
+    const [debouncedLeadsSearch, setDebouncedLeadsSearch] = useState('');
+    const [debouncedFollowupsSearch, setDebouncedFollowupsSearch] = useState('');
+    const leadsTimerRef = useRef<ReturnType<typeof setTimeout>>();
+    const fuTimerRef = useRef<ReturnType<typeof setTimeout>>();
+
+    useEffect(() => {
+        leadsTimerRef.current && clearTimeout(leadsTimerRef.current);
+        leadsTimerRef.current = setTimeout(() => { setDebouncedLeadsSearch(leadsSearch); setLeadsPage(0); }, 500);
+        return () => leadsTimerRef.current && clearTimeout(leadsTimerRef.current);
+    }, [leadsSearch]);
+
+    useEffect(() => {
+        fuTimerRef.current && clearTimeout(fuTimerRef.current);
+        fuTimerRef.current = setTimeout(() => { setDebouncedFollowupsSearch(followupsSearch); setFollowupsPage(0); }, 500);
+        return () => fuTimerRef.current && clearTimeout(fuTimerRef.current);
+    }, [followupsSearch]);
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -115,8 +132,8 @@ export default function LeadDistributionSettings() {
             let leadsQuery = supabase
                 .from('marketing_leads')
                 .select('*, social_conversations!conversation_id(tags, customer_type, interested_products, referral_source, ad_id, source_type, facebook_pages!page_id(name))', { count: 'exact' });
-            if (leadsSearch.trim()) {
-                leadsQuery = leadsQuery.or(`customer_name.ilike.%${leadsSearch.trim()}%,customer_phone.ilike.%${leadsSearch.trim()}%`);
+            if (debouncedLeadsSearch.trim()) {
+                leadsQuery = leadsQuery.or(`customer_name.ilike.%${debouncedLeadsSearch.trim()}%,customer_phone.ilike.%${debouncedLeadsSearch.trim()}%`);
             }
             if (leadsStatusFilter !== 'all') {
                 leadsQuery = leadsQuery.eq('status', leadsStatusFilter);
@@ -135,8 +152,8 @@ export default function LeadDistributionSettings() {
                 .select('id, customer_name, external_id, followup_count, last_message_at, needs_followup, tags, interested_products', { count: 'exact' })
                 .eq('needs_followup', true)
                 .is('customer_phone', null);
-            if (followupsSearch.trim()) {
-                fuQuery = fuQuery.ilike('customer_name', `%${followupsSearch.trim()}%`);
+            if (debouncedFollowupsSearch.trim()) {
+                fuQuery = fuQuery.ilike('customer_name', `%${debouncedFollowupsSearch.trim()}%`);
             }
             const { data: followupData, count: followupCount } = await fuQuery
                 .order('last_message_at', { ascending: true })
@@ -149,7 +166,7 @@ export default function LeadDistributionSettings() {
         } finally {
             setLoading(false);
         }
-    }, [leadsPage, leadsPageSize, followupsPage, followupsPageSize, leadsSearch, leadsStatusFilter, followupsSearch]);
+    }, [leadsPage, leadsPageSize, followupsPage, followupsPageSize, debouncedLeadsSearch, leadsStatusFilter, debouncedFollowupsSearch]);
 
     useEffect(() => { loadData(); }, [loadData]);
 
@@ -494,7 +511,7 @@ export default function LeadDistributionSettings() {
                         type="text"
                         placeholder="🔍 Tìm theo tên, SĐT..."
                         value={leadsSearch}
-                        onChange={(e) => { setLeadsSearch(e.target.value); setLeadsPage(0); }}
+                        onChange={(e) => setLeadsSearch(e.target.value)}
                         className="flex-1 px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                     />
                     <select
@@ -651,7 +668,7 @@ export default function LeadDistributionSettings() {
                         type="text"
                         placeholder="🔍 Tìm theo tên khách..."
                         value={followupsSearch}
-                        onChange={(e) => { setFollowupsSearch(e.target.value); setFollowupsPage(0); }}
+                        onChange={(e) => setFollowupsSearch(e.target.value)}
                         className="w-full max-w-sm px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
                     />
                 </div>
