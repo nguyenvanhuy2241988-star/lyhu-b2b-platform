@@ -123,6 +123,7 @@ export async function GET(request: Request) {
             const messages = aiMessage.split('\n').filter(m => m.trim());
 
             // Send messages with typing simulation
+            let sendSuccess = true;
             for (let i = 0; i < messages.length; i++) {
                 // Typing indicator
                 try {
@@ -155,15 +156,22 @@ export async function GET(request: Request) {
                     const sendData = await sendRes.json();
                     if (sendData.error) {
                         console.error(`[Follow-up] Send error for ${customerName}:`, sendData.error);
-                        break; // Stop sending more messages if error
+                        sendSuccess = false;
+                        break;
                     }
                 } catch (e) {
                     console.error(`[Follow-up] Send error for ${customerName}:`, e);
+                    sendSuccess = false;
                     break;
                 }
             }
 
-            // Save follow-up messages to DB
+            if (!sendSuccess) {
+                skipped.send_failed++;
+                continue; // Skip DB update if send failed
+            }
+
+            // Save follow-up messages to DB (only if sent successfully)
             for (const msg of messages) {
                 await supabase.from('social_messages').insert({
                     conversation_id: conv.id,
@@ -174,10 +182,10 @@ export async function GET(request: Request) {
                 });
             }
 
-            // Update follow-up count
+            // Update follow-up count (only if sent successfully)
             await supabase.from('social_conversations').update({
                 followup_count: currentCount + 1,
-                followup_sent: currentCount + 1 >= 3,  // Mark done after 3rd
+                followup_sent: currentCount + 1 >= 3,
                 last_message_at: new Date().toISOString()
             }).eq('id', conv.id);
 
