@@ -296,11 +296,34 @@ export async function POST(request: Request) {
                             const needsReferralCheck = isNewConversation || (existingConv && !existingConv.ad_id);
                             if (!referral && needsReferralCheck && mid && !mid.startsWith('postback_') && pageData.access_token) {
                                 try {
+                                    // Method 1: Check current message for referral
                                     const msgRes = await fetch(`https://graph.facebook.com/v21.0/${mid}?fields=referral,from,message,tags&access_token=${pageData.access_token}`);
                                     const msgData = await msgRes.json();
                                     if (msgData.referral) {
-                                        console.log("Found Referral via Graph API:", msgData.referral);
+                                        console.log("Found Referral via Graph API (current msg):", msgData.referral);
                                         referral = msgData.referral;
+                                    }
+
+                                    // Method 2: Check conversation's FIRST message for referral (ad click creates postback)
+                                    if (!referral) {
+                                        try {
+                                            const convMsgRes = await fetch(
+                                                `https://graph.facebook.com/v21.0/${pageId}/conversations?user_id=${senderId}&fields=messages.limit(1){message,from,tags}&access_token=${pageData.access_token}`
+                                            );
+                                            const convMsgData = await convMsgRes.json();
+                                            const firstConv = convMsgData?.data?.[0];
+                                            if (firstConv?.messages?.data) {
+                                                // Check if conversation has ad-related tags
+                                                for (const msg of firstConv.messages.data) {
+                                                    if (msg.tags?.some((t: any) => t.name === 'sponsored_message' || t.name === 'ads')) {
+                                                        console.log("Found ad tag in conversation messages");
+                                                        referral = { source: 'ADS', ad_id: null };
+                                                    }
+                                                }
+                                            }
+                                        } catch (e2) {
+                                            console.error("Conv message check failed:", e2);
+                                        }
                                     }
                                 } catch (e) {
                                     console.error("Failed to fetch message details:", e);
