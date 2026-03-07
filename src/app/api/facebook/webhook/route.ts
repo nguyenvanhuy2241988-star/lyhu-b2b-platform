@@ -608,12 +608,12 @@ export async function POST(request: Request) {
                                         }
 
                                         // If AI detected a phone number, update conversation
-                                        if (aiResult.phoneDetected && aiResult.phoneNumber) {
+                                        if (aiResult.phoneDetected) {
                                             await supabase.from('social_conversations').update({
-                                                customer_phone: aiResult.phoneNumber,
+                                                customer_phone: aiResult.phoneDetected,
                                                 needs_followup: false
                                             }).eq('id', conv.id);
-                                            console.log(`[AI] Phone detected: ${aiResult.phoneNumber}`);
+                                            console.log(`[AI] Phone detected: ${aiResult.phoneDetected}`);
 
                                             // Auto-create lead for telesales distribution
                                             try {
