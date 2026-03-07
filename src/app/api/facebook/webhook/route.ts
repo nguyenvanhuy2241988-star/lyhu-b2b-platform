@@ -374,14 +374,12 @@ export async function POST(request: Request) {
                                 last_message_at: new Date().toISOString()
                             };
 
-                            // Auto-detect Vietnamese phone numbers from customer messages
-                            // Strip dots, spaces, dashes for formats like 0933.661.095
-                            const cleanedText = text.replace(/[\.\s\-]/g, '');
-                            const phoneRegex = /(0[35789])([0-9]{8})\b/g;
-                            const phoneMatch = cleanedText.match(phoneRegex);
-                            if (phoneMatch) {
-                                upsertData.customer_phone = phoneMatch[0];
+                            // Auto-detect Vietnamese phone numbers (uses same robust regex as AI)
+                            const detectedPhone = extractPhoneNumber(text);
+                            if (detectedPhone) {
+                                upsertData.customer_phone = detectedPhone;
                             }
+
 
                             // Auto-detect Vietnamese region from message
                             const regionKeywords: Record<string, string> = {
