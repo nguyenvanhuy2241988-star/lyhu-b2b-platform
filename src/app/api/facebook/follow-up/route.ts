@@ -37,10 +37,26 @@ export async function GET(request: Request) {
             { auth: { autoRefreshToken: false, persistSession: false } }
         );
 
+        // Mark expired conversations (>7 days) as no longer needing follow-up
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: expiredData } = await supabase
+            .from('social_conversations')
+            .update({ needs_followup: false, followup_sent: true })
+            .eq('needs_followup', true)
+            .is('customer_phone', null)
+            .lt('last_message_at', sevenDaysAgo)
+            .select('id');
+        const expiredCount = expiredData?.length || 0;
+
+        if (expiredCount && expiredCount > 0) {
+            console.log(`[Follow-up] Marked ${expiredCount} expired conversations (>7 days)`);
+        }
+
         // Find conversations needing follow-up:
         // - needs_followup = true
         // - No customer_phone
         // - followup_count < 3 (max 3 attempts)
+        // - last_message_at within 7 days (Facebook messaging window)
         const { data: conversations } = await supabase
             .from('social_conversations')
             .select(`
@@ -51,6 +67,7 @@ export async function GET(request: Request) {
             .eq('needs_followup', true)
             .is('customer_phone', null)
             .lt('followup_count', 3)
+            .gte('last_message_at', sevenDaysAgo)
             .order('last_message_at', { ascending: true })
             .limit(30);
 
@@ -119,12 +136,14 @@ export async function GET(request: Request) {
                 const wait = i === 0 ? 1500 : 2500 + Math.floor(Math.random() * 2000);
                 await new Promise(resolve => setTimeout(resolve, wait));
 
-                // Send message
+                // Send message with HUMAN_AGENT tag (extends messaging window to 7 days)
                 try {
                     const sendRes = await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
+                            messaging_type: 'MESSAGE_TAG',
+                            tag: 'HUMAN_AGENT',
                             recipient: { id: conv.external_id },
                             message: { text: messages[i] }
                         })
@@ -168,7 +187,8 @@ export async function GET(request: Request) {
         return NextResponse.json({
             success: true,
             followups_sent: sent,
-            total_checked: conversations.length
+            total_checked: conversations.length,
+            expired_marked: expiredCount || 0
         });
 
     } catch (error: any) {
