@@ -1,7 +1,43 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { getAIResponse, extractPhoneNumber } from '@/lib/geminiService';
 
 const VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN || 'lyhu_verify_token_123';
+
+// Helper: send multiple messages with delays (mimics human typing)
+async function sendSequentialMessages(recipientId: string, messages: string[], pageToken: string, delayMs: number = 2500) {
+    for (let i = 0; i < messages.length; i++) {
+        // Show typing indicator
+        try {
+            await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${pageToken}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    recipient: { id: recipientId },
+                    sender_action: 'typing_on'
+                })
+            });
+        } catch (e) { }
+
+        // Wait before sending (random 2-4 seconds to seem natural)
+        const wait = i === 0 ? 1000 : delayMs + Math.floor(Math.random() * 1500);
+        await new Promise(resolve => setTimeout(resolve, wait));
+
+        // Send message
+        try {
+            await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${pageToken}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    recipient: { id: recipientId },
+                    message: { text: messages[i] }
+                })
+            });
+        } catch (e) {
+            console.error('Send sequential message error:', e);
+        }
+    }
+}
 
 // Helper to send reply to Facebook
 // Helper to send reply to Facebook
@@ -235,7 +271,7 @@ export async function POST(request: Request) {
                             // Check if conversation already exists
                             const { data: existingConv } = await supabase
                                 .from('social_conversations')
-                                .select('id, customer_name, ad_id')
+                                .select('id, customer_name, ad_id, customer_phone')
                                 .eq('platform', 'facebook')
                                 .eq('external_id', senderId)
                                 .single();
@@ -397,6 +433,8 @@ export async function POST(request: Request) {
 
                                 // 3. Chatbot Logic
                                 if (pageData.access_token) {
+                                    let ruleMatched = false;
+
                                     const { data: rules } = await supabase
                                         .from('chatbot_rules')
                                         .select('*')
@@ -408,9 +446,6 @@ export async function POST(request: Request) {
                                             const textLower = text.toLowerCase();
                                             const keywordLower = rule.keyword.toLowerCase();
 
-                                            // Simple 'Contains' Match
-                                            // Ensure exact match for Postback/Welcome usually?
-                                            // But configured per rule (match_type).
                                             let isMatch = false;
                                             if (rule.match_type === 'exact') {
                                                 isMatch = textLower === keywordLower;
@@ -419,6 +454,7 @@ export async function POST(request: Request) {
                                             }
 
                                             if (isMatch) {
+                                                ruleMatched = true;
                                                 await sendReply(senderId, rule, pageData.access_token);
 
                                                 // Save Bot Reply
@@ -430,6 +466,86 @@ export async function POST(request: Request) {
                                                     created_at: new Date().toISOString()
                                                 });
                                                 break;
+                                            }
+                                        }
+                                    }
+
+                                    // 4. AI Gemini Fallback — if no chatbot rule matched
+                                    if (!ruleMatched && text) {
+                                        // Check if AI is enabled for this page
+                                        const { data: pageConfig } = await supabase
+                                            .from('facebook_pages')
+                                            .select('chatbot_config')
+                                            .eq('id', pageData.id)
+                                            .single();
+
+                                        const config = (pageConfig?.chatbot_config as any) || {};
+                                        const aiEnabled = config.ai_enabled !== false; // Default ON
+
+                                        if (aiEnabled) {
+                                            try {
+                                                // Get recent chat history for context
+                                                const { data: recentMsgs } = await supabase
+                                                    .from('social_messages')
+                                                    .select('content, is_from_page')
+                                                    .eq('conversation_id', conv.id)
+                                                    .order('created_at', { ascending: false })
+                                                    .limit(6);
+
+                                                const chatHistory = (recentMsgs || []).reverse().map(m => ({
+                                                    role: m.is_from_page ? 'assistant' : 'customer',
+                                                    content: m.content
+                                                }));
+
+                                                // Check if customer already has phone in conversation
+                                                const hasPhone = !!(conv as any).customer_phone;
+
+                                                const aiResult = await getAIResponse(
+                                                    text,
+                                                    customerName,
+                                                    isNewConversation,
+                                                    hasPhone,
+                                                    chatHistory
+                                                );
+
+                                                if (aiResult.messages.length > 0) {
+                                                    console.log(`[AI] State: ${aiResult.state}, Messages: ${aiResult.messages.length}`);
+
+                                                    // Send messages sequentially with typing delays
+                                                    await sendSequentialMessages(
+                                                        senderId,
+                                                        aiResult.messages,
+                                                        pageData.access_token
+                                                    );
+
+                                                    // Save AI messages to DB
+                                                    for (const msg of aiResult.messages) {
+                                                        await supabase.from('social_messages').insert({
+                                                            conversation_id: conv.id,
+                                                            content: `[AI]: ${msg}`,
+                                                            sender_id: pageId,
+                                                            is_from_page: true,
+                                                            created_at: new Date().toISOString()
+                                                        });
+                                                    }
+
+                                                    // If phone detected, save it
+                                                    if (aiResult.phoneDetected) {
+                                                        await supabase.from('social_conversations').update({
+                                                            customer_phone: aiResult.phoneDetected
+                                                        }).eq('id', conv.id);
+                                                        console.log(`[AI] Phone saved: ${aiResult.phoneDetected}`);
+                                                    }
+
+                                                    // Mark needs_followup if no phone yet
+                                                    if (!aiResult.phoneDetected && aiResult.state !== 'already_has_phone') {
+                                                        await supabase.from('social_conversations').update({
+                                                            needs_followup: true
+                                                        }).eq('id', conv.id);
+                                                    }
+                                                }
+                                            } catch (aiError) {
+                                                console.error('[AI] Error:', aiError);
                                             }
                                         }
                                     }
