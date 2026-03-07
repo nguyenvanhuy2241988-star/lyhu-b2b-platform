@@ -52,6 +52,8 @@ export default function LeadDistributionSettings() {
     const [users, setUsers] = useState<TelesalesUser[]>([]);
     const [leads, setLeads] = useState<MarketingLead[]>([]);
     const [followups, setFollowups] = useState<FollowupConv[]>([]);
+    const [totalLeads, setTotalLeads] = useState(0);
+    const [totalFollowups, setTotalFollowups] = useState(0);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [savedRecently, setSavedRecently] = useState(false);
@@ -90,23 +92,25 @@ export default function LeadDistributionSettings() {
                 setUsers(telesales);
             }
 
-            // Load recent leads (last 50)
-            const { data: leadsData } = await supabase
+            // Load recent leads (all)
+            const { data: leadsData, count: leadsCount } = await supabase
                 .from('marketing_leads')
-                .select('*')
+                .select('*', { count: 'exact' })
                 .order('created_at', { ascending: false })
-                .limit(50);
+                .limit(500);
             if (leadsData) setLeads(leadsData);
+            if (leadsCount !== null) setTotalLeads(leadsCount);
 
             // Load follow-up conversations (no phone, needs follow-up)
-            const { data: followupData } = await supabase
+            const { data: followupData, count: followupCount } = await supabase
                 .from('social_conversations')
-                .select('id, customer_name, external_id, followup_count, last_message_at, needs_followup')
+                .select('id, customer_name, external_id, followup_count, last_message_at, needs_followup', { count: 'exact' })
                 .eq('needs_followup', true)
                 .is('customer_phone', null)
                 .order('last_message_at', { ascending: true })
-                .limit(50);
+                .limit(500);
             if (followupData) setFollowups(followupData);
+            if (followupCount !== null) setTotalFollowups(followupCount);
 
         } catch (err) {
             console.error('Load lead dist data error:', err);
@@ -309,8 +313,19 @@ export default function LeadDistributionSettings() {
                 <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                     <h4 className="font-bold text-slate-800 flex items-center gap-2">
                         <Phone className="w-4 h-4 text-blue-600" />
-                        Data gần đây ({leads.length})
+                        Data có SĐT ({totalLeads})
                     </h4>
+                    <div className="flex items-center gap-3 text-xs">
+                        <span className="px-2 py-1 rounded-full bg-amber-100 text-amber-700 font-medium">
+                            🟡 {pendingCount} đang chờ
+                        </span>
+                        <span className="px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">
+                            🟢 {assignedCount} đã phân
+                        </span>
+                        <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-500 font-medium">
+                            📋 {leads.filter(l => l.status === 'historical').length} lịch sử
+                        </span>
+                    </div>
                 </div>
 
                 {leads.length === 0 ? (
@@ -327,6 +342,7 @@ export default function LeadDistributionSettings() {
                                     <th className="px-4 py-3 font-medium">Khu vực</th>
                                     <th className="px-4 py-3 font-medium">Nguồn</th>
                                     <th className="px-4 py-3 font-medium">Trạng thái</th>
+                                    <th className="px-4 py-3 font-medium">Phân cho</th>
                                     <th className="px-4 py-3 font-medium">Thời gian</th>
                                 </tr>
                             </thead>
@@ -367,6 +383,13 @@ export default function LeadDistributionSettings() {
                                                 </span>
                                             )}
                                         </td>
+                                        <td className="px-4 py-3 text-xs text-slate-600">
+                                            {lead.assigned_to ? (
+                                                <span className="inline-flex items-center gap-1">
+                                                    <UserIcon className="w-3 h-3" /> {getUserName(lead.assigned_to)}
+                                                </span>
+                                            ) : '—'}
+                                        </td>
                                         <td className="px-4 py-3 text-xs text-slate-500">
                                             {new Date(lead.created_at).toLocaleString('vi-VN', {
                                                 day: '2-digit', month: '2-digit',
@@ -386,7 +409,7 @@ export default function LeadDistributionSettings() {
                 <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                     <h4 className="font-bold text-slate-800 flex items-center gap-2">
                         <Bell className="w-4 h-4 text-purple-600" />
-                        AI Follow-up — Nhắn lại xin SĐT
+                        AI Follow-up — Nhắn lại xin SĐT ({totalFollowups})
                     </h4>
                     <div className="flex items-center gap-3 text-xs">
                         <span className="px-2 py-1 rounded-full bg-purple-100 text-purple-700 font-medium">
