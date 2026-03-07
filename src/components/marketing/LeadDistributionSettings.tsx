@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { Zap, Users, Loader2, RefreshCw, Check, Clock, Phone, MapPin, MessageSquare, User as UserIcon } from 'lucide-react';
+import { Zap, Users, Loader2, RefreshCw, Check, Clock, Phone, MapPin, MessageSquare, User as UserIcon, Bell, AlertCircle } from 'lucide-react';
 
 interface TelesalesUser {
     id: string;
@@ -33,6 +33,15 @@ interface MarketingLead {
     created_at: string;
 }
 
+interface FollowupConv {
+    id: string;
+    customer_name: string;
+    external_id: string;
+    followup_count: number;
+    last_message_at: string;
+    needs_followup: boolean;
+}
+
 export default function LeadDistributionSettings() {
     const [config, setConfig] = useState<DistConfig>({
         enabled: true,
@@ -42,6 +51,7 @@ export default function LeadDistributionSettings() {
     });
     const [users, setUsers] = useState<TelesalesUser[]>([]);
     const [leads, setLeads] = useState<MarketingLead[]>([]);
+    const [followups, setFollowups] = useState<FollowupConv[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [savedRecently, setSavedRecently] = useState(false);
@@ -87,6 +97,16 @@ export default function LeadDistributionSettings() {
                 .order('created_at', { ascending: false })
                 .limit(50);
             if (leadsData) setLeads(leadsData);
+
+            // Load follow-up conversations (no phone, needs follow-up)
+            const { data: followupData } = await supabase
+                .from('social_conversations')
+                .select('id, customer_name, external_id, followup_count, last_message_at, needs_followup')
+                .eq('needs_followup', true)
+                .is('customer_phone', null)
+                .order('last_message_at', { ascending: true })
+                .limit(50);
+            if (followupData) setFollowups(followupData);
 
         } catch (err) {
             console.error('Load lead dist data error:', err);
@@ -149,6 +169,8 @@ export default function LeadDistributionSettings() {
     const pendingCount = leads.filter(l => l.status === 'pending').length;
     const assignedCount = leads.filter(l => l.status === 'assigned').length;
     const onlineEligible = users.filter(u => config.eligible_user_ids.includes(u.id) && u.is_online).length;
+    const followupPending = followups.filter(f => (f.followup_count || 0) < 3).length;
+    const followupDone = followups.filter(f => (f.followup_count || 0) >= 3).length;
 
     // Get user name by id
     const getUserName = (id: string | null) => {
@@ -258,8 +280,8 @@ export default function LeadDistributionSettings() {
                                 key={user.id}
                                 onClick={() => toggleUser(user.id)}
                                 className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${isSelected
-                                        ? 'border-blue-200 bg-blue-50 ring-1 ring-blue-200'
-                                        : 'border-slate-100 bg-white hover:border-slate-200'
+                                    ? 'border-blue-200 bg-blue-50 ring-1 ring-blue-200'
+                                    : 'border-slate-100 bg-white hover:border-slate-200'
                                     }`}
                             >
                                 <input type="checkbox" checked={isSelected} readOnly className="rounded border-slate-300 text-blue-600 pointer-events-none" />
@@ -353,6 +375,76 @@ export default function LeadDistributionSettings() {
                                         </td>
                                     </tr>
                                 ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+
+            {/* Follow-up Monitoring Section */}
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+                    <h4 className="font-bold text-slate-800 flex items-center gap-2">
+                        <Bell className="w-4 h-4 text-purple-600" />
+                        AI Follow-up — Nhắn lại xin SĐT
+                    </h4>
+                    <div className="flex items-center gap-3 text-xs">
+                        <span className="px-2 py-1 rounded-full bg-purple-100 text-purple-700 font-medium">
+                            ⏳ {followupPending} đang chờ nhắn
+                        </span>
+                        <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-500 font-medium">
+                            ✅ {followupDone} đã nhắn 3 lần
+                        </span>
+                        <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-600 font-medium">
+                            🔄 Cron mỗi 2 giờ
+                        </span>
+                    </div>
+                </div>
+
+                {followups.length === 0 ? (
+                    <div className="p-8 text-center text-sm text-slate-400">
+                        <AlertCircle className="w-5 h-5 mx-auto mb-2 text-slate-300" />
+                        Tất cả khách đã gửi SĐT hoặc chưa có cuộc trò chuyện nào
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                            <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                                <tr>
+                                    <th className="px-4 py-3 font-medium">Khách hàng</th>
+                                    <th className="px-4 py-3 font-medium">Lần nhắc</th>
+                                    <th className="px-4 py-3 font-medium">Trạng thái</th>
+                                    <th className="px-4 py-3 font-medium">Tin nhắn cuối</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {followups.map(f => {
+                                    const count = f.followup_count || 0;
+                                    const hoursSince = Math.round((Date.now() - new Date(f.last_message_at).getTime()) / (1000 * 60 * 60));
+                                    const tierLabels = ['Chưa nhắc', 'Đã nhắc lần 1', 'Đã nhắc lần 2', 'Đã nhắc 3 lần ✋'];
+                                    return (
+                                        <tr key={f.id} className="hover:bg-slate-50 transition-colors">
+                                            <td className="px-4 py-3 font-medium text-slate-800">{f.customer_name || '—'}</td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center gap-1">
+                                                    {[0, 1, 2].map(i => (
+                                                        <div key={i} className={`w-3 h-3 rounded-full ${i < count ? 'bg-purple-500' : 'bg-slate-200'}`} />
+                                                    ))}
+                                                    <span className="text-xs text-slate-500 ml-1">{count}/3</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${count >= 3 ? 'bg-slate-100 text-slate-500' : count > 0 ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-700'
+                                                    }`}>
+                                                    {tierLabels[Math.min(count, 3)]}
+                                                </span>
+                                            </td>
+                                            <td className="px-4 py-3 text-xs text-slate-500">
+                                                {hoursSince < 1 ? 'Vừa xong' : hoursSince < 24 ? `${hoursSince} giờ trước` : `${Math.round(hoursSince / 24)} ngày trước`}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
