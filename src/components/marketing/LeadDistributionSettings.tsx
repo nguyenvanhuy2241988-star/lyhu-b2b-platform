@@ -79,6 +79,7 @@ export default function LeadDistributionSettings() {
     const [debouncedFollowupsSearch, setDebouncedFollowupsSearch] = useState('');
     const leadsTimerRef = useRef<ReturnType<typeof setTimeout>>();
     const fuTimerRef = useRef<ReturnType<typeof setTimeout>>();
+    const isInitialLoad = useRef(true);
 
     useEffect(() => {
         leadsTimerRef.current && clearTimeout(leadsTimerRef.current);
@@ -93,7 +94,7 @@ export default function LeadDistributionSettings() {
     }, [followupsSearch]);
 
     const loadData = useCallback(async () => {
-        setLoading(true);
+        if (isInitialLoad.current) setLoading(true);
         try {
             // Load config
             const { data: cfgData } = await supabase
@@ -165,6 +166,7 @@ export default function LeadDistributionSettings() {
             console.error('Load lead dist data error:', err);
         } finally {
             setLoading(false);
+            isInitialLoad.current = false;
         }
     }, [leadsPage, leadsPageSize, followupsPage, followupsPageSize, debouncedLeadsSearch, leadsStatusFilter, debouncedFollowupsSearch]);
 
