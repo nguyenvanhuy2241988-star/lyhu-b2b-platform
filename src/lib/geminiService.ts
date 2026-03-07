@@ -202,7 +202,7 @@ Tên khách: ${customerName}`;
 
     try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000);
+        const timeout = setTimeout(() => controller.abort(), 15000);
 
         const res = await fetch(GEMINI_URL, {
             method: 'POST',
@@ -222,14 +222,17 @@ Tên khách: ${customerName}`;
 
         const data = await res.json();
         if (data.error) {
-            console.error('Gemini API Error:', data.error);
+            console.error('Gemini API Error:', JSON.stringify(data.error));
             return '';
         }
 
         const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        if (!reply) {
+            console.error('Gemini returned empty response. Status:', res.status, 'Data:', JSON.stringify(data).slice(0, 200));
+        }
         return reply.trim();
     } catch (e: any) {
-        console.error('Gemini call failed:', e.message);
+        console.error('Gemini call failed:', e.name, e.message);
         return '';
     }
 }
