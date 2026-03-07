@@ -410,6 +410,7 @@ export async function POST(request: Request) {
                                 upsertData.referral_source = referral.source || 'ADS';
                                 upsertData.ad_id = referral.ad_id;
                                 upsertData.ref_parameter = referral.ref;
+                                upsertData.source_type = 'ads';
                                 if (referral.ad_id) {
                                     upsertData.ad_title = `QC #${referral.ad_id}`;
                                 }
@@ -426,7 +427,7 @@ export async function POST(request: Request) {
                                 // Already done in upsert if new, but if old, upsert updates it.
                                 // Logic simplified.
 
-                                // 2. Insert Message (User's message/postback)
+                                // 2. Insert Message (User's message/postback) — DEDUP CHECK
                                 const msgData: any = {
                                     conversation_id: conv.id,
                                     external_id: mid || `mid_${Date.now()}`,
@@ -438,6 +439,19 @@ export async function POST(request: Request) {
                                 if (attachments.length > 0) {
                                     msgData.attachments = attachments;
                                 }
+
+                                // Check if this message was already processed (Facebook webhook retry)
+                                const { data: existingMsg } = await supabase
+                                    .from('social_messages')
+                                    .select('id')
+                                    .eq('external_id', msgData.external_id)
+                                    .maybeSingle();
+
+                                if (existingMsg) {
+                                    console.log('[DEDUP] Message already processed:', msgData.external_id);
+                                    continue; // Skip duplicate — don't save or respond again
+                                }
+
                                 await supabase.from('social_messages').insert(msgData);
 
                                 // 3. Chatbot Logic
