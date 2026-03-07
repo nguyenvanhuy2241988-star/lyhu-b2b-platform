@@ -146,6 +146,24 @@ export default function LeadDistributionSettings() {
         total: number; label: string;
     }) => {
         const totalPages = Math.ceil(total / pageSize);
+
+        // Generate page numbers with ellipsis
+        const getPageNumbers = () => {
+            const pages: (number | string)[] = [];
+            if (totalPages <= 7) {
+                for (let i = 0; i < totalPages; i++) pages.push(i);
+            } else {
+                pages.push(0); // always show first
+                if (page > 2) pages.push('...');
+                for (let i = Math.max(1, page - 1); i <= Math.min(totalPages - 2, page + 1); i++) {
+                    pages.push(i);
+                }
+                if (page < totalPages - 3) pages.push('...');
+                pages.push(totalPages - 1); // always show last
+            }
+            return pages;
+        };
+
         return (
             <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between bg-slate-50">
                 <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -165,16 +183,27 @@ export default function LeadDistributionSettings() {
                     <button
                         onClick={() => setPage(Math.max(0, page - 1))}
                         disabled={page === 0}
-                        className="px-3 py-1 text-xs rounded border border-slate-300 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition"
-                    >← Trước</button>
-                    <span className="px-3 py-1 text-xs text-slate-600">
-                        Trang {page + 1}/{totalPages || 1}
-                    </span>
+                        className="px-2 py-1 text-xs rounded border border-slate-300 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition"
+                    >←</button>
+                    {getPageNumbers().map((p, i) =>
+                        typeof p === 'string' ? (
+                            <span key={`ellipsis-${i}`} className="px-1 text-xs text-slate-400">...</span>
+                        ) : (
+                            <button
+                                key={p}
+                                onClick={() => setPage(p)}
+                                className={`min-w-[28px] py-1 text-xs rounded border transition ${p === page
+                                        ? 'bg-blue-600 text-white border-blue-600 font-bold'
+                                        : 'border-slate-300 hover:bg-white text-slate-600'
+                                    }`}
+                            >{p + 1}</button>
+                        )
+                    )}
                     <button
                         onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
                         disabled={page >= totalPages - 1}
-                        className="px-3 py-1 text-xs rounded border border-slate-300 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition"
-                    >Sau →</button>
+                        className="px-2 py-1 text-xs rounded border border-slate-300 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition"
+                    >→</button>
                 </div>
             </div>
         );
