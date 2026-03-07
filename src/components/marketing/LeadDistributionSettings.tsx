@@ -71,6 +71,9 @@ export default function LeadDistributionSettings() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [savedRecently, setSavedRecently] = useState(false);
+    const [leadsSearch, setLeadsSearch] = useState('');
+    const [leadsStatusFilter, setLeadsStatusFilter] = useState('all');
+    const [followupsSearch, setFollowupsSearch] = useState('');
 
     const loadData = useCallback(async () => {
         setLoading(true);
@@ -109,9 +112,16 @@ export default function LeadDistributionSettings() {
             // Load leads with joined conversation data
             const leadsFrom = leadsPage * leadsPageSize;
             const leadsTo = leadsFrom + leadsPageSize - 1;
-            const { data: leadsData, count: leadsCount } = await supabase
+            let leadsQuery = supabase
                 .from('marketing_leads')
-                .select('*, social_conversations!conversation_id(tags, customer_type, interested_products, referral_source, ad_id, source_type, facebook_pages!page_id(name))', { count: 'exact' })
+                .select('*, social_conversations!conversation_id(tags, customer_type, interested_products, referral_source, ad_id, source_type, facebook_pages!page_id(name))', { count: 'exact' });
+            if (leadsSearch.trim()) {
+                leadsQuery = leadsQuery.or(`customer_name.ilike.%${leadsSearch.trim()}%,customer_phone.ilike.%${leadsSearch.trim()}%`);
+            }
+            if (leadsStatusFilter !== 'all') {
+                leadsQuery = leadsQuery.eq('status', leadsStatusFilter);
+            }
+            const { data: leadsData, count: leadsCount } = await leadsQuery
                 .order('created_at', { ascending: false })
                 .range(leadsFrom, leadsTo);
             if (leadsData) setLeads(leadsData);
@@ -120,11 +130,15 @@ export default function LeadDistributionSettings() {
             // Load follow-up conversations
             const fuFrom = followupsPage * followupsPageSize;
             const fuTo = fuFrom + followupsPageSize - 1;
-            const { data: followupData, count: followupCount } = await supabase
+            let fuQuery = supabase
                 .from('social_conversations')
                 .select('id, customer_name, external_id, followup_count, last_message_at, needs_followup, tags, interested_products', { count: 'exact' })
                 .eq('needs_followup', true)
-                .is('customer_phone', null)
+                .is('customer_phone', null);
+            if (followupsSearch.trim()) {
+                fuQuery = fuQuery.ilike('customer_name', `%${followupsSearch.trim()}%`);
+            }
+            const { data: followupData, count: followupCount } = await fuQuery
                 .order('last_message_at', { ascending: true })
                 .range(fuFrom, fuTo);
             if (followupData) setFollowups(followupData);
@@ -135,7 +149,7 @@ export default function LeadDistributionSettings() {
         } finally {
             setLoading(false);
         }
-    }, [leadsPage, leadsPageSize, followupsPage, followupsPageSize]);
+    }, [leadsPage, leadsPageSize, followupsPage, followupsPageSize, leadsSearch, leadsStatusFilter, followupsSearch]);
 
     useEffect(() => { loadData(); }, [loadData]);
 
@@ -474,6 +488,27 @@ export default function LeadDistributionSettings() {
                     </div>
                 </div>
 
+                {/* Search & Filter */}
+                <div className="px-5 py-3 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
+                    <input
+                        type="text"
+                        placeholder="🔍 Tìm theo tên, SĐT..."
+                        value={leadsSearch}
+                        onChange={(e) => { setLeadsSearch(e.target.value); setLeadsPage(0); }}
+                        className="flex-1 px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <select
+                        value={leadsStatusFilter}
+                        onChange={(e) => { setLeadsStatusFilter(e.target.value); setLeadsPage(0); }}
+                        className="px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                        <option value="all">Tất cả trạng thái</option>
+                        <option value="pending">🟡 Đang chờ</option>
+                        <option value="assigned">🟢 Đã phân</option>
+                        <option value="historical">📋 Lịch sử</option>
+                    </select>
+                </div>
+
                 {leads.length === 0 ? (
                     <div className="p-8 text-center text-sm text-slate-400">
                         Chưa có data nào từ Messenger
@@ -608,6 +643,17 @@ export default function LeadDistributionSettings() {
                             🔄 Cron mỗi 2 giờ
                         </span>
                     </div>
+                </div>
+
+                {/* Search Follow-up */}
+                <div className="px-5 py-3 border-b border-slate-100 bg-slate-50/50">
+                    <input
+                        type="text"
+                        placeholder="🔍 Tìm theo tên khách..."
+                        value={followupsSearch}
+                        onChange={(e) => { setFollowupsSearch(e.target.value); setFollowupsPage(0); }}
+                        className="w-full max-w-sm px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
+                    />
                 </div>
 
                 {followups.length === 0 ? (
