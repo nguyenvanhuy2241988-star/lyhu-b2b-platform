@@ -268,7 +268,7 @@ export async function POST(request: Request) {
                             // Retrieve Page Data early (needed for fallback fetch)
                             const { data: pageData } = await supabase
                                 .from('facebook_pages')
-                                .select('id, access_token, page_name')
+                                .select('id, access_token, name')
                                 .eq('page_id', pageId)
                                 .single();
 
@@ -558,7 +558,7 @@ export async function POST(request: Request) {
                                                                 customerAvatar: (conv as any).customer_avatar,
                                                                 region: (conv as any).customer_region,
                                                                 source: 'facebook_messenger',
-                                                                pageName: pageData.page_name,
+                                                                pageName: pageData.name,
                                                                 pageId: pageData.id,
                                                                 adId: (conv as any).ad_id,
                                                                 firstMessage: text
