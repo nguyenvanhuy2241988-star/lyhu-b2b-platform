@@ -659,7 +659,7 @@ export default function LeadDistributionSettings() {
                             ✅ {followupDone} đã nhắn 3 lần
                         </span>
                         <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-600 font-medium">
-                            🔄 Cron mỗi 2 giờ
+                            🔄 Cron mỗi 2h (trong 24h)
                         </span>
                     </div>
                 </div>

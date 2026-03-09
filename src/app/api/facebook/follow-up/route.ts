@@ -5,9 +5,12 @@ import { detectGender, callGeminiAI } from '@/lib/geminiService';
 /**
  * Cron Job: Multi-tier follow-up for customers who haven't left phone numbers
  * 
- * Tier 1 (after 4 hours):  Gentle ask for phone
- * Tier 2 (after 1 day):    Friendly reminder with value prop
- * Tier 3 (after 3 days):   Polite final message
+ * Strategy: Send within Facebook's 24-hour messaging window using RESPONSE type
+ * (No HUMAN_AGENT tag needed — no Meta approval required)
+ * 
+ * Tier 1 (after 1 hour):   Gentle ask for phone
+ * Tier 2 (after 6 hours):  Friendly reminder with value prop  
+ * Tier 3 (after 18 hours): Polite final message
  * 
  * Uses Gemini AI to generate natural, human-like messages each time.
  * Max 3 follow-ups per conversation → then stops completely.
@@ -16,11 +19,11 @@ import { detectGender, callGeminiAI } from '@/lib/geminiService';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 300;
 
-// Follow-up tier configuration
+// Follow-up tier configuration — all within 24h messaging window
 const FOLLOWUP_TIERS = [
-    { tier: 1, minHours: 4, prompt: 'Nhắn 1 tin nhắn NGẮN GỌN xin số điện thoại, giọng điệu nhẹ nhàng quan tâm, như nhân viên thật đang nhắn. KHÔNG nhắc rằng đây là lần nhắc nhở.' },
-    { tier: 2, minHours: 24, prompt: 'Nhắn 1 tin nhắn NGẮN GỌN nhắc nhở xin SĐT, thân thiện và tự nhiên hơn, có thể nhắc bên em đang có chương trình tốt. KHÔNG dùng từ "nhắc lại" hay "follow-up".' },
-    { tier: 3, minHours: 72, prompt: 'Nhắn 1 tin nhắn NGẮN GỌN cuối cùng, lịch sự kết thúc, nói khi nào cần tư vấn cứ nhắn em. KHÔNG spam, KHÔNG ép buộc.' },
+    { tier: 1, minHours: 1, prompt: 'Nhắn 1 tin nhắn NGẮN GỌN xin số điện thoại, giọng điệu nhẹ nhàng quan tâm, như nhân viên thật đang nhắn. KHÔNG nhắc rằng đây là lần nhắc nhở.' },
+    { tier: 2, minHours: 6, prompt: 'Nhắn 1 tin nhắn NGẮN GỌN nhắc nhở xin SĐT, thân thiện và tự nhiên hơn, có thể nhắc bên em đang có chương trình tốt. KHÔNG dùng từ "nhắc lại" hay "follow-up".' },
+    { tier: 3, minHours: 18, prompt: 'Nhắn 1 tin nhắn NGẮN GỌN cuối cùng, lịch sự kết thúc, nói khi nào cần tư vấn cứ nhắn em. KHÔNG spam, KHÔNG ép buộc.' },
 ];
 
 export async function GET(request: Request) {
@@ -42,26 +45,27 @@ export async function GET(request: Request) {
         );
 
 
-        // Mark expired conversations (>7 days) as no longer needing follow-up
-        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        // Mark expired conversations (>24 hours) as no longer needing follow-up
+        // Facebook only allows RESPONSE messages within 24h of customer's last message
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
         const { data: expiredData } = await supabase
             .from('social_conversations')
             .update({ needs_followup: false, followup_sent: true })
             .eq('needs_followup', true)
             .is('customer_phone', null)
-            .lt('last_message_at', sevenDaysAgo)
+            .lt('last_message_at', twentyFourHoursAgo)
             .select('id');
         const expiredCount = expiredData?.length || 0;
 
         if (expiredCount && expiredCount > 0) {
-            console.log(`[Follow-up] Marked ${expiredCount} expired conversations (>7 days)`);
+            console.log(`[Follow-up] Marked ${expiredCount} expired conversations (>24h window closed)`);
         }
 
         // Find conversations needing follow-up:
         // - needs_followup = true
         // - No customer_phone
         // - followup_count < 3 (max 3 attempts)
-        // - last_message_at within 7 days (Facebook messaging window)
+        // - last_message_at within 24 hours (Facebook RESPONSE messaging window)
         const { data: conversations } = await supabase
             .from('social_conversations')
             .select(`
@@ -72,7 +76,7 @@ export async function GET(request: Request) {
             .eq('needs_followup', true)
             .is('customer_phone', null)
             .lt('followup_count', 3)
-            .gte('last_message_at', sevenDaysAgo)
+            .gte('last_message_at', twentyFourHoursAgo)
             .order('last_message_at', { ascending: true })
             .limit(forceMode ? 5 : 20);
 
@@ -153,14 +157,13 @@ export async function GET(request: Request) {
                     await new Promise(resolve => setTimeout(resolve, 500));
                 }
 
-                // Send message with HUMAN_AGENT tag (extends messaging window to 7 days)
+                // Send message using RESPONSE type (within 24h window, no special permission needed)
                 try {
                     const sendRes = await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            messaging_type: 'MESSAGE_TAG',
-                            tag: 'HUMAN_AGENT',
+                            messaging_type: 'RESPONSE',
                             recipient: { id: conv.external_id },
                             message: { text: messages[i] }
                         })
