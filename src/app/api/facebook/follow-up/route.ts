@@ -74,7 +74,7 @@ export async function GET(request: Request) {
             .lt('followup_count', 3)
             .gte('last_message_at', sevenDaysAgo)
             .order('last_message_at', { ascending: true })
-            .limit(20);
+            .limit(forceMode ? 5 : 20);
 
         if (!conversations || conversations.length === 0) {
             return NextResponse.json({ success: true, followups_sent: 0, message: 'No pending follow-ups' });
@@ -82,9 +82,18 @@ export async function GET(request: Request) {
 
         let sent = 0;
         const now = Date.now();
-        const skipped = { no_token: 0, ai_disabled: 0, too_early: 0, ai_failed: 0, send_failed: 0 };
+        const startTime = Date.now();
+        const MAX_EXECUTION_MS = 240_000; // Stop processing at 240s to respond before Vercel 300s limit
+        const skipped = { no_token: 0, ai_disabled: 0, too_early: 0, ai_failed: 0, send_failed: 0, time_limit: 0 };
 
         for (const conv of conversations) {
+            // Guard: stop if running too long
+            if (Date.now() - startTime > MAX_EXECUTION_MS) {
+                skipped.time_limit = conversations.length - conversations.indexOf(conv);
+                console.log(`[Follow-up] Time limit reached at ${Math.round((Date.now() - startTime) / 1000)}s, stopping.`);
+                break;
+            }
+
             const page = (conv as any).facebook_pages;
             if (!page?.access_token) { skipped.no_token++; continue; }
 
@@ -108,17 +117,27 @@ export async function GET(request: Request) {
             const honorific = detectGender(conv.customer_name || '');
             const customerName = conv.customer_name || 'bạn';
 
-            // Use Gemini AI to generate a natural, personalized message
-            const aiMessage = await callGeminiAI(
-                tierConfig.prompt,
-                customerName,
-                honorific,
-                [], // No chat history needed for follow-up
-                false // hasPhone = false, we want phone
-            );
+            // Use Gemini AI with a strict 10s timeout to avoid hanging
+            let aiMessage = '';
+            try {
+                aiMessage = await Promise.race([
+                    callGeminiAI(
+                        tierConfig.prompt,
+                        customerName,
+                        honorific,
+                        [], // No chat history needed for follow-up
+                        false // hasPhone = false, we want phone
+                    ),
+                    new Promise<string>((_, reject) => setTimeout(() => reject(new Error('AI timeout')), 10000))
+                ]);
+            } catch (e: any) {
+                console.error(`[Follow-up] AI timeout/error for ${customerName}:`, e.message);
+                skipped.ai_failed++;
+                continue;
+            }
 
             if (!aiMessage) {
-                console.log(`[Follow-up] AI failed for ${customerName}, skipping`);
+                console.log(`[Follow-up] AI returned empty for ${customerName}, skipping`);
                 skipped.ai_failed++;
                 continue;
             }
@@ -126,24 +145,13 @@ export async function GET(request: Request) {
             // Split into short messages if multiline
             const messages = aiMessage.split('\n').filter(m => m.trim());
 
-            // Send messages with typing simulation
+            // Send messages (no typing simulation in cron — send directly)
             let sendSuccess = true;
             for (let i = 0; i < messages.length; i++) {
-                // Typing indicator
-                try {
-                    await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            recipient: { id: conv.external_id },
-                            sender_action: 'typing_on'
-                        })
-                    });
-                } catch (e) { }
-
-                // Shorter delay for cron (not real-time chat, no need to simulate human typing)
-                const wait = i === 0 ? 500 : 1000 + Math.floor(Math.random() * 500);
-                await new Promise(resolve => setTimeout(resolve, wait));
+                // Small delay between messages
+                if (i > 0) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
 
                 // Send message with HUMAN_AGENT tag (extends messaging window to 7 days)
                 try {
@@ -159,12 +167,12 @@ export async function GET(request: Request) {
                     });
                     const sendData = await sendRes.json();
                     if (sendData.error) {
-                        console.error(`[Follow-up] Send error for ${customerName}:`, sendData.error);
+                        console.error(`[Follow-up] FB Send error for ${customerName}:`, JSON.stringify(sendData.error));
                         sendSuccess = false;
                         break;
                     }
-                } catch (e) {
-                    console.error(`[Follow-up] Send error for ${customerName}:`, e);
+                } catch (e: any) {
+                    console.error(`[Follow-up] FB Send exception for ${customerName}:`, e.message);
                     sendSuccess = false;
                     break;
                 }
@@ -194,10 +202,10 @@ export async function GET(request: Request) {
             }).eq('id', conv.id);
 
             sent++;
-            console.log(`[Follow-up] Tier ${currentCount + 1} sent to ${customerName} (${hoursSinceLastMsg.toFixed(1)}h since last msg)`);
+            console.log(`[Follow-up] ✅ Tier ${currentCount + 1} sent to ${customerName} (${hoursSinceLastMsg.toFixed(1)}h since last msg)`);
 
-            // Small delay between customers to avoid rate limits
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            // Small delay between customers to avoid FB rate limits
+            await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
         console.log(`[Follow-up] Done. Sent: ${sent}, Checked: ${conversations.length}, Expired: ${expiredCount || 0}, Skipped:`, skipped);
