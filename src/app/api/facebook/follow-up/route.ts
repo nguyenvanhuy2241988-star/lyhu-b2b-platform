@@ -14,7 +14,7 @@ import { detectGender, callGeminiAI } from '@/lib/geminiService';
  */
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 // Follow-up tier configuration
 const FOLLOWUP_TIERS = [
@@ -30,6 +30,10 @@ export async function GET(request: Request) {
         if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+
+        // Allow manual trigger with ?force=1 to skip timing checks (for debugging)
+        const url = new URL(request.url);
+        const forceMode = url.searchParams.get('force') === '1';
 
         const supabase = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -70,7 +74,7 @@ export async function GET(request: Request) {
             .lt('followup_count', 3)
             .gte('last_message_at', sevenDaysAgo)
             .order('last_message_at', { ascending: true })
-            .limit(5);
+            .limit(20);
 
         if (!conversations || conversations.length === 0) {
             return NextResponse.json({ success: true, followups_sent: 0, message: 'No pending follow-ups' });
@@ -96,7 +100,7 @@ export async function GET(request: Request) {
             const lastMsgTime = new Date(conv.last_message_at).getTime();
             const hoursSinceLastMsg = (now - lastMsgTime) / (1000 * 60 * 60);
 
-            if (hoursSinceLastMsg < tierConfig.minHours) {
+            if (!forceMode && hoursSinceLastMsg < tierConfig.minHours) {
                 skipped.too_early++;
                 continue; // Too early for this tier
             }
@@ -137,8 +141,8 @@ export async function GET(request: Request) {
                     });
                 } catch (e) { }
 
-                // Natural delay
-                const wait = i === 0 ? 1500 : 2500 + Math.floor(Math.random() * 2000);
+                // Shorter delay for cron (not real-time chat, no need to simulate human typing)
+                const wait = i === 0 ? 500 : 1000 + Math.floor(Math.random() * 500);
                 await new Promise(resolve => setTimeout(resolve, wait));
 
                 // Send message with HUMAN_AGENT tag (extends messaging window to 7 days)
@@ -190,19 +194,21 @@ export async function GET(request: Request) {
             }).eq('id', conv.id);
 
             sent++;
-            console.log(`[Follow-up] Tier ${currentCount + 1} sent to ${customerName}`);
+            console.log(`[Follow-up] Tier ${currentCount + 1} sent to ${customerName} (${hoursSinceLastMsg.toFixed(1)}h since last msg)`);
 
             // Small delay between customers to avoid rate limits
-            await new Promise(resolve => setTimeout(resolve, 3000));
+            await new Promise(resolve => setTimeout(resolve, 1500));
         }
 
+        console.log(`[Follow-up] Done. Sent: ${sent}, Checked: ${conversations.length}, Expired: ${expiredCount || 0}, Skipped:`, skipped);
         return NextResponse.json({
             success: true,
             followups_sent: sent,
             total_checked: conversations.length,
             expired_marked: expiredCount || 0,
             skipped,
-            model: 'gemini-1.5-flash'
+            force_mode: forceMode,
+            model: 'gemini-2.5-flash-lite'
         });
 
     } catch (error: any) {
