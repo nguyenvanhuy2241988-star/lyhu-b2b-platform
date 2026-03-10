@@ -406,24 +406,28 @@ export const MisaService = {
 
                 const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
                 const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
-                const dictEndpoint = `${baseUrl}/api/sync/actopen/save_dictionary`;
+                // Dictionary uses /apir/ (confirmed from MISA docs)
+                const dictEndpoint = `${baseUrl}/apir/sync/actopen/save_dictionary`;
 
                 const dictPayload = {
                     app_id: config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e",
                     org_company_code: "NB",
-                    data: {
-                        account_objects: [{
-                            account_object_code: customerCode,
-                            account_object_name: customerName,
-                            account_object_type: 1, // 1 = Khách hàng (Customer)
-                            account_object_category_code: config?.customerGroupCode || "NPP",
-                            tel: customerPhone,
-                            address: customerAddress,
-                            is_customer: true,
-                            is_vendor: false,
-                        }]
-                    }
+                    dictionary_type: 1, // 1 = Khách hàng/Đối tượng (Account Object)
+                    account_objects: [{
+                        account_object_code: customerCode,
+                        account_object_name: customerName,
+                        account_object_type: 1, // 1 = Customer
+                        account_object_category_code: config?.customerGroupCode || "NPP",
+                        account_object_category_name: "Nhà phân phối",
+                        tel: customerPhone,
+                        mobile: customerPhone,
+                        address: customerAddress,
+                        is_customer: true,
+                        is_vendor: false,
+                    }]
                 };
+
+                console.log(`[MisaService] Dict payload:`, JSON.stringify(dictPayload));
 
                 const dictRes = await fetch(dictEndpoint, {
                     method: "POST",
@@ -434,8 +438,11 @@ export const MisaService = {
                     body: JSON.stringify(dictPayload)
                 });
 
-                const dictResult = await dictRes.json();
-                console.log(`[MisaService] Customer pre-create result:`, JSON.stringify(dictResult));
+                const dictText = await dictRes.text();
+                console.log(`[MisaService] Customer pre-create response (${dictRes.status}):`, dictText);
+
+                // Wait 2 seconds for MISA to process the dictionary entry
+                await new Promise(resolve => setTimeout(resolve, 2000));
             } catch (custErr: any) {
                 // Non-fatal: continue even if customer pre-creation fails
                 console.warn(`[MisaService] Customer pre-create warning:`, custErr.message);
