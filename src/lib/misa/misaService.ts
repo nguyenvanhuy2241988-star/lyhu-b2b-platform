@@ -457,13 +457,14 @@ export const MisaService = {
 
             const payload = {
                 app_id: appId,
-                org_company_code: "NB", // Must match auth token scope (hardcoded NB)
-                // Auto-create items/customers if they don't exist in MISA catalog
+                // IMPORTANT: org_company_code = COMPANY CODE (QFCXJDR4), NOT auth access_code (NB)
+                // These are different! Auth uses "NB" for token, payload uses actual company code.
+                org_company_code: config?.companyCode?.trim() || "NB",
                 is_auto_create_object: true,
                 voucher: [{
                     ...invoiceObj,
-                    organization_unit_code: config?.orgUnitCode || "NB",
-                    OrganizationUnitCode: config?.orgUnitCode || "NB" // PascalCase alias
+                    organization_unit_code: config?.orgUnitCode || config?.companyCode?.trim() || "NB",
+                    OrganizationUnitCode: config?.orgUnitCode || config?.companyCode?.trim() || "NB"
                 }]
             };
 
