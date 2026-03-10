@@ -94,7 +94,7 @@ export const autoMapMisaProducts = async (): Promise<{
 };
 
 /** Batch update misa_code for multiple products */
-export const batchMapProducts = async (mappings: { product_id: string; misa_code: string }[]): Promise<{
+export const batchMapProducts = async (mappings: { product_id: string; misa_code: string; name?: string }[]): Promise<{
     success: boolean;
     updated: number;
     total: number;

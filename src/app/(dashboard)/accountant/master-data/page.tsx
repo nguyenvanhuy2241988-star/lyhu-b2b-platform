@@ -50,7 +50,7 @@ export default function AccountantMasterDataPage() {
     // Import Modal State
     const [showImportModal, setShowImportModal] = useState(false);
     const [importText, setImportText] = useState("");
-    const [importPreview, setImportPreview] = useState<{ matched: { name: string; misaCode: string; productId: string }[]; unmatched: string[] }>({ matched: [], unmatched: [] });
+    const [importPreview, setImportPreview] = useState<{ matched: { misaCode: string; misaName: string; productId: string; currentName: string; matchType: string }[]; unmatched: string[] }>({ matched: [], unmatched: [] });
     const [isImporting, setIsImporting] = useState(false);
 
     const loadData = useCallback(async () => {
@@ -184,47 +184,53 @@ export default function AccountantMasterDataPage() {
             return;
         }
         const lines = text.split('\n').filter(l => l.trim());
-        const matched: { name: string; misaCode: string; productId: string }[] = [];
+        const matched: { misaCode: string; misaName: string; productId: string; currentName: string; matchType: string }[] = [];
         const unmatched: string[] = [];
+        const usedIds = new Set<string>();
 
         for (const line of lines) {
-            // Try tab-separated: "MÃ\tTÊN" or "TÊN\tMÃ" or "MÃ\tTÊN\t..."
             const parts = line.split('\t').map(p => p.trim()).filter(Boolean);
             if (parts.length < 2) {
                 unmatched.push(line.trim());
                 continue;
             }
 
-            // Detect which column is the code (shorter, looks like number/code)
             let misaCode = '';
-            let productName = '';
+            let misaName = '';
 
-            // If first column looks like a numeric code (barcode/SKU)
             if (/^[\d]{4,}$/.test(parts[0]) || /^[A-Z0-9_-]{2,10}$/i.test(parts[0])) {
                 misaCode = parts[0];
-                productName = parts[1];
+                misaName = parts[1];
             } else if (/^[\d]{4,}$/.test(parts[1]) || /^[A-Z0-9_-]{2,10}$/i.test(parts[1])) {
-                productName = parts[0];
+                misaName = parts[0];
                 misaCode = parts[1];
             } else {
-                // Default: first=code, second=name
                 misaCode = parts[0];
-                productName = parts[1];
+                misaName = parts[1];
             }
 
-            // Try to match with local products by name (fuzzy)
-            const normalizedName = productName.toLowerCase().replace(/[\s]+/g, ' ').trim();
-            const matchedProduct = products.find(p => {
-                const pName = (p.name || '').toLowerCase().replace(/[\s]+/g, ' ').trim();
-                return pName === normalizedName ||
-                    pName.includes(normalizedName) ||
-                    normalizedName.includes(pName);
-            });
+            // Priority 1: Match by SKU
+            let matchedProduct = products.find(p =>
+                !usedIds.has(p.id) && p.sku && misaCode && p.sku === misaCode
+            );
+            let matchType = 'SKU';
+
+            // Priority 2: Match by name
+            if (!matchedProduct) {
+                const norm = misaName.toLowerCase().replace(/[\s]+/g, ' ').trim();
+                matchedProduct = products.find(p => {
+                    if (usedIds.has(p.id)) return false;
+                    const pName = (p.name || '').toLowerCase().replace(/[\s]+/g, ' ').trim();
+                    return pName === norm || pName.includes(norm) || norm.includes(pName);
+                });
+                matchType = 'Tên';
+            }
 
             if (matchedProduct) {
-                matched.push({ name: productName, misaCode, productId: matchedProduct.id });
+                usedIds.add(matchedProduct.id);
+                matched.push({ misaCode, misaName, productId: matchedProduct.id, currentName: matchedProduct.name || '', matchType });
             } else {
-                unmatched.push(`${misaCode} — ${productName}`);
+                unmatched.push(`${misaCode} — ${misaName}`);
             }
         }
 
@@ -239,6 +245,7 @@ export default function AccountantMasterDataPage() {
             const mappings = importPreview.matched.map(m => ({
                 product_id: m.productId,
                 misa_code: m.misaCode,
+                name: m.misaName, // Sync name from MISA
             }));
             const result = await batchMapProducts(mappings);
             if (result.success) {
@@ -719,9 +726,13 @@ export default function AccountantMasterDataPage() {
                                             <div className="mt-1 bg-emerald-50 rounded-lg p-2 max-h-32 overflow-y-auto">
                                                 {importPreview.matched.map((m, i) => (
                                                     <div key={i} className="flex items-center gap-2 text-xs py-0.5">
+                                                        <span className={`px-1 rounded text-[10px] font-bold ${m.matchType === 'SKU' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500'}`}>{m.matchType}</span>
                                                         <span className="font-mono text-emerald-700 font-bold">{m.misaCode}</span>
                                                         <span className="text-slate-400">→</span>
-                                                        <span className="text-slate-600">{m.name}</span>
+                                                        <span className="text-slate-600">{m.misaName}</span>
+                                                        {m.currentName !== m.misaName && (
+                                                            <span className="text-orange-500 text-[10px]">(đổi tên)</span>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>

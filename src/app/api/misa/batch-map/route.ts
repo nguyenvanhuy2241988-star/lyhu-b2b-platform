@@ -24,9 +24,11 @@ export async function POST(request: Request) {
 
         for (const m of mappings) {
             if (!m.product_id || !m.misa_code) continue;
+            const updateData: any = { misa_code: m.misa_code };
+            if (m.name) updateData.name = m.name; // Sync name from MISA
             const { error } = await supabase
                 .from('products')
-                .update({ misa_code: m.misa_code })
+                .update(updateData)
                 .eq('id', m.product_id);
 
             if (error) {
