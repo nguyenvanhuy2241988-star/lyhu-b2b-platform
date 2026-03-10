@@ -268,8 +268,8 @@ export const MisaService = {
             account_object_name: order.customerName || order.customer?.name || "Khách lẻ",
             account_object_address: order.receiverAddress || order.address || "",
             account_object_contact: phoneCode, // Phone for reference
-            // Customer Group for auto-creation (REQUIRED by MISA)
-            account_object_group_code: config?.customerGroupCode || "NPP",
+            // Note: Customer is pre-created in dictionary step (3b) above
+            // Don't set group_code here to avoid "NPP group not found" errors
 
             // Employee Mapping Fix:
             // 'employee_code' usually refers to the System User. 
@@ -406,8 +406,8 @@ export const MisaService = {
 
                 const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
                 const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
-                // Dictionary uses /apir/ (confirmed from MISA docs)
-                const dictEndpoint = `${baseUrl}/apir/sync/actopen/save_dictionary`;
+                // FIX: Use /api/ (auto-create) instead of /apir/ (strict) to allow creating new objects
+                const dictEndpoint = `${baseUrl}/api/sync/actopen/save_dictionary`;
 
                 const dictPayload = {
                     app_id: config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e",
@@ -417,8 +417,8 @@ export const MisaService = {
                         account_object_code: customerCode,
                         account_object_name: customerName,
                         account_object_type: 1, // 1 = Customer
-                        account_object_category_code: config?.customerGroupCode || "NPP",
-                        account_object_category_name: "Nhà phân phối",
+                        // Don't set category_code to avoid "NPP category not found" errors
+                        // MISA will use default category if not specified
                         tel: customerPhone,
                         mobile: customerPhone,
                         address: customerAddress,
@@ -443,12 +443,52 @@ export const MisaService = {
                 // Store for debug return
                 (invoiceObj as any)._dictDebug = { status: dictRes.status, response: dictText.substring(0, 500) };
 
-                // Wait 2 seconds for MISA to process the dictionary entry
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                // Wait 1 second for MISA to process the dictionary entry
+                await new Promise(resolve => setTimeout(resolve, 1000));
             } catch (custErr: any) {
                 // Non-fatal: continue even if customer pre-creation fails
                 console.warn(`[MisaService] Customer pre-create warning:`, custErr.message);
                 (invoiceObj as any)._dictDebug = { error: custErr.message };
+            }
+
+            // 3c. Pre-create Employee in MISA Dictionary (prevents "Đối tượng không tồn tại" for employee)
+            try {
+                const empCode = config?.employeeCode || "NV000009";
+                const empName = mappedName || "Nhân viên";
+                console.log(`[MisaService] Pre-creating employee: ${empCode} (${empName})`);
+
+                const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
+                const baseUrl2 = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+                const empDictEndpoint = `${baseUrl2}/api/sync/actopen/save_dictionary`;
+
+                const empDictPayload = {
+                    app_id: config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e",
+                    org_company_code: "NB",
+                    dictionary_type: 3, // 3 = Nhân viên (Employee)
+                    employees: [{
+                        employee_code: empCode,
+                        employee_name: empName,
+                        is_active: true,
+                    }]
+                };
+
+                const empDictRes = await fetch(empDictEndpoint, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-MISA-AccessToken": token
+                    },
+                    body: JSON.stringify(empDictPayload)
+                });
+
+                const empDictText = await empDictRes.text();
+                console.log(`[MisaService] Employee pre-create response (${empDictRes.status}):`, empDictText);
+                (invoiceObj as any)._empDictDebug = { status: empDictRes.status, response: empDictText.substring(0, 500) };
+
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            } catch (empErr: any) {
+                console.warn(`[MisaService] Employee pre-create warning:`, empErr.message);
+                (invoiceObj as any)._empDictDebug = { error: empErr.message };
             }
 
             // 4. Prepare Payload (Strict V5 Schema)
@@ -527,6 +567,7 @@ export const MisaService = {
                         _debug_codeLen: config?.employeeCode ? config.employeeCode.length : 0,
                         _debug_created_by: orderData.created_by || "N/A",
                         _debug_dictResult: (invoiceObj as any)._dictDebug || "N/A",
+                        _debug_empDictResult: (invoiceObj as any)._empDictDebug || "N/A",
                         _debug_customerCode: invoiceObj.account_object_code
                     }
                 };
@@ -552,6 +593,7 @@ export const MisaService = {
                         _debug_mappedCode: mappedCode || "N/A",
                         _debug_finalEmployeeCode: config?.employeeCode || "N/A",
                         _debug_dictResult: (invoiceObj as any)._dictDebug || "N/A",
+                        _debug_empDictResult: (invoiceObj as any)._empDictDebug || "N/A",
                         _debug_customerCode: invoiceObj.account_object_code
                     }
                 };
