@@ -212,7 +212,7 @@ export const MisaService = {
                 inventory_item_code: productCode,
                 inventory_item_name: productName,
                 inventory_item_type: 1, // Loại: Hàng hóa (Goods)
-                inventory_item_category_code: "HH", // Default Group: Goods
+                // Note: inventory_item_category_code removed - MISA uses specific codes per product
                 description: productName,
                 unit_code: unit,
 
@@ -394,150 +394,13 @@ export const MisaService = {
                 invoiceObj.SaleEmployeeName = mappedName;
                 invoiceObj.EmployeeName = mappedName;
             }
-
-            // 3b. Pre-create Customer in MISA Dictionary (prevents "Đối tượng không tồn tại")
-            try {
-                const customerCode = invoiceObj.account_object_code;
-                const customerName = invoiceObj.account_object_name;
-                const customerPhone = orderData.receiverPhone || orderData.customer?.phone || "";
-                const customerAddress = invoiceObj.account_object_address || "";
-
-                console.log(`[MisaService] Pre-creating customer: ${customerCode} (${customerName})`);
-
-                const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
-                const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
-                // FIX: Use /api/ (auto-create) instead of /apir/ (strict) to allow creating new objects
-                const dictEndpoint = `${baseUrl}/api/sync/actopen/save_dictionary`;
-
-                const dictPayload = {
-                    app_id: config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e",
-                    org_company_code: "NB",
-                    dictionary_type: 1, // 1 = Khách hàng/Đối tượng (Account Object)
-                    account_objects: [{
-                        account_object_code: customerCode,
-                        account_object_name: customerName,
-                        account_object_type: 1, // 1 = Customer
-                        // Don't set category_code to avoid "NPP category not found" errors
-                        // MISA will use default category if not specified
-                        tel: customerPhone,
-                        mobile: customerPhone,
-                        address: customerAddress,
-                        is_customer: true,
-                        is_vendor: false,
-                    }]
-                };
-
-                console.log(`[MisaService] Dict payload:`, JSON.stringify(dictPayload));
-
-                const dictRes = await fetch(dictEndpoint, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-MISA-AccessToken": token
-                    },
-                    body: JSON.stringify(dictPayload)
-                });
-
-                const dictText = await dictRes.text();
-                console.log(`[MisaService] Customer pre-create response (${dictRes.status}):`, dictText);
-                // Store for debug return
-                (invoiceObj as any)._dictDebug = { status: dictRes.status, response: dictText.substring(0, 500) };
-
-                // Wait 1 second for MISA to process the dictionary entry
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            } catch (custErr: any) {
-                // Non-fatal: continue even if customer pre-creation fails
-                console.warn(`[MisaService] Customer pre-create warning:`, custErr.message);
-                (invoiceObj as any)._dictDebug = { error: custErr.message };
-            }
-
-            // 3c. Pre-create Employee in MISA Dictionary (prevents "Đối tượng không tồn tại" for employee)
-            try {
-                const empCode = config?.employeeCode || "NV000009";
-                const empName = mappedName || "Nhân viên";
-                console.log(`[MisaService] Pre-creating employee: ${empCode} (${empName})`);
-
-                const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
-                const baseUrl2 = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
-                const empDictEndpoint = `${baseUrl2}/api/sync/actopen/save_dictionary`;
-
-                const empDictPayload = {
-                    app_id: config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e",
-                    org_company_code: "NB",
-                    dictionary_type: 3, // 3 = Nhân viên (Employee)
-                    employees: [{
-                        employee_code: empCode,
-                        employee_name: empName,
-                        is_active: true,
-                    }]
-                };
-
-                const empDictRes = await fetch(empDictEndpoint, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-MISA-AccessToken": token
-                    },
-                    body: JSON.stringify(empDictPayload)
-                });
-
-                const empDictText = await empDictRes.text();
-                console.log(`[MisaService] Employee pre-create response (${empDictRes.status}):`, empDictText);
-                (invoiceObj as any)._empDictDebug = { status: empDictRes.status, response: empDictText.substring(0, 500) };
-
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            } catch (empErr: any) {
-                console.warn(`[MisaService] Employee pre-create warning:`, empErr.message);
-                (invoiceObj as any)._empDictDebug = { error: empErr.message };
-            }
-
-            // 3d. Pre-create Inventory Items in MISA Dictionary
-            try {
-                const details = invoiceObj.detail || [];
-                const uniqueItems = details
-                    .filter((d: any) => d.inventory_item_code)
-                    .map((d: any) => ({
-                        inventory_item_code: d.inventory_item_code,
-                        inventory_item_name: d.inventory_item_name || d.description || d.inventory_item_code,
-                        inventory_item_type: 1, // 1 = Hàng hóa (Goods)
-                        inventory_item_category_code: "HH",
-                        unit_name: d.unit_code || "Cái",
-                        is_active: true,
-                    }));
-
-                if (uniqueItems.length > 0) {
-                    console.log(`[MisaService] Pre-creating ${uniqueItems.length} inventory items:`, uniqueItems.map((i: any) => i.inventory_item_code));
-
-                    const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
-                    const baseUrl3 = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
-                    const invDictEndpoint = `${baseUrl3}/api/sync/actopen/save_dictionary`;
-
-                    const invDictPayload = {
-                        app_id: config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e",
-                        org_company_code: "NB",
-                        dictionary_type: 2, // 2 = Vật tư hàng hóa (Inventory Items)
-                        inventory_items: uniqueItems
-                    };
-
-                    const invDictRes = await fetch(invDictEndpoint, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "X-MISA-AccessToken": token
-                        },
-                        body: JSON.stringify(invDictPayload)
-                    });
-
-                    const invDictText = await invDictRes.text();
-                    console.log(`[MisaService] Inventory pre-create response (${invDictRes.status}):`, invDictText);
-                    (invoiceObj as any)._invDictDebug = { status: invDictRes.status, response: invDictText.substring(0, 500), itemCount: uniqueItems.length };
-
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                }
-            } catch (invErr: any) {
-                console.warn(`[MisaService] Inventory pre-create warning:`, invErr.message);
-                (invoiceObj as any)._invDictDebug = { error: invErr.message };
-            }
+            // NOTE: Pre-creation via save_dictionary was REMOVED.
+            // MISA processes save_dictionary requests ASYNCHRONOUSLY (queued),
+            // so the objects won't be available when the order is pushed immediately after.
+            // Instead, we rely on the main /api/sync/actopen/save endpoint with
+            // is_auto_create_object: true to auto-create objects inline.
+            // Debug: log what customer/employee codes will be used
+            console.log(`[MisaService] Customer code: ${invoiceObj.account_object_code}, Employee code: ${config?.employeeCode || "NV000009"}`);
 
             // 4. Prepare Payload (Strict V5 Schema)
             // https://actdocs.misa.vn
@@ -545,14 +408,17 @@ export const MisaService = {
 
             const payload = {
                 app_id: appId,
-                // IMPORTANT: org_company_code = COMPANY CODE (QFCXJDR4), NOT auth access_code (NB)
-                // These are different! Auth uses "NB" for token, payload uses actual company code.
+                // org_company_code = Company Code from MISA config
                 org_company_code: config?.companyCode?.trim() || "NB",
                 is_auto_create_object: true,
                 voucher: [{
                     ...invoiceObj,
-                    organization_unit_code: config?.orgUnitCode || config?.companyCode?.trim() || "NB",
-                    OrganizationUnitCode: config?.orgUnitCode || config?.companyCode?.trim() || "NB"
+                    // organization_unit_code = "NB" (from MISA org units, NOT companyCode)
+                    organization_unit_code: config?.orgUnitCode || "NB",
+                    OrganizationUnitCode: config?.orgUnitCode || "NB",
+                    // Help MISA auto-create customer object
+                    account_object_type: 1, // 1 = Customer
+                    is_customer: true,
                 }]
             };
 
