@@ -523,7 +523,8 @@ export const MisaService = {
             // @ts-ignore
             const config = settings?.misa_config || {};
             const appId = config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e";
-            const companyCode = config?.companyCode?.trim() || "NB";
+            // IMPORTANT: Must match org_company_code used in getAccessToken ("NB")
+            const companyCode = "NB";
 
             // MISA ActOpen API: POST /api/sync/actopen/get_dictionary
             // data_type: 1 = Đối tượng (Customers), 2 = Vật tư hàng hóa (Inventory Items)
