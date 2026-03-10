@@ -407,6 +407,8 @@ export const MisaService = {
             const payload = {
                 app_id: appId,
                 org_company_code: "NB", // Must match auth token scope (hardcoded NB)
+                // Auto-create items/customers if they don't exist in MISA catalog
+                is_auto_create_object: true,
                 voucher: [{
                     ...invoiceObj,
                     organization_unit_code: config?.orgUnitCode || "NB",
