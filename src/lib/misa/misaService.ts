@@ -559,6 +559,12 @@ export const MisaService = {
                 return { success: false, error: "Invalid JSON response from MISA" };
             }
 
+            // Debug: log full structure
+            console.log(`[MisaService] Dictionary Response Keys:`, Object.keys(data || {}));
+            console.log(`[MisaService] Dictionary Response Success:`, data?.Success);
+            console.log(`[MisaService] Dictionary Response Data type:`, typeof data?.Data, Array.isArray(data?.Data) ? `(array len: ${data.Data.length})` : '');
+            console.log(`[MisaService] Dictionary Response Raw (500 chars):`, textRaw.substring(0, 500));
+
             // MISA response structure: { Success: true, Data: [...] }
             if (data?.Success && Array.isArray(data?.Data)) {
                 console.log(`[MisaService] Fetched ${data.Data.length} inventory items from MISA`);

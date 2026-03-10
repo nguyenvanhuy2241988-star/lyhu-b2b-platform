@@ -22,10 +22,13 @@ export async function POST(request: Request) {
         return NextResponse.json({
             success: true,
             total: result.items?.length || 0,
-            items: result.items || []
+            items: result.items || [],
+            // Debug: show first 3 raw items if available
+            _debug_sample: (result.items || []).slice(0, 3),
         });
     } catch (error: any) {
         console.error('[MISA Sync Products] Error:', error);
         return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 }
+
