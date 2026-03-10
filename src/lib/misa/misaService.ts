@@ -407,8 +407,10 @@ export const MisaService = {
 
             const payload = {
                 app_id: appId,
-                // org_company_code = Company Code from MISA config
-                org_company_code: config?.companyCode?.trim() || "NB",
+                // CRITICAL: org_company_code MUST be "NB" — same as auth endpoint
+                // config.companyCode ("OPCXJDR4") is NOT the right value here!
+                // All successful MISA calls (auth, get_dictionary, save_dictionary) use "NB"
+                org_company_code: "NB",
                 is_auto_create_object: true,
                 voucher: [{
                     ...invoiceObj,
