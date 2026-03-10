@@ -101,8 +101,13 @@ export const MisaService = {
     mapOrderToMisaInvoice: (order: any, config: any) => {
         console.log("Mapping Order to Misa V5 Payload...");
         const items = order.items || [];
-        const today = new Date().toISOString().split('T')[0];
-        const orderDate = new Date(order.created_at || new Date()).toISOString().split('T')[0];
+        // Use Vietnam timezone (UTC+7) to avoid off-by-one-day issues
+        const vnDateStr = (d: Date) => {
+            const vn = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+            return vn.toISOString().split('T')[0];
+        };
+        const today = vnDateStr(new Date());
+        const orderDate = vnDateStr(new Date(order.created_at || new Date()));
 
         // Configurable Defaults
         const stockCode = config?.stockCode || "KBH";
