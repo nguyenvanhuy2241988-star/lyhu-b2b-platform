@@ -544,7 +544,8 @@ export const MisaService = {
                 body: JSON.stringify({
                     app_id: appId,
                     org_company_code: companyCode,
-                    data_type: 2
+                    data_type: 2,
+                    last_sync_time: "2000-01-01 00:00:00" // Get all items since very old date
                 })
             });
 
