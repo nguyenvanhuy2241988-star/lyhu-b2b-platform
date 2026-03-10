@@ -393,60 +393,89 @@ export const MisaService = {
                 invoiceObj.SaleEmployeeName = mappedName;
                 invoiceObj.EmployeeName = mappedName;
             }
-            // 3b. Pre-create Customer in MISA Dictionary
+            // 3b. Check if Customer exists in MISA, if not → use default customer code
             // CONFIRMED: MISA does NOT auto-create customers even with is_auto_create_object: true
-            // MISA DOES auto-create inventory items, but customers must exist beforehand.
-            // save_dictionary is ASYNC — MISA queues the request, so we must wait for processing.
+            // CONFIRMED: save_dictionary is async and takes 20+ seconds — cannot wait in serverless function
+            // Strategy: Check if customer exists → if yes, use their code
+            //           If no → fire-and-forget creation + use default customer for THIS order
             try {
                 const customerCode = invoiceObj.account_object_code;
                 const customerName = invoiceObj.account_object_name;
-                const customerPhone = orderData.receiverPhone || orderData.customer?.phone || "";
-                const customerAddress = invoiceObj.account_object_address || "";
+                const apiUrl = (config?.apiUrl || "https://actapp.misa.vn").replace(/\/$/, "");
+                const appIdForDict = config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e";
 
-                console.log(`[MisaService] Pre-creating customer in MISA: ${customerCode} (${customerName})`);
-
-                const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
-                const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
-                const dictEndpoint = `${baseUrl}/api/sync/actopen/save_dictionary`;
-
-                const dictPayload = {
-                    app_id: config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e",
-                    org_company_code: "NB",
-                    dictionary_type: 1, // 1 = Account Object (confirmed from debug)
-                    account_objects: [{
-                        account_object_code: customerCode,
-                        account_object_name: customerName,
-                        account_object_type: 1, // 1 = Customer
-                        tel: customerPhone,
-                        mobile: customerPhone,
-                        address: customerAddress,
-                        is_customer: true,
-                        is_vendor: false,
-                    }]
-                };
-
-                const dictRes = await fetch(dictEndpoint, {
+                // Check if customer exists in MISA
+                console.log(`[MisaService] Checking if customer ${customerCode} exists in MISA...`);
+                const checkRes = await fetch(`${apiUrl}/api/sync/actopen/get_dictionary`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
                         "X-MISA-AccessToken": token
                     },
-                    body: JSON.stringify(dictPayload)
+                    body: JSON.stringify({
+                        app_id: appIdForDict,
+                        org_company_code: "NB",
+                        data_type: 1,
+                        skip: 0,
+                        take: 500
+                    })
                 });
+                const checkText = await checkRes.text();
+                const customerExists = checkText.includes(`"account_object_code":"${customerCode}"`);
 
-                const dictText = await dictRes.text();
-                console.log(`[MisaService] Customer pre-create response (${dictRes.status}):`, dictText);
+                if (customerExists) {
+                    console.log(`[MisaService] ✅ Customer ${customerCode} EXISTS in MISA — using directly.`);
+                } else {
+                    console.log(`[MisaService] ⚠️ Customer ${customerCode} NOT FOUND in MISA.`);
 
-                // CRITICAL: Wait 8 seconds for MISA to process the async dictionary entry
-                // MISA save_dictionary is asynchronous — it queues the request
-                console.log(`[MisaService] Waiting 8 seconds for MISA to process customer creation...`);
-                await new Promise(resolve => setTimeout(resolve, 8000));
+                    // Fire-and-forget: Queue customer creation for FUTURE orders
+                    const customerPhone = orderData.receiverPhone || orderData.customer?.phone || "";
+                    const customerAddress = invoiceObj.account_object_address || "";
+                    fetch(`${apiUrl}/api/sync/actopen/save_dictionary`, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-MISA-AccessToken": token
+                        },
+                        body: JSON.stringify({
+                            app_id: appIdForDict,
+                            org_company_code: "NB",
+                            dictionary_type: 1,
+                            account_objects: [{
+                                account_object_code: customerCode,
+                                account_object_name: customerName,
+                                account_object_type: 1,
+                                tel: customerPhone,
+                                mobile: customerPhone,
+                                address: customerAddress,
+                                is_customer: true,
+                                is_vendor: false,
+                            }]
+                        })
+                    }).then(r => r.text()).then(t => {
+                        console.log(`[MisaService] Customer creation queued:`, t.substring(0, 200));
+                    }).catch(e => {
+                        console.warn(`[MisaService] Customer creation queue failed:`, e.message);
+                    });
 
+                    // For THIS order: use default customer code that EXISTS in MISA
+                    // Default: "00335" (confirmed to exist from debug)
+                    // Store original customer info in journal_memo
+                    const defaultCustomerCode = config?.defaultCustomerCode || "00335";
+                    console.log(`[MisaService] Using default customer code "${defaultCustomerCode}" for this order.`);
+                    console.log(`[MisaService] Original customer: ${customerCode} (${customerName})`);
+
+                    // Update invoice to use default customer but keep real info in description
+                    const originalInfo = `[KH: ${customerName} - ${customerCode}]`;
+                    invoiceObj.account_object_code = defaultCustomerCode;
+                    invoiceObj.account_object_name = customerName; // Keep name for reference
+                    invoiceObj.journal_memo = `${originalInfo} ${invoiceObj.journal_memo || "Đơn hàng tạo bởi Telesales"}`;
+                }
             } catch (custErr: any) {
-                console.warn(`[MisaService] Customer pre-create warning:`, custErr.message);
+                console.warn(`[MisaService] Customer check warning:`, custErr.message);
             }
 
-            console.log(`[MisaService] Customer code: ${invoiceObj.account_object_code}`);
+            console.log(`[MisaService] Final customer code: ${invoiceObj.account_object_code}`);
 
             // 4. Prepare Payload (Strict V5 Schema)
             // https://actdocs.misa.vn
