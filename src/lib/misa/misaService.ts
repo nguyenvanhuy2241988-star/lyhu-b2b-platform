@@ -440,12 +440,15 @@ export const MisaService = {
 
                 const dictText = await dictRes.text();
                 console.log(`[MisaService] Customer pre-create response (${dictRes.status}):`, dictText);
+                // Store for debug return
+                (invoiceObj as any)._dictDebug = { status: dictRes.status, response: dictText.substring(0, 500) };
 
                 // Wait 2 seconds for MISA to process the dictionary entry
                 await new Promise(resolve => setTimeout(resolve, 2000));
             } catch (custErr: any) {
                 // Non-fatal: continue even if customer pre-creation fails
                 console.warn(`[MisaService] Customer pre-create warning:`, custErr.message);
+                (invoiceObj as any)._dictDebug = { error: custErr.message };
             }
 
             // 4. Prepare Payload (Strict V5 Schema)
@@ -518,11 +521,12 @@ export const MisaService = {
                         ...payload,
                         _debug_userId: userId || "N/A",
                         _debug_mappedCode: mappedCode || "N/A",
-                        // _debug_mappedCodeChars: removed for cleanliness
                         _debug_mappedName: mappedName || "N/A",
                         _debug_finalEmployeeCode: config?.employeeCode || "N/A",
                         _debug_codeLen: config?.employeeCode ? config.employeeCode.length : 0,
-                        _debug_created_by: orderData.created_by || "N/A"
+                        _debug_created_by: orderData.created_by || "N/A",
+                        _debug_dictResult: (invoiceObj as any)._dictDebug || "N/A",
+                        _debug_customerCode: invoiceObj.account_object_code
                     }
                 };
             }
@@ -545,8 +549,9 @@ export const MisaService = {
                     debugPayload: {
                         ...payload,
                         _debug_mappedCode: mappedCode || "N/A",
-                        // _debug_mappedCodeChars: removed for cleanliness
-                        _debug_finalEmployeeCode: config?.employeeCode || "N/A"
+                        _debug_finalEmployeeCode: config?.employeeCode || "N/A",
+                        _debug_dictResult: (invoiceObj as any)._dictDebug || "N/A",
+                        _debug_customerCode: invoiceObj.account_object_code
                     }
                 };
             } else {
