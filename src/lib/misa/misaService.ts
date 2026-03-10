@@ -271,17 +271,16 @@ export const MisaService = {
             // Note: Customer is pre-created in dictionary step (3b) above
             // Don't set group_code here to avoid "NPP group not found" errors
 
-            // Employee Mapping Fix:
-            // 'employee_code' usually refers to the System User. 
-            // 'sale_employee_code' refers to the Sales Person (Dictionary).
-            // We only want to map the Sales Person.
-            // employee_code: config?.employeeCode || "NV000009",
-
-            employee_code: config?.employeeCode || "NV000009",
-            sale_employee_code: config?.employeeCode || "NV000009",
-            sales_employee_code: config?.employeeCode || "NV000009", // Alias just in case
-            SaleEmployeeCode: config?.employeeCode || "NV000009", // PascalCase alias
-            EmployeeCode: config?.employeeCode || "NV000009", // PascalCase alias
+            // Employee Mapping: Only set if a REAL employee code exists in MISA
+            // Don't use a hardcoded fallback like "NV000009" — it might not exist in MISA's dictionary
+            // and would cause "Đối tượng không tồn tại trong danh mục" error
+            ...(config?.employeeCode ? {
+                employee_code: config.employeeCode,
+                sale_employee_code: config.employeeCode,
+                sales_employee_code: config.employeeCode,
+                SaleEmployeeCode: config.employeeCode,
+                EmployeeCode: config.employeeCode,
+            } : {}),
 
             // Debug Employee Code
             // console.log(`[MisaService] Payload Employee Code: ${config?.employeeCode || "NV000009"}`);
