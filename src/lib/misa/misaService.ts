@@ -526,10 +526,11 @@ export const MisaService = {
             // IMPORTANT: Must match org_company_code used in getAccessToken ("NB")
             const companyCode = "NB";
 
-            // MISA ActOpen API: POST /api/sync/actopen/get_dictionary
+            // MISA ActOpen API: POST /apir/sync/actopen/get_dictionary
             // data_type: 1 = Đối tượng (Customers), 2 = Vật tư hàng hóa (Inventory Items)
+            // NOTE: MISA uses /apir/ not /api/ for this endpoint!
             const apiUrl = "https://actapp.misa.vn";
-            const endpoint = `${apiUrl}/api/sync/actopen/get_dictionary`;
+            const endpoint = `${apiUrl}/apir/sync/actopen/get_dictionary`;
 
             console.log(`[MisaService] Fetching Inventory Items from: ${endpoint}`);
             console.log(`[MisaService] Request body:`, { app_id: appId, org_company_code: companyCode, data_type: 2 });
