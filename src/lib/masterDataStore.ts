@@ -92,3 +92,22 @@ export const autoMapMisaProducts = async (): Promise<{
         return { success: false, matched: 0, unmatched: 0, error: e.message };
     }
 };
+
+/** Batch update misa_code for multiple products */
+export const batchMapProducts = async (mappings: { product_id: string; misa_code: string }[]): Promise<{
+    success: boolean;
+    updated: number;
+    total: number;
+    error?: string;
+}> => {
+    try {
+        const res = await fetch('/api/misa/batch-map', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mappings }),
+        });
+        return await res.json();
+    } catch (e: any) {
+        return { success: false, updated: 0, total: 0, error: e.message };
+    }
+};

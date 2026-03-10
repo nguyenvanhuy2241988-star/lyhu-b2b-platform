@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
     fetchMasterProducts, updateProductMisa, MisaProduct,
-    fetchMisaProducts, autoMapMisaProducts, MisaItem
+    fetchMisaProducts, autoMapMisaProducts, MisaItem,
+    batchMapProducts
 } from "@/lib/masterDataStore";
 import {
     fetchCustomers, updateCustomer, Customer
@@ -13,7 +14,7 @@ import {
     Search, Filter, Loader2, Save, X, Pencil,
     Building2, Package, CheckCircle2, AlertCircle,
     Copy, ExternalLink, Database, Settings,
-    RefreshCw, Zap, ChevronDown
+    RefreshCw, Zap, ChevronDown, Upload, FileText, ClipboardPaste
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 
@@ -45,6 +46,12 @@ export default function AccountantMasterDataPage() {
     const [syncResult, setSyncResult] = useState<string | null>(null);
     const [misaSearch, setMisaSearch] = useState("");
     const [showMisaDropdown, setShowMisaDropdown] = useState(false);
+
+    // Import Modal State
+    const [showImportModal, setShowImportModal] = useState(false);
+    const [importText, setImportText] = useState("");
+    const [importPreview, setImportPreview] = useState<{ matched: { name: string; misaCode: string; productId: string }[]; unmatched: string[] }>({ matched: [], unmatched: [] });
+    const [isImporting, setIsImporting] = useState(false);
 
     const loadData = useCallback(async () => {
         setIsLoading(true);
@@ -158,7 +165,7 @@ export default function AccountantMasterDataPage() {
             const result = await autoMapMisaProducts();
             if (result.success) {
                 setSyncResult(`⚡ Auto-Map: ${result.matched} khớp, ${result.unmatched} chưa khớp`);
-                loadData(); // Refresh product list
+                loadData();
             } else {
                 setSyncResult(`❌ Lỗi: ${result.error}`);
             }
@@ -166,6 +173,87 @@ export default function AccountantMasterDataPage() {
             setSyncResult(`❌ Lỗi: ${e.message}`);
         } finally {
             setIsAutoMapping(false);
+        }
+    };
+
+    // Parse pasted text from MISA Excel/table
+    const handleParseImport = (text: string) => {
+        setImportText(text);
+        if (!text.trim()) {
+            setImportPreview({ matched: [], unmatched: [] });
+            return;
+        }
+        const lines = text.split('\n').filter(l => l.trim());
+        const matched: { name: string; misaCode: string; productId: string }[] = [];
+        const unmatched: string[] = [];
+
+        for (const line of lines) {
+            // Try tab-separated: "MÃ\tTÊN" or "TÊN\tMÃ" or "MÃ\tTÊN\t..."
+            const parts = line.split('\t').map(p => p.trim()).filter(Boolean);
+            if (parts.length < 2) {
+                unmatched.push(line.trim());
+                continue;
+            }
+
+            // Detect which column is the code (shorter, looks like number/code)
+            let misaCode = '';
+            let productName = '';
+
+            // If first column looks like a numeric code (barcode/SKU)
+            if (/^[\d]{4,}$/.test(parts[0]) || /^[A-Z0-9_-]{2,10}$/i.test(parts[0])) {
+                misaCode = parts[0];
+                productName = parts[1];
+            } else if (/^[\d]{4,}$/.test(parts[1]) || /^[A-Z0-9_-]{2,10}$/i.test(parts[1])) {
+                productName = parts[0];
+                misaCode = parts[1];
+            } else {
+                // Default: first=code, second=name
+                misaCode = parts[0];
+                productName = parts[1];
+            }
+
+            // Try to match with local products by name (fuzzy)
+            const normalizedName = productName.toLowerCase().replace(/[\s]+/g, ' ').trim();
+            const matchedProduct = products.find(p => {
+                const pName = (p.name || '').toLowerCase().replace(/[\s]+/g, ' ').trim();
+                return pName === normalizedName ||
+                    pName.includes(normalizedName) ||
+                    normalizedName.includes(pName);
+            });
+
+            if (matchedProduct) {
+                matched.push({ name: productName, misaCode, productId: matchedProduct.id });
+            } else {
+                unmatched.push(`${misaCode} — ${productName}`);
+            }
+        }
+
+        setImportPreview({ matched, unmatched });
+    };
+
+    // Execute batch import
+    const handleExecuteImport = async () => {
+        if (importPreview.matched.length === 0) return;
+        setIsImporting(true);
+        try {
+            const mappings = importPreview.matched.map(m => ({
+                product_id: m.productId,
+                misa_code: m.misaCode,
+            }));
+            const result = await batchMapProducts(mappings);
+            if (result.success) {
+                setSyncResult(`✅ Đã map ${result.updated}/${result.total} sản phẩm thành công`);
+                setShowImportModal(false);
+                setImportText('');
+                setImportPreview({ matched: [], unmatched: [] });
+                loadData();
+            } else {
+                setSyncResult(`❌ Lỗi: ${result.error}`);
+            }
+        } catch (e: any) {
+            setSyncResult(`❌ Lỗi: ${e.message}`);
+        } finally {
+            setIsImporting(false);
         }
     };
 
@@ -189,12 +277,11 @@ export default function AccountantMasterDataPage() {
                 {activeTab === "products" && (
                     <div className="flex gap-2">
                         <button
-                            onClick={handleSyncMisa}
-                            disabled={isSyncing}
-                            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 disabled:opacity-50 flex items-center gap-2 text-sm shadow-sm"
+                            onClick={() => setShowImportModal(true)}
+                            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 flex items-center gap-2 text-sm shadow-sm"
                         >
-                            {isSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                            Đồng bộ từ MISA
+                            <ClipboardPaste className="w-4 h-4" />
+                            Import từ MISA
                         </button>
                         <button
                             onClick={handleAutoMap}
@@ -580,6 +667,113 @@ export default function AccountantMasterDataPage() {
                     </div>
                 )
             }
+            {/* Import Modal */}
+            {showImportModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center">
+                                    <ClipboardPaste className="w-5 h-5 text-primary-600" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-slate-900">Import từ MISA</h3>
+                                    <p className="text-xs text-slate-400">Dán dữ liệu từ Excel/MISA để auto-map</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowImportModal(false)} className="p-2 hover:bg-slate-100 rounded-lg">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Instructions */}
+                        <div className="px-6 py-3 bg-blue-50 border-b border-blue-100 text-sm">
+                            <p className="text-blue-800 font-medium">📋 Hướng dẫn:</p>
+                            <ol className="text-blue-700 text-xs mt-1 list-decimal list-inside space-y-0.5">
+                                <li>Mở MISA → Danh mục → Vật tư hàng hóa</li>
+                                <li>Chọn tất cả → Copy (Ctrl+C) các cột <b>Mã</b> và <b>Tên</b></li>
+                                <li>Paste (Ctrl+V) vào ô bên dưới</li>
+                            </ol>
+                        </div>
+
+                        {/* Textarea */}
+                        <div className="px-6 py-4 flex-1 overflow-y-auto space-y-4">
+                            <textarea
+                                value={importText}
+                                onChange={(e) => handleParseImport(e.target.value)}
+                                placeholder={"Dán dữ liệu ở đây...\n\nVí dụ (tab-separated):\n00001\tHàng xá bành phồng tôm\n00002\tHàng xá bành phồng cua\n6971443680729\tKhoai môn sấy vị cay từ xuyên 75g"}
+                                className="w-full h-40 px-3 py-2 border border-slate-200 rounded-xl text-sm font-mono resize-none focus:ring-2 focus:ring-primary-500 outline-none"
+                            />
+
+                            {/* Preview Results */}
+                            {importText.trim() && (
+                                <div className="space-y-3">
+                                    {/* Matched */}
+                                    {importPreview.matched.length > 0 && (
+                                        <div>
+                                            <h4 className="text-sm font-bold text-emerald-600 flex items-center gap-1">
+                                                <CheckCircle2 className="w-4 h-4" />
+                                                Khớp: {importPreview.matched.length} sản phẩm
+                                            </h4>
+                                            <div className="mt-1 bg-emerald-50 rounded-lg p-2 max-h-32 overflow-y-auto">
+                                                {importPreview.matched.map((m, i) => (
+                                                    <div key={i} className="flex items-center gap-2 text-xs py-0.5">
+                                                        <span className="font-mono text-emerald-700 font-bold">{m.misaCode}</span>
+                                                        <span className="text-slate-400">→</span>
+                                                        <span className="text-slate-600">{m.name}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Unmatched */}
+                                    {importPreview.unmatched.length > 0 && (
+                                        <div>
+                                            <h4 className="text-sm font-bold text-amber-600 flex items-center gap-1">
+                                                <AlertCircle className="w-4 h-4" />
+                                                Chưa khớp: {importPreview.unmatched.length} dòng
+                                            </h4>
+                                            <div className="mt-1 bg-amber-50 rounded-lg p-2 max-h-24 overflow-y-auto">
+                                                {importPreview.unmatched.slice(0, 10).map((u, i) => (
+                                                    <div key={i} className="text-xs text-amber-700 py-0.5 truncate">{u}</div>
+                                                ))}
+                                                {importPreview.unmatched.length > 10 && (
+                                                    <p className="text-xs text-amber-500 mt-1">...và {importPreview.unmatched.length - 10} dòng khác</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-6 py-4 border-t border-slate-100 flex justify-between items-center">
+                            <span className="text-xs text-slate-400">
+                                {importPreview.matched.length > 0 && `${importPreview.matched.length} SP sẽ được cập nhật`}
+                            </span>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => setShowImportModal(false)}
+                                    className="px-4 py-2 text-slate-600 font-bold rounded-xl hover:bg-slate-50 text-sm"
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    onClick={handleExecuteImport}
+                                    disabled={isImporting || importPreview.matched.length === 0}
+                                    className="px-6 py-2 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2 text-sm"
+                                >
+                                    {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                                    Áp dụng {importPreview.matched.length > 0 ? `(${importPreview.matched.length})` : ''}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 }
