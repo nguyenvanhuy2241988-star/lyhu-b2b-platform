@@ -194,8 +194,9 @@ export const MisaService = {
             totalAmount += netAmount + vatAmount;
             totalVat += vatAmount;
 
-            // Determine Product Code (Priority: Product Misa Code > Product SKU > Item SKU)
-            const productCode = item.product?.misa_code || item.product?.sku || item.sku || item.product_code || `SP-${index + 1}`;
+            // Determine Product Code
+            // Priority: SKU (what MISA already has from previous pushes) > misa_code > fallback
+            const productCode = item.product?.sku || item.sku || item.product?.misa_code || item.product_code || `SP-${index + 1}`;
             const productName = item.product?.name || item.name || item.inventory_item_name;
             const unit = item.product?.unit || item.unit || "Cái";
 
