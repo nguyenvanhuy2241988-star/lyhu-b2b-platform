@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { MisaService } from '@/lib/misa/misaService';
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/misa/sync-products/debug — Try all data_types to find inventory items
+// Comprehensive debug: try all combinations of company codes, API paths, and auth
 export async function GET() {
     try {
         const supabase = createClient(
@@ -13,70 +12,103 @@ export async function GET() {
             { auth: { autoRefreshToken: false, persistSession: false } }
         );
 
-        // Get token and config
-        const token = await MisaService.getAccessToken(supabase);
         const { data: settings } = await supabase.from('app_settings').select('*').single();
         const config = (settings as any)?.misa_config || {};
         const appId = config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e";
-        const companyCode = config?.companyCode?.trim() || "NB";
+        const accessCode = config?.accessCode;
+        const configCompanyCode = config?.companyCode?.trim() || "UNKNOWN";
 
-        const endpoint = "https://actapp.misa.vn/api/sync/actopen/get_dictionary";
         const results: Record<string, any> = {};
 
-        // Try data_type 0, 1, 2, 3, 4, 5
-        for (const dt of [0, 1, 2, 3, 4, 5]) {
+        // Step 1: Try auth with different company codes
+        const companyCodes = ["NB", configCompanyCode];
+        const authTokens: Record<string, string> = {};
+
+        for (const cc of companyCodes) {
             try {
-                const res = await fetch(endpoint, {
+                const authRes = await fetch("https://actapp.misa.vn/api/oauth/actopen/connect", {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-MISA-AccessToken": token,
-                        "X-MISA-AppID": appId,
-                    },
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         app_id: appId,
-                        org_company_code: companyCode,
-                        data_type: dt,
-                        last_sync_time: "2000-01-01 00:00:00"
+                        access_code: accessCode,
+                        org_company_code: cc
                     })
                 });
-                const text = await res.text();
-                let parsed: any = null;
-                try { parsed = JSON.parse(text); } catch (e) { }
+                const authData = await authRes.json();
+                if (authData?.Success && authData?.Data) {
+                    let token = authData.Data;
+                    if (typeof token === 'string' && token.trim().startsWith('{')) {
+                        try { const p = JSON.parse(token); if (p.access_token) token = p.access_token; } catch (e) { }
+                    }
+                    authTokens[cc] = token;
+                    results[`auth_${cc}`] = { success: true, tokenLength: token.length };
+                } else {
+                    results[`auth_${cc}`] = { success: false, response: JSON.stringify(authData).substring(0, 200) };
+                }
+            } catch (e: any) {
+                results[`auth_${cc}`] = { error: e.message };
+            }
+        }
 
-                // Try to extract Data
-                let dataInfo = 'N/A';
-                if (parsed?.Data) {
-                    if (typeof parsed.Data === 'string') {
-                        try {
-                            const arr = JSON.parse(parsed.Data);
-                            dataInfo = `string → parsed array (${Array.isArray(arr) ? arr.length : 'not array'} items)`;
-                            if (Array.isArray(arr) && arr.length > 0) {
-                                dataInfo += ` | keys: ${Object.keys(arr[0]).join(', ')}`;
+        // Step 2: Try dictionary with each token + each company code + both API paths
+        const apiPaths = ["/api/sync/actopen/get_dictionary", "/apir/sync/actopen/get_dictionary"];
+
+        for (const [authCC, token] of Object.entries(authTokens)) {
+            for (const path of apiPaths) {
+                for (const dictCC of companyCodes) {
+                    const key = `auth:${authCC}_path:${path.includes('apir') ? 'apir' : 'api'}_dict:${dictCC}`;
+                    try {
+                        const res = await fetch(`https://actapp.misa.vn${path}`, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-MISA-AccessToken": token,
+                                "X-MISA-AppID": appId,
+                            },
+                            body: JSON.stringify({
+                                app_id: appId,
+                                org_company_code: dictCC,
+                                data_type: 2,
+                                last_sync_time: "2000-01-01 00:00:00"
+                            })
+                        });
+                        const text = await res.text();
+                        let parsed: any = null;
+                        try { parsed = JSON.parse(text); } catch (e) { }
+
+                        let itemCount = 'N/A';
+                        if (parsed?.Data) {
+                            if (typeof parsed.Data === 'string') {
+                                try {
+                                    const arr = JSON.parse(parsed.Data);
+                                    itemCount = Array.isArray(arr) ? `${arr.length} items` : 'not array';
+                                    if (Array.isArray(arr) && arr.length > 0) {
+                                        itemCount += ` | sample keys: ${Object.keys(arr[0]).slice(0, 5).join(',')}`;
+                                    }
+                                } catch (e) {
+                                    itemCount = `string(${parsed.Data.length}): ${parsed.Data.substring(0, 50)}`;
+                                }
+                            } else if (Array.isArray(parsed.Data)) {
+                                itemCount = `${parsed.Data.length} items (direct array)`;
                             }
-                        } catch (e) {
-                            dataInfo = `string (${parsed.Data.length} chars): ${parsed.Data.substring(0, 100)}`;
                         }
-                    } else if (Array.isArray(parsed.Data)) {
-                        dataInfo = `array (${parsed.Data.length} items)`;
-                    } else {
-                        dataInfo = `${typeof parsed.Data}: ${JSON.stringify(parsed.Data).substring(0, 100)}`;
+
+                        results[key] = {
+                            status: res.status,
+                            success: parsed?.Success,
+                            items: itemCount,
+                            message: parsed?.CustomData?.Message || null,
+                        };
+                    } catch (e: any) {
+                        results[key] = { error: e.message };
                     }
                 }
-
-                results[`data_type_${dt}`] = {
-                    status: res.status,
-                    success: parsed?.Success,
-                    dataInfo,
-                    customDataMessage: parsed?.CustomData?.Message || null,
-                };
-            } catch (e: any) {
-                results[`data_type_${dt}`] = { error: e.message };
             }
         }
 
         return NextResponse.json({
-            config: { appId, companyCode },
+            config: { appId, configCompanyCode, hasAccessCode: !!accessCode },
             results
         });
     } catch (error: any) {
