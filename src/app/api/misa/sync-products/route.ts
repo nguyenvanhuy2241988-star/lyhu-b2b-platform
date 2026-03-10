@@ -4,8 +4,7 @@ import { MisaService } from '@/lib/misa/misaService';
 
 export const dynamic = 'force-dynamic';
 
-// POST /api/misa/sync-products — Pull product catalog from MISA
-export async function POST(request: Request) {
+async function handleSync() {
     try {
         const supabase = createClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,7 +22,6 @@ export async function POST(request: Request) {
             success: true,
             total: result.items?.length || 0,
             items: result.items || [],
-            // Debug: show first 3 raw items if available
             _debug_sample: (result.items || []).slice(0, 3),
         });
     } catch (error: any) {
@@ -32,3 +30,6 @@ export async function POST(request: Request) {
     }
 }
 
+// Support both GET (browser debug) and POST (from UI)
+export async function GET() { return handleSync(); }
+export async function POST() { return handleSync(); }
