@@ -393,13 +393,60 @@ export const MisaService = {
                 invoiceObj.SaleEmployeeName = mappedName;
                 invoiceObj.EmployeeName = mappedName;
             }
-            // NOTE: Pre-creation via save_dictionary was REMOVED.
-            // MISA processes save_dictionary requests ASYNCHRONOUSLY (queued),
-            // so the objects won't be available when the order is pushed immediately after.
-            // Instead, we rely on the main /api/sync/actopen/save endpoint with
-            // is_auto_create_object: true to auto-create objects inline.
-            // Debug: log what customer/employee codes will be used
-            console.log(`[MisaService] Customer code: ${invoiceObj.account_object_code}, Employee code: ${config?.employeeCode || "NV000009"}`);
+            // 3b. Pre-create Customer in MISA Dictionary
+            // CONFIRMED: MISA does NOT auto-create customers even with is_auto_create_object: true
+            // MISA DOES auto-create inventory items, but customers must exist beforehand.
+            // save_dictionary is ASYNC — MISA queues the request, so we must wait for processing.
+            try {
+                const customerCode = invoiceObj.account_object_code;
+                const customerName = invoiceObj.account_object_name;
+                const customerPhone = orderData.receiverPhone || orderData.customer?.phone || "";
+                const customerAddress = invoiceObj.account_object_address || "";
+
+                console.log(`[MisaService] Pre-creating customer in MISA: ${customerCode} (${customerName})`);
+
+                const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
+                const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+                const dictEndpoint = `${baseUrl}/api/sync/actopen/save_dictionary`;
+
+                const dictPayload = {
+                    app_id: config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e",
+                    org_company_code: "NB",
+                    dictionary_type: 1, // 1 = Account Object (confirmed from debug)
+                    account_objects: [{
+                        account_object_code: customerCode,
+                        account_object_name: customerName,
+                        account_object_type: 1, // 1 = Customer
+                        tel: customerPhone,
+                        mobile: customerPhone,
+                        address: customerAddress,
+                        is_customer: true,
+                        is_vendor: false,
+                    }]
+                };
+
+                const dictRes = await fetch(dictEndpoint, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-MISA-AccessToken": token
+                    },
+                    body: JSON.stringify(dictPayload)
+                });
+
+                const dictText = await dictRes.text();
+                console.log(`[MisaService] Customer pre-create response (${dictRes.status}):`, dictText);
+
+                // CRITICAL: Wait 8 seconds for MISA to process the async dictionary entry
+                // MISA save_dictionary is asynchronous — it queues the request
+                console.log(`[MisaService] Waiting 8 seconds for MISA to process customer creation...`);
+                await new Promise(resolve => setTimeout(resolve, 8000));
+
+            } catch (custErr: any) {
+                console.warn(`[MisaService] Customer pre-create warning:`, custErr.message);
+            }
+
+            console.log(`[MisaService] Customer code: ${invoiceObj.account_object_code}`);
 
             // 4. Prepare Payload (Strict V5 Schema)
             // https://actdocs.misa.vn
