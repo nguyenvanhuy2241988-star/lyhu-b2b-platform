@@ -491,6 +491,54 @@ export const MisaService = {
                 (invoiceObj as any)._empDictDebug = { error: empErr.message };
             }
 
+            // 3d. Pre-create Inventory Items in MISA Dictionary
+            try {
+                const details = invoiceObj.detail || [];
+                const uniqueItems = details
+                    .filter((d: any) => d.inventory_item_code)
+                    .map((d: any) => ({
+                        inventory_item_code: d.inventory_item_code,
+                        inventory_item_name: d.inventory_item_name || d.description || d.inventory_item_code,
+                        inventory_item_type: 1, // 1 = Hàng hóa (Goods)
+                        inventory_item_category_code: "HH",
+                        unit_name: d.unit_code || "Cái",
+                        is_active: true,
+                    }));
+
+                if (uniqueItems.length > 0) {
+                    console.log(`[MisaService] Pre-creating ${uniqueItems.length} inventory items:`, uniqueItems.map((i: any) => i.inventory_item_code));
+
+                    const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
+                    const baseUrl3 = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+                    const invDictEndpoint = `${baseUrl3}/api/sync/actopen/save_dictionary`;
+
+                    const invDictPayload = {
+                        app_id: config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e",
+                        org_company_code: "NB",
+                        dictionary_type: 2, // 2 = Vật tư hàng hóa (Inventory Items)
+                        inventory_items: uniqueItems
+                    };
+
+                    const invDictRes = await fetch(invDictEndpoint, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-MISA-AccessToken": token
+                        },
+                        body: JSON.stringify(invDictPayload)
+                    });
+
+                    const invDictText = await invDictRes.text();
+                    console.log(`[MisaService] Inventory pre-create response (${invDictRes.status}):`, invDictText);
+                    (invoiceObj as any)._invDictDebug = { status: invDictRes.status, response: invDictText.substring(0, 500), itemCount: uniqueItems.length };
+
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+            } catch (invErr: any) {
+                console.warn(`[MisaService] Inventory pre-create warning:`, invErr.message);
+                (invoiceObj as any)._invDictDebug = { error: invErr.message };
+            }
+
             // 4. Prepare Payload (Strict V5 Schema)
             // https://actdocs.misa.vn
             const appId = config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e";
