@@ -391,9 +391,54 @@ export const MisaService = {
             if (mappedName) {
                 invoiceObj.sale_employee_name = mappedName;
                 invoiceObj.employee_name = mappedName;
-                // Add redundant name fields
                 invoiceObj.SaleEmployeeName = mappedName;
                 invoiceObj.EmployeeName = mappedName;
+            }
+
+            // 3b. Pre-create Customer in MISA Dictionary (prevents "Đối tượng không tồn tại")
+            try {
+                const customerCode = invoiceObj.account_object_code;
+                const customerName = invoiceObj.account_object_name;
+                const customerPhone = orderData.receiverPhone || orderData.customer?.phone || "";
+                const customerAddress = invoiceObj.account_object_address || "";
+
+                console.log(`[MisaService] Pre-creating customer: ${customerCode} (${customerName})`);
+
+                const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
+                const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+                const dictEndpoint = `${baseUrl}/api/sync/actopen/save_dictionary`;
+
+                const dictPayload = {
+                    app_id: config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e",
+                    org_company_code: "NB",
+                    data: {
+                        account_objects: [{
+                            account_object_code: customerCode,
+                            account_object_name: customerName,
+                            account_object_type: 1, // 1 = Khách hàng (Customer)
+                            account_object_category_code: config?.customerGroupCode || "NPP",
+                            tel: customerPhone,
+                            address: customerAddress,
+                            is_customer: true,
+                            is_vendor: false,
+                        }]
+                    }
+                };
+
+                const dictRes = await fetch(dictEndpoint, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-MISA-AccessToken": token
+                    },
+                    body: JSON.stringify(dictPayload)
+                });
+
+                const dictResult = await dictRes.json();
+                console.log(`[MisaService] Customer pre-create result:`, JSON.stringify(dictResult));
+            } catch (custErr: any) {
+                // Non-fatal: continue even if customer pre-creation fails
+                console.warn(`[MisaService] Customer pre-create warning:`, custErr.message);
             }
 
             // 4. Prepare Payload (Strict V5 Schema)
