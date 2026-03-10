@@ -249,30 +249,26 @@ export const MisaService = {
 
         const totalSaleAmount = totalAmount - totalVat; // Pre-tax roughly
 
-        // Customer Info (Dynamic Mapping based on Phone)
+        // Customer Info: Priority = customer.misa_code (matched) > phone > auto-generated
+        const customerMisaCode = order.customer?.misa_code;
         const phoneCode = order.receiverPhone || order.customer?.phone || "";
-        // Auto-generate customer code if missing
-        const customerCode = phoneCode.trim() || `KH-${order.customer?.id || Date.now()}`;
+        const customerCode = customerMisaCode || phoneCode.trim() || `KH-${order.customer?.id || Date.now()}`;
 
         const payload: any = {
             voucher_type: 20, // Đơn đặt hàng
-            // reftype: 3535,    // REMOVED: Let MISA infer (Might be causing silent rejection)
 
             org_refid: `${order.id}-${Date.now()}`,
-            // Changed prefix to DH-WEB to be distinct
             org_refno: `DH-WEB-${order.readable_id || order.readableId || order.id.substring(0, 6)}-${Math.floor(1000 + Math.random() * 9000)}`,
             org_reftype_name: "Đơn đặt hàng website",
 
             refdate: orderDate,
-            // posted_date: today, // Not needed for Order
-            // inv_date: today,    // Not needed for Order
 
             // Customer Info
             account_object_code: customerCode,
             account_object_name: order.customerName || order.customer?.name || "Khách lẻ",
             account_object_address: order.receiverAddress || order.address || "",
-            // Default Customer Group: NPP (Nhà Phân Phối) or THU (Khách thử hàng mẫu)
-            // This is REQUIRED for auto-creating new customers
+            account_object_contact: phoneCode, // Phone for reference
+            // Customer Group for auto-creation (REQUIRED by MISA)
             account_object_group_code: config?.customerGroupCode || "NPP",
 
             // Employee Mapping Fix:
