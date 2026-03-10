@@ -194,9 +194,8 @@ export const MisaService = {
             totalAmount += netAmount + vatAmount;
             totalVat += vatAmount;
 
-            // Determine Product Code
-            // Priority: SKU (what MISA already has from previous pushes) > misa_code > fallback
-            const productCode = item.product?.sku || item.sku || item.product?.misa_code || item.product_code || `SP-${index + 1}`;
+            // Determine Product Code (Priority: misa_code > SKU > fallback)
+            const productCode = item.product?.misa_code || item.product?.sku || item.sku || item.product_code || `SP-${index + 1}`;
             const productName = item.product?.name || item.name || item.inventory_item_name;
             const unit = item.product?.unit || item.unit || "Cái";
 
@@ -421,7 +420,8 @@ export const MisaService = {
             const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
             // Check for trailing slash
             const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
-            endpoint = `${baseUrl}/apir/sync/actopen/save`;
+            // NOTE: Save uses /api/ (NOT /apir/) — /api/ auto-creates items, /apir/ is strict and rejects unknown items
+            endpoint = `${baseUrl}/api/sync/actopen/save`;
 
             console.log(`[MisaService] POST ${endpoint}`);
             console.log(`[MisaService] Config:`, JSON.stringify(config));
