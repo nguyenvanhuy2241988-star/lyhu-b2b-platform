@@ -401,11 +401,11 @@ export const MisaService = {
 
             const payload = {
                 app_id: appId,
-                org_company_code: config?.companyCode?.trim() || "NB", // Access Code must match Company/Branch
+                org_company_code: "NB", // Must match auth token scope (hardcoded NB)
                 voucher: [{
                     ...invoiceObj,
-                    organization_unit_code: config?.orgUnitCode || config?.companyCode?.trim() || "NB",
-                    OrganizationUnitCode: config?.orgUnitCode || config?.companyCode?.trim() || "NB" // PascalCase alias
+                    organization_unit_code: config?.orgUnitCode || "NB",
+                    OrganizationUnitCode: config?.orgUnitCode || "NB" // PascalCase alias
                 }]
             };
 
@@ -413,7 +413,7 @@ export const MisaService = {
             const apiUrl = config?.apiUrl || "https://actapp.misa.vn";
             // Check for trailing slash
             const baseUrl = apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
-            endpoint = `${baseUrl}/api/sync/actopen/save`;
+            endpoint = `${baseUrl}/apir/sync/actopen/save`;
 
             console.log(`[MisaService] POST ${endpoint}`);
             console.log(`[MisaService] Config:`, JSON.stringify(config));
