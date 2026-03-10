@@ -525,20 +525,26 @@ export const MisaService = {
             const appId = config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e";
             const companyCode = config?.companyCode?.trim() || "NB";
 
-            // MISA ActOpen Dictionary API for Inventory Items
+            // MISA ActOpen API: POST /api/sync/actopen/get_dictionary
+            // data_type: 1 = Đối tượng (Customers), 2 = Vật tư hàng hóa (Inventory Items)
             const apiUrl = "https://actapp.misa.vn";
-            const endpoint = `${apiUrl}/api/sync/actopen/dictionary/InventoryItem?app_id=${appId}&org_company_code=${companyCode}`;
+            const endpoint = `${apiUrl}/api/sync/actopen/get_dictionary`;
 
             console.log(`[MisaService] Fetching Inventory Items from: ${endpoint}`);
 
             const res = await fetch(endpoint, {
-                method: "GET",
+                method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "X-MISA-AccessToken": token,
                     "X-MISA-AppID": appId,
                     "User-Agent": "LYHU-B2B-Platform/1.0"
-                }
+                },
+                body: JSON.stringify({
+                    app_id: appId,
+                    org_company_code: companyCode,
+                    data_type: 2 // 2 = Vật tư hàng hóa (Inventory Items)
+                })
             });
 
             const textRaw = await res.text();
@@ -581,7 +587,26 @@ export const MisaService = {
                 };
             }
 
-            return { success: false, error: `Unexpected MISA response: ${JSON.stringify(data).substring(0, 200)}` };
+            // If Data is a JSON string, try parsing
+            if (data?.Success && typeof data?.Data === 'string') {
+                try {
+                    const parsed = JSON.parse(data.Data);
+                    if (Array.isArray(parsed)) {
+                        console.log(`[MisaService] Fetched ${parsed.length} inventory items from MISA (string Data)`);
+                        return {
+                            success: true,
+                            items: parsed.map((item: any) => ({
+                                inventory_item_code: item.inventory_item_code || item.InventoryItemCode || '',
+                                inventory_item_name: item.inventory_item_name || item.InventoryItemName || '',
+                                unit_name: item.unit_name || item.UnitName || '',
+                                inventory_item_id: item.inventory_item_id || item.InventoryItemID || '',
+                            }))
+                        };
+                    }
+                } catch (e) { }
+            }
+
+            return { success: false, error: `Unexpected MISA response: ${JSON.stringify(data).substring(0, 300)}` };
         } catch (err: any) {
             console.error("[MisaService] fetchInventoryItems Error:", err);
             return { success: false, error: err.message };
