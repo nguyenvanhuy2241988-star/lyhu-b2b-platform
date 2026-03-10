@@ -516,7 +516,7 @@ export const MisaService = {
     },
 
     // 4. Fetch Inventory Items from MISA (Dictionary API)
-    fetchInventoryItems: async (supabase: any): Promise<{ success: boolean; items?: any[]; error?: string }> => {
+    fetchInventoryItems: async (supabase: any): Promise<{ success: boolean; items?: any[]; error?: string; _raw?: any }> => {
         try {
             const token = await MisaService.getAccessToken(supabase);
             const settings = await fetchAppSettings(supabase);
@@ -531,6 +531,7 @@ export const MisaService = {
             const endpoint = `${apiUrl}/api/sync/actopen/get_dictionary`;
 
             console.log(`[MisaService] Fetching Inventory Items from: ${endpoint}`);
+            console.log(`[MisaService] Request body:`, { app_id: appId, org_company_code: companyCode, data_type: 2 });
 
             const res = await fetch(endpoint, {
                 method: "POST",
@@ -543,7 +544,7 @@ export const MisaService = {
                 body: JSON.stringify({
                     app_id: appId,
                     org_company_code: companyCode,
-                    data_type: 2 // 2 = Vật tư hàng hóa (Inventory Items)
+                    data_type: 2
                 })
             });
 
@@ -551,71 +552,73 @@ export const MisaService = {
 
             if (!res.ok) {
                 console.error(`[MisaService] Fetch Items Failed (${res.status}):`, textRaw);
-                return { success: false, error: `MISA API Error (${res.status}): ${textRaw.substring(0, 200)}` };
+                return { success: false, error: `MISA API Error (${res.status}): ${textRaw.substring(0, 500)}` };
             }
 
             let data;
             try { data = JSON.parse(textRaw); } catch (e) {
-                return { success: false, error: "Invalid JSON response from MISA" };
+                return { success: false, error: "Invalid JSON response from MISA", _raw: textRaw.substring(0, 500) };
             }
 
-            // Debug: log full structure
-            console.log(`[MisaService] Dictionary Response Keys:`, Object.keys(data || {}));
-            console.log(`[MisaService] Dictionary Response Success:`, data?.Success);
-            console.log(`[MisaService] Dictionary Response Data type:`, typeof data?.Data, Array.isArray(data?.Data) ? `(array len: ${data.Data.length})` : '');
-            console.log(`[MisaService] Dictionary Response Raw (500 chars):`, textRaw.substring(0, 500));
+            // Debug: surface raw response structure
+            const rawDebug = {
+                keys: Object.keys(data || {}),
+                Success: data?.Success,
+                DataType: typeof data?.Data,
+                DataIsArray: Array.isArray(data?.Data),
+                DataLength: Array.isArray(data?.Data) ? data.Data.length : (typeof data?.Data === 'string' ? data.Data.length : 'N/A'),
+                DataSample: Array.isArray(data?.Data)
+                    ? JSON.stringify(data.Data[0]).substring(0, 300)
+                    : (typeof data?.Data === 'string' ? data.Data.substring(0, 300) : JSON.stringify(data?.Data).substring(0, 300)),
+                raw500: textRaw.substring(0, 500),
+            };
 
-            // MISA response structure: { Success: true, Data: [...] }
+            console.log(`[MisaService] Dictionary Response Debug:`, JSON.stringify(rawDebug));
+
+            // Parse items from various MISA response formats
+            let rawItems: any[] = [];
+
+            // Format 1: { Success: true, Data: [...] }
             if (data?.Success && Array.isArray(data?.Data)) {
-                console.log(`[MisaService] Fetched ${data.Data.length} inventory items from MISA`);
-                return {
-                    success: true,
-                    items: data.Data.map((item: any) => ({
-                        inventory_item_code: item.inventory_item_code || item.InventoryItemCode || '',
-                        inventory_item_name: item.inventory_item_name || item.InventoryItemName || '',
-                        unit_name: item.unit_name || item.UnitName || '',
-                        inventory_item_id: item.inventory_item_id || item.InventoryItemID || '',
-                    }))
-                };
+                rawItems = data.Data;
             }
-
-            // Some MISA APIs return Data as array directly
-            if (Array.isArray(data)) {
-                console.log(`[MisaService] Fetched ${data.length} inventory items from MISA (array)`);
-                return {
-                    success: true,
-                    items: data.map((item: any) => ({
-                        inventory_item_code: item.inventory_item_code || item.InventoryItemCode || '',
-                        inventory_item_name: item.inventory_item_name || item.InventoryItemName || '',
-                        unit_name: item.unit_name || item.UnitName || '',
-                        inventory_item_id: item.inventory_item_id || item.InventoryItemID || '',
-                    }))
-                };
+            // Format 2: Direct array
+            else if (Array.isArray(data)) {
+                rawItems = data;
             }
-
-            // If Data is a JSON string, try parsing
-            if (data?.Success && typeof data?.Data === 'string') {
+            // Format 3: { Success: true, Data: "json_string" }
+            else if (data?.Success && typeof data?.Data === 'string') {
                 try {
                     const parsed = JSON.parse(data.Data);
-                    if (Array.isArray(parsed)) {
-                        console.log(`[MisaService] Fetched ${parsed.length} inventory items from MISA (string Data)`);
-                        return {
-                            success: true,
-                            items: parsed.map((item: any) => ({
-                                inventory_item_code: item.inventory_item_code || item.InventoryItemCode || '',
-                                inventory_item_name: item.inventory_item_name || item.InventoryItemName || '',
-                                unit_name: item.unit_name || item.UnitName || '',
-                                inventory_item_id: item.inventory_item_id || item.InventoryItemID || '',
-                            }))
-                        };
-                    }
+                    if (Array.isArray(parsed)) rawItems = parsed;
                 } catch (e) { }
             }
 
-            return { success: false, error: `Unexpected MISA response: ${JSON.stringify(data).substring(0, 300)}` };
+            if (rawItems.length > 0) {
+                // Auto-detect field names from first item
+                const sample = rawItems[0];
+                const keys = Object.keys(sample);
+                console.log(`[MisaService] Item keys:`, keys);
+
+                return {
+                    success: true,
+                    items: rawItems.map((item: any) => ({
+                        inventory_item_code: item.inventory_item_code || item.InventoryItemCode || item.code || item.Code || item.inventory_item_id || '',
+                        inventory_item_name: item.inventory_item_name || item.InventoryItemName || item.name || item.Name || '',
+                        unit_name: item.unit_name || item.UnitName || item.unit || item.Unit || '',
+                        inventory_item_id: item.inventory_item_id || item.InventoryItemID || item.id || item.ID || '',
+                    })),
+                    _raw: rawDebug
+                };
+            }
+
+            // No items found — return raw response for debugging
+            return { success: true, items: [], _raw: rawDebug };
         } catch (err: any) {
             console.error("[MisaService] fetchInventoryItems Error:", err);
             return { success: false, error: err.message };
         }
     },
 };
+
+

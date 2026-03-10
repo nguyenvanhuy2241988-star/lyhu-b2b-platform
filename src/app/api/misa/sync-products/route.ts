@@ -15,14 +15,18 @@ async function handleSync() {
         const result = await MisaService.fetchInventoryItems(supabase);
 
         if (!result.success) {
-            return NextResponse.json({ success: false, error: result.error }, { status: 400 });
+            return NextResponse.json({
+                success: false,
+                error: result.error,
+                _raw: result._raw || null,
+            }, { status: 400 });
         }
 
         return NextResponse.json({
             success: true,
             total: result.items?.length || 0,
             items: result.items || [],
-            _debug_sample: (result.items || []).slice(0, 3),
+            _raw: result._raw || null,
         });
     } catch (error: any) {
         console.error('[MISA Sync Products] Error:', error);
