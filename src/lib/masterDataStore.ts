@@ -21,7 +21,7 @@ export interface MisaProduct {
 export const fetchMasterProducts = async (token?: string): Promise<MisaProduct[]> => {
     try {
         const headers = getHeaders(token);
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=id,sku,name,misa_code,unit&order=name.asc`, { headers });
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=id,sku,name,misa_code,unit&is_active=eq.true&order=name.asc`, { headers });
         if (!res.ok) return [];
         return await res.json();
     } catch {
