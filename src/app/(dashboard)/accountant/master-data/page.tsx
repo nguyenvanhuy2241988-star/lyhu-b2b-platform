@@ -50,7 +50,7 @@ export default function AccountantMasterDataPage() {
     // Import Modal State
     const [showImportModal, setShowImportModal] = useState(false);
     const [importText, setImportText] = useState("");
-    const [importPreview, setImportPreview] = useState<{ matched: { misaCode: string; misaName: string; productId: string; currentName: string; matchType: string }[]; unmatched: string[] }>({ matched: [], unmatched: [] });
+    const [importPreview, setImportPreview] = useState<{ matched: { misaCode: string; misaName: string; productId: string; currentName: string; matchType: string }[]; unmatched: string[]; unmatchedApp: { name: string; sku: string }[] }>({ matched: [], unmatched: [], unmatchedApp: [] });
     const [isImporting, setIsImporting] = useState(false);
 
     const loadData = useCallback(async () => {
@@ -180,7 +180,7 @@ export default function AccountantMasterDataPage() {
     const handleParseImport = (text: string) => {
         setImportText(text);
         if (!text.trim()) {
-            setImportPreview({ matched: [], unmatched: [] });
+            setImportPreview({ matched: [], unmatched: [], unmatchedApp: [] });
             return;
         }
         const lines = text.split('\n').filter(l => l.trim());
@@ -195,46 +195,76 @@ export default function AccountantMasterDataPage() {
                 continue;
             }
 
-            let misaCode = '';
-            let misaName = '';
-
-            if (/^[\d]{4,}$/.test(parts[0]) || /^[A-Z0-9_-]{2,10}$/i.test(parts[0])) {
-                misaCode = parts[0];
-                misaName = parts[1];
-            } else if (/^[\d]{4,}$/.test(parts[1]) || /^[A-Z0-9_-]{2,10}$/i.test(parts[1])) {
-                misaName = parts[0];
-                misaCode = parts[1];
-            } else {
-                misaCode = parts[0];
-                misaName = parts[1];
+            // Scan ALL columns: find numeric codes and longest text (=name)
+            const numericCols: string[] = [];
+            let longestText = '';
+            for (const p of parts) {
+                if (/^\d{4,}$/.test(p) || /^[A-Z0-9_-]{2,10}$/i.test(p)) {
+                    numericCols.push(p);
+                } else if (p.length > longestText.length) {
+                    longestText = p;
+                }
             }
 
-            // Priority 1: Match by SKU
-            let matchedProduct = products.find(p =>
-                !usedIds.has(p.id) && p.sku && misaCode && p.sku === misaCode
-            );
-            let matchType = 'SKU';
+            const misaName = longestText || parts[1] || parts[0];
 
-            // Priority 2: Match by name
-            if (!matchedProduct) {
-                const norm = misaName.toLowerCase().replace(/[\s]+/g, ' ').trim();
+            // Priority 1: Match ANY numeric column against ANY product SKU
+            let matchedProduct: typeof products[0] | undefined;
+            let matchedMisaCode = '';
+            let matchType = '';
+
+            for (const code of numericCols) {
+                const cleanCode = code.replace(/\s+/g, '').trim();
                 matchedProduct = products.find(p => {
                     if (usedIds.has(p.id)) return false;
-                    const pName = (p.name || '').toLowerCase().replace(/[\s]+/g, ' ').trim();
-                    return pName === norm || pName.includes(norm) || norm.includes(pName);
+                    const cleanSku = (p.sku || '').replace(/\s+/g, '').trim();
+                    return cleanSku && (cleanSku === cleanCode || cleanSku.includes(cleanCode) || cleanCode.includes(cleanSku));
                 });
-                matchType = 'Tên';
+                if (matchedProduct) {
+                    matchedMisaCode = code;
+                    matchType = 'SKU';
+                    break;
+                }
             }
 
-            if (matchedProduct) {
+            // Priority 2: Match by name (fuzzy - word overlap)
+            if (!matchedProduct) {
+                const misaWords = misaName.toLowerCase().replace(/[^a-z0-9\u00C0-\u024F\u1E00-\u1EFF ]/gi, '').split(/\s+/).filter(w => w.length > 1);
+                let bestScore = 0;
+                let bestProduct: typeof products[0] | undefined;
+
+                for (const p of products) {
+                    if (usedIds.has(p.id)) continue;
+                    const pWords = (p.name || '').toLowerCase().replace(/[^a-z0-9\u00C0-\u024F\u1E00-\u1EFF ]/gi, '').split(/\s+/).filter(w => w.length > 1);
+                    const overlap = misaWords.filter(w => pWords.includes(w)).length;
+                    const score = overlap / Math.max(misaWords.length, pWords.length, 1);
+                    if (score > bestScore && score >= 0.5) { // At least 50% word overlap
+                        bestScore = score;
+                        bestProduct = p;
+                    }
+                }
+
+                if (bestProduct) {
+                    matchedProduct = bestProduct;
+                    matchedMisaCode = numericCols[0] || '';
+                    matchType = `Tên (${Math.round(bestScore * 100)}%)`;
+                }
+            }
+
+            if (matchedProduct && matchedMisaCode) {
                 usedIds.add(matchedProduct.id);
-                matched.push({ misaCode, misaName, productId: matchedProduct.id, currentName: matchedProduct.name || '', matchType });
+                matched.push({ misaCode: matchedMisaCode, misaName, productId: matchedProduct.id, currentName: matchedProduct.name || '', matchType });
             } else {
-                unmatched.push(`${misaCode} — ${misaName}`);
+                unmatched.push(`${numericCols[0] || '?'} — ${misaName}`);
             }
         }
 
-        setImportPreview({ matched, unmatched });
+        // Find app products that didn't match
+        const unmatchedApp = products
+            .filter(p => !usedIds.has(p.id) && !p.misa_code)
+            .map(p => ({ name: p.name || '', sku: p.sku || '' }));
+
+        setImportPreview({ matched, unmatched, unmatchedApp });
     };
 
     // Execute batch import
@@ -252,7 +282,7 @@ export default function AccountantMasterDataPage() {
                 setSyncResult(`✅ Đã map ${result.updated}/${result.total} sản phẩm thành công`);
                 setShowImportModal(false);
                 setImportText('');
-                setImportPreview({ matched: [], unmatched: [] });
+                setImportPreview({ matched: [], unmatched: [], unmatchedApp: [] });
                 loadData();
             } else {
                 setSyncResult(`❌ Lỗi: ${result.error}`);
@@ -754,6 +784,25 @@ export default function AccountantMasterDataPage() {
                                                     <p className="text-xs text-amber-500 mt-1">...và {importPreview.unmatched.length - 10} dòng khác</p>
                                                 )}
                                             </div>
+                                        </div>
+                                    )}
+
+                                    {/* App Products Not Matched */}
+                                    {importPreview.unmatchedApp.length > 0 && (
+                                        <div>
+                                            <h4 className="text-sm font-bold text-red-600 flex items-center gap-1">
+                                                <Package className="w-4 h-4" />
+                                                SP trong app chưa khớp: {importPreview.unmatchedApp.length}
+                                            </h4>
+                                            <div className="mt-1 bg-red-50 rounded-lg p-2 max-h-32 overflow-y-auto">
+                                                {importPreview.unmatchedApp.map((p, i) => (
+                                                    <div key={i} className="flex items-center gap-2 text-xs py-0.5">
+                                                        <span className="font-mono text-red-600 font-bold min-w-[110px]">{p.sku || 'no-sku'}</span>
+                                                        <span className="text-slate-600">{p.name}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <p className="text-[10px] text-red-400 mt-1 italic">So sánh SKU trên với mã MISA trong phần &quot;Chưa khớp&quot; để tìm lý do</p>
                                         </div>
                                     )}
                                 </div>
