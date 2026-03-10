@@ -514,4 +514,77 @@ export const MisaService = {
             return { success: false, error: `Lỗi hệ thống: ${err.message}` };
         }
     },
+
+    // 4. Fetch Inventory Items from MISA (Dictionary API)
+    fetchInventoryItems: async (supabase: any): Promise<{ success: boolean; items?: any[]; error?: string }> => {
+        try {
+            const token = await MisaService.getAccessToken(supabase);
+            const settings = await fetchAppSettings(supabase);
+            // @ts-ignore
+            const config = settings?.misa_config || {};
+            const appId = config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e";
+            const companyCode = config?.companyCode?.trim() || "NB";
+
+            // MISA ActOpen Dictionary API for Inventory Items
+            const apiUrl = "https://actapp.misa.vn";
+            const endpoint = `${apiUrl}/api/sync/actopen/dictionary/InventoryItem?app_id=${appId}&org_company_code=${companyCode}`;
+
+            console.log(`[MisaService] Fetching Inventory Items from: ${endpoint}`);
+
+            const res = await fetch(endpoint, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-MISA-AccessToken": token,
+                    "X-MISA-AppID": appId,
+                    "User-Agent": "LYHU-B2B-Platform/1.0"
+                }
+            });
+
+            const textRaw = await res.text();
+
+            if (!res.ok) {
+                console.error(`[MisaService] Fetch Items Failed (${res.status}):`, textRaw);
+                return { success: false, error: `MISA API Error (${res.status}): ${textRaw.substring(0, 200)}` };
+            }
+
+            let data;
+            try { data = JSON.parse(textRaw); } catch (e) {
+                return { success: false, error: "Invalid JSON response from MISA" };
+            }
+
+            // MISA response structure: { Success: true, Data: [...] }
+            if (data?.Success && Array.isArray(data?.Data)) {
+                console.log(`[MisaService] Fetched ${data.Data.length} inventory items from MISA`);
+                return {
+                    success: true,
+                    items: data.Data.map((item: any) => ({
+                        inventory_item_code: item.inventory_item_code || item.InventoryItemCode || '',
+                        inventory_item_name: item.inventory_item_name || item.InventoryItemName || '',
+                        unit_name: item.unit_name || item.UnitName || '',
+                        inventory_item_id: item.inventory_item_id || item.InventoryItemID || '',
+                    }))
+                };
+            }
+
+            // Some MISA APIs return Data as array directly
+            if (Array.isArray(data)) {
+                console.log(`[MisaService] Fetched ${data.length} inventory items from MISA (array)`);
+                return {
+                    success: true,
+                    items: data.map((item: any) => ({
+                        inventory_item_code: item.inventory_item_code || item.InventoryItemCode || '',
+                        inventory_item_name: item.inventory_item_name || item.InventoryItemName || '',
+                        unit_name: item.unit_name || item.UnitName || '',
+                        inventory_item_id: item.inventory_item_id || item.InventoryItemID || '',
+                    }))
+                };
+            }
+
+            return { success: false, error: `Unexpected MISA response: ${JSON.stringify(data).substring(0, 200)}` };
+        } catch (err: any) {
+            console.error("[MisaService] fetchInventoryItems Error:", err);
+            return { success: false, error: err.message };
+        }
+    },
 };

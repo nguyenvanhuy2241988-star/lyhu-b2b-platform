@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
-    fetchMasterProducts, updateProductMisa, MisaProduct
+    fetchMasterProducts, updateProductMisa, MisaProduct,
+    fetchMisaProducts, autoMapMisaProducts, MisaItem
 } from "@/lib/masterDataStore";
 import {
     fetchCustomers, updateCustomer, Customer
@@ -11,7 +12,8 @@ import { fetchAppSettings, updateAppSettings, AppSettings } from "@/lib/settings
 import {
     Search, Filter, Loader2, Save, X, Pencil,
     Building2, Package, CheckCircle2, AlertCircle,
-    Copy, ExternalLink, Database, Settings
+    Copy, ExternalLink, Database, Settings,
+    RefreshCw, Zap, ChevronDown
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 
@@ -35,6 +37,14 @@ export default function AccountantMasterDataPage() {
     // Edit State
     const [editingItem, setEditingItem] = useState<{ id: string; type: "product" | "customer"; value: string; tax_code?: string } | null>(null);
     const [isSaving, setIsSaving] = useState(false);
+
+    // MISA Sync State
+    const [misaItems, setMisaItems] = useState<MisaItem[]>([]);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [isAutoMapping, setIsAutoMapping] = useState(false);
+    const [syncResult, setSyncResult] = useState<string | null>(null);
+    const [misaSearch, setMisaSearch] = useState("");
+    const [showMisaDropdown, setShowMisaDropdown] = useState(false);
 
     const loadData = useCallback(async () => {
         setIsLoading(true);
@@ -118,12 +128,111 @@ export default function AccountantMasterDataPage() {
         ? products.filter(p => (p.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || (p.sku || "").toLowerCase().includes(searchQuery.toLowerCase())).length
         : customers.filter(c => (c.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || (c.tax_code || "").includes(searchQuery)).length;
 
+    // Stats
+    const mappedCount = products.filter(p => p.misa_code).length;
+    const totalCount = products.length;
+
+    // Handlers for MISA sync
+    const handleSyncMisa = async () => {
+        setIsSyncing(true);
+        setSyncResult(null);
+        try {
+            const result = await fetchMisaProducts();
+            if (result.success) {
+                setMisaItems(result.items);
+                setSyncResult(`✅ Đã tải ${result.items.length} sản phẩm từ MISA`);
+            } else {
+                setSyncResult(`❌ Lỗi: ${result.error}`);
+            }
+        } catch (e: any) {
+            setSyncResult(`❌ Lỗi: ${e.message}`);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    const handleAutoMap = async () => {
+        setIsAutoMapping(true);
+        setSyncResult(null);
+        try {
+            const result = await autoMapMisaProducts();
+            if (result.success) {
+                setSyncResult(`⚡ Auto-Map: ${result.matched} khớp, ${result.unmatched} chưa khớp`);
+                loadData(); // Refresh product list
+            } else {
+                setSyncResult(`❌ Lỗi: ${result.error}`);
+            }
+        } catch (e: any) {
+            setSyncResult(`❌ Lỗi: ${e.message}`);
+        } finally {
+            setIsAutoMapping(false);
+        }
+    };
+
+    // Filtered MISA items for dropdown
+    const filteredMisaItems = useMemo(() => {
+        if (!misaSearch.trim()) return misaItems.slice(0, 50);
+        const q = misaSearch.toLowerCase();
+        return misaItems.filter(m =>
+            m.inventory_item_code.toLowerCase().includes(q) ||
+            m.inventory_item_name.toLowerCase().includes(q)
+        ).slice(0, 50);
+    }, [misaItems, misaSearch]);
+
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-slate-900">Danh mục & Cấu hình MISA</h1>
-                <p className="text-sm text-slate-600 mt-1">Đồng bộ mã danh mục và thiết lập kết nối tới Misa Amis</p>
+            <div className="flex items-start justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-slate-900">Danh mục & Cấu hình MISA</h1>
+                    <p className="text-sm text-slate-600 mt-1">Đồng bộ mã danh mục và thiết lập kết nối tới Misa Amis</p>
+                </div>
+                {activeTab === "products" && (
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleSyncMisa}
+                            disabled={isSyncing}
+                            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 disabled:opacity-50 flex items-center gap-2 text-sm shadow-sm"
+                        >
+                            {isSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                            Đồng bộ từ MISA
+                        </button>
+                        <button
+                            onClick={handleAutoMap}
+                            disabled={isAutoMapping}
+                            className="px-4 py-2 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 disabled:opacity-50 flex items-center gap-2 text-sm shadow-sm"
+                        >
+                            {isAutoMapping ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+                            Auto-Map SKU
+                        </button>
+                    </div>
+                )}
             </div>
+
+            {/* Progress Bar + Sync Result */}
+            {activeTab === "products" && totalCount > 0 && (
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-600">
+                            <CheckCircle2 className="w-4 h-4 inline mr-1 text-emerald-500" />
+                            {mappedCount}/{totalCount} đã map ({totalCount > 0 ? Math.round(mappedCount / totalCount * 100) : 0}%)
+                        </span>
+                        {misaItems.length > 0 && (
+                            <span className="text-blue-600 text-xs">📦 {misaItems.length} SP từ MISA đã tải</span>
+                        )}
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2">
+                        <div
+                            className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
+                            style={{ width: `${totalCount > 0 ? (mappedCount / totalCount) * 100 : 0}%` }}
+                        />
+                    </div>
+                    {syncResult && (
+                        <p className={`text-sm font-medium ${syncResult.startsWith('❌') ? 'text-red-600' : 'text-emerald-600'}`}>
+                            {syncResult}
+                        </p>
+                    )}
+                </div>
+            )}
 
             {/* Tabs */}
             <div className="flex border-b border-slate-200 gap-8">
@@ -386,14 +495,68 @@ export default function AccountantMasterDataPage() {
                                 )}
                                 <div>
                                     <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Mã định danh MISA</label>
-                                    <input
-                                        value={editingItem.value}
-                                        onChange={(e) => setEditingItem({ ...editingItem, value: e.target.value })}
-                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
-                                        placeholder={editingItem.type === "product" ? "Ví dụ: SP001" : "Ví dụ: KH001"}
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            value={editingItem.value}
+                                            onChange={(e) => {
+                                                setEditingItem({ ...editingItem, value: e.target.value });
+                                                setMisaSearch(e.target.value);
+                                                setShowMisaDropdown(true);
+                                            }}
+                                            onFocus={() => {
+                                                if (misaItems.length === 0) handleSyncMisa();
+                                                setShowMisaDropdown(true);
+                                            }}
+                                            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none pr-8"
+                                            placeholder={editingItem.type === "product" ? "Nhập hoặc chọn từ MISA..." : "Ví dụ: KH001"}
+                                        />
+                                        {editingItem.type === "product" && (
+                                            <button
+                                                onClick={() => setShowMisaDropdown(!showMisaDropdown)}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600"
+                                            >
+                                                <ChevronDown className="w-4 h-4" />
+                                            </button>
+                                        )}
+
+                                        {/* MISA Products Dropdown */}
+                                        {showMisaDropdown && editingItem.type === "product" && misaItems.length > 0 && (
+                                            <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-xl max-h-48 overflow-y-auto">
+                                                {isSyncing ? (
+                                                    <div className="p-3 text-center text-sm text-slate-400">
+                                                        <Loader2 className="w-4 h-4 animate-spin inline mr-2" />Đang tải...
+                                                    </div>
+                                                ) : filteredMisaItems.length === 0 ? (
+                                                    <div className="p-3 text-center text-sm text-slate-400">Không tìm thấy</div>
+                                                ) : (
+                                                    filteredMisaItems.map((item) => (
+                                                        <button
+                                                            key={item.inventory_item_code}
+                                                            onClick={() => {
+                                                                setEditingItem({ ...editingItem, value: item.inventory_item_code });
+                                                                setShowMisaDropdown(false);
+                                                                setMisaSearch("");
+                                                            }}
+                                                            className="w-full text-left px-3 py-2 hover:bg-primary-50 text-sm flex justify-between items-center border-b border-slate-50 last:border-0"
+                                                        >
+                                                            <div>
+                                                                <span className="font-mono text-primary-600 font-bold text-xs">{item.inventory_item_code}</span>
+                                                                <span className="text-slate-600 ml-2">{item.inventory_item_name}</span>
+                                                            </div>
+                                                            {item.unit_name && (
+                                                                <span className="text-xs text-slate-400">{item.unit_name}</span>
+                                                            )}
+                                                        </button>
+                                                    ))
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                     <p className="text-[10px] text-slate-400 mt-1 italic">
-                                        * Mã này phải khớp với mã đã khai báo trong danh mục của MISA AMIS/SME.
+                                        {misaItems.length > 0
+                                            ? `💡 Gõ để tìm trong ${misaItems.length} SP từ MISA, hoặc nhập tay mã.`
+                                            : '* Click vào ô để tải danh sách MISA, hoặc nhập tay mã.'
+                                        }
                                     </p>
                                 </div>
                                 <div className="pt-4 flex gap-3">

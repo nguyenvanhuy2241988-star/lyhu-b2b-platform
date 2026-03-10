@@ -1,0 +1,31 @@
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { MisaService } from '@/lib/misa/misaService';
+
+export const dynamic = 'force-dynamic';
+
+// POST /api/misa/sync-products — Pull product catalog from MISA
+export async function POST(request: Request) {
+    try {
+        const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            { auth: { autoRefreshToken: false, persistSession: false } }
+        );
+
+        const result = await MisaService.fetchInventoryItems(supabase);
+
+        if (!result.success) {
+            return NextResponse.json({ success: false, error: result.error }, { status: 400 });
+        }
+
+        return NextResponse.json({
+            success: true,
+            total: result.items?.length || 0,
+            items: result.items || []
+        });
+    } catch (error: any) {
+        console.error('[MISA Sync Products] Error:', error);
+        return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+}

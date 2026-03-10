@@ -53,3 +53,42 @@ export const fetchMasterWarehouses = async (token?: string) => {
         return [];
     }
 };
+
+// MISA Integration Functions
+
+export interface MisaItem {
+    inventory_item_code: string;
+    inventory_item_name: string;
+    unit_name: string;
+    inventory_item_id: string;
+}
+
+/** Fetch product catalog from MISA via API */
+export const fetchMisaProducts = async (): Promise<{ success: boolean; items: MisaItem[]; error?: string }> => {
+    try {
+        const res = await fetch('/api/misa/sync-products', { method: 'POST' });
+        const data = await res.json();
+        if (!data.success) return { success: false, items: [], error: data.error };
+        return { success: true, items: data.items || [] };
+    } catch (e: any) {
+        return { success: false, items: [], error: e.message };
+    }
+};
+
+/** Auto-map products by matching SKU with MISA inventory_item_code */
+export const autoMapMisaProducts = async (): Promise<{
+    success: boolean;
+    matched: number;
+    unmatched: number;
+    error?: string;
+    matched_details?: any[];
+    unmatched_details?: any[];
+}> => {
+    try {
+        const res = await fetch('/api/misa/auto-map', { method: 'POST' });
+        const data = await res.json();
+        return data;
+    } catch (e: any) {
+        return { success: false, matched: 0, unmatched: 0, error: e.message };
+    }
+};
