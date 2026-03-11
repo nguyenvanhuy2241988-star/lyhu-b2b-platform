@@ -2,7 +2,49 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { Zap, Users, Loader2, RefreshCw, Check, Clock, Phone, MapPin, MessageSquare, User as UserIcon, Bell, AlertCircle } from 'lucide-react';
+import { Zap, Users, Loader2, RefreshCw, Check, Clock, Phone, MapPin, MessageSquare, User as UserIcon, Bell, AlertCircle, Calendar } from 'lucide-react';
+
+type DateFilterMode = 'day' | 'week' | 'month' | 'year' | 'custom';
+
+function getDateRange(mode: DateFilterMode, customFrom?: string, customTo?: string): { start: string; end: string } {
+    const now = new Date();
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+    let start: Date;
+
+    switch (mode) {
+        case 'day':
+            start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+            break;
+        case 'week': {
+            const day = now.getDay(); // 0=Sun
+            const diff = day === 0 ? 6 : day - 1; // Monday as start
+            start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - diff, 0, 0, 0, 0);
+            break;
+        }
+        case 'month':
+            start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+            break;
+        case 'year':
+            start = new Date(now.getFullYear(), 0, 1, 0, 0, 0, 0);
+            break;
+        case 'custom':
+            return {
+                start: customFrom ? new Date(customFrom + 'T00:00:00').toISOString() : new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).toISOString(),
+                end: customTo ? new Date(customTo + 'T23:59:59.999').toISOString() : endOfToday.toISOString(),
+            };
+        default:
+            start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+    }
+    return { start: start.toISOString(), end: endOfToday.toISOString() };
+}
+
+const DATE_FILTER_LABELS: Record<DateFilterMode, string> = {
+    day: 'Hôm nay',
+    week: 'Tuần này',
+    month: 'Tháng này',
+    year: 'Năm nay',
+    custom: 'Khoảng chọn',
+};
 
 interface TelesalesUser {
     id: string;
@@ -64,6 +106,10 @@ export default function LeadDistributionSettings() {
     const [followups, setFollowups] = useState<FollowupConv[]>([]);
     const [totalLeads, setTotalLeads] = useState(0);
     const [totalFollowups, setTotalFollowups] = useState(0);
+    // Date filter
+    const [dateFilterMode, setDateFilterMode] = useState<DateFilterMode>('day');
+    const [customFrom, setCustomFrom] = useState('');
+    const [customTo, setCustomTo] = useState('');
     const [leadsPage, setLeadsPage] = useState(0);
     const [leadsPageSize, setLeadsPageSize] = useState(20);
     const [followupsPage, setFollowupsPage] = useState(0);
@@ -130,9 +176,14 @@ export default function LeadDistributionSettings() {
             // Load leads with joined conversation data
             const leadsFrom = leadsPage * leadsPageSize;
             const leadsTo = leadsFrom + leadsPageSize - 1;
+            // Calculate date range for filter
+            const { start: dateStart, end: dateEnd } = getDateRange(dateFilterMode, customFrom, customTo);
+
             let leadsQuery = supabase
                 .from('marketing_leads')
-                .select('*, social_conversations!conversation_id(tags, customer_type, interested_products, referral_source, ad_id, source_type, facebook_pages!page_id(name))', { count: 'exact' });
+                .select('*, social_conversations!conversation_id(tags, customer_type, interested_products, referral_source, ad_id, source_type, facebook_pages!page_id(name))', { count: 'exact' })
+                .gte('created_at', dateStart)
+                .lte('created_at', dateEnd);
             if (debouncedLeadsSearch.trim()) {
                 leadsQuery = leadsQuery.or(`customer_name.ilike.%${debouncedLeadsSearch.trim()}%,customer_phone.ilike.%${debouncedLeadsSearch.trim()}%`);
             }
@@ -168,7 +219,7 @@ export default function LeadDistributionSettings() {
             setLoading(false);
             isInitialLoad.current = false;
         }
-    }, [leadsPage, leadsPageSize, followupsPage, followupsPageSize, debouncedLeadsSearch, leadsStatusFilter, debouncedFollowupsSearch]);
+    }, [leadsPage, leadsPageSize, followupsPage, followupsPageSize, debouncedLeadsSearch, leadsStatusFilter, debouncedFollowupsSearch, dateFilterMode, customFrom, customTo]);
 
     useEffect(() => { loadData(); }, [loadData]);
 
@@ -285,12 +336,7 @@ export default function LeadDistributionSettings() {
         setConfig(prev => ({ ...prev, eligible_user_ids: [] }));
     };
 
-    // Stats
-    const todayLeads = leads.filter(l => {
-        const d = new Date(l.created_at);
-        const today = new Date();
-        return d.toDateString() === today.toDateString();
-    });
+    // Stats — totalLeads is already server-filtered by date range
     const pendingCount = leads.filter(l => l.status === 'pending').length;
     const assignedCount = leads.filter(l => l.status === 'assigned').length;
     const onlineEligible = users.filter(u => config.eligible_user_ids.includes(u.id) && u.is_online).length;
@@ -340,6 +386,48 @@ export default function LeadDistributionSettings() {
                 </div>
             </div>
 
+            {/* Date Filter Tabs */}
+            <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-lg">
+                    {([['day', '📅 Ngày'], ['week', '📆 Tuần'], ['month', '🗓️ Tháng'], ['year', '📊 Năm'], ['custom', '🎯 Tùy chọn']] as [DateFilterMode, string][]).map(([mode, label]) => (
+                        <button
+                            key={mode}
+                            onClick={() => { setDateFilterMode(mode); setLeadsPage(0); }}
+                            className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                                dateFilterMode === mode
+                                    ? 'bg-white shadow text-blue-600 ring-1 ring-blue-200'
+                                    : 'text-slate-500 hover:text-slate-700 hover:bg-white/50'
+                            }`}
+                        >
+                            {label}
+                        </button>
+                    ))}
+                </div>
+                {dateFilterMode === 'custom' && (
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
+                            <label className="text-xs text-slate-500">Từ</label>
+                            <input
+                                type="date"
+                                value={customFrom}
+                                onChange={(e) => { setCustomFrom(e.target.value); setLeadsPage(0); }}
+                                className="px-2 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                        </div>
+                        <span className="text-slate-400">→</span>
+                        <div className="flex items-center gap-1.5">
+                            <label className="text-xs text-slate-500">Đến</label>
+                            <input
+                                type="date"
+                                value={customTo}
+                                onChange={(e) => { setCustomTo(e.target.value); setLeadsPage(0); }}
+                                className="px-2 py-1.5 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                        </div>
+                    </div>
+                )}
+            </div>
+
             {/* Toggle + Stats */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {/* Enable Toggle */}
@@ -358,8 +446,8 @@ export default function LeadDistributionSettings() {
                 </div>
 
                 <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
-                    <span className="text-xs font-medium uppercase text-blue-600">Hôm nay</span>
-                    <p className="text-2xl font-bold text-slate-800 mt-1">{todayLeads.length}</p>
+                    <span className="text-xs font-medium uppercase text-blue-600">{DATE_FILTER_LABELS[dateFilterMode]}</span>
+                    <p className="text-2xl font-bold text-slate-800 mt-1">{totalLeads}</p>
                     <p className="text-[10px] text-slate-400">data mới</p>
                 </div>
 
