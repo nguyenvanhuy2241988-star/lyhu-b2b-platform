@@ -179,9 +179,31 @@ export async function POST(request: Request) {
                 
                 // Process first page
                 const allComments: any[] = [];
+                
+                // Extract name from comment text when from.name is unavailable
+                // Common patterns: "368 Nguyễn Văn A", "368 > Nguyễn Văn A", "#368 Nguyễn Văn A"
+                const extractNameFromMessage = (msg: string): string => {
+                    if (!msg) return 'Người chơi';
+                    // Remove the number part and extract the remaining text as name
+                    // Pattern: optional #, digits, optional > or space, then the name
+                    const nameMatch = msg.match(/^[#]?\d{1,5}\s*[>:\-–]?\s*(.+)/);
+                    if (nameMatch) {
+                        let name = nameMatch[1].trim();
+                        // Limit to first few words (typical Vietnamese name is 2-4 words)
+                        const words = name.split(/\s+/);
+                        if (words.length > 5) {
+                            name = words.slice(0, 4).join(' ');
+                        }
+                        // Remove trailing text that looks like extra commentary
+                        name = name.replace(/\s*(mong|chúc|hy vọng|cầu|mình|em|con|tui|thanks|cám|chọn|số).*/i, '').trim();
+                        if (name.length > 1 && name.length < 50) return name;
+                    }
+                    return 'Người chơi';
+                };
+                
                 const mapComment = (c: any) => ({
                     id: c.id,
-                    name: c.from?.name || 'Người chơi',
+                    name: c.from?.name || extractNameFromMessage(c.message || ''),
                     from_id: c.from?.id || '',
                     message: c.message || '',
                     created_time: c.created_time || '',
