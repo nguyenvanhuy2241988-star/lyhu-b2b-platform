@@ -116,24 +116,24 @@ export async function POST(request: Request) {
                 let workingUrl: string | null = null;
                 let usedMethod = '';
                 
-                // Try field expansion strategies first
-                for (const tkn of tokens) {
-                    const expansionUrls = [
-                        // Expansion with all fields
-                        `https://graph.facebook.com/v19.0/${targetPostId}?fields=comments.limit(100){id,message,from,created_time}&access_token=${tkn}`,
-                        // Expansion without from
-                        `https://graph.facebook.com/v19.0/${targetPostId}?fields=comments.limit(100){id,message,created_time}&access_token=${tkn}`,
-                        // Expansion minimal
-                        `https://graph.facebook.com/v19.0/${targetPostId}?fields=comments.limit(100){id,message}&access_token=${tkn}`,
-                    ];
-                    for (const url of expansionUrls) {
+                // PRIORITY: Try to get FULL data (with names) first, using ANY token
+                // Then fallback to less data. This ensures we get names if possible.
+                const expansionFieldSets = [
+                    '{id,message,from,created_time}',  // Full with names (priority!)
+                    '{id,message,created_time}',         // Without names
+                    '{id,message}',                      // Minimal
+                ];
+                
+                for (const fields of expansionFieldSets) {
+                    for (const tkn of tokens) {
+                        const url = `https://graph.facebook.com/v19.0/${targetPostId}?fields=comments.limit(100)${fields}&access_token=${tkn}`;
                         try {
                             const r: Response = await fetch(url);
                             const d: any = await r.json();
                             if (!d.error && d.comments?.data) {
                                 firstPageData = d.comments;
                                 workingUrl = d.comments.paging?.next || null;
-                                usedMethod = 'field_expansion';
+                                usedMethod = `field_expansion_${fields.includes('from') ? 'with_names' : 'no_names'}`;
                                 break;
                             }
                         } catch (_) {}
@@ -150,8 +150,8 @@ export async function POST(request: Request) {
                         '',
                     ];
                     outer:
-                    for (const tkn of tokens) {
-                        for (const fields of fieldSets) {
+                    for (const fields of fieldSets) {
+                        for (const tkn of tokens) {
                             const fieldParam = fields ? `&fields=${fields}` : '';
                             const testUrl = `https://graph.facebook.com/v19.0/${targetPostId}/comments?limit=100${fieldParam}&access_token=${tkn}`;
                             try {
@@ -160,7 +160,7 @@ export async function POST(request: Request) {
                                 if (!testData.error && testData.data) {
                                     firstPageData = testData;
                                     workingUrl = testData.paging?.next || null;
-                                    usedMethod = 'direct_comments';
+                                    usedMethod = `direct_${fields.includes('from') ? 'with_names' : 'no_names'}`;
                                     break outer;
                                 }
                             } catch (_) {}
