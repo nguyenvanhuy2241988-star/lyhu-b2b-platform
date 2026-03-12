@@ -5,8 +5,10 @@ export async function POST(request: Request) {
         const { page_id, access_token, user_token, action, comment_id, post_id } = await request.json();
         // NPE pages require Page Token for ALL operations including reading comments
         // access_token = page token (preferred for NPE pages)
-        // user_token = long-lived user token (fallback only)
+        // user_token = long-lived user token (fallback for pages_read_engagement)
         const commentToken = access_token;
+        // For scanning ALL comments, prefer user_token if available (has pages_read_engagement)
+        const scanToken = user_token || access_token;
 
         if (!page_id || !access_token) {
             return NextResponse.json({ error: 'Missing page_id or access_token' }, { status: 400 });
@@ -37,12 +39,12 @@ export async function POST(request: Request) {
         if (action === 'scan_all_comments' && post_id) {
             try {
                 const allComments: any[] = [];
-                let url = `https://graph.facebook.com/v19.0/${post_id}/comments?fields=from,message,created_time&limit=100&order=chronological&filter=stream&access_token=${access_token}`;
+                let scanUrl = `https://graph.facebook.com/v19.0/${post_id}/comments?fields=from,message,created_time&limit=100&order=chronological&filter=stream&access_token=${scanToken}`;
                 let pageNum = 0;
                 const MAX_PAGES = 50; // safety limit ~5000 comments
 
-                while (url && pageNum < MAX_PAGES) {
-                    const res = await fetch(url);
+                while (scanUrl && pageNum < MAX_PAGES) {
+                    const res = await fetch(scanUrl);
                     const data = await res.json();
                     if (data.error) {
                         return NextResponse.json({
@@ -63,7 +65,7 @@ export async function POST(request: Request) {
                         message: c.message || '',
                         created_time: c.created_time,
                     })));
-                    url = data.paging?.next || null;
+                    scanUrl = data.paging?.next || null;
                     pageNum++;
                 }
 

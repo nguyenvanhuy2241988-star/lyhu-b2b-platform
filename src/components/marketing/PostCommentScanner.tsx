@@ -82,12 +82,16 @@ export default function PostCommentScanner({ pageId, accessToken, onClose }: Pro
         setFiltered([]);
 
         try {
+            // Try to get user_token from localStorage (has pages_read_engagement after token refresh)
+            const userToken = typeof window !== 'undefined' ? localStorage.getItem('fb_user_token') || '' : '';
+
             const res = await fetch('/api/facebook/comments', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     page_id: pageId,
                     access_token: accessToken,
+                    user_token: userToken,
                     action: 'scan_all_comments',
                     post_id: postId,
                 }),
