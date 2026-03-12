@@ -473,67 +473,82 @@ export function generateReferencePrompt(data: ReferenceFormData): string {
   
   const sections: string[] = [];
   
-  // Reference instruction — this is key
-  sections.push(`=== DESIGN BY REFERENCE ===`);
-  sections.push(`Look at the ATTACHED REFERENCE IMAGE carefully. You must replicate its design approach:`);
-  sections.push(`- SAME overall layout structure and composition`);
-  sections.push(`- SAME text treatment style (3D effects, outlines, gradients, shadows, glow — whatever the reference uses)`);
-  sections.push(`- SAME approach to decorative elements (badges, ribbons, banners, frames)`);
-  sections.push(`- SAME level of visual quality and polish`);
-  sections.push(`- SAME type of product presentation style`);
-  sections.push(`- SIMILAR color mood and atmosphere (but adapted to the brand colors below)`);
+  // Reference instruction — REDESIGNED to prevent literal copying
+  sections.push(`=== DESIGN BY REFERENCE — STYLE ONLY ===`);
+  sections.push(`Look at the ATTACHED IMAGE as a DESIGN STYLE REFERENCE.`);
+  sections.push('');
+  sections.push(`COPY THESE DESIGN TECHNIQUES from the reference:`);
+  sections.push(`✅ Typography technique — how the headline text is styled (3D depth, gradients, outlines, shadows, metallic effects, etc.)`);
+  sections.push(`✅ Layout structure — general arrangement: where headline sits, where products are placed, where badges go`);
+  sections.push(`✅ Quality level — same level of polish, detail, and professionalism`);
+  sections.push(`✅ How selling points are presented — badge shapes, ribbon styles, icon usage`);
+  sections.push(`✅ How the CTA button/banner looks`);
+  sections.push(`✅ Product display technique — how products are arranged and lit`);
+  sections.push('');
+  sections.push(`🚫 DO NOT COPY these specific elements from the reference:`);
+  sections.push(`❌ DO NOT copy any mascots, cartoon characters, or animals from the reference — they belong to another brand`);
+  sections.push(`❌ DO NOT copy the reference's brand name, logo, or any text from the reference image`);
+  sections.push(`❌ DO NOT copy holiday-specific decorations (lanterns, red envelopes, lucky charms, fireworks) UNLESS the user's content is about that same holiday`);
+  sections.push(`❌ DO NOT copy the reference's color scheme literally — ADAPT to the brand colors specified below`);
+  sections.push(`❌ DO NOT copy specific decorative objects that are unique to the reference's theme`);
   sections.push('');
   
   if (reference_notes) {
-    sections.push(`WHAT I SPECIFICALLY LIKE ABOUT THE REFERENCE: ${reference_notes}`);
+    sections.push(`USER NOTES ABOUT THE REFERENCE: ${reference_notes}`);
     sections.push('');
   }
   
-  sections.push(`BUT REPLACE ALL CONTENT with the following:`);
+  sections.push(`=== NEW CONTENT (replace EVERYTHING from the reference with this) ===`);
   sections.push('');
   
   // Brand
   sections.push(`BRAND: "${brand.brand_name}" — ${brand.industry}`);
-  sections.push(`COLOR PALETTE: Primary ${primaryColor} (${brand.primary_color}), Secondary ${secondaryColor} (${brand.secondary_color})`);
+  sections.push(`COLOR SCHEME: Use ${primaryColor} (${brand.primary_color}) as primary and ${secondaryColor} (${brand.secondary_color}) as secondary. Adapt background and decorative colors to match these brand colors instead of the reference's colors.`);
   if (brand.default_instructions) {
-    sections.push(`BRAND SPECIFICS: ${brand.default_instructions}`);
+    sections.push(`BRAND DETAILS: ${brand.default_instructions}`);
   }
   sections.push(`FORMAT: ${getAspectDescription(aspect_ratio)}`);
   sections.push('');
   
   // Content
-  sections.push(`HEADLINE: "${headline}"`);
+  sections.push(`HEADLINE (apply the reference's text styling technique to this text): "${headline}"`);
   if (subheadline) sections.push(`SUBHEADLINE: "${subheadline}"`);
   if (product_name) sections.push(`FEATURED PRODUCT: ${product_name}`);
-  if (pointsList) sections.push(`KEY SELLING POINTS:\n${pointsList}`);
-  if (cta) sections.push(`CALL TO ACTION: "${cta}"`);
+  if (pointsList) sections.push(`SELLING POINTS (each in a decorative badge/ribbon, same style as reference):\n${pointsList}`);
+  if (cta) sections.push(`CTA (in a button/banner shape at the bottom): "${cta}"`);
   sections.push('');
   
   // Visual elements
   if (product_description) {
     sections.push(`PRODUCT VISUAL: ${product_description}`);
   }
+  
+  // Character — EXPLICIT about what kind
   if (has_character && character_description) {
     sections.push(`CHARACTER: ${character_description}`);
+    sections.push(`⚠️ The character MUST be a realistic photographic-style human (NOT a 3D cartoon, NOT an animated character, NOT a mascot). Real person, professional photo quality.`);
+  } else if (!has_character) {
+    sections.push(`CHARACTER: No human character or mascot in this poster. Do NOT add any characters or mascots from the reference.`);
   }
   sections.push('');
   
-  // Branding
-  sections.push(`BRANDING: Place "${brand.brand_name}" logo in a visible position (match the reference's logo placement approach)`);
+  // Branding — STRICT LIMIT
+  sections.push(`LOGO: Place the "${brand.brand_name}" logo in EXACTLY 1 location — bottom-right corner. Do NOT repeat the logo or brand name elsewhere on the poster. Do NOT put the brand name on boxes, products, or decorative elements.`);
   sections.push('');
   
   // Extra
   if (extra_instructions) {
-    sections.push(`ADDITIONAL: ${extra_instructions}`);
+    sections.push(`ADDITIONAL INSTRUCTIONS: ${extra_instructions}`);
     sections.push('');
   }
   
-  // Quality
-  sections.push('CRITICAL:');
-  sections.push('- Replicate the SAME design quality level as the reference — professional, polished, agency-grade');
-  sections.push('- All Vietnamese text must be spelled correctly with proper diacritics');
-  sections.push('- Text effects (3D, glow, metallic, etc.) must match the reference style');
-  sections.push('- The final result should look like it belongs in the same campaign as the reference image');
+  // Quality + Anti-copy rules
+  sections.push('=== FINAL RULES ===');
+  sections.push('- The poster is for a REGULAR promotional sale, NOT a holiday/festival — do NOT add holiday decorations unless specifically requested');
+  sections.push('- All Vietnamese text must be spelled correctly with proper diacritics (ă, â, đ, ê, ô, ơ, ư and all tone marks)');
+  sections.push('- Match the QUALITY and POLISH of the reference, not its specific content');
+  sections.push('- Background should be a clean gradient or solid color matching the brand palette — NOT a scene copied from the reference');
+  sections.push('- The final output should look like it was designed by the SAME designer who made the reference, but for a COMPLETELY DIFFERENT brand and campaign');
   
   return sections.join('\n');
 }
