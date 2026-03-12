@@ -211,6 +211,13 @@ export async function POST(request: Request) {
                     } catch (_) { break; }
                 }
 
+                // Find first comment NOT from the page (a real user comment)
+                const rawComments = firstPageData.data || [];
+                const pageOwnComment = rawComments.find((c: any) => c.from?.id === page_id);
+                const userComment = rawComments.find((c: any) => c.from?.id && c.from.id !== page_id) 
+                    || rawComments.find((c: any) => !c.from || c.from.id !== page_id)
+                    || rawComments[1];
+                
                 return NextResponse.json({
                     success: true,
                     total: allComments.length,
@@ -219,10 +226,10 @@ export async function POST(request: Request) {
                         resolved_post_id: targetPostId,
                         method: usedMethod || 'default',
                         pages_fetched: pageNum,
-                        // Include raw first comment so we can see what Facebook actually returns
-                        raw_sample: (firstPageData.data || [])[0] || null,
-                        has_from_field: !!(firstPageData.data || [])[0]?.from,
-                        sample_from: (firstPageData.data || [])[0]?.from || 'NOT_PRESENT',
+                        page_comment_sample: pageOwnComment || 'NONE',
+                        user_comment_sample: userComment || 'NONE',
+                        total_with_names: allComments.filter((c: any) => c.name && c.name !== '').length,
+                        total_without_names: allComments.filter((c: any) => !c.name || c.name === '').length,
                     }
                 });
             } catch (e: any) {

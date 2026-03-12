@@ -150,7 +150,7 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
             // Show debug info about what Facebook returned
             if (data.debug) {
                 const d = data.debug;
-                setDebugInfo(`Phương thức: ${d.method}\nCó field 'from': ${d.has_from_field ? '✅' : '❌'}\nRaw sample from: ${JSON.stringify(d.sample_from, null, 2)}\nRaw sample comment: ${JSON.stringify(d.raw_sample, null, 2)}`);
+                setDebugInfo(`Phương thức: ${d.method}\nCó tên: ${d.total_with_names} | Không tên: ${d.total_without_names}\n\n--- Comment của PAGE ---\n${JSON.stringify(d.page_comment_sample, null, 2)}\n\n--- Comment của USER ---\n${JSON.stringify(d.user_comment_sample, null, 2)}`);
             }
         } catch (err: any) {
             setError(`Lỗi kết nối: ${err.message}`);
