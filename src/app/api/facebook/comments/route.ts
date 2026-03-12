@@ -132,9 +132,10 @@ export async function POST(request: Request) {
                                 const d: any = await r.json();
                                 const comments = d.comments?.data || d.data;
                                 if (!d.error && comments?.length > 0) {
-                                    // Check if from.name is actually populated
-                                    const hasNames = comments.some((c: any) => c.from?.name);
-                                    if (hasNames) {
+                                    // Only count USER comments (not page's own) to check for real names
+                                    const userComments = comments.filter((c: any) => c.from?.id && c.from.id !== page_id);
+                                    const hasUserNames = userComments.some((c: any) => c.from?.name);
+                                    if (hasUserNames) {
                                         firstPageData = d.comments || d;
                                         workingUrl = (d.comments?.paging?.next || d.paging?.next) || null;
                                         usedMethod = `${ver}_with_names`;
