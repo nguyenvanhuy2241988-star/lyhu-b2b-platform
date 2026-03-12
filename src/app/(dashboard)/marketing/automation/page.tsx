@@ -1172,6 +1172,7 @@ export default function AutomationPage() {
                     <PostCommentScanner
                         pageId={page.page_id}
                         accessToken={page.access_token}
+                        userToken={userToken}
                         onClose={() => setShowCommentScanner(false)}
                     />
                 ) : null;

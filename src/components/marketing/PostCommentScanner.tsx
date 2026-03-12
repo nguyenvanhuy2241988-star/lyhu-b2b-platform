@@ -15,10 +15,11 @@ interface ScannedComment {
 interface Props {
     pageId: string;
     accessToken: string;
+    userToken?: string;
     onClose: () => void;
 }
 
-export default function PostCommentScanner({ pageId, accessToken, onClose }: Props) {
+export default function PostCommentScanner({ pageId, accessToken, userToken: propUserToken, onClose }: Props) {
     const [postUrl, setPostUrl] = useState('');
     const [deadline, setDeadline] = useState('');
     const [targetNumber, setTargetNumber] = useState('');
@@ -82,8 +83,8 @@ export default function PostCommentScanner({ pageId, accessToken, onClose }: Pro
         setFiltered([]);
 
         try {
-            // Try to get user_token from localStorage (has pages_read_engagement after token refresh)
-            const userToken = typeof window !== 'undefined' ? localStorage.getItem('fb_user_token') || '' : '';
+            // Use prop userToken first, then fallback to localStorage
+            const userToken = propUserToken || (typeof window !== 'undefined' ? localStorage.getItem('fb_user_token') || '' : '');
 
             const res = await fetch('/api/facebook/comments', {
                 method: 'POST',
