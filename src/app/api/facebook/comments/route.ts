@@ -14,6 +14,65 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing page_id or access_token' }, { status: 400 });
         }
 
+        // ACTION: Debug token permissions
+        if (action === 'debug_token') {
+            const FB_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || process.env.FB_APP_ID;
+            const FB_APP_SECRET = process.env.FB_APP_SECRET;
+            const results: any = { page_token: {}, user_token: {} };
+            
+            // Debug page token
+            try {
+                if (FB_APP_ID && FB_APP_SECRET) {
+                    const debugRes = await fetch(
+                        `https://graph.facebook.com/v19.0/debug_token?input_token=${access_token}&access_token=${FB_APP_ID}|${FB_APP_SECRET}`
+                    );
+                    const debugData = await debugRes.json();
+                    results.page_token = {
+                        scopes: debugData.data?.scopes || [],
+                        type: debugData.data?.type,
+                        app_id: debugData.data?.app_id,
+                        is_valid: debugData.data?.is_valid,
+                        has_pages_read_engagement: (debugData.data?.scopes || []).includes('pages_read_engagement'),
+                        has_pages_read_user_content: (debugData.data?.scopes || []).includes('pages_read_user_content'),
+                    };
+                }
+            } catch (_) {}
+            
+            // Debug user token  
+            if (user_token) {
+                try {
+                    if (FB_APP_ID && FB_APP_SECRET) {
+                        const debugRes = await fetch(
+                            `https://graph.facebook.com/v19.0/debug_token?input_token=${user_token}&access_token=${FB_APP_ID}|${FB_APP_SECRET}`
+                        );
+                        const debugData = await debugRes.json();
+                        results.user_token = {
+                            scopes: debugData.data?.scopes || [],
+                            type: debugData.data?.type,
+                            is_valid: debugData.data?.is_valid,
+                            has_pages_read_engagement: (debugData.data?.scopes || []).includes('pages_read_engagement'),
+                            has_pages_read_user_content: (debugData.data?.scopes || []).includes('pages_read_user_content'),
+                        };
+                    }
+                } catch (_) {}
+            }
+            
+            // Quick test: try to read 1 comment
+            try {
+                const testRes = await fetch(
+                    `https://graph.facebook.com/v19.0/${page_id}/feed?fields=comments.limit(1){message}&limit=1&access_token=${access_token}`
+                );
+                const testData = await testRes.json();
+                results.comment_test = {
+                    has_feed: !!testData.data,
+                    first_post_has_comments: !!testData.data?.[0]?.comments,
+                    error: testData.error?.message,
+                };
+            } catch (_) {}
+            
+            return NextResponse.json({ success: true, debug: results });
+        }
+
         // ACTION: hide/unhide a comment
         if (action === 'hide' && comment_id) {
             const res = await fetch(`https://graph.facebook.com/v19.0/${comment_id}?access_token=${access_token}`, {

@@ -40,6 +40,38 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
     const [comments, setComments] = useState<ScannedComment[]>([]);
     const [filtered, setFiltered] = useState<ScannedComment[]>([]);
     const [totalScanned, setTotalScanned] = useState(0);
+    const [debugInfo, setDebugInfo] = useState<string>('');
+
+    const debugToken = async () => {
+        setError('');
+        setDebugInfo('Đang kiểm tra token...');
+        try {
+            const userToken = propUserToken || (typeof window !== 'undefined' ? localStorage.getItem('fb_user_token') || '' : '');
+            const res = await fetch('/api/facebook/comments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ page_id: pageId, access_token: accessToken, user_token: userToken, action: 'debug_token' }),
+            });
+            const data = await res.json();
+            if (data.debug) {
+                const pt = data.debug.page_token;
+                const ut = data.debug.user_token;
+                const ct = data.debug.comment_test;
+                let info = `=== PAGE TOKEN ===\nValid: ${pt.is_valid}\nType: ${pt.type}\nScopes: ${(pt.scopes || []).join(', ')}\npages_read_engagement: ${pt.has_pages_read_engagement ? '✅' : '❌'}\npages_read_user_content: ${pt.has_pages_read_user_content ? '✅' : '❌'}`;
+                if (ut.scopes?.length) {
+                    info += `\n\n=== USER TOKEN ===\nValid: ${ut.is_valid}\nType: ${ut.type}\nScopes: ${(ut.scopes || []).join(', ')}\npages_read_engagement: ${ut.has_pages_read_engagement ? '✅' : '❌'}\npages_read_user_content: ${ut.has_pages_read_user_content ? '✅' : '❌'}`;
+                } else {
+                    info += `\n\n=== USER TOKEN ===\nKhông có user token`;
+                }
+                if (ct) {
+                    info += `\n\n=== COMMENT TEST ===\nĐọc feed: ${ct.has_feed ? '✅' : '❌'}\nĐọc comment: ${ct.first_post_has_comments ? '✅' : '❌'}\nLỗi: ${ct.error || 'Không'}`;
+                }
+                setDebugInfo(info);
+            }
+        } catch (e: any) {
+            setDebugInfo(`Lỗi: ${e.message}`);
+        }
+    };
 
     // Load posts from the page on mount
     useEffect(() => {
@@ -313,10 +345,27 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
                 {error && (
                     <div className="mx-6 mt-3 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 flex items-start gap-2">
                         <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <div>
+                        <div className="flex-1">
                             <p>{error}</p>
                             {hint && <p className="mt-1 text-xs text-red-500">{hint}</p>}
+                            <button
+                                onClick={debugToken}
+                                className="mt-2 text-xs bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded transition"
+                            >
+                                🔍 Kiểm tra quyền Token
+                            </button>
                         </div>
+                    </div>
+                )}
+
+                {/* Debug Info */}
+                {debugInfo && (
+                    <div className="mx-6 mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="text-xs font-bold text-yellow-800">🔧 Token Debug Info</span>
+                            <button onClick={() => setDebugInfo('')} className="text-xs text-yellow-600 hover:underline">Đóng</button>
+                        </div>
+                        <pre className="text-xs text-yellow-900 whitespace-pre-wrap font-mono">{debugInfo}</pre>
                     </div>
                 )}
 
