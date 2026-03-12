@@ -38,18 +38,42 @@ export async function POST(request: Request) {
         // ACTION: Scan ALL comments with full pagination (for minigame / contest)
         if (action === 'scan_all_comments' && post_id) {
             try {
+                // Resolve pfbid to numeric post ID if needed
+                let resolvedPostId = post_id;
+                if (post_id.includes('pfbid')) {
+                    // Extract just the pfbid part
+                    const pfbidPart = post_id.includes('_') ? post_id.split('_').pop() : post_id;
+                    // Try to resolve via Graph API
+                    const resolveRes = await fetch(
+                        `https://graph.facebook.com/v19.0/${pfbidPart}?fields=id&access_token=${access_token}`
+                    );
+                    const resolveData = await resolveRes.json();
+                    if (resolveData.id) {
+                        resolvedPostId = resolveData.id;
+                    } else {
+                        // Try with page_id prefix
+                        const resolveRes2 = await fetch(
+                            `https://graph.facebook.com/v19.0/${page_id}_${pfbidPart}?fields=id&access_token=${access_token}`
+                        );
+                        const resolveData2 = await resolveRes2.json();
+                        if (resolveData2.id) {
+                            resolvedPostId = resolveData2.id;
+                        }
+                    }
+                }
+                
                 const allComments: any[] = [];
                 
                 // Try multiple token/format strategies
                 const strategies = [
                     // Strategy 1: page token, no filter=stream (most compatible)
-                    `https://graph.facebook.com/v19.0/${post_id}/comments?fields=from,message,created_time&limit=100&order=chronological&access_token=${access_token}`,
+                    `https://graph.facebook.com/v19.0/${resolvedPostId}/comments?fields=from,message,created_time&limit=100&order=chronological&access_token=${access_token}`,
                     // Strategy 2: user token if available
-                    ...(user_token ? [`https://graph.facebook.com/v19.0/${post_id}/comments?fields=from,message,created_time&limit=100&order=chronological&access_token=${user_token}`] : []),
+                    ...(user_token ? [`https://graph.facebook.com/v19.0/${resolvedPostId}/comments?fields=from,message,created_time&limit=100&order=chronological&access_token=${user_token}`] : []),
                     // Strategy 3: page token with filter=stream
-                    `https://graph.facebook.com/v19.0/${post_id}/comments?fields=from,message,created_time&limit=100&order=chronological&filter=stream&access_token=${access_token}`,
+                    `https://graph.facebook.com/v19.0/${resolvedPostId}/comments?fields=from,message,created_time&limit=100&order=chronological&filter=stream&access_token=${access_token}`,
                     // Strategy 4: without 'from' field (minimal permissions)
-                    `https://graph.facebook.com/v19.0/${post_id}/comments?fields=message,created_time&limit=100&order=chronological&access_token=${access_token}`,
+                    `https://graph.facebook.com/v19.0/${resolvedPostId}/comments?fields=message,created_time&limit=100&order=chronological&access_token=${access_token}`,
                 ];
                 
                 let workingUrl: string | null = null;
