@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Download, Trophy, Loader2, AlertCircle, X, RefreshCw } from 'lucide-react';
+import { Search, Download, Trophy, Loader2, AlertCircle, X, RefreshCw, ExternalLink } from 'lucide-react';
 
 interface ScannedComment {
     id: string;
@@ -147,11 +147,6 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
 
             setTotalScanned(data.total || 0);
             processComments(data.comments || []);
-            // Show debug info about what Facebook returned
-            if (data.debug) {
-                const d = data.debug;
-                setDebugInfo(`Phương thức: ${d.method}\nCó tên: ${d.total_with_names} | Không tên: ${d.total_without_names}\n\n--- Comment của PAGE ---\n${JSON.stringify(d.page_comment_sample, null, 2)}\n\n--- Comment của USER ---\n${JSON.stringify(d.user_comment_sample, null, 2)}`);
-            }
         } catch (err: any) {
             setError(`Lỗi kết nối: ${err.message}`);
         } finally {
@@ -200,12 +195,12 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
 
     const downloadCSV = () => {
         const data = targetNumber ? getRanking() : filtered;
-        const rows = ['STT,Tên,Số chọn,Thời gian,Lệch'];
+        const rows = ['STT,Số chọn,Nội dung,Thời gian,Lệch,Link Comment'];
         const target = targetNumber ? parseInt(targetNumber) : 0;
         data.forEach((c, i) => {
             const diff = target ? Math.abs(parseInt(c.number!) - target) : '';
             const time = new Date(c.created_time).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
-            rows.push(`${i + 1},"${c.name}",${c.number},"${time}",${diff}`);
+            rows.push(`${i + 1},${c.number},"${(c.message || '').replace(/"/g, '""')}","${time}",${diff},https://facebook.com/${c.id}`);
         });
         const blob = new Blob(['\uFEFF' + rows.join('\n')], { type: 'text/csv;charset=utf-8' });
         const a = document.createElement('a');
@@ -382,7 +377,7 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
                                 <tr>
                                     <th className="px-4 py-3 font-medium text-left w-12">STT</th>
                                     {targetNumber && <th className="px-4 py-3 font-medium text-center w-16">🏆</th>}
-                                    <th className="px-4 py-3 font-medium text-left">Tên người chơi</th>
+                                    <th className="px-4 py-3 font-medium text-center w-10">Link</th>
                                     <th className="px-4 py-3 font-medium text-center w-20">Số chọn</th>
                                     {targetNumber && <th className="px-4 py-3 font-medium text-center w-16">Lệch</th>}
                                     <th className="px-4 py-3 font-medium text-left">Nội dung</th>
@@ -403,7 +398,11 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
                                                     {i === 2 && <span className="text-lg">🥉</span>}
                                                 </td>
                                             )}
-                                            <td className="px-4 py-2.5 font-medium text-slate-800">{c.name}</td>
+                                            <td className="px-4 py-2.5 text-center">
+                                                <a href={`https://facebook.com/${c.id}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-700 transition" title="Xem comment trên Facebook">
+                                                    <ExternalLink className="w-3.5 h-3.5 inline" />
+                                                </a>
+                                            </td>
                                             <td className="px-4 py-2.5 text-center">
                                                 <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-bold ${
                                                     isWinner ? 'bg-yellow-200 text-yellow-800' : 'bg-blue-100 text-blue-700'
@@ -416,8 +415,8 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
                                                     {diff === 0 ? '🎯 Trùng!' : `±${diff}`}
                                                 </td>
                                             )}
-                                            <td className="px-4 py-2.5 text-xs text-slate-500 max-w-[200px] truncate" title={c.message}>
-                                                {c.message.substring(0, 80)}
+                                            <td className="px-4 py-2.5 text-xs text-slate-600 max-w-[300px] truncate" title={c.message}>
+                                                {c.message.substring(0, 120)}
                                             </td>
                                             <td className="px-4 py-2.5 text-xs text-slate-500">
                                                 {new Date(c.created_time).toLocaleString('vi-VN', {
@@ -453,7 +452,9 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
                                 return (
                                     <div key={c.id} className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-lg border border-amber-200 text-sm">
                                         <span>{medals[i]}</span>
-                                        <span className="font-medium">{c.name}</span>
+                                        <a href={`https://facebook.com/${c.id}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                                            <ExternalLink className="w-3 h-3 inline mr-1" />Xem
+                                        </a>
                                         <span className="text-blue-600 font-bold">{c.number}</span>
                                         <span className="text-xs text-slate-400">(lệch {diff})</span>
                                     </div>
