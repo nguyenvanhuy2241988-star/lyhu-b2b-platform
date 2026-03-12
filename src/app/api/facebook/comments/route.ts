@@ -33,6 +33,50 @@ export async function POST(request: Request) {
             return NextResponse.json({ success: !data.error, data });
         }
 
+        // ACTION: Scan ALL comments with full pagination (for minigame / contest)
+        if (action === 'scan_all_comments' && post_id) {
+            try {
+                const allComments: any[] = [];
+                let url = `https://graph.facebook.com/v19.0/${post_id}/comments?fields=from,message,created_time&limit=100&order=chronological&filter=stream&access_token=${access_token}`;
+                let pageNum = 0;
+                const MAX_PAGES = 50; // safety limit ~5000 comments
+
+                while (url && pageNum < MAX_PAGES) {
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    if (data.error) {
+                        return NextResponse.json({
+                            success: false,
+                            error: data.error.message,
+                            error_code: data.error.code,
+                            partial_comments: allComments,
+                            hint: data.error.code === 10
+                                ? 'Token thiếu quyền pages_read_engagement. Vào Marketing → Automation → Cấu hình chung → "🔑 Làm mới Token Facebook" để cập nhật.'
+                                : undefined
+                        });
+                    }
+                    const comments = data.data || [];
+                    allComments.push(...comments.map((c: any) => ({
+                        id: c.id,
+                        name: c.from?.name || 'Unknown',
+                        from_id: c.from?.id,
+                        message: c.message || '',
+                        created_time: c.created_time,
+                    })));
+                    url = data.paging?.next || null;
+                    pageNum++;
+                }
+
+                return NextResponse.json({
+                    success: true,
+                    total: allComments.length,
+                    comments: allComments,
+                });
+            } catch (e: any) {
+                return NextResponse.json({ success: false, error: e.message });
+            }
+        }
+
         // ACTION: fetch comments for a specific post
         if (action === 'post_comments' && post_id) {
             const res = await fetch(

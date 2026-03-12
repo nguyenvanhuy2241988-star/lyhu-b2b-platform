@@ -14,6 +14,7 @@ import {
 import { Plus, Trash2, Edit, Zap, X, Save, Search, Bot, MessageSquare, EyeOff, Shield, Eye, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 import LeadDistributionSettings from '@/components/marketing/LeadDistributionSettings';
+import PostCommentScanner from '@/components/marketing/PostCommentScanner';
 
 export default function AutomationPage() {
     const { user, session } = useAuth();
@@ -50,6 +51,7 @@ export default function AutomationPage() {
     const [pages, setPages] = useState<any[]>([]);
     const [selectedPageId, setSelectedPageId] = useState<string>('');
     const [userToken, setUserToken] = useState<string>('');
+    const [showCommentScanner, setShowCommentScanner] = useState(false);
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -635,6 +637,26 @@ export default function AutomationPage() {
                                 </button>
                             </div>
                         </div>
+
+                        {/* Post Comment Scanner (Minigame) */}
+                        <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100 relative z-10">
+                            <div className="flex items-center justify-between gap-4">
+                                <div>
+                                    <p className="font-medium text-slate-800">🎯 Quét Comment Bài Viết</p>
+                                    <p className="text-xs text-indigo-600">Lọc số chơi MiniGame, sự kiện, hoặc chương trình khuyến mãi. Hỗ trợ lọc theo deadline, xếp hạng, xuất CSV.</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (!selectedPageId) return toast.error('Chọn Fanpage trước');
+                                        setShowCommentScanner(true);
+                                    }}
+                                    className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-indigo-700 transition whitespace-nowrap cursor-pointer"
+                                >
+                                    🎯 Mở Scanner
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="mt-8 pt-4 border-t flex justify-end">
@@ -1143,6 +1165,17 @@ export default function AutomationPage() {
                     </div>
                 </div>
             )}
+            {/* Post Comment Scanner Modal */}
+            {showCommentScanner && (() => {
+                const page = pages.find((p: any) => p.id === selectedPageId);
+                return page ? (
+                    <PostCommentScanner
+                        pageId={page.page_id}
+                        accessToken={page.access_token}
+                        onClose={() => setShowCommentScanner(false)}
+                    />
+                ) : null;
+            })()}
         </div>
     );
 }
