@@ -215,7 +215,15 @@ export async function POST(request: Request) {
                     success: true,
                     total: allComments.length,
                     comments: allComments,
-                    debug: { resolved_post_id: targetPostId, method: usedMethod || 'default', pages_fetched: pageNum }
+                    debug: {
+                        resolved_post_id: targetPostId,
+                        method: usedMethod || 'default',
+                        pages_fetched: pageNum,
+                        // Include raw first comment so we can see what Facebook actually returns
+                        raw_sample: (firstPageData.data || [])[0] || null,
+                        has_from_field: !!(firstPageData.data || [])[0]?.from,
+                        sample_from: (firstPageData.data || [])[0]?.from || 'NOT_PRESENT',
+                    }
                 });
             } catch (e: any) {
                 return NextResponse.json({ success: false, error: e.message });
