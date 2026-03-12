@@ -418,12 +418,30 @@ export function generatePosterPrompt(data: PosterFormData): string {
   
   // Quality rules
   sections.push('CRITICAL REQUIREMENTS:');
+  sections.push('- HEADLINE must appear EXACTLY ONCE on the poster — NEVER duplicate or repeat the headline text in any other location');
+  sections.push(`- BRAND LOGO "${brand.brand_name}" must appear in EXACTLY 1 corner — do NOT put the brand name on products, boxes, containers, or decorations`);
+  sections.push('- ALL selling point badges MUST use the SAME consistent visual style — same shape, same color scheme, same size. Do NOT mix ribbons with seals with circles. Pick ONE badge style and apply it to ALL selling points.');
+  sections.push('- Do NOT add ANY text that is not explicitly listed in this prompt — no extra labels, annotations, floating descriptive words, or placeholder text');
   sections.push('- All Vietnamese text must be spelled correctly with proper diacritics (ă, â, đ, ê, ô, ơ, ư and all tone marks)');
   sections.push('- PREMIUM commercial-quality design — must look like it was made by a professional design agency, not a template');
   sections.push('- Text must be clearly readable with proper contrast, but also visually impressive');
   sections.push('- Overall design should match the quality level of e-commerce promotional posters from JD.com, Tmall, Shopee');
   sections.push('- No watermarks, no stock photo indicators, no placeholder text');
   sections.push('- The final output should look like a poster you would see on a professional brand\'s official Facebook page');
+  sections.push('');
+  
+  // Text inventory — explicit list of allowed text
+  const allowedTexts: string[] = [`Headline: "${data.headline}"`];
+  if (data.subheadline) allowedTexts.push(`Subheadline: "${data.subheadline}"`);
+  if (data.selling_points?.filter(p => p.trim()).length) {
+    allowedTexts.push(`Selling points: ${data.selling_points.filter(p => p.trim()).map(p => `"${p}"`).join(', ')}`);
+  }
+  if (data.cta) allowedTexts.push(`CTA: "${data.cta}"`);
+  allowedTexts.push(`Brand logo: "${brand.brand_name}"`);
+  
+  sections.push('TEXT INVENTORY — The poster must contain ONLY these text elements:');
+  allowedTexts.forEach(t => sections.push(`  • ${t}`));
+  sections.push('⛔ Any text NOT in this list is FORBIDDEN. Do not invent, add, or hallucinate extra text.');
   
   return sections.join('\n');
 }
@@ -542,12 +560,43 @@ export function generateReferencePrompt(data: ReferenceFormData): string {
     sections.push('');
   }
   
+  // Auto-detect poster purpose for better context
+  const hasPromotionalSP = selling_points?.some(p => 
+    /sale|giảm|free|tặng|khuyến|ưu đãi|mua/i.test(p)
+  );
+  if (hasPromotionalSP) {
+    sections.push('POSTER PURPOSE: This is a PROMOTIONAL/SALE poster — design should convey urgency and excitement.');
+    sections.push('');
+  }
+  
   // Quality + Anti-copy rules
   sections.push('=== FINAL RULES ===');
+  sections.push('');
+  sections.push('STRICT ELEMENT COUNT RULES (violations will ruin the design):');
+  sections.push(`1. HEADLINE TEXT "${headline}": Must appear EXACTLY ONCE on the poster. Do NOT duplicate, repeat, or echo the headline anywhere else.`);
+  sections.push(`2. BRAND LOGO "${brand.brand_name}": Must appear in EXACTLY 1 position (bottom-right corner). Do NOT show the brand name or logo on any product boxes, containers, decorative elements, or other areas.`);
+  sections.push('3. SELLING POINT BADGES: Must ALL use the SAME visual style — same shape, same color scheme, same size. Do NOT mix different badge types (e.g. ribbon + seal + circle). Pick ONE consistent badge design and apply it to ALL selling points.');
+  sections.push('');
+  
+  // Text inventory for reference mode
+  const refAllowedTexts: string[] = [`Headline: "${headline}"`];
+  if (subheadline) refAllowedTexts.push(`Subheadline: "${subheadline}"`);
+  if (selling_points?.filter(p => p.trim()).length) {
+    refAllowedTexts.push(`Selling points: ${selling_points.filter(p => p.trim()).map(p => `"${p}"`).join(', ')}`);
+  }
+  if (cta) refAllowedTexts.push(`CTA: "${cta}"`);
+  refAllowedTexts.push(`Brand logo: "${brand.brand_name}"`);
+  
+  sections.push('4. TEXT INVENTORY — The poster must contain ONLY these text elements and NOTHING ELSE:');
+  refAllowedTexts.forEach(t => sections.push(`   • ${t}`));
+  sections.push('   ⛔ Do NOT add ANY other text, labels, descriptions, annotations, floating words, or placeholder text (no "tags", no product flavor descriptions, no extra decorative text).');
+  sections.push('');
+  sections.push('BACKGROUND RULE: Use a clean, simple gradient background (e.g. teal-to-dark-teal, or brand-color gradient). Do NOT create a 3D room, store interior, shelf display, or elaborate scene. Keep the background SIMPLE and let the products and text be the focus.');
+  sections.push('');
+  sections.push('GENERAL QUALITY RULES:');
   sections.push('- The poster is for a REGULAR promotional sale, NOT a holiday/festival — do NOT add holiday decorations unless specifically requested');
   sections.push('- All Vietnamese text must be spelled correctly with proper diacritics (ă, â, đ, ê, ô, ơ, ư and all tone marks)');
   sections.push('- Match the QUALITY and POLISH of the reference, not its specific content');
-  sections.push('- Background should be a clean gradient or solid color matching the brand palette — NOT a scene copied from the reference');
   sections.push('- The final output should look like it was designed by the SAME designer who made the reference, but for a COMPLETELY DIFFERENT brand and campaign');
   
   return sections.join('\n');
