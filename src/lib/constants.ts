@@ -35,7 +35,8 @@ import {
     ToggleLeft,     // Role Switch
     ArrowRightLeft, // Accountant Reconciliation
     Zap,            // Automation
-    Gamepad2
+    Gamepad2,
+    Sparkles,       // Poster Studio
 } from "lucide-react";
 import { MODULES } from '@/modules/registry';
 
@@ -247,6 +248,7 @@ export const NAV_ITEMS = {
         { label: "Content & Lịch", href: "/marketing/content", icon: Calendar },
         { label: "Quét Data", href: "/marketing/scraper", icon: Globe },
         { label: "Tự động hóa", href: "/marketing/automation", icon: Zap },
+        { label: "AI Poster Studio", href: "/marketing/poster-studio", icon: Sparkles },
         { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
         { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
         { label: "Góc Giải Trí", href: "/entertainment", icon: Gamepad2 },
