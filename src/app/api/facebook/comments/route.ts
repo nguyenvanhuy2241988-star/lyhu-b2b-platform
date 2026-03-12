@@ -38,118 +38,91 @@ export async function POST(request: Request) {
         // ACTION: Scan ALL comments with full pagination (for minigame / contest)
         if (action === 'scan_all_comments' && post_id) {
             try {
-                // Resolve pfbid or raw URL to a numeric post ID
+                // post_id should now be numeric (from dropdown), but handle pfbid just in case
                 let targetPostId = post_id;
-                
-                // If pfbid, we need to find the actual post by listing page posts
-                const isPfbid = post_id.includes('pfbid');
-                
-                // Strategy: List ALL posts from the page and find the target one
-                // This works WITHOUT pages_read_engagement (same as "Quét ngay" button)
-                const allPagePosts: string[] = [];
-                
-                // 1. Fetch from page feed (includes all post types)
-                try {
-                    const feedRes = await fetch(
-                        `https://graph.facebook.com/v19.0/${page_id}/feed?fields=id,message&limit=50&access_token=${access_token}`
-                    );
-                    const feedData = await feedRes.json();
-                    if (feedData.data) {
-                        for (const p of feedData.data) {
-                            allPagePosts.push(p.id);
-                            // If user entered a partial ID, try to match
-                            if (!isPfbid && targetPostId.includes(p.id.split('_').pop() || '___')) {
-                                targetPostId = p.id;
-                            }
-                            // Try to match by message content keywords
-                            if (isPfbid && p.message && (
-                                p.message.toLowerCase().includes('minigame') ||
-                                p.message.toLowerCase().includes('số may mắn') ||
-                                p.message.toLowerCase().includes('xsmb')
-                            )) {
-                                targetPostId = p.id;
-                            }
-                        }
-                    }
-                } catch (e) {}
-
-                // 2. Also fetch from /posts endpoint
-                try {
-                    const postsRes = await fetch(
-                        `https://graph.facebook.com/v19.0/${page_id}/posts?fields=id,message&limit=30&access_token=${access_token}`
-                    );
-                    const postsData = await postsRes.json();
-                    if (postsData.data) {
-                        for (const p of postsData.data) {
-                            if (!allPagePosts.includes(p.id)) allPagePosts.push(p.id);
-                            if (!isPfbid && targetPostId.includes(p.id.split('_').pop() || '___')) {
-                                targetPostId = p.id;
-                            }
-                            if (isPfbid && p.message && (
-                                p.message.toLowerCase().includes('minigame') ||
-                                p.message.toLowerCase().includes('số may mắn') ||
-                                p.message.toLowerCase().includes('xsmb')
-                            )) {
-                                targetPostId = p.id;
-                            }
-                        }
-                    }
-                } catch (e) {}
-
-                // 3. Try to resolve pfbid via Graph API (may or may not work)
-                if (isPfbid && targetPostId === post_id) {
+                if (post_id.includes('pfbid')) {
+                    // Fallback: try to resolve pfbid
                     const pfbidPart = post_id.includes('_') ? post_id.split('_').pop() : post_id;
                     try {
-                        const resolveRes = await fetch(
-                            `https://graph.facebook.com/v19.0/${pfbidPart}?fields=id&access_token=${access_token}`
-                        );
-                        const resolveData = await resolveRes.json();
-                        if (resolveData.id) targetPostId = resolveData.id;
-                    } catch (e) {}
+                        const rr = await fetch(`https://graph.facebook.com/v19.0/${pfbidPart}?fields=id&access_token=${access_token}`);
+                        const rd = await rr.json();
+                        if (rd.id) targetPostId = rd.id;
+                    } catch (_) {}
                 }
-
-                // Now fetch ALL comments for the target post with pagination
-                const allComments: any[] = [];
-                let commentsUrl: string | null = `https://graph.facebook.com/v19.0/${targetPostId}/comments?fields=id,message,from,created_time&limit=100&access_token=${access_token}`;
-                let pageNum = 0;
-                const MAX_PAGES = 50;
-
-                while (commentsUrl && pageNum < MAX_PAGES) {
-                    const res: Response = await fetch(commentsUrl);
-                    const data: any = await res.json();
-                    if (data.error) {
-                        // If direct call fails, return error with debug info
-                        return NextResponse.json({
-                            success: false,
-                            error: data.error.message,
-                            error_code: data.error.code,
-                            debug: {
-                                attempted_post_id: targetPostId,
-                                original_input: post_id,
-                                is_pfbid: isPfbid,
-                                page_posts_found: allPagePosts.length,
-                                available_posts: allPagePosts.slice(0, 5),
-                            },
-                            hint: `Post ID dùng: ${targetPostId}. Nếu sai, thử nhập trực tiếp Post ID số (VD: ${allPagePosts[0] || 'pageId_postId'})`
-                        });
+                
+                // Try multiple field sets and tokens to find one that works
+                const tokens = [access_token, ...(user_token ? [user_token] : [])];
+                const fieldSets = [
+                    'id,message,from,created_time',  // Full (needs pages_read_engagement)
+                    'id,message,created_time',         // Without from (may work without permission)
+                    'id,message',                      // Minimal
+                    '',                                // Default fields (id, message)
+                ];
+                
+                let workingUrl: string | null = null;
+                let firstPageData: any = null;
+                let usedFields = '';
+                
+                // Find a working combination
+                outer:
+                for (const tkn of tokens) {
+                    for (const fields of fieldSets) {
+                        const fieldParam = fields ? `&fields=${fields}` : '';
+                        const testUrl = `https://graph.facebook.com/v19.0/${targetPostId}/comments?limit=100${fieldParam}&access_token=${tkn}`;
+                        try {
+                            const testRes: Response = await fetch(testUrl);
+                            const testData: any = await testRes.json();
+                            if (!testData.error && testData.data) {
+                                firstPageData = testData;
+                                usedFields = fields;
+                                // Build the working URL pattern for pagination
+                                workingUrl = testData.paging?.next || null;
+                                break outer;
+                            }
+                        } catch (_) {}
                     }
-                    const comments = data.data || [];
-                    allComments.push(...comments.map((c: any) => ({
-                        id: c.id,
-                        name: c.from?.name || 'Unknown',
-                        from_id: c.from?.id || '',
-                        message: c.message || '',
-                        created_time: c.created_time,
-                    })));
-                    commentsUrl = data.paging?.next || null;
-                    pageNum++;
+                }
+                
+                if (!firstPageData) {
+                    return NextResponse.json({
+                        success: false,
+                        error: 'Không thể đọc comment. Tất cả cách thử đều bị từ chối.',
+                        error_code: 10,
+                        hint: 'Facebook App cần được App Review cho quyền pages_read_engagement. Vào developers.facebook.com → App Dashboard → App Review để gửi yêu cầu.'
+                    });
+                }
+                
+                // Process first page
+                const allComments: any[] = [];
+                const mapComment = (c: any) => ({
+                    id: c.id,
+                    name: c.from?.name || 'Người chơi',
+                    from_id: c.from?.id || '',
+                    message: c.message || '',
+                    created_time: c.created_time || '',
+                });
+                
+                allComments.push(...(firstPageData.data || []).map(mapComment));
+                
+                // Continue pagination
+                let pageNum = 1;
+                const MAX_PAGES = 50;
+                while (workingUrl && pageNum < MAX_PAGES) {
+                    try {
+                        const res: Response = await fetch(workingUrl);
+                        const data: any = await res.json();
+                        if (data.error || !data.data) break;
+                        allComments.push(...data.data.map(mapComment));
+                        workingUrl = data.paging?.next || null;
+                        pageNum++;
+                    } catch (_) { break; }
                 }
 
                 return NextResponse.json({
                     success: true,
                     total: allComments.length,
                     comments: allComments,
-                    debug: { resolved_post_id: targetPostId, original: post_id }
+                    debug: { resolved_post_id: targetPostId, fields_used: usedFields || 'default', pages_fetched: pageNum }
                 });
             } catch (e: any) {
                 return NextResponse.json({ success: false, error: e.message });
