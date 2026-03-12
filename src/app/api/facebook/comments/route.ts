@@ -109,62 +109,70 @@ export async function POST(request: Request) {
                     } catch (_) {}
                 }
                 
-                // APPROACH 1: Field expansion — get comments as nested field of the post
-                // This is a DIFFERENT API path than /{post_id}/comments
+                // Try multiple API versions, field sets, and tokens
+                // Older API versions (v15, v16) may return `from` without Advanced Access
                 const tokens = [access_token, ...(user_token ? [user_token] : [])];
                 let firstPageData: any = null;
                 let workingUrl: string | null = null;
                 let usedMethod = '';
+                const apiVersions = ['v15.0', 'v16.0', 'v19.0'];
                 
-                // PRIORITY: Try to get FULL data (with names) first, using ANY token
-                // Then fallback to less data. This ensures we get names if possible.
-                const expansionFieldSets = [
-                    '{id,message,from,created_time}',  // Full with names (priority!)
-                    '{id,message,created_time}',         // Without names
-                    '{id,message}',                      // Minimal
-                ];
-                
-                for (const fields of expansionFieldSets) {
+                // PRIORITY 1: Try to get FULL data WITH names using any version/token
+                for (const ver of apiVersions) {
                     for (const tkn of tokens) {
-                        const url = `https://graph.facebook.com/v19.0/${targetPostId}?fields=comments.limit(100)${fields}&access_token=${tkn}`;
-                        try {
-                            const r: Response = await fetch(url);
-                            const d: any = await r.json();
-                            if (!d.error && d.comments?.data) {
-                                firstPageData = d.comments;
-                                workingUrl = d.comments.paging?.next || null;
-                                usedMethod = `field_expansion_${fields.includes('from') ? 'with_names' : 'no_names'}`;
-                                break;
-                            }
-                        } catch (_) {}
+                        // Try with filter=stream (sometimes bypasses from restriction)
+                        const urls = [
+                            `https://graph.facebook.com/${ver}/${targetPostId}/comments?fields=id,message,from,created_time&filter=stream&limit=100&access_token=${tkn}`,
+                            `https://graph.facebook.com/${ver}/${targetPostId}/comments?fields=id,message,from,created_time&limit=100&access_token=${tkn}`,
+                            `https://graph.facebook.com/${ver}/${targetPostId}?fields=comments.limit(100){id,message,from,created_time}&access_token=${tkn}`,
+                        ];
+                        for (const url of urls) {
+                            try {
+                                const r: Response = await fetch(url);
+                                const d: any = await r.json();
+                                const comments = d.comments?.data || d.data;
+                                if (!d.error && comments?.length > 0) {
+                                    // Check if from.name is actually populated
+                                    const hasNames = comments.some((c: any) => c.from?.name);
+                                    if (hasNames) {
+                                        firstPageData = d.comments || d;
+                                        workingUrl = (d.comments?.paging?.next || d.paging?.next) || null;
+                                        usedMethod = `${ver}_with_names`;
+                                        break;
+                                    }
+                                }
+                            } catch (_) {}
+                        }
+                        if (firstPageData) break;
                     }
                     if (firstPageData) break;
                 }
                 
-                // APPROACH 2: Direct /comments edge (fallback)
+                // PRIORITY 2: If no names found, just get comments without names
                 if (!firstPageData) {
-                    const fieldSets = [
-                        'id,message,from,created_time',
-                        'id,message,created_time',
-                        'id,message',
-                        '',
-                    ];
-                    outer:
-                    for (const fields of fieldSets) {
+                    for (const ver of apiVersions) {
                         for (const tkn of tokens) {
-                            const fieldParam = fields ? `&fields=${fields}` : '';
-                            const testUrl = `https://graph.facebook.com/v19.0/${targetPostId}/comments?limit=100${fieldParam}&access_token=${tkn}`;
-                            try {
-                                const testRes: Response = await fetch(testUrl);
-                                const testData: any = await testRes.json();
-                                if (!testData.error && testData.data) {
-                                    firstPageData = testData;
-                                    workingUrl = testData.paging?.next || null;
-                                    usedMethod = `direct_${fields.includes('from') ? 'with_names' : 'no_names'}`;
-                                    break outer;
-                                }
-                            } catch (_) {}
+                            const urls = [
+                                `https://graph.facebook.com/${ver}/${targetPostId}/comments?fields=id,message,created_time&limit=100&access_token=${tkn}`,
+                                `https://graph.facebook.com/${ver}/${targetPostId}?fields=comments.limit(100){id,message,created_time}&access_token=${tkn}`,
+                                `https://graph.facebook.com/${ver}/${targetPostId}/comments?limit=100&access_token=${tkn}`,
+                            ];
+                            for (const url of urls) {
+                                try {
+                                    const r: Response = await fetch(url);
+                                    const d: any = await r.json();
+                                    const comments = d.comments?.data || d.data;
+                                    if (!d.error && comments?.length > 0) {
+                                        firstPageData = d.comments || d;
+                                        workingUrl = (d.comments?.paging?.next || d.paging?.next) || null;
+                                        usedMethod = `${ver}_no_names`;
+                                        break;
+                                    }
+                                } catch (_) {}
+                            }
+                            if (firstPageData) break;
                         }
+                        if (firstPageData) break;
                     }
                 }
                 
@@ -179,31 +187,9 @@ export async function POST(request: Request) {
                 
                 // Process first page
                 const allComments: any[] = [];
-                
-                // Extract name from comment text when from.name is unavailable
-                // Common patterns: "368 Nguyễn Văn A", "368 > Nguyễn Văn A", "#368 Nguyễn Văn A"
-                const extractNameFromMessage = (msg: string): string => {
-                    if (!msg) return 'Người chơi';
-                    // Remove the number part and extract the remaining text as name
-                    // Pattern: optional #, digits, optional > or space, then the name
-                    const nameMatch = msg.match(/^[#]?\d{1,5}\s*[>:\-–]?\s*(.+)/);
-                    if (nameMatch) {
-                        let name = nameMatch[1].trim();
-                        // Limit to first few words (typical Vietnamese name is 2-4 words)
-                        const words = name.split(/\s+/);
-                        if (words.length > 5) {
-                            name = words.slice(0, 4).join(' ');
-                        }
-                        // Remove trailing text that looks like extra commentary
-                        name = name.replace(/\s*(mong|chúc|hy vọng|cầu|mình|em|con|tui|thanks|cám|chọn|số).*/i, '').trim();
-                        if (name.length > 1 && name.length < 50) return name;
-                    }
-                    return 'Người chơi';
-                };
-                
                 const mapComment = (c: any) => ({
                     id: c.id,
-                    name: c.from?.name || extractNameFromMessage(c.message || ''),
+                    name: c.from?.name || '',
                     from_id: c.from?.id || '',
                     message: c.message || '',
                     created_time: c.created_time || '',
