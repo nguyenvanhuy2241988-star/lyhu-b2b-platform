@@ -6,8 +6,8 @@ import {
     ChevronRight, ChevronLeft, Wand2, Download
 } from 'lucide-react';
 import {
-    PosterType, AspectRatio, DesignStyle, PosterFormData, BrandProfile,
-    POSTER_TYPES, ASPECT_RATIOS, DESIGN_STYLES, DEFAULT_BRANDS,
+    PosterType, AspectRatio, DesignStyle, TextStyle, PosterFormData, BrandProfile,
+    POSTER_TYPES, ASPECT_RATIOS, DESIGN_STYLES, TEXT_STYLES, DEFAULT_BRANDS,
     generatePosterPrompt, generateRefinementPrompt,
 } from '@/lib/posterPromptEngine';
 
@@ -40,6 +40,7 @@ export default function PosterStudioPage() {
     // Visual
     const [aspectRatio, setAspectRatio] = useState<AspectRatio>('1:1');
     const [designStyle, setDesignStyle] = useState<DesignStyle>('vibrant');
+    const [textStyle, setTextStyle] = useState<TextStyle>('3d_pop');
     const [hasCharacter, setHasCharacter] = useState(false);
     const [characterDesc, setCharacterDesc] = useState('');
     const [productDesc, setProductDesc] = useState('');
@@ -87,6 +88,7 @@ export default function PosterStudioPage() {
             cta: cta || undefined,
             aspect_ratio: aspectRatio,
             style: designStyle,
+            text_style: textStyle,
             has_character: hasCharacter,
             character_description: characterDesc || undefined,
             product_description: productDesc || undefined,
@@ -406,6 +408,28 @@ export default function PosterStudioPage() {
                                         className={`flex flex-col items-start p-3 rounded-xl border-2 text-left transition-all ${
                                             designStyle === key
                                                 ? 'border-blue-500 bg-blue-50 shadow-md'
+                                                : 'border-slate-200 hover:border-slate-300'
+                                        }`}
+                                    >
+                                        <span className="text-sm font-bold text-slate-800">{val.label}</span>
+                                        <span className="text-xs text-slate-500">{val.desc}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Text Style — THE MOST IMPORTANT */}
+                        <div>
+                            <label className="text-sm font-medium text-slate-700 mb-1 block">Kiểu chữ tiêu đề ⭐</label>
+                            <p className="text-xs text-slate-500 mb-3">Chọn hiệu ứng cho tiêu đề — ảnh hưởng lớn đến chất lượng poster</p>
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                {Object.entries(TEXT_STYLES).map(([key, val]) => (
+                                    <button
+                                        key={key}
+                                        onClick={() => setTextStyle(key as TextStyle)}
+                                        className={`flex flex-col items-start p-3 rounded-xl border-2 text-left transition-all ${
+                                            textStyle === key
+                                                ? 'border-purple-500 bg-purple-50 shadow-md ring-1 ring-purple-300'
                                                 : 'border-slate-200 hover:border-slate-300'
                                         }`}
                                     >

@@ -20,6 +20,8 @@ export type AspectRatio = '1:1' | '9:16' | '21:9' | '4:5' | '16:9';
 
 export type DesignStyle = 'modern' | 'minimalist' | 'vibrant' | 'professional' | 'playful' | 'luxury';
 
+export type TextStyle = '3d_pop' | 'neon_glow' | 'metallic' | 'ribbon_banner' | 'flat_bold' | 'elegant';
+
 export interface BrandProfile {
   id: string;
   brand_name: string;
@@ -48,6 +50,7 @@ export interface PosterFormData {
   // Visual
   aspect_ratio: AspectRatio;
   style: DesignStyle;
+  text_style: TextStyle;
   has_character: boolean;
   character_description?: string;
   product_description?: string;   // What the product looks like
@@ -120,6 +123,71 @@ export const DESIGN_STYLES: Record<DesignStyle, { label: string; desc: string; k
   luxury:       { label: 'Luxury',       desc: 'Sang trọng, cao cấp',       keywords: 'gold accents, dark background, elegant serif fonts, premium feel' },
 };
 
+export const TEXT_STYLES: Record<TextStyle, { label: string; desc: string; prompt: string }> = {
+  '3d_pop': {
+    label: '3D nổi',
+    desc: 'Chữ 3D nổi khối, bóng đổ sâu — như JD, Tmall',
+    prompt: `MANDATORY 3D EXTRUDED TEXT EFFECT for the headline:
+- The headline text MUST be rendered as thick 3D extruded block letters with visible depth/thickness on the sides and bottom edges
+- Apply a color gradient on the front face (e.g. from bright to slightly darker shade of the brand primary color)
+- The extrusion/depth sides should be a darker shade, creating a strong 3D pop-out effect
+- Add a soft drop shadow beneath the 3D text to ground it in the scene
+- The text should appear to physically jump out of the poster, like signage or a storefront header
+- Reference style: Chinese e-commerce promotional posters (JD.com 京东, Tmall 天猫) where headlines are large 3D block text`,
+  },
+  neon_glow: {
+    label: 'Neon phát sáng',
+    desc: 'Chữ phát sáng neon, hiệu ứng đèn LED',
+    prompt: `NEON GLOW TEXT EFFECT for the headline:
+- Render headline as glowing neon-tube-style letters
+- Add bright outer glow and subtle inner glow matching the brand color
+- Include light bloom/halo effect around each letter
+- Text should look like illuminated LED signage at night
+- Subtle light reflection on nearby surfaces`,
+  },
+  metallic: {
+    label: 'Metallic / Vàng',
+    desc: 'Chữ ánh kim, vàng gold, bạc',
+    prompt: `METALLIC/GOLD TEXT EFFECT for the headline:
+- Render headline with glossy metallic gold or chrome finish
+- Include specular highlights and reflections on letter surfaces
+- Add subtle emboss/bevel effect creating depth
+- Gold gradient from warm yellow to deeper amber
+- Light sparkle/glint effects on key letter edges`,
+  },
+  ribbon_banner: {
+    label: 'Banner / Ribbon',
+    desc: 'Chữ trên nền ribbon, banner trang trí',
+    prompt: `DECORATIVE BANNER/RIBBON TEXT TREATMENT for the headline:
+- Place the headline text INSIDE a decorative banner/ribbon shape
+- The banner should have folded edges and 3D depth, looking like a physical ribbon
+- Banner color should use the brand primary color with a gradient
+- Text on the banner should be white or contrasting, bold, and clearly readable
+- Add subtle shadow behind the banner to give it dimension
+- Subheadline can use a smaller matching ribbon or badge shape`,
+  },
+  flat_bold: {
+    label: 'Flat Bold',
+    desc: 'Phẳng nhưng đậm, viền outline',
+    prompt: `BOLD FLAT TEXT WITH STRONG OUTLINE for the headline:
+- Use extra-bold/black weight typography
+- Add a thick contrasting outline/stroke around each letter (white outline on dark text or vice versa)
+- Include a subtle drop shadow for depth
+- Text should be large, filling a significant portion of the poster width
+- Clean and impactful, easy to read at a glance`,
+  },
+  elegant: {
+    label: 'Thanh lịch',
+    desc: 'Script font, thanh lịch, mỏng',
+    prompt: `ELEGANT TYPOGRAPHY for the headline:
+- Use a combination of serif/script fonts for an upscale feel
+- Thin elegant strokes with subtle serif details
+- Add delicate ornamental elements (thin lines, small flourishes)
+- Generous letter spacing for sophistication
+- Subtle gold or metallic accent on key words`,
+  },
+};
+
 // ============ DEFAULT BRAND PROFILES ============
 
 export const DEFAULT_BRANDS: BrandProfile[] = [
@@ -182,37 +250,37 @@ function buildTypeSpecificPrompt(data: PosterFormData): string {
     case 'promotion':
       return `PURPOSE: Promotional/Sales poster for a food distribution company.
 
-HEADLINE (large, bold, eye-catching): "${headline}"
-${subheadline ? `SUBHEADLINE: "${subheadline}"` : ''}
+HEADLINE (MUST be the largest, most visually dominant element — treated as a design centerpiece, not just text): "${headline}"
+${subheadline ? `SUBHEADLINE (smaller but still stylized, placed below headline): "${subheadline}"` : ''}
 ${product_name ? `FEATURED PRODUCT: ${product_name}` : ''}
 
-${pointsList ? `KEY SELLING POINTS (display as badges, ribbons, or callout elements):\n${pointsList}` : ''}
-${cta ? `CALL TO ACTION: "${cta}"` : ''}
+${pointsList ? `KEY SELLING POINTS (each displayed inside its own decorative badge, rounded rectangle, or ribbon element with icon):\n${pointsList}` : ''}
+${cta ? `CALL TO ACTION (inside a prominent button-shaped banner at bottom): "${cta}"` : ''}
 
-DESIGN DIRECTION: Create urgency and excitement. Use bold typography for the main offer. Product should be prominently displayed with dynamic floating/flying effect.`;
+DESIGN DIRECTION: Create urgency and excitement. Product should be prominently displayed with dynamic floating/flying effect. Selling point badges should be arranged in a row or grid. Overall composition should feel like a premium e-commerce promotional poster.`;
 
     case 'product_launch':
       return `PURPOSE: New product launch/introduction poster.
 
-HEADLINE (large, bold): "${headline}"
-${subheadline ? `SUBHEADLINE: "${subheadline}"` : ''}
-${product_name ? `PRODUCT: ${product_name} — make it the hero element, large and centered` : ''}
+HEADLINE (large, dominant, treated as hero text with visual effects): "${headline}"
+${subheadline ? `SUBHEADLINE (stylized, complementary to headline): "${subheadline}"` : ''}
+${product_name ? `PRODUCT: ${product_name} — make it the hero element, large and centered with dramatic lighting` : ''}
 
-${pointsList ? `UNIQUE SELLING POINTS:\n${pointsList}` : ''}
-${cta ? `CALL TO ACTION: "${cta}"` : ''}
+${pointsList ? `UNIQUE SELLING POINTS (display as elegant labeled badges):\n${pointsList}` : ''}
+${cta ? `CALL TO ACTION (inside a prominent styled button/banner): "${cta}"` : ''}
 
-DESIGN DIRECTION: Focus on product beauty shot. Clean, premium feel. Product should look appetizing and high-quality. Use spotlight or glow effect on the product.`;
+DESIGN DIRECTION: Focus on product beauty shot. Premium commercial feel. Product should look appetizing and high-quality with spotlight, glow, or radial light burst behind it.`;
 
     case 'minigame':
       return `PURPOSE: Facebook MiniGame/Interactive post.
 
-GAME TITLE (large, fun typography): "${headline}"
-${subheadline ? `GAME DESCRIPTION: "${subheadline}"` : ''}
+GAME TITLE (large, 3D extruded block text with playful colors and thick outline — this is the focal point): "${headline}"
+${subheadline ? `GAME DESCRIPTION (fun styled subtitle): "${subheadline}"` : ''}
 
-${pointsList ? `GAME DETAILS:\n${pointsList}` : ''}
-${cta ? `CALL TO ACTION: "${cta}"` : ''}
+${pointsList ? `GAME DETAILS (display as fun callout bubbles or game-UI style panels):\n${pointsList}` : ''}
+${cta ? `CALL TO ACTION (bright button style with arrow): "${cta}"` : ''}
 
-DESIGN DIRECTION: Fun, engaging, game-like design. Use playful elements like stars, confetti, gift boxes, arrows. Make it clear this is an interactive game post. Include visual element suggesting "comment to play".`;
+DESIGN DIRECTION: Fun, engaging, game-like design. Use playful elements like stars, confetti, gift boxes, arrows. Title text MUST look like a game logo — chunky, colorful, with depth. Overall feel: mobile game promotional art quality.`;
 
     case 'brand_awareness':
       return `PURPOSE: Brand awareness / brand identity poster.
@@ -331,14 +399,31 @@ export function generatePosterPrompt(data: PosterFormData): string {
     sections.push(`ADDITIONAL INSTRUCTIONS: ${extra_instructions}`);
   }
   
-  // Quality rules
+  // Typography section — the most important upgrade
+  const textStyleInfo = TEXT_STYLES[data.text_style || '3d_pop'];
   sections.push('');
+  sections.push('=== TYPOGRAPHY & TEXT DESIGN (CRITICAL — THIS IS THE MOST IMPORTANT SECTION) ===');
+  sections.push('');
+  sections.push(textStyleInfo.prompt);
+  sections.push('');
+  sections.push(`TEXT HIERARCHY AND COMPOSITION RULES:`);
+  sections.push(`- The HEADLINE is THE most important visual element of the entire poster — it should occupy 20-30% of the poster area`);
+  sections.push(`- Headline text must NOT look like plain typed text — it must be DESIGNED with effects (3D, glow, metallic, etc.)`);
+  sections.push(`- Subheadline should complement the headline style but be smaller and less dramatic`);
+  sections.push(`- Selling points / benefits should each be inside decorative shapes (rounded rectangles, badges, ribbons, or shield icons)`);
+  sections.push(`- CTA text should be inside a prominent button-like shape at the bottom`);
+  sections.push(`- NEVER render text as plain flat single-color text — every text element needs visual treatment`);
+  sections.push(`- Use proper Vietnamese font rendering — no broken diacritics`);
+  sections.push('');
+  
+  // Quality rules
   sections.push('CRITICAL REQUIREMENTS:');
-  sections.push('- All Vietnamese text must be spelled correctly with proper diacritics');
-  sections.push('- Commercial-quality design suitable for professional social media marketing');
-  sections.push('- Text must be clearly readable with proper contrast against background');
-  sections.push('- Clean layout with proper visual hierarchy (headline > subheadline > details)');
-  sections.push('- No watermarks, no stock photo indicators');
+  sections.push('- All Vietnamese text must be spelled correctly with proper diacritics (ă, â, đ, ê, ô, ơ, ư and all tone marks)');
+  sections.push('- PREMIUM commercial-quality design — must look like it was made by a professional design agency, not a template');
+  sections.push('- Text must be clearly readable with proper contrast, but also visually impressive');
+  sections.push('- Overall design should match the quality level of e-commerce promotional posters from JD.com, Tmall, Shopee');
+  sections.push('- No watermarks, no stock photo indicators, no placeholder text');
+  sections.push('- The final output should look like a poster you would see on a professional brand\'s official Facebook page');
   
   return sections.join('\n');
 }
