@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, Download, Trophy, Loader2, AlertCircle, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Download, Trophy, Loader2, AlertCircle, X, RefreshCw } from 'lucide-react';
 
 interface ScannedComment {
     id: string;
@@ -12,6 +12,12 @@ interface ScannedComment {
     number?: string;
 }
 
+interface PagePost {
+    id: string;
+    message: string;
+    created_time: string;
+}
+
 interface Props {
     pageId: string;
     accessToken: string;
@@ -20,7 +26,11 @@ interface Props {
 }
 
 export default function PostCommentScanner({ pageId, accessToken, userToken: propUserToken, onClose }: Props) {
-    const [postUrl, setPostUrl] = useState('');
+    const [posts, setPosts] = useState<PagePost[]>([]);
+    const [loadingPosts, setLoadingPosts] = useState(true);
+    const [selectedPostId, setSelectedPostId] = useState('');
+    const [manualPostId, setManualPostId] = useState('');
+    const [useManual, setUseManual] = useState(false);
     const [deadline, setDeadline] = useState('');
     const [targetNumber, setTargetNumber] = useState('');
     const [digitCount, setDigitCount] = useState(3);
@@ -31,48 +41,46 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
     const [filtered, setFiltered] = useState<ScannedComment[]>([]);
     const [totalScanned, setTotalScanned] = useState(0);
 
-    // Extract post ID from various Facebook URL formats
-    const extractPostId = (url: string): string | null => {
-        // https://www.facebook.com/PAGE/posts/POST_ID
-        // https://www.facebook.com/permalink.php?story_fbid=POST_ID&id=PAGE_ID
-        // https://www.facebook.com/PAGE/posts/pfbid...
-        // Direct numeric ID: PAGE_ID_POST_ID
+    // Load posts from the page on mount
+    useEffect(() => {
+        loadPosts();
+    }, []);
 
-        const trimmed = url.trim();
-
-        // If already a numeric post ID like "112376494782495_900316922762763"
-        if (/^\d+_\d+$/.test(trimmed)) return trimmed;
-
-        // Extract from /posts/NUMERIC_ID
-        const postMatch = trimmed.match(/\/posts\/(\d+)/);
-        if (postMatch) return `${pageId}_${postMatch[1]}`;
-
-        // Extract from story_fbid=NUMERIC_ID
-        const storyMatch = trimmed.match(/story_fbid=(\d+)/);
-        if (storyMatch) return `${pageId}_${storyMatch[1]}`;
-
-        // pfbid URLs — need to resolve via Graph API
-        if (trimmed.includes('pfbid')) {
-            // Extract the pfbid and try with page_id prefix
-            const pfbidMatch = trimmed.match(/posts\/(pfbid\w+)/);
-            if (pfbidMatch) return `${pageId}_${pfbidMatch[1]}`;
+    const loadPosts = async () => {
+        setLoadingPosts(true);
+        try {
+            // Fetch recent posts from the page (same as scan-comments uses)
+            const res = await fetch(
+                `https://graph.facebook.com/v19.0/${pageId}/posts?fields=id,message,created_time&limit=30&access_token=${accessToken}`
+            );
+            const data = await res.json();
+            if (data.data) {
+                setPosts(data.data.filter((p: any) => p.message)); // Only posts with text
+                if (data.data.length > 0) {
+                    setSelectedPostId(data.data[0].id);
+                }
+            }
+        } catch (e) {
+            console.error('Failed to load posts:', e);
+        } finally {
+            setLoadingPosts(false);
         }
+    };
 
-        // If just a number, assume it's the post ID
-        if (/^\d+$/.test(trimmed)) return `${pageId}_${trimmed}`;
-
-        return null;
+    const getPostId = (): string | null => {
+        if (useManual) {
+            const trimmed = manualPostId.trim();
+            if (/^\d+_\d+$/.test(trimmed)) return trimmed;
+            if (/^\d+$/.test(trimmed)) return `${pageId}_${trimmed}`;
+            return null;
+        }
+        return selectedPostId || null;
     };
 
     const handleScan = async () => {
-        if (!postUrl.trim()) {
-            setError('Vui lòng nhập URL hoặc ID bài viết');
-            return;
-        }
-
-        const postId = extractPostId(postUrl);
+        const postId = getPostId();
         if (!postId) {
-            setError('Không nhận diện được ID bài viết. Hãy dùng URL dạng facebook.com/page/posts/ID hoặc nhập trực tiếp Post ID (ví dụ: 112376494782495_900316922762763)');
+            setError('Vui lòng chọn bài viết hoặc nhập Post ID');
             return;
         }
 
@@ -83,7 +91,6 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
         setFiltered([]);
 
         try {
-            // Use prop userToken first, then fallback to localStorage
             const userToken = propUserToken || (typeof window !== 'undefined' ? localStorage.getItem('fb_user_token') || '' : '');
 
             const res = await fetch('/api/facebook/comments', {
@@ -103,10 +110,6 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
             if (!data.success) {
                 setError(data.error || 'Lỗi không xác định');
                 if (data.hint) setHint(data.hint);
-                // Use partial comments if available
-                if (data.partial_comments?.length) {
-                    processComments(data.partial_comments);
-                }
                 return;
             }
 
@@ -120,7 +123,6 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
     };
 
     const processComments = (rawComments: ScannedComment[]) => {
-        // Extract N-digit numbers from each comment
         const regex = new RegExp(`\\b(\\d{${digitCount}})\\b`);
         const withNumbers = rawComments.map(c => {
             const match = c.message.match(regex);
@@ -129,7 +131,6 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
 
         setComments(withNumbers);
 
-        // Filter by deadline if set
         if (deadline) {
             const dl = new Date(deadline);
             const valid = withNumbers.filter(c => new Date(c.created_time) <= dl);
@@ -139,7 +140,6 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
         }
     };
 
-    // Re-filter when deadline changes
     const applyDeadline = (dl: string) => {
         setDeadline(dl);
         if (!dl) {
@@ -157,7 +157,6 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
             const diffA = Math.abs(parseInt(a.number!) - target);
             const diffB = Math.abs(parseInt(b.number!) - target);
             if (diffA !== diffB) return diffA - diffB;
-            // Same difference → who commented first wins
             return new Date(a.created_time).getTime() - new Date(b.created_time).getTime();
         });
     };
@@ -199,57 +198,91 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
 
                 {/* Inputs */}
                 <div className="px-6 py-4 border-b border-slate-100 space-y-3 bg-slate-50">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                            <label className="text-xs font-medium text-slate-600 mb-1 block">URL hoặc Post ID bài viết *</label>
+                    {/* Post Selection */}
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <label className="text-xs font-medium text-slate-600">Chọn bài viết *</label>
+                            <button
+                                onClick={() => setUseManual(!useManual)}
+                                className="text-xs text-blue-600 hover:underline"
+                            >
+                                {useManual ? '← Chọn từ danh sách' : 'Nhập Post ID thủ công →'}
+                            </button>
+                        </div>
+                        {useManual ? (
                             <input
                                 type="text"
-                                value={postUrl}
-                                onChange={e => setPostUrl(e.target.value)}
-                                placeholder="https://facebook.com/lyhu.vn/posts/... hoặc PageID_PostID"
+                                value={manualPostId}
+                                onChange={e => setManualPostId(e.target.value)}
+                                placeholder="Nhập Post ID số (VD: 1199280844074453_940050756811891)"
                                 className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             />
+                        ) : loadingPosts ? (
+                            <div className="flex items-center gap-2 text-sm text-slate-400 py-2">
+                                <Loader2 className="w-4 h-4 animate-spin" /> Đang tải bài viết...
+                            </div>
+                        ) : posts.length > 0 ? (
+                            <select
+                                value={selectedPostId}
+                                onChange={e => setSelectedPostId(e.target.value)}
+                                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                            >
+                                {posts.map(p => {
+                                    const date = new Date(p.created_time).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+                                    const preview = (p.message || '').substring(0, 80).replace(/\n/g, ' ');
+                                    return (
+                                        <option key={p.id} value={p.id}>
+                                            [{date}] {preview}{p.message.length > 80 ? '...' : ''}
+                                        </option>
+                                    );
+                                })}
+                            </select>
+                        ) : (
+                            <p className="text-sm text-red-500 py-2">Không tải được bài viết. Kiểm tra token.</p>
+                        )}
+                    </div>
+
+                    {/* Filters */}
+                    <div className="grid grid-cols-3 gap-3">
+                        <div>
+                            <label className="text-xs font-medium text-slate-600 mb-1 block">Hạn chót</label>
+                            <input
+                                type="datetime-local"
+                                value={deadline}
+                                onChange={e => applyDeadline(e.target.value)}
+                                className="w-full px-2 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
                         </div>
-                        <div className="grid grid-cols-3 gap-2">
-                            <div>
-                                <label className="text-xs font-medium text-slate-600 mb-1 block">Hạn chót</label>
-                                <input
-                                    type="datetime-local"
-                                    value={deadline}
-                                    onChange={e => applyDeadline(e.target.value)}
-                                    className="w-full px-2 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-medium text-slate-600 mb-1 block">Số trúng</label>
-                                <input
-                                    type="text"
-                                    value={targetNumber}
-                                    onChange={e => setTargetNumber(e.target.value.replace(/\D/g, ''))}
-                                    placeholder="VD: 368"
-                                    className="w-full px-2 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-medium text-slate-600 mb-1 block">Số chữ số</label>
-                                <select
-                                    value={digitCount}
-                                    onChange={e => setDigitCount(Number(e.target.value))}
-                                    className="w-full px-2 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                >
-                                    <option value={2}>2 chữ số</option>
-                                    <option value={3}>3 chữ số</option>
-                                    <option value={4}>4 chữ số</option>
-                                    <option value={5}>5 chữ số</option>
-                                </select>
-                            </div>
+                        <div>
+                            <label className="text-xs font-medium text-slate-600 mb-1 block">Số trúng</label>
+                            <input
+                                type="text"
+                                value={targetNumber}
+                                onChange={e => setTargetNumber(e.target.value.replace(/\D/g, ''))}
+                                placeholder="VD: 368"
+                                className="w-full px-2 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-medium text-slate-600 mb-1 block">Số chữ số</label>
+                            <select
+                                value={digitCount}
+                                onChange={e => setDigitCount(Number(e.target.value))}
+                                className="w-full px-2 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value={2}>2 chữ số</option>
+                                <option value={3}>3 chữ số</option>
+                                <option value={4}>4 chữ số</option>
+                                <option value={5}>5 chữ số</option>
+                            </select>
                         </div>
                     </div>
 
+                    {/* Actions */}
                     <div className="flex items-center gap-3">
                         <button
                             onClick={handleScan}
-                            disabled={loading || !postUrl.trim()}
+                            disabled={loading || (!selectedPostId && !manualPostId.trim())}
                             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
@@ -268,8 +301,8 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
 
                         {totalScanned > 0 && (
                             <div className="flex items-center gap-4 text-xs text-slate-500 ml-auto">
-                                <span>📄 Tổng comment: <strong className="text-slate-700">{totalScanned}</strong></span>
-                                <span>🔢 Có số {digitCount} chữ số: <strong className="text-blue-700">{comments.length}</strong></span>
+                                <span>📄 Tổng: <strong className="text-slate-700">{totalScanned}</strong></span>
+                                <span>🔢 Có số: <strong className="text-blue-700">{comments.length}</strong></span>
                                 <span>✅ Hợp lệ: <strong className="text-emerald-700">{filtered.length}</strong></span>
                             </div>
                         )}
@@ -347,7 +380,7 @@ export default function PostCommentScanner({ pageId, accessToken, userToken: pro
                     ) : !loading && totalScanned === 0 ? (
                         <div className="flex flex-col items-center justify-center py-16 text-slate-400">
                             <Search className="w-12 h-12 mb-3 opacity-30" />
-                            <p className="text-sm">Nhập URL bài viết và nhấn "Quét Comment" để bắt đầu</p>
+                            <p className="text-sm">Chọn bài viết và nhấn "Quét Comment" để bắt đầu</p>
                         </div>
                     ) : null}
                 </div>
