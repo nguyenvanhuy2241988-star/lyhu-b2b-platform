@@ -39,33 +39,70 @@ export async function POST(request: Request) {
         if (action === 'scan_all_comments' && post_id) {
             try {
                 const allComments: any[] = [];
-                let scanUrl = `https://graph.facebook.com/v19.0/${post_id}/comments?fields=from,message,created_time&limit=100&order=chronological&filter=stream&access_token=${scanToken}`;
-                let pageNum = 0;
-                const MAX_PAGES = 50; // safety limit ~5000 comments
-
-                while (scanUrl && pageNum < MAX_PAGES) {
-                    const res = await fetch(scanUrl);
-                    const data = await res.json();
-                    if (data.error) {
-                        return NextResponse.json({
-                            success: false,
-                            error: data.error.message,
-                            error_code: data.error.code,
-                            partial_comments: allComments,
-                            hint: data.error.code === 10
-                                ? 'Token thiếu quyền pages_read_engagement. Vào Marketing → Automation → Cấu hình chung → "🔑 Làm mới Token Facebook" để cập nhật.'
-                                : undefined
-                        });
+                
+                // Try multiple token/format strategies
+                const strategies = [
+                    // Strategy 1: page token, no filter=stream (most compatible)
+                    `https://graph.facebook.com/v19.0/${post_id}/comments?fields=from,message,created_time&limit=100&order=chronological&access_token=${access_token}`,
+                    // Strategy 2: user token if available
+                    ...(user_token ? [`https://graph.facebook.com/v19.0/${post_id}/comments?fields=from,message,created_time&limit=100&order=chronological&access_token=${user_token}`] : []),
+                    // Strategy 3: page token with filter=stream
+                    `https://graph.facebook.com/v19.0/${post_id}/comments?fields=from,message,created_time&limit=100&order=chronological&filter=stream&access_token=${access_token}`,
+                    // Strategy 4: without 'from' field (minimal permissions)
+                    `https://graph.facebook.com/v19.0/${post_id}/comments?fields=message,created_time&limit=100&order=chronological&access_token=${access_token}`,
+                ];
+                
+                let workingUrl: string | null = null;
+                let lastError: any = null;
+                
+                for (const strategyUrl of strategies) {
+                    const testRes = await fetch(strategyUrl);
+                    const testData = await testRes.json();
+                    if (!testData.error) {
+                        workingUrl = strategyUrl;
+                        // Process first page of results
+                        const comments = testData.data || [];
+                        allComments.push(...comments.map((c: any) => ({
+                            id: c.id,
+                            name: c.from?.name || 'Unknown',
+                            from_id: c.from?.id || '',
+                            message: c.message || '',
+                            created_time: c.created_time,
+                        })));
+                        // Get next page URL
+                        workingUrl = testData.paging?.next || null;
+                        break;
                     }
+                    lastError = testData.error;
+                }
+                
+                if (allComments.length === 0 && lastError) {
+                    return NextResponse.json({
+                        success: false,
+                        error: lastError.message,
+                        error_code: lastError.code,
+                        hint: lastError.code === 10
+                            ? 'Token thiếu quyền pages_read_engagement. Vào Marketing → Automation → Cấu hình chung → "🔑 Làm mới Token Facebook" để cập nhật.'
+                            : undefined
+                    });
+                }
+                
+                // Continue pagination
+                let pageNum = 1;
+                const MAX_PAGES = 50;
+                while (workingUrl && pageNum < MAX_PAGES) {
+                    const res = await fetch(workingUrl);
+                    const data = await res.json();
+                    if (data.error) break; // Stop on error, return what we have
                     const comments = data.data || [];
                     allComments.push(...comments.map((c: any) => ({
                         id: c.id,
                         name: c.from?.name || 'Unknown',
-                        from_id: c.from?.id,
+                        from_id: c.from?.id || '',
                         message: c.message || '',
                         created_time: c.created_time,
                     })));
-                    scanUrl = data.paging?.next || null;
+                    workingUrl = data.paging?.next || null;
                     pageNum++;
                 }
 
