@@ -7,12 +7,14 @@ import {
 } from 'lucide-react';
 import {
     PosterType, AspectRatio, DesignStyle, TextStyle, PosterFormData, BrandProfile,
+    ReferenceFormData,
     POSTER_TYPES, ASPECT_RATIOS, DESIGN_STYLES, TEXT_STYLES, DEFAULT_BRANDS,
-    generatePosterPrompt, generateRefinementPrompt,
+    generatePosterPrompt, generateRefinementPrompt, generateReferencePrompt,
 } from '@/lib/posterPromptEngine';
 
 export default function PosterStudioPage() {
     // ============ STATE ============
+    const [mode, setMode] = useState<'create' | 'reference'>('create');
     const [step, setStep] = useState(1);
     const [copied, setCopied] = useState(false);
 
@@ -47,6 +49,9 @@ export default function PosterStudioPage() {
     const [bgDesc, setBgDesc] = useState('');
     const [extraInstructions, setExtraInstructions] = useState('');
 
+    // Reference mode
+    const [referenceNotes, setReferenceNotes] = useState('');
+
     // Result
     const [generatedPrompt, setGeneratedPrompt] = useState('');
     const [refinementFeedback, setRefinementFeedback] = useState('');
@@ -78,6 +83,27 @@ export default function PosterStudioPage() {
 
     // ============ GENERATE ============
     const generatePrompt = () => {
+        if (mode === 'reference') {
+            const refData: ReferenceFormData = {
+                brand: selectedBrand,
+                aspect_ratio: aspectRatio,
+                headline,
+                subheadline: subheadline || undefined,
+                product_name: productName || undefined,
+                selling_points: sellingPoints.filter(s => s.trim()),
+                cta: cta || undefined,
+                product_description: productDesc || undefined,
+                has_character: hasCharacter,
+                character_description: characterDesc || undefined,
+                reference_notes: referenceNotes || undefined,
+                extra_instructions: extraInstructions || undefined,
+            };
+            const prompt = generateReferencePrompt(refData);
+            setGeneratedPrompt(prompt);
+            setStep(4);
+            return;
+        }
+
         const formData: PosterFormData = {
             brand: selectedBrand,
             type: posterType,
@@ -127,40 +153,265 @@ export default function PosterStudioPage() {
                     </h1>
                     <p className="text-sm text-slate-500 mt-1">Tạo prompt thiết kế poster chuyên nghiệp trong 30 giây</p>
                 </div>
+
+            {/* Mode Toggle */}
+            <div className="flex gap-2 bg-white rounded-xl p-2 border border-slate-200 shadow-sm w-fit">
+                <button
+                    onClick={() => { setMode('create'); setStep(1); }}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        mode === 'create'
+                            ? 'bg-blue-600 text-white shadow-md'
+                            : 'text-slate-500 hover:bg-slate-100'
+                    }`}
+                >
+                    <Sparkles className="w-4 h-4" />
+                    Tạo mới
+                </button>
+                <button
+                    onClick={() => { setMode('reference'); setStep(1); }}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                        mode === 'reference'
+                            ? 'bg-purple-600 text-white shadow-md'
+                            : 'text-slate-500 hover:bg-slate-100'
+                    }`}
+                >
+                    <Image className="w-4 h-4" />
+                    Thiết kế theo mẫu
+                </button>
+            </div>
             </div>
 
-            {/* Progress Steps */}
-            <div className="flex items-center gap-2 bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-                {[
-                    { num: 1, label: 'Thương hiệu', icon: Palette },
-                    { num: 2, label: 'Nội dung', icon: Type },
-                    { num: 3, label: 'Thiết kế', icon: Image },
-                    { num: 4, label: 'Prompt', icon: Wand2 },
-                ].map((s, i) => (
-                    <div key={s.num} className="flex items-center">
-                        <button
-                            onClick={() => { if (s.num <= step) setStep(s.num); }}
-                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                step === s.num
-                                    ? 'bg-blue-600 text-white shadow-md'
-                                    : step > s.num
-                                    ? 'bg-green-100 text-green-700 cursor-pointer hover:bg-green-200'
-                                    : 'bg-slate-100 text-slate-400'
-                            }`}
-                        >
-                            <s.icon className="w-4 h-4" />
-                            {s.label}
-                        </button>
-                        {i < 3 && <ChevronRight className="w-4 h-4 text-slate-300 mx-1" />}
-                    </div>
-                ))}
-            </div>
+            {/* Progress Steps — Different for each mode */}
+            {mode === 'create' ? (
+                <div className="flex items-center gap-2 bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
+                    {[
+                        { num: 1, label: 'Thương hiệu', icon: Palette },
+                        { num: 2, label: 'Nội dung', icon: Type },
+                        { num: 3, label: 'Thiết kế', icon: Image },
+                        { num: 4, label: 'Prompt', icon: Wand2 },
+                    ].map((s, i) => (
+                        <div key={s.num} className="flex items-center">
+                            <button
+                                onClick={() => { if (s.num <= step) setStep(s.num); }}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                    step === s.num
+                                        ? 'bg-blue-600 text-white shadow-md'
+                                        : step > s.num
+                                        ? 'bg-green-100 text-green-700 cursor-pointer hover:bg-green-200'
+                                        : 'bg-slate-100 text-slate-400'
+                                }`}
+                            >
+                                <s.icon className="w-4 h-4" />
+                                {s.label}
+                            </button>
+                            {i < 3 && <ChevronRight className="w-4 h-4 text-slate-300 mx-1" />}
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <div className="flex items-center gap-2 bg-white rounded-xl p-4 border border-purple-200 shadow-sm">
+                    {[
+                        { num: 1, label: 'Mẫu & Nội dung', icon: Image },
+                        { num: 4, label: 'Prompt', icon: Wand2 },
+                    ].map((s, i) => (
+                        <div key={s.num} className="flex items-center">
+                            <button
+                                onClick={() => { if (s.num <= step) setStep(s.num); }}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                    step === s.num
+                                        ? 'bg-purple-600 text-white shadow-md'
+                                        : step > s.num
+                                        ? 'bg-green-100 text-green-700 cursor-pointer hover:bg-green-200'
+                                        : 'bg-slate-100 text-slate-400'
+                                }`}
+                            >
+                                <s.icon className="w-4 h-4" />
+                                {s.label}
+                            </button>
+                            {i < 1 && <ChevronRight className="w-4 h-4 text-purple-300 mx-1" />}
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* Step Content */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
 
-                {/* ===== STEP 1: Brand ===== */}
-                {step === 1 && (
+                {/* ===== REFERENCE MODE: Combined Form ===== */}
+                {mode === 'reference' && step === 1 && (
+                    <div className="p-6 space-y-6">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
+                                <Image className="w-5 h-5 text-purple-600" />
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-bold text-slate-800">Thiết kế theo mẫu</h2>
+                                <p className="text-sm text-slate-500">Mô tả ảnh mẫu bạn thích + điền nội dung của bạn</p>
+                            </div>
+                        </div>
+
+                        {/* Step 1: Reference image notes */}
+                        <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 space-y-3">
+                            <h3 className="font-bold text-purple-800 text-sm flex items-center gap-2">
+                                🖼️ Ảnh mẫu tham khảo
+                            </h3>
+                            <p className="text-xs text-purple-700">Upload ảnh mẫu vào AI Studio kèm prompt này. Mô tả điểm bạn thích ở ảnh mẫu để AI tái tạo chính xác hơn.</p>
+                            <textarea
+                                value={referenceNotes}
+                                onChange={e => setReferenceNotes(e.target.value)}
+                                rows={3}
+                                className="w-full px-4 py-3 text-sm border border-purple-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
+                                placeholder="VD: Tôi thích kiểu chữ 3D vàng gold nổi, sản phẩm bày ra từ hộp, mascot dễ thương hai bên, nền đỏ lễ hội, badge ưu đãi bên dưới..."
+                            />
+                        </div>
+
+                        {/* Brand selector (compact) */}
+                        <div>
+                            <label className="text-sm font-medium text-slate-600 mb-2 block">Thương hiệu</label>
+                            <div className="flex gap-3 flex-wrap">
+                                {brands.map(b => (
+                                    <button
+                                        key={b.id}
+                                        onClick={() => setSelectedBrand(b)}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
+                                            selectedBrand.id === b.id
+                                                ? 'border-purple-500 bg-purple-50 shadow-md'
+                                                : 'border-slate-200 hover:border-slate-300'
+                                        }`}
+                                    >
+                                        <div className="w-4 h-4 rounded-full border-2 border-white shadow" style={{ background: b.primary_color }} />
+                                        <span className="font-medium text-sm">{b.brand_name}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Aspect ratio */}
+                        <div>
+                            <label className="text-sm font-medium text-slate-600 mb-2 block">Tỷ lệ hình</label>
+                            <div className="flex gap-2 flex-wrap">
+                                {Object.entries(ASPECT_RATIOS).map(([key, val]) => (
+                                    <button
+                                        key={key}
+                                        onClick={() => setAspectRatio(key as AspectRatio)}
+                                        className={`px-3 py-2 rounded-lg border-2 text-xs font-medium transition-all ${
+                                            aspectRatio === key
+                                                ? 'border-purple-500 bg-purple-50'
+                                                : 'border-slate-200 hover:border-slate-300'
+                                        }`}
+                                    >
+                                        {val.label} <span className="text-slate-400">{val.desc}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Content fields */}
+                        <div className="space-y-4">
+                            <h3 className="font-bold text-slate-700 text-sm">Nội dung của bạn</h3>
+                            <div>
+                                <label className="text-sm font-medium text-slate-700">Tiêu đề chính *</label>
+                                <input
+                                    type="text"
+                                    value={headline}
+                                    onChange={e => setHeadline(e.target.value)}
+                                    className="w-full mt-1 px-4 py-3 text-base border border-slate-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-medium"
+                                    placeholder="VD: LYHU Khoai Môn — Siêu Hot Mùa Tết"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-sm font-medium text-slate-700">Tiêu đề phụ</label>
+                                    <input
+                                        type="text"
+                                        value={subheadline}
+                                        onChange={e => setSubheadline(e.target.value)}
+                                        className="w-full mt-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                        placeholder="VD: Đặt ngay kẻo hết"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-medium text-slate-700">Sản phẩm</label>
+                                    <input
+                                        type="text"
+                                        value={productName}
+                                        onChange={e => setProductName(e.target.value)}
+                                        className="w-full mt-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                        placeholder="VD: Khoai môn LYHU, Snack bò"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-slate-700">CTA</label>
+                                <input
+                                    type="text"
+                                    value={cta}
+                                    onChange={e => setCta(e.target.value)}
+                                    className="w-full mt-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                    placeholder="VD: Đặt hàng ngay hôm nay"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-slate-700 mb-1 block">Điểm nổi bật</label>
+                                <div className="space-y-2">
+                                    {sellingPoints.map((sp, i) => (
+                                        <input
+                                            key={i}
+                                            type="text"
+                                            value={sp}
+                                            onChange={e => {
+                                                const arr = [...sellingPoints];
+                                                arr[i] = e.target.value;
+                                                setSellingPoints(arr);
+                                            }}
+                                            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                            placeholder={`VD: ${i === 0 ? 'Giảm 20%' : i === 1 ? 'Free Ship' : 'Mua 10 tặng 1'}`}
+                                        />
+                                    ))}
+                                    <button onClick={() => setSellingPoints([...sellingPoints, ''])} className="text-xs text-purple-600 hover:underline">+ Thêm điểm</button>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-slate-700">Mô tả sản phẩm (visual)</label>
+                                <input
+                                    type="text"
+                                    value={productDesc}
+                                    onChange={e => setProductDesc(e.target.value)}
+                                    className="w-full mt-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                    placeholder="VD: Gói khoai môn bay ra từ hộp, voucher rơi"
+                                />
+                            </div>
+                            <div>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" checked={hasCharacter} onChange={e => setHasCharacter(e.target.checked)} className="w-4 h-4 rounded text-purple-600" />
+                                    <span className="text-sm font-medium text-slate-700">Có nhân vật</span>
+                                </label>
+                                {hasCharacter && (
+                                    <input type="text" value={characterDesc} onChange={e => setCharacterDesc(e.target.value)} className="w-full mt-2 px-3 py-2 text-sm border border-slate-300 rounded-lg" placeholder="VD: Nữ nhân viên mặc áo LYHU xanh ngọc" />
+                                )}
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-slate-700">Yêu cầu thêm</label>
+                                <textarea
+                                    value={extraInstructions}
+                                    onChange={e => setExtraInstructions(e.target.value)}
+                                    rows={2}
+                                    className="w-full mt-1 px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                                    placeholder="VD: Thêm hiệu ứng confetti, đổi tông màu xanh thay cho đỏ..."
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end pt-4">
+                            <button onClick={generatePrompt} disabled={!headline.trim()} className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-pink-700 transition shadow-sm disabled:opacity-40 disabled:cursor-not-allowed">
+                                <Wand2 className="w-4 h-4" /> Tạo Prompt theo mẫu
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* ===== CREATE MODE: STEP 1: Brand ===== */}
+                {mode === 'create' && step === 1 && (
                     <div className="p-6 space-y-6">
                         <h2 className="text-lg font-bold text-slate-800">Chọn thương hiệu & Loại poster</h2>
 
@@ -283,8 +534,8 @@ export default function PosterStudioPage() {
                     </div>
                 )}
 
-                {/* ===== STEP 2: Content ===== */}
-                {step === 2 && (
+                {/* ===== CREATE MODE: STEP 2: Content ===== */}
+                {mode === 'create' && step === 2 && (
                     <div className="p-6 space-y-5">
                         <h2 className="text-lg font-bold text-slate-800">Nội dung poster</h2>
                         <p className="text-sm text-slate-500">Điền thông tin chính — hệ thống sẽ tự sinh prompt thiết kế chuyên nghiệp</p>
@@ -370,8 +621,8 @@ export default function PosterStudioPage() {
                     </div>
                 )}
 
-                {/* ===== STEP 3: Design Options ===== */}
-                {step === 3 && (
+                {/* ===== CREATE MODE: STEP 3: Design Options ===== */}
+                {mode === 'create' && step === 3 && (
                     <div className="p-6 space-y-6">
                         <h2 className="text-lg font-bold text-slate-800">Tùy chọn thiết kế</h2>
 
@@ -545,7 +796,10 @@ export default function PosterStudioPage() {
                         </div>
 
                         <div className="text-xs text-slate-500 flex items-center gap-4">
-                            <span>📋 Copy prompt → Dán vào Google AI Studio → Đính kèm ảnh logo/sản phẩm → Generate</span>
+                            {mode === 'reference'
+                                ? <span>🖼️ Upload ảnh mẫu + Copy prompt → Dán vào AI Studio → Đính kèm logo/ảnh SP → Generate!</span>
+                                : <span>📋 Copy prompt → Dán vào Google AI Studio → Đính kèm ảnh logo/sản phẩm → Generate</span>
+                            }
                         </div>
 
                         {/* Refinement */}
@@ -576,7 +830,7 @@ export default function PosterStudioPage() {
 
                         <div className="flex justify-between pt-2">
                             <button onClick={() => { setStep(1); setGeneratedPrompt(''); }} className="flex items-center gap-2 px-5 py-2.5 text-slate-600 rounded-lg hover:bg-slate-100 transition text-sm">
-                                <Sparkles className="w-4 h-4" /> Tạo poster mới
+                                <Sparkles className="w-4 h-4" /> {mode === 'reference' ? 'Thêm mẫu khác' : 'Tạo poster mới'}
                             </button>
                         </div>
                     </div>

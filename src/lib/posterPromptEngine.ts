@@ -444,3 +444,96 @@ ${originalPrompt}
 
 Apply the requested changes while maintaining the overall design quality and brand consistency.`;
 }
+
+/**
+ * Generate a "design by reference" prompt — replicate a reference image's style
+ * with the user's own content. The reference image is uploaded separately in AI Studio.
+ */
+export interface ReferenceFormData {
+  brand: BrandProfile;
+  aspect_ratio: AspectRatio;
+  headline: string;
+  subheadline?: string;
+  product_name?: string;
+  selling_points?: string[];
+  cta?: string;
+  product_description?: string;
+  has_character: boolean;
+  character_description?: string;
+  reference_notes?: string;  // What the user likes about the reference
+  extra_instructions?: string;
+}
+
+export function generateReferencePrompt(data: ReferenceFormData): string {
+  const { brand, aspect_ratio, headline, subheadline, product_name, selling_points, cta, product_description, has_character, character_description, reference_notes, extra_instructions } = data;
+  
+  const primaryColor = hexToColorName(brand.primary_color);
+  const secondaryColor = hexToColorName(brand.secondary_color);
+  const pointsList = selling_points?.filter(p => p.trim()).map(p => `  - "${p}"`).join('\n') || '';
+  
+  const sections: string[] = [];
+  
+  // Reference instruction — this is key
+  sections.push(`=== DESIGN BY REFERENCE ===`);
+  sections.push(`Look at the ATTACHED REFERENCE IMAGE carefully. You must replicate its design approach:`);
+  sections.push(`- SAME overall layout structure and composition`);
+  sections.push(`- SAME text treatment style (3D effects, outlines, gradients, shadows, glow — whatever the reference uses)`);
+  sections.push(`- SAME approach to decorative elements (badges, ribbons, banners, frames)`);
+  sections.push(`- SAME level of visual quality and polish`);
+  sections.push(`- SAME type of product presentation style`);
+  sections.push(`- SIMILAR color mood and atmosphere (but adapted to the brand colors below)`);
+  sections.push('');
+  
+  if (reference_notes) {
+    sections.push(`WHAT I SPECIFICALLY LIKE ABOUT THE REFERENCE: ${reference_notes}`);
+    sections.push('');
+  }
+  
+  sections.push(`BUT REPLACE ALL CONTENT with the following:`);
+  sections.push('');
+  
+  // Brand
+  sections.push(`BRAND: "${brand.brand_name}" — ${brand.industry}`);
+  sections.push(`COLOR PALETTE: Primary ${primaryColor} (${brand.primary_color}), Secondary ${secondaryColor} (${brand.secondary_color})`);
+  if (brand.default_instructions) {
+    sections.push(`BRAND SPECIFICS: ${brand.default_instructions}`);
+  }
+  sections.push(`FORMAT: ${getAspectDescription(aspect_ratio)}`);
+  sections.push('');
+  
+  // Content
+  sections.push(`HEADLINE: "${headline}"`);
+  if (subheadline) sections.push(`SUBHEADLINE: "${subheadline}"`);
+  if (product_name) sections.push(`FEATURED PRODUCT: ${product_name}`);
+  if (pointsList) sections.push(`KEY SELLING POINTS:\n${pointsList}`);
+  if (cta) sections.push(`CALL TO ACTION: "${cta}"`);
+  sections.push('');
+  
+  // Visual elements
+  if (product_description) {
+    sections.push(`PRODUCT VISUAL: ${product_description}`);
+  }
+  if (has_character && character_description) {
+    sections.push(`CHARACTER: ${character_description}`);
+  }
+  sections.push('');
+  
+  // Branding
+  sections.push(`BRANDING: Place "${brand.brand_name}" logo in a visible position (match the reference's logo placement approach)`);
+  sections.push('');
+  
+  // Extra
+  if (extra_instructions) {
+    sections.push(`ADDITIONAL: ${extra_instructions}`);
+    sections.push('');
+  }
+  
+  // Quality
+  sections.push('CRITICAL:');
+  sections.push('- Replicate the SAME design quality level as the reference — professional, polished, agency-grade');
+  sections.push('- All Vietnamese text must be spelled correctly with proper diacritics');
+  sections.push('- Text effects (3D, glow, metallic, etc.) must match the reference style');
+  sections.push('- The final result should look like it belongs in the same campaign as the reference image');
+  
+  return sections.join('\n');
+}
