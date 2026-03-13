@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import {
     Copy, Check, RefreshCw, Image, Palette, Type, Sparkles,
-    ChevronRight, ChevronLeft, Wand2, Download, Upload, X
+    ChevronRight, ChevronLeft, Wand2, Download, Upload, X, Loader2, Camera, Zap
 } from 'lucide-react';
 import {
     PosterType, AspectRatio, DesignStyle, TextStyle, PosterFormData, BrandProfile,
@@ -49,6 +49,11 @@ export default function PosterStudioPage() {
     const [bgDesc, setBgDesc] = useState('');
     const [extraInstructions, setExtraInstructions] = useState('');
 
+    // Brand images
+    const [analyzing, setAnalyzing] = useState(false);
+    const logoFileInput = useRef<HTMLInputElement>(null);
+    const productFileInput = useRef<HTMLInputElement>(null);
+
     // Reference mode
     const [referenceNotes, setReferenceNotes] = useState('');
     const [referenceImage, setReferenceImage] = useState<string | null>(null);
@@ -81,6 +86,94 @@ export default function PosterStudioPage() {
         };
         setSelectedBrand(newBrand);
         setShowBrandEditor(true);
+    };
+
+    // ============ BRAND IMAGE UPLOAD & ANALYSIS ============
+    const handleLogoUpload = (file: File) => {
+        if (!file.type.startsWith('image/')) return;
+        // Resize to thumbnail for localStorage
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = document.createElement('img');
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const maxSize = 256;
+                const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+                const ctx = canvas.getContext('2d')!;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const thumbnail = canvas.toDataURL('image/png', 0.8);
+                setSelectedBrand(prev => ({ ...prev, logo_image: thumbnail }));
+            };
+            img.src = e.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleProductImageUpload = (file: File) => {
+        if (!file.type.startsWith('image/')) return;
+        const currentImages = selectedBrand.product_images || [];
+        if (currentImages.length >= 3) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = document.createElement('img');
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const maxSize = 256;
+                const scale = Math.min(maxSize / img.width, maxSize / img.height, 1);
+                canvas.width = img.width * scale;
+                canvas.height = img.height * scale;
+                const ctx = canvas.getContext('2d')!;
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                const thumbnail = canvas.toDataURL('image/jpeg', 0.7);
+                setSelectedBrand(prev => ({
+                    ...prev,
+                    product_images: [...(prev.product_images || []), thumbnail],
+                }));
+            };
+            img.src = e.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const handleRemoveProductImage = (index: number) => {
+        setSelectedBrand(prev => ({
+            ...prev,
+            product_images: (prev.product_images || []).filter((_, i) => i !== index),
+        }));
+    };
+
+    const analyzeBrand = async () => {
+        if (!selectedBrand.logo_image) return;
+        setAnalyzing(true);
+        try {
+            const res = await fetch('/api/marketing/analyze-brand', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    logo_image: selectedBrand.logo_image,
+                    product_image: selectedBrand.product_images?.[0] || undefined,
+                }),
+            });
+            if (!res.ok) throw new Error('API error');
+            const data = await res.json();
+            setSelectedBrand(prev => ({
+                ...prev,
+                primary_color: data.primary_color || prev.primary_color,
+                secondary_color: data.secondary_color || prev.secondary_color,
+                detected_colors: data.additional_colors || [],
+                industry: data.industry_guess || prev.industry,
+                style_keywords: data.style_keywords || prev.style_keywords,
+                font_suggestion: data.font_suggestion || undefined,
+                default_instructions: prev.default_instructions || data.brand_description || '',
+            }));
+        } catch (err) {
+            console.error('Brand analysis failed:', err);
+            alert('Phân tích thất bại. Kiểm tra lại kết nối hoặc ảnh logo.');
+        } finally {
+            setAnalyzing(false);
+        }
     };
 
     // ============ REFERENCE IMAGE HANDLING ============
@@ -528,8 +621,156 @@ export default function PosterStudioPage() {
 
                         {/* Brand Editor (inline) */}
                         {showBrandEditor && (
-                            <div className="bg-slate-50 rounded-xl p-5 space-y-4 border border-slate-200">
+                            <div className="bg-slate-50 rounded-xl p-5 space-y-5 border border-slate-200">
                                 <h3 className="font-bold text-slate-700">Thông tin thương hiệu</h3>
+
+                                {/* Logo & Product Image Upload */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Logo Upload */}
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                                            <Camera className="w-3.5 h-3.5" /> Logo thương hiệu
+                                        </label>
+                                        {!selectedBrand.logo_image ? (
+                                            <div
+                                                onClick={() => logoFileInput.current?.click()}
+                                                className="border-2 border-dashed border-blue-300 rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-blue-500 hover:bg-blue-50/50 transition-all group"
+                                            >
+                                                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center group-hover:bg-blue-200 transition">
+                                                    <Upload className="w-5 h-5 text-blue-500" />
+                                                </div>
+                                                <p className="text-xs font-medium text-blue-600">Upload logo</p>
+                                                <p className="text-xs text-blue-400">PNG, SVG, JPG</p>
+                                            </div>
+                                        ) : (
+                                            <div className="relative group">
+                                                <div className="border-2 border-blue-200 rounded-xl p-3 bg-white flex items-center justify-center min-h-[120px]">
+                                                    <img src={selectedBrand.logo_image} alt="Logo" className="max-h-[100px] object-contain" />
+                                                </div>
+                                                <button
+                                                    onClick={() => setSelectedBrand(prev => ({ ...prev, logo_image: undefined }))}
+                                                    className="absolute top-1 right-1 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-600 text-xs"
+                                                >
+                                                    <X className="w-3 h-3" />
+                                                </button>
+                                                <button
+                                                    onClick={() => logoFileInput.current?.click()}
+                                                    className="absolute bottom-1 right-1 px-2 py-1 bg-white/90 text-blue-600 rounded-lg text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity shadow border border-blue-200"
+                                                >
+                                                    Đổi
+                                                </button>
+                                            </div>
+                                        )}
+                                        <input ref={logoFileInput} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f); e.target.value = ''; }} />
+                                    </div>
+
+                                    {/* Product Image Upload */}
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-medium text-slate-500 flex items-center gap-1.5">
+                                            <Image className="w-3.5 h-3.5" /> Ảnh sản phẩm (tùy chọn, tối đa 3)
+                                        </label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            {(selectedBrand.product_images || []).map((img, i) => (
+                                                <div key={i} className="relative group">
+                                                    <div className="border border-slate-200 rounded-lg overflow-hidden bg-white aspect-square flex items-center justify-center">
+                                                        <img src={img} alt={`SP ${i + 1}`} className="w-full h-full object-cover" />
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleRemoveProductImage(i)}
+                                                        className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow text-xs"
+                                                    >
+                                                        <X className="w-3 h-3" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                            {(selectedBrand.product_images || []).length < 3 && (
+                                                <div
+                                                    onClick={() => productFileInput.current?.click()}
+                                                    className="border-2 border-dashed border-slate-300 rounded-lg aspect-square flex flex-col items-center justify-center gap-1 cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-all"
+                                                >
+                                                    <Upload className="w-4 h-4 text-slate-400" />
+                                                    <span className="text-xs text-slate-400">Thêm</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <input ref={productFileInput} type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) handleProductImageUpload(f); e.target.value = ''; }} />
+                                    </div>
+                                </div>
+
+                                {/* Auto-Analysis Button */}
+                                {selectedBrand.logo_image && (
+                                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-4">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <h4 className="text-sm font-bold text-purple-800 flex items-center gap-2">
+                                                    <Zap className="w-4 h-4" /> Phân tích tự động bằng AI
+                                                </h4>
+                                                <p className="text-xs text-purple-600 mt-0.5">
+                                                    Trích xuất mã màu, phong cách thiết kế, font chữ từ logo{selectedBrand.product_images?.length ? ' & sản phẩm' : ''}
+                                                </p>
+                                            </div>
+                                            <button
+                                                onClick={analyzeBrand}
+                                                disabled={analyzing}
+                                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg text-sm font-medium hover:from-purple-700 hover:to-blue-700 transition shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                                            >
+                                                {analyzing ? (
+                                                    <><Loader2 className="w-4 h-4 animate-spin" /> Đang phân tích...</>
+                                                ) : (
+                                                    <><Wand2 className="w-4 h-4" /> Phân tích</>  
+                                                )}
+                                            </button>
+                                        </div>
+
+                                        {/* Font Suggestion Badge */}
+                                        {selectedBrand.font_suggestion && (
+                                            <div className="mt-3 flex items-center gap-2">
+                                                <span className="text-xs font-medium text-purple-700">🔤 Font gợi ý:</span>
+                                                <span className="px-2.5 py-1 bg-white/80 border border-purple-200 rounded-full text-xs font-medium text-purple-800 shadow-sm">
+                                                    {selectedBrand.font_suggestion}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Detected Colors Palette */}
+                                        {selectedBrand.detected_colors && selectedBrand.detected_colors.length > 0 && (
+                                            <div className="mt-3">
+                                                <span className="text-xs font-medium text-purple-700 mb-1.5 block">🎨 Bảng màu phát hiện (nhấn để chọn):</span>
+                                                <div className="flex gap-2 flex-wrap">
+                                                    {[selectedBrand.primary_color, selectedBrand.secondary_color, ...selectedBrand.detected_colors].map((color, i) => (
+                                                        <button
+                                                            key={`${color}-${i}`}
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(color);
+                                                            }}
+                                                            className="group relative"
+                                                            title={`${color} — Click để copy`}
+                                                        >
+                                                            <div
+                                                                className={`w-8 h-8 rounded-lg border-2 shadow-sm transition-all hover:scale-110 ${
+                                                                    i === 0 ? 'border-blue-500 ring-2 ring-blue-200' :
+                                                                    i === 1 ? 'border-green-500 ring-2 ring-green-200' :
+                                                                    'border-white hover:border-slate-300'
+                                                                }`}
+                                                                style={{ backgroundColor: color }}
+                                                            />
+                                                            <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] font-mono text-slate-500 opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
+                                                                {color}
+                                                            </span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                <div className="flex gap-4 mt-3 text-[10px] text-slate-400">
+                                                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500" /> Chính</span>
+                                                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-500" /> Phụ</span>
+                                                    <span className="flex items-center gap-1"><span className="w-2 h-2 rounded border border-slate-300" /> Accent</span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Brand Info Fields */}
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="text-xs font-medium text-slate-500">Tên thương hiệu *</label>

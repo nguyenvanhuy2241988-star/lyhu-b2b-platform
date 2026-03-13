@@ -26,10 +26,14 @@ export interface BrandProfile {
   id: string;
   brand_name: string;
   logo_url?: string;
+  logo_image?: string;         // base64 thumbnail of logo
+  product_images?: string[];   // base64 thumbnails of products (max 3)
   primary_color: string;
   secondary_color: string;
+  detected_colors?: string[];  // additional colors detected from logo
   industry: string;
   style_keywords: string;
+  font_suggestion?: string;    // AI-suggested font style
   default_instructions: string;
 }
 
@@ -376,7 +380,13 @@ export function generatePosterPrompt(data: PosterFormData): string {
   
   // Color & Style
   sections.push(`COLOR PALETTE: Primary ${primaryColor} (${brand.primary_color}), Secondary ${secondaryColor} (${brand.secondary_color}), with white text for readability`);
+  if (brand.detected_colors?.length) {
+    sections.push(`ACCENT COLORS: ${brand.detected_colors.map(c => `${hexToColorName(c)} (${c})`).join(', ')} — use sparingly for decorative elements, badges, or highlights`);
+  }
   sections.push(`DESIGN STYLE: ${styleInfo.label} — ${styleInfo.keywords}`);
+  if (brand.font_suggestion) {
+    sections.push(`RECOMMENDED FONT STYLE: ${brand.font_suggestion} — apply this to the headline and key text elements`);
+  }
   sections.push('');
   
   // Branding
@@ -522,6 +532,12 @@ export function generateReferencePrompt(data: ReferenceFormData): string {
   // Brand
   sections.push(`BRAND: "${brand.brand_name}" — ${brand.industry}`);
   sections.push(`COLOR SCHEME: Use ${primaryColor} (${brand.primary_color}) as primary and ${secondaryColor} (${brand.secondary_color}) as secondary. Adapt background and decorative colors to match these brand colors instead of the reference's colors.`);
+  if (brand.detected_colors?.length) {
+    sections.push(`ACCENT COLORS: ${brand.detected_colors.map(c => `${hexToColorName(c)} (${c})`).join(', ')} — use for decorative accents`);
+  }
+  if (brand.font_suggestion) {
+    sections.push(`RECOMMENDED FONT STYLE: ${brand.font_suggestion}`);
+  }
   if (brand.default_instructions) {
     sections.push(`BRAND DETAILS: ${brand.default_instructions}`);
   }
