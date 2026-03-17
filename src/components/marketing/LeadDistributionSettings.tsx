@@ -106,6 +106,11 @@ export default function LeadDistributionSettings() {
     const [followups, setFollowups] = useState<FollowupConv[]>([]);
     const [totalLeads, setTotalLeads] = useState(0);
     const [totalFollowups, setTotalFollowups] = useState(0);
+    // Full date-range stats (not paginated)
+    const [distributionStats, setDistributionStats] = useState<Record<string, number>>({});
+    const [totalPending, setTotalPending] = useState(0);
+    const [totalAssigned, setTotalAssigned] = useState(0);
+    const [totalHistorical, setTotalHistorical] = useState(0);
     // Date filter
     const [dateFilterMode, setDateFilterMode] = useState<DateFilterMode>('day');
     const [customFrom, setCustomFrom] = useState('');
@@ -195,6 +200,28 @@ export default function LeadDistributionSettings() {
                 .range(leadsFrom, leadsTo);
             if (leadsData) setLeads(leadsData);
             if (leadsCount !== null) setTotalLeads(leadsCount);
+
+            // Separate lightweight query for FULL stats across entire date range (no pagination)
+            const { data: allStatsData } = await supabase
+                .from('marketing_leads')
+                .select('assigned_to, status')
+                .gte('created_at', dateStart)
+                .lte('created_at', dateEnd);
+
+            if (allStatsData) {
+                const statsMap: Record<string, number> = {};
+                let pending = 0, assigned = 0, historical = 0;
+                allStatsData.forEach((l: any) => {
+                    if (l.assigned_to) statsMap[l.assigned_to] = (statsMap[l.assigned_to] || 0) + 1;
+                    if (l.status === 'pending') pending++;
+                    else if (l.status === 'assigned') assigned++;
+                    else if (l.status === 'historical') historical++;
+                });
+                setDistributionStats(statsMap);
+                setTotalPending(pending);
+                setTotalAssigned(assigned);
+                setTotalHistorical(historical);
+            }
 
             // Load follow-up conversations
             const fuFrom = followupsPage * followupsPageSize;
@@ -336,9 +363,9 @@ export default function LeadDistributionSettings() {
         setConfig(prev => ({ ...prev, eligible_user_ids: [] }));
     };
 
-    // Stats — totalLeads is already server-filtered by date range
-    const pendingCount = leads.filter(l => l.status === 'pending').length;
-    const assignedCount = leads.filter(l => l.status === 'assigned').length;
+    // Stats — use full date-range counts (not paginated)
+    const pendingCount = totalPending;
+    const assignedCount = totalAssigned;
     const onlineEligible = users.filter(u => config.eligible_user_ids.includes(u.id) && u.is_online).length;
     const followupPending = followups.filter(f => (f.followup_count || 0) < 3).length;
     const followupDone = followups.filter(f => (f.followup_count || 0) >= 3).length;
@@ -517,41 +544,36 @@ export default function LeadDistributionSettings() {
                 )}
             </div>
 
-            {/* Stats per Telesales */}
+            {/* Stats per Telesales — uses full date-range data */}
             {(() => {
-                const assignedLeads = leads.filter(l => l.assigned_to);
-                const allAssigned = totalLeads > 0 ? leads : [];
-                // Count assigned per user from visible leads
-                const statsByUser: Record<string, { name: string; count: number }> = {};
+                // Build stats from full date-range distributionStats (not paginated)
+                const statsByUser: { name: string; count: number }[] = [];
                 users.forEach(u => {
                     if (config.eligible_user_ids.includes(u.id)) {
-                        statsByUser[u.id] = { name: u.full_name, count: 0 };
+                        statsByUser.push({ name: u.full_name, count: distributionStats[u.id] || 0 });
                     }
                 });
-                leads.forEach(l => {
-                    if (l.assigned_to && statsByUser[l.assigned_to]) {
-                        statsByUser[l.assigned_to].count++;
-                    } else if (l.assigned_to) {
-                        const user = users.find(u => u.id === l.assigned_to);
-                        statsByUser[l.assigned_to] = { name: user?.full_name || 'Unknown', count: 1 };
+                // Also include users who received leads but aren't in eligible list
+                Object.entries(distributionStats).forEach(([userId, count]) => {
+                    if (!statsByUser.find(s => s.name === (users.find(u => u.id === userId)?.full_name))) {
+                        const user = users.find(u => u.id === userId);
+                        if (user) statsByUser.push({ name: user.full_name, count });
                     }
                 });
-                const stats = Object.values(statsByUser);
-                const maxCount = Math.max(...stats.map(s => s.count), 1);
-                const totalAssigned = leads.filter(l => l.status === 'assigned').length;
+                const maxCount = Math.max(...statsByUser.map(s => s.count), 1);
 
-                if (stats.length === 0) return null;
+                if (statsByUser.length === 0) return null;
 
                 return (
                     <div className="bg-white rounded-xl border border-slate-200 p-5">
                         <h4 className="font-bold text-slate-800 mb-3 flex items-center gap-2 text-sm">
                             📊 Thống kê phân chia Data
                             <span className="text-[10px] font-normal text-slate-400 ml-auto">
-                                (trang hiện tại: {leads.length} lead)
+                                ({DATE_FILTER_LABELS[dateFilterMode]}: {totalLeads} lead)
                             </span>
                         </h4>
                         <div className="space-y-2">
-                            {stats.map(s => (
+                            {statsByUser.map(s => (
                                 <div key={s.name} className="flex items-center gap-3">
                                     <span className="text-xs text-slate-600 w-28 truncate font-medium">{s.name}</span>
                                     <div className="flex-1 bg-slate-100 rounded-full h-5 overflow-hidden">
@@ -568,8 +590,8 @@ export default function LeadDistributionSettings() {
                         </div>
                         <div className="mt-3 pt-3 border-t border-slate-100 flex gap-4 text-[10px] text-slate-400">
                             <span>🟢 Đã phân: <strong className="text-emerald-600">{totalAssigned}</strong></span>
-                            <span>🟡 Đang chờ: <strong className="text-amber-600">{leads.filter(l => l.status === 'pending').length}</strong></span>
-                            <span>📋 Lịch sử: <strong className="text-slate-600">{leads.filter(l => l.status === 'historical').length}</strong></span>
+                            <span>🟡 Đang chờ: <strong className="text-amber-600">{totalPending}</strong></span>
+                            <span>📋 Lịch sử: <strong className="text-slate-600">{totalHistorical}</strong></span>
                         </div>
                     </div>
                 );
