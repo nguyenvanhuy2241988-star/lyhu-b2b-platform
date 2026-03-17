@@ -52,7 +52,7 @@ export default function ReportsPage() {
             districtMap.get(o.district)!.outletCount++;
         });
 
-        const outletDistrict = new Map((outlets || []).map((o: any) => [o.id, o.district]));
+        const outletDistrict = new Map<string, string>((outlets || []).map((o: any) => [o.id, o.district]));
         (checkins || []).forEach((c: any) => {
             const d = outletDistrict.get(c.outlet_id);
             if (d && districtMap.has(d)) {
