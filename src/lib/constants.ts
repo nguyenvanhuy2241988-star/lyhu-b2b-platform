@@ -37,6 +37,7 @@ import {
     Zap,            // Automation
     Gamepad2,
     Sparkles,       // Poster Studio
+    MapPin,         // Sales GT
 } from "lucide-react";
 import { MODULES } from '@/modules/registry';
 
@@ -64,6 +65,7 @@ export const ROLES = {
     ACCOUNTANT: "accountant",
     SALE_ADMIN: "sale_admin",
     LIVESTREAM: "livestream",
+    SALES_GT: "sales_gt",
 } as const;
 
 export const NAV_ITEMS = {
@@ -255,5 +257,18 @@ export const NAV_ITEMS = {
         { label: "Sự kiện", href: "/events", icon: Calendar },
         { label: "Tài liệu", href: "/documents", icon: FileText },
         { label: "Việc cần làm", href: "/tasks", icon: ListTodo },
+    ],
+    [ROLES.SALES_GT]: [
+        { label: "Tổng quan GT", href: "/sales-gt", icon: LayoutDashboard },
+        { label: "Điểm bán", href: "/sales-gt/outlets", icon: MapPin },
+        { label: "Check-in", href: "/sales-gt/checkin", icon: MapPin },
+        { label: "Tạo đơn hàng", href: "/sales-gt/create-order", icon: ShoppingCart },
+        { label: "Tuyến bán hàng", href: "/sales-gt/routes", icon: List },
+        { label: "Báo cáo", href: "/sales-gt/reports", icon: TrendingUp },
+        { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
+        { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
+        { label: "Góc Giải Trí", href: "/entertainment", icon: Gamepad2 },
+        { label: "Sự kiện", href: "/events", icon: Calendar },
+        { label: "Tài liệu", href: "/documents", icon: Book },
     ],
 };

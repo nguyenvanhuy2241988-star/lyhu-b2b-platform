@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { ShieldCheck, Users, TrendingUp, UserPlus, Headset, Briefcase, Archive, Megaphone, Globe, FlaskConical, Truck, Calculator, ClipboardCheck, Video } from "lucide-react";
+import { ShieldCheck, Users, TrendingUp, UserPlus, Headset, Briefcase, Archive, Megaphone, Globe, FlaskConical, Truck, Calculator, ClipboardCheck, Video, MapPin } from "lucide-react";
 
 const roles = [
     // 1. Nhóm Quản trị (Management)
@@ -66,6 +66,14 @@ const roles = [
         icon: TrendingUp,
         color: "text-green-600",
         bg: "bg-green-50",
+    },
+    {
+        title: "Sales GT",
+        description: "Bán hàng thị trường GT",
+        href: "/login?role=sales_gt",
+        icon: MapPin,
+        color: "text-teal-600",
+        bg: "bg-teal-50",
     },
     {
         title: "Telesales",
