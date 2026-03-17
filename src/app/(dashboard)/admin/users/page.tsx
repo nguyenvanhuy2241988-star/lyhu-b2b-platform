@@ -30,6 +30,7 @@ const ROLE_LABELS: Record<string, string> = {
     [ROLES.ACCOUNTANT]: "Kế toán",
     [ROLES.SALE_ADMIN]: "Sale Admin",
     [ROLES.LIVESTREAM]: "Livestream",
+    [ROLES.SALES_GT]: "Sales GT (Thị trường)",
 };
 
 const STATUS_LABELS: Record<string, string> = {
