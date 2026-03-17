@@ -69,6 +69,12 @@ const ROLE_PERMS: Record<Role, PermissionKey[]> = {
     ],
     livestream: [
         'orders.read', 'orders.create'
+    ],
+    sales_gt: [
+        'leads.read',
+        'orders.read', 'orders.create',
+        'chat.use',
+        'docs.read'
     ]
 };
 
