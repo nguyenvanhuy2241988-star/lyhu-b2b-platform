@@ -71,7 +71,7 @@ export default function SalesGTDashboard() {
                 .eq('status', 'active')
                 .contains('day_of_week', [dayOfWeek]);
 
-            const routeOutletIds = routes?.flatMap(r => r.outlet_ids || []) || [];
+            const routeOutletIds = routes?.flatMap((r: any) => r.outlet_ids || []) || [];
 
             if (routeOutletIds.length > 0) {
                 const { data: outlets } = await supabase
@@ -87,10 +87,10 @@ export default function SalesGTDashboard() {
                     .eq('user_id', user.id)
                     .gte('check_in_at', todayStart.toISOString());
 
-                const checkedInIds = new Set(todayCheckins?.map(c => c.outlet_id) || []);
+                const checkedInIds = new Set(todayCheckins?.map((c: any) => c.outlet_id) || []);
 
                 setTodayOutlets(
-                    (outlets || []).map(o => ({
+                    (outlets || []).map((o: any) => ({
                         ...o,
                         checked_in: checkedInIds.has(o.id),
                     }))
