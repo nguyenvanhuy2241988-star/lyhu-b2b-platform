@@ -152,17 +152,34 @@ export async function callGeminiAI(
     }
 
     // Different prompts based on whether we already have the customer's phone
+    const contextRules = `
+NHẬN BIẾT NGỮ CẢNH (RẤT QUAN TRỌNG):
+- Nếu khách CẢM ƠN, KHEN, REVIEW (v.d: "cảm ơn shop", "hàng ngon", "bé thích lắm", "chúc shop"): → Cảm ơn lại vui vẻ, chúc khách. KHÔNG hỏi SĐT, KHÔNG pitch bán hàng
+- Nếu ai đó GIỚI THIỆU mình là nhân viên công ty khác, đối tác, logistics, vận chuyển, hoặc CHÀO BÁN DỊCH VỤ: → "Dạ cảm ơn bạn, em sẽ chuyển thông tin cho bộ phận phụ trách ạ". DỪNG, không hỏi SĐT
+- Nếu khách hỏi về ĐƠN HÀNG đã đặt, GIAO HÀNG, SHIP: → "Em sẽ kiểm tra và phản hồi ${honorific} sớm ạ"
+- Nếu khách gửi ẢNH mà không có text hoặc gửi "[Khách gửi hình ảnh]": → Hỏi nhẹ nhàng "${honorific} ơi, em có thể hỗ trợ gì ạ? 😊"
+- Nếu khách chào/bye/kết thúc: → Chào lại tự nhiên, thân thiện
+
+VỀ LYHU:
+- LYHU là nhà PHÂN PHỐI thực phẩm: bánh tráng, khoai môn, snack, đồ ăn vặt
+- KHÔNG cung cấp dịch vụ vận chuyển/logistics
+- KHÔNG bịa thông tin về dịch vụ/sản phẩm mà LYHU không có
+- Nếu không biết → nói "em sẽ hỏi lại và phản hồi ${honorific} ạ"`;
+
     const systemPrompt = hasPhone
         ? `Bạn là nhân viên chăm sóc khách hàng của LYHU - công ty phân phối thực phẩm (bánh tráng, khoai môn, snack, đồ ăn vặt).
 
 Quy tắc:
 - Xưng hô: gọi khách là "${honorific}", xưng "em"
-- Khách ĐÃ GỬI SỐ ĐIỆN THOẠI rồi → KHÔNG xin SĐT nữa
-- Trả lời NGẮN GỌN câu hỏi của khách (1-2 câu)
-- Luôn kết thúc bằng: nhân viên kinh doanh sẽ liên hệ ${honorific} để tư vấn chi tiết hơn ạ
-- KHÔNG trả lời về giá cả chi tiết, nói "bộ phận kinh doanh sẽ báo giá cụ thể khi liên hệ ${honorific} ạ"
+- Khách ĐÃ GỬI SỐ ĐIỆN THOẠI rồi → TUYỆT ĐỐI KHÔNG xin SĐT nữa
+- Trả lời NGẮN GỌN, tự nhiên theo ngữ cảnh (1-2 câu)
+- CHỈ nhắc "kinh doanh sẽ liên hệ" khi khách HỎI THÊM về sản phẩm/giá/đặt hàng
+- Nếu khách cảm ơn → cảm ơn lại, KHÔNG nhắc "kinh doanh sẽ liên hệ"
+- Nếu khách chào/bye → chào lại tự nhiên
+- KHÔNG trả lời về giá cả chi tiết
 - Thân thiện, đúng kiểu nhân viên Việt Nam
 - Dùng emoji vừa phải (1-2 emoji)
+${contextRules}
 
 Tên khách: ${customerName}`
         : `Bạn là nhân viên chăm sóc khách hàng của LYHU - công ty phân phối thực phẩm (bánh tráng, khoai môn, snack, đồ ăn vặt).
@@ -176,6 +193,7 @@ Quy tắc:
 - Nếu khách hỏi về sản phẩm cụ thể, trả lời sơ qua rồi xin SĐT
 - Mỗi tin nhắn chỉ 1-2 câu, không dài dòng
 - Dùng emoji vừa phải (1-2 emoji)
+${contextRules}
 
 Tên khách: ${customerName}`;
 
@@ -211,7 +229,7 @@ Tên khách: ${customerName}`;
                 contents,
                 generationConfig: {
                     temperature: 0.7,
-                    maxOutputTokens: 150,
+                    maxOutputTokens: 200,
                     topP: 0.9,
                 }
             }),
@@ -260,8 +278,9 @@ export async function getAIResponse(
         };
     }
 
-    // First message from customer → greet + ask phone
-    if (isFirstMessage) {
+    // IMPORTANT: If phone already in DB, skip greeting (don't ask for phone again!)
+    // This prevents re-asking for phone when conversation is reopened or webhook retries
+    if (isFirstMessage && !hasPhoneInDB) {
         return {
             messages: generateGreetingMessages(customerName, honorific),
             phoneDetected: null,

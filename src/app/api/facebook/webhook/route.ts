@@ -567,8 +567,8 @@ export async function POST(request: Request) {
                                         // Check if customer already has phone in conversation
                                         const hasPhone = !!(conv as any).customer_phone;
 
-                                        // For image-only messages, create a descriptive text for AI
-                                        const aiText = text || '[Khách gửi hình ảnh sản phẩm/quảng cáo]';
+                                        // For image-only messages, use neutral placeholder (don't assume product/ad)
+                                        const aiText = text || '[Khách gửi hình ảnh]';
 
                                         const aiResult = await getAIResponse(
                                             aiText,

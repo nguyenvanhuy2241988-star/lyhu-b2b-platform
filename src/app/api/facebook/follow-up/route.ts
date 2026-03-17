@@ -118,6 +118,21 @@ export async function GET(request: Request) {
                 continue; // Too early for this tier
             }
 
+            // Double-check: re-query phone in case it was saved between initial query and now
+            const { data: freshConv } = await supabase
+                .from('social_conversations')
+                .select('customer_phone')
+                .eq('id', conv.id)
+                .single();
+            if (freshConv?.customer_phone) {
+                // Phone was saved since our initial query — skip follow-up
+                await supabase.from('social_conversations').update({
+                    needs_followup: false
+                }).eq('id', conv.id);
+                console.log(`[Follow-up] Skipped ${conv.customer_name}: phone found on re-check (${freshConv.customer_phone})`);
+                continue;
+            }
+
             const honorific = detectGender(conv.customer_name || '');
             const customerName = conv.customer_name || 'bạn';
 
