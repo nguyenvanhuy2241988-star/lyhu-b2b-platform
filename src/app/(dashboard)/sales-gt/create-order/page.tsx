@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Product } from "@/mocks/data";
 import { loadProducts } from "@/lib/supabase/products";
-import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, Store, Gift, Search, Filter, ArrowUpDown, Eye, EyeOff, Package, Loader2 } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2, CheckCircle, Store, Gift, Search, Filter, ArrowUpDown, Eye, EyeOff, Package, Loader2, FileText, Building } from "lucide-react";
 import { addOrderSupabase } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { createClient } from "@/lib/supabaseClient";
@@ -51,6 +51,9 @@ export default function GTCreateOrderPage() {
     const [orderNote, setOrderNote] = useState("");
     const [currentStep, setCurrentStep] = useState(1);
     const [submitting, setSubmitting] = useState(false);
+    const [vatRate, setVatRate] = useState<number>(0);
+    const [orderDiscountPercent, setOrderDiscountPercent] = useState<number>(0);
+    const [paymentMethod, setPaymentMethod] = useState<string>("COD");
 
     // Product filters
     const [productSearch, setProductSearch] = useState("");
@@ -166,6 +169,39 @@ export default function GTCreateOrderPage() {
 
     const handleRemoveItem = (index: number) => setOrderItems(prev => prev.filter((_, i) => i !== index));
 
+    const handleSetQuantity = (index: number, value: number) => {
+        setOrderItems(prev => {
+            const newItems = [...prev];
+            const item = newItems[index];
+            const newQty = Math.max(1, value);
+            if (newQty > (inventory[item.product.id] ?? 0)) {
+                alert(`Kho chỉ còn ${inventory[item.product.id] ?? 0} sản phẩm!`);
+                return prev;
+            }
+            newItems[index] = { ...item, quantity: newQty };
+            return newItems;
+        });
+    };
+
+    const handleUpdateDiscount = (index: number, value: number, type: 'amount' | 'percent') => {
+        setOrderItems(prev => {
+            const newItems = [...prev];
+            const item = newItems[index];
+            const subtotal = item.price * item.quantity;
+            let newDiscount = type === 'amount' ? value : subtotal * (value / 100);
+            newItems[index] = { ...item, discount: newDiscount, discountType: type, discountValue: value };
+            return newItems;
+        });
+    };
+
+    const handleUpdatePrice = (index: number, price: number) => {
+        setOrderItems(prev => {
+            const newItems = [...prev];
+            newItems[index] = { ...newItems[index], price };
+            return newItems;
+        });
+    };
+
     const handleToggleGift = (index: number) => {
         setOrderItems(prev => {
             const newItems = [...prev];
@@ -180,7 +216,15 @@ export default function GTCreateOrderPage() {
     };
 
     const calcItemSubtotal = (item: OrderItem) => item.isGift ? 0 : Math.max(0, (item.price * item.quantity) - item.discount);
-    const totalAmount = orderItems.reduce((sum, item) => sum + calcItemSubtotal(item), 0);
+    const totalListPrice = orderItems.reduce((sum, item) => item.isGift ? sum : sum + (item.price * item.quantity), 0);
+    const totalItemDiscount = orderItems.reduce((sum, item) => item.isGift ? sum : sum + item.discount, 0);
+    const itemsSubtotal = orderItems.reduce((sum, item) => sum + calcItemSubtotal(item), 0);
+    const orderDiscountAmount = itemsSubtotal * (orderDiscountPercent / 100);
+    const afterAllDiscounts = itemsSubtotal - orderDiscountAmount;
+    const totalVAT = afterAllDiscounts * (vatRate / 100);
+    const finalTotal = afterAllDiscounts + totalVAT;
+    const totalAllDiscounts = totalItemDiscount + orderDiscountAmount;
+    const discountPercent = totalListPrice > 0 ? (totalAllDiscounts / totalListPrice) * 100 : 0;
 
     const handleSubmit = async () => {
         if (!selectedOutlet || orderItems.length === 0) return;
@@ -205,13 +249,13 @@ export default function GTCreateOrderPage() {
                 discountType: item.discountType,
                 isGift: item.isGift
             })),
-            totalAmount,
+            totalAmount: finalTotal,
             status: "pending",
             notes: orderNote || `Đơn GT - ${selectedOutlet.name}`,
-            vat: 0,
-            vat_rate: 0,
-            order_discount_percent: 0,
-            paymentMethod: "COD"
+            vat: totalVAT,
+            vat_rate: vatRate,
+            order_discount_percent: orderDiscountPercent,
+            paymentMethod: paymentMethod
         }, session?.access_token);
 
         if (res?.success) {
@@ -233,6 +277,9 @@ export default function GTCreateOrderPage() {
         setSelectedOutlet(null);
         setOrderItems([]);
         setOrderNote("");
+        setVatRate(0);
+        setOrderDiscountPercent(0);
+        setPaymentMethod("COD");
         setCurrentStep(1);
     };
 
@@ -245,7 +292,7 @@ export default function GTCreateOrderPage() {
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                 <h2 className="text-xl font-bold text-slate-900">Đơn hàng đã được tạo!</h2>
                 <p className="text-sm text-slate-500 mt-2">
-                    {selectedOutlet?.name} • {orderItems.length} sản phẩm • {formatPrice(totalAmount)}
+                    {selectedOutlet?.name} • {orderItems.length} sản phẩm • {formatPrice(finalTotal)}
                 </p>
                 <div className="flex gap-3 justify-center mt-6">
                     <button onClick={handleReset} className="px-4 py-2 text-sm bg-teal-600 text-white rounded-lg hover:bg-teal-700">
@@ -499,75 +546,188 @@ export default function GTCreateOrderPage() {
                                         </div>
                                     ) : (
                                         orderItems.map((item, idx) => (
-                                            <div key={idx} className={`p-3 rounded-lg border ${item.isGift ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-100'}`}>
-                                                <div className="flex items-start justify-between mb-2">
+                                            <div key={idx} className={`p-3 transition-colors ${item.isGift ? 'bg-emerald-50/50' : ''}`}>
+                                                {/* Item header: name + subtotal + delete */}
+                                                <div className="flex items-start justify-between gap-2 mb-2">
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-1.5">
-                                                            {item.isGift && <Gift className="w-3.5 h-3.5 text-amber-600" />}
-                                                            <p className="text-xs font-medium text-slate-800 truncate">{item.product.name}</p>
+                                                            {item.isGift && <span className="px-1 py-0.5 bg-emerald-100 text-emerald-700 text-[9px] font-bold uppercase rounded">Tặng</span>}
+                                                            <h4 className="font-medium text-slate-900 text-xs truncate">{item.product.name}</h4>
                                                         </div>
-                                                        <p className="text-[10px] text-slate-400 mt-0.5">{formatPrice(item.price)} / {item.product.unit || "cái"}</p>
                                                     </div>
-                                                    <button onClick={() => item.isGift ? handleToggleGift(idx) : handleRemoveItem(idx)}
-                                                        className="p-1 hover:bg-red-100 rounded text-slate-400 hover:text-red-500"
-                                                    ><Trash2 className="w-3.5 h-3.5" /></button>
+                                                    <div className="flex items-center gap-1.5 shrink-0">
+                                                        <span className={`text-sm font-semibold ${item.isGift ? 'text-emerald-600' : 'text-slate-900'}`}>
+                                                            {formatPrice(calcItemSubtotal(item))}
+                                                        </span>
+                                                        <button onClick={() => handleRemoveItem(idx)}
+                                                            className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                        ><Trash2 className="w-3.5 h-3.5" /></button>
+                                                    </div>
                                                 </div>
 
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-1">
-                                                        <button onClick={() => handleUpdateQuantity(idx, -1)}
-                                                            className="w-6 h-6 rounded bg-white border border-slate-200 flex items-center justify-center hover:bg-slate-100"
+                                                {/* Controls row: qty, price, gift, discount */}
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    {/* Quantity */}
+                                                    <div className="flex items-center bg-slate-100 rounded-md">
+                                                        <button onClick={() => handleUpdateQuantity(idx, -1)} disabled={item.quantity <= 1}
+                                                            className="p-1 hover:bg-white rounded-l-md transition-colors disabled:opacity-40"
                                                         ><Minus className="w-3 h-3" /></button>
-                                                        <span className="w-8 text-center text-xs font-medium">{item.quantity}</span>
+                                                        <input type="number" className="w-16 text-center text-xs font-semibold bg-white border-x border-slate-200 py-1 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            value={item.quantity} onChange={(e) => handleSetQuantity(idx, parseInt(e.target.value) || 1)} min={1}
+                                                        />
                                                         <button onClick={() => handleUpdateQuantity(idx, 1)}
-                                                            className="w-6 h-6 rounded bg-white border border-slate-200 flex items-center justify-center hover:bg-slate-100"
+                                                            className="p-1 hover:bg-white rounded-r-md transition-colors"
                                                         ><Plus className="w-3 h-3" /></button>
                                                     </div>
-                                                    <div className="flex items-center gap-2">
-                                                        {!item.isGift && (
-                                                            <button onClick={() => handleToggleGift(idx)}
-                                                                className="text-[10px] text-amber-600 hover:text-amber-700 font-medium"
-                                                            >+ Tặng</button>
-                                                        )}
-                                                        <span className="text-xs font-semibold text-slate-900">
-                                                            {item.isGift ? "Tặng" : formatPrice(calcItemSubtotal(item))}
-                                                        </span>
-                                                    </div>
+
+                                                    {/* Price edit */}
+                                                    {!item.isGift && (
+                                                        <div className="relative">
+                                                            <input type="number"
+                                                                className="w-20 pl-1.5 pr-4 py-1 text-xs font-medium text-slate-900 border border-slate-200 rounded-md focus:border-teal-500 focus:ring-1 focus:ring-teal-500 text-right"
+                                                                value={item.price} onChange={(e) => handleUpdatePrice(idx, Number(e.target.value))}
+                                                            />
+                                                            <span className="absolute right-1 top-1/2 -translate-y-1/2 text-[9px] text-slate-400">đ</span>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Gift toggle */}
+                                                    <label className="flex items-center gap-1 cursor-pointer text-[11px] font-medium text-slate-500 select-none ml-auto">
+                                                        <input type="checkbox" checked={item.isGift} onChange={() => handleToggleGift(idx)}
+                                                            className="w-3.5 h-3.5 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                                                        />
+                                                        <Gift className="w-3 h-3" />
+                                                    </label>
+
+                                                    {/* Discount */}
+                                                    {!item.isGift && (
+                                                        <div className="flex items-center border border-slate-200 rounded-md overflow-hidden">
+                                                            <input type="number" placeholder="CK"
+                                                                className="w-14 pl-1.5 pr-0.5 py-1 text-[11px] outline-none text-right"
+                                                                value={item.discountValue || ""}
+                                                                onChange={(e) => handleUpdateDiscount(idx, Number(e.target.value), item.discountType)}
+                                                                min={0}
+                                                            />
+                                                            <button
+                                                                onClick={() => handleUpdateDiscount(idx, item.discountValue, item.discountType === 'amount' ? 'percent' : 'amount')}
+                                                                className="px-1 py-1 bg-slate-50 border-l border-slate-200 text-[9px] text-slate-600 font-bold hover:bg-teal-50 hover:text-teal-600 transition-colors"
+                                                            >{item.discountType === 'amount' ? 'đ' : '%'}</button>
+                                                        </div>
+                                                    )}
                                                 </div>
+
+                                                {/* Discount info */}
+                                                {item.discount > 0 && !item.isGift && (
+                                                    <p className="text-[10px] text-red-500 mt-1 text-right">CK: -{formatPrice(item.discount)}</p>
+                                                )}
                                             </div>
                                         ))
                                     )}
                                 </div>
 
-                                {/* Notes + Submit */}
+                                {/* Cart Footer: Note, Payment, Summary, Actions */}
                                 {orderItems.length > 0 && (
-                                    <div className="p-4 border-t border-slate-100 space-y-3">
-                                        <textarea
-                                            value={orderNote}
-                                            onChange={e => setOrderNote(e.target.value)}
-                                            placeholder="Ghi chú đơn hàng..."
-                                            className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs resize-none focus:ring-1 focus:ring-teal-500"
-                                            rows={2}
-                                        />
+                                    <div className="border-t border-slate-200 p-4 space-y-3">
+                                        {/* Note */}
+                                        <div>
+                                            <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1">
+                                                <FileText className="w-3.5 h-3.5" /> Ghi chú
+                                            </label>
+                                            <textarea
+                                                className="w-full px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 min-h-[40px] resize-none"
+                                                placeholder="Ghi chú thêm..."
+                                                value={orderNote}
+                                                onChange={(e) => setOrderNote(e.target.value)}
+                                            />
+                                        </div>
 
-                                        <div className="bg-slate-50 p-3 rounded-lg">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm font-medium text-slate-600">Tổng cộng:</span>
-                                                <span className="text-lg font-bold text-teal-700">{formatPrice(totalAmount)}</span>
+                                        {/* Payment Method */}
+                                        <div>
+                                            <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 mb-1">
+                                                <Building className="w-3.5 h-3.5" /> Thanh toán
+                                            </label>
+                                            <div className="grid grid-cols-3 gap-1.5">
+                                                {[
+                                                    { id: 'COD', label: 'COD' },
+                                                    { id: 'BANKING', label: 'CK' },
+                                                    { id: 'DEBT', label: 'Công nợ' }
+                                                ].map((method) => (
+                                                    <button key={method.id} onClick={() => setPaymentMethod(method.id)}
+                                                        className={`py-1.5 px-2 text-xs rounded-md border text-center transition-colors ${paymentMethod === method.id
+                                                            ? 'bg-teal-50 border-teal-500 text-teal-700 font-medium'
+                                                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}
+                                                    >{method.label}</button>
+                                                ))}
                                             </div>
                                         </div>
 
-                                        <button
-                                            onClick={handleSubmit}
-                                            disabled={submitting}
-                                            className="w-full bg-teal-600 text-white py-3 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 font-medium text-sm flex items-center justify-center gap-2"
-                                        >
-                                            {submitting ? (
-                                                <><Loader2 className="w-4 h-4 animate-spin" /> Đang tạo đơn...</>
-                                            ) : (
-                                                <><ShoppingCart className="w-4 h-4" /> Tạo đơn hàng</>
+                                        {/* Summary */}
+                                        <div className="bg-slate-50 p-3 rounded-lg space-y-1.5 text-xs">
+                                            <div className="flex items-center justify-between text-slate-600">
+                                                <span>Tiền hàng:</span>
+                                                <span>{formatPrice(totalListPrice)}</span>
+                                            </div>
+                                            {totalItemDiscount > 0 && (
+                                                <div className="flex items-center justify-between text-slate-600">
+                                                    <span>CK dòng:</span>
+                                                    <span className="text-red-600">-{formatPrice(totalItemDiscount)}</span>
+                                                </div>
                                             )}
-                                        </button>
+                                            <div className="flex items-center justify-between text-slate-600">
+                                                <div className="flex items-center gap-1">
+                                                    <span>CK đơn:</span>
+                                                    <input type="number" className="w-10 px-1 py-0.5 text-center border border-slate-300 rounded focus:border-teal-500 text-[11px]"
+                                                        placeholder="0" min={0} max={100} value={orderDiscountPercent || ""}
+                                                        onChange={(e) => setOrderDiscountPercent(Math.min(100, Math.max(0, Number(e.target.value))))}
+                                                    />
+                                                    <span className="text-slate-400">%</span>
+                                                </div>
+                                                <span className="text-red-600">-{formatPrice(orderDiscountAmount)}</span>
+                                            </div>
+                                            {totalAllDiscounts > 0 && (
+                                                <div className="flex items-center justify-between text-slate-500">
+                                                    <span>Tổng CK:</span>
+                                                    <div>
+                                                        <span className="text-red-600 mr-1">-{formatPrice(totalAllDiscounts)}</span>
+                                                        <span className="bg-red-100 text-red-700 px-1 py-0.5 rounded text-[10px]">{discountPercent.toFixed(1)}%</span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <div className="border-t border-slate-200 my-1"></div>
+                                            <div className="flex items-center justify-between text-slate-600">
+                                                <div className="flex items-center gap-1">
+                                                    <span>VAT:</span>
+                                                    <input type="number" className="w-9 px-1 py-0.5 text-center border border-slate-300 rounded focus:border-teal-500 text-[11px]"
+                                                        placeholder="0" min={0} max={100} value={vatRate || ""}
+                                                        onChange={(e) => setVatRate(Number(e.target.value))}
+                                                    />
+                                                    <span className="text-slate-400">%</span>
+                                                </div>
+                                                <span>+{formatPrice(totalVAT)}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Total */}
+                                        <div className="flex items-center justify-between pt-1">
+                                            <span className="text-sm font-bold text-slate-900">Tổng:</span>
+                                            <span className="text-xl font-bold text-teal-600">{formatPrice(finalTotal)}</span>
+                                        </div>
+
+                                        {/* Actions */}
+                                        <div className="flex gap-2 pt-1">
+                                            <button onClick={handleReset}
+                                                className="flex-1 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-semibold text-sm transition-colors"
+                                            >Hủy</button>
+                                            <button onClick={handleSubmit} disabled={submitting}
+                                                className="flex-[2] px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-semibold text-sm transition-colors flex items-center justify-center gap-2"
+                                            >
+                                                {submitting ? (
+                                                    <><Loader2 className="w-4 h-4 animate-spin" /> Đang tạo đơn...</>
+                                                ) : (
+                                                    <><ShoppingCart className="w-4 h-4" /> Tạo đơn hàng</>
+                                                )}
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
                             </div>
