@@ -94,7 +94,7 @@ export const fetchWards = async (provinceCode: string): Promise<LocationOption[]
     if (cached) return cached;
 
     try {
-        const res = await fetch(`https://provinces.open-api.vn/api/v2/p/${provinceCode}?depth=1`);
+        const res = await fetch(`https://provinces.open-api.vn/api/v2/p/${provinceCode}?depth=2`);
         if (!res.ok) return [];
         const data = await res.json();
         const mapped = (data.wards || []).map((w: any) => ({
