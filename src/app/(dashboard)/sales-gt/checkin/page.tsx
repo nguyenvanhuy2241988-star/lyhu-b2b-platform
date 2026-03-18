@@ -67,6 +67,7 @@ export default function CheckinPage() {
     const [gpsError, setGpsError] = useState("");
     const [gpsLoading, setGpsLoading] = useState(false);
     const [distance, setDistance] = useState<number | null>(null);
+    const [gpsAddress, setGpsAddress] = useState("");
     const [marketNotes, setMarketNotes] = useState("");
     const [inventoryNotes, setInventoryNotes] = useState("");
     const [visitResult, setVisitResult] = useState("visited");
@@ -125,6 +126,27 @@ export default function CheckinPage() {
 
     useEffect(() => { loadData(); }, [loadData]);
 
+    async function reverseGeocode(lat: number, lng: number): Promise<string> {
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=vi&zoom=16`);
+            const data = await res.json();
+            if (data?.address) {
+                const a = data.address;
+                // Build readable address: road/neighbourhood, suburb/district, city
+                const parts = [
+                    a.road || a.neighbourhood || a.hamlet || '',
+                    a.suburb || a.quarter || a.village || '',
+                    a.city_district || a.county || a.town || '',
+                    a.city || a.state || '',
+                ].filter(Boolean);
+                return parts.join(', ') || data.display_name || '';
+            }
+            return '';
+        } catch {
+            return '';
+        }
+    }
+
     async function handleGetGPS() {
         setGpsLoading(true);
         setGpsError("");
@@ -144,6 +166,11 @@ export default function CheckinPage() {
                 const dist = getDistance(coords.lat, coords.lng, selectedOutlet.lat, selectedOutlet.lng);
                 setDistance(Math.round(dist));
             }
+
+            // Reverse geocode to get readable address
+            const addr = await reverseGeocode(coords.lat, coords.lng);
+            setGpsAddress(addr);
+
             setCheckinStep("details");
         } catch (err: any) {
             setGpsError(
@@ -197,10 +224,15 @@ export default function CheckinPage() {
                 ctx.fillText(timeStr, pad, textY);
                 textY += lineH;
 
-                // Line 2: GPS + Distance
+                // Line 2: Address + Distance (or GPS fallback)
                 if (gpsPosition) {
-                    const gpsStr = `📍 ${gpsPosition.lat.toFixed(6)}, ${gpsPosition.lng.toFixed(6)}${distance !== null ? `  •  ${distance}m` : ''}`;
-                    ctx.fillText(gpsStr, pad, textY);
+                    const locationStr = gpsAddress
+                        ? `📍 ${gpsAddress}${distance !== null ? `  •  ${distance}m` : ''}`
+                        : `📍 ${gpsPosition.lat.toFixed(6)}, ${gpsPosition.lng.toFixed(6)}${distance !== null ? `  •  ${distance}m` : ''}`;
+                    // Truncate if too long for canvas
+                    const maxChars = Math.floor((canvas.width - pad * 2) / (fontSize * 0.55));
+                    const truncated = locationStr.length > maxChars ? locationStr.slice(0, maxChars - 1) + '…' : locationStr;
+                    ctx.fillText(truncated, pad, textY);
                     textY += lineH;
                 }
 
@@ -292,6 +324,7 @@ export default function CheckinPage() {
         setSelectedOutlet(null);
         setGpsPosition(null);
         setDistance(null);
+        setGpsAddress("");
         setMarketNotes("");
         setInventoryNotes("");
         setVisitResult("visited");

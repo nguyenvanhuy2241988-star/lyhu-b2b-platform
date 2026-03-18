@@ -527,7 +527,21 @@ export default function AdminGTReportsPage() {
                                                                             </span>
                                                                         )}
                                                                     </div>
-                                                                    <p className="text-[11px] text-slate-400 mt-0.5">{c.outlet_address} • {c.outlet_district}</p>
+                                                                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                                                        <p className="text-[11px] text-slate-400">{c.outlet_address} • {c.outlet_district}</p>
+                                                                        {c.check_in_lat && c.check_in_lng && (
+                                                                            <a
+                                                                                href={`https://www.google.com/maps?q=${c.check_in_lat},${c.check_in_lng}`}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                onClick={e => e.stopPropagation()}
+                                                                                className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:text-blue-700 font-medium hover:underline"
+                                                                            >
+                                                                                <MapPin className="w-3 h-3" />
+                                                                                Xem bản đồ
+                                                                            </a>
+                                                                        )}
+                                                                    </div>
 
                                                                     {/* Notes */}
                                                                     {(c.inventory_notes || c.market_notes) && (
