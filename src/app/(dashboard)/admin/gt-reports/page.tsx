@@ -204,7 +204,7 @@ export default function AdminGTReportsPage() {
                 .order('check_in_at', { ascending: false });
 
             // Get outlet details
-            const outletIds = [...new Set((checkins || []).map((c: any) => c.outlet_id))];
+            const outletIds = Array.from(new Set((checkins || []).map((c: any) => c.outlet_id)));
             let outletMap = new Map<string, { name: string; address: string; district: string }>();
             if (outletIds.length > 0) {
                 const { data: outlets } = await supabase
