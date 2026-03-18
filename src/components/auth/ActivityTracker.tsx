@@ -9,23 +9,29 @@ export const ActivityTracker = () => {
     const { user } = useAuth();
     const pathname = usePathname();
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const ipRef = useRef<string | null>(null);
+
+    // Fetch IP once on mount
+    useEffect(() => {
+        fetch('/api/ip')
+            .then(res => res.json())
+            .then(data => { ipRef.current = data.ip || null; })
+            .catch(() => { ipRef.current = null; });
+    }, []);
 
     useEffect(() => {
         if (!user) return;
 
         const sendHeartbeat = async () => {
-            // Optional: Check if document is hidden to stop tracking when tab is inactive
-            // if (document.hidden) return; 
-
             try {
-                // Determine simple device info
                 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
                 const deviceInfo = isMobile ? "Mobile" : "Desktop";
-                const currentPath = window.location.pathname; // Or use pathname from hook
+                const currentPath = window.location.pathname;
 
                 await supabase.rpc('track_heartbeat', {
                     p_path: currentPath,
-                    p_device: deviceInfo
+                    p_device: deviceInfo,
+                    p_ip: ipRef.current || null
                 });
             } catch (error) {
                 console.error("Heartbeat failed", error);
@@ -43,7 +49,7 @@ export const ActivityTracker = () => {
                 clearInterval(intervalRef.current);
             }
         };
-    }, [user, pathname]); // Re-run/update closure when path changes (optional, but interval handles latest if refs used. Here simpler to just let it run)
+    }, [user, pathname]);
 
-    return null; // This component renders nothing
+    return null;
 };

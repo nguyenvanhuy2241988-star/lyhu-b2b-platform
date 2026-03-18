@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { Zap, Users, Loader2, RefreshCw, Check, Clock, Phone, MapPin, MessageSquare, User as UserIcon, Bell, AlertCircle, Calendar } from 'lucide-react';
+import { Zap, Users, Loader2, RefreshCw, Check, Clock, Phone, MapPin, MessageSquare, User as UserIcon, Bell, AlertCircle, Calendar, Building2, Home } from 'lucide-react';
 
 type DateFilterMode = 'day' | 'week' | 'month' | 'year' | 'custom';
 
@@ -53,12 +53,15 @@ interface TelesalesUser {
     role: string;
     is_online: boolean;
     last_seen: string | null;
+    current_ip: string | null;
 }
 
 interface DistConfig {
     enabled: boolean;
     eligible_user_ids: string[];
     only_online: boolean;
+    only_company_ip: boolean;
+    company_ips: string[];
     fallback_delay_minutes: number;
 }
 
@@ -99,8 +102,12 @@ export default function LeadDistributionSettings() {
         enabled: true,
         eligible_user_ids: [],
         only_online: true,
+        only_company_ip: false,
+        company_ips: [],
         fallback_delay_minutes: 5
     });
+    const [myIp, setMyIp] = useState<string | null>(null);
+    const [companyIpInput, setCompanyIpInput] = useState('');
     const [users, setUsers] = useState<TelesalesUser[]>([]);
     const [leads, setLeads] = useState<MarketingLead[]>([]);
     const [followups, setFollowups] = useState<FollowupConv[]>([]);
@@ -158,8 +165,11 @@ export default function LeadDistributionSettings() {
                     enabled: cfgData.enabled,
                     eligible_user_ids: cfgData.eligible_user_ids || [],
                     only_online: cfgData.only_online,
+                    only_company_ip: cfgData.only_company_ip || false,
+                    company_ips: cfgData.company_ips || [],
                     fallback_delay_minutes: cfgData.fallback_delay_minutes
                 });
+                setCompanyIpInput((cfgData.company_ips || []).join(', '));
             }
 
             // Load all telesales users
@@ -173,7 +183,8 @@ export default function LeadDistributionSettings() {
                         email: u.email,
                         role: u.role,
                         is_online: u.is_online,
-                        last_seen: u.last_seen
+                        last_seen: u.last_seen,
+                        current_ip: u.current_ip || null
                     }));
                 setUsers(telesales);
             }
@@ -250,6 +261,11 @@ export default function LeadDistributionSettings() {
 
     useEffect(() => { loadData(); }, [loadData]);
 
+    // Fetch my own IP
+    useEffect(() => {
+        fetch('/api/ip').then(r => r.json()).then(d => setMyIp(d.ip || null)).catch(() => {});
+    }, []);
+
     // Pagination helper
     const PaginationControls = ({ page, setPage, pageSize, setPageSize, total, label }: {
         page: number; setPage: (p: number) => void;
@@ -323,6 +339,8 @@ export default function LeadDistributionSettings() {
     const handleSave = async () => {
         setSaving(true);
         try {
+            // Parse company IPs from input
+            const parsedIps = companyIpInput.split(',').map(s => s.trim()).filter(Boolean);
             const { error } = await supabase
                 .from('lead_distribution_config')
                 .upsert({
@@ -330,9 +348,12 @@ export default function LeadDistributionSettings() {
                     enabled: config.enabled,
                     eligible_user_ids: config.eligible_user_ids,
                     only_online: config.only_online,
+                    only_company_ip: config.only_company_ip,
+                    company_ips: parsedIps,
                     fallback_delay_minutes: config.fallback_delay_minutes,
                     updated_at: new Date().toISOString()
                 });
+            if (!error) setConfig(prev => ({ ...prev, company_ips: parsedIps }));
             if (error) throw error;
             setSavedRecently(true);
             setTimeout(() => setSavedRecently(false), 2000);
@@ -510,7 +531,47 @@ export default function LeadDistributionSettings() {
                         />
                         <span className="text-xs text-slate-600">Chỉ chia khi online</span>
                     </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={config.only_company_ip}
+                            onChange={(e) => setConfig(prev => ({ ...prev, only_company_ip: e.target.checked }))}
+                            className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <span className="text-xs text-slate-600 flex items-center gap-1">
+                            <Building2 className="w-3 h-3" /> Chỉ chia cho người tại công ty
+                        </span>
+                    </label>
                 </div>
+
+                {/* Company IP Config */}
+                {config.only_company_ip && (
+                    <div className="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Building2 className="w-4 h-4 text-emerald-600" />
+                            <span className="text-xs font-medium text-emerald-800">IP công ty (cách nhau bằng dấu phẩy)</span>
+                        </div>
+                        <input
+                            type="text"
+                            value={companyIpInput}
+                            onChange={(e) => setCompanyIpInput(e.target.value)}
+                            placeholder="VD: 113.161.72.35, 42.119.148.201"
+                            className="w-full px-3 py-2 text-sm border border-emerald-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+                        />
+                        {myIp && (
+                            <p className="mt-2 text-[11px] text-emerald-600">
+                                📍 IP hiện tại của bạn: <strong className="font-mono select-all">{myIp}</strong>
+                                {config.company_ips.includes(myIp) 
+                                    ? <span className="ml-2 text-emerald-700">✅ Đã trong danh sách</span>
+                                    : <button 
+                                        onClick={() => setCompanyIpInput(prev => prev ? `${prev}, ${myIp}` : myIp)}
+                                        className="ml-2 text-blue-600 hover:underline cursor-pointer"
+                                      >+ Thêm IP này</button>
+                                }
+                            </p>
+                        )}
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
                     {users.map(user => {
@@ -529,11 +590,24 @@ export default function LeadDistributionSettings() {
                                     <div className="text-sm font-medium text-slate-800 truncate">{user.full_name || user.email}</div>
                                     <div className="text-[10px] text-slate-400">{user.role}</div>
                                 </div>
-                                <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium ${user.is_online ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
-                                    }`}>
-                                    <span className={`w-1.5 h-1.5 rounded-full ${user.is_online ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
-                                    {user.is_online ? 'Online' : 'Offline'}
-                                </span>
+                                <div className="flex flex-col items-end gap-0.5">
+                                    <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full font-medium ${user.is_online ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
+                                        }`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${user.is_online ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                                        {user.is_online ? 'Online' : 'Offline'}
+                                    </span>
+                                    {user.is_online && user.current_ip && config.company_ips.length > 0 && (
+                                        <span className={`inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-medium ${
+                                            config.company_ips.includes(user.current_ip)
+                                                ? 'bg-blue-100 text-blue-700'
+                                                : 'bg-orange-100 text-orange-600'
+                                        }`}>
+                                            {config.company_ips.includes(user.current_ip)
+                                                ? <><Building2 className="w-2.5 h-2.5" /> Công ty</>
+                                                : <><Home className="w-2.5 h-2.5" /> Ngoài</>}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                         );
                     })}
