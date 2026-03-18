@@ -49,12 +49,12 @@ export const PROVINCES: LocationOption[] = [
 
 const getCache = (key: string) => {
     if (typeof window === 'undefined') return null;
-    const cached = localStorage.getItem(`vn_loc_v2_${key}`);
+    const cached = localStorage.getItem(`vn_loc_v2d2_${key}`);
     if (!cached) return null;
     try {
         const { data, expiry } = JSON.parse(cached);
         if (Date.now() > expiry) {
-            localStorage.removeItem(`vn_loc_v2_${key}`);
+            localStorage.removeItem(`vn_loc_v2d2_${key}`);
             return null;
         }
         return data;
@@ -66,7 +66,7 @@ const getCache = (key: string) => {
 const setCache = (key: string, data: any) => {
     if (typeof window === 'undefined') return;
     const expiry = Date.now() + 24 * 60 * 60 * 1000; // Cache 24h
-    localStorage.setItem(`vn_loc_v2_${key}`, JSON.stringify({ data, expiry }));
+    localStorage.setItem(`vn_loc_v2d2_${key}`, JSON.stringify({ data, expiry }));
 };
 
 // Xóa cache v1 cũ khi module được load lần đầu
@@ -75,7 +75,7 @@ if (typeof window !== 'undefined') {
         const keysToRemove: string[] = [];
         for (let i = 0; i < localStorage.length; i++) {
             const key = localStorage.key(i);
-            if (key && key.startsWith('vn_loc_') && !key.startsWith('vn_loc_v2_')) {
+            if (key && key.startsWith('vn_loc_') && !key.startsWith('vn_loc_v2d2_')) {
                 keysToRemove.push(key);
             }
         }
