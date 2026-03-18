@@ -22,7 +22,7 @@ const getHeaders = (token?: string) => {
 };
 
 export type OrderStatus = 'pending' | 'processing' | 'delivering' | 'delivered' | 'returned' | 'cancelled' | 'draft';
-export type OrderSource = 'TELESALES' | 'CUSTOMER' | 'SALES' | 'CTV' | 'SHOPEE' | 'TIKTOK' | 'WEB' | 'FACEBOOK' | 'ZALO';
+export type OrderSource = 'TELESALES' | 'CUSTOMER' | 'SALES' | 'SALES_GT' | 'CTV' | 'SHOPEE' | 'TIKTOK' | 'WEB' | 'FACEBOOK' | 'ZALO';
 export type FraudStatus = "NONE" | "FLAGGED" | "CONFIRMED" | "CLEARED";
 
 export interface OrderItem {
