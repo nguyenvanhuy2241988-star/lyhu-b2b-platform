@@ -63,6 +63,47 @@ export const KPI_TEMPLATES: Record<string, KpiTemplate> = {
         ],
         hasCommission: true
     },
+    sales_gt: {
+        label: "KPI Sales GT (Thị trường)",
+        fields: [
+            {
+                key: 'kpi_checkins_per_day',
+                label: 'Check-in / Ngày',
+                type: 'number',
+                suffix: 'lượt',
+                description: 'Số lượt check-in GPS tại điểm bán mỗi ngày'
+            },
+            {
+                key: 'kpi_new_outlets',
+                label: 'Mở mới Điểm bán',
+                type: 'number',
+                suffix: 'điểm',
+                description: 'Số điểm bán mới mở trong tháng'
+            },
+            {
+                key: 'kpi_monthly_revenue',
+                label: 'Doanh số Thực thu',
+                type: 'currency',
+                suffix: 'đ',
+                description: 'Tổng tiền đơn hàng giao thành công (Delivered)'
+            },
+            {
+                key: 'kpi_route_completion',
+                label: 'Hoàn thành Tuyến',
+                type: 'percentage',
+                suffix: '%',
+                description: '% tuyến được hoàn thành đúng lịch trong tháng'
+            },
+            {
+                key: 'kpi_orders_count',
+                label: 'Số đơn hàng',
+                type: 'number',
+                suffix: 'đơn',
+                description: 'Tổng số đơn hàng tạo mới trong tháng'
+            },
+        ],
+        hasCommission: true
+    },
     // Future templates for Warehouse, Recruiter, Accountant can be added here
 };
 

@@ -104,7 +104,7 @@ export default function AdminPayrollPage() {
         try {
             if (!silent) setIsLoading(true);
             const allUsers = await fetchUsers(session?.access_token);
-            const telesalesStaff = allUsers.filter(u => u.role === 'telesales');
+            const telesalesStaff = allUsers.filter(u => u.role === 'telesales' || u.role === 'sales_gt');
             setStaff(telesalesStaff);
             if (telesalesStaff.length > 0 && !selectedUserId) {
                 setSelectedUserId(telesalesStaff[0].id);
@@ -343,6 +343,7 @@ export default function AdminPayrollPage() {
     // Income Policy Handlers
     const DEPARTMENTS = [
         { value: 'telesales', label: 'Telesales' },
+        { value: 'sales_gt', label: 'Sales GT' },
         { value: 'admin', label: 'Admin' },
         { value: 'sale_admin', label: 'Sale Admin' },
         { value: 'marketing', label: 'Marketing' },
@@ -418,7 +419,7 @@ export default function AdminPayrollPage() {
                 <div className="p-4 border-b border-slate-50 space-y-3">
                     <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
                         <Users className="w-4 h-4 text-primary-500" />
-                        Đội ngũ Telesales
+                        Đội ngũ Sales
                     </h2>
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -448,7 +449,10 @@ export default function AdminPayrollPage() {
                             </div>
                             <div className="text-left">
                                 <div className={`font-bold text-sm truncate w-40 ${selectedUserId === user.id ? 'text-primary-900' : 'text-slate-700'}`}>{user.name || "Chưa đặt tên"}</div>
-                                <div className={`text-[10px] ${selectedUserId === user.id ? 'text-primary-600' : 'text-slate-400'}`}>{user.email}</div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className={`text-[10px] ${selectedUserId === user.id ? 'text-primary-600' : 'text-slate-400'}`}>{user.email}</span>
+                                    <span className={`text-[8px] font-bold px-1 py-0.5 rounded ${user.role === 'sales_gt' ? 'bg-teal-50 text-teal-600' : 'bg-blue-50 text-blue-600'}`}>{user.role === 'sales_gt' ? 'GT' : 'TS'}</span>
+                                </div>
                             </div>
                         </button>
                     ))}
