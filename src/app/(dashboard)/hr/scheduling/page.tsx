@@ -10,6 +10,7 @@ import {
     uploadHRAsset
 } from "@/lib/hrStore";
 import { format, getISOWeek, getYear } from "date-fns";
+import { Lock, Unlock } from "lucide-react";
 import {
     Plus, Loader2, Upload, Edit3, MessageSquare, X, Palette, Trash2, Check, ExternalLink, Image as ImageIcon, Eye
 } from "lucide-react";
@@ -18,8 +19,32 @@ import { useHRLayout } from "@/components/hr/HRLayoutContext";
 
 export default function HRSchedulingPage() {
     const { user, role } = useAuth();
-    const isAdmin = role === ROLES.ADMIN || role === ROLES.RECRUITER;
+    const isAdmin = role === ROLES.ADMIN || role === ROLES.RECRUITER || role === 'hr';
     const isHR = isAdmin;
+
+    // Time-based registration window: Saturday 6:00 AM → Sunday 6:00 PM
+    const isRegistrationWindowOpen = () => {
+        const now = new Date();
+        const day = now.getDay(); // 0=Sun, 6=Sat
+        const hour = now.getHours();
+        if (day === 6 && hour >= 6) return true;  // Saturday >= 6:00
+        if (day === 0 && hour < 18) return true;   // Sunday < 18:00
+        return false;
+    };
+
+    const getNextOpenTime = () => {
+        const now = new Date();
+        const day = now.getDay();
+        // Calculate days until next Saturday
+        const daysUntilSat = (6 - day + 7) % 7 || 7;
+        // If it's Saturday but before 6AM, it opens today
+        if (day === 6 && now.getHours() < 6) return 'hôm nay lúc 06:00';
+        const nextSat = new Date(now);
+        nextSat.setDate(now.getDate() + daysUntilSat);
+        return `Thứ 7 (${format(nextSat, 'dd/MM')}) lúc 06:00`;
+    };
+
+    const windowOpen = isRegistrationWindowOpen();
 
     // Context
     const { setPosters, setThemeColor } = useHRLayout();
@@ -297,6 +322,25 @@ export default function HRSchedulingPage() {
                 )}
             </div>
 
+            {/* Registration Lock Banner */}
+            {!isHR && !windowOpen && (
+                <div className="shrink-0 px-4 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center gap-3">
+                    <Lock className="w-4 h-4 text-amber-600 shrink-0" />
+                    <div className="text-xs text-amber-800">
+                        <span className="font-semibold">Đăng ký lịch đã khóa.</span>{' '}
+                        Mở lại {getNextOpenTime()}. Nếu cần thay đổi, liên hệ <span className="font-semibold">HR hoặc Admin</span>.
+                    </div>
+                </div>
+            )}
+            {!isHR && windowOpen && (
+                <div className="shrink-0 px-4 py-2 bg-emerald-50 border-b border-emerald-200 flex items-center gap-3">
+                    <Unlock className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <div className="text-xs text-emerald-800">
+                        <span className="font-semibold">Đang mở đăng ký.</span> Khóa lúc 18:00 Chủ nhật.
+                    </div>
+                </div>
+            )}
+
             {/* 2. Toolbar */}
             <div className="px-4 py-2 border-b border-slate-300 flex flex-col md:flex-row md:items-center justify-between bg-slate-50 shrink-0 gap-2">
                 <div className="flex items-center gap-4 overflow-x-auto chrome-scrollbar-hidden py-1">
@@ -472,7 +516,7 @@ export default function HRSchedulingPage() {
                                         {weekDays.map((date, dayIdx) => {
                                             const dateStr = format(date, 'yyyy-MM-dd');
                                             const reg = registrations.find(r => r.user_id === profile.id && r.date === dateStr);
-                                            const isOpen = selectedSchedule.status === 'open';
+                                            const isOpen = selectedSchedule.status === 'open' && (isHR || windowOpen);
                                             const canAction = isHR || (user?.id === profile.id && isOpen);
                                             const isDropdownOpen = openDropdown?.userId === profile.id && openDropdown?.date === dateStr;
 
