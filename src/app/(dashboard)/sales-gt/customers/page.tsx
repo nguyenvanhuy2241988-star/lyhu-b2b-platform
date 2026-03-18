@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus, MapPin, Phone, MoreHorizontal, Building, Loader2, X, Filter, TrendingUp, Map, Tag, Calendar } from "lucide-react";
+import { Search, Plus, MapPin, Phone, MoreHorizontal, Building, Loader2, X, Filter, TrendingUp, Map, Tag, Calendar, Pencil } from "lucide-react";
 import { createClient, supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
+import EditOutletModal, { GTOutletData } from "@/components/sales-gt/EditOutletModal";
 
 interface GTOutlet {
     id: string;
@@ -51,6 +52,8 @@ export default function GTCustomersPage() {
     }, []);
 
     const [outlets, setOutlets] = useState<GTOutlet[]>([]);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingOutlet, setEditingOutlet] = useState<GTOutletData | null>(null);
 
     // Filter State
     const [showFilters, setShowFilters] = useState(false);
@@ -430,6 +433,15 @@ export default function GTCustomersPage() {
                                                 <Plus className="w-3.5 h-3.5 inline mr-1" />
                                                 Tạo đơn
                                             </button>
+                                            <button
+                                                onClick={() => {
+                                                    setEditingOutlet(outlet as GTOutletData);
+                                                    setShowEditModal(true);
+                                                }}
+                                                className="px-3 py-1.5 bg-slate-50 text-slate-600 hover:bg-slate-100 rounded text-xs font-medium transition-colors"
+                                            >
+                                                Sửa
+                                            </button>
                                             <div className="relative">
                                                 <button
                                                     onClick={(e) => {
@@ -481,6 +493,21 @@ export default function GTCustomersPage() {
                         Tạo đơn hàng
                     </button>
                     <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            const outletToEdit = outlets.find(o => o.id === openMenuId);
+                            if (outletToEdit) {
+                                setEditingOutlet(outletToEdit as GTOutletData);
+                                setShowEditModal(true);
+                                setOpenMenuId(null);
+                            }
+                        }}
+                        className="w-full text-left px-4 py-3 text-sm text-slate-700 hover:bg-slate-50 hover:text-teal-600 flex items-center gap-2 border-t border-slate-50"
+                    >
+                        <Pencil className="w-4 h-4" />
+                        Sửa thông tin
+                    </button>
+                    <button
                         onClick={async (e) => {
                             e.stopPropagation();
                             if (window.confirm('Bạn có chắc chắn muốn xóa điểm bán này?')) {
@@ -505,6 +532,14 @@ export default function GTCustomersPage() {
                     </button>
                 </div>
             )}
+
+            {/* Edit Outlet Modal */}
+            <EditOutletModal
+                isOpen={showEditModal}
+                onClose={() => { setShowEditModal(false); setEditingOutlet(null); }}
+                onSuccess={() => loadData()}
+                initialData={editingOutlet}
+            />
         </div>
     );
 }
