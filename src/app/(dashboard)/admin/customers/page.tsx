@@ -16,7 +16,7 @@ import {
     CustomerDashboardStats, PipelineItem, TopCustomer, DistributionItem, DateRange
 } from "@/lib/customerDashboardStore";
 
-import { PROVINCES, fetchDistricts, fetchWards, LocationOption } from "@/lib/vn-locations";
+import { PROVINCES, fetchWards, LocationOption } from "@/lib/vn-locations";
 
 const CUSTOMER_TYPES = ["Tất cả", "Tạp hóa", "Mini mart", "Đại lý", "NPP", "Siêu thị"] as const;
 
@@ -48,16 +48,13 @@ export default function AdminCustomersPage() {
 
     // Filter state
     const [selectedProvince, setSelectedProvince] = useState<string>("");
-    const [selectedDistrict, setSelectedDistrict] = useState<string>("");
     const [selectedWard, setSelectedWard] = useState<string>("");
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
     const [sortBy, setSortBy] = useState("newest");
 
-    // Location data state
-    const [districts, setDistricts] = useState<LocationOption[]>([]);
+    // Location data state (2-cấp sau sáp nhập 2025)
     const [wards, setWards] = useState<LocationOption[]>([]);
-    const [loadingDistricts, setLoadingDistricts] = useState(false);
     const [loadingWards, setLoadingWards] = useState(false);
 
     // Edit state
@@ -105,32 +102,13 @@ export default function AdminCustomersPage() {
         }
     }, [timePreset, customFrom, customTo]);
 
-    // Load districts when province changes
+    // Load wards when province changes (2-cấp: Tỉnh → Phường/Xã)
     useEffect(() => {
         if (selectedProvince) {
             const province = PROVINCES.find(p => p.value === selectedProvince);
             if (province) {
-                setLoadingDistricts(true);
-                fetchDistricts(province.code).then(data => {
-                    setDistricts(data);
-                    setLoadingDistricts(false);
-                });
-            }
-        } else {
-            setDistricts([]);
-            setWards([]);
-        }
-        setSelectedDistrict("");
-        setSelectedWard("");
-    }, [selectedProvince]);
-
-    // Load wards when district changes
-    useEffect(() => {
-        if (selectedDistrict) {
-            const district = districts.find(d => d.value === selectedDistrict);
-            if (district) {
                 setLoadingWards(true);
-                fetchWards(district.code).then(data => {
+                fetchWards(province.code).then(data => {
                     setWards(data);
                     setLoadingWards(false);
                 });
@@ -139,14 +117,13 @@ export default function AdminCustomersPage() {
             setWards([]);
         }
         setSelectedWard("");
-    }, [selectedDistrict, districts]);
+    }, [selectedProvince]);
 
     const resetFilters = () => {
         setSelectedType("Tất cả");
         setSelectedOwner("Tất cả");
         setSearchQuery("");
         setSelectedProvince("");
-        setSelectedDistrict("");
         setSelectedWard("");
         setFromDate("");
         setToDate("");
@@ -159,7 +136,6 @@ export default function AdminCustomersPage() {
         try {
             const filters = {
                 province: selectedProvince,
-                district: selectedDistrict,
                 ward: selectedWard,
                 type: selectedType === "Tất cả" ? "Tất cả" : reverseTypeMap[selectedType] || selectedType,
                 search: searchQuery,
@@ -179,7 +155,7 @@ export default function AdminCustomersPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [session, selectedProvince, selectedDistrict, selectedWard, selectedType, selectedOwner, searchQuery, fromDate, toDate, sortBy]);
+    }, [session, selectedProvince, selectedWard, selectedType, selectedOwner, searchQuery, fromDate, toDate, sortBy]);
 
     // Debounce search query
     useEffect(() => {
@@ -576,27 +552,12 @@ export default function AdminCustomersPage() {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Quận / Huyện</label>
-                        <div className="relative">
-                            <select
-                                value={selectedDistrict}
-                                onChange={(e) => setSelectedDistrict(e.target.value)}
-                                disabled={!selectedProvince}
-                                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-slate-50 disabled:text-slate-400"
-                            >
-                                <option value="">Tất cả Quận/Huyện</option>
-                                {districts.map(d => <option key={d.code} value={d.value}>{d.label}</option>)}
-                            </select>
-                            {loadingDistricts && <Loader2 className="absolute right-3 top-2.5 w-4 h-4 animate-spin text-primary-500" />}
-                        </div>
-                    </div>
-                    <div>
                         <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Phường / Xã</label>
                         <div className="relative">
                             <select
                                 value={selectedWard}
                                 onChange={(e) => setSelectedWard(e.target.value)}
-                                disabled={!selectedDistrict}
+                                disabled={!selectedProvince}
                                 className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-slate-50 disabled:text-slate-400"
                             >
                                 <option value="">Tất cả Phường/Xã</option>

@@ -11,7 +11,7 @@ import {
     fetchPipelineStats, fetchTopCustomers, fetchProvinceDistribution, fetchTypeDistribution
 } from "@/lib/customerDashboardStore";
 
-import { PROVINCES, fetchDistricts, fetchWards, LocationOption } from "@/lib/vn-locations";
+import { PROVINCES, fetchWards, LocationOption } from "@/lib/vn-locations";
 
 const CUSTOMER_TYPES = [
     { value: 'tap_hoa', label: 'Tạp hóa' },
@@ -56,16 +56,13 @@ export default function TelesalesCustomersPage() {
     const [showFilters, setShowFilters] = useState(false);
     const [selectedType, setSelectedType] = useState("");
     const [selectedProvince, setSelectedProvince] = useState("");
-    const [selectedDistrict, setSelectedDistrict] = useState("");
     const [selectedWard, setSelectedWard] = useState("");
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
     const [sortBy, setSortBy] = useState("newest");
 
-    // Location Data
-    const [districts, setDistricts] = useState<LocationOption[]>([]);
+    // Location Data (2-cấp sau sáp nhập 2025)
     const [wards, setWards] = useState<LocationOption[]>([]);
-    const [loadingDistricts, setLoadingDistricts] = useState(false);
     const [loadingWards, setLoadingWards] = useState(false);
 
     // Dashboard state
@@ -107,41 +104,25 @@ export default function TelesalesCustomersPage() {
         }
     }, [timePreset, customFrom, customTo]);
 
-    // Location Effects
+    // Location Effects (2-cấp: Tỉnh → Phường/Xã)
     useEffect(() => {
         if (selectedProvince) {
             const p = PROVINCES.find(x => x.value === selectedProvince);
             if (p) {
-                setLoadingDistricts(true);
-                fetchDistricts(p.code).then(d => { setDistricts(d); setLoadingDistricts(false); });
+                setLoadingWards(true);
+                fetchWards(p.code).then(w => { setWards(w); setLoadingWards(false); });
             }
         } else {
-            setDistricts([]);
             setWards([]);
         }
-        setSelectedDistrict("");
         setSelectedWard("");
     }, [selectedProvince]);
-
-    useEffect(() => {
-        if (selectedDistrict) {
-            const d = districts.find(x => x.value === selectedDistrict);
-            if (d) {
-                setLoadingWards(true);
-                fetchWards(d.code).then(w => { setWards(w); setLoadingWards(false); });
-            }
-        } else {
-            setWards([]);
-        }
-        setSelectedWard("");
-    }, [selectedDistrict, districts]);
 
 
     const resetFilters = () => {
         setSearchTerm("");
         setSelectedType("");
         setSelectedProvince("");
-        setSelectedDistrict("");
         setSelectedWard("");
         setFromDate("");
         setToDate("");
@@ -158,7 +139,6 @@ export default function TelesalesCustomersPage() {
 
         const filters = {
             province: selectedProvince,
-            district: selectedDistrict,
             ward: selectedWard,
             type: selectedType,
             search: searchTerm,
@@ -170,7 +150,7 @@ export default function TelesalesCustomersPage() {
         const data = await fetchCustomers(user.id, session.access_token, filters);
         setCustomers(data);
         setIsLoading(false);
-    }, [user, session?.access_token, selectedProvince, selectedDistrict, selectedWard, selectedType, searchTerm, fromDate, toDate, sortBy]);
+    }, [user, session?.access_token, selectedProvince, selectedWard, selectedType, searchTerm, fromDate, toDate, sortBy]);
 
     // Debounce effect
     useEffect(() => {
@@ -347,28 +327,19 @@ export default function TelesalesCustomersPage() {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-slate-500 mb-1">Quận / Huyện</label>
-                                <select
-                                    value={selectedDistrict}
-                                    onChange={e => setSelectedDistrict(e.target.value)}
-                                    disabled={!selectedProvince}
-                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 disabled:bg-slate-50"
-                                >
-                                    <option value="">Tất cả</option>
-                                    {districts.map(d => <option key={d.code} value={d.value}>{d.label}</option>)}
-                                </select>
-                            </div>
-                            <div>
                                 <label className="block text-xs font-medium text-slate-500 mb-1">Phường / Xã</label>
-                                <select
-                                    value={selectedWard}
-                                    onChange={e => setSelectedWard(e.target.value)}
-                                    disabled={!selectedDistrict}
-                                    className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 disabled:bg-slate-50"
-                                >
-                                    <option value="">Tất cả</option>
-                                    {wards.map(w => <option key={w.code} value={w.value}>{w.label}</option>)}
-                                </select>
+                                <div className="relative">
+                                    <select
+                                        value={selectedWard}
+                                        onChange={e => setSelectedWard(e.target.value)}
+                                        disabled={!selectedProvince}
+                                        className="w-full text-sm border-slate-200 rounded-lg focus:ring-2 focus:ring-primary-500/20 disabled:bg-slate-50"
+                                    >
+                                        <option value="">Tất cả</option>
+                                        {wards.map(w => <option key={w.code} value={w.value}>{w.label}</option>)}
+                                    </select>
+                                    {loadingWards && <Loader2 className="absolute right-3 top-2.5 w-4 h-4 animate-spin text-slate-400" />}
+                                </div>
                             </div>
                         </div>
 

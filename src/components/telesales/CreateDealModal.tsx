@@ -15,7 +15,7 @@ import {
 } from "@/lib/crmDealsStore";
 import { fetchCampaigns, MarketingCampaign } from "@/lib/marketingStore";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { PROVINCES, fetchDistricts, fetchWards, LocationOption } from "@/lib/vn-locations";
+import { PROVINCES, fetchWards, LocationOption } from "@/lib/vn-locations";
 import { Loader2 } from "lucide-react";
 
 interface CreateDealModalProps {
@@ -112,14 +112,11 @@ export const CreateDealModal = ({
     // For editing deal, we use dealCustomerType.
     const [customerType, setCustomerType] = useState("tap_hoa");
     const [customerAddress, setCustomerAddress] = useState("");
-    // Improved Location State
+    // Location State (2-cấp sau sáp nhập 2025: Tỉnh/Thành → Phường/Xã)
     const [customerProvince, setCustomerProvince] = useState("");
-    const [customerDistrict, setCustomerDistrict] = useState("");
     const [customerWard, setCustomerWard] = useState("");
 
-    const [districts, setDistricts] = useState<LocationOption[]>([]);
     const [wards, setWards] = useState<LocationOption[]>([]);
-    const [loadingDistricts, setLoadingDistricts] = useState(false);
     const [loadingWards, setLoadingWards] = useState(false);
 
     // Marketing Campaigns logic
@@ -143,35 +140,14 @@ export const CreateDealModal = ({
         if (customer.type) setDealCustomerType(customer.type);
     };
 
-    const onProvinceChange = async (provinceCode: string, resetLower = true) => {
+    const onProvinceChange = async (provinceCode: string) => {
         setCustomerProvince(provinceCode);
-        if (resetLower) {
-            setCustomerDistrict("");
-            setCustomerWard("");
-            setDistricts([]);
-            setWards([]);
-        }
+        setCustomerWard("");
+        setWards([]);
         if (provinceCode) {
-            setLoadingDistricts(true);
-            const data = await fetchDistricts(provinceCode);
-            setDistricts(data);
-            setLoadingDistricts(false);
-        }
-    };
-
-    const onDistrictChange = async (districtName: string, resetLower = true) => {
-        setCustomerDistrict(districtName);
-        if (resetLower) {
-            setCustomerWard("");
-            setWards([]);
-        }
-
-        // Find district code from name to fetch wards
-        const district = districts.find(d => d.value === districtName);
-        if (district) {
             setLoadingWards(true);
-            const wData = await fetchWards(district.code);
-            setWards(wData);
+            const data = await fetchWards(provinceCode);
+            setWards(data);
             setLoadingWards(false);
         }
     };
@@ -265,7 +241,6 @@ export const CreateDealModal = ({
                 type: customerType,
                 address: customerAddress.trim() || undefined,
                 province: customerProvince ? PROVINCES.find(p => p.code === customerProvince)?.label : undefined,
-                district: customerDistrict ? districts.find(d => d.value === customerDistrict)?.label : undefined,
                 ward: customerWard ? wards.find(w => w.value === customerWard)?.label : undefined,
 
                 tax_code: customerTaxCode.trim() || undefined,
@@ -356,32 +331,20 @@ export const CreateDealModal = ({
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-600 mb-1">Quận/Huyện</label>
-                                    <div className="relative">
-                                        <select value={customerDistrict} onChange={(e) => onDistrictChange(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-slate-100" disabled={!customerProvince || loadingDistricts}>
-                                            <option value="">-- Chọn Quận --</option>
-                                            {districts.map(d => <option key={d.code} value={d.value}>{d.label}</option>)}
-                                        </select>
-                                        {loadingDistricts && <Loader2 className="absolute right-8 top-2.5 w-4 h-4 animate-spin text-slate-400" />}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
                                     <label className="block text-xs font-medium text-slate-600 mb-1">Phường/Xã</label>
                                     <div className="relative">
-                                        <select value={customerWard} onChange={(e) => setCustomerWard(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-slate-100" disabled={!customerDistrict || loadingWards}>
+                                        <select value={customerWard} onChange={(e) => setCustomerWard(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:bg-slate-100" disabled={!customerProvince || loadingWards}>
                                             <option value="">-- Chọn Phường/Xã --</option>
                                             {wards.map(w => <option key={w.code} value={w.value}>{w.label}</option>)}
                                         </select>
                                         {loadingWards && <Loader2 className="absolute right-8 top-2.5 w-4 h-4 animate-spin text-slate-400" />}
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-medium text-slate-600 mb-1">Địa chỉ (Số nhà/Đường)</label>
-                                    <input type="text" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Số 123..." />
-                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Địa chỉ (Số nhà/Đường)</label>
+                                <input type="text" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Số 123..." />
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">

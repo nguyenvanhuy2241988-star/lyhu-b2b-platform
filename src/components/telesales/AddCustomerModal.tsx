@@ -5,7 +5,7 @@ import { X, Save, Loader2, Copy, User, MessageSquare, MapPin, Building, Info } f
 import { Customer, createCustomer, updateCustomer } from "@/lib/crmDealsStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { toast } from "sonner";
-import { PROVINCES, fetchDistricts, fetchWards, LocationOption } from "@/lib/vn-locations";
+import { PROVINCES, fetchWards, LocationOption } from "@/lib/vn-locations";
 
 const CUSTOMER_TYPES = [
     { value: 'tap_hoa', label: 'Tạp hóa' },
@@ -44,10 +44,8 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
         notes: ""
     });
 
-    // Location State
-    const [districts, setDistricts] = useState<LocationOption[]>([]);
+    // Location State (2-cấp sau sáp nhập 2025: Tỉnh/Thành → Phường/Xã)
     const [wards, setWards] = useState<LocationOption[]>([]);
-    const [loadingDistricts, setLoadingDistricts] = useState(false);
     const [loadingWards, setLoadingWards] = useState(false);
 
     // Errors
@@ -72,13 +70,8 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                     notes: initialData.notes || ""
                 });
 
-                // Initialize cascading data if exists
+                // Initialize wards if province exists
                 if (initialData.province) onProvinceChange(initialData.province, false);
-                // Cannot fully auto-load district/ward lists easily without codes, 
-                // typically we'd look up code from name or store code. 
-                // For simplicity here, we re-fetch based on PROVINCES lookup if name matches.
-                // Or better: store code in hidden field? 
-                // Current plan uses Name for storage. We will try to reverse lookup Code from Name
             } else {
                 setFormData({
                     name: "",
@@ -94,7 +87,6 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                     ward: "",
                     notes: ""
                 });
-                setDistricts([]);
                 setWards([]);
             }
             setErrors({});
@@ -115,41 +107,15 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
     const onProvinceChange = async (provinceName: string, resetLower = true) => {
         handleChange('province', provinceName);
         if (resetLower) {
-            setFormData(prev => ({ ...prev, district: "", ward: "" })); // Update state directly
-            setDistricts([]);
+            setFormData(prev => ({ ...prev, ward: "" }));
             setWards([]);
         }
 
         const province = PROVINCES.find(p => p.value === provinceName);
         if (province) {
-            setLoadingDistricts(true);
-            const data = await fetchDistricts(province.code);
-            setDistricts(data);
-            setLoadingDistricts(false);
-
-            // If editing and has district, try to load wards too
-            if (!resetLower && initialData?.district) {
-                const district = data.find(d => d.value === initialData.district);
-                if (district) {
-                    const wData = await fetchWards(district.code);
-                    setWards(wData);
-                }
-            }
-        }
-    };
-
-    const onDistrictChange = async (districtName: string, resetLower = true) => {
-        handleChange('district', districtName);
-        if (resetLower) {
-            setFormData(prev => ({ ...prev, ward: "" }));
-            setWards([]);
-        }
-
-        const district = districts.find(d => d.value === districtName);
-        if (district) {
             setLoadingWards(true);
-            const wData = await fetchWards(district.code);
-            setWards(wData);
+            const data = await fetchWards(province.code);
+            setWards(data);
             setLoadingWards(false);
         }
     };
@@ -366,40 +332,21 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                 </select>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-medium text-slate-700">Quận / Huyện</label>
-                                    <div className="relative">
-                                        <select
-                                            value={formData.district}
-                                            onChange={(e) => onDistrictChange(e.target.value)}
-                                            disabled={!formData.province || loadingDistricts}
-                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none bg-white disabled:bg-slate-100"
-                                        >
-                                            <option value="">-- Chọn Quận/Huyện --</option>
-                                            {districts.map(d => (
-                                                <option key={d.code} value={d.value}>{d.label}</option>
-                                            ))}
-                                        </select>
-                                        {loadingDistricts && <Loader2 className="absolute right-8 top-2.5 w-4 h-4 animate-spin text-slate-400" />}
-                                    </div>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-medium text-slate-700">Phường / Xã</label>
-                                    <div className="relative">
-                                        <select
-                                            value={formData.ward}
-                                            onChange={(e) => handleChange('ward', e.target.value)}
-                                            disabled={!formData.district || loadingWards}
-                                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none bg-white disabled:bg-slate-100"
-                                        >
-                                            <option value="">-- Chọn Phường/Xã --</option>
-                                            {wards.map(w => (
-                                                <option key={w.code} value={w.value}>{w.label}</option>
-                                            ))}
-                                        </select>
-                                        {loadingWards && <Loader2 className="absolute right-8 top-2.5 w-4 h-4 animate-spin text-slate-400" />}
-                                    </div>
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-slate-700">Phường / Xã</label>
+                                <div className="relative">
+                                    <select
+                                        value={formData.ward}
+                                        onChange={(e) => handleChange('ward', e.target.value)}
+                                        disabled={!formData.province || loadingWards}
+                                        className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none bg-white disabled:bg-slate-100"
+                                    >
+                                        <option value="">-- Chọn Phường/Xã --</option>
+                                        {wards.map(w => (
+                                            <option key={w.code} value={w.value}>{w.label}</option>
+                                        ))}
+                                    </select>
+                                    {loadingWards && <Loader2 className="absolute right-8 top-2.5 w-4 h-4 animate-spin text-slate-400" />}
                                 </div>
                             </div>
 
