@@ -66,6 +66,8 @@ export default function HRSchedulingPage() {
 
     const [openDropdown, setOpenDropdown] = useState<{ userId: string, date: string } | null>(null);
     const [noteValue, setNoteValue] = useState("");
+    const [lockNote, setLockNote] = useState("");
+    const [savingLockNote, setSavingLockNote] = useState(false);
 
     const bannerInputRef = useRef<HTMLInputElement>(null);
     const poster1InputRef = useRef<HTMLInputElement>(null);
@@ -107,6 +109,7 @@ export default function HRSchedulingPage() {
 
         if (schedule.theme_color) setThemeColor(schedule.theme_color);
         else setThemeColor("#0d9488");
+        setLockNote((schedule as any).lock_note || "");
 
         try {
             const regs = await getShiftRegistrations(schedule.id);
@@ -327,8 +330,7 @@ export default function HRSchedulingPage() {
                 <div className="shrink-0 px-4 py-2.5 bg-amber-50 border-b border-amber-200 flex items-center gap-3">
                     <Lock className="w-4 h-4 text-amber-600 shrink-0" />
                     <div className="text-xs text-amber-800">
-                        <span className="font-semibold">Đăng ký lịch đã khóa.</span>{' '}
-                        Mở lại {getNextOpenTime()}. Nếu cần thay đổi, liên hệ <span className="font-semibold">HR hoặc Admin</span>.
+                        {lockNote || (<><span className="font-semibold">Đăng ký lịch đã khóa.</span>{' '}Mở lại {getNextOpenTime()}. Nếu cần thay đổi, liên hệ <span className="font-semibold">HR hoặc Admin</span>.</>)}
                     </div>
                 </div>
             )}
@@ -338,6 +340,37 @@ export default function HRSchedulingPage() {
                     <div className="text-xs text-emerald-800">
                         <span className="font-semibold">Đang mở đăng ký.</span> Khóa lúc 18:00 Chủ nhật.
                     </div>
+                </div>
+            )}
+            {isHR && selectedSchedule && (
+                <div className="shrink-0 px-4 py-2 bg-blue-50 border-b border-blue-200 flex items-center gap-2">
+                    <Edit3 className="w-4 h-4 text-blue-500 shrink-0" />
+                    <input
+                        type="text"
+                        value={lockNote}
+                        onChange={(e) => setLockNote(e.target.value)}
+                        placeholder={`Đăng ký lịch đã khóa. Mở lại ${getNextOpenTime()}. Nếu cần thay đổi, liên hệ HR hoặc Admin.`}
+                        className="flex-1 text-xs bg-transparent border-none outline-none text-blue-800 placeholder:text-blue-400"
+                    />
+                    <button
+                        onClick={async () => {
+                            if (!selectedSchedule) return;
+                            setSavingLockNote(true);
+                            try {
+                                await updateWeeklySchedule(selectedSchedule.id, { lock_note: lockNote } as any);
+                                setSelectedSchedule({ ...selectedSchedule, lock_note: lockNote } as any);
+                                setSchedules(prev => prev.map(s => s.id === selectedSchedule.id ? { ...s, lock_note: lockNote } as any : s));
+                            } catch (e) { console.error(e); }
+                            finally { setSavingLockNote(false); }
+                        }}
+                        disabled={savingLockNote}
+                        className="text-[10px] px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
+                    >
+                        {savingLockNote ? '...' : 'Lưu'}
+                    </button>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${windowOpen ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                        {windowOpen ? '🔓 Đang mở' : '🔒 Đã khóa'}
+                    </span>
                 </div>
             )}
 
