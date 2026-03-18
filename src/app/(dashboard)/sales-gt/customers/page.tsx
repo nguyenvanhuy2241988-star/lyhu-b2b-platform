@@ -135,7 +135,7 @@ export default function GTCustomersPage() {
     }, [loadData]);
 
     // Dashboard computed stats
-    const districts = [...new Set(outlets.map(o => o.district).filter(Boolean))];
+    const districts = Array.from(new Set(outlets.map(o => o.district).filter(Boolean)));
     const typeCounts = OUTLET_TYPES.map(t => ({
         ...t,
         count: outlets.filter(o => o.outlet_type === t.value).length
