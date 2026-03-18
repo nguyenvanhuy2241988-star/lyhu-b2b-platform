@@ -19,6 +19,7 @@ export interface KpiMetricDefinition {
     sort_order: number;
     salary_percent: number;
     monthly_target: number;
+    role?: string;
     created_at?: string;
     updated_at?: string;
 }
@@ -51,11 +52,12 @@ export interface KpiSalaryResult {
 // CRUD: KPI Metric Definitions
 // =====================================================
 
-export const fetchKpiMetrics = async (): Promise<KpiMetricDefinition[]> => {
-    const { data, error } = await supabase
+export const fetchKpiMetrics = async (role?: string): Promise<KpiMetricDefinition[]> => {
+    let query = supabase
         .from('kpi_metric_definitions')
-        .select('*')
-        .order('sort_order', { ascending: true });
+        .select('*');
+    if (role) query = query.eq('role', role);
+    const { data, error } = await query.order('sort_order', { ascending: true });
 
     if (error) {
         console.error('[fetchKpiMetrics] error:', error);
@@ -64,12 +66,13 @@ export const fetchKpiMetrics = async (): Promise<KpiMetricDefinition[]> => {
     return (data || []) as KpiMetricDefinition[];
 };
 
-export const fetchActiveKpiMetrics = async (): Promise<KpiMetricDefinition[]> => {
-    const { data, error } = await supabase
+export const fetchActiveKpiMetrics = async (role?: string): Promise<KpiMetricDefinition[]> => {
+    let query = supabase
         .from('kpi_metric_definitions')
         .select('*')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
+        .eq('is_active', true);
+    if (role) query = query.eq('role', role);
+    const { data, error } = await query.order('sort_order', { ascending: true });
 
     if (error) {
         console.error('[fetchActiveKpiMetrics] error:', error);
@@ -83,6 +86,7 @@ export const upsertKpiMetric = async (metric: Partial<KpiMetricDefinition>): Pro
         .from('kpi_metric_definitions')
         .upsert({
             ...metric,
+            role: metric.role || 'telesales',
             updated_at: new Date().toISOString()
         }, { onConflict: 'key' });
 

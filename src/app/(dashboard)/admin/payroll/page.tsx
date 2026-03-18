@@ -295,9 +295,11 @@ export default function AdminPayrollPage() {
         setIsLoadingKpi(true);
         setIsKpiModalOpen(true);
         try {
+            const selectedUser = staff.find(s => s.id === selectedUserId);
+            const userRole = selectedUser?.role || 'telesales';
             const [settings, metrics] = await Promise.all([
                 fetchUserKpiSettings(selectedUserId, session?.access_token),
-                fetchKpiMetrics()
+                fetchKpiMetrics(userRole)
             ]);
             setKpiSettings(settings);
             // Normalize sort_order: assign unique index if all values are the same
@@ -996,13 +998,15 @@ export default function AdminPayrollPage() {
                                                             is_active: true,
                                                             sort_order: kpiMetrics.length,
                                                             salary_percent: salaryPercent,
-                                                            monthly_target: target
+                                                            monthly_target: target,
+                                                            role: staff.find(s => s.id === selectedUserId)?.role || 'telesales'
                                                         };
 
                                                         const success = await upsertKpiMetric(newMetric);
                                                         if (success) {
-                                                            // Reload metrics
-                                                            const metrics = await fetchKpiMetrics();
+                                                            // Reload metrics with role filter
+                                                            const userRole = staff.find(s => s.id === selectedUserId)?.role || 'telesales';
+                                                            const metrics = await fetchKpiMetrics(userRole);
                                                             setKpiMetrics(metrics);
                                                         } else {
                                                             alert("Lỗi thêm chỉ tiêu. Key có thể đã tồn tại.");
