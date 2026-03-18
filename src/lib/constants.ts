@@ -264,6 +264,7 @@ export const NAV_ITEMS = {
         { label: "Điểm bán", href: "/sales-gt/outlets", icon: MapPin },
         { label: "Check-in", href: "/sales-gt/checkin", icon: MapPin },
         { label: "Tạo đơn hàng", href: "/sales-gt/create-order", icon: ShoppingCart },
+        { label: "Đơn hàng", href: "/sales-gt/orders", icon: Package },
         { label: "Tuyến bán hàng", href: "/sales-gt/routes", icon: List },
         { label: "Báo cáo", href: "/sales-gt/reports", icon: TrendingUp },
         { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
