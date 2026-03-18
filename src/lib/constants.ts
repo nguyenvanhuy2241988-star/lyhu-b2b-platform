@@ -270,6 +270,8 @@ export const NAV_ITEMS = {
         { label: "Báo cáo", href: "/sales-gt/reports", icon: TrendingUp },
         { label: "Lịch làm việc", href: "/sales-gt/schedule", icon: Calendar },
         { label: "Việc cần làm", href: "/sales-gt/tasks", icon: ListTodo },
+        { label: "Thu nhập & KPI", href: "/sales-gt/earnings", icon: DollarSign },
+        { label: "Quy định & Chính sách", href: "/sales-gt/rules", icon: Book },
         { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
         { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
         { label: "Góc Giải Trí", href: "/entertainment", icon: Gamepad2 },
