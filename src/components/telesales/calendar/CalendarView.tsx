@@ -7,9 +7,13 @@ import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, Phone, Aler
 import { ScheduledTask, fetchScheduledTasks } from "@/lib/crmDealsStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function CalendarView() {
     const { user, session } = useAuth();
+    const pathname = usePathname();
+    const isGT = pathname?.startsWith('/sales-gt');
+    const taskPageHref = isGT ? '/sales-gt/tasks' : '/telesales/tasks';
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [tasks, setTasks] = useState<ScheduledTask[]>([]);
@@ -118,7 +122,7 @@ export default function CalendarView() {
                                             bg-blue-50 border-blue-100 text-blue-700
                                         ">
                                             <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-                                            {format(new Date(task.due_date), "HH:mm")} - {task.customer_name}
+                                            {format(new Date(task.due_date), "HH:mm")} - {task.customer_name || task.name || 'Công việc'}
                                         </div>
                                     ))}
                                     {dayTasks.length > 3 && (
@@ -158,7 +162,21 @@ export default function CalendarView() {
                                                 task.status === 'lost' ? 'bg-red-50 border-red-100 text-red-700' :
                                                     'bg-blue-50 border-blue-100 text-blue-700'}
                                     `}>
-                                        {task.source_type === 'task' ? (task.status === 'today' ? 'Hôm nay' : task.status === 'done' ? 'Xong' : task.status) : task.status}
+                                        {(() => {
+                                            if (task.source_type === 'task') {
+                                                if (task.status === 'done') return 'Xong';
+                                                if (task.status === 'today') return 'Hôm nay';
+                                                if (task.status === 'inbox') return 'Inbox';
+                                                if (task.status === 'active') return 'Active';
+                                                // UUID or custom column status → show as Active
+                                                if (task.status && task.status.length > 10) return 'Active';
+                                                return task.status || 'Active';
+                                            }
+                                            // Deal statuses
+                                            if (task.status === 'won') return 'Thắng';
+                                            if (task.status === 'lost') return 'Thua';
+                                            return task.status || 'Active';
+                                        })()}
                                     </span>
                                 </div>
                                 <h4 className="text-sm font-bold text-slate-900 mb-0.5 line-clamp-1">
@@ -179,7 +197,7 @@ export default function CalendarView() {
                                         </Link>
                                     ) : (
                                         <Link
-                                            href={`/telesales/tasks`}
+                                            href={taskPageHref}
                                             className="flex-1 text-center text-xs bg-purple-600 text-white py-1.5 rounded hover:bg-purple-700 transition-colors"
                                         >
                                             Xem Task
