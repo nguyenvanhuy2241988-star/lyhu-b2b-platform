@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabaseClient";
-import { MapPin, Camera, CheckCircle, Clock, AlertTriangle, Navigation, Store } from "lucide-react";
+import { MapPin, Camera, CheckCircle, Clock, AlertTriangle, Navigation, Store, Trash2, ImageIcon, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -72,6 +72,11 @@ export default function CheckinPage() {
     const [visitResult, setVisitResult] = useState("visited");
     const [checkinStep, setCheckinStep] = useState<"select" | "gps" | "details" | "done">("select");
     const [submitting, setSubmitting] = useState(false);
+
+    // Photo capture state
+    const cameraInputRef = useRef<HTMLInputElement>(null);
+    const [photos, setPhotos] = useState<{ file: Blob; preview: string }[]>([]);
+    const [processingPhoto, setProcessingPhoto] = useState(false);
 
     const loadData = useCallback(async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -151,12 +156,118 @@ export default function CheckinPage() {
         }
     }
 
+    // Watermark photo with Canvas
+    async function processPhotoWithWatermark(file: File): Promise<{ file: Blob; preview: string }> {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d')!;
+
+                // Resize if too large (max 1600px width)
+                const maxW = 1600;
+                const scale = img.width > maxW ? maxW / img.width : 1;
+                canvas.width = Math.round(img.width * scale);
+                canvas.height = Math.round(img.height * scale);
+
+                // Draw original image
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                // Watermark bar at bottom
+                const barH = Math.max(80, canvas.height * 0.12);
+                const barY = canvas.height - barH;
+
+                // Semi-transparent dark overlay
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+                ctx.fillRect(0, barY, canvas.width, barH);
+
+                // Text settings
+                const fontSize = Math.max(14, Math.round(canvas.width * 0.022));
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+                ctx.textBaseline = 'top';
+
+                const pad = Math.round(fontSize * 0.8);
+                let textY = barY + pad;
+                const lineH = fontSize * 1.5;
+
+                // Line 1: Timestamp
+                const now = new Date();
+                const timeStr = `🕐 ${now.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+                ctx.fillText(timeStr, pad, textY);
+                textY += lineH;
+
+                // Line 2: GPS + Distance
+                if (gpsPosition) {
+                    const gpsStr = `📍 ${gpsPosition.lat.toFixed(6)}, ${gpsPosition.lng.toFixed(6)}${distance !== null ? `  •  ${distance}m` : ''}`;
+                    ctx.fillText(gpsStr, pad, textY);
+                    textY += lineH;
+                }
+
+                // Line 3: Outlet name
+                if (selectedOutlet) {
+                    ctx.font = `${fontSize}px Arial, sans-serif`;
+                    ctx.fillText(`🏪 ${selectedOutlet.name} — ${selectedOutlet.address}`, pad, textY);
+                }
+
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        resolve({ file: blob, preview: URL.createObjectURL(blob) });
+                    } else {
+                        reject(new Error('Failed to create blob'));
+                    }
+                }, 'image/jpeg', 0.85);
+            };
+            img.onerror = () => reject(new Error('Failed to load image'));
+            img.src = URL.createObjectURL(file);
+        });
+    }
+
+    async function handleCameraCapture(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setProcessingPhoto(true);
+        try {
+            const result = await processPhotoWithWatermark(file);
+            setPhotos(prev => [...prev, result]);
+        } catch (err) {
+            console.error('Photo processing failed', err);
+        } finally {
+            setProcessingPhoto(false);
+            // Reset input so same file can be re-selected
+            if (cameraInputRef.current) cameraInputRef.current.value = '';
+        }
+    }
+
+    async function uploadPhotos(): Promise<string[]> {
+        const urls: string[] = [];
+        for (const photo of photos) {
+            const fileName = `checkin_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
+            const { error } = await supabase.storage
+                .from('gt-checkin-photos')
+                .upload(fileName, photo.file, { contentType: 'image/jpeg' });
+            if (!error) {
+                const { data: { publicUrl } } = supabase.storage
+                    .from('gt-checkin-photos')
+                    .getPublicUrl(fileName);
+                urls.push(publicUrl);
+            }
+        }
+        return urls;
+    }
+
     async function handleSubmitCheckin() {
         if (!selectedOutlet || !gpsPosition) return;
         setSubmitting(true);
 
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
+
+        // Upload watermarked photos
+        let photoUrls: string[] = [];
+        if (photos.length > 0) {
+            photoUrls = await uploadPhotos();
+        }
 
         const { error } = await supabase.from('gt_checkins').insert({
             outlet_id: selectedOutlet.id,
@@ -167,11 +278,12 @@ export default function CheckinPage() {
             market_notes: marketNotes || null,
             inventory_notes: inventoryNotes || null,
             visit_result: visitResult,
+            display_photos: photoUrls,
         });
 
         if (!error) {
             setCheckinStep("done");
-            loadData(); // Refresh today's list
+            loadData();
         }
         setSubmitting(false);
     }
@@ -185,6 +297,9 @@ export default function CheckinPage() {
         setVisitResult("visited");
         setGpsError("");
         setCheckinStep("select");
+        // Cleanup photo previews
+        photos.forEach(p => URL.revokeObjectURL(p.preview));
+        setPhotos([]);
     }
 
     if (loading) {
@@ -335,6 +450,52 @@ export default function CheckinPage() {
                                 className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 resize-none"
                                 rows={2}
                             />
+                        </div>
+
+                        {/* Photo Capture Section */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">📸 Ảnh cửa hàng (có watermark)</label>
+                            <input
+                                ref={cameraInputRef}
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                onChange={handleCameraCapture}
+                                className="hidden"
+                            />
+
+                            {/* Photo grid */}
+                            {photos.length > 0 && (
+                                <div className="grid grid-cols-2 gap-2 mb-3">
+                                    {photos.map((photo, idx) => (
+                                        <div key={idx} className="relative group rounded-lg overflow-hidden border border-slate-200">
+                                            <img src={photo.preview} className="w-full h-32 object-cover" />
+                                            <button
+                                                onClick={() => {
+                                                    URL.revokeObjectURL(photo.preview);
+                                                    setPhotos(prev => prev.filter((_, i) => i !== idx));
+                                                }}
+                                                className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow"
+                                            >
+                                                <Trash2 className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            <button
+                                onClick={() => cameraInputRef.current?.click()}
+                                disabled={processingPhoto}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed border-teal-300 rounded-xl text-teal-700 hover:bg-teal-50 transition-colors disabled:opacity-50 font-medium text-sm"
+                            >
+                                {processingPhoto ? (
+                                    <><Loader2 className="w-5 h-5 animate-spin" /> Đang xử lý ảnh...</>
+                                ) : (
+                                    <><Camera className="w-5 h-5" /> {photos.length > 0 ? 'Chụp thêm ảnh' : 'Chụp ảnh cửa hàng'}</>
+                                )}
+                            </button>
+                            <p className="text-[11px] text-slate-400 mt-1 text-center">Ảnh tự ghi thời gian, GPS, tên điểm bán</p>
                         </div>
 
                         <div className="flex gap-3 pt-2">
