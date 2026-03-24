@@ -111,29 +111,42 @@ export async function createAndAssignLead(data: LeadCreateData): Promise<{
 }
 
 /**
- * Assign a pending marketing lead to a random online telesales
+ * Assign a pending marketing lead to a telesales
+ * If targetUserId is provided, assign directly to that user (for round-robin)
+ * Otherwise, query eligible telesales via RPC (for real-time webhook)
  */
-export async function assignLeadToTelesales(marketingLeadId: string): Promise<{
+export async function assignLeadToTelesales(
+    marketingLeadId: string,
+    targetUserId?: string,
+    targetUserName?: string
+): Promise<{
     assignedTo: string | null;
     assignedName: string | null;
 }> {
     try {
-        // Get online eligible telesales (random order)
-        const { data: eligibleUsers, error: rpcError } = await supabase
-            .rpc('get_online_eligible_telesales');
+        let chosen: { user_id: string; full_name: string };
 
-        if (rpcError) {
-            console.error('[LeadDist] RPC error:', rpcError);
-            return { assignedTo: null, assignedName: null };
+        if (targetUserId && targetUserName) {
+            // Round-robin mode: use pre-selected user
+            chosen = { user_id: targetUserId, full_name: targetUserName };
+        } else {
+            // Real-time mode: query for best eligible user (least leads first)
+            const { data: eligibleUsers, error: rpcError } = await supabase
+                .rpc('get_online_eligible_telesales');
+
+            if (rpcError) {
+                console.error('[LeadDist] RPC error:', rpcError);
+                return { assignedTo: null, assignedName: null };
+            }
+
+            if (!eligibleUsers || eligibleUsers.length === 0) {
+                console.log('[LeadDist] No eligible telesales online (or all at quota) — lead stays pending');
+                return { assignedTo: null, assignedName: null };
+            }
+
+            // Pick the first one (already sorted by least leads in SQL)
+            chosen = eligibleUsers[0];
         }
-
-        if (!eligibleUsers || eligibleUsers.length === 0) {
-            console.log('[LeadDist] No eligible telesales online — lead stays pending');
-            return { assignedTo: null, assignedName: null };
-        }
-
-        // Pick the first one (already randomized by SQL)
-        const chosen = eligibleUsers[0];
 
         // Get the lead data for creating CRM record
         const { data: lead } = await supabase
@@ -234,10 +247,11 @@ export async function assignLeadToTelesales(marketingLeadId: string): Promise<{
 /**
  * Process all pending (unassigned) leads
  * Called by cron job or when telesales comes online
+ * Uses round-robin to distribute leads evenly across eligible users
  */
 export async function processQueuedLeads(): Promise<number> {
     try {
-        // Get all pending leads
+        // 1. Get all pending leads (oldest first)
         const { data: pendingLeads, error } = await supabase
             .from('marketing_leads')
             .select('id')
@@ -248,20 +262,40 @@ export async function processQueuedLeads(): Promise<number> {
             return 0;
         }
 
-        console.log(`[LeadDist] Processing ${pendingLeads.length} pending leads...`);
+        // 2. Get online eligible telesales (sorted by least leads first by SQL)
+        const { data: eligibleUsers, error: rpcError } = await supabase
+            .rpc('get_online_eligible_telesales');
 
+        if (rpcError) {
+            console.error('[LeadDist] RPC error:', rpcError);
+            return 0;
+        }
+
+        if (!eligibleUsers || eligibleUsers.length === 0) {
+            console.log('[LeadDist] No eligible telesales online (or all at quota) — leads stay pending');
+            return 0;
+        }
+
+        console.log(`[LeadDist] Processing ${pendingLeads.length} pending leads across ${eligibleUsers.length} eligible users...`);
+
+        // 3. Round-robin: cycle through eligible users
         let assigned = 0;
-        for (const lead of pendingLeads) {
-            const result = await assignLeadToTelesales(lead.id);
+        for (let i = 0; i < pendingLeads.length; i++) {
+            const userIndex = i % eligibleUsers.length;
+            const targetUser = eligibleUsers[userIndex];
+
+            const result = await assignLeadToTelesales(
+                pendingLeads[i].id,
+                targetUser.user_id,
+                targetUser.full_name
+            );
+
             if (result.assignedTo) {
                 assigned++;
-            } else {
-                // No more online telesales, stop trying
-                break;
             }
         }
 
-        console.log(`[LeadDist] Assigned ${assigned}/${pendingLeads.length} pending leads`);
+        console.log(`[LeadDist] ✅ Round-robin assigned ${assigned}/${pendingLeads.length} pending leads to ${eligibleUsers.length} users`);
         return assigned;
 
     } catch (error) {
