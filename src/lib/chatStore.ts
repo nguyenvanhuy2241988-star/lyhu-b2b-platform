@@ -476,7 +476,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
     },
 
     markRead: async (conversationId: string, userId: string) => {
+        // Immediately clear local unread count (so sidebar badge updates instantly)
+        set((state: ChatState) => ({
+            conversations: state.conversations.map((c: any) =>
+                c.id === conversationId ? { ...c, unread_count: 0 } : c
+            )
+        }));
+        // Update server
         await supabase.rpc('mark_conversation_read', { p_conversation_id: conversationId, p_user_id: userId });
+        // Re-fetch to ensure sync
+        get().fetchConversations(userId);
     },
 
     editMessage: async (messageId: string, content: string) => {
