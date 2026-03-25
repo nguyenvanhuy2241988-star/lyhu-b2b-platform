@@ -20,7 +20,9 @@ import {
     Facebook,
     Search,
     Filter,
-    Phone
+    Phone,
+    Wifi,
+    WifiOff
 } from "lucide-react";
 import { createDeal } from "@/lib/crmDealsStore";
 
@@ -76,6 +78,24 @@ export default function MarketingScraperPage() {
     const [resultSearch, setResultSearch] = useState("");
     const [filterHasPhone, setFilterHasPhone] = useState(false);
     const [filterKeyword, setFilterKeyword] = useState("");
+
+    // Google API connection test state
+    const [apiTestResult, setApiTestResult] = useState<any>(null);
+    const [isTestingApi, setIsTestingApi] = useState(false);
+
+    const testGoogleApiConnection = async () => {
+        setIsTestingApi(true);
+        setApiTestResult(null);
+        try {
+            const res = await fetch('/api/marketing/scrape/google-places/test');
+            const data = await res.json();
+            setApiTestResult(data);
+        } catch (e: any) {
+            setApiTestResult({ connected: false, error: e.message, diagnosis: 'Lỗi kết nối' });
+        } finally {
+            setIsTestingApi(false);
+        }
+    };
 
     useEffect(() => {
         fetchJobs();
@@ -411,6 +431,42 @@ export default function MarketingScraperPage() {
                                             {useGoogleApi ? 'Kết quả ngay lập tức, tối đa 20/lần' : 'Chạy nền, tối đa 100/lần'}
                                         </span>
                                     </div>
+                                    {/* Connection Test */}
+                                    {useGoogleApi && (
+                                        <div className="mb-3">
+                                            <button
+                                                onClick={testGoogleApiConnection}
+                                                disabled={isTestingApi}
+                                                className="text-sm px-3 py-1.5 rounded-md border border-slate-200 hover:bg-slate-50 text-slate-600 flex items-center gap-1.5 transition-colors"
+                                            >
+                                                {isTestingApi ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Wifi className="w-3.5 h-3.5" />}
+                                                Kiểm tra kết nối API
+                                            </button>
+                                            {apiTestResult && (
+                                                <div className={`mt-2 p-3 rounded-lg text-sm border ${
+                                                    apiTestResult.connected
+                                                        ? 'bg-green-50 border-green-200 text-green-800'
+                                                        : 'bg-red-50 border-red-200 text-red-800'
+                                                }`}>
+                                                    <div className="flex items-center gap-2 font-medium">
+                                                        {apiTestResult.connected
+                                                            ? <><CheckCircle2 className="w-4 h-4 text-green-600" /> Kết nối thành công!</>
+                                                            : <><WifiOff className="w-4 h-4 text-red-600" /> Kết nối thất bại</>
+                                                        }
+                                                    </div>
+                                                    {apiTestResult.key_preview && (
+                                                        <p className="mt-1 text-xs opacity-70">API Key: {apiTestResult.key_preview}</p>
+                                                    )}
+                                                    {apiTestResult.diagnosis && (
+                                                        <p className="mt-1 font-medium">{apiTestResult.diagnosis}</p>
+                                                    )}
+                                                    {apiTestResult.error && !apiTestResult.connected && (
+                                                        <p className="mt-1 text-xs opacity-70">Chi tiết: {apiTestResult.error}</p>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                     <input
                                         type="text"
                                         placeholder="Ví dụ: Tạp hóa tại Cầu Giấy, Spa tại Hà Nội..."
