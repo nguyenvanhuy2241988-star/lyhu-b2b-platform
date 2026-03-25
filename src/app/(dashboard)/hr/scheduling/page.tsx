@@ -12,7 +12,7 @@ import {
 import { format, getISOWeek, getYear } from "date-fns";
 import { Lock, Unlock } from "lucide-react";
 import {
-    Plus, Loader2, Upload, Edit3, MessageSquare, X, Palette, Trash2, Check, ExternalLink, Image as ImageIcon, Eye
+    Plus, Loader2, Upload, Edit3, MessageSquare, X, Palette, Trash2, Check, ExternalLink, Image as ImageIcon, Eye, EyeOff
 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { useHRLayout } from "@/components/hr/HRLayoutContext";
@@ -73,6 +73,10 @@ export default function HRSchedulingPage() {
     const poster1InputRef = useRef<HTMLInputElement>(null);
     const poster2InputRef = useRef<HTMLInputElement>(null);
     const poster3InputRef = useRef<HTMLInputElement>(null);
+
+    // Admin: show/hide hidden users
+    const [showHidden, setShowHidden] = useState(false);
+    const [togglingHide, setTogglingHide] = useState<string | null>(null);
 
     const loadData = async () => {
         setLoading(true);
@@ -275,6 +279,28 @@ export default function HRSchedulingPage() {
     const weekDays = selectedSchedule ? getWeekDays(selectedSchedule.week_number, selectedSchedule.year) : [];
     const DAY_NAMES = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "CN"];
     const themeColor = selectedSchedule?.theme_color || "#0d9488";
+
+    // Filter profiles: non-admin never sees hidden, admin can toggle
+    const displayProfiles = profiles.filter(p => {
+        if (!(p as any).hidden_from_schedule) return true; // not hidden → always show
+        return isAdmin && showHidden; // hidden → only show if admin + toggle on
+    });
+    const hiddenCount = profiles.filter(p => (p as any).hidden_from_schedule).length;
+
+    // Toggle hidden_from_schedule for a user
+    const handleToggleHidden = async (profileId: string, currentlyHidden: boolean) => {
+        setTogglingHide(profileId);
+        try {
+            await supabase
+                .from('profiles')
+                .update({ hidden_from_schedule: !currentlyHidden })
+                .eq('id', profileId);
+            setProfiles(prev => prev.map(p =>
+                p.id === profileId ? { ...p, hidden_from_schedule: !currentlyHidden } as any : p
+            ));
+        } catch (err) { console.error(err); }
+        finally { setTogglingHide(null); }
+    };
 
     const getShiftColor = (name: string) => {
         if (name.includes("Sáng")) return "bg-teal-50 text-teal-800 border-teal-200";
@@ -512,6 +538,21 @@ export default function HRSchedulingPage() {
                             )}
                         </div>
                     )}
+
+                    {/* Admin: Toggle hidden users */}
+                    {isAdmin && hiddenCount > 0 && (
+                        <button
+                            onClick={() => setShowHidden(!showHidden)}
+                            className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded border transition-colors h-7 ${showHidden
+                                ? 'bg-amber-50 border-amber-300 text-amber-700'
+                                : 'bg-white border-slate-300 text-slate-500 hover:bg-slate-50'
+                            }`}
+                            title={showHidden ? 'Đang hiện tài khoản ẩn' : 'Hiện tài khoản ẩn'}
+                        >
+                            {showHidden ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+                            {hiddenCount} ẩn
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -531,12 +572,27 @@ export default function HRSchedulingPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {profiles.map((profile, rowIdx) => {
+                            {displayProfiles.map((profile, rowIdx) => {
                                 const rowBg = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/50';
+                                const isHidden = (profile as any).hidden_from_schedule;
                                 return (
-                                    <tr key={profile.id} className={`${rowBg} hover:bg-slate-50`}>
+                                    <tr key={profile.id} className={`${rowBg} hover:bg-slate-50 ${isHidden ? 'opacity-40' : ''}`}>
                                         <td className={`sticky left-0 z-20 ${rowBg} border border-slate-300 px-3 py-1 h-12 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]`}>
                                             <div className="flex items-center gap-2 truncate">
+                                                {/* Admin: hide/show button */}
+                                                {isAdmin && (
+                                                    <button
+                                                        onClick={(e) => { e.stopPropagation(); handleToggleHidden(profile.id, isHidden); }}
+                                                        disabled={togglingHide === profile.id}
+                                                        className={`shrink-0 p-0.5 rounded hover:bg-slate-200 transition-colors ${isHidden ? 'text-amber-500' : 'text-slate-300 hover:text-slate-500'}`}
+                                                        title={isHidden ? 'Bỏ ẩn' : 'Ẩn khỏi lịch'}
+                                                    >
+                                                        {togglingHide === profile.id
+                                                            ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                                            : isHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />
+                                                        }
+                                                    </button>
+                                                )}
                                                 <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-600 shrink-0 border border-slate-200 shadow-sm">
                                                     {profile.avatar_url ? <img src={profile.avatar_url} className="w-full h-full rounded-full object-cover" /> : profile.full_name?.charAt(0)}
                                                 </div>
