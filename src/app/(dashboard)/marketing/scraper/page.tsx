@@ -29,7 +29,7 @@ interface ScrapeJob {
     created_at: string;
     target_url: string;
     keywords?: string;
-    job_type: 'fb_group' | 'fb_page' | 'google_maps';
+    job_type: 'fb_group' | 'fb_page' | 'google_maps' | 'google_places_api';
     status: 'pending' | 'running' | 'completed' | 'failed';
     result_count: number;
     processed_count: number;
@@ -44,6 +44,8 @@ interface ScrapeResult {
     // Business specific
     address?: string;
     website?: string;
+    rating?: number;
+    reviews?: number;
     is_saved: boolean;
 }
 
@@ -56,6 +58,7 @@ export default function MarketingScraperPage() {
     const [jobType, setJobType] = useState<JobType>('fb_group');
     const [targetUrl, setTargetUrl] = useState("");
     const [keywords, setKeywords] = useState("");
+    const [useGoogleApi, setUseGoogleApi] = useState(true); // true = Google API trực tiếp, false = Apify
     const [limit, setLimit] = useState(50);
 
     const [isLoading, setIsLoading] = useState(false);
@@ -115,6 +118,42 @@ export default function MarketingScraperPage() {
 
         setIsLoading(true);
         try {
+            // Google Places API (direct, instant results)
+            if (jobType === 'google_maps' && useGoogleApi) {
+                const response = await fetch('/api/marketing/scrape/google-places', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ keywords, limit })
+                });
+
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.error || "Lỗi Google Places API");
+                }
+
+                // Show results immediately in modal
+                toast.success(`Tìm thấy ${result.total} kết quả (${result.with_phone} có SĐT)`);
+                setResults(result.results || []);
+                setSelectedResults(new Set((result.results || []).map((r: any) => r.id)));
+                setSelectedJob({
+                    id: result.job_id || 'temp',
+                    created_at: new Date().toISOString(),
+                    target_url: '',
+                    keywords,
+                    job_type: 'google_places_api',
+                    status: 'completed',
+                    result_count: result.total,
+                    processed_count: result.with_phone,
+                });
+                setResultSearch("");
+                setFilterHasPhone(false);
+                setFilterKeyword("");
+                setKeywords("");
+                fetchJobs();
+                return;
+            }
+
+            // Apify (async, queue-based)
             const payload = {
                 job_type: jobType,
                 target_url: targetUrl,
@@ -137,9 +176,8 @@ export default function MarketingScraperPage() {
             toast.success("Đã gửi yêu cầu quét thành công!");
             setTargetUrl("");
             setKeywords("");
-            fetchJobs(); // Reload list
+            fetchJobs();
 
-            // Auto sync after 3 seconds for demo purpose
             setTimeout(() => {
                 fetch('/api/marketing/scrape/sync', {
                     method: 'POST',
@@ -289,6 +327,7 @@ export default function MarketingScraperPage() {
     const getJobIcon = (type: string) => {
         switch (type) {
             case 'google_maps': return <MapPin className="w-4 h-4 text-red-500" />;
+            case 'google_places_api': return <MapPin className="w-4 h-4 text-green-600" />;
             case 'fb_page': return <Globe className="w-4 h-4 text-blue-600" />;
             default: return <Facebook className="w-4 h-4 text-blue-600" />;
         }
@@ -296,7 +335,8 @@ export default function MarketingScraperPage() {
 
     const getJobLabel = (type: string) => {
         switch (type) {
-            case 'google_maps': return 'Google Maps';
+            case 'google_maps': return 'Maps (Apify)';
+            case 'google_places_api': return 'Maps (Google API)';
             case 'fb_page': return 'FB Page/Ads';
             default: return 'FB Group';
         }
@@ -348,14 +388,42 @@ export default function MarketingScraperPage() {
                         <div className="flex-1 space-y-3">
                             {jobType === 'google_maps' ? (
                                 <div>
+                                    {/* Engine Toggle */}
+                                    <div className="flex items-center gap-3 mb-3 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                        <span className="text-sm font-medium text-slate-600">Engine:</span>
+                                        <button
+                                            onClick={() => setUseGoogleApi(true)}
+                                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${useGoogleApi
+                                                ? 'bg-green-600 text-white shadow-sm'
+                                                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'}`}
+                                        >
+                                            ⚡ Google API (nhanh)
+                                        </button>
+                                        <button
+                                            onClick={() => setUseGoogleApi(false)}
+                                            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${!useGoogleApi
+                                                ? 'bg-orange-600 text-white shadow-sm'
+                                                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'}`}
+                                        >
+                                            🔄 Apify (nhiều data hơn)
+                                        </button>
+                                        <span className="text-xs text-slate-400 ml-auto">
+                                            {useGoogleApi ? 'Kết quả ngay lập tức, tối đa 20/lần' : 'Chạy nền, tối đa 100/lần'}
+                                        </span>
+                                    </div>
                                     <input
                                         type="text"
                                         placeholder="Ví dụ: Tạp hóa tại Cầu Giấy, Spa tại Hà Nội..."
-                                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none transition-all"
+                                        className={`w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 outline-none transition-all ${useGoogleApi ? 'focus:ring-green-500 focus:border-green-500' : 'focus:ring-red-500 focus:border-red-500'}`}
                                         value={keywords}
                                         onChange={(e) => setKeywords(e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter' && keywords) handleStartScrape(); }}
                                     />
-                                    <p className="text-xs text-slate-400 mt-2">* Nhập từ khóa để tìm kiếm địa điểm kinh doanh.</p>
+                                    <p className="text-xs text-slate-400 mt-2">
+                                        {useGoogleApi
+                                            ? '⚡ Google Places API — Kết quả trả về ngay (miễn phí $200/tháng)'
+                                            : '🔄 Apify — Chạy nền, kết quả sau vài phút'}
+                                    </p>
                                 </div>
                             ) : (
                                 <div>
@@ -381,8 +449,8 @@ export default function MarketingScraperPage() {
                                     className="border border-slate-300 rounded-md px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                                 >
                                     <option value={20}>20 kết quả</option>
-                                    <option value={50}>50 kết quả</option>
-                                    <option value={100}>100 kết quả</option>
+                                    {!(jobType === 'google_maps' && useGoogleApi) && <option value={50}>50 kết quả</option>}
+                                    {!(jobType === 'google_maps' && useGoogleApi) && <option value={100}>100 kết quả</option>}
                                 </select>
                             </div>
                         </div>
@@ -390,10 +458,14 @@ export default function MarketingScraperPage() {
                         <button
                             onClick={handleStartScrape}
                             disabled={isLoading || (jobType === 'google_maps' ? !keywords : !targetUrl)}
-                            className={`px-6 py-3 text-white font-medium rounded-lg shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${jobType === 'google_maps' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            className={`px-6 py-3 text-white font-medium rounded-lg shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
+                                jobType === 'google_maps'
+                                    ? (useGoogleApi ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700')
+                                    : 'bg-blue-600 hover:bg-blue-700'
+                            }`}
                         >
                             {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
-                            Bắt đầu
+                            {jobType === 'google_maps' && useGoogleApi ? 'Tìm ngay' : 'Bắt đầu'}
                         </button>
                     </div>
                 </div>
@@ -558,10 +630,11 @@ export default function MarketingScraperPage() {
                                             </th>
                                             <th className="px-4 py-3 text-left text-sm font-semibold">Tên (Facebook/Địa điểm)</th>
                                             <th className="px-4 py-3 text-left text-sm font-semibold">SĐT</th>
-                                            {selectedJob.job_type === 'google_maps' ? (
+                                            {(selectedJob.job_type === 'google_maps' || selectedJob.job_type === 'google_places_api') ? (
                                                 <>
                                                     <th className="px-4 py-3 text-left text-sm font-semibold">Địa chỉ</th>
                                                     <th className="px-4 py-3 text-left text-sm font-semibold">Website</th>
+                                                    <th className="px-4 py-3 text-center text-sm font-semibold">Rating</th>
                                                 </>
                                             ) : (
                                                 <th className="px-4 py-3 text-left text-sm font-semibold">Nội dung / Comment</th>
@@ -580,11 +653,18 @@ export default function MarketingScraperPage() {
                                                 </td>
                                                 <td className="px-4 py-2 font-medium">{r.facebook_name}</td>
                                                 <td className="px-4 py-2 text-green-600 font-bold">{r.phone || 'N/A'}</td>
-                                                {selectedJob.job_type === 'google_maps' ? (
+                                                {(selectedJob.job_type === 'google_maps' || selectedJob.job_type === 'google_places_api') ? (
                                                     <>
                                                         <td className="px-4 py-2 text-slate-600 truncate max-w-[200px]" title={r.address}>{r.address}</td>
                                                         <td className="px-4 py-2 text-blue-600 truncate max-w-[150px]">
                                                             {r.website ? <a href={r.website} target="_blank" rel="noreferrer" className="hover:underline">Website</a> : '-'}
+                                                        </td>
+                                                        <td className="px-4 py-2 text-center">
+                                                            {r.rating ? (
+                                                                <span className="inline-flex items-center gap-1 text-amber-600 text-xs font-medium">
+                                                                    ⭐ {r.rating} <span className="text-slate-400">({r.reviews})</span>
+                                                                </span>
+                                                            ) : '-'}
                                                         </td>
                                                     </>
                                                 ) : (

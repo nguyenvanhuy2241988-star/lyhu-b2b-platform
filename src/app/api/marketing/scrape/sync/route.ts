@@ -68,6 +68,7 @@ export async function POST(request: Request) {
 
 async function syncJob(supabase: any, job: any) {
     if (!job.apify_run_id) return;
+    if (job.job_type === 'google_places_api') return; // Google API jobs are already completed
 
     // Handle Mock Runs (Legacy support or fallback)
     if (job.apify_run_id.startsWith('mock_')) {
