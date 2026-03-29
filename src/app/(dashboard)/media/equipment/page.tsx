@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { Wrench, Camera, AlertTriangle, CheckCircle, XCircle, Settings } from "lucide-react";
+import { Wrench, Plus, Trash2, Pencil, X, Save } from "lucide-react";
 
 const EQUIPMENT_TYPES: Record<string, string> = {
     camera: "📷 Camera",
@@ -28,12 +28,44 @@ const CONDITION_CONFIG: Record<string, { label: string; color: string }> = {
     needs_repair: { label: "Cần sửa", color: "text-red-600" },
 };
 
+interface EquipmentItem {
+    id: string;
+    name: string;
+    equipment_type: string;
+    brand: string | null;
+    model: string | null;
+    serial_number: string | null;
+    status: string;
+    condition: string;
+    notes: string | null;
+    created_at: string;
+}
+
+const EMPTY_FORM = {
+    name: "",
+    equipment_type: "camera",
+    brand: "",
+    model: "",
+    serial_number: "",
+    status: "available",
+    condition: "good",
+    notes: "",
+};
+
 export default function MediaEquipmentPage() {
     const supabase = createClient();
     const { user } = useAuth();
-    const [equipment, setEquipment] = useState<any[]>([]);
+    const isAdmin = user?.role === "admin" || user?.role === "sale_admin";
+
+    const [equipment, setEquipment] = useState<EquipmentItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState("all");
+
+    // Form state
+    const [showForm, setShowForm] = useState(false);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [form, setForm] = useState(EMPTY_FORM);
+    const [saving, setSaving] = useState(false);
 
     const loadEquipment = useCallback(async () => {
         setLoading(true);
@@ -49,7 +81,7 @@ export default function MediaEquipmentPage() {
             }
 
             const { data } = await query;
-            setEquipment(data || []);
+            setEquipment((data as EquipmentItem[]) || []);
         } catch (err) {
             console.error("loadEquipment error:", err);
         } finally {
@@ -59,10 +91,67 @@ export default function MediaEquipmentPage() {
 
     useEffect(() => { loadEquipment(); }, [loadEquipment]);
 
-    const statusCounts = equipment.reduce((acc, eq) => {
+    const openAdd = () => {
+        setEditingId(null);
+        setForm(EMPTY_FORM);
+        setShowForm(true);
+    };
+
+    const openEdit = (item: EquipmentItem) => {
+        setEditingId(item.id);
+        setForm({
+            name: item.name,
+            equipment_type: item.equipment_type,
+            brand: item.brand || "",
+            model: item.model || "",
+            serial_number: item.serial_number || "",
+            status: item.status,
+            condition: item.condition,
+            notes: item.notes || "",
+        });
+        setShowForm(true);
+    };
+
+    const handleSave = async () => {
+        if (!form.name.trim()) { alert("Vui lòng nhập tên thiết bị"); return; }
+        setSaving(true);
+        try {
+            const payload = {
+                name: form.name.trim(),
+                equipment_type: form.equipment_type,
+                brand: form.brand.trim() || null,
+                model: form.model.trim() || null,
+                serial_number: form.serial_number.trim() || null,
+                status: form.status,
+                condition: form.condition,
+                notes: form.notes.trim() || null,
+            };
+
+            if (editingId) {
+                await supabase.from("media_equipment").update(payload).eq("id", editingId);
+            } else {
+                await supabase.from("media_equipment").insert(payload);
+            }
+            setShowForm(false);
+            loadEquipment();
+        } catch (err) {
+            console.error("handleSave error:", err);
+            alert("Lỗi khi lưu thiết bị");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDelete = async (id: string, name: string) => {
+        if (!confirm(`Xóa thiết bị "${name}"?`)) return;
+        await supabase.from("media_equipment").delete().eq("id", id);
+        loadEquipment();
+    };
+
+    const statusCounts = equipment.reduce((acc: Record<string, number>, eq) => {
         acc[eq.status] = (acc[eq.status] || 0) + 1;
         return acc;
-    }, {} as Record<string, number>);
+    }, {});
 
     return (
         <div className="space-y-6">
@@ -72,6 +161,12 @@ export default function MediaEquipmentPage() {
                     <h1 className="text-xl font-bold text-slate-900">Thiết bị</h1>
                     <p className="text-sm text-slate-500 mt-1">Quản lý camera, ống kính, phụ kiện</p>
                 </div>
+                {isAdmin && (
+                    <button onClick={openAdd}
+                        className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 transition-colors">
+                        <Plus className="w-4 h-4" /> Thêm thiết bị
+                    </button>
+                )}
             </div>
 
             {/* Stats */}
@@ -105,7 +200,12 @@ export default function MediaEquipmentPage() {
                 <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
                     <Wrench className="w-12 h-12 mx-auto mb-3 text-slate-300" />
                     <p className="text-sm text-slate-500 font-medium">Chưa có thiết bị nào</p>
-                    <p className="text-xs text-slate-400 mt-1">Admin sẽ thêm thiết bị tại đây</p>
+                    {isAdmin && (
+                        <button onClick={openAdd}
+                            className="mt-3 text-sm text-pink-600 hover:text-pink-700 font-medium">
+                            + Thêm thiết bị đầu tiên
+                        </button>
+                    )}
                 </div>
             ) : (
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -118,6 +218,7 @@ export default function MediaEquipmentPage() {
                                 <th className="p-3 text-xs font-medium text-slate-500">Tình trạng</th>
                                 <th className="p-3 text-xs font-medium text-slate-500">Trạng thái</th>
                                 <th className="p-3 text-xs font-medium text-slate-500">Serial</th>
+                                {isAdmin && <th className="p-3 text-xs font-medium text-slate-500 text-center">Thao tác</th>}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
@@ -136,11 +237,115 @@ export default function MediaEquipmentPage() {
                                             <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${status.color}`}>{status.label}</span>
                                         </td>
                                         <td className="p-3 text-xs text-slate-400 font-mono">{eq.serial_number || "-"}</td>
+                                        {isAdmin && (
+                                            <td className="p-3 text-center">
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <button onClick={() => openEdit(eq)}
+                                                        className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                                                        <Pencil className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button onClick={() => handleDelete(eq.id, eq.name)}
+                                                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        )}
                                     </tr>
                                 );
                             })}
                         </tbody>
                     </table>
+                </div>
+            )}
+
+            {/* Add/Edit Modal */}
+            {showForm && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl w-full max-w-lg shadow-xl overflow-hidden">
+                        <div className="p-5 border-b border-slate-200 flex items-center justify-between">
+                            <h2 className="text-lg font-bold text-slate-900">
+                                {editingId ? "Chỉnh sửa thiết bị" : "Thêm thiết bị mới"}
+                            </h2>
+                            <button onClick={() => setShowForm(false)} className="p-2 hover:bg-slate-100 rounded-lg text-slate-400">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-5 space-y-4">
+                            <div>
+                                <label className="text-xs font-medium text-slate-500 block mb-1">Tên thiết bị *</label>
+                                <input className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm"
+                                    placeholder="VD: Canon EOS R5"
+                                    value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-medium text-slate-500 block mb-1">Loại</label>
+                                    <select className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm bg-white"
+                                        value={form.equipment_type} onChange={e => setForm({ ...form, equipment_type: e.target.value })}>
+                                        {Object.entries(EQUIPMENT_TYPES).map(([k, v]) => (
+                                            <option key={k} value={k}>{v}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-medium text-slate-500 block mb-1">Trạng thái</label>
+                                    <select className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm bg-white"
+                                        value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}>
+                                        {Object.entries(STATUS_CONFIG).map(([k, v]) => (
+                                            <option key={k} value={k}>{v.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-medium text-slate-500 block mb-1">Hãng</label>
+                                    <input className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm"
+                                        placeholder="VD: Canon"
+                                        value={form.brand} onChange={e => setForm({ ...form, brand: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-medium text-slate-500 block mb-1">Model</label>
+                                    <input className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm"
+                                        placeholder="VD: EOS R5"
+                                        value={form.model} onChange={e => setForm({ ...form, model: e.target.value })} />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="text-xs font-medium text-slate-500 block mb-1">Serial Number</label>
+                                    <input className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm font-mono"
+                                        placeholder="VD: SN123456"
+                                        value={form.serial_number} onChange={e => setForm({ ...form, serial_number: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-medium text-slate-500 block mb-1">Tình trạng</label>
+                                    <select className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm bg-white"
+                                        value={form.condition} onChange={e => setForm({ ...form, condition: e.target.value })}>
+                                        {Object.entries(CONDITION_CONFIG).map(([k, v]) => (
+                                            <option key={k} value={k}>{v.label}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs font-medium text-slate-500 block mb-1">Ghi chú</label>
+                                <textarea className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={2}
+                                    placeholder="Ghi chú thêm..."
+                                    value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
+                            </div>
+                        </div>
+                        <div className="p-4 border-t border-slate-200 flex justify-end gap-3">
+                            <button onClick={() => setShowForm(false)}
+                                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-100">Hủy</button>
+                            <button onClick={handleSave} disabled={saving}
+                                className="px-5 py-2 rounded-lg text-sm font-medium bg-pink-600 text-white hover:bg-pink-700 disabled:opacity-50 flex items-center gap-2">
+                                {saving ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+                                {editingId ? "Cập nhật" : "Thêm thiết bị"}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
