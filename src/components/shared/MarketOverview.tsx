@@ -4,8 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
 import {
-    Search, Edit2, X, Save, Loader2, MapPin, Store,
-    TrendingUp, CheckCircle, XCircle, Filter, ChevronDown, ChevronUp
+    Search, Edit2, X, Save, Loader2, MapPin, Store, Plus, Trash2,
+    TrendingUp, CheckCircle, XCircle, Filter, ChevronDown, ChevronUp, Route
 } from "lucide-react";
 
 interface ProvinceData {
@@ -21,6 +21,16 @@ interface ProvinceData {
     npp_status: string;
     notes: string | null;
     updated_at: string;
+}
+
+interface RouteData {
+    id: string;
+    province: string;
+    route_name: string;
+    districts: string | null;
+    estimated_outlets: number;
+    frequency: string;
+    notes: string | null;
 }
 
 interface MarketOverviewProps {
@@ -59,6 +69,23 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
     // Expanded rows
     const [expandedRegion, setExpandedRegion] = useState<string | null>(null);
 
+    // Route details
+    const [expandedProvince, setExpandedProvince] = useState<string | null>(null);
+    const [routes, setRoutes] = useState<Record<string, RouteData[]>>({});
+    const [loadingRoutes, setLoadingRoutes] = useState<string | null>(null);
+
+    // Add route form
+    const [showAddRoute, setShowAddRoute] = useState(false);
+    const [addRouteProvince, setAddRouteProvince] = useState("");
+    const [routeForm, setRouteForm] = useState({
+        route_name: "",
+        districts: "",
+        estimated_outlets: 0,
+        frequency: "weekly",
+        notes: "",
+    });
+    const [savingRoute, setSavingRoute] = useState(false);
+
     const loadData = useCallback(async () => {
         setLoading(true);
         const { data: rows, error } = await supabase
@@ -72,6 +99,30 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
     }, []);
 
     useEffect(() => { loadData(); }, [loadData]);
+
+    // Load routes for a province
+    const loadRoutes = useCallback(async (province: string) => {
+        setLoadingRoutes(province);
+        const { data: rows, error } = await supabase
+            .from("province_routes")
+            .select("*")
+            .eq("province", province)
+            .order("route_name");
+
+        if (!error && rows) {
+            setRoutes(prev => ({ ...prev, [province]: rows }));
+        }
+        setLoadingRoutes(null);
+    }, []);
+
+    const toggleProvince = (province: string) => {
+        if (expandedProvince === province) {
+            setExpandedProvince(null);
+        } else {
+            setExpandedProvince(province);
+            if (!routes[province]) loadRoutes(province);
+        }
+    };
 
     // Derived stats
     const filtered = data.filter(d => {
@@ -103,6 +154,9 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
     };
     const regionIcons: Record<string, string> = {
         "Bắc": "🏔️", "Trung": "🏖️", "Nam": "🌴"
+    };
+    const freqLabels: Record<string, string> = {
+        "weekly": "Hàng tuần", "biweekly": "2 tuần/lần", "monthly": "Hàng tháng"
     };
 
     function openEdit(item: ProvinceData) {
@@ -150,6 +204,41 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
             loadData();
         }
         setSaving(false);
+    }
+
+    // Route CRUD
+    function openAddRoute(province: string) {
+        setAddRouteProvince(province);
+        setRouteForm({ route_name: "", districts: "", estimated_outlets: 0, frequency: "weekly", notes: "" });
+        setShowAddRoute(true);
+    }
+
+    async function handleAddRoute(e: React.FormEvent) {
+        e.preventDefault();
+        setSavingRoute(true);
+        const { error } = await supabase.from("province_routes").insert({
+            province: addRouteProvince,
+            route_name: routeForm.route_name,
+            districts: routeForm.districts || null,
+            estimated_outlets: routeForm.estimated_outlets,
+            frequency: routeForm.frequency,
+            notes: routeForm.notes || null,
+        });
+        if (error) {
+            alert("Lỗi: " + error.message);
+        } else {
+            setShowAddRoute(false);
+            loadRoutes(addRouteProvince);
+            loadData(); // refresh counts
+        }
+        setSavingRoute(false);
+    }
+
+    async function handleDeleteRoute(routeId: string, province: string) {
+        if (!confirm("Xóa tuyến này?")) return;
+        await supabase.from("province_routes").delete().eq("id", routeId);
+        loadRoutes(province);
+        loadData();
     }
 
     if (loading) {
@@ -279,62 +368,138 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                         </thead>
                                         <tbody className="divide-y divide-slate-50">
                                             {provinces.map(p => (
-                                                <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
-                                                    <td className="px-4 py-2.5">
-                                                        <span className="font-medium text-slate-800 text-xs">{p.province}</span>
-                                                    </td>
-                                                    <td className="px-3 py-2.5 text-right text-xs text-slate-600">
-                                                        {p.population > 0 ? p.population.toLocaleString('vi-VN') : '-'}
-                                                    </td>
-                                                    <td className="px-3 py-2.5 text-right">
-                                                        <span className={`text-xs font-medium ${p.total_routes > 0 ? 'text-blue-600' : 'text-slate-300'}`}>
-                                                            {p.total_routes > 0 ? p.total_routes : '-'}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-3 py-2.5 text-right">
-                                                        <span className={`text-xs font-medium ${p.estimated_outlets > 0 ? 'text-purple-600' : 'text-slate-300'}`}>
-                                                            {p.estimated_outlets > 0 ? p.estimated_outlets.toLocaleString('vi-VN') : '-'}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-3 py-2.5 text-center">
-                                                        {p.has_npp ? (
-                                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
-                                                                <CheckCircle className="w-3 h-3" /> Có
-                                                            </span>
-                                                        ) : (
-                                                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-                                                                <XCircle className="w-3 h-3" /> Chưa
-                                                            </span>
-                                                        )}
-                                                    </td>
-                                                    {!readOnly && (
-                                                        <td className="px-3 py-2.5 text-xs text-slate-600">
-                                                            {p.npp_name || <span className="text-slate-300">-</span>}
-                                                        </td>
-                                                    )}
-                                                    {!readOnly && (
-                                                        <td className="px-3 py-2.5">
-                                                            <div className="flex flex-wrap gap-1">
-                                                                {(p.npp_brands || []).length > 0 ? p.npp_brands.map((brand, i) => (
-                                                                    <span key={i} className="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-medium">
-                                                                        {brand}
-                                                                    </span>
-                                                                )) : <span className="text-[10px] text-slate-300">-</span>}
+                                                <>
+                                                    <tr key={p.id} className="hover:bg-slate-50/50 transition-colors cursor-pointer"
+                                                        onClick={() => p.total_routes > 0 || !readOnly ? toggleProvince(p.province) : null}>
+                                                        <td className="px-4 py-2.5">
+                                                            <div className="flex items-center gap-1.5">
+                                                                {(p.total_routes > 0 || !readOnly) && (
+                                                                    <ChevronDown className={`w-3 h-3 text-slate-400 transition-transform ${expandedProvince === p.province ? 'rotate-180' : ''}`} />
+                                                                )}
+                                                                <span className="font-medium text-slate-800 text-xs">{p.province}</span>
                                                             </div>
                                                         </td>
-                                                    )}
-                                                    {!readOnly && (
-                                                        <td className="px-4 py-2.5 text-right">
-                                                            <button
-                                                                onClick={() => openEdit(p)}
-                                                                className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
-                                                                title="Sửa thông tin"
-                                                            >
-                                                                <Edit2 className="w-3.5 h-3.5" />
-                                                            </button>
+                                                        <td className="px-3 py-2.5 text-right text-xs text-slate-600">
+                                                            {p.population > 0 ? p.population.toLocaleString('vi-VN') : '-'}
                                                         </td>
+                                                        <td className="px-3 py-2.5 text-right">
+                                                            <span className={`text-xs font-medium ${p.total_routes > 0 ? 'text-blue-600' : 'text-slate-300'}`}>
+                                                                {p.total_routes > 0 ? p.total_routes : '-'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-3 py-2.5 text-right">
+                                                            <span className={`text-xs font-medium ${p.estimated_outlets > 0 ? 'text-purple-600' : 'text-slate-300'}`}>
+                                                                {p.estimated_outlets > 0 ? p.estimated_outlets.toLocaleString('vi-VN') : '-'}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-3 py-2.5 text-center">
+                                                            {p.has_npp ? (
+                                                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                                                                    <CheckCircle className="w-3 h-3" /> Có
+                                                                </span>
+                                                            ) : (
+                                                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                                                                    <XCircle className="w-3 h-3" /> Chưa
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        {!readOnly && (
+                                                            <td className="px-3 py-2.5 text-xs text-slate-600">
+                                                                {p.npp_name || <span className="text-slate-300">-</span>}
+                                                            </td>
+                                                        )}
+                                                        {!readOnly && (
+                                                            <td className="px-3 py-2.5">
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {(p.npp_brands || []).length > 0 ? p.npp_brands.map((brand, i) => (
+                                                                        <span key={i} className="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-medium">
+                                                                            {brand}
+                                                                        </span>
+                                                                    )) : <span className="text-[10px] text-slate-300">-</span>}
+                                                                </div>
+                                                            </td>
+                                                        )}
+                                                        {!readOnly && (
+                                                            <td className="px-4 py-2.5 text-right">
+                                                                <button
+                                                                    onClick={(e) => { e.stopPropagation(); openEdit(p); }}
+                                                                    className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                                                                    title="Sửa thông tin"
+                                                                >
+                                                                    <Edit2 className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            </td>
+                                                        )}
+                                                    </tr>
+
+                                                    {/* Expanded Route Details */}
+                                                    {expandedProvince === p.province && (
+                                                        <tr key={`${p.id}-routes`}>
+                                                            <td colSpan={readOnly ? 5 : 8} className="px-0 py-0">
+                                                                <div className="bg-slate-50 border-y border-slate-100 px-8 py-3">
+                                                                    <div className="flex items-center justify-between mb-2">
+                                                                        <h4 className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                                                                            <Route className="w-3.5 h-3.5 text-blue-500" />
+                                                                            Tuyến bán hàng — {p.province}
+                                                                        </h4>
+                                                                        {!readOnly && (
+                                                                            <button
+                                                                                onClick={() => openAddRoute(p.province)}
+                                                                                className="flex items-center gap-1 text-[11px] font-medium text-teal-600 hover:text-teal-700 bg-teal-50 hover:bg-teal-100 px-2.5 py-1 rounded-lg transition-colors"
+                                                                            >
+                                                                                <Plus className="w-3 h-3" /> Thêm tuyến
+                                                                            </button>
+                                                                        )}
+                                                                    </div>
+
+                                                                    {loadingRoutes === p.province ? (
+                                                                        <div className="flex items-center justify-center py-4">
+                                                                            <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                                                                        </div>
+                                                                    ) : (routes[p.province] || []).length === 0 ? (
+                                                                        <p className="text-[11px] text-slate-400 py-3 text-center">
+                                                                            Chưa có tuyến nào được thiết lập
+                                                                        </p>
+                                                                    ) : (
+                                                                        <div className="space-y-1.5">
+                                                                            {(routes[p.province] || []).map((rt, idx) => (
+                                                                                <div key={rt.id} className="flex items-center gap-3 bg-white rounded-lg px-3 py-2 border border-slate-200">
+                                                                                    <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                                                                                        {idx + 1}
+                                                                                    </span>
+                                                                                    <div className="flex-1 min-w-0">
+                                                                                        <div className="text-xs font-semibold text-slate-800">{rt.route_name}</div>
+                                                                                        {rt.districts && (
+                                                                                            <div className="text-[10px] text-slate-500 truncate">{rt.districts}</div>
+                                                                                        )}
+                                                                                    </div>
+                                                                                    <div className="flex items-center gap-3 flex-shrink-0">
+                                                                                        {rt.estimated_outlets > 0 && (
+                                                                                            <span className="text-[10px] text-purple-600 bg-purple-50 px-2 py-0.5 rounded font-medium">
+                                                                                                {rt.estimated_outlets} điểm bán
+                                                                                            </span>
+                                                                                        )}
+                                                                                        <span className="text-[10px] text-slate-400">
+                                                                                            {freqLabels[rt.frequency] || rt.frequency}
+                                                                                        </span>
+                                                                                        {!readOnly && (
+                                                                                            <button
+                                                                                                onClick={() => handleDeleteRoute(rt.id, p.province)}
+                                                                                                className="p-1 text-slate-300 hover:text-red-500 rounded transition-colors"
+                                                                                            >
+                                                                                                <Trash2 className="w-3 h-3" />
+                                                                                            </button>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
                                                     )}
-                                                </tr>
+                                                </>
                                             ))}
                                         </tbody>
                                     </table>
@@ -352,7 +517,7 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                 )}
             </div>
 
-            {/* Edit Modal */}
+            {/* Edit Province Modal */}
             {editing && !readOnly && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
                     <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
@@ -450,6 +615,78 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                     className="flex items-center gap-2 px-5 py-2 text-sm bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 font-medium transition-colors">
                                     <Save className="w-4 h-4" />
                                     {saving ? "Đang lưu..." : "Lưu"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Route Modal */}
+            {showAddRoute && !readOnly && (
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+                        <div className="flex items-center justify-between p-5 border-b border-slate-200">
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-900">🛣️ Thêm tuyến — {addRouteProvince}</h3>
+                            </div>
+                            <button onClick={() => setShowAddRoute(false)} className="p-1 hover:bg-slate-100 rounded-lg">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleAddRoute} className="p-5 space-y-4">
+                            <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Tên tuyến *</label>
+                                <input required value={routeForm.route_name}
+                                    onChange={e => setRouteForm(f => ({ ...f, route_name: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                                    placeholder="VD: Tuyến Đống Đa - Thanh Xuân"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Quận/Huyện đi qua</label>
+                                <input value={routeForm.districts}
+                                    onChange={e => setRouteForm(f => ({ ...f, districts: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                                    placeholder="VD: Đống Đa, Thanh Xuân, Hoàng Mai"
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Điểm bán DT</label>
+                                    <input type="number" value={routeForm.estimated_outlets}
+                                        onChange={e => setRouteForm(f => ({ ...f, estimated_outlets: parseInt(e.target.value) || 0 }))}
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Tần suất</label>
+                                    <select value={routeForm.frequency}
+                                        onChange={e => setRouteForm(f => ({ ...f, frequency: e.target.value }))}
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                                    >
+                                        <option value="weekly">Hàng tuần</option>
+                                        <option value="biweekly">2 tuần/lần</option>
+                                        <option value="monthly">Hàng tháng</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Ghi chú</label>
+                                <input value={routeForm.notes}
+                                    onChange={e => setRouteForm(f => ({ ...f, notes: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                                    placeholder="Ghi chú thêm..."
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+                                <button type="button" onClick={() => setShowAddRoute(false)}
+                                    className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg">Hủy</button>
+                                <button type="submit" disabled={savingRoute}
+                                    className="flex items-center gap-2 px-5 py-2 text-sm bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 font-medium transition-colors">
+                                    <Plus className="w-4 h-4" />
+                                    {savingRoute ? "Đang thêm..." : "Thêm tuyến"}
                                 </button>
                             </div>
                         </form>
