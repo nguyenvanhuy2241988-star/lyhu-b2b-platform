@@ -156,6 +156,7 @@ export const NAV_ITEMS = {
         { label: "Hiệu suất CTV", href: "/admin/ctv", icon: TrendingUp },
         { label: "Báo cáo Sales GT", href: "/admin/gt-reports", icon: MapPin },
         { label: "Báo cáo Media", href: "/admin/media-reports", icon: Camera },
+        { label: "Thiết bị Media", href: "/admin/media-equipment", icon: Wrench },
         { label: "Hiệu quả Tuyển dụng", href: "/recruitment/performance", icon: Trophy },
         { label: "Báo cáo Tuyển dụng", href: "/recruitment/reports", icon: ClipboardList },
         { label: "Mối quan hệ", href: "/recruitment/networking", icon: UserPlus },
