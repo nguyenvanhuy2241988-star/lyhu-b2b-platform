@@ -143,8 +143,8 @@ export default function AdminMediaReportsPage() {
                 .eq("role", "media_creator")
                 .eq("status", "active");
 
-            const users = mediaUsers || [];
-            const userIds = users.map(u => u.id);
+            const users: { id: string; full_name: string }[] = mediaUsers || [];
+            const userIds = users.map((u: { id: string }) => u.id);
 
             if (userIds.length === 0) {
                 setTotalBriefs(0);
@@ -181,9 +181,9 @@ export default function AdminMediaReportsPage() {
                 .gte("created_at", fromStr)
                 .lte("created_at", toStr);
 
-            const briefs = allBriefs || [];
-            const projects = allProjects || [];
-            const assets = allAssets || [];
+            const briefs: { id: string; assigned_to: string; status: string }[] = allBriefs || [];
+            const projects: { id: string; assigned_to: string; status: string }[] = allProjects || [];
+            const assets: { id: string; uploaded_by: string }[] = allAssets || [];
 
             // Summary cards
             setTotalBriefs(briefs.length);
@@ -195,17 +195,17 @@ export default function AdminMediaReportsPage() {
             setTotalAssets(assets.length);
 
             // Per-user breakdown
-            const userReportList: UserReport[] = users.map(u => {
-                const uBriefs = briefs.filter(b => b.assigned_to === u.id);
-                const uProjects = projects.filter(p => p.assigned_to === u.id);
-                const uAssets = assets.filter(a => a.uploaded_by === u.id);
+            const userReportList: UserReport[] = users.map((u: { id: string; full_name: string }) => {
+                const uBriefs = briefs.filter((b: { assigned_to: string }) => b.assigned_to === u.id);
+                const uProjects = projects.filter((p: { assigned_to: string }) => p.assigned_to === u.id);
+                const uAssets = assets.filter((a: { uploaded_by: string }) => a.uploaded_by === u.id);
                 return {
                     userId: u.id,
                     fullName: u.full_name || u.id.slice(0, 8),
                     briefsAssigned: uBriefs.length,
-                    briefsCompleted: uBriefs.filter(b => b.status === "completed").length,
-                    projectsActive: uProjects.filter(p => ["shooting", "editing", "review"].includes(p.status)).length,
-                    projectsCompleted: uProjects.filter(p => p.status === "completed").length,
+                    briefsCompleted: uBriefs.filter((b: { status: string }) => b.status === "completed").length,
+                    projectsActive: uProjects.filter((p: { status: string }) => ["shooting", "editing", "review"].includes(p.status)).length,
+                    projectsCompleted: uProjects.filter((p: { status: string }) => p.status === "completed").length,
                     assetsUploaded: uAssets.length,
                 };
             });
