@@ -75,6 +75,10 @@ const ROLE_PERMS: Record<Role, PermissionKey[]> = {
         'orders.read', 'orders.create',
         'chat.use',
         'docs.read'
+    ],
+    media_creator: [
+        'docs.read',
+        'chat.use'
     ]
 };
 
