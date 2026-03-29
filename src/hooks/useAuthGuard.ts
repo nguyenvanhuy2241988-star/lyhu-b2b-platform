@@ -18,6 +18,7 @@ const ROLE_PATHS = {
     [ROLES.ACCOUNTANT]: "/accountant",
     [ROLES.SALE_ADMIN]: "/sale-admin",
     [ROLES.LIVESTREAM]: "/livestream",
+    [ROLES.MEDIA_CREATOR]: "/media",
 };
 
 export type UserRole = keyof typeof ROLE_PATHS;

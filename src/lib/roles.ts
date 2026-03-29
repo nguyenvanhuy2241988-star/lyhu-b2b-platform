@@ -1,4 +1,4 @@
-export type Role = "admin" | "telesales" | "sales" | "ctv" | "customer" | "recruiter" | "warehouse" | "marketing" | "ecommerce" | "rnd" | "shipper" | "accountant" | "sale_admin" | "livestream" | "sales_gt";
+export type Role = "admin" | "telesales" | "sales" | "ctv" | "customer" | "recruiter" | "warehouse" | "marketing" | "ecommerce" | "rnd" | "shipper" | "accountant" | "sale_admin" | "livestream" | "sales_gt" | "media_creator";
 
 export const ROLE_HOME: Record<Role, string> = {
     admin: "/admin",
@@ -16,6 +16,7 @@ export const ROLE_HOME: Record<Role, string> = {
     sale_admin: "/sale-admin",
     livestream: "/livestream",
     sales_gt: "/sales-gt",
+    media_creator: "/media",
 };
 
 // Các đường dẫn dùng chung cho nhiều role

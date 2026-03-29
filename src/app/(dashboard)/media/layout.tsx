@@ -9,7 +9,7 @@ export default function MediaLayout({
 }: {
     children: React.ReactNode;
 }) {
-    useAuthGuard(ROLES.MEDIA_CREATOR as any);
+    useAuthGuard(ROLES.MEDIA_CREATOR);
 
     return (
         <DashboardShell role={ROLES.MEDIA_CREATOR} title="Media (Ảnh/Video)">
