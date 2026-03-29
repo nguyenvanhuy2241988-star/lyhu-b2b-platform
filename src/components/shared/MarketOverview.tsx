@@ -272,8 +272,8 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                                 <th className="text-right px-3 py-2 font-medium text-xs">Số tuyến</th>
                                                 <th className="text-right px-3 py-2 font-medium text-xs">Điểm bán DT</th>
                                                 <th className="text-center px-3 py-2 font-medium text-xs">NPP</th>
-                                                <th className="text-left px-3 py-2 font-medium text-xs">Tên NPP</th>
-                                                <th className="text-left px-3 py-2 font-medium text-xs">Nhãn hiệu</th>
+                                                {!readOnly && <th className="text-left px-3 py-2 font-medium text-xs">Tên NPP</th>}
+                                                {!readOnly && <th className="text-left px-3 py-2 font-medium text-xs">Nhãn hiệu</th>}
                                                 {!readOnly && <th className="text-right px-4 py-2 font-medium text-xs">Sửa</th>}
                                             </tr>
                                         </thead>
@@ -307,18 +307,22 @@ export default function MarketOverview({ readOnly = true }: MarketOverviewProps)
                                                             </span>
                                                         )}
                                                     </td>
-                                                    <td className="px-3 py-2.5 text-xs text-slate-600">
-                                                        {p.npp_name || <span className="text-slate-300">-</span>}
-                                                    </td>
-                                                    <td className="px-3 py-2.5">
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {(p.npp_brands || []).length > 0 ? p.npp_brands.map((brand, i) => (
-                                                                <span key={i} className="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-medium">
-                                                                    {brand}
-                                                                </span>
-                                                            )) : <span className="text-[10px] text-slate-300">-</span>}
-                                                        </div>
-                                                    </td>
+                                                    {!readOnly && (
+                                                        <td className="px-3 py-2.5 text-xs text-slate-600">
+                                                            {p.npp_name || <span className="text-slate-300">-</span>}
+                                                        </td>
+                                                    )}
+                                                    {!readOnly && (
+                                                        <td className="px-3 py-2.5">
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {(p.npp_brands || []).length > 0 ? p.npp_brands.map((brand, i) => (
+                                                                    <span key={i} className="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded font-medium">
+                                                                        {brand}
+                                                                    </span>
+                                                                )) : <span className="text-[10px] text-slate-300">-</span>}
+                                                            </div>
+                                                        </td>
+                                                    )}
                                                     {!readOnly && (
                                                         <td className="px-4 py-2.5 text-right">
                                                             <button
