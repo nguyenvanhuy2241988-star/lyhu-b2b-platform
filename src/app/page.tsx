@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { ShieldCheck, Users, TrendingUp, UserPlus, Headset, Briefcase, Archive, Megaphone, Globe, FlaskConical, Truck, Calculator, ClipboardCheck, Video, MapPin } from "lucide-react";
+import { ShieldCheck, Users, TrendingUp, UserPlus, Headset, Briefcase, Archive, Megaphone, Globe, FlaskConical, Truck, Calculator, ClipboardCheck, Video, MapPin, Camera } from "lucide-react";
 
 const roles = [
     // 1. Nhóm Quản trị (Management)
@@ -106,6 +106,14 @@ const roles = [
         icon: Megaphone,
         color: "text-fuchsia-600",
         bg: "bg-fuchsia-50",
+    },
+    {
+        title: "Media (Ảnh/Video)",
+        description: "Chụp ảnh & Quay dựng video",
+        href: "/login?role=media_creator",
+        icon: Camera,
+        color: "text-pink-600",
+        bg: "bg-pink-50",
     },
     {
         title: "CTV",

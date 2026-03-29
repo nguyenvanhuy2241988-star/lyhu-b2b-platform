@@ -38,6 +38,10 @@ import {
     Gamepad2,
     Sparkles,       // Poster Studio
     MapPin,         // Sales GT
+    Camera,         // Media Creator
+    FolderOpen,     // Media Library
+    Wrench,         // Equipment
+    FileInput,      // Brief
 } from "lucide-react";
 import { MODULES } from '@/modules/registry';
 
@@ -66,6 +70,7 @@ export const ROLES = {
     SALE_ADMIN: "sale_admin",
     LIVESTREAM: "livestream",
     SALES_GT: "sales_gt",
+    MEDIA_CREATOR: "media_creator",
 } as const;
 
 export const NAV_ITEMS = {
@@ -272,6 +277,21 @@ export const NAV_ITEMS = {
         { label: "Việc cần làm", href: "/sales-gt/tasks", icon: ListTodo },
         { label: "Thu nhập & KPI", href: "/sales-gt/earnings", icon: DollarSign },
         { label: "Quy định & Chính sách", href: "/sales-gt/rules", icon: Book },
+        { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
+        { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
+        { label: "Góc Giải Trí", href: "/entertainment", icon: Gamepad2 },
+        { label: "Sự kiện", href: "/events", icon: Calendar },
+        { label: "Tài liệu", href: "/documents", icon: Book },
+    ],
+    [ROLES.MEDIA_CREATOR]: [
+        { label: "Tổng quan", href: "/media", icon: LayoutDashboard },
+        { label: "Brief / Yêu cầu", href: "/media/briefs", icon: FileInput },
+        { label: "Thư viện Media", href: "/media/library", icon: FolderOpen },
+        { label: "Dự án", href: "/media/projects", icon: ClipboardList },
+        { label: "Thiết bị", href: "/media/equipment", icon: Wrench },
+        { label: "Việc cần làm", href: "/media/tasks", icon: ListTodo },
+        { label: "Thu nhập & KPI", href: "/media/earnings", icon: DollarSign },
+        { label: "Quy định & Chính sách", href: "/media/rules", icon: Book },
         { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
         { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
         { label: "Góc Giải Trí", href: "/entertainment", icon: Gamepad2 },
