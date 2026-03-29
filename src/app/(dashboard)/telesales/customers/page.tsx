@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Plus, MapPin, Phone, Mail, MoreHorizontal, Building, UserPlus, Loader2, X, Save, Filter, TrendingUp, Trophy, Map, Tag, Calendar } from "lucide-react";
+import { Search, Plus, MapPin, Phone, Mail, MoreHorizontal, Building, UserPlus, Loader2, X, Save, Filter, TrendingUp, Trophy, Map, Tag, Calendar, Globe } from "lucide-react";
+import MarketOverview from "@/components/shared/MarketOverview";
 import { fetchCustomers, createCustomer, deleteCustomer, Customer, DEAL_STAGE_LABELS } from "@/lib/crmDealsStore";
 import { createClient } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -72,6 +73,7 @@ export default function TelesalesCustomersPage() {
     const [typeDist, setTypeDist] = useState<DistributionItem[]>([]);
     const [dashLoading, setDashLoading] = useState(true);
     const [showDashboard, setShowDashboard] = useState(true);
+    const [showMarket, setShowMarket] = useState(false);
 
     // Dashboard time filter
     type TimePreset = 'today' | '7days' | 'month' | 'quarter' | 'year' | 'custom';
@@ -446,6 +448,10 @@ export default function TelesalesCustomersPage() {
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showDashboard ? 'bg-primary-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                     <TrendingUp className="w-3.5 h-3.5" /> Dashboard
                 </button>
+                <button onClick={() => setShowMarket(!showMarket)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showMarket ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                    <Globe className="w-3.5 h-3.5" /> Thị trường
+                </button>
             </div>
 
             {/* Dashboard Sections */}
@@ -567,6 +573,9 @@ export default function TelesalesCustomersPage() {
                     )}
                 </div>
             )}
+
+            {/* Market Overview Section */}
+            {showMarket && <MarketOverview readOnly={true} />}
 
             {/* Customers Table */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200">

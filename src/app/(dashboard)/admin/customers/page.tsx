@@ -7,8 +7,9 @@ import {
     Phone, Mail, MapPin, Loader2, Building2,
     Search, Filter, Pencil, Trash2, X, Save,
     UserCircle, AlertCircle, Users, UserPlus, PhoneCall, ShoppingCart, Snowflake, TrendingUp, Crown,
-    MapPinned, UserCog, Tag, Calendar, ChevronLeft, ChevronRight
+    MapPinned, UserCog, Tag, Calendar, ChevronLeft, ChevronRight, Globe
 } from "lucide-react";
+import MarketOverview from "@/components/shared/MarketOverview";
 import { useAuth } from "@/components/auth/AuthProvider";
 import {
     fetchCustomerDashboardStats, fetchPipelineStats, fetchTopCustomers,
@@ -69,6 +70,7 @@ export default function AdminCustomersPage() {
     const [ownerDist, setOwnerDist] = useState<DistributionItem[]>([]);
     const [typeDist, setTypeDist] = useState<DistributionItem[]>([]);
     const [dashLoading, setDashLoading] = useState(true);
+    const [showMarket, setShowMarket] = useState(false);
 
     // Time filter for dashboard
     type TimePreset = 'today' | '7days' | 'month' | 'quarter' | 'year' | 'custom';
@@ -306,6 +308,10 @@ export default function AdminCustomersPage() {
                         </div>
                     )}
                 </div>
+                <button onClick={() => setShowMarket(!showMarket)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showMarket ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                    <Globe className="w-3.5 h-3.5" /> Thị trường
+                </button>
             </div>
 
             {/* ===== DASHBOARD ===== */}
@@ -495,6 +501,9 @@ export default function AdminCustomersPage() {
                     </div>
                 </div>
             )}
+
+            {/* Market Overview Section */}
+            {showMarket && <MarketOverview readOnly={false} />}
 
             {/* Advanced Filters */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
