@@ -63,11 +63,17 @@ export async function POST(req: NextRequest) {
             const mimeType = formData.get("mimeType") as string;
             const fileSize = formData.get("fileSize") as string;
             const userName = formData.get("userName") as string;
+            const targetFolderId = formData.get("targetFolderId") as string;
 
             const token = await getAccessToken();
-            const folderId = userName
-                ? await getOrCreateFolder(token, userName)
-                : GOOGLE_DRIVE_FOLDER_ID;
+
+            // Use targetFolderId if provided, otherwise create/use user folder
+            let folderId = GOOGLE_DRIVE_FOLDER_ID;
+            if (targetFolderId) {
+                folderId = targetFolderId;
+            } else if (userName) {
+                folderId = await getOrCreateFolder(token, userName);
+            }
 
             const initRes = await fetch(
                 "https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable",
