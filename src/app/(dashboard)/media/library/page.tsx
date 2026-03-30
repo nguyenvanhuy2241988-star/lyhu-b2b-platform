@@ -13,6 +13,8 @@ const CATEGORIES: Record<string, string> = {
     other: "Khác",
 };
 
+const CHUNK_SIZE = 3 * 1024 * 1024; // 3MB chunks (under Vercel 4.5MB limit)
+
 export default function MediaLibraryPage() {
     const supabase = createClient();
     const { user } = useAuth();
@@ -24,6 +26,7 @@ export default function MediaLibraryPage() {
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState("");
+    const [uploadPercent, setUploadPercent] = useState(0);
     const fileRef = useRef<HTMLInputElement>(null);
 
     const loadAssets = useCallback(async () => {
@@ -54,59 +57,69 @@ export default function MediaLibraryPage() {
     const uploadFile = async (file: File) => {
         if (!user) return;
 
-        // Step 1: Get resumable upload URL from our server
-        const urlRes = await fetch("/api/media/upload-url", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                fileName: file.name,
-                mimeType: file.type,
-                fileSize: file.size,
-                userName: user.full_name || user.id.slice(0, 8),
-            }),
-        });
+        // Step 1: Initialize resumable upload
+        const initForm = new FormData();
+        initForm.append("action", "init");
+        initForm.append("fileName", file.name);
+        initForm.append("mimeType", file.type);
+        initForm.append("fileSize", String(file.size));
+        initForm.append("userName", user.full_name || user.id.slice(0, 8));
 
-        if (!urlRes.ok) {
-            const err = await urlRes.json();
-            throw new Error(err.error || "Failed to get upload URL");
+        const initRes = await fetch("/api/media/upload", { method: "POST", body: initForm });
+        if (!initRes.ok) {
+            const err = await initRes.json();
+            throw new Error(err.error || "Failed to init upload");
+        }
+        const { uploadUrl, token } = await initRes.json();
+
+        // Step 2: Upload file in chunks
+        const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+        let driveFileId = "";
+
+        for (let i = 0; i < totalChunks; i++) {
+            const start = i * CHUNK_SIZE;
+            const end = Math.min(start + CHUNK_SIZE, file.size) - 1;
+            const chunkBlob = file.slice(start, end + 1);
+
+            setUploadPercent(Math.round(((i + 1) / totalChunks) * 100));
+
+            const chunkForm = new FormData();
+            chunkForm.append("action", "chunk");
+            chunkForm.append("uploadUrl", uploadUrl);
+            chunkForm.append("token", token);
+            chunkForm.append("chunk", chunkBlob, "chunk");
+            chunkForm.append("rangeStart", String(start));
+            chunkForm.append("rangeEnd", String(end));
+            chunkForm.append("totalSize", String(file.size));
+
+            const chunkRes = await fetch("/api/media/upload", { method: "POST", body: chunkForm });
+            if (!chunkRes.ok) {
+                const err = await chunkRes.json();
+                throw new Error(err.error || `Chunk ${i + 1} failed`);
+            }
+
+            const chunkData = await chunkRes.json();
+            if (chunkData.status === "complete") {
+                driveFileId = chunkData.driveFileId;
+            }
         }
 
-        const { uploadUrl } = await urlRes.json();
-
-        // Step 2: Upload file directly to Google Drive (bypasses Vercel limit)
-        const driveRes = await fetch(uploadUrl, {
-            method: "PUT",
-            headers: {
-                "Content-Type": file.type,
-                "Content-Length": String(file.size),
-            },
-            body: file,
-        });
-
-        if (!driveRes.ok) {
-            const err = await driveRes.text();
-            throw new Error(`Drive upload failed: ${err}`);
+        if (!driveFileId) {
+            throw new Error("Upload completed but no file ID returned");
         }
 
-        const driveData = await driveRes.json();
-        const driveFileId = driveData.id;
+        // Step 3: Save metadata
+        const completeForm = new FormData();
+        completeForm.append("action", "complete");
+        completeForm.append("driveFileId", driveFileId);
+        completeForm.append("fileName", file.name);
+        completeForm.append("fileSize", String(file.size));
+        completeForm.append("fileType", file.type);
+        completeForm.append("userId", user.id);
 
-        // Step 3: Save metadata to Supabase
-        const saveRes = await fetch("/api/media/upload", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                fileName: file.name,
-                fileSize: file.size,
-                fileType: file.type,
-                category: "other",
-                userId: user.id,
-                driveFileId,
-            }),
-        });
-
-        if (!saveRes.ok) {
-            const err = await saveRes.json();
+        const completeRes = await fetch("/api/media/upload", { method: "POST", body: completeForm });
+        if (!completeRes.ok) {
+            const err = await completeRes.json();
             throw new Error(err.error || "Failed to save metadata");
         }
     };
@@ -120,7 +133,8 @@ export default function MediaLibraryPage() {
             const fileArray = Array.from(files);
             for (let i = 0; i < fileArray.length; i++) {
                 const file = fileArray[i];
-                setUploadProgress(`Đang upload ${i + 1}/${fileArray.length}: ${file.name} (${formatSize(file.size)})`);
+                setUploadProgress(`${i + 1}/${fileArray.length}: ${file.name} (${formatSize(file.size)})`);
+                setUploadPercent(0);
 
                 try {
                     await uploadFile(file);
@@ -130,11 +144,10 @@ export default function MediaLibraryPage() {
                 }
             }
             loadAssets();
-        } catch (err) {
-            console.error("handleUpload error:", err);
         } finally {
             setUploading(false);
             setUploadProgress("");
+            setUploadPercent(0);
             if (fileRef.current) fileRef.current.value = "";
         }
     };
@@ -194,13 +207,17 @@ export default function MediaLibraryPage() {
                 </div>
             </div>
 
-            {/* Upload progress bar */}
-            {uploading && uploadProgress && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                    <div className="flex items-center gap-3">
+            {/* Upload progress */}
+            {uploading && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-center gap-3 mb-2">
                         <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                        <p className="text-sm text-blue-700 font-medium">{uploadProgress}</p>
+                        <p className="text-sm text-blue-700 font-medium">Đang upload {uploadProgress}</p>
                     </div>
+                    <div className="w-full bg-blue-200 rounded-full h-2">
+                        <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: `${uploadPercent}%` }} />
+                    </div>
+                    <p className="text-xs text-blue-500 mt-1 text-right">{uploadPercent}%</p>
                 </div>
             )}
 
