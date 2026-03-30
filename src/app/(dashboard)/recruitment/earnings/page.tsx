@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { DollarSign, TrendingUp, Calendar, ChevronDown, Download, Target, Award, Receipt, Info, Users, CalendarCheck, UserCheck, Clock, Percent } from "lucide-react";
+import { Calendar, ChevronDown, Download, Target, Award, Receipt, Info, Users, CalendarCheck, UserCheck, Clock, Percent } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import {
     FinancialTransaction,
@@ -9,7 +9,7 @@ import {
 } from "@/lib/payrollStore";
 import { supabase, getRealtimeClient } from "@/lib/supabaseClient";
 import { KPI_TEMPLATES, formatKpiValue } from "@/lib/kpi_config";
-import { KpiSalaryResult, calculateKpiSalary } from "@/lib/kpiSalaryStore";
+import { KpiSalaryResult, calculateKpiSalary, calculateKpiSalaryForRange } from "@/lib/kpiSalaryStore";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -17,6 +17,8 @@ const formatPrice = (price: number) => {
         currency: "VND",
     }).format(price);
 };
+
+type DateRangeOption = 'today' | 'this_week' | 'this_month';
 
 export default function RecruiterEarningsPage() {
     const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
@@ -27,6 +29,7 @@ export default function RecruiterEarningsPage() {
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [baseSalaryMonthly, setBaseSalaryMonthly] = useState(0);
+    const [dateRange, setDateRange] = useState<DateRangeOption>('this_month');
 
     const { user, session } = useAuth();
 
@@ -60,6 +63,46 @@ export default function RecruiterEarningsPage() {
         }
     }, [user, session?.access_token, selectedMonth, selectedYear]);
 
+    // Recalculate KPI salary when dateRange changes (day/week/month scaling)
+    useEffect(() => {
+        if (!user || baseSalaryMonthly <= 0) return;
+
+        if (dateRange === 'this_month') {
+            const recalc = async () => {
+                const result = await calculateKpiSalary(user.id, selectedMonth + 1, selectedYear, baseSalaryMonthly, 'recruiter');
+                setKpiSalary(result);
+            };
+            recalc();
+        } else {
+            const divisor = dateRange === 'today' ? 26 : 4;
+            const now = new Date();
+            let rangeStart: Date, rangeEnd: Date;
+
+            if (dateRange === 'today') {
+                rangeStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+                rangeEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+            } else {
+                const dayOfWeek = now.getDay();
+                const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+                rangeStart = new Date(now);
+                rangeStart.setDate(now.getDate() + mondayOffset);
+                rangeStart.setHours(0, 0, 0, 0);
+                rangeEnd = new Date(rangeStart);
+                rangeEnd.setDate(rangeStart.getDate() + 6);
+                rangeEnd.setHours(23, 59, 59, 999);
+            }
+
+            const recalc = async () => {
+                const result = await calculateKpiSalaryForRange(
+                    user.id, rangeStart, rangeEnd, baseSalaryMonthly, divisor, 'recruiter'
+                );
+                setKpiSalary(result);
+            };
+            recalc();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dateRange]);
+
     useEffect(() => {
         if (user && session?.access_token) loadData();
         else setIsLoading(false);
@@ -82,24 +125,56 @@ export default function RecruiterEarningsPage() {
     const goToPrevMonth = () => {
         if (selectedMonth === 0) { setSelectedMonth(11); setSelectedYear(y => y - 1); }
         else setSelectedMonth(m => m - 1);
+        setDateRange('this_month');
     };
     const goToNextMonth = () => {
         const now = new Date();
         if (selectedYear === now.getFullYear() && selectedMonth >= now.getMonth()) return;
         if (selectedMonth === 11) { setSelectedMonth(0); setSelectedYear(y => y + 1); }
         else setSelectedMonth(m => m + 1);
+        setDateRange('this_month');
     };
     const isCurrentMonth = selectedMonth === new Date().getMonth() && selectedYear === new Date().getFullYear();
     const monthNames = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];
-    const rangeLabel = `${monthNames[selectedMonth]}, ${selectedYear}`;
 
-    // Date range for filtering
+    const getDateRangeText = () => {
+        switch (dateRange) {
+            case 'today': return "Hôm nay";
+            case 'this_week': return "Tuần này";
+            case 'this_month': return `${monthNames[selectedMonth]}, ${selectedYear}`;
+            default: return "";
+        }
+    };
+    const rangeLabel = getDateRangeText();
+
+    // Date range for filtering transactions
     const currentRange = useMemo(() => {
-        return {
-            from: new Date(selectedYear, selectedMonth, 1),
-            to: new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999)
-        };
-    }, [selectedMonth, selectedYear]);
+        const now = new Date();
+        switch (dateRange) {
+            case 'today':
+                return {
+                    from: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0),
+                    to: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+                };
+            case 'this_week': {
+                const dayOfWeek = now.getDay();
+                const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+                const rangeFrom = new Date(now);
+                rangeFrom.setDate(now.getDate() + mondayOffset);
+                rangeFrom.setHours(0, 0, 0, 0);
+                const rangeTo = new Date(rangeFrom);
+                rangeTo.setDate(rangeFrom.getDate() + 6);
+                rangeTo.setHours(23, 59, 59, 999);
+                return { from: rangeFrom, to: rangeTo };
+            }
+            case 'this_month':
+            default:
+                return {
+                    from: new Date(selectedYear, selectedMonth, 1),
+                    to: new Date(selectedYear, selectedMonth + 1, 0, 23, 59, 59, 999)
+                };
+        }
+    }, [dateRange, selectedMonth, selectedYear]);
 
     // Financial
     const payrollMetrics = useMemo(() => {
@@ -114,9 +189,6 @@ export default function RecruiterEarningsPage() {
         const totalNetSalary = kpiBasedSalary + bonusTotal - penaltyTotal;
         return { bonusTotal, penaltyTotal, estimatedBonuses, totalNetSalary };
     }, [transactions, kpiSalary, baseSalaryMonthly, currentRange]);
-
-    // KPI template - use recruiter template
-    const kpiTemplate = KPI_TEMPLATES['recruiter'] || KPI_TEMPLATES['telesales'];
 
     // Get KPI icon
     const getKpiIcon = (key: string) => {
@@ -166,18 +238,61 @@ export default function RecruiterEarningsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h1 className="text-xl font-bold text-slate-900">Thu nhập & KPI</h1>
                 <div className="flex items-center gap-2">
+                    {/* Month Navigator */}
                     <div className="flex items-center bg-white border border-slate-200 rounded-lg overflow-hidden">
                         <button onClick={goToPrevMonth} className="px-2 py-2 hover:bg-slate-50 transition-colors text-slate-400 hover:text-slate-600">
                             <ChevronDown className="w-4 h-4 rotate-90" />
                         </button>
-                        <span className="px-3 py-2 text-sm font-medium text-slate-700 min-w-[140px] text-center">
+                        <button
+                            onClick={() => {
+                                const input = document.getElementById('hr-earnings-month-picker') as HTMLInputElement;
+                                if (input) input.showPicker();
+                            }}
+                            className={`px-3 py-2 text-sm font-medium transition-colors min-w-[140px] text-center relative ${isCurrentMonth ? 'text-primary-600' : 'text-slate-700 hover:text-primary-600'}`}
+                        >
                             <Calendar className="w-3.5 h-3.5 inline-block mr-1.5 -mt-0.5" />
                             {rangeLabel}
-                        </span>
+                            <input
+                                id="hr-earnings-month-picker"
+                                type="month"
+                                value={`${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`}
+                                onChange={(e) => {
+                                    const [y, m] = e.target.value.split('-').map(Number);
+                                    if (y && m) {
+                                        setSelectedYear(y);
+                                        setSelectedMonth(m - 1);
+                                        setDateRange('this_month');
+                                    }
+                                }}
+                                className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                                style={{ pointerEvents: 'none' }}
+                            />
+                        </button>
                         <button onClick={goToNextMonth}
                             className={`px-2 py-2 transition-colors ${isCurrentMonth ? 'text-slate-200 cursor-not-allowed' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'}`}
                             disabled={isCurrentMonth}>
                             <ChevronDown className="w-4 h-4 -rotate-90" />
+                        </button>
+                    </div>
+                    {/* Quick Filters: Ngày / Tuần / Tháng */}
+                    <div className="flex bg-slate-100 p-0.5 rounded-lg">
+                        <button
+                            onClick={() => setDateRange('today')}
+                            className={`px-2.5 py-1.5 text-[11px] font-medium rounded transition-colors ${dateRange === 'today' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Ngày
+                        </button>
+                        <button
+                            onClick={() => setDateRange('this_week')}
+                            className={`px-2.5 py-1.5 text-[11px] font-medium rounded transition-colors ${dateRange === 'this_week' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Tuần
+                        </button>
+                        <button
+                            onClick={() => setDateRange('this_month')}
+                            className={`px-2.5 py-1.5 text-[11px] font-medium rounded transition-colors ${dateRange === 'this_month' ? 'bg-white text-primary-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                        >
+                            Tháng
                         </button>
                     </div>
                     <button onClick={handleExportCsv}
@@ -255,9 +370,13 @@ export default function RecruiterEarningsPage() {
                                     <div>
                                         <div className="flex justify-between items-center pb-3 mb-3 border-b border-slate-200">
                                             <div>
-                                                <div className="text-sm font-bold text-slate-900">Lương theo KPI</div>
+                                                <div className="text-sm font-bold text-slate-900">
+                                                    {dateRange === 'today' ? 'Lương ngày hôm nay' : dateRange === 'this_week' ? 'Lương tuần này' : 'Lương theo KPI'}
+                                                </div>
                                                 <div className="text-xs text-slate-400 mt-0.5">
-                                                    Lương cơ bản: {formatPrice(kpiSalary.baseSalary)}
+                                                    {dateRange === 'today' ? `Lương cơ bản ngày: ${formatPrice(kpiSalary.baseSalary)} (${formatPrice(baseSalaryMonthly)}/tháng ÷26)` :
+                                                        dateRange === 'this_week' ? `Lương cơ bản tuần: ${formatPrice(kpiSalary.baseSalary)} (${formatPrice(baseSalaryMonthly)}/tháng ÷4)` :
+                                                            `Lương cơ bản: ${formatPrice(kpiSalary.baseSalary)}`}
                                                 </div>
                                             </div>
                                             <div className="text-right">
@@ -319,8 +438,12 @@ export default function RecruiterEarningsPage() {
                                 {/* Total */}
                                 <div className="bg-primary-50 border border-primary-100 rounded-lg p-4 flex justify-between items-center">
                                     <div>
-                                        <div className="text-xs font-semibold text-primary-700 uppercase tracking-wide">Tổng thu nhập</div>
-                                        <div className="text-[10px] text-primary-500 mt-0.5">Ước tính thực nhận tháng này</div>
+                                        <div className="text-xs font-semibold text-primary-700 uppercase tracking-wide">
+                                            {dateRange === 'today' ? 'Thu nhập hôm nay' : dateRange === 'this_week' ? 'Thu nhập tuần này' : 'Tổng thu nhập'}
+                                        </div>
+                                        <div className="text-[10px] text-primary-500 mt-0.5">
+                                            {dateRange === 'today' ? 'Ước tính thu nhập ngày hôm nay' : dateRange === 'this_week' ? 'Ước tính thu nhập tuần này' : 'Ước tính thực nhận tháng này'}
+                                        </div>
                                     </div>
                                     <div className="text-xl font-bold text-primary-700">{formatPrice(payrollMetrics.totalNetSalary)}</div>
                                 </div>
