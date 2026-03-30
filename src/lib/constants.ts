@@ -295,7 +295,7 @@ export const NAV_ITEMS = {
         { label: "Thu nhập & KPI", href: "/media/earnings", icon: DollarSign },
         { label: "Quy định & Chính sách", href: "/media/rules", icon: Book },
         { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
-        { label: "Xếp lịch làm việc", href: "/hr/scheduling", icon: Calendar },
+        { label: "Lịch làm việc", href: "/media/schedule", icon: Calendar },
         { label: "Góc Giải Trí", href: "/entertainment", icon: Gamepad2 },
         { label: "Sự kiện", href: "/events", icon: Calendar },
         { label: "Tài liệu", href: "/documents", icon: Book },
