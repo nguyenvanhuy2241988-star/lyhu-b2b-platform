@@ -346,6 +346,7 @@ export default function AdminPayrollPage() {
     const DEPARTMENTS = [
         { value: 'telesales', label: 'Telesales' },
         { value: 'sales_gt', label: 'Sales GT' },
+        { value: 'recruiter', label: 'Tuyển dụng (HR)' },
         { value: 'admin', label: 'Admin' },
         { value: 'sale_admin', label: 'Sale Admin' },
         { value: 'marketing', label: 'Marketing' },
