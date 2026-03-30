@@ -44,7 +44,7 @@ export default function AdminKpiSettingsPage() {
 
     const loadMetrics = useCallback(async () => {
         setIsLoading(true);
-        const data = await fetchKpiMetrics();
+        const data = await fetchKpiMetrics('telesales');
         setMetrics(data);
         setIsLoading(false);
     }, []);

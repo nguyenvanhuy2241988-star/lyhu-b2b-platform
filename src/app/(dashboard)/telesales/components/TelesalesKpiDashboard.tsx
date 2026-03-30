@@ -59,7 +59,7 @@ export default function TelesalesKpiDashboard({ date, userId, toDate, targetDivi
         if (!userId) return;
         try {
             // 1. Load active metric definitions
-            const metrics = await fetchActiveKpiMetrics();
+            const metrics = await fetchActiveKpiMetrics('telesales');
             setMetricDefs(metrics);
 
             // 2. Load targets from user_kpi_settings (monthly values)

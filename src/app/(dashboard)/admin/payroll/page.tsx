@@ -921,7 +921,8 @@ export default function AdminPayrollPage() {
                                                                             const undo = confirm(`Đã ẩn "${metricDef.label}".\nBấm OK để hoàn tác, Cancel để giữ nguyên.`);
                                                                             if (undo) {
                                                                                 await restoreKpiMetric(metricDef.id);
-                                                                                const refreshed = await fetchKpiMetrics();
+                                                                                const selUser = staff.find(s => s.id === selectedUserId);
+                                                                                const refreshed = await fetchKpiMetrics(selUser?.role || 'telesales');
                                                                                 setKpiMetrics(refreshed);
                                                                             }
                                                                         }
