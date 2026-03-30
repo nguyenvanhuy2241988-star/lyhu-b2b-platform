@@ -33,8 +33,8 @@ export default function AdminMediaLibraryPage() {
 
     // Load users for filter dropdown
     useEffect(() => {
-        supabase.from("users").select("id, full_name, role").eq("role", "media_creator").then(({ data }) => {
-            setUsers(data || []);
+        supabase.from("users").select("id, full_name, role").eq("role", "media_creator").then((result: any) => {
+            setUsers(result.data || []);
         });
     }, []);
 
