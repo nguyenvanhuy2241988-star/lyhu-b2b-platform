@@ -139,7 +139,7 @@ export default function MediaLibraryPage() {
     const bulkDelete = async () => {
         if (selectedIds.size === 0) return;
         if (!confirm(`Xóa ${selectedIds.size} mục đã chọn?`)) return;
-        for (const id of selectedIds) {
+        for (const id of Array.from(selectedIds)) {
             await fetch("/api/media/folders", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ folderId: id }) });
         }
         setSelectedIds(new Set()); setSelectMode(false);

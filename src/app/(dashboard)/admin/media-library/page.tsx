@@ -96,7 +96,7 @@ export default function AdminMediaLibraryPage() {
 
     const bulkDelete = async () => {
         if (!selectedIds.size || !confirm(`Xóa ${selectedIds.size} mục?`)) return;
-        for (const id of selectedIds) await fetch("/api/media/folders", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ folderId: id }) });
+        for (const id of Array.from(selectedIds)) await fetch("/api/media/folders", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ folderId: id }) });
         setSelectedIds(new Set()); setSelectMode(false); loadFolder(currentFolderId); showToast(`Đã xóa ${selectedIds.size} mục`);
     };
 
