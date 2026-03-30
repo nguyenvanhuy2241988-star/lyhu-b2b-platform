@@ -191,7 +191,7 @@ export default function RecruiterRulesPage() {
                         <section className="bg-emerald-50 rounded-xl border border-emerald-200 p-5">
                             <div className="flex items-start gap-2">
                                 <Info className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
-                                <p className="text-sm text-emerald-800 font-medium leading-relaxed">{policy.commissionNote}</p>
+                                <p className="text-sm text-emerald-800 font-medium leading-relaxed whitespace-pre-line">{policy.commissionNote}</p>
                             </div>
                         </section>
                     )}
@@ -242,7 +242,7 @@ export default function RecruiterRulesPage() {
                                 <div className="px-5 py-3 bg-slate-50 border-t border-slate-100">
                                     <div className="flex items-start gap-2">
                                         <Info className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
-                                        <p className="text-xs text-slate-500 leading-relaxed">{policy.penaltyNote}</p>
+                                        <p className="text-xs text-slate-500 leading-relaxed whitespace-pre-line">{policy.penaltyNote}</p>
                                     </div>
                                 </div>
                             )}
