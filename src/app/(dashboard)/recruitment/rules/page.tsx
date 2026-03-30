@@ -219,7 +219,7 @@ export default function RecruiterRulesPage() {
                                             <p className="text-sm font-medium text-slate-900">{item.title}</p>
                                             <p className="text-xs text-slate-400 mt-0.5">{item.desc}</p>
                                         </div>
-                                        <span className="text-sm font-bold text-emerald-600 whitespace-nowrap">{item.amount}</span>
+                                        <span className="text-sm font-bold text-emerald-600 whitespace-nowrap">{isNaN(Number(item.amount)) ? item.amount : formatNumber(Number(item.amount))}</span>
                                     </div>
                                 ))}
                             </div>
@@ -241,7 +241,7 @@ export default function RecruiterRulesPage() {
                                             <p className="text-xs text-slate-400 mt-0.5">{v.desc}</p>
                                         </div>
                                         <div className="text-right">
-                                            <span className="text-sm font-bold text-rose-600">-{v.fine}</span>
+                                            <span className="text-sm font-bold text-rose-600">-{isNaN(Number(v.fine)) ? v.fine : formatNumber(Number(v.fine))}</span>
                                             <p className="text-[10px] text-slate-400 mt-0.5">mỗi lần</p>
                                         </div>
                                     </div>
