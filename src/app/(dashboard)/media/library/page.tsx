@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { FolderOpen, Upload, Image, Film, Search, Grid, List, Trash2, X, Filter } from "lucide-react";
+import { FolderOpen, Upload, Image, Film, Search, Grid, List, Trash2, X, Filter, ExternalLink, Download } from "lucide-react";
 
 const CATEGORIES: Record<string, string> = {
     product: "Sản phẩm",
@@ -23,6 +23,7 @@ export default function MediaLibraryPage() {
     const [filterType, setFilterType] = useState("all");
     const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
     const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState("");
     const fileRef = useRef<HTMLInputElement>(null);
 
     const loadAssets = useCallback(async () => {
@@ -56,52 +57,74 @@ export default function MediaLibraryPage() {
         setUploading(true);
 
         try {
-            for (const file of Array.from(files)) {
-                const ext = file.name.split('.').pop();
-                const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-                const filePath = `media/${user.id}/${fileName}`;
+            const fileArray = Array.from(files);
+            for (let i = 0; i < fileArray.length; i++) {
+                const file = fileArray[i];
+                setUploadProgress(`Đang upload ${i + 1}/${fileArray.length}: ${file.name}`);
 
-                const { error: uploadError } = await supabase.storage
-                    .from("media-library")
-                    .upload(filePath, file);
+                const formData = new FormData();
+                formData.append("file", file);
+                formData.append("userId", user.id);
+                formData.append("userName", user.full_name || user.id.slice(0, 8));
+                formData.append("category", "other");
 
-                if (uploadError) {
-                    console.error("Upload error:", uploadError);
+                const res = await fetch("/api/media/upload", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    console.error("Upload error:", err);
+                    alert(`Lỗi upload ${file.name}: ${err.error}`);
                     continue;
                 }
-
-                const { data: urlData } = supabase.storage.from("media-library").getPublicUrl(filePath);
-
-                const isVideo = file.type.startsWith("video/");
-                await supabase.from("media_assets").insert({
-                    file_name: file.name,
-                    file_url: urlData.publicUrl,
-                    file_type: isVideo ? "video" : "image",
-                    file_size: file.size,
-                    category: "other",
-                    uploaded_by: user.id,
-                });
             }
             loadAssets();
         } catch (err) {
             console.error("handleUpload error:", err);
+            alert("Lỗi upload file");
         } finally {
             setUploading(false);
+            setUploadProgress("");
             if (fileRef.current) fileRef.current.value = "";
         }
     };
 
-    const handleDelete = async (id: string, fileUrl: string) => {
+    const handleDelete = async (id: string) => {
         if (!confirm("Xóa file này?")) return;
-        await supabase.from("media_assets").delete().eq("id", id);
-        loadAssets();
+        try {
+            const res = await fetch("/api/media/delete", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ assetId: id }),
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                alert(`Lỗi xóa: ${err.error}`);
+                return;
+            }
+            loadAssets();
+        } catch (err) {
+            console.error("handleDelete error:", err);
+        }
     };
 
     const formatSize = (bytes: number) => {
         if (bytes < 1024) return `${bytes} B`;
         if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+        if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+        return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
     };
+
+    const getThumbnailUrl = (asset: any) => {
+        if (asset.drive_file_id) {
+            return `https://drive.google.com/thumbnail?id=${asset.drive_file_id}&sz=w400`;
+        }
+        return asset.file_url;
+    };
+
+    const totalSize = assets.reduce((sum, a) => sum + (a.file_size || 0), 0);
 
     return (
         <div className="space-y-6">
@@ -109,14 +132,17 @@ export default function MediaLibraryPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-xl font-bold text-slate-900">Thư viện Media</h1>
-                    <p className="text-sm text-slate-500 mt-1">{assets.length} tệp</p>
+                    <p className="text-sm text-slate-500 mt-1">
+                        {assets.length} tệp · {formatSize(totalSize)}
+                        <span className="ml-2 text-xs text-green-600">☁️ Google Drive</span>
+                    </p>
                 </div>
                 <div>
-                    <input ref={fileRef} type="file" multiple accept="image/*,video/*" className="hidden" onChange={handleUpload} />
+                    <input ref={fileRef} type="file" multiple accept="image/*,video/*,.psd,.ai,.eps,.raw,.cr2,.nef,.arw" className="hidden" onChange={handleUpload} />
                     <button onClick={() => fileRef.current?.click()} disabled={uploading}
                         className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 disabled:opacity-50 transition-colors">
                         <Upload className="w-4 h-4" />
-                        {uploading ? "Đang upload..." : "Upload"}
+                        {uploading ? uploadProgress || "Đang upload..." : "Upload lên Drive"}
                     </button>
                 </div>
             </div>
@@ -168,7 +194,7 @@ export default function MediaLibraryPage() {
                 <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
                     <FolderOpen className="w-12 h-12 mx-auto mb-3 text-slate-300" />
                     <p className="text-sm text-slate-500 font-medium">Chưa có media nào</p>
-                    <p className="text-xs text-slate-400 mt-1">Nhấn "Upload" để tải lên ảnh hoặc video</p>
+                    <p className="text-xs text-slate-400 mt-1">Nhấn "Upload lên Drive" để tải lên ảnh hoặc video</p>
                 </div>
             ) : viewMode === "grid" ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -180,12 +206,21 @@ export default function MediaLibraryPage() {
                                         <Film className="w-10 h-10 text-slate-300" />
                                     </div>
                                 ) : (
-                                    <img src={asset.file_url} alt={asset.file_name} className="w-full h-full object-cover" />
+                                    <img src={getThumbnailUrl(asset)} alt={asset.file_name} className="w-full h-full object-cover" loading="lazy" />
                                 )}
-                                <button onClick={() => handleDelete(asset.id, asset.file_url)}
-                                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                </button>
+                                {/* Actions overlay */}
+                                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {asset.drive_view_link && (
+                                        <a href={asset.drive_view_link} target="_blank" rel="noopener noreferrer"
+                                            className="p-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
+                                            <ExternalLink className="w-3.5 h-3.5" />
+                                        </a>
+                                    )}
+                                    <button onClick={() => handleDelete(asset.id)}
+                                        className="p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600">
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
                                 <div className="absolute top-2 left-2">
                                     <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${asset.file_type === "video" ? "bg-blue-100 text-blue-600" : "bg-green-100 text-green-600"}`}>
                                         {asset.file_type === "video" ? "Video" : "Ảnh"}
@@ -228,10 +263,18 @@ export default function MediaLibraryPage() {
                                     <td className="p-3 text-slate-400">{formatSize(asset.file_size || 0)}</td>
                                     <td className="p-3 text-slate-400">{new Date(asset.created_at).toLocaleDateString('vi-VN')}</td>
                                     <td className="p-3">
-                                        <button onClick={() => handleDelete(asset.id, asset.file_url)}
-                                            className="p-1 text-slate-300 hover:text-red-500 transition-colors">
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
+                                        <div className="flex items-center gap-1">
+                                            {asset.drive_view_link && (
+                                                <a href={asset.drive_view_link} target="_blank" rel="noopener noreferrer"
+                                                    className="p-1 text-slate-300 hover:text-blue-500 transition-colors">
+                                                    <ExternalLink className="w-4 h-4" />
+                                                </a>
+                                            )}
+                                            <button onClick={() => handleDelete(asset.id)}
+                                                className="p-1 text-slate-300 hover:text-red-500 transition-colors">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
