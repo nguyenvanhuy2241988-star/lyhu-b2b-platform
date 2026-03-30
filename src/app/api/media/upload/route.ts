@@ -1,55 +1,62 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { uploadFileToDrive, getDriveThumbnailUrl, getDriveDirectUrl } from "@/lib/googleDriveService";
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Save metadata after direct upload to Google Drive completes
 export async function POST(req: NextRequest) {
     try {
-        const formData = await req.formData();
-        const file = formData.get("file") as File | null;
-        const userId = formData.get("userId") as string;
-        const userName = formData.get("userName") as string;
-        const category = (formData.get("category") as string) || "other";
+        const { fileName, fileSize, fileType, category, userId, driveFileId } = await req.json();
 
-        if (!file || !userId) {
-            return NextResponse.json({ error: "No file or userId" }, { status: 400 });
+        if (!fileName || !userId || !driveFileId) {
+            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
-        // Convert File to Buffer
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
+        // Set file as publicly viewable
+        const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+                client_id: process.env.GOOGLE_DRIVE_CLIENT_ID || "",
+                client_secret: process.env.GOOGLE_DRIVE_CLIENT_SECRET || "",
+                refresh_token: process.env.GOOGLE_DRIVE_REFRESH_TOKEN || "",
+                grant_type: "refresh_token",
+            }),
+        });
+        const tokenData = await tokenRes.json();
+        const token = tokenData.access_token;
 
-        // Determine subfolder name (by user)
-        const folderName = userName || userId.slice(0, 8);
-
-        // Upload to Google Drive
-        const { fileId, webViewLink, webContentLink } = await uploadFileToDrive(
-            buffer,
-            file.name,
-            file.type,
-            folderName
+        // Make file public (anyone with link can view)
+        await fetch(
+            `https://www.googleapis.com/drive/v3/files/${driveFileId}/permissions`,
+            {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ role: "reader", type: "anyone" }),
+            }
         );
 
-        const isVideo = file.type.startsWith("video/");
-        const thumbnailUrl = isVideo ? null : getDriveThumbnailUrl(fileId, 400);
-        const directUrl = getDriveDirectUrl(fileId);
+        const isVideo = fileType?.startsWith("video/");
+        const directUrl = `https://drive.google.com/uc?id=${driveFileId}&export=view`;
+        const viewLink = `https://drive.google.com/file/d/${driveFileId}/view`;
 
-        // Save metadata to Supabase
         const { data, error } = await supabaseAdmin
             .from("media_assets")
             .insert({
-                file_name: file.name,
+                file_name: fileName,
                 file_url: directUrl,
                 file_type: isVideo ? "video" : "image",
-                file_size: file.size,
-                category,
+                file_size: fileSize || 0,
+                category: category || "other",
                 uploaded_by: userId,
-                drive_file_id: fileId,
-                drive_view_link: webViewLink,
+                drive_file_id: driveFileId,
+                drive_view_link: viewLink,
             })
             .select()
             .single();
@@ -60,8 +67,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ asset: data });
     } catch (err: any) {
-        console.error("Media upload error:", err);
-        return NextResponse.json({ error: err.message || "Upload failed" }, { status: 500 });
+        console.error("Media save error:", err);
+        return NextResponse.json({ error: err.message || "Save failed" }, { status: 500 });
     }
 }
-

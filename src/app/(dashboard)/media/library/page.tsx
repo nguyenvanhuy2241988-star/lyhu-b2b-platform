@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { FolderOpen, Upload, Image, Film, Search, Grid, List, Trash2, X, Filter, ExternalLink, Download } from "lucide-react";
+import { FolderOpen, Upload, Film, Search, Grid, List, Trash2, ExternalLink } from "lucide-react";
 
 const CATEGORIES: Record<string, string> = {
     product: "Sản phẩm",
@@ -51,6 +51,66 @@ export default function MediaLibraryPage() {
 
     useEffect(() => { loadAssets(); }, [loadAssets]);
 
+    const uploadFile = async (file: File) => {
+        if (!user) return;
+
+        // Step 1: Get resumable upload URL from our server
+        const urlRes = await fetch("/api/media/upload-url", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                fileName: file.name,
+                mimeType: file.type,
+                fileSize: file.size,
+                userName: user.full_name || user.id.slice(0, 8),
+            }),
+        });
+
+        if (!urlRes.ok) {
+            const err = await urlRes.json();
+            throw new Error(err.error || "Failed to get upload URL");
+        }
+
+        const { uploadUrl } = await urlRes.json();
+
+        // Step 2: Upload file directly to Google Drive (bypasses Vercel limit)
+        const driveRes = await fetch(uploadUrl, {
+            method: "PUT",
+            headers: {
+                "Content-Type": file.type,
+                "Content-Length": String(file.size),
+            },
+            body: file,
+        });
+
+        if (!driveRes.ok) {
+            const err = await driveRes.text();
+            throw new Error(`Drive upload failed: ${err}`);
+        }
+
+        const driveData = await driveRes.json();
+        const driveFileId = driveData.id;
+
+        // Step 3: Save metadata to Supabase
+        const saveRes = await fetch("/api/media/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                fileName: file.name,
+                fileSize: file.size,
+                fileType: file.type,
+                category: "other",
+                userId: user.id,
+                driveFileId,
+            }),
+        });
+
+        if (!saveRes.ok) {
+            const err = await saveRes.json();
+            throw new Error(err.error || "Failed to save metadata");
+        }
+    };
+
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || !user) return;
@@ -60,30 +120,18 @@ export default function MediaLibraryPage() {
             const fileArray = Array.from(files);
             for (let i = 0; i < fileArray.length; i++) {
                 const file = fileArray[i];
-                setUploadProgress(`Đang upload ${i + 1}/${fileArray.length}: ${file.name}`);
+                setUploadProgress(`Đang upload ${i + 1}/${fileArray.length}: ${file.name} (${formatSize(file.size)})`);
 
-                const formData = new FormData();
-                formData.append("file", file);
-                formData.append("userId", user.id);
-                formData.append("userName", user.full_name || user.id.slice(0, 8));
-                formData.append("category", "other");
-
-                const res = await fetch("/api/media/upload", {
-                    method: "POST",
-                    body: formData,
-                });
-
-                if (!res.ok) {
-                    const err = await res.json();
-                    console.error("Upload error:", err);
-                    alert(`Lỗi upload ${file.name}: ${err.error}`);
-                    continue;
+                try {
+                    await uploadFile(file);
+                } catch (err: any) {
+                    console.error(`Upload error for ${file.name}:`, err);
+                    alert(`Lỗi upload ${file.name}: ${err.message}`);
                 }
             }
             loadAssets();
         } catch (err) {
             console.error("handleUpload error:", err);
-            alert("Lỗi upload file");
         } finally {
             setUploading(false);
             setUploadProgress("");
@@ -124,11 +172,10 @@ export default function MediaLibraryPage() {
         return asset.file_url;
     };
 
-    const totalSize = assets.reduce((sum, a) => sum + (a.file_size || 0), 0);
+    const totalSize = assets.reduce((sum: number, a: any) => sum + (a.file_size || 0), 0);
 
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-xl font-bold text-slate-900">Thư viện Media</h1>
@@ -142,28 +189,32 @@ export default function MediaLibraryPage() {
                     <button onClick={() => fileRef.current?.click()} disabled={uploading}
                         className="flex items-center gap-2 px-4 py-2 bg-pink-600 text-white text-sm font-medium rounded-lg hover:bg-pink-700 disabled:opacity-50 transition-colors">
                         <Upload className="w-4 h-4" />
-                        {uploading ? uploadProgress || "Đang upload..." : "Upload lên Drive"}
+                        {uploading ? "Đang upload..." : "Upload lên Drive"}
                     </button>
                 </div>
             </div>
+
+            {/* Upload progress bar */}
+            {uploading && uploadProgress && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                        <p className="text-sm text-blue-700 font-medium">{uploadProgress}</p>
+                    </div>
+                </div>
+            )}
 
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-3">
                 <div className="flex-1 min-w-[200px] relative">
                     <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                        className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-pink-200"
-                        placeholder="Tìm kiếm tên file..."
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                    />
+                    <input className="w-full pl-9 pr-3 py-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-pink-200"
+                        placeholder="Tìm kiếm tên file..." value={search} onChange={e => setSearch(e.target.value)} />
                 </div>
                 <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)}
                     className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white">
                     <option value="all">Tất cả danh mục</option>
-                    {Object.entries(CATEGORIES).map(([k, v]) => (
-                        <option key={k} value={k}>{v}</option>
-                    ))}
+                    {Object.entries(CATEGORIES).map(([k, v]) => (<option key={k} value={k}>{v}</option>))}
                 </select>
                 <select value={filterType} onChange={e => setFilterType(e.target.value)}
                     className="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white">
@@ -172,12 +223,10 @@ export default function MediaLibraryPage() {
                     <option value="video">Video</option>
                 </select>
                 <div className="flex bg-slate-100 p-0.5 rounded-lg">
-                    <button onClick={() => setViewMode("grid")}
-                        className={`p-1.5 rounded ${viewMode === "grid" ? "bg-white shadow-sm" : "text-slate-400"}`}>
+                    <button onClick={() => setViewMode("grid")} className={`p-1.5 rounded ${viewMode === "grid" ? "bg-white shadow-sm" : "text-slate-400"}`}>
                         <Grid className="w-4 h-4" />
                     </button>
-                    <button onClick={() => setViewMode("list")}
-                        className={`p-1.5 rounded ${viewMode === "list" ? "bg-white shadow-sm" : "text-slate-400"}`}>
+                    <button onClick={() => setViewMode("list")} className={`p-1.5 rounded ${viewMode === "list" ? "bg-white shadow-sm" : "text-slate-400"}`}>
                         <List className="w-4 h-4" />
                     </button>
                 </div>
@@ -194,7 +243,7 @@ export default function MediaLibraryPage() {
                 <div className="bg-white rounded-xl border border-slate-200 p-12 text-center">
                     <FolderOpen className="w-12 h-12 mx-auto mb-3 text-slate-300" />
                     <p className="text-sm text-slate-500 font-medium">Chưa có media nào</p>
-                    <p className="text-xs text-slate-400 mt-1">Nhấn "Upload lên Drive" để tải lên ảnh hoặc video</p>
+                    <p className="text-xs text-slate-400 mt-1">Nhấn &quot;Upload lên Drive&quot; để tải lên ảnh hoặc video</p>
                 </div>
             ) : viewMode === "grid" ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -208,7 +257,6 @@ export default function MediaLibraryPage() {
                                 ) : (
                                     <img src={getThumbnailUrl(asset)} alt={asset.file_name} className="w-full h-full object-cover" loading="lazy" />
                                 )}
-                                {/* Actions overlay */}
                                 <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     {asset.drive_view_link && (
                                         <a href={asset.drive_view_link} target="_blank" rel="noopener noreferrer"
