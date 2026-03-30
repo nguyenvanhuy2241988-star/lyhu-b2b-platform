@@ -1163,7 +1163,7 @@ export default function AdminPayrollPage() {
                                 {/* Notes */}
                                 <div className="space-y-3">
                                     <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-blue-500 pl-3">Ghi chú hoa hồng</h3>
-                                    <textarea className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={2}
+                                    <textarea className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={3}
                                         placeholder="VD: Hoa hồng tính trên phần doanh số VƯỢT target..."
                                         value={policyData.commissionNote || ''}
                                         onChange={(e) => setPolicyData({ ...policyData, commissionNote: e.target.value })} />
@@ -1171,10 +1171,32 @@ export default function AdminPayrollPage() {
 
                                 <div className="space-y-3">
                                     <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-slate-400 pl-3">Ghi chú phạt</h3>
-                                    <textarea className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={2}
+                                    <textarea className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={3}
                                         placeholder="VD: Mọi khoản phí phạt được gom vào quỹ Bonding..."
                                         value={policyData.penaltyNote || ''}
                                         onChange={(e) => setPolicyData({ ...policyData, penaltyNote: e.target.value })} />
+                                </div>
+
+                                {/* Custom Notes */}
+                                <div className="space-y-3">
+                                    <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-purple-500 pl-3">Ghi chú bổ sung</h3>
+                                    {(policyData.customNotes || []).map((note: any, i: number) => (
+                                        <div key={i} className="space-y-1.5 bg-slate-50 rounded-lg p-3 border border-slate-100">
+                                            <div className="flex gap-2 items-center">
+                                                <input className="flex-1 py-1.5 px-3 rounded border border-slate-200 text-sm font-semibold" placeholder="Tiêu đề (VD: Ghi chú lương thử việc)"
+                                                    value={note.title}
+                                                    onChange={(e) => { const arr = [...(policyData.customNotes || [])]; arr[i] = { ...note, title: e.target.value }; setPolicyData({ ...policyData, customNotes: arr }); }} />
+                                                <button onClick={() => setPolicyData({ ...policyData, customNotes: (policyData.customNotes || []).filter((_: any, j: number) => j !== i) })}
+                                                    className="p-1 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                                            </div>
+                                            <textarea className="w-full py-1.5 px-3 rounded border border-slate-200 text-sm" rows={2}
+                                                placeholder="Nội dung ghi chú..."
+                                                value={note.content}
+                                                onChange={(e) => { const arr = [...(policyData.customNotes || [])]; arr[i] = { ...note, content: e.target.value }; setPolicyData({ ...policyData, customNotes: arr }); }} />
+                                        </div>
+                                    ))}
+                                    <button onClick={() => setPolicyData({ ...policyData, customNotes: [...(policyData.customNotes || []), { title: "", content: "" }] })}
+                                        className="text-xs text-primary-600 flex items-center gap-1 hover:text-primary-700"><Plus className="w-3 h-3" /> Thêm ghi chú</button>
                                 </div>
                             </div>
 

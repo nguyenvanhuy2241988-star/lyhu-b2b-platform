@@ -16,6 +16,7 @@ interface PolicyData {
     penalties: { name: string; desc: string; fine: string }[];
     penaltyNote: string;
     commissionNote: string;
+    customNotes: { title: string; content: string }[];
     version: string;
 }
 
@@ -29,6 +30,7 @@ const DEFAULT_POLICY: PolicyData = {
     penalties: [],
     penaltyNote: "",
     commissionNote: "",
+    customNotes: [],
     version: "v1.0"
 };
 
@@ -248,6 +250,25 @@ export default function RecruiterRulesPage() {
                             )}
                         </section>
                     )}
+
+                    {/* Custom Notes */}
+                    {(policy.customNotes || []).length > 0 && (
+                        <section className="space-y-3">
+                            {policy.customNotes.map((note, idx) => (
+                                note.title && note.content ? (
+                                    <div key={idx} className="bg-purple-50 rounded-xl border border-purple-200 p-5">
+                                        <div className="flex items-start gap-2">
+                                            <Info className="w-4 h-4 text-purple-600 mt-0.5 shrink-0" />
+                                            <div>
+                                                <p className="text-sm font-semibold text-purple-800 mb-1">{note.title}</p>
+                                                <p className="text-sm text-purple-700 leading-relaxed whitespace-pre-line">{note.content}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : null
+                            ))}
+                        </section>
+                    )}
                 </>
             )}
 
@@ -367,10 +388,32 @@ export default function RecruiterRulesPage() {
 
                             <div className="space-y-3">
                                 <h3 className="text-xs font-bold text-slate-500 uppercase">Ghi chú phạt</h3>
-                                <textarea className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={2}
+                                <textarea className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={3}
                                     placeholder="VD: Mọi khoản phí phạt được gom vào quỹ team building..."
                                     value={editPolicy.penaltyNote}
                                     onChange={(e) => setEditPolicy({ ...editPolicy, penaltyNote: e.target.value })} />
+                            </div>
+
+                            {/* Custom Notes */}
+                            <div className="space-y-3">
+                                <h3 className="text-xs font-bold text-slate-500 uppercase">Ghi chú bổ sung</h3>
+                                {(editPolicy.customNotes || []).map((note, i) => (
+                                    <div key={i} className="space-y-1.5 bg-slate-50 rounded-lg p-3 border border-slate-100">
+                                        <div className="flex gap-2 items-center">
+                                            <input className="flex-1 py-1.5 px-3 rounded border border-slate-200 text-sm font-semibold" placeholder="Tiêu đề (VD: Ghi chú lương thử việc)"
+                                                value={note.title}
+                                                onChange={(e) => { const arr = [...(editPolicy.customNotes || [])]; arr[i] = { ...note, title: e.target.value }; setEditPolicy({ ...editPolicy, customNotes: arr }); }} />
+                                            <button onClick={() => setEditPolicy({ ...editPolicy, customNotes: (editPolicy.customNotes || []).filter((_, j) => j !== i) })}
+                                                className="p-1 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                                        </div>
+                                        <textarea className="w-full py-1.5 px-3 rounded border border-slate-200 text-sm" rows={2}
+                                            placeholder="Nội dung ghi chú..."
+                                            value={note.content}
+                                            onChange={(e) => { const arr = [...(editPolicy.customNotes || [])]; arr[i] = { ...note, content: e.target.value }; setEditPolicy({ ...editPolicy, customNotes: arr }); }} />
+                                    </div>
+                                ))}
+                                <button onClick={() => setEditPolicy({ ...editPolicy, customNotes: [...(editPolicy.customNotes || []), { title: "", content: "" }] })}
+                                    className="text-xs text-primary-600 flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm ghi chú</button>
                             </div>
                         </div>
 
