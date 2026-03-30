@@ -43,7 +43,7 @@ export default function AdminMediaLibraryPage() {
         try {
             let query = supabase
                 .from("media_assets")
-                .select("*, users:uploaded_by(full_name)")
+                .select("*")
                 .order("created_at", { ascending: false });
 
             if (filterCategory !== "all") query = query.eq("category", filterCategory);
@@ -271,7 +271,7 @@ export default function AdminMediaLibraryPage() {
                                 <div className="flex items-center justify-between mt-1">
                                     <span className="text-[10px] text-slate-400">{formatSize(asset.file_size || 0)}</span>
                                     <span className="text-[10px] text-blue-500 flex items-center gap-1">
-                                        <User className="w-3 h-3" /> {asset.users?.full_name || "—"}
+                                        <User className="w-3 h-3" /> {asset.uploaded_by?.slice(0, 8) || "—"}
                                     </span>
                                 </div>
                             </div>
@@ -295,7 +295,7 @@ export default function AdminMediaLibraryPage() {
                             {assets.map(asset => (
                                 <tr key={asset.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="p-3 font-medium text-slate-800">{asset.file_name}</td>
-                                    <td className="p-3 text-slate-500">{asset.users?.full_name || "—"}</td>
+                                    <td className="p-3 text-slate-500">{asset.uploaded_by?.slice(0, 8) || "—"}</td>
                                     <td className="p-3">
                                         <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${asset.file_type === "video" ? "bg-blue-100 text-blue-600" : "bg-green-100 text-green-600"}`}>
                                             {asset.file_type === "video" ? "Video" : "Ảnh"}

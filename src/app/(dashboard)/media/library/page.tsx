@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { FolderOpen, Upload, Film, Search, Grid, List, Trash2, ExternalLink } from "lucide-react";
+import { FolderOpen, Upload, Film, Search, Grid, List, Trash2, ExternalLink, XCircle } from "lucide-react";
 
 const CATEGORIES: Record<string, string> = {
     product: "Sản phẩm",
@@ -28,6 +28,20 @@ export default function MediaLibraryPage() {
     const [uploadProgress, setUploadProgress] = useState("");
     const [uploadPercent, setUploadPercent] = useState(0);
     const fileRef = useRef<HTMLInputElement>(null);
+    const abortRef = useRef<AbortController | null>(null);
+
+    // Warn user before leaving page during upload
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            if (uploading) {
+                e.preventDefault();
+                e.returnValue = "Đang upload file. Bạn có chắc muốn rời trang?";
+                return e.returnValue;
+            }
+        };
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    }, [uploading]);
 
     const loadAssets = useCallback(async () => {
         if (!user) return;
@@ -54,7 +68,18 @@ export default function MediaLibraryPage() {
 
     useEffect(() => { loadAssets(); }, [loadAssets]);
 
-    const uploadFile = async (file: File) => {
+    const cancelUpload = () => {
+        if (abortRef.current) {
+            abortRef.current.abort();
+            abortRef.current = null;
+        }
+        setUploading(false);
+        setUploadProgress("");
+        setUploadPercent(0);
+        if (fileRef.current) fileRef.current.value = "";
+    };
+
+    const uploadFile = async (file: File, signal: AbortSignal) => {
         if (!user) return;
 
         // Step 1: Initialize resumable upload
@@ -65,7 +90,7 @@ export default function MediaLibraryPage() {
         initForm.append("fileSize", String(file.size));
         initForm.append("userName", user.full_name || user.id.slice(0, 8));
 
-        const initRes = await fetch("/api/media/upload", { method: "POST", body: initForm });
+        const initRes = await fetch("/api/media/upload", { method: "POST", body: initForm, signal });
         if (!initRes.ok) {
             const err = await initRes.json();
             throw new Error(err.error || "Failed to init upload");
@@ -81,6 +106,7 @@ export default function MediaLibraryPage() {
             const end = Math.min(start + CHUNK_SIZE, file.size) - 1;
             const chunkBlob = file.slice(start, end + 1);
 
+            if (signal.aborted) throw new DOMException("Upload cancelled", "AbortError");
             setUploadPercent(Math.round(((i + 1) / totalChunks) * 100));
 
             const chunkForm = new FormData();
@@ -92,7 +118,7 @@ export default function MediaLibraryPage() {
             chunkForm.append("rangeEnd", String(end));
             chunkForm.append("totalSize", String(file.size));
 
-            const chunkRes = await fetch("/api/media/upload", { method: "POST", body: chunkForm });
+            const chunkRes = await fetch("/api/media/upload", { method: "POST", body: chunkForm, signal });
             if (!chunkRes.ok) {
                 const err = await chunkRes.json();
                 throw new Error(err.error || `Chunk ${i + 1} failed`);
@@ -117,7 +143,7 @@ export default function MediaLibraryPage() {
         completeForm.append("fileType", file.type);
         completeForm.append("userId", user.id);
 
-        const completeRes = await fetch("/api/media/upload", { method: "POST", body: completeForm });
+        const completeRes = await fetch("/api/media/upload", { method: "POST", body: completeForm, signal });
         if (!completeRes.ok) {
             const err = await completeRes.json();
             throw new Error(err.error || "Failed to save metadata");
@@ -127,6 +153,8 @@ export default function MediaLibraryPage() {
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || !user) return;
+        const controller = new AbortController();
+        abortRef.current = controller;
         setUploading(true);
 
         try {
@@ -136,9 +164,14 @@ export default function MediaLibraryPage() {
                 setUploadProgress(`${i + 1}/${fileArray.length}: ${file.name} (${formatSize(file.size)})`);
                 setUploadPercent(0);
 
+                if (controller.signal.aborted) break;
                 try {
-                    await uploadFile(file);
+                    await uploadFile(file, controller.signal);
                 } catch (err: any) {
+                    if (err.name === "AbortError") {
+                        console.log("Upload cancelled by user");
+                        break;
+                    }
                     console.error(`Upload error for ${file.name}:`, err);
                     alert(`Lỗi upload ${file.name}: ${err.message}`);
                 }
@@ -210,9 +243,14 @@ export default function MediaLibraryPage() {
             {/* Upload progress */}
             {uploading && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                        <p className="text-sm text-blue-700 font-medium">Đang upload {uploadProgress}</p>
+                    <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                            <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                            <p className="text-sm text-blue-700 font-medium">Đang upload {uploadProgress}</p>
+                        </div>
+                        <button onClick={cancelUpload} className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-600 text-xs font-medium rounded-lg hover:bg-red-200 transition-colors" title="Hủy upload">
+                            <XCircle className="w-4 h-4" /> Hủy
+                        </button>
                     </div>
                     <div className="w-full bg-blue-200 rounded-full h-2">
                         <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: `${uploadPercent}%` }} />
