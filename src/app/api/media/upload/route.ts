@@ -3,7 +3,6 @@ import { createClient } from "@supabase/supabase-js";
 
 // Chunked upload: handles init, chunk forwarding, and completion
 // Each chunk is < 4MB to stay under Vercel's body limit
-// Client sends file in chunks → API forwards to Google Drive resumable upload
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_DRIVE_CLIENT_ID || "";
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_DRIVE_CLIENT_SECRET || "";
@@ -27,12 +26,45 @@ async function getAccessToken(): Promise<string> {
         }),
     });
     if (!res.ok) throw new Error(`Token refresh failed: ${await res.text()}`);
-    const data = await res.json();
-    return data.access_token;
+    return (await res.json()).access_token;
 }
 
-async function getOrCreateFolder(token: string, folderName: string): Promise<string> {
-    const query = `name='${folderName}' and '${GOOGLE_DRIVE_FOLDER_ID}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+// Auto-detect or create root "LYHU Media" folder
+async function getRootFolder(token: string): Promise<string> {
+    if (GOOGLE_DRIVE_FOLDER_ID) {
+        try {
+            const checkRes = await fetch(
+                `https://www.googleapis.com/drive/v3/files/${GOOGLE_DRIVE_FOLDER_ID}?fields=id,trashed`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (checkRes.ok) {
+                const f = await checkRes.json();
+                if (!f.trashed) return GOOGLE_DRIVE_FOLDER_ID;
+            }
+        } catch {}
+    }
+
+    const query = `name='LYHU Media' and 'root' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+    const searchRes = await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id)`,
+        { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (searchRes.ok) {
+        const data = await searchRes.json();
+        if (data.files?.length > 0) return data.files[0].id;
+    }
+
+    const createRes = await fetch("https://www.googleapis.com/drive/v3/files", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "LYHU Media", mimeType: "application/vnd.google-apps.folder" }),
+    });
+    if (!createRes.ok) throw new Error(`Failed to create root folder: ${await createRes.text()}`);
+    return (await createRes.json()).id;
+}
+
+async function getOrCreateSubfolder(token: string, parentId: string, folderName: string): Promise<string> {
+    const query = `name='${folderName}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
     const searchRes = await fetch(
         `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id)`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -46,7 +78,7 @@ async function getOrCreateFolder(token: string, folderName: string): Promise<str
         body: JSON.stringify({
             name: folderName,
             mimeType: "application/vnd.google-apps.folder",
-            parents: [GOOGLE_DRIVE_FOLDER_ID],
+            parents: [parentId],
         }),
     });
     return (await createRes.json()).id;
@@ -58,7 +90,6 @@ export async function POST(req: NextRequest) {
         const action = formData.get("action") as string;
 
         if (action === "init") {
-            // Step 1: Create resumable upload session
             const fileName = formData.get("fileName") as string;
             const mimeType = formData.get("mimeType") as string;
             const fileSize = formData.get("fileSize") as string;
@@ -66,13 +97,14 @@ export async function POST(req: NextRequest) {
             const targetFolderId = formData.get("targetFolderId") as string;
 
             const token = await getAccessToken();
+            const rootId = await getRootFolder(token);
 
-            // Use targetFolderId if provided, otherwise create/use user folder
-            let folderId = GOOGLE_DRIVE_FOLDER_ID;
+            // Use targetFolderId if provided, otherwise create/use user subfolder
+            let folderId = rootId;
             if (targetFolderId) {
                 folderId = targetFolderId;
             } else if (userName) {
-                folderId = await getOrCreateFolder(token, userName);
+                folderId = await getOrCreateSubfolder(token, rootId, userName);
             }
 
             const initRes = await fetch(
@@ -95,7 +127,6 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ uploadUrl, token });
 
         } else if (action === "chunk") {
-            // Step 2: Upload a chunk to Google Drive
             const uploadUrl = formData.get("uploadUrl") as string;
             const token = formData.get("token") as string;
             const chunk = formData.get("chunk") as File;
@@ -115,8 +146,6 @@ export async function POST(req: NextRequest) {
                 body: chunkBuffer,
             });
 
-            // 308 = Resume Incomplete (more chunks needed)
-            // 200/201 = Upload complete
             if (putRes.status === 308) {
                 return NextResponse.json({ status: "continue" });
             } else if (putRes.ok) {
@@ -127,7 +156,6 @@ export async function POST(req: NextRequest) {
             }
 
         } else if (action === "complete") {
-            // Step 3: Save metadata to Supabase
             const driveFileId = formData.get("driveFileId") as string;
             const fileName = formData.get("fileName") as string;
             const fileSize = formData.get("fileSize") as string;

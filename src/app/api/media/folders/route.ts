@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 // Google Drive folder management API
 // Supports: list, create, delete folders - all synced with Google Drive
+// Auto-detects root folder to avoid permission issues with drive.file scope
 
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_DRIVE_CLIENT_ID || "";
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_DRIVE_CLIENT_SECRET || "";
@@ -23,13 +24,66 @@ async function getAccessToken(): Promise<string> {
     return (await res.json()).access_token;
 }
 
+// Get or create the root "LYHU Media" folder
+// This ensures the token always has access (creates it if needed)
+async function getRootFolder(token: string): Promise<string> {
+    // 1. Try the configured folder ID
+    if (GOOGLE_DRIVE_FOLDER_ID) {
+        try {
+            const checkRes = await fetch(
+                `https://www.googleapis.com/drive/v3/files/${GOOGLE_DRIVE_FOLDER_ID}?fields=id,name,trashed`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (checkRes.ok) {
+                const f = await checkRes.json();
+                if (!f.trashed) return GOOGLE_DRIVE_FOLDER_ID;
+            }
+        } catch {
+            // Folder not accessible, fall through to search/create
+        }
+    }
+
+    // 2. Search for "LYHU Media" folder in root that this token can access
+    const query = `name='LYHU Media' and 'root' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+    const searchRes = await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name)`,
+        { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (searchRes.ok) {
+        const searchData = await searchRes.json();
+        if (searchData.files?.length > 0) {
+            console.log("Found existing LYHU Media folder:", searchData.files[0].id);
+            return searchData.files[0].id;
+        }
+    }
+
+    // 3. Create "LYHU Media" folder in root
+    const createRes = await fetch("https://www.googleapis.com/drive/v3/files", {
+        method: "POST",
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            name: "LYHU Media",
+            mimeType: "application/vnd.google-apps.folder",
+        }),
+    });
+    if (!createRes.ok) throw new Error(`Failed to create root folder: ${await createRes.text()}`);
+    const newFolder = await createRes.json();
+    console.log("Created LYHU Media folder:", newFolder.id);
+    return newFolder.id;
+}
+
 // GET: List folders and files inside a folder
 export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
-        const parentId = searchParams.get("parentId") || GOOGLE_DRIVE_FOLDER_ID;
-
         const token = await getAccessToken();
+
+        // Get root folder (auto-detect)
+        const rootId = await getRootFolder(token);
+        const parentId = searchParams.get("parentId") || rootId;
 
         // List all items in folder (folders first, then files)
         const query = `'${parentId}' in parents and trashed=false`;
@@ -55,7 +109,7 @@ export async function GET(req: NextRequest) {
             webViewLink: f.webViewLink,
         }));
 
-        return NextResponse.json({ items, parentId });
+        return NextResponse.json({ items, parentId, rootId });
     } catch (err: any) {
         console.error("Folder list error:", err);
         return NextResponse.json({ error: err.message }, { status: 500 });
@@ -72,7 +126,10 @@ export async function POST(req: NextRequest) {
         }
 
         const token = await getAccessToken();
-        const targetParent = parentId || GOOGLE_DRIVE_FOLDER_ID;
+
+        // Get root folder (auto-detect)
+        const rootId = await getRootFolder(token);
+        const targetParent = parentId || rootId;
 
         const res = await fetch("https://www.googleapis.com/drive/v3/files", {
             method: "POST",
@@ -101,18 +158,13 @@ export async function POST(req: NextRequest) {
     }
 }
 
-// DELETE: Delete a folder (moves to trash on Drive)
+// DELETE: Delete a folder/file (moves to trash on Drive)
 export async function DELETE(req: NextRequest) {
     try {
         const { folderId } = await req.json();
 
         if (!folderId) {
             return NextResponse.json({ error: "Folder ID is required" }, { status: 400 });
-        }
-
-        // Safety: don't allow deleting the root folder
-        if (folderId === GOOGLE_DRIVE_FOLDER_ID) {
-            return NextResponse.json({ error: "Cannot delete root folder" }, { status: 400 });
         }
 
         const token = await getAccessToken();
@@ -130,11 +182,11 @@ export async function DELETE(req: NextRequest) {
             }
         );
 
-        if (!res.ok) throw new Error(`Delete folder failed: ${await res.text()}`);
+        if (!res.ok) throw new Error(`Delete failed: ${await res.text()}`);
 
         return NextResponse.json({ success: true });
     } catch (err: any) {
-        console.error("Delete folder error:", err);
+        console.error("Delete error:", err);
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }
