@@ -15,7 +15,9 @@ interface PolicyData {
     bonuses: { title: string; amount: string; desc: string }[];
     penalties: { name: string; desc: string; fine: string }[];
     penaltyNote: string;
+    penaltyNotes?: string[];
     commissionNote: string;
+    commissionNotes?: string[];
     customNotes: { title: string; content: string }[];
     version: string;
 }
@@ -188,13 +190,18 @@ export default function RecruiterRulesPage() {
                         </div>
                     </section>
 
-                    {/* Commission Note */}
-                    {policy.commissionNote && (
-                        <section className="bg-emerald-50 rounded-xl border border-emerald-200 p-5">
-                            <div className="flex items-start gap-2">
-                                <Info className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
-                                <p className="text-sm text-emerald-800 font-medium leading-relaxed whitespace-pre-line">{policy.commissionNote}</p>
-                            </div>
+                    {/* Commission Notes */}
+                    {((policy.commissionNotes || []).length > 0 || policy.commissionNote) && (
+                        <section className="bg-emerald-50 rounded-xl border border-emerald-200 p-5 space-y-3">
+                            <h3 className="text-xs font-semibold text-emerald-700 uppercase tracking-wide">Ghi chú hoa hồng</h3>
+                            {(Array.isArray(policy.commissionNotes) ? policy.commissionNotes : (policy.commissionNote ? [policy.commissionNote] : [])).map((note, idx) => (
+                                note ? (
+                                    <div key={idx} className="flex items-start gap-2">
+                                        <Info className="w-3.5 h-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                                        <p className="text-sm text-emerald-800 leading-relaxed whitespace-pre-line">{note}</p>
+                                    </div>
+                                ) : null
+                            ))}
                         </section>
                     )}
 
@@ -240,12 +247,17 @@ export default function RecruiterRulesPage() {
                                     </div>
                                 ))}
                             </div>
-                            {policy.penaltyNote && (
-                                <div className="px-5 py-3 bg-slate-50 border-t border-slate-100">
-                                    <div className="flex items-start gap-2">
-                                        <Info className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
-                                        <p className="text-xs text-slate-500 leading-relaxed whitespace-pre-line">{policy.penaltyNote}</p>
-                                    </div>
+                            {((policy.penaltyNotes || []).length > 0 || policy.penaltyNote) && (
+                                <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 space-y-2">
+                                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Ghi chú phạt</p>
+                                    {(Array.isArray(policy.penaltyNotes) ? policy.penaltyNotes : (policy.penaltyNote ? [policy.penaltyNote] : [])).map((note, idx) => (
+                                        note ? (
+                                            <div key={idx} className="flex items-start gap-2">
+                                                <Info className="w-3.5 h-3.5 text-slate-400 mt-0.5 shrink-0" />
+                                                <p className="text-xs text-slate-500 leading-relaxed whitespace-pre-line">{note}</p>
+                                            </div>
+                                        ) : null
+                                    ))}
                                 </div>
                             )}
                         </section>
@@ -377,21 +389,54 @@ export default function RecruiterRulesPage() {
                                     className="text-xs text-primary-600 flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm chế tài</button>
                             </div>
 
-                            {/* Notes */}
+                            {/* Commission Notes */}
                             <div className="space-y-3">
-                                <h3 className="text-xs font-bold text-slate-500 uppercase">Ghi chú thưởng/KPI</h3>
-                                <textarea className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={2}
-                                    placeholder="VD: Thưởng theo số lượng tuyển thành công trong tháng..."
-                                    value={editPolicy.commissionNote}
-                                    onChange={(e) => setEditPolicy({ ...editPolicy, commissionNote: e.target.value })} />
+                                <h3 className="text-xs font-bold text-slate-500 uppercase">Ghi chú hoa hồng</h3>
+                                {(Array.isArray(editPolicy.commissionNotes) ? editPolicy.commissionNotes : (editPolicy.commissionNote ? [editPolicy.commissionNote] : [])).map((note, i) => (
+                                    <div key={i} className="flex gap-2 items-start">
+                                        <textarea className="flex-1 py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={2}
+                                            placeholder="VD: Thưởng theo số lượng tuyển thành công trong tháng..."
+                                            value={note}
+                                            onChange={(e) => {
+                                                const arr = [...(Array.isArray(editPolicy.commissionNotes) ? editPolicy.commissionNotes : (editPolicy.commissionNote ? [editPolicy.commissionNote] : []))];
+                                                arr[i] = e.target.value;
+                                                setEditPolicy({ ...editPolicy, commissionNotes: arr, commissionNote: arr[0] || '' });
+                                            }} />
+                                        <button onClick={() => {
+                                            const arr = (Array.isArray(editPolicy.commissionNotes) ? editPolicy.commissionNotes : (editPolicy.commissionNote ? [editPolicy.commissionNote] : [])).filter((_, j) => j !== i);
+                                            setEditPolicy({ ...editPolicy, commissionNotes: arr, commissionNote: arr[0] || '' });
+                                        }} className="p-1.5 mt-1.5 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                                    </div>
+                                ))}
+                                <button onClick={() => {
+                                    const existing = Array.isArray(editPolicy.commissionNotes) ? editPolicy.commissionNotes : (editPolicy.commissionNote ? [editPolicy.commissionNote] : []);
+                                    setEditPolicy({ ...editPolicy, commissionNotes: [...existing, ''] });
+                                }} className="text-xs text-primary-600 flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm ghi chú hoa hồng</button>
                             </div>
 
+                            {/* Penalty Notes */}
                             <div className="space-y-3">
                                 <h3 className="text-xs font-bold text-slate-500 uppercase">Ghi chú phạt</h3>
-                                <textarea className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={3}
-                                    placeholder="VD: Mọi khoản phí phạt được gom vào quỹ team building..."
-                                    value={editPolicy.penaltyNote}
-                                    onChange={(e) => setEditPolicy({ ...editPolicy, penaltyNote: e.target.value })} />
+                                {(Array.isArray(editPolicy.penaltyNotes) ? editPolicy.penaltyNotes : (editPolicy.penaltyNote ? [editPolicy.penaltyNote] : [])).map((note, i) => (
+                                    <div key={i} className="flex gap-2 items-start">
+                                        <textarea className="flex-1 py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={2}
+                                            placeholder="VD: Mọi khoản phí phạt được gom vào quỹ team building..."
+                                            value={note}
+                                            onChange={(e) => {
+                                                const arr = [...(Array.isArray(editPolicy.penaltyNotes) ? editPolicy.penaltyNotes : (editPolicy.penaltyNote ? [editPolicy.penaltyNote] : []))];
+                                                arr[i] = e.target.value;
+                                                setEditPolicy({ ...editPolicy, penaltyNotes: arr, penaltyNote: arr[0] || '' });
+                                            }} />
+                                        <button onClick={() => {
+                                            const arr = (Array.isArray(editPolicy.penaltyNotes) ? editPolicy.penaltyNotes : (editPolicy.penaltyNote ? [editPolicy.penaltyNote] : [])).filter((_, j) => j !== i);
+                                            setEditPolicy({ ...editPolicy, penaltyNotes: arr, penaltyNote: arr[0] || '' });
+                                        }} className="p-1.5 mt-1.5 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                                    </div>
+                                ))}
+                                <button onClick={() => {
+                                    const existing = Array.isArray(editPolicy.penaltyNotes) ? editPolicy.penaltyNotes : (editPolicy.penaltyNote ? [editPolicy.penaltyNote] : []);
+                                    setEditPolicy({ ...editPolicy, penaltyNotes: [...existing, ''] });
+                                }} className="text-xs text-primary-600 flex items-center gap-1"><Plus className="w-3 h-3" /> Thêm ghi chú phạt</button>
                             </div>
 
                             {/* Custom Notes */}

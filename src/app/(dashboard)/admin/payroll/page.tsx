@@ -1160,21 +1160,54 @@ export default function AdminPayrollPage() {
                                         className="text-xs text-primary-600 flex items-center gap-1 hover:text-primary-700"><Plus className="w-3 h-3" /> Thêm chế tài</button>
                                 </div>
 
-                                {/* Notes */}
+                                {/* Commission Notes */}
                                 <div className="space-y-3">
                                     <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-blue-500 pl-3">Ghi chú hoa hồng</h3>
-                                    <textarea className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={3}
-                                        placeholder="VD: Hoa hồng tính trên phần doanh số VƯỢT target..."
-                                        value={policyData.commissionNote || ''}
-                                        onChange={(e) => setPolicyData({ ...policyData, commissionNote: e.target.value })} />
+                                    {(Array.isArray(policyData.commissionNotes) ? policyData.commissionNotes : (policyData.commissionNote ? [policyData.commissionNote] : [])).map((note: string, i: number) => (
+                                        <div key={i} className="flex gap-2 items-start">
+                                            <textarea className="flex-1 py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={2}
+                                                placeholder="VD: Hoa hồng tính trên phần doanh số VƯỢT target..."
+                                                value={note}
+                                                onChange={(e) => {
+                                                    const arr = [...(Array.isArray(policyData.commissionNotes) ? policyData.commissionNotes : (policyData.commissionNote ? [policyData.commissionNote] : []))];
+                                                    arr[i] = e.target.value;
+                                                    setPolicyData({ ...policyData, commissionNotes: arr, commissionNote: arr[0] || '' });
+                                                }} />
+                                            <button onClick={() => {
+                                                const arr = (Array.isArray(policyData.commissionNotes) ? policyData.commissionNotes : (policyData.commissionNote ? [policyData.commissionNote] : [])).filter((_: any, j: number) => j !== i);
+                                                setPolicyData({ ...policyData, commissionNotes: arr, commissionNote: arr[0] || '' });
+                                            }} className="p-1.5 mt-1.5 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                                        </div>
+                                    ))}
+                                    <button onClick={() => {
+                                        const existing = Array.isArray(policyData.commissionNotes) ? policyData.commissionNotes : (policyData.commissionNote ? [policyData.commissionNote] : []);
+                                        setPolicyData({ ...policyData, commissionNotes: [...existing, ''] });
+                                    }} className="text-xs text-primary-600 flex items-center gap-1 hover:text-primary-700"><Plus className="w-3 h-3" /> Thêm ghi chú hoa hồng</button>
                                 </div>
 
+                                {/* Penalty Notes */}
                                 <div className="space-y-3">
                                     <h3 className="text-xs font-bold text-slate-500 uppercase border-l-3 border-slate-400 pl-3">Ghi chú phạt</h3>
-                                    <textarea className="w-full py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={3}
-                                        placeholder="VD: Mọi khoản phí phạt được gom vào quỹ Bonding..."
-                                        value={policyData.penaltyNote || ''}
-                                        onChange={(e) => setPolicyData({ ...policyData, penaltyNote: e.target.value })} />
+                                    {(Array.isArray(policyData.penaltyNotes) ? policyData.penaltyNotes : (policyData.penaltyNote ? [policyData.penaltyNote] : [])).map((note: string, i: number) => (
+                                        <div key={i} className="flex gap-2 items-start">
+                                            <textarea className="flex-1 py-2 px-3 rounded-lg border border-slate-200 text-sm" rows={2}
+                                                placeholder="VD: Mọi khoản phí phạt được gom vào quỹ Bonding..."
+                                                value={note}
+                                                onChange={(e) => {
+                                                    const arr = [...(Array.isArray(policyData.penaltyNotes) ? policyData.penaltyNotes : (policyData.penaltyNote ? [policyData.penaltyNote] : []))];
+                                                    arr[i] = e.target.value;
+                                                    setPolicyData({ ...policyData, penaltyNotes: arr, penaltyNote: arr[0] || '' });
+                                                }} />
+                                            <button onClick={() => {
+                                                const arr = (Array.isArray(policyData.penaltyNotes) ? policyData.penaltyNotes : (policyData.penaltyNote ? [policyData.penaltyNote] : [])).filter((_: any, j: number) => j !== i);
+                                                setPolicyData({ ...policyData, penaltyNotes: arr, penaltyNote: arr[0] || '' });
+                                            }} className="p-1.5 mt-1.5 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                                        </div>
+                                    ))}
+                                    <button onClick={() => {
+                                        const existing = Array.isArray(policyData.penaltyNotes) ? policyData.penaltyNotes : (policyData.penaltyNote ? [policyData.penaltyNote] : []);
+                                        setPolicyData({ ...policyData, penaltyNotes: [...existing, ''] });
+                                    }} className="text-xs text-primary-600 flex items-center gap-1 hover:text-primary-700"><Plus className="w-3 h-3" /> Thêm ghi chú phạt</button>
                                 </div>
 
                                 {/* Custom Notes */}
@@ -1196,7 +1229,7 @@ export default function AdminPayrollPage() {
                                         </div>
                                     ))}
                                     <button onClick={() => setPolicyData({ ...policyData, customNotes: [...(policyData.customNotes || []), { title: "", content: "" }] })}
-                                        className="text-xs text-primary-600 flex items-center gap-1 hover:text-primary-700"><Plus className="w-3 h-3" /> Thêm ghi chú</button>
+                                        className="text-xs text-primary-600 flex items-center gap-1 hover:text-primary-700"><Plus className="w-3 h-3" /> Thêm ghi chú bổ sung</button>
                                 </div>
                             </div>
 
