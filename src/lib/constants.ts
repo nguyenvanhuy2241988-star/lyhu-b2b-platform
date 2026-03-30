@@ -232,6 +232,8 @@ export const NAV_ITEMS = {
         { label: "Hồ sơ Nhân sự", href: "/hr/directory", icon: Users },
         { label: "Sự kiện", href: "/events", icon: Calendar },
         { label: "Việc cần làm", href: "/tasks", icon: ListTodo },
+        { label: "Thu nhập & KPI", href: "/recruitment/earnings", icon: DollarSign },
+        { label: "Quy định & Chính sách", href: "/recruitment/rules", icon: Book },
         { label: "Hồ sơ công ty", href: "/recruitment/settings", icon: Settings },
         { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
         { label: "Góc Giải Trí", href: "/entertainment", icon: Gamepad2 },

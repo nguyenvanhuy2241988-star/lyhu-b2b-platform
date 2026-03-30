@@ -28,7 +28,7 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
 
     useEffect(() => {
         // Only check for Telesales role or if the link exists
-        if (role === 'telesales' || role === 'admin') { // Check role
+        if (role === 'telesales' || role === 'recruiter' || role === 'admin') { // Check role
             const checkKpi = async () => {
                 try {
                     const tasks = await getMyTasks();
@@ -89,7 +89,7 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
                     {items.map((item) => {
                         const Icon = item.icon as LucideIcon;
                         const isActive = pathname === item.href;
-                        const isKpiLink = item.href === '/telesales/earnings';
+                        const isKpiLink = item.href === '/telesales/earnings' || item.href === '/recruitment/earnings';
                         const isChatLink = item.href === '/chat';
 
                         return (

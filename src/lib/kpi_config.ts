@@ -105,6 +105,47 @@ export const KPI_TEMPLATES: Record<string, KpiTemplate> = {
         hasCommission: true
     },
     // Future templates for Warehouse, Recruiter, Accountant can be added here
+    recruiter: {
+        label: "KPI Tuyển dụng",
+        fields: [
+            {
+                key: 'kpi_candidates_sourced',
+                label: 'Ứng viên đã Tìm',
+                type: 'number',
+                suffix: 'ứng viên',
+                description: 'Số hồ sơ ứng viên mới tìm/tiếp nhận trong tháng'
+            },
+            {
+                key: 'kpi_interviews_scheduled',
+                label: 'Lịch phỏng vấn',
+                type: 'number',
+                suffix: 'buổi',
+                description: 'Số buổi phỏng vấn đã sắp xếp thành công'
+            },
+            {
+                key: 'kpi_hires_closed',
+                label: 'Tuyển thành công',
+                type: 'number',
+                suffix: 'người',
+                description: 'Số ứng viên nhận việc (Onboard) trong tháng'
+            },
+            {
+                key: 'kpi_offer_acceptance_rate',
+                label: 'Tỷ lệ nhận Offer',
+                type: 'percentage',
+                suffix: '%',
+                description: '% ứng viên chấp nhận offer trên tổng offer gửi'
+            },
+            {
+                key: 'kpi_time_to_fill',
+                label: 'Thời gian tuyển TB',
+                type: 'number',
+                suffix: 'ngày',
+                description: 'Số ngày trung bình từ đăng tin đến onboard'
+            }
+        ],
+        hasCommission: false
+    },
 };
 
 export function formatKpiValue(value: number, type: KpiFieldType): string {
