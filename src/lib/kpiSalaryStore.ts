@@ -310,10 +310,11 @@ export const calculateKpiSalary = async (
     userId: string,
     month: number,
     year: number,
-    baseSalary: number
+    baseSalary: number,
+    role?: string
 ): Promise<KpiSalaryResult> => {
-    // 1. Get active metrics with salary weights
-    const metrics = await fetchActiveKpiMetrics();
+    // 1. Get active metrics with salary weights (filtered by role if provided)
+    const metrics = await fetchActiveKpiMetrics(role);
 
     // 2. Get user-specific target overrides from user_kpi_settings (existing payroll config)
     const { data: userKpiSettings } = await supabase
@@ -485,9 +486,10 @@ export const calculateKpiSalaryForRange = async (
     startDate: Date,
     endDate: Date,
     baseSalary: number,
-    divisor: number = 1
+    divisor: number = 1,
+    role?: string
 ): Promise<KpiSalaryResult> => {
-    const metrics = await fetchActiveKpiMetrics();
+    const metrics = await fetchActiveKpiMetrics(role);
 
     const { data: userKpiSettings } = await supabase
         .rpc('get_user_kpi_settings', { p_user_id: userId });

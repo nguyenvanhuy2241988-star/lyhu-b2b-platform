@@ -50,7 +50,7 @@ export default function RecruiterEarningsPage() {
 
             const baseSalary = kpiRes.data?.base_salary_monthly || 0;
             setBaseSalaryMonthly(baseSalary);
-            const salaryResult = await calculateKpiSalary(user.id, selectedMonth + 1, selectedYear, baseSalary);
+            const salaryResult = await calculateKpiSalary(user.id, selectedMonth + 1, selectedYear, baseSalary, 'recruiter');
             setKpiSalary(salaryResult);
             setLastUpdated(new Date());
         } catch (error) {

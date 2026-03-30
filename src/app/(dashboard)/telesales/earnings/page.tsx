@@ -95,7 +95,7 @@ export default function TelesalesEarningsPage() {
             // Calculate KPI-based salary for the selected month
             const baseSalary = trackingRes[3]?.baseSalaryMonthly || (trackingRes[4].data?.base_salary_monthly) || 0;
             setBaseSalaryMonthly(baseSalary);
-            const salaryResult = await calculateKpiSalary(user.id, selectedMonth + 1, selectedYear, baseSalary);
+            const salaryResult = await calculateKpiSalary(user.id, selectedMonth + 1, selectedYear, baseSalary, 'telesales');
             setKpiSalary(salaryResult);
             setLastUpdated(new Date());
 
@@ -115,7 +115,7 @@ export default function TelesalesEarningsPage() {
         if (dateRange === 'this_month') {
             // Already showing monthly data, recalculate from scratch
             const recalc = async () => {
-                const result = await calculateKpiSalary(user.id, selectedMonth + 1, selectedYear, baseSalaryMonthly);
+                const result = await calculateKpiSalary(user.id, selectedMonth + 1, selectedYear, baseSalaryMonthly, 'telesales');
                 setKpiSalary(result);
             };
             recalc();
@@ -141,7 +141,7 @@ export default function TelesalesEarningsPage() {
 
             const recalc = async () => {
                 const result = await calculateKpiSalaryForRange(
-                    user.id, rangeStart, rangeEnd, baseSalaryMonthly, divisor
+                    user.id, rangeStart, rangeEnd, baseSalaryMonthly, divisor, 'telesales'
                 );
                 setKpiSalary(result);
             };
