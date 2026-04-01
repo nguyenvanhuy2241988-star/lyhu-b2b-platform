@@ -104,15 +104,14 @@ async function handleSync() {
 
             // Only update if quantity differs
             if (currentQty !== misaQty) {
-                // Upsert inventory_levels
+                // Upsert inventory_levels — only write quantity_on_hand
+                // (quantity_available is a generated column, auto-calculated by DB)
                 const { error: upsertErr } = await supabaseAdmin
                     .from("inventory_levels")
                     .upsert({
                         warehouse_id: warehouseId,
                         product_id: matched.id,
                         quantity_on_hand: misaQty,
-                        // Recalculate available (on_hand - committed)
-                        quantity_available: misaQty - (currentLevels?.find(l => l.product_id === matched.id) ? 0 : 0),
                         updated_at: new Date().toISOString(),
                     }, {
                         onConflict: "warehouse_id,product_id",
@@ -127,24 +126,6 @@ async function handleSync() {
                         oldQty: currentQty,
                         newQty: misaQty,
                     });
-
-                    // Also update quantity_available correctly
-                    // (need to preserve quantity_committed)
-                    const { data: levelData } = await supabaseAdmin
-                        .from("inventory_levels")
-                        .select("quantity_committed")
-                        .eq("warehouse_id", warehouseId)
-                        .eq("product_id", matched.id)
-                        .single();
-
-                    const committed = levelData?.quantity_committed || 0;
-                    await supabaseAdmin
-                        .from("inventory_levels")
-                        .update({
-                            quantity_available: Math.max(0, misaQty - committed),
-                        })
-                        .eq("warehouse_id", warehouseId)
-                        .eq("product_id", matched.id);
 
                     // Log as inventory_transaction
                     const diff = misaQty - currentQty;
