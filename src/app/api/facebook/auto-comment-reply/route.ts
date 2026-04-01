@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 55;
-const VERSION = 'v8-ads-only';
+const VERSION = 'v9-posts-25';
 
 /**
  * Cron Job: Auto-scan comments on all connected pages
@@ -60,17 +60,16 @@ export async function GET(request: NextRequest) {
             const inboxText = config.auto_comment_inbox_text ||
                 'Chào bạn! 👋\nCảm ơn bạn đã quan tâm đến sản phẩm LYHU!\nBạn vui lòng cho mình xin SĐT để tư vấn chi tiết hơn nhé ❤️';
 
-            // Fetch ads_posts only (bài quảng cáo đang chạy)
+            // Fetch page posts (includes bài quảng cáo đã promoted) - limit 25
             const allPosts: { id: string }[] = [];
             const seenPostIds = new Set<string>();
 
-            // Ads posts (includes dark posts from ads) - limit 25 to catch older campaigns
             try {
-                const adsRes = await fetch(
-                    `https://graph.facebook.com/v19.0/${page.page_id}/ads_posts?fields=id&limit=25&access_token=${page.access_token}`
+                const postsRes = await fetch(
+                    `https://graph.facebook.com/v19.0/${page.page_id}/posts?fields=id&limit=25&access_token=${page.access_token}`
                 );
-                const adsData = await adsRes.json();
-                for (const p of adsData.data || []) {
+                const postsData = await postsRes.json();
+                for (const p of postsData.data || []) {
                     if (!seenPostIds.has(p.id)) { seenPostIds.add(p.id); allPosts.push({ id: p.id }); }
                 }
             } catch (e) { }
