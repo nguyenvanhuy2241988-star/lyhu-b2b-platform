@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 55;
-const VERSION = 'v5-no-fb-doublecheck';
+const VERSION = 'v6-filter-stats';
 
 /**
  * Cron Job: Auto-scan comments on all connected pages
@@ -91,11 +91,14 @@ export async function GET() {
                         post_id: post.id,
                         comments_total: commentsData.data?.length || 0,
                         error: commentsData.error?.message || null,
-                        sample_comments: (commentsData.data || []).slice(0, 3).map((c: any) => ({
+                        filtered_page_own: 0,
+                        filtered_hidden: 0,
+                        passed_filter: 0,
+                        sample_comments: (commentsData.data || []).slice(0, 5).map((c: any) => ({
                             id: c.id,
                             from: c.from?.name || 'NO_FROM',
                             from_id: c.from?.id || 'NO_ID',
-                            message: (c.message || '').substring(0, 40),
+                            message: (c.message || '').substring(0, 50),
                             is_hidden: c.is_hidden,
                             is_page: c.from?.id === page.page_id
                         }))
@@ -105,10 +108,16 @@ export async function GET() {
 
                     for (const comment of commentsData.data) {
                         // Skip page's own comments (only if from.id is available)
-                        if (comment.from?.id && comment.from.id === page.page_id) continue;
-                        if (comment.is_hidden) continue;
+                        if (comment.from?.id && comment.from.id === page.page_id) {
+                            postDebug.filtered_page_own++;
+                            continue;
+                        }
+                        if (comment.is_hidden) {
+                            postDebug.filtered_hidden++;
+                            continue;
+                        }
                         // NOTE: Do NOT skip comments without from.id - we can still reply to them
-
+                        postDebug.passed_filter++;
                         totalProcessed++;
 
                         // ===== DB DEDUP CHECK =====
@@ -146,10 +155,12 @@ export async function GET() {
                                 console.error(`[Comment Cron] ❌ Reply failed:`, errMsg);
                                 pageDebug.reply_errors.push({
                                     comment_id: comment.id,
-                                    comment_msg: (comment.message || '').substring(0, 40),
+                                    comment_msg: (comment.message || '').substring(0, 50),
+                                    from: comment.from?.name || 'NO_FROM',
                                     error: errMsg,
                                     error_code: errCode,
-                                    error_subcode: replyData.error?.error_subcode || 0
+                                    error_subcode: replyData.error?.error_subcode || 0,
+                                    full_response: JSON.stringify(replyData).substring(0, 200)
                                 });
                             }
                         } catch (e) {
