@@ -123,32 +123,8 @@ export async function GET() {
                             continue; // Already successfully replied, skip
                         }
 
-                        // Also double-check via Facebook API (belt & suspenders)
-                        let alreadyRepliedOnFB = false;
-                        try {
-                            const repliesRes = await fetch(
-                                `https://graph.facebook.com/v19.0/${comment.id}/comments?fields=from&limit=5&access_token=${page.access_token}`
-                            );
-                            const repliesData = await repliesRes.json();
-                            alreadyRepliedOnFB = repliesData.data?.some((r: any) => r.from?.id === page.page_id);
-                        } catch (e) { }
-
-                        if (alreadyRepliedOnFB) {
-                            // Save to DB so we skip next time
-                            await supabase.from('comment_auto_replies').upsert({
-                                comment_id: comment.id,
-                                post_id: post.id,
-                                page_id: page.id,
-                                commenter_id: comment.from?.id || '',
-                                commenter_name: comment.from?.name || '',
-                                comment_text: comment.message || '',
-                                replied: true,
-                                inboxed: false,
-                                created_at: new Date().toISOString()
-                            }, { onConflict: 'comment_id' });
-                            totalSkipped++;
-                            continue;
-                        }
+                        // NOTE: Removed FB API double-check - DB dedup is sufficient
+                        // and the FB check was incorrectly skipping comments
 
                         // ===== 1. REPLY TO COMMENT =====
                         let replySuccess = false;
