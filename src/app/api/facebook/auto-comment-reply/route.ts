@@ -179,36 +179,44 @@ export async function GET(request: NextRequest) {
                             if (replySuccess) { totalReplied++; pageReplied++; }
                         } catch (e) { }
 
-                        // 2. INBOX
+                        // 2. INBOX - send private message after reply
                         let inboxSuccess = false;
                         let inboxError = '';
                         if (inboxEnabled && comment.from?.id) {
+                            // Method 1: me/messages with comment_id (Facebook recommended)
                             try {
-                                // Method 1: private_replies (preferred)
-                                const privateRes = await fetch(
-                                    `https://graph.facebook.com/v19.0/${comment.id}/private_replies?access_token=${page.access_token}`,
-                                    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: inboxText }) }
+                                const m1Res = await fetch(
+                                    `https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`,
+                                    { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ recipient: { comment_id: comment.id }, message: { text: inboxText } }) }
                                 );
-                                const privateData = await privateRes.json();
-                                if (privateData.error) {
-                                    inboxError = `private_reply: ${privateData.error.message}`;
-                                    // Method 2: fallback to me/messages
-                                    const msgRes = await fetch(
+                                const m1Data = await m1Res.json();
+                                if (!m1Data.error) {
+                                    inboxSuccess = true;
+                                } else {
+                                    inboxError = `comment_id: ${m1Data.error.message}`;
+                                }
+                            } catch (e) { inboxError = 'comment_id: network error'; }
+
+                            // Method 2: fallback to user ID
+                            if (!inboxSuccess) {
+                                try {
+                                    const m2Res = await fetch(
                                         `https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`,
-                                        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recipient: { id: comment.from.id }, message: { text: inboxText } }) }
+                                        { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ recipient: { id: comment.from.id }, message: { text: inboxText } }) }
                                     );
-                                    const msgData = await msgRes.json();
-                                    if (msgData.error) {
-                                        inboxError += ` | messages: ${msgData.error.message}`;
-                                    } else {
+                                    const m2Data = await m2Res.json();
+                                    if (!m2Data.error) {
                                         inboxSuccess = true;
                                         inboxError = '';
+                                    } else {
+                                        inboxError += ` | user_id: ${m2Data.error.message}`;
                                     }
-                                } else {
-                                    inboxSuccess = true;
-                                }
-                                if (inboxSuccess) totalInboxed++;
-                            } catch (e) { }
+                                } catch (e) { inboxError += ' | user_id: network error'; }
+                            }
+
+                            if (inboxSuccess) totalInboxed++;
                         }
 
                         // Add inbox error to debug
