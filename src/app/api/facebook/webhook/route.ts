@@ -142,6 +142,121 @@ export async function POST(request: Request) {
         for (const entry of body.entry) {
             const pageId = entry.id;
 
+            // ============================================
+            // FEED EVENTS (Comment auto-reply + inbox)
+            // ============================================
+            if (entry.changes) {
+                for (const change of entry.changes) {
+                    if (change.field !== 'feed') continue;
+                    const value = change.value;
+
+                    // Only handle new comments (not edits, removes, etc.)
+                    if (value.item !== 'comment' || value.verb !== 'add') continue;
+
+                    // Skip page's own comments
+                    if (value.from?.id === pageId) continue;
+
+                    const commentId = value.comment_id;
+                    const commenterId = value.from?.id;
+                    const commenterName = value.from?.name || 'Khách hàng';
+                    const commentMessage = value.message || '';
+                    const postId = value.post_id;
+
+                    if (!commentId || !commenterId) continue;
+
+                    console.log(`[Comment Webhook] New comment from ${commenterName}: "${commentMessage}" on post ${postId}`);
+
+                    // Get page data
+                    const { data: pageDataComment } = await supabase
+                        .from('facebook_pages')
+                        .select('id, access_token, chatbot_config')
+                        .eq('page_id', pageId)
+                        .single();
+
+                    if (!pageDataComment?.access_token) continue;
+
+                    const commentConfig = (pageDataComment.chatbot_config as any) || {};
+
+                    // Check if auto comment reply is enabled (default: ON)
+                    const autoCommentEnabled = commentConfig.auto_comment_reply_enabled !== false;
+                    if (!autoCommentEnabled) continue;
+
+                    // Check if already replied (dedup)
+                    try {
+                        const repliesRes = await fetch(
+                            `https://graph.facebook.com/v19.0/${commentId}/comments?fields=from&limit=5&access_token=${pageDataComment.access_token}`
+                        );
+                        const repliesData = await repliesRes.json();
+                        const alreadyReplied = repliesData.data?.some((r: any) => r.from?.id === pageId);
+                        if (alreadyReplied) {
+                            console.log(`[Comment Webhook] Already replied to ${commentId}, skipping`);
+                            continue;
+                        }
+                    } catch (e) {
+                        console.error('[Comment Webhook] Check replies error:', e);
+                    }
+
+                    // 1. Reply to the comment
+                    const commentReplyText = commentConfig.auto_comment_reply_text || 'Anh/Chị check Inbox ạ ❤️';
+                    try {
+                        await fetch(`https://graph.facebook.com/v19.0/${commentId}/comments?access_token=${pageDataComment.access_token}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ message: commentReplyText })
+                        });
+                        console.log(`[Comment Webhook] Replied to comment ${commentId}: "${commentReplyText}"`);
+                    } catch (e) {
+                        console.error('[Comment Webhook] Reply error:', e);
+                    }
+
+                    // 2. Send private inbox message via Private Replies API
+                    const inboxEnabled = commentConfig.auto_comment_inbox_enabled !== false;
+                    if (inboxEnabled) {
+                        const inboxText = commentConfig.auto_comment_inbox_text ||
+                            `Chào bạn! 👋\nCảm ơn bạn đã quan tâm đến sản phẩm LYHU!\nBạn vui lòng cho mình xin SĐT để tư vấn chi tiết hơn nhé ❤️`;
+
+                        try {
+                            const privateReplyRes = await fetch(
+                                `https://graph.facebook.com/v19.0/${commentId}/private_replies?access_token=${pageDataComment.access_token}`,
+                                {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ message: inboxText })
+                                }
+                            );
+                            const privateReplyData = await privateReplyRes.json();
+
+                            if (privateReplyData.error) {
+                                console.error('[Comment Webhook] Private reply error:', privateReplyData.error.message);
+                                // Fallback: try sending via Messenger API directly 
+                                // (only works if user has messaged page before)
+                                try {
+                                    await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${pageDataComment.access_token}`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            recipient: { id: commenterId },
+                                            message: { text: inboxText }
+                                        })
+                                    });
+                                    console.log(`[Comment Webhook] Fallback messenger sent to ${commenterId}`);
+                                } catch (fallbackErr) {
+                                    console.error('[Comment Webhook] Fallback messenger error:', fallbackErr);
+                                }
+                            } else {
+                                console.log(`[Comment Webhook] Private reply sent to ${commenterName} (${commenterId})`);
+                            }
+                        } catch (e) {
+                            console.error('[Comment Webhook] Private reply failed:', e);
+                        }
+                    }
+                }
+            }
+
+            // ============================================
+            // MESSAGING EVENTS (Messenger DMs)
+            // ============================================
+
             // Process standby events (for pages where app is secondary receiver)
             if (entry.standby) {
                 for (const event of entry.standby) {

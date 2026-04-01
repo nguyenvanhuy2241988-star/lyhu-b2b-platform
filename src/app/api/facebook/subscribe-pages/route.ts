@@ -19,7 +19,7 @@ export async function GET() {
         const results = [];
 
         for (const page of (pages || [])) {
-            const url = `https://graph.facebook.com/v19.0/${page.page_id}/subscribed_apps?subscribed_fields=messages,messaging_postbacks,message_echoes&access_token=${page.access_token}`;
+            const url = `https://graph.facebook.com/v19.0/${page.page_id}/subscribed_apps?subscribed_fields=messages,messaging_postbacks,message_echoes,feed&access_token=${page.access_token}`;
 
             try {
                 const res = await fetch(url, { method: 'POST' });
