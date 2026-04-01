@@ -24,8 +24,8 @@ export async function POST(request: Request) {
             ];
         }
 
-        // 3. Persistent Menu
-        if (persistent_menu && Array.isArray(persistent_menu)) {
+        // 3. Persistent Menu (only send if non-empty)
+        if (persistent_menu && Array.isArray(persistent_menu) && persistent_menu.length > 0) {
             profileBody.persistent_menu = [
                 {
                     locale: 'default',
@@ -35,23 +35,24 @@ export async function POST(request: Request) {
             ];
         }
 
-        // Call Facebook API
-        const res = await fetch(`https://graph.facebook.com/v19.0/me/messenger_profile?access_token=${page_token}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(profileBody)
-        });
+        // Only call Facebook API if there's something to update
+        if (Object.keys(profileBody).length > 0) {
+            const res = await fetch(`https://graph.facebook.com/v19.0/me/messenger_profile?access_token=${page_token}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(profileBody)
+            });
 
-        const data = await res.json();
+            const data = await res.json();
 
-        if (data.error) {
-            console.error("FB Profile Error:", data.error);
-            return NextResponse.json({ error: data.error.message }, { status: 400 });
+            if (data.error) {
+                console.error("FB Profile Error:", data.error);
+                // Don't return error - still save to database below
+            }
         }
 
         // 4. Save to Database (chatbot_config)
-        // Need page_id from body
-        const { page_id, auto_hide_phone } = body;
+        const { page_id } = body;
 
         if (page_id) {
             const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -61,7 +62,6 @@ export async function POST(request: Request) {
                 auth: { persistSession: false }
             });
 
-            // 1. Fetch current config
             const { data: currentData } = await supabase
                 .from('facebook_pages')
                 .select('chatbot_config')
@@ -70,15 +70,18 @@ export async function POST(request: Request) {
 
             const existingConfig = currentData?.chatbot_config || {};
 
-            // 2. Merge
-            const newConfig = {
-                ...existingConfig,
-                greeting_text: greeting_text !== undefined ? greeting_text : existingConfig.greeting_text,
-                auto_hide_phone: auto_hide_phone !== undefined ? auto_hide_phone : existingConfig.auto_hide_phone,
-                persistent_menu: persistent_menu !== undefined ? persistent_menu : existingConfig.persistent_menu,
-                get_started_payload: get_started_payload !== undefined ? get_started_payload : existingConfig.get_started_payload,
-                updated_at: new Date().toISOString()
-            };
+            // Merge all config fields
+            const configFields = [
+                'greeting_text', 'auto_hide_phone', 'auto_hide_all', 'auto_hide_keywords',
+                'persistent_menu', 'get_started_payload', 'auto_reply_comment', 'auto_reply_comment_text',
+                'ai_enabled', 'auto_comment_post_ids'
+            ];
+            const newConfig: any = { ...existingConfig, updated_at: new Date().toISOString() };
+            for (const field of configFields) {
+                if (body[field] !== undefined) {
+                    newConfig[field] = body[field];
+                }
+            }
 
             await supabase
                 .from('facebook_pages')
@@ -86,7 +89,7 @@ export async function POST(request: Request) {
                 .eq('page_id', page_id);
         }
 
-        return NextResponse.json({ success: true, result: data });
+        return NextResponse.json({ success: true });
     } catch (error: any) {
         console.error("Profile API Error:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
