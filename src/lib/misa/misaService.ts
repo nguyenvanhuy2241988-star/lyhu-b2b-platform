@@ -268,6 +268,7 @@ export const MisaService = {
             account_object_name: order.customerName || order.customer?.name || "Khách lẻ",
             account_object_address: order.receiverAddress || order.address || "",
             account_object_contact: phoneCode, // Phone for reference
+            account_object_tax_code: order.customer?.tax_code || "",
             // Note: Customer is pre-created in dictionary step (3b) above
             // Don't set group_code here to avoid "NPP group not found" errors
 
@@ -448,6 +449,7 @@ export const MisaService = {
                                 tel: customerPhone,
                                 mobile: customerPhone,
                                 address: customerAddress,
+                                tax_code: orderData.customer?.tax_code || "",
                                 is_customer: true,
                                 is_vendor: false,
                             }]

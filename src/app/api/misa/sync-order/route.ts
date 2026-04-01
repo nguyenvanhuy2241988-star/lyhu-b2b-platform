@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
                     *,
                     product:products(id, sku, name, misa_code, unit)
                 ),
-                customer:customers(id, name, phone, misa_code)
+                customer:customers(id, name, phone, misa_code, tax_code)
             `)
             .eq("id", orderId)
             .single();
