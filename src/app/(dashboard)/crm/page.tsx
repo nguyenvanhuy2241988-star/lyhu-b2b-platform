@@ -381,6 +381,7 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
 
 import CRMBanner from "@/components/crm/CRMBanner";
 import TelesalesKpiDashboard from "@/app/(dashboard)/telesales/components/TelesalesKpiDashboard";
+import AIDailyBriefing from "@/components/crm/AIDailyBriefing";
 
 export default function CRMPage() {
     const { user, session, role: authRole, isLoading: authIsLoading } = useAuth();
@@ -1210,6 +1211,11 @@ export default function CRMPage() {
 
     return (
         <div className="p-4 sm:p-6 space-y-6 h-full flex flex-col relative" onClick={() => setIsSettingsOpen(false)}>
+            {/* AI Daily Briefing */}
+            {isMounted && userInfo.id && (
+                <AIDailyBriefing userId={userInfo.id} />
+            )}
+
             {/* KPI Dashboard */}
             {isMounted && userInfo.id && (
                 <div>
