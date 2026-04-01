@@ -37,6 +37,7 @@ export async function GET() {
         let totalReplied = 0;
         let totalInboxed = 0;
         let totalSkipped = 0;
+        const debug: any[] = [];
 
         for (const page of pages) {
             if (!page.access_token) continue;
@@ -76,6 +77,8 @@ export async function GET() {
                 }
             } catch (e) { }
 
+            const pageDebug: any = { page: page.name, page_id: page.page_id, posts_found: allPosts.length, posts: [] as any[] };
+
             // Scan comments for each post
             for (const post of allPosts) {
                 try {
@@ -83,6 +86,20 @@ export async function GET() {
                         `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,is_hidden,created_time&limit=50&order=reverse_chronological&access_token=${page.access_token}`
                     );
                     const commentsData = await commentsRes.json();
+                    const postDebug: any = {
+                        post_id: post.id,
+                        comments_total: commentsData.data?.length || 0,
+                        error: commentsData.error?.message || null,
+                        sample_comments: (commentsData.data || []).slice(0, 3).map((c: any) => ({
+                            id: c.id,
+                            from: c.from?.name || 'NO_FROM',
+                            from_id: c.from?.id || 'NO_ID',
+                            message: (c.message || '').substring(0, 40),
+                            is_hidden: c.is_hidden,
+                            is_page: c.from?.id === page.page_id
+                        }))
+                    };
+                    pageDebug.posts.push(postDebug);
                     if (!commentsData.data) continue;
 
                     for (const comment of commentsData.data) {
@@ -214,6 +231,8 @@ export async function GET() {
                     console.error(`[Comment Cron] Error scanning post ${post.id}:`, e);
                 }
             }
+
+            debug.push(pageDebug);
         }
 
         const elapsed = Date.now() - startTime;
@@ -225,7 +244,8 @@ export async function GET() {
             replied: totalReplied,
             inboxed: totalInboxed,
             skipped: totalSkipped,
-            elapsed_ms: elapsed
+            elapsed_ms: elapsed,
+            debug
         });
 
     } catch (error: any) {
