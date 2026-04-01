@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { MisaService } from "@/lib/misa/misaService";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,79 +20,70 @@ async function handleSync() {
         const misaResult = await MisaService.fetchInventoryStock(supabaseAdmin);
 
         if (!misaResult.success || !misaResult.items) {
-            // Log failure
             await supabaseAdmin.from("inventory_sync_log").insert({
-                sync_type: "misa_pull",
-                items_synced: 0,
-                items_changed: 0,
-                status: "failed",
-                error: misaResult.error || "Failed to fetch from MISA",
+                sync_type: "misa_pull", items_synced: 0, items_changed: 0,
+                status: "failed", error: misaResult.error || "Failed to fetch from MISA",
                 details: { _debug: misaResult._debug },
             });
-
-            return NextResponse.json({
-                success: false,
-                error: misaResult.error,
-                _debug: misaResult._debug,
-            }, { status: 400 });
+            return NextResponse.json({ success: false, error: misaResult.error, _debug: misaResult._debug }, { status: 400 });
         }
 
         const misaItems = misaResult.items;
         console.log(`[Inventory Sync] Got ${misaItems.length} items from MISA`);
 
-        // 2. Fetch ALL products from App (with misa_code for matching)
-        const { data: products, error: prodErr } = await supabaseAdmin
-            .from("products")
-            .select("id, name, sku, misa_code")
-            .not("misa_code", "is", null);
-
-        if (prodErr) {
-            console.error("[Inventory Sync] Failed to fetch products:", prodErr);
-            return NextResponse.json({ success: false, error: "Failed to fetch products" }, { status: 500 });
+        // 2. Aggregate MISA items by code (sum quantity across warehouses)
+        const misaAggregated = new Map<string, { name: string; totalQty: number }>();
+        for (const item of misaItems) {
+            const code = item.inventory_item_code.trim().toUpperCase();
+            if (!code) continue;
+            const existing = misaAggregated.get(code);
+            if (existing) {
+                existing.totalQty += item.quantity_on_hand;
+            } else {
+                misaAggregated.set(code, {
+                    name: item.inventory_item_name,
+                    totalQty: item.quantity_on_hand,
+                });
+            }
         }
+        console.log(`[Inventory Sync] Aggregated to ${misaAggregated.size} unique products`);
 
-        // 3. Get default warehouse
-        const { data: warehouses } = await supabaseAdmin
-            .from("warehouses")
-            .select("id")
-            .eq("status", "active")
-            .order("created_at", { ascending: true })
-            .limit(1);
+        // 3. Fetch products + warehouse + current levels in parallel
+        const [productsRes, warehousesRes, levelsRes] = await Promise.all([
+            supabaseAdmin.from("products").select("id, name, sku, misa_code").not("misa_code", "is", null),
+            supabaseAdmin.from("warehouses").select("id").eq("status", "active").order("created_at", { ascending: true }).limit(1),
+            supabaseAdmin.from("inventory_levels").select("product_id, quantity_on_hand, warehouse_id"),
+        ]);
 
-        const warehouseId = warehouses?.[0]?.id;
+        const products = productsRes.data || [];
+        const warehouseId = warehousesRes.data?.[0]?.id;
         if (!warehouseId) {
             return NextResponse.json({ success: false, error: "No active warehouse found" }, { status: 400 });
         }
 
-        // 4. Build MISA code → product map
+        // 4. Build maps
         const productMap = new Map<string, { id: string; name: string; sku: string }>();
-        for (const p of products || []) {
-            if (p.misa_code) {
-                productMap.set(p.misa_code.trim().toUpperCase(), { id: p.id, name: p.name, sku: p.sku });
+        for (const p of products) {
+            if (p.misa_code) productMap.set(p.misa_code.trim().toUpperCase(), { id: p.id, name: p.name, sku: p.sku });
+        }
+
+        const currentMap = new Map<string, number>();
+        for (const l of levelsRes.data || []) {
+            if (l.warehouse_id === warehouseId) {
+                currentMap.set(l.product_id, l.quantity_on_hand || 0);
             }
         }
 
-        // 5. Fetch current inventory levels
-        const { data: currentLevels } = await supabaseAdmin
-            .from("inventory_levels")
-            .select("product_id, quantity_on_hand")
-            .eq("warehouse_id", warehouseId);
-
-        const currentMap = new Map<string, number>();
-        for (const l of currentLevels || []) {
-            currentMap.set(l.product_id, l.quantity_on_hand || 0);
-        }
-
-        // 6. Compare & Update
+        // 5. Find changes needed
         let itemsSynced = 0;
         let itemsChanged = 0;
         const changes: { product: string; sku: string; misaCode: string; oldQty: number; newQty: number }[] = [];
         const unmatchedMisa: string[] = [];
+        const upsertBatch: any[] = [];
+        const transactionBatch: any[] = [];
 
-        for (const misaItem of misaItems) {
-            const code = misaItem.inventory_item_code.trim().toUpperCase();
+        for (const [code, misaData] of misaAggregated) {
             const matched = productMap.get(code);
-
             if (!matched) {
                 unmatchedMisa.push(code);
                 continue;
@@ -100,53 +91,58 @@ async function handleSync() {
 
             itemsSynced++;
             const currentQty = currentMap.get(matched.id) ?? 0;
-            const misaQty = misaItem.quantity_on_hand;
+            const misaQty = Math.max(0, misaData.totalQty); // Clamp negative to 0
 
-            // Only update if quantity differs
             if (currentQty !== misaQty) {
-                // Upsert inventory_levels — only write quantity_on_hand
-                // (quantity_available is a generated column, auto-calculated by DB)
-                const { error: upsertErr } = await supabaseAdmin
-                    .from("inventory_levels")
-                    .upsert({
-                        warehouse_id: warehouseId,
-                        product_id: matched.id,
-                        quantity_on_hand: misaQty,
-                        updated_at: new Date().toISOString(),
-                    }, {
-                        onConflict: "warehouse_id,product_id",
-                    });
+                upsertBatch.push({
+                    warehouse_id: warehouseId,
+                    product_id: matched.id,
+                    quantity_on_hand: misaQty,
+                    updated_at: new Date().toISOString(),
+                });
+                transactionBatch.push({
+                    warehouse_id: warehouseId,
+                    product_id: matched.id,
+                    type: "adjustment",
+                    quantity: misaQty - currentQty,
+                    reference_type: "misa_sync",
+                    note: `Đồng bộ MISA: ${currentQty} → ${misaQty}`,
+                });
+                changes.push({
+                    product: matched.name,
+                    sku: matched.sku,
+                    misaCode: code,
+                    oldQty: currentQty,
+                    newQty: misaQty,
+                });
+                itemsChanged++;
+            }
+        }
 
-                if (!upsertErr) {
-                    itemsChanged++;
-                    changes.push({
-                        product: matched.name,
-                        sku: matched.sku,
-                        misaCode: code,
-                        oldQty: currentQty,
-                        newQty: misaQty,
-                    });
+        // 6. Batch upsert (chunked to avoid too-large requests)
+        const CHUNK_SIZE = 50;
+        for (let i = 0; i < upsertBatch.length; i += CHUNK_SIZE) {
+            const chunk = upsertBatch.slice(i, i + CHUNK_SIZE);
+            const { error } = await supabaseAdmin
+                .from("inventory_levels")
+                .upsert(chunk, { onConflict: "warehouse_id,product_id" });
+            if (error) {
+                console.error(`[Inventory Sync] Batch upsert error (chunk ${i}):`, error);
+            }
+        }
 
-                    // Log as inventory_transaction
-                    const diff = misaQty - currentQty;
-                    await supabaseAdmin.from("inventory_transactions").insert({
-                        warehouse_id: warehouseId,
-                        product_id: matched.id,
-                        type: "adjustment",
-                        quantity: diff,
-                        reference_type: "misa_sync",
-                        note: `Đồng bộ MISA: ${currentQty} → ${misaQty}`,
-                    });
-                } else {
-                    console.error(`[Inventory Sync] Upsert error for ${code}:`, upsertErr);
-                }
+        // 7. Batch insert transactions
+        if (transactionBatch.length > 0) {
+            for (let i = 0; i < transactionBatch.length; i += CHUNK_SIZE) {
+                const chunk = transactionBatch.slice(i, i + CHUNK_SIZE);
+                await supabaseAdmin.from("inventory_transactions").insert(chunk);
             }
         }
 
         const elapsed = Date.now() - startTime;
         console.log(`[Inventory Sync] Done in ${elapsed}ms. Synced: ${itemsSynced}, Changed: ${itemsChanged}`);
 
-        // 7. Log sync result
+        // 8. Log sync result
         await supabaseAdmin.from("inventory_sync_log").insert({
             sync_type: "misa_pull",
             items_synced: itemsSynced,
@@ -155,11 +151,12 @@ async function handleSync() {
             details: {
                 elapsed_ms: elapsed,
                 total_misa_items: misaItems.length,
-                total_app_products: products?.length || 0,
+                aggregated_items: misaAggregated.size,
+                total_app_products: products.length,
                 matched: itemsSynced,
                 unmatched_misa: unmatchedMisa.length,
-                changes: changes.slice(0, 50), // Limit log size
-                has_quantity_field: misaResult._debug?.hasQuantityField,
+                unmatched_codes: unmatchedMisa.slice(0, 20),
+                changes: changes.slice(0, 50),
             },
         });
 
@@ -167,7 +164,8 @@ async function handleSync() {
             success: true,
             summary: {
                 misaItems: misaItems.length,
-                appProducts: products?.length || 0,
+                aggregatedItems: misaAggregated.size,
+                appProducts: products.length,
                 matched: itemsSynced,
                 changed: itemsChanged,
                 elapsed_ms: elapsed,
@@ -178,17 +176,12 @@ async function handleSync() {
 
     } catch (err: any) {
         console.error("[Inventory Sync] Error:", err);
-
         try {
             await supabaseAdmin.from("inventory_sync_log").insert({
-                sync_type: "misa_pull",
-                items_synced: 0,
-                items_changed: 0,
-                status: "failed",
-                error: err.message,
+                sync_type: "misa_pull", items_synced: 0, items_changed: 0,
+                status: "failed", error: err.message,
             });
         } catch (_) { }
-
         return NextResponse.json({ success: false, error: err.message }, { status: 500 });
     }
 }
