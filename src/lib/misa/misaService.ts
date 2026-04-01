@@ -742,10 +742,10 @@ export const MisaService = {
             const companyCode = "NB";
             const apiUrl = "https://actapp.misa.vn";
 
-            // Fetch inventory items (data_type=2) with stock info
-            const endpoint = `${apiUrl}/apir/sync/actopen/get_dictionary`;
+            // Use dedicated endpoint: get_list_inventory_balance (per MISA ActOpen docs #7)
+            const endpoint = `${apiUrl}/apir/sync/actopen/get_list_inventory_balance`;
 
-            console.log(`[MisaService] Fetching Inventory Stock from MISA...`);
+            console.log(`[MisaService] Fetching Inventory Balance from MISA (get_list_inventory_balance)...`);
 
             const res = await fetch(endpoint, {
                 method: "POST",
@@ -758,8 +758,11 @@ export const MisaService = {
                 body: JSON.stringify({
                     app_id: appId,
                     org_company_code: companyCode,
-                    data_type: 2,
-                    last_sync_time: "2000-01-01 00:00:00"
+                    stock_id: null,       // null = all warehouses
+                    branch_id: null,      // null = all branches
+                    skip: 0,
+                    take: 500,            // max items per request
+                    last_sync_time: null  // null = get all
                 })
             });
 
@@ -802,17 +805,16 @@ export const MisaService = {
                 const name = item.inventory_item_name || item.InventoryItemName || item.name || '';
                 const unit = item.unit_name || item.UnitName || item.unit || '';
 
-                // Try all possible quantity field names from MISA
-                const qty = item.quantity_on_hand
+                // inventory_balance fields per MISA docs:
+                // quantity_balance = Số lượng tồn của vật tư hàng hóa
+                const qty = item.quantity_balance
+                    ?? item.QuantityBalance
+                    ?? item.quantity_on_hand
                     ?? item.QuantityOnHand
                     ?? item.stock_quantity
                     ?? item.StockQuantity
                     ?? item.quantity
                     ?? item.Quantity
-                    ?? item.on_hand
-                    ?? item.OnHand
-                    ?? item.closing_quantity
-                    ?? item.ClosingQuantity
                     ?? 0;
 
                 return {
