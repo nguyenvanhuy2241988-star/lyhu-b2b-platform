@@ -97,25 +97,37 @@ export async function GET(request: NextRequest) {
                 if (Date.now() - startTime > 48000) break;
 
                 try {
-                    // Use since parameter to only get recent comments
                     const sinceTimestamp = Math.floor(cutoffTime.getTime() / 1000);
-                    const commentsUrl = `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,is_hidden,created_time&limit=50&order=reverse_chronological&since=${sinceTimestamp}&access_token=${page.access_token}`;
+                    // For specific posts, don't use since filter (scan all comments, time filter in loop)
+                    // For auto-scan, use since to reduce API load
+                    const usesSince = monitoredPostIds.length === 0;
+                    const commentsUrl = `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,is_hidden,created_time&limit=50&order=reverse_chronological${usesSince ? `&since=${sinceTimestamp}` : ''}&access_token=${page.access_token}`;
                     const commentsRes = await fetch(commentsUrl);
                     const commentsData = await commentsRes.json();
+                    
+                    // If specific post returns error, try with page_id prefix
+                    let finalData = commentsData;
+                    if (commentsData.error && monitoredPostIds.length > 0 && !post.id.includes('_')) {
+                        const altId = `${page.page_id}_${post.id}`;
+                        const altUrl = `https://graph.facebook.com/v19.0/${altId}/comments?fields=id,message,from,is_hidden,created_time&limit=50&order=reverse_chronological&access_token=${page.access_token}`;
+                        const altRes = await fetch(altUrl);
+                        finalData = await altRes.json();
+                        // Update post id for reply to work
+                        if (!finalData.error) post.id = altId;
+                    }
                     
                     // Debug: capture errors and count for specific posts
                     if (monitoredPostIds.length > 0) {
                         postDebugList.push({
                             post_id: post.id,
-                            comments_found: commentsData.data?.length || 0,
-                            error: commentsData.error?.message || null,
-                            since: new Date(sinceTimestamp * 1000).toISOString()
+                            comments_found: finalData.data?.length || 0,
+                            error: finalData.error?.message || null,
                         });
                     }
                     
-                    if (!commentsData.data) continue;
+                    if (!finalData.data) continue;
 
-                    for (const comment of commentsData.data) {
+                    for (const comment of finalData.data) {
                         if (comment.from?.id && comment.from.id === page.page_id) continue;
                         if (comment.is_hidden) continue;
 
