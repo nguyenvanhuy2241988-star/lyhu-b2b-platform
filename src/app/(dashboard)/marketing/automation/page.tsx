@@ -47,6 +47,7 @@ export default function AutomationPage() {
     const [autoReplyCommentText, setAutoReplyCommentText] = useState('');
     const [persistentMenu, setPersistentMenu] = useState<any[]>([]);
     const [aiEnabled, setAiEnabled] = useState(true);
+    const [adPostUrls, setAdPostUrls] = useState('');
     const [isSavingSettings, setIsSavingSettings] = useState(false);
     const [pages, setPages] = useState<any[]>([]);
     const [selectedPageId, setSelectedPageId] = useState<string>('');
@@ -97,6 +98,7 @@ export default function AutomationPage() {
                 setAutoReplyCommentText(config?.auto_reply_comment_text || '');
                 setPersistentMenu(config?.persistent_menu || []);
                 setAiEnabled(config?.ai_enabled !== false);
+                setAdPostUrls((config?.auto_comment_post_ids || []).join('\n'));
             }
         }
     };
@@ -114,6 +116,7 @@ export default function AutomationPage() {
                 setAutoReplyComment(config?.auto_reply_comment || false);
                 setAutoReplyCommentText(config?.auto_reply_comment_text || '');
                 setPersistentMenu(config?.persistent_menu || []);
+                setAdPostUrls((config?.auto_comment_post_ids || []).join('\n'));
             }
         }
     }, [selectedPageId]);
@@ -141,6 +144,8 @@ export default function AutomationPage() {
             const page = pages.find(p => p.id === selectedPageId);
             if (!page || !page.access_token) throw new Error("Page Token not found");
 
+            const parsedPostIds = adPostUrls.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+
             await updateMessengerProfile(page.page_id, page.access_token, {
                 greeting_text: greetingText,
                 auto_hide_phone: autoHidePhone,
@@ -150,12 +155,13 @@ export default function AutomationPage() {
                 auto_reply_comment_text: autoReplyCommentText,
                 persistent_menu: persistentMenu,
                 ai_enabled: aiEnabled,
+                auto_comment_post_ids: parsedPostIds,
             });
 
             // Optimistic update
             setPages(prev => prev.map(p => p.id === selectedPageId ? {
                 ...p,
-                chatbot_config: { ...p.chatbot_config, greeting_text: greetingText, auto_hide_phone: autoHidePhone, auto_hide_all: autoHideAll, auto_hide_keywords: autoHideKeywords, auto_reply_comment: autoReplyComment, auto_reply_comment_text: autoReplyCommentText, persistent_menu: persistentMenu, ai_enabled: aiEnabled }
+                chatbot_config: { ...p.chatbot_config, greeting_text: greetingText, auto_hide_phone: autoHidePhone, auto_hide_all: autoHideAll, auto_hide_keywords: autoHideKeywords, auto_reply_comment: autoReplyComment, auto_reply_comment_text: autoReplyCommentText, persistent_menu: persistentMenu, ai_enabled: aiEnabled, auto_comment_post_ids: parsedPostIds }
             } : p));
             toast.success("Đã cập nhật cấu hình lên Facebook");
         } catch (error) {
@@ -577,6 +583,35 @@ export default function AutomationPage() {
                                     </div>
                                 </div>
                             )}
+                        </div>
+
+                        {/* Ad Post Auto-Reply URLs */}
+                        <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                            <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-lg">📌</span>
+                                    <label className="font-medium text-slate-800">Bài QC tự động Reply + Inbox</label>
+                                </div>
+                                {adPostUrls.split('\n').filter(s => s.trim()).length > 0 && (
+                                    <span className="text-xs px-2 py-1 rounded-full bg-amber-200 text-amber-800 font-medium">
+                                        {adPostUrls.split('\n').filter(s => s.trim()).length} bài
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-xs text-amber-700 mb-2">
+                                Dán link bài quảng cáo Facebook cần tự động reply comment + gửi inbox. Mỗi dòng 1 link.
+                                <br/>Hệ thống quét mỗi 3 phút, chỉ reply comment trong 24 giờ gần nhất, không lặp.
+                            </p>
+                            <textarea
+                                rows={4}
+                                className="w-full border border-amber-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-amber-400 outline-none bg-white font-mono"
+                                placeholder={"https://www.facebook.com/lyhu.vn/videos/1784508998903102/\nhttps://www.facebook.com/lyhu.vn/posts/..."}
+                                value={adPostUrls}
+                                onChange={e => setAdPostUrls(e.target.value)}
+                            />
+                            <p className="text-xs text-slate-500 mt-1">
+                                💡 Cách lấy link: Mở bài viết trên Facebook → Copy URL từ thanh địa chỉ → Dán vào đây
+                            </p>
                         </div>
 
                         {/* Auto-Hide Comments on Ad Posts */}

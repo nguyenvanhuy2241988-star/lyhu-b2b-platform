@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 55;
 const VERSION = 'v13-video-fix';
 
-const MAX_COMMENT_AGE_HOURS = 2;
+const MAX_COMMENT_AGE_HOURS = 24;
 
 export async function GET(request: NextRequest) {
     const startTime = Date.now();
