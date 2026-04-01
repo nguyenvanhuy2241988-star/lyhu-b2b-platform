@@ -82,7 +82,7 @@ async function handleSync() {
         const upsertBatch: any[] = [];
         const transactionBatch: any[] = [];
 
-        for (const [code, misaData] of misaAggregated) {
+        for (const [code, misaData] of Array.from(misaAggregated.entries())) {
             const matched = productMap.get(code);
             if (!matched) {
                 unmatchedMisa.push(code);
