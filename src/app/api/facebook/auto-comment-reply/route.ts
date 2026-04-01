@@ -76,18 +76,29 @@ export async function GET(request: NextRequest) {
                 for (const postIdOrUrl of monitoredPostIds) {
                     let resolvedId = postIdOrUrl;
                     
-                    // If it's a URL, resolve to Graph API ID
-                    if (postIdOrUrl.startsWith('http') || postIdOrUrl.includes('facebook.com')) {
+                    // Extract numeric ID from URL if provided
+                    if (postIdOrUrl.includes('facebook.com') || postIdOrUrl.startsWith('http')) {
+                        // Try to extract numeric ID from common FB URL patterns
+                        const numericMatch = postIdOrUrl.match(/\/(\d{10,})/);
+                        const extractedId = numericMatch ? numericMatch[1] : null;
+                        
+                        // Method 1: URL lookup via Graph API
                         try {
-                            const lookupUrl = `https://graph.facebook.com/v19.0/?id=${encodeURIComponent(postIdOrUrl)}&fields=id,og_object{id}&access_token=${page.access_token}`;
-                            const lookupRes = await fetch(lookupUrl);
+                            const lookupRes = await fetch(
+                                `https://graph.facebook.com/v19.0/?id=${encodeURIComponent(postIdOrUrl)}&fields=id,og_object{id}&access_token=${page.access_token}`
+                            );
                             const lookupData = await lookupRes.json();
                             if (lookupData.og_object?.id) {
                                 resolvedId = lookupData.og_object.id;
                             } else if (lookupData.id) {
                                 resolvedId = lookupData.id;
+                            } else if (extractedId) {
+                                // Method 2: Use extracted numeric ID
+                                resolvedId = extractedId;
                             }
-                        } catch (e) { }
+                        } catch (e) {
+                            if (extractedId) resolvedId = extractedId;
+                        }
                     }
                     
                     allPosts.push({ id: resolvedId });
