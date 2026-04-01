@@ -3,23 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 55;
-const VERSION = 'v12-smart-filter';
+const VERSION = 'v13-video-fix';
 
-// Only reply to comments created within the last N hours
 const MAX_COMMENT_AGE_HOURS = 2;
 
-/**
- * Cron Job: Auto-scan comments on connected pages
- * Only replies to RECENT comments (last 2 hours) that haven't been replied by the page yet.
- * 
- * Features:
- * - Time filter: only process comments from last 2 hours
- * - FB double-check: skip comments already replied by the page
- * - DB dedup: track successful replies to avoid duplicates
- * - Specific post IDs: optionally configure which posts to monitor
- * 
- * Debug: Add ?clean=1 to clear DB before scanning
- */
 export async function GET(request: NextRequest) {
     const startTime = Date.now();
     const cleanMode = request.nextUrl.searchParams.get('clean') === '1';
@@ -51,8 +38,6 @@ export async function GET(request: NextRequest) {
         let totalTooOld = 0;
         let totalAlreadyReplied = 0;
         const summary: any[] = [];
-
-        // Calculate the cutoff time (only reply to comments newer than this)
         const cutoffTime = new Date(Date.now() - MAX_COMMENT_AGE_HOURS * 60 * 60 * 1000);
 
         for (const page of pages) {
@@ -67,44 +52,36 @@ export async function GET(request: NextRequest) {
             const inboxText = config.auto_comment_inbox_text ||
                 'Chào bạn! 👋\nCảm ơn bạn đã quan tâm đến sản phẩm LYHU!\nBạn vui lòng cho mình xin SĐT để tư vấn chi tiết hơn nhé ❤️';
 
-            // Get posts to scan - either from config or auto-fetch
             const allPosts: { id: string }[] = [];
-
-            // Option 1: Specific post IDs configured (user pastes post URLs)
             const monitoredPostIds: string[] = config.auto_comment_post_ids || [];
+
             if (monitoredPostIds.length > 0) {
                 for (const postIdOrUrl of monitoredPostIds) {
                     let resolvedId = postIdOrUrl;
-                    
-                    // Extract numeric ID from URL if provided
+
+                    // Extract numeric ID from URL
                     if (postIdOrUrl.includes('facebook.com') || postIdOrUrl.startsWith('http')) {
-                        // Try to extract numeric ID from common FB URL patterns
                         const numericMatch = postIdOrUrl.match(/\/(\d{10,})/);
-                        const extractedId = numericMatch ? numericMatch[1] : null;
-                        
-                        // Method 1: URL lookup via Graph API
-                        try {
-                            const lookupRes = await fetch(
-                                `https://graph.facebook.com/v19.0/?id=${encodeURIComponent(postIdOrUrl)}&fields=id,og_object{id}&access_token=${page.access_token}`
-                            );
-                            const lookupData = await lookupRes.json();
-                            if (lookupData.og_object?.id) {
-                                resolvedId = lookupData.og_object.id;
-                            } else if (lookupData.id) {
-                                resolvedId = lookupData.id;
-                            } else if (extractedId) {
-                                // Method 2: Use extracted numeric ID
-                                resolvedId = extractedId;
-                            }
-                        } catch (e) {
-                            if (extractedId) resolvedId = extractedId;
-                        }
+                        if (numericMatch) resolvedId = numericMatch[1];
                     }
-                    
+
+                    // For pure numeric IDs (likely video IDs), try page_id_numericId format
+                    if (/^\d+$/.test(resolvedId)) {
+                        const pagePostId = `${page.page_id}_${resolvedId}`;
+                        try {
+                            const checkRes = await fetch(
+                                `https://graph.facebook.com/v19.0/${pagePostId}?fields=id&access_token=${page.access_token}`
+                            );
+                            const checkData = await checkRes.json();
+                            if (!checkData.error) {
+                                resolvedId = pagePostId; // page_id_videoId format works!
+                            }
+                        } catch (e) { }
+                    }
+
                     allPosts.push({ id: resolvedId });
                 }
             } else {
-                // Option 2: Auto-fetch recent posts
                 try {
                     const postsRes = await fetch(
                         `https://graph.facebook.com/v19.0/${page.page_id}/posts?fields=id&limit=10&access_token=${page.access_token}`
@@ -125,41 +102,28 @@ export async function GET(request: NextRequest) {
 
                 try {
                     const sinceTimestamp = Math.floor(cutoffTime.getTime() / 1000);
-                    // For specific posts, don't use since filter (scan all comments, time filter in loop)
-                    // For auto-scan, use since to reduce API load
                     const usesSince = monitoredPostIds.length === 0;
                     const commentsUrl = `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,is_hidden,created_time&limit=50&order=reverse_chronological${usesSince ? `&since=${sinceTimestamp}` : ''}&access_token=${page.access_token}`;
                     const commentsRes = await fetch(commentsUrl);
                     const commentsData = await commentsRes.json();
-                    
-                    // If specific post returns error, try with page_id prefix
-                    let finalData = commentsData;
-                    if (commentsData.error && monitoredPostIds.length > 0 && !post.id.includes('_')) {
-                        const altId = `${page.page_id}_${post.id}`;
-                        const altUrl = `https://graph.facebook.com/v19.0/${altId}/comments?fields=id,message,from,is_hidden,created_time&limit=50&order=reverse_chronological&access_token=${page.access_token}`;
-                        const altRes = await fetch(altUrl);
-                        finalData = await altRes.json();
-                        // Update post id for reply to work
-                        if (!finalData.error) post.id = altId;
-                    }
-                    
-                    // Debug: capture errors and count for specific posts
+
+                    // Debug for specific posts
                     if (monitoredPostIds.length > 0) {
                         postDebugList.push({
                             post_id: post.id,
-                            comments_found: finalData.data?.length || 0,
-                            error: finalData.error?.message || null,
+                            comments_found: commentsData.data?.length || 0,
+                            error: commentsData.error?.message || null,
                         });
                     }
-                    
-                    if (!finalData.data) continue;
 
-                    for (const comment of finalData.data) {
+                    if (!commentsData.data) continue;
+
+                    for (const comment of commentsData.data) {
                         if (comment.from?.id && comment.from.id === page.page_id) continue;
                         if (comment.is_hidden) continue;
 
-                        // Double-check: skip comments older than cutoff (belt & suspenders with since param)
-                        if (comment.created_time) {
+                        // Time filter for specific posts (auto-scan uses since param)
+                        if (comment.created_time && monitoredPostIds.length > 0) {
                             const commentDate = new Date(comment.created_time);
                             if (commentDate < cutoffTime) {
                                 totalTooOld++;
@@ -169,7 +133,7 @@ export async function GET(request: NextRequest) {
 
                         totalProcessed++;
 
-                        // DB DEDUP: Only skip if already SUCCESSFULLY replied
+                        // DB DEDUP
                         const { data: existing } = await supabase
                             .from('comment_auto_replies')
                             .select('id, replied')
@@ -182,7 +146,7 @@ export async function GET(request: NextRequest) {
                             continue;
                         }
 
-                        // FB DOUBLE-CHECK: Skip if page already replied to this comment
+                        // FB DOUBLE-CHECK: skip if page already replied
                         try {
                             const repliesRes = await fetch(
                                 `https://graph.facebook.com/v19.0/${comment.id}/comments?fields=from&limit=5&access_token=${page.access_token}`
@@ -190,16 +154,10 @@ export async function GET(request: NextRequest) {
                             const repliesData = await repliesRes.json();
                             const alreadyReplied = repliesData.data?.some((r: any) => r.from?.id === page.page_id);
                             if (alreadyReplied) {
-                                // Save to DB so we skip next time
                                 await supabase.from('comment_auto_replies').upsert({
-                                    comment_id: comment.id,
-                                    post_id: post.id,
-                                    page_id: page.id,
-                                    commenter_id: comment.from?.id || '',
-                                    commenter_name: comment.from?.name || '',
-                                    comment_text: comment.message || '',
-                                    replied: true,
-                                    inboxed: false,
+                                    comment_id: comment.id, post_id: post.id, page_id: page.id,
+                                    commenter_id: comment.from?.id || '', commenter_name: comment.from?.name || '',
+                                    comment_text: comment.message || '', replied: true, inboxed: false,
                                     created_at: new Date().toISOString()
                                 }, { onConflict: 'comment_id' });
                                 totalAlreadyReplied++;
@@ -208,49 +166,31 @@ export async function GET(request: NextRequest) {
                             }
                         } catch (e) { }
 
-                        // 1. REPLY TO COMMENT
+                        // 1. REPLY
                         let replySuccess = false;
                         try {
                             const replyRes = await fetch(
                                 `https://graph.facebook.com/v19.0/${comment.id}/comments?access_token=${page.access_token}`,
-                                {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ message: commentReplyText })
-                                }
+                                { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: commentReplyText }) }
                             );
                             const replyData = await replyRes.json();
                             replySuccess = !replyData.error;
-                            if (replySuccess) {
-                                totalReplied++;
-                                pageReplied++;
-                            }
+                            if (replySuccess) { totalReplied++; pageReplied++; }
                         } catch (e) { }
 
-                        // 2. SEND PRIVATE INBOX
+                        // 2. INBOX
                         let inboxSuccess = false;
                         if (inboxEnabled) {
                             try {
                                 const privateRes = await fetch(
                                     `https://graph.facebook.com/v19.0/${comment.id}/private_replies?access_token=${page.access_token}`,
-                                    {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ message: inboxText })
-                                    }
+                                    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: inboxText }) }
                                 );
                                 const privateData = await privateRes.json();
                                 if (privateData.error && comment.from?.id) {
                                     const msgRes = await fetch(
                                         `https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`,
-                                        {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({
-                                                recipient: { id: comment.from.id },
-                                                message: { text: inboxText }
-                                            })
-                                        }
+                                        { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recipient: { id: comment.from.id }, message: { text: inboxText } }) }
                                     );
                                     const msgData = await msgRes.json();
                                     inboxSuccess = !msgData.error;
@@ -261,16 +201,11 @@ export async function GET(request: NextRequest) {
                             } catch (e) { }
                         }
 
-                        // 3. SAVE TO DB
+                        // 3. SAVE
                         await supabase.from('comment_auto_replies').upsert({
-                            comment_id: comment.id,
-                            post_id: post.id,
-                            page_id: page.id,
-                            commenter_id: comment.from?.id || '',
-                            commenter_name: comment.from?.name || '',
-                            comment_text: comment.message || '',
-                            replied: replySuccess,
-                            inboxed: inboxSuccess,
+                            comment_id: comment.id, post_id: post.id, page_id: page.id,
+                            commenter_id: comment.from?.id || '', commenter_name: comment.from?.name || '',
+                            comment_text: comment.message || '', replied: replySuccess, inboxed: inboxSuccess,
                             created_at: new Date().toISOString()
                         }, { onConflict: 'comment_id' });
 
@@ -280,29 +215,21 @@ export async function GET(request: NextRequest) {
             }
 
             summary.push({
-                page: page.name,
-                posts: allPosts.length,
+                page: page.name, posts: allPosts.length,
                 mode: monitoredPostIds.length > 0 ? 'specific_posts' : 'auto_scan',
-                replied: pageReplied,
-                skipped: pageSkipped,
+                replied: pageReplied, skipped: pageSkipped,
                 ...(postDebugList.length > 0 ? { post_debug: postDebugList } : {})
             });
         }
 
         return NextResponse.json({
-            version: VERSION,
-            success: true,
-            processed: totalProcessed,
-            replied: totalReplied,
-            inboxed: totalInboxed,
-            skipped: totalSkipped,
-            too_old: totalTooOld,
-            already_replied_on_fb: totalAlreadyReplied,
+            version: VERSION, success: true,
+            processed: totalProcessed, replied: totalReplied,
+            inboxed: totalInboxed, skipped: totalSkipped,
+            too_old: totalTooOld, already_replied_on_fb: totalAlreadyReplied,
             max_comment_age_hours: MAX_COMMENT_AGE_HOURS,
-            elapsed_ms: Date.now() - startTime,
-            summary
+            elapsed_ms: Date.now() - startTime, summary
         });
-
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
