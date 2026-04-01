@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 55;
+const VERSION = 'v5-no-fb-doublecheck';
 
 /**
  * Cron Job: Auto-scan comments on all connected pages
@@ -226,6 +227,7 @@ export async function GET() {
         console.log(`[Comment Cron] Done in ${elapsed}ms. Processed: ${totalProcessed}, Replied: ${totalReplied}, Inboxed: ${totalInboxed}, Skipped: ${totalSkipped}`);
 
         return NextResponse.json({
+            version: VERSION,
             success: true,
             processed: totalProcessed,
             replied: totalReplied,
