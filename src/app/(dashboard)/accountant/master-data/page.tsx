@@ -47,6 +47,32 @@ export default function AccountantMasterDataPage() {
     const [misaSearch, setMisaSearch] = useState("");
     const [showMisaDropdown, setShowMisaDropdown] = useState(false);
 
+    // Inventory Sync State
+    const [isInventorySyncing, setIsInventorySyncing] = useState(false);
+    const [lastInventorySync, setLastInventorySync] = useState<{ time: string; changed: number } | null>(null);
+
+    const handleInventorySync = async () => {
+        setIsInventorySyncing(true);
+        setSyncResult(null);
+        try {
+            const res = await fetch('/api/misa/sync-inventory', { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                setLastInventorySync({
+                    time: new Date().toLocaleTimeString('vi-VN'),
+                    changed: data.summary?.changed || 0,
+                });
+                setSyncResult(`✅ Đồng bộ tồn kho: ${data.summary?.matched || 0} SP khớp, ${data.summary?.changed || 0} thay đổi`);
+            } else {
+                setSyncResult(`❌ Lỗi đồng bộ tồn kho: ${data.error}`);
+            }
+        } catch (err: any) {
+            setSyncResult(`❌ Lỗi: ${err.message}`);
+        } finally {
+            setIsInventorySyncing(false);
+        }
+    };
+
     // Import Modal State
     const [showImportModal, setShowImportModal] = useState(false);
     const [importText, setImportText] = useState("");
@@ -309,8 +335,23 @@ export default function AccountantMasterDataPage() {
             <div className="flex items-start justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Danh mục & Cấu hình MISA</h1>
-                    <p className="text-sm text-slate-600 mt-1">Đồng bộ mã danh mục và thiết lập kết nối tới Misa Amis</p>
+                    <p className="text-sm text-slate-600 mt-1">
+                        Đồng bộ mã danh mục và thiết lập kết nối tới Misa Amis
+                        {lastInventorySync && (
+                            <span className="ml-2 text-xs text-emerald-600">
+                                ✅ Tồn kho sync lúc {lastInventorySync.time} ({lastInventorySync.changed} thay đổi)
+                            </span>
+                        )}
+                    </p>
                 </div>
+                <button
+                    onClick={handleInventorySync}
+                    disabled={isInventorySyncing}
+                    className={`px-4 py-2 rounded-xl font-bold text-sm shadow-sm transition-all flex items-center gap-2 ${isInventorySyncing ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95'}`}
+                >
+                    <RefreshCw className={`w-4 h-4 ${isInventorySyncing ? 'animate-spin' : ''}`} />
+                    {isInventorySyncing ? 'Đang đồng bộ...' : '🔄 Đồng bộ Tồn kho'}
+                </button>
                 {activeTab === "products" && (
                     <div className="flex gap-2">
                         <button
