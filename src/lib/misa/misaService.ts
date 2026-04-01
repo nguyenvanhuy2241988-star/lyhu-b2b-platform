@@ -719,6 +719,131 @@ export const MisaService = {
             return { success: false, error: err.message };
         }
     },
+
+    // 5. Fetch Inventory Stock Levels from MISA for Sync
+    // Returns items with quantity info for inventory sync
+    fetchInventoryStock: async (supabase: any): Promise<{
+        success: boolean;
+        items?: {
+            inventory_item_code: string;
+            inventory_item_name: string;
+            unit_name: string;
+            quantity_on_hand: number;
+        }[];
+        error?: string;
+        _debug?: any;
+    }> => {
+        try {
+            const token = await MisaService.getAccessToken(supabase);
+            const settings = await fetchAppSettings(supabase);
+            // @ts-ignore
+            const config = settings?.misa_config || {};
+            const appId = config?.appId || "84318d18-5a63-4422-b94f-40e87d60567e";
+            const companyCode = "NB";
+            const apiUrl = "https://actapp.misa.vn";
+
+            // Fetch inventory items (data_type=2) with stock info
+            const endpoint = `${apiUrl}/apir/sync/actopen/get_dictionary`;
+
+            console.log(`[MisaService] Fetching Inventory Stock from MISA...`);
+
+            const res = await fetch(endpoint, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-MISA-AccessToken": token,
+                    "X-MISA-AppID": appId,
+                    "User-Agent": "LYHU-B2B-Platform/1.0"
+                },
+                body: JSON.stringify({
+                    app_id: appId,
+                    org_company_code: companyCode,
+                    data_type: 2,
+                    last_sync_time: "2000-01-01 00:00:00"
+                })
+            });
+
+            const textRaw = await res.text();
+
+            if (!res.ok) {
+                console.error(`[MisaService] Fetch Stock Failed (${res.status}):`, textRaw.substring(0, 500));
+                return { success: false, error: `MISA API Error (${res.status}): ${textRaw.substring(0, 300)}` };
+            }
+
+            let data;
+            try { data = JSON.parse(textRaw); } catch (e) {
+                return { success: false, error: "Invalid JSON response from MISA" };
+            }
+
+            // Parse items from response
+            let rawItems: any[] = [];
+            if (data?.Success && Array.isArray(data?.Data)) {
+                rawItems = data.Data;
+            } else if (Array.isArray(data)) {
+                rawItems = data;
+            } else if (data?.Success && typeof data?.Data === 'string') {
+                try {
+                    const parsed = JSON.parse(data.Data);
+                    if (Array.isArray(parsed)) rawItems = parsed;
+                } catch (e) { }
+            }
+
+            // Log sample item keys for debugging
+            const sampleKeys = rawItems.length > 0 ? Object.keys(rawItems[0]) : [];
+            console.log(`[MisaService] Stock items: ${rawItems.length}, sample keys:`, sampleKeys);
+
+            // Log first item for debugging stock fields
+            if (rawItems.length > 0) {
+                console.log(`[MisaService] Sample item:`, JSON.stringify(rawItems[0]).substring(0, 500));
+            }
+
+            const items = rawItems.map((item: any) => {
+                const code = item.inventory_item_code || item.InventoryItemCode || item.code || '';
+                const name = item.inventory_item_name || item.InventoryItemName || item.name || '';
+                const unit = item.unit_name || item.UnitName || item.unit || '';
+
+                // Try all possible quantity field names from MISA
+                const qty = item.quantity_on_hand
+                    ?? item.QuantityOnHand
+                    ?? item.stock_quantity
+                    ?? item.StockQuantity
+                    ?? item.quantity
+                    ?? item.Quantity
+                    ?? item.on_hand
+                    ?? item.OnHand
+                    ?? item.closing_quantity
+                    ?? item.ClosingQuantity
+                    ?? 0;
+
+                return {
+                    inventory_item_code: code,
+                    inventory_item_name: name,
+                    unit_name: unit,
+                    quantity_on_hand: Number(qty) || 0,
+                };
+            });
+
+            return {
+                success: true,
+                items,
+                _debug: {
+                    totalItems: rawItems.length,
+                    sampleKeys,
+                    sampleItem: rawItems.length > 0
+                        ? JSON.stringify(rawItems[0]).substring(0, 500)
+                        : null,
+                    hasQuantityField: sampleKeys.some(k =>
+                        k.toLowerCase().includes('quantity') ||
+                        k.toLowerCase().includes('stock') ||
+                        k.toLowerCase().includes('on_hand')
+                    ),
+                }
+            };
+        } catch (err: any) {
+            console.error("[MisaService] fetchInventoryStock Error:", err);
+            return { success: false, error: err.message };
+        }
+    },
 };
 
 

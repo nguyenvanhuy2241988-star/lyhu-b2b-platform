@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Package, AlertTriangle, ArrowRight, Archive, ClipboardList, CheckCircle2, Loader2, Warehouse as WarehouseIcon } from "lucide-react";
+import { Package, AlertTriangle, ArrowRight, Archive, ClipboardList, CheckCircle2, Loader2, Warehouse as WarehouseIcon, RefreshCw } from "lucide-react";
 import Link from 'next/link';
 import { fetchWarehousingStats } from '@/lib/inventoryStore';
 import { FulfillmentModal } from "@/components/warehouse/FulfillmentModal";
@@ -17,6 +17,51 @@ export default function WarehouseDashboard() {
         ordersToPack: 0
     });
     const [isLoading, setIsLoading] = useState(true);
+
+    // MISA Sync State
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [lastSync, setLastSync] = useState<{ time: string; changed: number } | null>(null);
+    const [syncError, setSyncError] = useState<string | null>(null);
+
+    const handleMisaSync = async () => {
+        setIsSyncing(true);
+        setSyncError(null);
+        try {
+            const res = await fetch('/api/misa/sync-inventory', { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                setLastSync({
+                    time: new Date().toLocaleTimeString('vi-VN'),
+                    changed: data.summary?.changed || 0,
+                });
+                loadStats(); // Refresh stats after sync
+            } else {
+                setSyncError(data.error || 'Lỗi đồng bộ');
+            }
+        } catch (err: any) {
+            setSyncError(err.message || 'Lỗi kết nối');
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    // Load last sync time on mount
+    useEffect(() => {
+        supabase
+            .from('inventory_sync_log')
+            .select('created_at, items_changed, status')
+            .eq('status', 'success')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .then(({ data }: { data: any }) => {
+                if (data && data.length > 0) {
+                    setLastSync({
+                        time: new Date(data[0].created_at).toLocaleString('vi-VN'),
+                        changed: data[0].items_changed || 0,
+                    });
+                }
+            });
+    }, []);
 
     const loadStats = useCallback(async () => {
         try {
@@ -127,9 +172,33 @@ export default function WarehouseDashboard() {
                         <span className="text-xs uppercase tracking-widest">Trung tâm Vận hành</span>
                     </div>
                     <h1 className="text-3xl font-black text-slate-900 tracking-tight">Quản lý Kho vận</h1>
-                    <p className="text-slate-500 text-sm mt-1">Theo dõi tồn kho và tối ưu quy trình xử lý đơn hàng.</p>
+                    <p className="text-slate-500 text-sm mt-1">
+                    Theo dõi tồn kho và tối ưu quy trình xử lý đơn hàng.
+                    {lastSync && (
+                        <span className="ml-2 text-xs text-emerald-600 font-medium">
+                            ✅ Sync lúc {lastSync.time} ({lastSync.changed} SP thay đổi)
+                        </span>
+                    )}
+                    {syncError && (
+                        <span className="ml-2 text-xs text-red-500 font-medium">
+                            ❌ {syncError}
+                        </span>
+                    )}
+                </p>
                 </div>
                 <div className="flex gap-3">
+                    <button
+                        onClick={handleMisaSync}
+                        disabled={isSyncing}
+                        className={`px-4 py-2 rounded-xl font-bold text-sm shadow-sm transition-all flex items-center gap-2 ${
+                            isSyncing
+                                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                : 'bg-emerald-600 text-white hover:bg-emerald-700 active:scale-95'
+                        }`}
+                    >
+                        <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                        {isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ MISA'}
+                    </button>
                     <Link href="/warehouse/import" className="px-4 py-2 bg-primary-600 text-white rounded-xl font-bold text-sm shadow-sm hover:bg-primary-700 transition-all flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4" />
                         Nhập kho mới
