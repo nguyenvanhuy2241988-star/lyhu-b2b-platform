@@ -111,16 +111,16 @@ export async function GET() {
                         totalProcessed++;
 
                         // ===== DB DEDUP CHECK =====
-                        // Check if we already processed this comment
+                        // Only skip if we already SUCCESSFULLY replied
                         const { data: existing } = await supabase
                             .from('comment_auto_replies')
-                            .select('id')
+                            .select('id, replied')
                             .eq('comment_id', comment.id)
                             .maybeSingle();
 
-                        if (existing) {
+                        if (existing?.replied) {
                             totalSkipped++;
-                            continue; // Already processed, skip
+                            continue; // Already successfully replied, skip
                         }
 
                         // Also double-check via Facebook API (belt & suspenders)
