@@ -2,13 +2,15 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 30;
+export const maxDuration = 55;
 
 /**
  * Cron Job: Auto-scan comments on all connected pages
  * Runs every 3 minutes to find new comments and:
  * 1. Reply "Anh/Chị check Inbox ạ ❤️"
  * 2. Send private inbox message to commenter
+ * 
+ * Dedup: Uses DB table `comment_auto_replies` to track replied comments
  */
 export async function GET() {
     const startTime = Date.now();
@@ -34,12 +36,12 @@ export async function GET() {
         let totalProcessed = 0;
         let totalReplied = 0;
         let totalInboxed = 0;
+        let totalSkipped = 0;
 
         for (const page of pages) {
             if (!page.access_token) continue;
 
             const config = (page.chatbot_config as any) || {};
-            // Default ON: auto reply + inbox for comments
             const autoCommentEnabled = config.auto_comment_reply_enabled !== false;
             if (!autoCommentEnabled) continue;
 
@@ -52,7 +54,7 @@ export async function GET() {
             const allPosts: { id: string }[] = [];
             const seenPostIds = new Set<string>();
 
-            // 1. Ads posts (includes dark posts)
+            // 1. Ads posts (includes dark posts from ads)
             try {
                 const adsRes = await fetch(
                     `https://graph.facebook.com/v19.0/${page.page_id}/ads_posts?fields=id&limit=10&access_token=${page.access_token}`
@@ -78,13 +80,10 @@ export async function GET() {
             for (const post of allPosts) {
                 try {
                     const commentsRes = await fetch(
-                        `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,is_hidden,created_time&limit=25&order=reverse_chronological&access_token=${page.access_token}`
+                        `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,is_hidden,created_time&limit=50&order=reverse_chronological&access_token=${page.access_token}`
                     );
                     const commentsData = await commentsRes.json();
                     if (!commentsData.data) continue;
-
-                    // Only process recent comments (last 10 minutes to avoid re-processing old ones)
-                    const tenMinAgo = Date.now() - 10 * 60 * 1000;
 
                     for (const comment of commentsData.data) {
                         // Skip page's own comments
@@ -92,35 +91,70 @@ export async function GET() {
                         if (comment.is_hidden) continue;
                         if (!comment.from?.id) continue;
 
-                        // Skip old comments
-                        const commentTime = new Date(comment.created_time).getTime();
-                        if (commentTime < tenMinAgo) continue;
-
                         totalProcessed++;
 
-                        // Check if page already replied
-                        const repliesRes = await fetch(
-                            `https://graph.facebook.com/v19.0/${comment.id}/comments?fields=from&limit=5&access_token=${page.access_token}`
-                        );
-                        const repliesData = await repliesRes.json();
-                        const alreadyReplied = repliesData.data?.some((r: any) => r.from?.id === page.page_id);
+                        // ===== DB DEDUP CHECK =====
+                        // Check if we already processed this comment
+                        const { data: existing } = await supabase
+                            .from('comment_auto_replies')
+                            .select('id')
+                            .eq('comment_id', comment.id)
+                            .maybeSingle();
 
-                        if (alreadyReplied) continue;
+                        if (existing) {
+                            totalSkipped++;
+                            continue; // Already processed, skip
+                        }
 
-                        // 1. Reply to comment
+                        // Also double-check via Facebook API (belt & suspenders)
+                        let alreadyRepliedOnFB = false;
                         try {
-                            await fetch(`https://graph.facebook.com/v19.0/${comment.id}/comments?access_token=${page.access_token}`, {
+                            const repliesRes = await fetch(
+                                `https://graph.facebook.com/v19.0/${comment.id}/comments?fields=from&limit=5&access_token=${page.access_token}`
+                            );
+                            const repliesData = await repliesRes.json();
+                            alreadyRepliedOnFB = repliesData.data?.some((r: any) => r.from?.id === page.page_id);
+                        } catch (e) { }
+
+                        if (alreadyRepliedOnFB) {
+                            // Save to DB so we skip next time
+                            await supabase.from('comment_auto_replies').upsert({
+                                comment_id: comment.id,
+                                post_id: post.id,
+                                page_id: page.id,
+                                commenter_id: comment.from.id,
+                                commenter_name: comment.from.name || '',
+                                comment_text: comment.message || '',
+                                replied: true,
+                                inboxed: false,
+                                created_at: new Date().toISOString()
+                            }, { onConflict: 'comment_id' });
+                            totalSkipped++;
+                            continue;
+                        }
+
+                        // ===== 1. REPLY TO COMMENT =====
+                        let replySuccess = false;
+                        try {
+                            const replyRes = await fetch(`https://graph.facebook.com/v19.0/${comment.id}/comments?access_token=${page.access_token}`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ message: commentReplyText })
                             });
-                            totalReplied++;
-                            console.log(`[Comment Cron] Replied to ${comment.from?.name}: "${commentReplyText}"`);
+                            const replyData = await replyRes.json();
+                            replySuccess = !replyData.error;
+                            if (replySuccess) {
+                                totalReplied++;
+                                console.log(`[Comment Cron] ✅ Replied to ${comment.from?.name}: "${comment.message?.substring(0, 30)}"`);
+                            } else {
+                                console.error(`[Comment Cron] ❌ Reply failed:`, replyData.error?.message);
+                            }
                         } catch (e) {
                             console.error('[Comment Cron] Reply error:', e);
                         }
 
-                        // 2. Send private inbox message
+                        // ===== 2. SEND PRIVATE INBOX =====
+                        let inboxSuccess = false;
                         if (inboxEnabled) {
                             try {
                                 // Try Private Replies API first
@@ -135,8 +169,9 @@ export async function GET() {
                                 const privateData = await privateRes.json();
 
                                 if (privateData.error) {
-                                    // Fallback: send via Messenger (only works if user messaged before)
-                                    await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`, {
+                                    console.log(`[Comment Cron] Private reply failed (${privateData.error?.message}), trying Messenger fallback...`);
+                                    // Fallback: send via Messenger API (only works if user messaged page before)
+                                    const msgRes = await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({
@@ -144,16 +179,36 @@ export async function GET() {
                                             message: { text: inboxText }
                                         })
                                     });
+                                    const msgData = await msgRes.json();
+                                    inboxSuccess = !msgData.error;
+                                } else {
+                                    inboxSuccess = true;
                                 }
-                                totalInboxed++;
-                                console.log(`[Comment Cron] Inbox sent to ${comment.from?.name}`);
+
+                                if (inboxSuccess) {
+                                    totalInboxed++;
+                                    console.log(`[Comment Cron] 📩 Inbox sent to ${comment.from?.name}`);
+                                }
                             } catch (e) {
                                 console.error('[Comment Cron] Inbox error:', e);
                             }
                         }
 
-                        // Rate limiting: small delay between replies
-                        await new Promise(r => setTimeout(r, 500));
+                        // ===== 3. SAVE TO DB (DEDUP LOG) =====
+                        await supabase.from('comment_auto_replies').upsert({
+                            comment_id: comment.id,
+                            post_id: post.id,
+                            page_id: page.id,
+                            commenter_id: comment.from.id,
+                            commenter_name: comment.from.name || '',
+                            comment_text: comment.message || '',
+                            replied: replySuccess,
+                            inboxed: inboxSuccess,
+                            created_at: new Date().toISOString()
+                        }, { onConflict: 'comment_id' });
+
+                        // Rate limiting: delay between replies to avoid FB throttle
+                        await new Promise(r => setTimeout(r, 800));
                     }
                 } catch (e) {
                     console.error(`[Comment Cron] Error scanning post ${post.id}:`, e);
@@ -162,13 +217,14 @@ export async function GET() {
         }
 
         const elapsed = Date.now() - startTime;
-        console.log(`[Comment Cron] Done in ${elapsed}ms. Processed: ${totalProcessed}, Replied: ${totalReplied}, Inboxed: ${totalInboxed}`);
+        console.log(`[Comment Cron] Done in ${elapsed}ms. Processed: ${totalProcessed}, Replied: ${totalReplied}, Inboxed: ${totalInboxed}, Skipped: ${totalSkipped}`);
 
         return NextResponse.json({
             success: true,
             processed: totalProcessed,
             replied: totalReplied,
             inboxed: totalInboxed,
+            skipped: totalSkipped,
             elapsed_ms: elapsed
         });
 
