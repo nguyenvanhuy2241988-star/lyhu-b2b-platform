@@ -113,6 +113,7 @@ export async function GET(request: NextRequest) {
                             post_id: post.id,
                             comments_found: commentsData.data?.length || 0,
                             error: commentsData.error?.message || null,
+                            inbox_errors: [] as string[]
                         });
                     }
 
@@ -180,25 +181,40 @@ export async function GET(request: NextRequest) {
 
                         // 2. INBOX
                         let inboxSuccess = false;
-                        if (inboxEnabled) {
+                        let inboxError = '';
+                        if (inboxEnabled && comment.from?.id) {
                             try {
+                                // Method 1: private_replies (preferred)
                                 const privateRes = await fetch(
                                     `https://graph.facebook.com/v19.0/${comment.id}/private_replies?access_token=${page.access_token}`,
                                     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: inboxText }) }
                                 );
                                 const privateData = await privateRes.json();
-                                if (privateData.error && comment.from?.id) {
+                                if (privateData.error) {
+                                    inboxError = `private_reply: ${privateData.error.message}`;
+                                    // Method 2: fallback to me/messages
                                     const msgRes = await fetch(
                                         `https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`,
                                         { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ recipient: { id: comment.from.id }, message: { text: inboxText } }) }
                                     );
                                     const msgData = await msgRes.json();
-                                    inboxSuccess = !msgData.error;
-                                } else if (!privateData.error) {
+                                    if (msgData.error) {
+                                        inboxError += ` | messages: ${msgData.error.message}`;
+                                    } else {
+                                        inboxSuccess = true;
+                                        inboxError = '';
+                                    }
+                                } else {
                                     inboxSuccess = true;
                                 }
                                 if (inboxSuccess) totalInboxed++;
                             } catch (e) { }
+                        }
+
+                        // Add inbox error to debug
+                        if (inboxError && monitoredPostIds.length > 0 && postDebugList.length > 0) {
+                            const lastDebug = postDebugList[postDebugList.length - 1];
+                            if (lastDebug.inbox_errors) lastDebug.inbox_errors.push(inboxError);
                         }
 
                         // 3. SAVE
