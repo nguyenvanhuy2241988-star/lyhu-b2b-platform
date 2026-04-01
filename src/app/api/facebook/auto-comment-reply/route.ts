@@ -73,8 +73,24 @@ export async function GET(request: NextRequest) {
             // Option 1: Specific post IDs configured (user pastes post URLs)
             const monitoredPostIds: string[] = config.auto_comment_post_ids || [];
             if (monitoredPostIds.length > 0) {
-                for (const postId of monitoredPostIds) {
-                    allPosts.push({ id: postId });
+                for (const postIdOrUrl of monitoredPostIds) {
+                    let resolvedId = postIdOrUrl;
+                    
+                    // If it's a URL, resolve to Graph API ID
+                    if (postIdOrUrl.startsWith('http') || postIdOrUrl.includes('facebook.com')) {
+                        try {
+                            const lookupUrl = `https://graph.facebook.com/v19.0/?id=${encodeURIComponent(postIdOrUrl)}&fields=id,og_object{id}&access_token=${page.access_token}`;
+                            const lookupRes = await fetch(lookupUrl);
+                            const lookupData = await lookupRes.json();
+                            if (lookupData.og_object?.id) {
+                                resolvedId = lookupData.og_object.id;
+                            } else if (lookupData.id) {
+                                resolvedId = lookupData.id;
+                            }
+                        } catch (e) { }
+                    }
+                    
+                    allPosts.push({ id: resolvedId });
                 }
             } else {
                 // Option 2: Auto-fetch recent posts
