@@ -91,6 +91,7 @@ export async function GET(request: NextRequest) {
 
             let pageReplied = 0;
             let pageSkipped = 0;
+            const postDebugList: any[] = [];
 
             for (const post of allPosts) {
                 if (Date.now() - startTime > 48000) break;
@@ -98,10 +99,20 @@ export async function GET(request: NextRequest) {
                 try {
                     // Use since parameter to only get recent comments
                     const sinceTimestamp = Math.floor(cutoffTime.getTime() / 1000);
-                    const commentsRes = await fetch(
-                        `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,is_hidden,created_time&limit=50&order=reverse_chronological&since=${sinceTimestamp}&access_token=${page.access_token}`
-                    );
+                    const commentsUrl = `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,is_hidden,created_time&limit=50&order=reverse_chronological&since=${sinceTimestamp}&access_token=${page.access_token}`;
+                    const commentsRes = await fetch(commentsUrl);
                     const commentsData = await commentsRes.json();
+                    
+                    // Debug: capture errors and count for specific posts
+                    if (monitoredPostIds.length > 0) {
+                        postDebugList.push({
+                            post_id: post.id,
+                            comments_found: commentsData.data?.length || 0,
+                            error: commentsData.error?.message || null,
+                            since: new Date(sinceTimestamp * 1000).toISOString()
+                        });
+                    }
+                    
                     if (!commentsData.data) continue;
 
                     for (const comment of commentsData.data) {
@@ -234,7 +245,8 @@ export async function GET(request: NextRequest) {
                 posts: allPosts.length,
                 mode: monitoredPostIds.length > 0 ? 'specific_posts' : 'auto_scan',
                 replied: pageReplied,
-                skipped: pageSkipped
+                skipped: pageSkipped,
+                ...(postDebugList.length > 0 ? { post_debug: postDebugList } : {})
             });
         }
 
