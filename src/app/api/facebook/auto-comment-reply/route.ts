@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 55;
-const VERSION = 'v9-posts-25';
+const VERSION = 'v10-timeout-fix';
 
 /**
  * Cron Job: Auto-scan comments on all connected pages
@@ -60,13 +60,13 @@ export async function GET(request: NextRequest) {
             const inboxText = config.auto_comment_inbox_text ||
                 'Chào bạn! 👋\nCảm ơn bạn đã quan tâm đến sản phẩm LYHU!\nBạn vui lòng cho mình xin SĐT để tư vấn chi tiết hơn nhé ❤️';
 
-            // Fetch page posts (includes bài quảng cáo đã promoted) - limit 25
+            // Fetch page posts (includes bài quảng cáo đã promoted) - limit 10
             const allPosts: { id: string }[] = [];
             const seenPostIds = new Set<string>();
 
             try {
                 const postsRes = await fetch(
-                    `https://graph.facebook.com/v19.0/${page.page_id}/posts?fields=id&limit=25&access_token=${page.access_token}`
+                    `https://graph.facebook.com/v19.0/${page.page_id}/posts?fields=id&limit=10&access_token=${page.access_token}`
                 );
                 const postsData = await postsRes.json();
                 for (const p of postsData.data || []) {
@@ -76,11 +76,16 @@ export async function GET(request: NextRequest) {
 
             const pageDebug: any = { page: page.name, page_id: page.page_id, posts_found: allPosts.length, posts: [] as any[], reply_errors: [] as any[] };
 
-            // Scan comments for each post
+            // Scan comments for each post (with timeout guard)
             for (const post of allPosts) {
+                // Timeout guard: stop scanning if approaching 50s limit
+                if (Date.now() - startTime > 45000) {
+                    console.log(`[Comment Cron] ⏱️ Approaching timeout, stopping scan for ${page.name}`);
+                    break;
+                }
                 try {
                     const commentsRes = await fetch(
-                        `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,is_hidden,created_time&limit=50&order=reverse_chronological&access_token=${page.access_token}`
+                        `https://graph.facebook.com/v19.0/${post.id}/comments?fields=id,message,from,is_hidden,created_time&limit=25&order=reverse_chronological&access_token=${page.access_token}`
                     );
                     const commentsData = await commentsRes.json();
                     const postDebug: any = {
