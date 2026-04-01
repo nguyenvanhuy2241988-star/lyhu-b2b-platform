@@ -103,10 +103,10 @@ export async function GET() {
                     if (!commentsData.data) continue;
 
                     for (const comment of commentsData.data) {
-                        // Skip page's own comments
-                        if (comment.from?.id === page.page_id) continue;
+                        // Skip page's own comments (only if from.id is available)
+                        if (comment.from?.id && comment.from.id === page.page_id) continue;
                         if (comment.is_hidden) continue;
-                        if (!comment.from?.id) continue;
+                        // NOTE: Do NOT skip comments without from.id - we can still reply to them
 
                         totalProcessed++;
 
@@ -174,7 +174,7 @@ export async function GET() {
                         let inboxSuccess = false;
                         if (inboxEnabled) {
                             try {
-                                // Try Private Replies API first
+                                // Try Private Replies API first (works without from.id)
                                 const privateRes = await fetch(
                                     `https://graph.facebook.com/v19.0/${comment.id}/private_replies?access_token=${page.access_token}`,
                                     {
@@ -186,25 +186,27 @@ export async function GET() {
                                 const privateData = await privateRes.json();
 
                                 if (privateData.error) {
-                                    console.log(`[Comment Cron] Private reply failed (${privateData.error?.message}), trying Messenger fallback...`);
-                                    // Fallback: send via Messenger API (only works if user messaged page before)
-                                    const msgRes = await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({
-                                            recipient: { id: comment.from.id },
-                                            message: { text: inboxText }
-                                        })
-                                    });
-                                    const msgData = await msgRes.json();
-                                    inboxSuccess = !msgData.error;
+                                    console.log(`[Comment Cron] Private reply failed (${privateData.error?.message})`);
+                                    // Fallback: send via Messenger API (only works if user messaged page before AND we have from.id)
+                                    if (comment.from?.id) {
+                                        const msgRes = await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                recipient: { id: comment.from.id },
+                                                message: { text: inboxText }
+                                            })
+                                        });
+                                        const msgData = await msgRes.json();
+                                        inboxSuccess = !msgData.error;
+                                    }
                                 } else {
                                     inboxSuccess = true;
                                 }
 
                                 if (inboxSuccess) {
                                     totalInboxed++;
-                                    console.log(`[Comment Cron] 📩 Inbox sent to ${comment.from?.name}`);
+                                    console.log(`[Comment Cron] 📩 Inbox sent to ${comment.from?.name || 'unknown'}`);
                                 }
                             } catch (e) {
                                 console.error('[Comment Cron] Inbox error:', e);
@@ -216,8 +218,8 @@ export async function GET() {
                             comment_id: comment.id,
                             post_id: post.id,
                             page_id: page.id,
-                            commenter_id: comment.from.id,
-                            commenter_name: comment.from.name || '',
+                            commenter_id: comment.from?.id || '',
+                            commenter_name: comment.from?.name || '',
                             comment_text: comment.message || '',
                             replied: replySuccess,
                             inboxed: inboxSuccess,
