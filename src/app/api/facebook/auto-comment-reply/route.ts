@@ -77,7 +77,7 @@ export async function GET() {
                 }
             } catch (e) { }
 
-            const pageDebug: any = { page: page.name, page_id: page.page_id, posts_found: allPosts.length, posts: [] as any[] };
+            const pageDebug: any = { page: page.name, page_id: page.page_id, posts_found: allPosts.length, posts: [] as any[], reply_errors: [] as any[] };
 
             // Scan comments for each post
             for (const post of allPosts) {
@@ -139,8 +139,8 @@ export async function GET() {
                                 comment_id: comment.id,
                                 post_id: post.id,
                                 page_id: page.id,
-                                commenter_id: comment.from.id,
-                                commenter_name: comment.from.name || '',
+                                commenter_id: comment.from?.id || '',
+                                commenter_name: comment.from?.name || '',
                                 comment_text: comment.message || '',
                                 replied: true,
                                 inboxed: false,
@@ -164,7 +164,16 @@ export async function GET() {
                                 totalReplied++;
                                 console.log(`[Comment Cron] ✅ Replied to ${comment.from?.name}: "${comment.message?.substring(0, 30)}"`);
                             } else {
-                                console.error(`[Comment Cron] ❌ Reply failed:`, replyData.error?.message);
+                                const errMsg = replyData.error?.message || 'Unknown error';
+                                const errCode = replyData.error?.code || 0;
+                                console.error(`[Comment Cron] ❌ Reply failed:`, errMsg);
+                                pageDebug.reply_errors.push({
+                                    comment_id: comment.id,
+                                    comment_msg: (comment.message || '').substring(0, 40),
+                                    error: errMsg,
+                                    error_code: errCode,
+                                    error_subcode: replyData.error?.error_subcode || 0
+                                });
                             }
                         } catch (e) {
                             console.error('[Comment Cron] Reply error:', e);
