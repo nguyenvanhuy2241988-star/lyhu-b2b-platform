@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 55;
-const VERSION = 'v6-filter-stats';
+const VERSION = 'v7-clean-mode';
 
 /**
  * Cron Job: Auto-scan comments on all connected pages
@@ -12,10 +12,12 @@ const VERSION = 'v6-filter-stats';
  * 2. Send private inbox message to commenter
  * 
  * Dedup: Uses DB table `comment_auto_replies` to track replied comments
+ * Debug: Add ?clean=1 to clear DB before scanning
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
     const startTime = Date.now();
-    console.log('[Comment Cron] Starting auto-scan...');
+    const cleanMode = request.nextUrl.searchParams.get('clean') === '1';
+    console.log(`[Comment Cron] Starting auto-scan... (clean=${cleanMode})`);
 
     try {
         const supabase = createClient(
@@ -29,6 +31,12 @@ export async function GET() {
             .from('facebook_pages')
             .select('id, page_id, name, access_token, chatbot_config')
             .eq('is_connected', true);
+
+        // Clean mode: delete all dedup records for fresh test
+        if (cleanMode) {
+            await supabase.from('comment_auto_replies').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+            console.log('[Comment Cron] 🧹 Clean mode: cleared all dedup records');
+        }
 
         if (error || !pages?.length) {
             return NextResponse.json({ success: true, message: 'No connected pages' });
