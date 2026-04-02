@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabaseClient";
-import { Loader2, CheckCircle, Send, MapPin, Briefcase, FileUp, X, Upload } from "lucide-react";
+import { Loader2, CheckCircle, Send, MapPin, Briefcase, FileUp, X, Upload, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 type PublicJob = {
@@ -56,6 +56,7 @@ export default function ApplyPage() {
     });
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [showFullCompanyInfo, setShowFullCompanyInfo] = useState(false);
+    const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
     useEffect(() => {
         const loadData = async () => {
@@ -308,11 +309,15 @@ export default function ApplyPage() {
                                         {company.culture_images && company.culture_images.length > 0 && (
                                             <div className="grid grid-cols-2 gap-3">
                                                 {company.culture_images.map((img, idx) => (
-                                                    <div key={idx} className="aspect-video rounded overflow-hidden bg-slate-50 border border-slate-100">
+                                                    <div 
+                                                        key={idx} 
+                                                        className="aspect-video rounded overflow-hidden bg-slate-50 border border-slate-100 cursor-pointer group"
+                                                        onClick={() => setLightboxIndex(idx)}
+                                                    >
                                                         <img
                                                             src={img}
                                                             alt={`Hoạt động ${idx + 1}`}
-                                                            className="w-full h-full object-cover"
+                                                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                                         />
                                                     </div>
                                                 ))}
@@ -459,6 +464,54 @@ export default function ApplyPage() {
                     </div>
                 </div>
             </main>
+
+            {/* Image Lightbox */}
+            {lightboxIndex !== null && company && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm"
+                    onClick={() => setLightboxIndex(null)}
+                >
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setLightboxIndex(null); }}
+                        className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition z-10"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+
+                    {/* Prev */}
+                    {lightboxIndex > 0 && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex - 1); }}
+                            className="absolute left-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition z-10"
+                        >
+                            <ChevronLeft className="w-6 h-6" />
+                        </button>
+                    )}
+
+                    {/* Image */}
+                    <img
+                        src={company.culture_images[lightboxIndex]}
+                        alt={`Preview ${lightboxIndex + 1}`}
+                        className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg shadow-2xl"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+
+                    {/* Next */}
+                    {lightboxIndex < company.culture_images.length - 1 && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex + 1); }}
+                            className="absolute right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition z-10"
+                        >
+                            <ChevronRight className="w-6 h-6" />
+                        </button>
+                    )}
+
+                    {/* Counter */}
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/70 text-sm bg-black/50 px-3 py-1 rounded-full">
+                        {lightboxIndex + 1} / {company.culture_images.length}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
