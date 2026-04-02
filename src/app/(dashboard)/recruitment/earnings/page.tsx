@@ -193,7 +193,7 @@ export default function RecruiterEarningsPage() {
     // Get KPI icon
     const getKpiIcon = (key: string) => {
         switch (key) {
-            case 'kpi_candidates_sourced': return <Users className="w-4 h-4 text-blue-500" />;
+            case 'kpi_candidates_sourced': return <Users className="w-4 h-4 text-primary-500" />;
             case 'kpi_interviews_scheduled': return <CalendarCheck className="w-4 h-4 text-purple-500" />;
             case 'kpi_hires_closed': return <UserCheck className="w-4 h-4 text-emerald-500" />;
             case 'kpi_offer_acceptance_rate': return <Percent className="w-4 h-4 text-amber-500" />;

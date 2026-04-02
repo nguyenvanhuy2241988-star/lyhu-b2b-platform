@@ -133,7 +133,7 @@ export default function PlatformsPage() {
 
     const getIcon = (type: string) => {
         const t = type.toLowerCase();
-        if (t.includes('web')) return <Globe className="w-5 h-5 text-blue-500" />;
+        if (t.includes('web')) return <Globe className="w-5 h-5 text-primary-500" />;
         if (t.includes('app')) return <Smartphone className="w-5 h-5 text-purple-500" />;
         if (t.includes('face') || t.includes('group')) return <Users className="w-5 h-5 text-indigo-500" />;
         return <Globe className="w-5 h-5 text-gray-500" />;
@@ -226,8 +226,8 @@ export default function PlatformsPage() {
 
                                     <div className="space-y-4 mb-6">
                                         {platform.pricing_details && (
-                                            <div className="bg-blue-50/50 rounded-xl p-3 border border-blue-50">
-                                                <div className="flex items-center gap-2 text-blue-700 text-xs font-semibold mb-1">
+                                            <div className="bg-primary-50/50 rounded-xl p-3 border border-primary-50">
+                                                <div className="flex items-center gap-2 text-primary-700 text-xs font-semibold mb-1">
                                                     <DollarSign className="w-3.5 h-3.5" />
                                                     Chi phí & Gói
                                                 </div>
@@ -249,7 +249,7 @@ export default function PlatformsPage() {
                                     <div className="pt-4 border-t border-gray-100 flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button
                                             onClick={() => openEdit(platform)}
-                                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                                         >
                                             <Edit className="w-4 h-4" />
                                         </button>
@@ -298,7 +298,7 @@ export default function PlatformsPage() {
                                     <tr key={group.id} className="bg-white hover:bg-gray-50 transition-colors">
                                         <td className="px-6 py-4 font-medium text-gray-900">{group.name}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${group.platform === 'facebook_group' ? 'bg-blue-50 text-blue-700' :
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${group.platform === 'facebook_group' ? 'bg-primary-50 text-primary-700' :
                                                     group.platform === 'zalo' ? 'bg-cyan-50 text-cyan-700' : 'bg-gray-100 text-gray-600'
                                                 }`}>
                                                 {group.platform === 'facebook_group' ? 'FB Group' : group.platform}

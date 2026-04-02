@@ -100,10 +100,10 @@ export default function ReportDetailModal({ isOpen, onClose, report }: ReportDet
                         </div>
                         <div className="space-y-2">
                             <h3 className="font-semibold text-slate-800 flex items-center gap-2">
-                                <Megaphone className="w-4 h-4 text-blue-500" />
+                                <Megaphone className="w-4 h-4 text-primary-500" />
                                 Đề xuất / Cần hỗ trợ
                             </h3>
-                            <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 min-h-[60px] text-sm text-blue-800 whitespace-pre-wrap">
+                            <div className="bg-primary-50 p-3 rounded-lg border border-primary-100 min-h-[60px] text-sm text-primary-800 whitespace-pre-wrap">
                                 {report.request_support || "Không có đề xuất."}
                             </div>
                         </div>

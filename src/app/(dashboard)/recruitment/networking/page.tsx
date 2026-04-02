@@ -107,7 +107,7 @@ export default function NetworkingPage() {
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'connected': return 'bg-green-100 text-green-700';
-            case 'contacted': return 'bg-blue-100 text-blue-700';
+            case 'contacted': return 'bg-primary-100 text-primary-700';
             default: return 'bg-slate-100 text-slate-700';
         }
     };
@@ -136,14 +136,14 @@ export default function NetworkingPage() {
                         <input
                             type="text"
                             placeholder="Tìm kiếm..."
-                            className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20"
+                            className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-primary-500/20"
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                         />
                     </div>
                     <button
                         onClick={() => { resetForm(); setShowModal(true); }}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition"
+                        className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition"
                     >
                         <Plus className="w-4 h-4" />
                         Thêm đối tác
@@ -191,7 +191,7 @@ export default function NetworkingPage() {
                                             </div>
                                         )}
                                         {contact.social_link && (
-                                            <a href={contact.social_link} target="_blank" className="flex items-center gap-1.5 text-blue-600 hover:underline">
+                                            <a href={contact.social_link} target="_blank" className="flex items-center gap-1.5 text-primary-600 hover:underline">
                                                 <ExternalLink className="w-3.5 h-3.5" /> Social Profile
                                             </a>
                                         )}
@@ -211,7 +211,7 @@ export default function NetworkingPage() {
                                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button
                                                 onClick={() => openEdit(contact)}
-                                                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                                                className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded"
                                             >
                                                 <Edit className="w-4 h-4" />
                                             </button>
@@ -247,7 +247,7 @@ export default function NetworkingPage() {
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-1">Họ và tên <span className="text-red-500">*</span></label>
                                 <input
-                                    className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-primary-500 outline-none"
                                     required
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -259,7 +259,7 @@ export default function NetworkingPage() {
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">Tổ chức / Trường</label>
                                     <input
-                                        className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-primary-500 outline-none"
                                         value={formData.organization}
                                         onChange={e => setFormData({ ...formData, organization: e.target.value })}
                                         placeholder="VD: ĐH Kinh Tế"
@@ -268,7 +268,7 @@ export default function NetworkingPage() {
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">Chức vụ</label>
                                     <input
-                                        className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-primary-500 outline-none"
                                         value={formData.position}
                                         onChange={e => setFormData({ ...formData, position: e.target.value })}
                                         placeholder="VD: Chủ nhiệm CLB..."
@@ -280,7 +280,7 @@ export default function NetworkingPage() {
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">Số điện thoại</label>
                                     <input
-                                        className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-primary-500 outline-none"
                                         value={formData.phone}
                                         onChange={e => setFormData({ ...formData, phone: e.target.value })}
                                         placeholder="0912..."
@@ -289,7 +289,7 @@ export default function NetworkingPage() {
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-1">Email</label>
                                     <input
-                                        className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-primary-500 outline-none"
                                         value={formData.email}
                                         onChange={e => setFormData({ ...formData, email: e.target.value })}
                                         placeholder="example@gmail.com"
@@ -300,7 +300,7 @@ export default function NetworkingPage() {
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-1">Link Facebook / LinkedIn</label>
                                 <input
-                                    className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-primary-500 outline-none"
                                     value={formData.social_link}
                                     onChange={e => setFormData({ ...formData, social_link: e.target.value })}
                                     placeholder="https://"
@@ -315,7 +315,7 @@ export default function NetworkingPage() {
                                             key={status}
                                             type="button"
                                             onClick={() => setFormData({ ...formData, status })}
-                                            className={`py-1.5 text-sm font-medium rounded transition ${formData.status === status ? 'bg-white shadow text-blue-700' : 'text-slate-500 hover:text-slate-700'}`}
+                                            className={`py-1.5 text-sm font-medium rounded transition ${formData.status === status ? 'bg-white shadow text-primary-700' : 'text-slate-500 hover:text-slate-700'}`}
                                         >
                                             {getStatusLabel(status)}
                                         </button>
@@ -326,7 +326,7 @@ export default function NetworkingPage() {
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-1">Ghi chú</label>
                                 <textarea
-                                    className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-primary-500 outline-none"
                                     rows={3}
                                     value={formData.notes}
                                     onChange={e => setFormData({ ...formData, notes: e.target.value })}
@@ -336,7 +336,7 @@ export default function NetworkingPage() {
 
                             <button
                                 type="submit"
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-600/20 transition active:scale-[0.98] mt-2"
+                                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 rounded-xl shadow-sm transition active:scale-[0.98] mt-2"
                             >
                                 {selectedId ? "Lưu thay đổi" : "Thêm đối tác"}
                             </button>

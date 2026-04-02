@@ -183,7 +183,7 @@ export default function JobEditor({ jobId }: JobEditorProps) {
                     <button
                         onClick={handleSave}
                         disabled={isSaving}
-                        className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium shadow-sm disabled:opacity-70"
+                        className="flex items-center gap-2 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition font-medium shadow-sm disabled:opacity-70"
                     >
                         {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                         {isEditMode ? "Lưu thay đổi" : "Đăng tin"}
@@ -197,7 +197,7 @@ export default function JobEditor({ jobId }: JobEditorProps) {
                     {/* Banner Card */}
                     <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                         <label className="block text-sm font-medium text-slate-700 mb-2">Ảnh bìa (Public Banner)</label>
-                        <div className="relative aspect-video bg-slate-100 rounded-lg overflow-hidden border-2 border-dashed border-slate-300 flex items-center justify-center group hover:border-blue-400 transition">
+                        <div className="relative aspect-video bg-slate-100 rounded-lg overflow-hidden border-2 border-dashed border-slate-300 flex items-center justify-center group hover:border-primary-400 transition">
                             {formData.banner_url ? (
                                 <img src={formData.banner_url} alt="Banner" className="w-full h-full object-cover" />
                             ) : (
@@ -216,7 +216,7 @@ export default function JobEditor({ jobId }: JobEditorProps) {
                                 required
                                 value={formData.title}
                                 onChange={e => setFormData({ ...formData, title: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
                                 placeholder="VD: Nhân viên kinh doanh"
                             />
                         </div>
@@ -228,7 +228,7 @@ export default function JobEditor({ jobId }: JobEditorProps) {
                                 <input
                                     value={formData.department}
                                     onChange={e => setFormData({ ...formData, department: e.target.value })}
-                                    className="w-full pl-9 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full pl-9 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
                                     placeholder="Sales, Marketing..."
                                 />
                             </div>
@@ -242,7 +242,7 @@ export default function JobEditor({ jobId }: JobEditorProps) {
                                     <input
                                         value={formData.salary_range}
                                         onChange={e => setFormData({ ...formData, salary_range: e.target.value })}
-                                        className="w-full pl-9 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className="w-full pl-9 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
                                         placeholder="10 - 15 triệu"
                                     />
                                 </div>
@@ -252,7 +252,7 @@ export default function JobEditor({ jobId }: JobEditorProps) {
                                 <select
                                     value={formData.employment_type}
                                     onChange={e => setFormData({ ...formData, employment_type: e.target.value })}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none bg-white"
                                 >
                                     <option value="Toàn thời gian">Toàn thời gian</option>
                                     <option value="Bán thời gian">Bán thời gian</option>
@@ -269,7 +269,7 @@ export default function JobEditor({ jobId }: JobEditorProps) {
                                 <input
                                     value={formData.location}
                                     onChange={e => setFormData({ ...formData, location: e.target.value })}
-                                    className="w-full pl-9 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className="w-full pl-9 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
                                 />
                             </div>
                         </div>
@@ -280,7 +280,7 @@ export default function JobEditor({ jobId }: JobEditorProps) {
                                 type="date"
                                 value={formData.deadline}
                                 onChange={e => setFormData({ ...formData, deadline: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none"
                             />
                         </div>
 
@@ -289,7 +289,7 @@ export default function JobEditor({ jobId }: JobEditorProps) {
                             <select
                                 value={formData.status}
                                 onChange={e => setFormData({ ...formData, status: e.target.value })}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white font-medium"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none bg-white font-medium"
                             >
                                 <option value="open" className="text-green-600">Đang tuyển (Public)</option>
                                 <option value="draft" className="text-slate-500">Nháp (Ẩn)</option>
@@ -307,7 +307,7 @@ export default function JobEditor({ jobId }: JobEditorProps) {
                             <textarea
                                 value={formData.description}
                                 onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none min-h-[150px] leading-relaxed"
+                                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none min-h-[150px] leading-relaxed"
                                 placeholder="- Mô tả chi tiết các đầu việc hàng ngày..."
                             />
                             <p className="text-xs text-slate-400 mt-1 text-right">Hỗ trợ xuống dòng, gạch đầu dòng</p>
@@ -318,7 +318,7 @@ export default function JobEditor({ jobId }: JobEditorProps) {
                             <textarea
                                 value={formData.requirements}
                                 onChange={e => setFormData({ ...formData, requirements: e.target.value })}
-                                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none min-h-[150px] leading-relaxed"
+                                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none min-h-[150px] leading-relaxed"
                                 placeholder="- Kinh nghiệm, kỹ năng cần thiết..."
                             />
                         </div>
@@ -328,7 +328,7 @@ export default function JobEditor({ jobId }: JobEditorProps) {
                             <textarea
                                 value={formData.benefits}
                                 onChange={e => setFormData({ ...formData, benefits: e.target.value })}
-                                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none min-h-[150px] leading-relaxed"
+                                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none min-h-[150px] leading-relaxed"
                                 placeholder="- Chế độ lương thưởng, bảo hiểm, đào tạo..."
                             />
                         </div>

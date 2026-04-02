@@ -181,9 +181,9 @@ export default function RecruiterRulesPage() {
                                 </div>
                             )}
 
-                            <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg">
-                                <Info className="w-3.5 h-3.5 text-blue-500 mt-0.5 shrink-0" />
-                                <p className="text-xs text-blue-700 leading-relaxed">
+                            <div className="flex items-start gap-2 p-3 bg-primary-50 rounded-lg">
+                                <Info className="w-3.5 h-3.5 text-primary-500 mt-0.5 shrink-0" />
+                                <p className="text-xs text-primary-700 leading-relaxed">
                                     Lương cứng được đảm bảo dựa trên sự chuyên cần. Nghỉ không phép quá {policy.maxUnexcusedAbsences} buổi sẽ bị xem xét lại định mức.
                                 </p>
                             </div>

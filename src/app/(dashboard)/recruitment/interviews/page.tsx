@@ -176,7 +176,7 @@ export default function InterviewsPage() {
         switch (status) {
             case 'completed': return 'text-green-600 bg-green-50 border-green-200';
             case 'cancelled': return 'text-red-600 bg-red-50 border-red-200';
-            default: return 'text-blue-600 bg-blue-50 border-blue-200'; // scheduled
+            default: return 'text-primary-600 bg-primary-50 border-primary-200'; // scheduled
         }
     };
 
@@ -195,7 +195,7 @@ export default function InterviewsPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <Calendar className="w-6 h-6 text-blue-600" />
+                        <Calendar className="w-6 h-6 text-primary-600" />
                         Lịch Phỏng Vấn
                     </h1>
                     <p className="text-slate-500 text-sm">Quản lý các cuộc hẹn với ứng viên</p>
@@ -204,20 +204,20 @@ export default function InterviewsPage() {
                     <div className="bg-white border p-1 rounded-lg flex text-sm font-medium">
                         <button
                             onClick={() => setFilter('upcoming')}
-                            className={`px-3 py-1.5 rounded-md transition ${filter === 'upcoming' ? 'bg-blue-50 text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-3 py-1.5 rounded-md transition ${filter === 'upcoming' ? 'bg-primary-50 text-primary-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             Sắp tới
                         </button>
                         <button
                             onClick={() => setFilter('all')}
-                            className={`px-3 py-1.5 rounded-md transition ${filter === 'all' ? 'bg-blue-50 text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`px-3 py-1.5 rounded-md transition ${filter === 'all' ? 'bg-primary-50 text-primary-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             Tất cả
                         </button>
                     </div>
                     <button
                         onClick={() => { resetForm(); setShowModal(true); }}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition shadow-sm"
+                        className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium transition shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
                         Đặt lịch mới
@@ -236,7 +236,7 @@ export default function InterviewsPage() {
                         <p className="text-slate-500 mt-1">Hãy đặt lịch phỏng vấn đầu tiên với ứng viên tiềm năng.</p>
                         <button
                             onClick={() => { resetForm(); setShowModal(true); }}
-                            className="text-blue-600 font-medium mt-4 hover:underline"
+                            className="text-primary-600 font-medium mt-4 hover:underline"
                         >
                             + Đặt lịch ngay
                         </button>
@@ -248,7 +248,7 @@ export default function InterviewsPage() {
                             return (
                                 <div key={interview.id} className="p-4 hover:bg-slate-50 transition flex flex-col md:flex-row md:items-center justify-between gap-4 group">
                                     <div className="flex items-start gap-4">
-                                        <div className="flex-shrink-0 w-16 h-16 bg-blue-50 rounded-xl flex flex-col items-center justify-center text-blue-700 border border-blue-100">
+                                        <div className="flex-shrink-0 w-16 h-16 bg-primary-50 rounded-xl flex flex-col items-center justify-center text-primary-700 border border-primary-100">
                                             <span className="text-xl font-bold">{format(date, 'dd')}</span>
                                             <span className="text-xs uppercase font-semibold">{format(date, 'MMM', { locale: vi })}</span>
                                         </div>
@@ -271,7 +271,7 @@ export default function InterviewsPage() {
                                                     {interview.type === 'online' ? 'Phỏng vấn Online (Google Meet)' : 'Phỏng vấn trực tiếp'}
                                                 </div>
                                                 {interview.type === 'online' && interview.meeting_link && (
-                                                    <a href={interview.meeting_link} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline flex items-center gap-1 ml-6">
+                                                    <a href={interview.meeting_link} target="_blank" rel="noreferrer" className="text-primary-600 hover:underline flex items-center gap-1 ml-6">
                                                         Vào phòng họp <ChevronRight className="w-3 h-3" />
                                                     </a>
                                                 )}
@@ -313,7 +313,7 @@ export default function InterviewsPage() {
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Ứng viên <span className="text-red-500">*</span></label>
                                 <select
-                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition bg-white"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition bg-white"
                                     required
                                     value={formData.candidate_id}
                                     onChange={e => setFormData({ ...formData, candidate_id: e.target.value })}
@@ -330,7 +330,7 @@ export default function InterviewsPage() {
                                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">Thời gian <span className="text-red-500">*</span></label>
                                     <input
                                         type="datetime-local"
-                                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none"
                                         required
                                         value={formData.scheduled_at}
                                         onChange={e => setFormData({ ...formData, scheduled_at: e.target.value })}
@@ -342,14 +342,14 @@ export default function InterviewsPage() {
                                         <button
                                             type="button"
                                             onClick={() => setFormData({ ...formData, type: 'online' })}
-                                            className={`py-1.5 text-sm font-medium rounded-lg transition ${formData.type === 'online' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                            className={`py-1.5 text-sm font-medium rounded-lg transition ${formData.type === 'online' ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                         >
                                             Online
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => setFormData({ ...formData, type: 'offline' })}
-                                            className={`py-1.5 text-sm font-medium rounded-lg transition ${formData.type === 'offline' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                            className={`py-1.5 text-sm font-medium rounded-lg transition ${formData.type === 'offline' ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                                         >
                                             Offline
                                         </button>
@@ -364,7 +364,7 @@ export default function InterviewsPage() {
                                         <Video className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
                                         <input
                                             type="url"
-                                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none"
                                             placeholder="https://meet.google.com/..."
                                             value={formData.meeting_link}
                                             onChange={e => setFormData({ ...formData, meeting_link: e.target.value })}
@@ -378,7 +378,7 @@ export default function InterviewsPage() {
                                         <MapPin className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
                                         <input
                                             type="text"
-                                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none"
+                                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none"
                                             placeholder="Phòng họp 1, Tầng 3..."
                                             value={formData.location}
                                             onChange={e => setFormData({ ...formData, location: e.target.value })}
@@ -389,7 +389,7 @@ export default function InterviewsPage() {
 
                             <button
                                 type="submit"
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-600/20 transition active:scale-[0.98] mt-4"
+                                className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold py-3 rounded-xl shadow-sm transition active:scale-[0.98] mt-4"
                             >
                                 {selectedId ? "Lưu thay đổi" : "Xác nhận đặt lịch"}
                             </button>

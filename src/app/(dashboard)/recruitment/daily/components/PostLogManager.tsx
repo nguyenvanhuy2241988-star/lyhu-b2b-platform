@@ -225,7 +225,7 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
                                         log.activity_type === 'comment' ? "bg-orange-100 text-orange-700" :
                                             log.activity_type === 'share' ? "bg-pink-100 text-pink-700" :
                                                 log.activity_type === 'friend' ? "bg-purple-100 text-purple-700" :
-                                                    "bg-blue-100 text-blue-700"
+                                                    "bg-primary-100 text-primary-700"
                                     )}>
                                         {log.activity_type === 'comment' && <MessageSquare className="w-3 h-3" />}
                                         {log.activity_type === 'share' && <Share2 className="w-3 h-3" />}
@@ -234,7 +234,7 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
                                     </span>
                                     <span className={cn(
                                         "text-xs px-2 py-0.5 rounded-full font-medium capitalize",
-                                        log.platform.includes('facebook') ? "bg-blue-100 text-blue-700" :
+                                        log.platform.includes('facebook') ? "bg-primary-100 text-primary-700" :
                                             log.platform === 'threads' ? "bg-black/5 text-black" : "bg-slate-100 text-slate-700"
                                     )}>
                                         {log.platform.replace('_', ' ')}
@@ -249,7 +249,7 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
                                             <LinkIcon className="w-3 h-3" /> Link nhóm: {log.group_link}
                                         </a>
                                     )}
-                                    <a href={log.post_link} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-blue-600 hover:underline font-medium truncate">
+                                    <a href={log.post_link} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-primary-600 hover:underline font-medium truncate">
                                         <ExternalLink className="w-3 h-3" /> {log.activity_type === 'friend' ? 'Xem Profile' : 'Xem bài viết trực tiếp'}
                                     </a>
                                     {log.group_note && (
@@ -265,7 +265,7 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all self-center">
                                     <button
                                         onClick={() => handleEdit(log)}
-                                        className="p-2 text-slate-400 hover:text-blue-600"
+                                        className="p-2 text-slate-400 hover:text-primary-600"
                                         title="Sửa"
                                     >
                                         <Pencil className="w-4 h-4" />

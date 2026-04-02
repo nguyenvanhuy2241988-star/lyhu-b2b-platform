@@ -157,14 +157,14 @@ export default function ReportsPage() {
                                 type="date"
                                 value={format(dateRange.start, "yyyy-MM-dd")}
                                 onChange={(e) => handleCustomDateChange('start', e.target.value)}
-                                className="px-2 py-1 text-sm border border-slate-200 rounded outline-none focus:border-blue-500"
+                                className="px-2 py-1 text-sm border border-slate-200 rounded outline-none focus:border-primary-500"
                             />
                             <span className="text-sm text-slate-500">Đến</span>
                             <input
                                 type="date"
                                 value={format(dateRange.end, "yyyy-MM-dd")}
                                 onChange={(e) => handleCustomDateChange('end', e.target.value)}
-                                className="px-2 py-1 text-sm border border-slate-200 rounded outline-none focus:border-blue-500"
+                                className="px-2 py-1 text-sm border border-slate-200 rounded outline-none focus:border-primary-500"
                             />
                         </div>
                     )}
@@ -187,7 +187,7 @@ export default function ReportsPage() {
                         <p className="text-sm text-slate-500 mb-1">Tổng bài đăng</p>
                         <p className="text-2xl font-bold text-slate-900">{totalPosts}</p>
                     </div>
-                    <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                    <div className="p-3 bg-primary-50 text-primary-600 rounded-lg">
                         <Share2 className="w-5 h-5" />
                     </div>
                 </div>
@@ -280,7 +280,7 @@ export default function ReportsPage() {
                                                             </div>
                                                         )}
                                                         {report.request_support && (
-                                                            <div className="flex gap-2 text-sm bg-blue-50 p-2 rounded text-blue-700 border border-blue-100">
+                                                            <div className="flex gap-2 text-sm bg-primary-50 p-2 rounded text-primary-700 border border-primary-100">
                                                                 <Megaphone className="w-4 h-4 shrink-0 mt-0.5" />
                                                                 <div>
                                                                     <span className="font-semibold">Đề xuất:</span> {report.request_support}

@@ -156,7 +156,7 @@ export default function RecruitmentSettingsPage() {
                 <button
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium shadow-sm disabled:opacity-70"
+                    className="flex items-center gap-2 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition font-medium shadow-sm disabled:opacity-70"
                 >
                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                     Lưu thay đổi
@@ -194,7 +194,7 @@ export default function RecruitmentSettingsPage() {
                                 <input
                                     value={settings.company_name}
                                     onChange={e => setSettings({ ...settings, company_name: e.target.value })}
-                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-primary-500"
                                     placeholder="VD: LYHU Technology"
                                 />
                             </div>
@@ -205,7 +205,7 @@ export default function RecruitmentSettingsPage() {
                                     <input
                                         value={settings.website}
                                         onChange={e => setSettings({ ...settings, website: e.target.value })}
-                                        className="w-full pl-9 px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full pl-9 px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-primary-500"
                                         placeholder="https://lyhu.vn"
                                     />
                                 </div>
@@ -218,7 +218,7 @@ export default function RecruitmentSettingsPage() {
                         <textarea
                             value={settings.description}
                             onChange={e => setSettings({ ...settings, description: e.target.value })}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-primary-500 min-h-[100px]"
                             placeholder="Giới thiệu về tầm nhìn, sứ mệnh, lĩnh vực hoạt động..."
                         />
                     </div>
@@ -235,7 +235,7 @@ export default function RecruitmentSettingsPage() {
                         <textarea
                             value={settings.culture_description}
                             onChange={e => setSettings({ ...settings, culture_description: e.target.value })}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-primary-500 min-h-[80px]"
                             placeholder="Môi trường làm việc trẻ trung, năng động, happy hour hàng tuần..."
                         />
                     </div>

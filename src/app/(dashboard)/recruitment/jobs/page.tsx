@@ -37,7 +37,7 @@ export default function JobsPage() {
                 </div>
                 <Link
                     href="/recruitment/jobs/new"
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium"
+                    className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition font-medium"
                 >
                     <Plus className="w-4 h-4" />
                     Tạo tin mới
@@ -52,7 +52,7 @@ export default function JobsPage() {
                     {jobs.map(job => (
                         <div key={job.id} className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition group cursor-pointer relative">
                             <div className="flex justify-between items-start mb-4">
-                                <Link href={`/recruitment/jobs/${job.id}`} className="block flex-1 group-hover:text-blue-600">
+                                <Link href={`/recruitment/jobs/${job.id}`} className="block flex-1 group-hover:text-primary-600">
                                     <h3 className="text-lg font-bold text-slate-800 mb-1 line-clamp-1">{job.title}</h3>
                                     <p className="text-slate-500 text-sm">{job.department}</p>
                                 </Link>
@@ -66,7 +66,7 @@ export default function JobsPage() {
                                     <Link
                                         href={`/recruitment/jobs/${job.id}/edit`}
                                         onClick={e => e.stopPropagation()} // Prevent card click
-                                        className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-blue-600 transition"
+                                        className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-primary-600 transition"
                                         title="Chỉnh sửa"
                                     >
                                         <Edit className="w-4 h-4" />
@@ -89,7 +89,7 @@ export default function JobsPage() {
                                 <span>{job.created_at ? format(new Date(job.created_at), 'dd/MM/yyyy') : '-'}</span>
                                 <Link
                                     href={`/recruitment/jobs/${job.id}`}
-                                    className="text-blue-600 font-medium group-hover:underline flex items-center gap-1 hover:gap-2 transition-all"
+                                    className="text-primary-600 font-medium group-hover:underline flex items-center gap-1 hover:gap-2 transition-all"
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     Chi tiết →

@@ -6,7 +6,7 @@ import { RecruitmentColumn, getKanbanColumns, createKanbanColumn, updateKanbanCo
 
 const COLOR_PRESETS = [
     { label: 'Xám', value: 'bg-slate-50 text-slate-700' },
-    { label: 'Xanh dương', value: 'bg-blue-50 text-blue-700' },
+    { label: 'Xanh dương', value: 'bg-primary-50 text-primary-700' },
     { label: 'Tím', value: 'bg-purple-50 text-purple-700' },
     { label: 'Cam', value: 'bg-orange-50 text-orange-700' },
     { label: 'Vàng', value: 'bg-yellow-50 text-yellow-700' },
@@ -158,7 +158,7 @@ export default function RecruitmentColumnManager({ isOpen, onClose, onColumnsCha
                     ) : (
                         <div className="space-y-3">
                             {columns.map((col, index) => (
-                                <div key={col.id} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl group hover:border-blue-300 transition">
+                                <div key={col.id} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl group hover:border-primary-300 transition">
                                     {/* Arrows */}
                                     <div className="flex flex-col gap-1">
                                         <button
@@ -182,14 +182,14 @@ export default function RecruitmentColumnManager({ isOpen, onClose, onColumnsCha
                                         {editingCol === col.id ? (
                                             <div className="flex flex-col sm:flex-row gap-2">
                                                 <input
-                                                    className="flex-1 px-3 py-1.5 border border-blue-300 rounded outline-none focus:ring-2 focus:ring-blue-100 text-sm font-semibold"
+                                                    className="flex-1 px-3 py-1.5 border border-primary-300 rounded outline-none focus:ring-2 focus:ring-primary-100 text-sm font-semibold"
                                                     value={editLabel}
                                                     onChange={(e) => setEditLabel(e.target.value)}
                                                     placeholder="Tên cột..."
                                                     autoFocus
                                                 />
                                                 <select
-                                                    className="border border-blue-300 rounded px-2 py-1.5 text-sm bg-white outline-none"
+                                                    className="border border-primary-300 rounded px-2 py-1.5 text-sm bg-white outline-none"
                                                     value={editColor}
                                                     onChange={(e) => setEditColor(e.target.value)}
                                                 >
@@ -214,7 +214,7 @@ export default function RecruitmentColumnManager({ isOpen, onClose, onColumnsCha
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-                                                    <button onClick={() => handleStartEdit(col)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded" title="Sửa">
+                                                    <button onClick={() => handleStartEdit(col)} className="p-1.5 text-primary-600 hover:bg-primary-50 rounded" title="Sửa">
                                                         <Edit2 className="w-4 h-4" />
                                                     </button>
                                                     <button
@@ -234,23 +234,23 @@ export default function RecruitmentColumnManager({ isOpen, onClose, onColumnsCha
 
                             {/* Add New Block */}
                             {isAdding ? (
-                                <div className="flex flex-col sm:flex-row gap-2 items-center p-3 bg-blue-50/50 border border-blue-200 border-dashed rounded-xl mt-4">
+                                <div className="flex flex-col sm:flex-row gap-2 items-center p-3 bg-primary-50/50 border border-primary-200 border-dashed rounded-xl mt-4">
                                     <input
-                                        className="flex-1 px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 text-sm font-semibold"
+                                        className="flex-1 px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400 text-sm font-semibold"
                                         value={newLabel}
                                         onChange={(e) => setNewLabel(e.target.value)}
                                         placeholder="Nhập tên trạng thái mới..."
                                         autoFocus
                                     />
                                     <select
-                                        className="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400"
+                                        className="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-400"
                                         value={newColor}
                                         onChange={(e) => setNewColor(e.target.value)}
                                     >
                                         {COLOR_PRESETS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
                                     </select>
                                     <div className="flex items-center gap-2">
-                                        <button onClick={handleAdd} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-semibold">
+                                        <button onClick={handleAdd} className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition text-sm font-semibold">
                                             Hoàn tất
                                         </button>
                                         <button onClick={() => setIsAdding(false)} className="px-3 py-2 text-slate-500 hover:bg-slate-200 rounded-lg transition text-sm">
@@ -261,7 +261,7 @@ export default function RecruitmentColumnManager({ isOpen, onClose, onColumnsCha
                             ) : (
                                 <button
                                     onClick={() => setIsAdding(true)}
-                                    className="w-full flex justify-center items-center gap-2 p-3 mt-4 border-2 border-dashed border-slate-200 rounded-xl text-slate-500 hover:text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition font-medium"
+                                    className="w-full flex justify-center items-center gap-2 p-3 mt-4 border-2 border-dashed border-slate-200 rounded-xl text-slate-500 hover:text-primary-600 hover:border-primary-300 hover:bg-primary-50 transition font-medium"
                                 >
                                     <Plus className="w-5 h-5" />
                                     Thêm trạng thái mới

@@ -133,17 +133,17 @@ export default function DailyReportPage() {
         <div className="p-6 max-w-5xl mx-auto space-y-6">
             {/* Admin Back Navigation */}
             {targetUserProfile && (
-                <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2">
+                <div className="bg-primary-50 border border-primary-200 p-4 rounded-lg flex items-center justify-between animate-in fade-in slide-in-from-top-2">
                     <div className="flex items-center gap-3">
                         <button onClick={() => router.back()} className="p-2 hover:bg-white rounded-full transition-colors">
-                            <ArrowLeft className="w-5 h-5 text-blue-700" />
+                            <ArrowLeft className="w-5 h-5 text-primary-700" />
                         </button>
                         <div>
-                            <p className="text-xs text-blue-600 font-semibold uppercase">Đang xem báo cáo của:</p>
-                            <h2 className="text-lg font-bold text-blue-900">{targetUserProfile.full_name} ({targetUserProfile.email})</h2>
+                            <p className="text-xs text-primary-600 font-semibold uppercase">Đang xem báo cáo của:</p>
+                            <h2 className="text-lg font-bold text-primary-900">{targetUserProfile.full_name} ({targetUserProfile.email})</h2>
                         </div>
                     </div>
-                    <div className="text-sm text-blue-800 bg-white/50 px-3 py-1 rounded">
+                    <div className="text-sm text-primary-800 bg-white/50 px-3 py-1 rounded">
                         Chế độ Admin
                     </div>
                 </div>

@@ -84,7 +84,7 @@ function countLogsForMetric(metricKey: string, metricLabel: string, logs: PostLo
 
 // Color palette for KPI cards
 const COLORS = [
-    { text: "text-blue-600", bg: "bg-blue-50", bar: "bg-blue-500" },
+    { text: "text-primary-600", bg: "bg-primary-50", bar: "bg-primary-500" },
     { text: "text-indigo-600", bg: "bg-indigo-50", bar: "bg-indigo-500" },
     { text: "text-teal-600", bg: "bg-teal-50", bar: "bg-teal-500" },
     { text: "text-emerald-600", bg: "bg-emerald-50", bar: "bg-emerald-500" },

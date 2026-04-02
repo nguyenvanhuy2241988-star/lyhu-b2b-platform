@@ -25,7 +25,7 @@ export default function CandidateDetailDrawer({ candidate, isOpen, onClose, onEd
                 {/* Header */}
                 <div className="sticky top-0 bg-white z-10 border-b p-6 flex justify-between items-start">
                     <div className="flex gap-4">
-                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-2xl">
+                        <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold text-2xl">
                             {candidate.full_name.charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -43,7 +43,7 @@ export default function CandidateDetailDrawer({ candidate, isOpen, onClose, onEd
                     <div className="flex items-center gap-2">
                         <button
                             onClick={onEdit}
-                            className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition"
+                            className="p-2 text-slate-500 hover:text-primary-600 hover:bg-primary-50 rounded-full transition"
                             title="Chỉnh sửa thông tin"
                         >
                             <Edit className="w-5 h-5" />
@@ -60,18 +60,18 @@ export default function CandidateDetailDrawer({ candidate, isOpen, onClose, onEd
                         <div className="space-y-3">
                             <div className="flex items-center gap-3 text-slate-600">
                                 <Mail className="w-4 h-4 text-slate-400" />
-                                <a href={`mailto:${candidate.email}`} className="hover:text-blue-600">{candidate.email || 'Chưa cập nhật'}</a>
+                                <a href={`mailto:${candidate.email}`} className="hover:text-primary-600">{candidate.email || 'Chưa cập nhật'}</a>
                             </div>
                             <div className="flex items-center gap-3 text-slate-600">
                                 <Phone className="w-4 h-4 text-slate-400" />
-                                <a href={`tel:${candidate.phone}`} className="hover:text-blue-600">{candidate.phone || 'Chưa cập nhật'}</a>
+                                <a href={`tel:${candidate.phone}`} className="hover:text-primary-600">{candidate.phone || 'Chưa cập nhật'}</a>
                             </div>
                         </div>
                         <div className="space-y-3">
                             <div className="flex items-center gap-3 text-slate-600">
                                 <LinkIcon className="w-4 h-4 text-slate-400" />
                                 {candidate.cv_url ? (
-                                    <a href={candidate.cv_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline truncate max-w-[200px]">
+                                    <a href={candidate.cv_url} target="_blank" rel="noreferrer" className="text-primary-600 hover:underline truncate max-w-[200px]">
                                         Link CV
                                     </a>
                                 ) : (
@@ -198,20 +198,20 @@ export default function CandidateDetailDrawer({ candidate, isOpen, onClose, onEd
                     {/* 3. Interview History */}
                     <div>
                         <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                            <Calendar className="w-5 h-5 text-blue-500" />
+                            <Calendar className="w-5 h-5 text-primary-500" />
                             Lịch sử phỏng vấn
                         </h3>
                         {interviews.length > 0 ? (
                             <div className="space-y-3">
                                 {interviews.map(interview => (
                                     <div key={interview.id} className="flex items-start gap-4 p-3 bg-white border rounded-lg hover:shadow-sm transition">
-                                        <div className={`p-2 rounded-lg ${interview.type === 'online' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
+                                        <div className={`p-2 rounded-lg ${interview.type === 'online' ? 'bg-primary-50 text-primary-600' : 'bg-purple-50 text-purple-600'}`}>
                                             <Calendar className="w-5 h-5" />
                                         </div>
                                         <div className="flex-1">
                                             <div className="flex justify-between">
                                                 <h4 className="font-medium text-slate-900">Phỏng vấn {interview.type === 'online' ? 'Online' : 'Trực tiếp'}</h4>
-                                                <span className={`text-xs px-2 py-0.5 rounded ${interview.status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
+                                                <span className={`text-xs px-2 py-0.5 rounded ${interview.status === 'scheduled' ? 'bg-primary-100 text-primary-700' :
                                                     interview.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'
                                                     }`}>
                                                     {interview.status === 'scheduled' ? 'Sắp tới' : interview.status === 'completed' ? 'Hoàn thành' : interview.status}
@@ -242,7 +242,7 @@ export default function CandidateDetailDrawer({ candidate, isOpen, onClose, onEd
 
 function getStatusColor(status: string) {
     switch (status) {
-        case 'new': return 'bg-blue-50 text-blue-700';
+        case 'new': return 'bg-primary-50 text-primary-700';
         case 'screening': return 'bg-purple-50 text-purple-700';
         case 'interview': return 'bg-orange-50 text-orange-700';
         case 'offer': return 'bg-yellow-50 text-yellow-700';

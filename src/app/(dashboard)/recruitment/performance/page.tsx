@@ -65,7 +65,7 @@ export default function RecruitmentPerformancePage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                        <TrendingUp className="w-6 h-6 text-blue-600" />
+                        <TrendingUp className="w-6 h-6 text-primary-600" />
                         Hiệu quả Tuyển dụng (Social KPI)
                     </h1>
                     <p className="text-slate-500 text-sm mt-1">Theo dõi Traffic và Chuyển đổi từ nguồn Social Media</p>
@@ -89,9 +89,9 @@ export default function RecruitmentPerformancePage() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white p-6 rounded-xl border border-blue-100 shadow-sm">
+                <div className="bg-white p-6 rounded-xl border border-primary-100 shadow-sm">
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                        <div className="p-2 bg-primary-50 text-primary-600 rounded-lg">
                             <MousePointer className="w-5 h-5" />
                         </div>
                         <h3 className="text-sm font-medium text-slate-500">Tổng Traffic (Clicks)</h3>
@@ -166,7 +166,7 @@ export default function RecruitmentPerformancePage() {
                                         </td>
                                         <td className="px-6 py-3 text-right text-slate-600 font-mono">{s.total_links}</td>
                                         <td className="px-6 py-3 text-right">
-                                            <span className="font-bold text-blue-600">{s.total_clicks.toLocaleString()}</span>
+                                            <span className="font-bold text-primary-600">{s.total_clicks.toLocaleString()}</span>
                                         </td>
                                         <td className="px-6 py-3 text-right">
                                             <span className="font-bold text-purple-600">{s.total_leads.toLocaleString()}</span>
