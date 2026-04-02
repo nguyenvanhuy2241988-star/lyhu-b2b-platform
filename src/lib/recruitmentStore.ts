@@ -41,7 +41,7 @@ export interface PostLog {
     id: string;
     user_id: string;
     date: string;
-    platform: 'facebook_group' | 'facebook_page' | 'facebook_personal' | 'threads' | 'zalo' | 'linkedin' | 'other';
+    platform: 'facebook_group' | 'facebook_page' | 'facebook_personal' | 'threads' | 'tiktok' | 'zalo' | 'linkedin' | 'other';
     group_name: string;
     group_link: string;
     post_link: string;
