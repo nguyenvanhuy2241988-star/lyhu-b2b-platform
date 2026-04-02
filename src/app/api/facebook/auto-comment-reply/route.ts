@@ -159,12 +159,13 @@ export async function GET(request: NextRequest) {
 
                         // If already replied on FB but inbox not sent yet, try inbox then skip
                         if (alreadyRepliedOnFb || existing?.replied) {
-                            const needsInbox = !existing?.inboxed && inboxEnabled && comment.from?.id;
+                            // Method 1 (comment_id) doesn't need from.id, so don't require it
+                            const needsInbox = !existing?.inboxed && inboxEnabled;
                             let inboxSuccess = false;
                             let inboxError = '';
 
                             if (needsInbox) {
-                                // Method 1: me/messages with comment_id
+                                // Method 1: me/messages with comment_id (doesn't need from.id)
                                 try {
                                     const m1Res = await fetch(
                                         `https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`,
@@ -179,8 +180,8 @@ export async function GET(request: NextRequest) {
                                     }
                                 } catch (e) { inboxError = 'comment_id: network error'; }
 
-                                // Method 2: fallback to user ID
-                                if (!inboxSuccess) {
+                                // Method 2: fallback to user ID (only if from.id available)
+                                if (!inboxSuccess && comment.from?.id) {
                                     try {
                                         const m2Res = await fetch(
                                             `https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`,
@@ -198,12 +199,18 @@ export async function GET(request: NextRequest) {
                                 }
 
                                 if (inboxSuccess) totalInboxed++;
+                            } else if (!inboxEnabled) {
+                                inboxError = 'SKIPPED: inbox disabled in config';
                             }
 
-                            // Add inbox error to debug
-                            if (inboxError && monitoredPostIds.length > 0 && postDebugList.length > 0) {
+                            // Add inbox error/status to debug
+                            if (monitoredPostIds.length > 0 && postDebugList.length > 0) {
                                 const lastDebug = postDebugList[postDebugList.length - 1];
-                                if (lastDebug.inbox_errors) lastDebug.inbox_errors.push(inboxError);
+                                if (lastDebug.inbox_errors) {
+                                    if (inboxError) lastDebug.inbox_errors.push(inboxError);
+                                    else if (inboxSuccess) lastDebug.inbox_errors.push(`OK: inbox sent to ${comment.from?.name || comment.id}`);
+                                    else if (existing?.inboxed) lastDebug.inbox_errors.push(`SKIP: already inboxed ${comment.id}`);
+                                }
                             }
 
                             // Save dedup record
@@ -233,7 +240,7 @@ export async function GET(request: NextRequest) {
                         // 2. INBOX - send private message after reply
                         let inboxSuccess = false;
                         let inboxError = '';
-                        if (inboxEnabled && comment.from?.id) {
+                        if (inboxEnabled) {
                             // Method 1: me/messages with comment_id (Facebook recommended)
                             try {
                                 const m1Res = await fetch(
@@ -249,8 +256,8 @@ export async function GET(request: NextRequest) {
                                 }
                             } catch (e) { inboxError = 'comment_id: network error'; }
 
-                            // Method 2: fallback to user ID
-                            if (!inboxSuccess) {
+                            // Method 2: fallback to user ID (only if from.id available)
+                            if (!inboxSuccess && comment.from?.id) {
                                 try {
                                     const m2Res = await fetch(
                                         `https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`,

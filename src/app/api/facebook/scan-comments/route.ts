@@ -189,7 +189,7 @@ export async function POST(request: Request) {
                 }
 
                 // 5. Send inbox message after reply (if reply was sent)
-                if (didReply && inboxEnabled && comment.from?.id) {
+                if (didReply && inboxEnabled) {
                     let inboxSuccess = false;
 
                     // Method 1: me/messages with comment_id (Facebook recommended)
@@ -212,8 +212,8 @@ export async function POST(request: Request) {
                         }
                     } catch (e) { }
 
-                    // Method 2: fallback to user ID
-                    if (!inboxSuccess) {
+                    // Method 2: fallback to user ID (only if from.id available)
+                    if (!inboxSuccess && comment.from?.id) {
                         try {
                             const m2Res = await fetch(
                                 `https://graph.facebook.com/v19.0/me/messages?access_token=${access_token}`,
