@@ -519,7 +519,7 @@ export default function RecruiterEarningsPage() {
                         </p>
                         <a
                             href="/recruitment/rules"
-                            className="block w-full py-2 bg-slate-800 text-white text-center rounded-lg text-xs font-medium hover:bg-slate-700 transition-colors"
+                            className="block w-full py-2 bg-primary-600 text-white text-center rounded-lg text-xs font-medium hover:bg-primary-700 transition-colors"
                         >
                             Xem Quy định Chi tiết
                         </a>

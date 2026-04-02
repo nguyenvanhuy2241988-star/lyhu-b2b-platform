@@ -152,7 +152,7 @@ export default function PlatformsPage() {
                 {activeTab === 'platforms' && (
                     <button
                         onClick={() => { resetForm(); setShowModal(true); }}
-                        className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-xl hover:bg-gray-800 transition-all active:scale-95 shadow-lg shadow-gray-200"
+                        className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all active:scale-95 shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
                         <span>Thêm nền tảng</span>
@@ -383,7 +383,7 @@ export default function PlatformsPage() {
                                 </div>
                                 <div className="flex items-center pt-6">
                                     <label className="flex items-center gap-2 cursor-pointer select-none">
-                                        <div className={`w-11 h-6 rounded-full p-1 transition-colors ${formData.active ? 'bg-black' : 'bg-gray-200'}`}>
+                                        <div className={`w-11 h-6 rounded-full p-1 transition-colors ${formData.active ? 'bg-primary-600' : 'bg-gray-200'}`}>
                                             <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${formData.active ? 'translate-x-5' : 'translate-x-0'}`} />
                                         </div>
                                         <input
@@ -430,7 +430,7 @@ export default function PlatformsPage() {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 bg-black text-white rounded-xl hover:bg-gray-800 transition-all active:scale-95 shadow-lg shadow-gray-200 font-medium disabled:opacity-50"
+                                    className="px-4 py-2 bg-primary-600 text-white rounded-xl hover:bg-primary-700 transition-all active:scale-95 shadow-sm font-medium disabled:opacity-50"
                                     disabled={loading}
                                 >
                                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (selectedId ? "Cập nhật" : "Thêm mới")}

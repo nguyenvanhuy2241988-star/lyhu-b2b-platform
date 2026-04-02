@@ -291,7 +291,7 @@ export default function RecruiterRulesPage() {
 
             {/* Edit Modal */}
             {isEditing && (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-primary-600/50 backdrop-blur-sm">
                     <div className="bg-white rounded-lg w-full max-w-2xl shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
                         <div className="p-5 border-b border-slate-200 flex justify-between items-center">
                             <div>

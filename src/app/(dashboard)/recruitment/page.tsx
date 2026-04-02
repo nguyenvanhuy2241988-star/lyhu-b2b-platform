@@ -96,7 +96,7 @@ export default function RecruitmentDashboard() {
                     </div>
                 </div>
 
-                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 p-6 rounded-2xl shadow-sm text-white flex flex-col justify-between">
+                <div className="bg-primary-600 p-6 rounded-2xl shadow-sm text-white flex flex-col justify-between">
                     <div>
                         <h3 className="font-bold text-xl mb-2">Cần tuyển thêm nhân sự?</h3>
                         <p className="text-primary-100 mb-6">Tạo tin tuyển dụng mới và chia sẻ ngay để thu hút ứng viên tiềm năng.</p>
