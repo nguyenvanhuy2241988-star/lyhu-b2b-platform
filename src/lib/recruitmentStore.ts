@@ -1,5 +1,23 @@
 import { supabase } from "@/lib/supabaseClient";
 
+// --- CV Upload ---
+export const uploadCandidateCV = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `cv/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from('hr-assets')
+        .upload(fileName, file, { upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+        .from('hr-assets')
+        .getPublicUrl(fileName);
+
+    return publicUrl;
+};
+
 export interface DailyActivity {
     id: string;
     user_id: string;

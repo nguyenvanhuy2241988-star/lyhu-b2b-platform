@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Mail, Phone, MoreHorizontal, User, Calendar, Briefcase, Trash2, Settings } from 'lucide-react';
-import { getCandidates, getJobs, createCandidate, updateCandidate, updateCandidateStatus, deleteCandidate, getInterviewsByCandidate, RecruitmentCandidate, RecruitmentJob, RecruitmentInterview, RecruitmentColumn, getKanbanColumns } from '@/lib/recruitmentStore';
+import { Plus, Search, Mail, Phone, MoreHorizontal, User, Calendar, Briefcase, Trash2, Settings, Upload, FileText, ExternalLink } from 'lucide-react';
+import { getCandidates, getJobs, createCandidate, updateCandidate, updateCandidateStatus, deleteCandidate, getInterviewsByCandidate, uploadCandidateCV, RecruitmentCandidate, RecruitmentJob, RecruitmentInterview, RecruitmentColumn, getKanbanColumns } from '@/lib/recruitmentStore';
 import CandidateDetailDrawer from './CandidateDetailDrawer';
 import RecruitmentColumnManager from './RecruitmentColumnManager';
 import { format } from 'date-fns';
@@ -24,6 +24,7 @@ export default function CandidatesPage() {
     const [selectedCandidate, setSelectedCandidate] = useState<RecruitmentCandidate | null>(null);
     const [candidateInterviews, setCandidateInterviews] = useState<RecruitmentInterview[]>([]);
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [cvUploading, setCvUploading] = useState(false);
 
     // Form
     const [newCandidate, setNewCandidate] = useState<Partial<RecruitmentCandidate>>({
@@ -547,6 +548,65 @@ export default function CandidatesPage() {
                                         placeholder="URL ảnh..."
                                     />
                                 </div>
+                            </div>
+
+                            {/* CV Upload */}
+                            <div>
+                                <label className="block text-sm font-medium mb-1">Tải CV ứng viên</label>
+                                {newCandidate.cv_url ? (
+                                    <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                        <FileText className="w-5 h-5 text-green-600 flex-shrink-0" />
+                                        <a href={newCandidate.cv_url} target="_blank" rel="noopener noreferrer" className="text-sm text-green-700 hover:underline truncate flex-1">
+                                            Xem CV đã tải lên
+                                        </a>
+                                        <button
+                                            type="button"
+                                            onClick={() => setNewCandidate({ ...newCandidate, cv_url: '' })}
+                                            className="text-xs text-red-500 hover:text-red-700 flex-shrink-0"
+                                        >
+                                            Xóa
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="relative">
+                                        <input
+                                            type="file"
+                                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                            className="hidden"
+                                            id="cv-upload-input"
+                                            disabled={cvUploading}
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+                                                if (file.size > 25 * 1024 * 1024) {
+                                                    alert('File quá lớn. Tối đa 25MB.');
+                                                    return;
+                                                }
+                                                try {
+                                                    setCvUploading(true);
+                                                    const url = await uploadCandidateCV(file);
+                                                    setNewCandidate({ ...newCandidate, cv_url: url });
+                                                } catch (err) {
+                                                    console.error(err);
+                                                    alert('Lỗi tải CV. Vui lòng thử lại.');
+                                                } finally {
+                                                    setCvUploading(false);
+                                                    e.target.value = '';
+                                                }
+                                            }}
+                                        />
+                                        <label
+                                            htmlFor="cv-upload-input"
+                                            className={`flex items-center justify-center gap-2 w-full border-2 border-dashed rounded-lg px-4 py-3 text-sm cursor-pointer transition ${cvUploading ? 'border-blue-300 bg-blue-50 text-blue-500' : 'border-slate-300 hover:border-blue-400 hover:bg-blue-50 text-slate-500 hover:text-blue-600'}`}
+                                        >
+                                            {cvUploading ? (
+                                                <><span className="animate-spin">⏳</span> Đang tải lên...</>
+                                            ) : (
+                                                <><Upload className="w-4 h-4" /> Chọn file CV (PDF, DOC, ảnh - tối đa 25MB)</>
+                                            )}
+                                        </label>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Notes */}
