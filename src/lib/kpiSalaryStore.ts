@@ -194,7 +194,8 @@ export const upsertUserTarget = async (target: KpiUserTarget): Promise<boolean> 
 export const getMonthlyKpiActuals = async (
     userId: string,
     month: number,
-    year: number
+    year: number,
+    role?: string
 ): Promise<Record<string, number>> => {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59, 999);
@@ -244,27 +245,53 @@ export const getMonthlyKpiActuals = async (
 
     actuals['self_contact'] = (selfContactData || []).length;
 
-    // 3. Manual KPIs from telesales_daily_activities (aggregated over the month)
-    const { data: dailyData } = await supabase
-        .from('telesales_daily_activities')
-        .select('fb_group_posts, fb_comments, fb_friends, fb_personal_posts, zalo_posts')
-        .eq('user_id', userId)
-        .gte('report_date', startDateStr)
-        .lte('report_date', endDateStr);
+    // 3. Social media activity KPIs
+    if (role === 'recruiter') {
+        // RECRUITER: Read from recruitment_post_logs (evidence-based tracking)
+        const { data: postLogs } = await supabase
+            .from('recruitment_post_logs')
+            .select('activity_type, platform')
+            .eq('user_id', userId)
+            .gte('date', startDateStr)
+            .lte('date', endDateStr);
 
-    let fbGroupPosts = 0, fbComments = 0, fbFriends = 0, fbPersonalPosts = 0, zaloPosts = 0;
-    for (const r of (dailyData || [])) {
-        fbGroupPosts += (r as any).fb_group_posts || 0;
-        fbComments += (r as any).fb_comments || 0;
-        fbFriends += (r as any).fb_friends || 0;
-        fbPersonalPosts += (r as any).fb_personal_posts || 0;
-        zaloPosts += (r as any).zalo_posts || 0;
+        const logs = postLogs || [];
+        actuals['fb_group_posts'] = logs.filter((l: any) => l.activity_type === 'post' && ['facebook_group', 'facebook_page'].includes(l.platform)).length;
+        actuals['fb_comments'] = logs.filter((l: any) => l.activity_type === 'comment' && ['facebook_group', 'facebook_page'].includes(l.platform)).length;
+        actuals['fb_friends'] = logs.filter((l: any) => l.activity_type === 'friend').length;
+        actuals['fb_personal_posts'] = logs.filter((l: any) => l.activity_type === 'post' && l.platform === 'facebook_personal').length;
+        actuals['zalo_posts'] = logs.filter((l: any) => l.activity_type === 'post' && l.platform === 'zalo').length;
+        actuals['threads_posts'] = logs.filter((l: any) => l.activity_type === 'post' && l.platform === 'threads').length;
+        actuals['threads_comments'] = logs.filter((l: any) => l.activity_type === 'comment' && l.platform === 'threads').length;
+        // Additional platforms for recruiter
+        actuals['tiktok_posts'] = logs.filter((l: any) => l.activity_type === 'post' && l.platform === 'tiktok').length;
+        actuals['tiktok_comments'] = logs.filter((l: any) => l.activity_type === 'comment' && l.platform === 'tiktok').length;
+        actuals['linkedin_posts'] = logs.filter((l: any) => l.activity_type === 'post' && l.platform === 'linkedin').length;
+        actuals['zalo_friends'] = logs.filter((l: any) => l.activity_type === 'friend' && l.platform === 'zalo').length;
+        actuals['zalo_diary'] = logs.filter((l: any) => l.activity_type === 'post' && l.platform === 'zalo').length;
+    } else {
+        // TELESALES: Read from telesales_daily_activities (aggregated daily reports)
+        const { data: dailyData } = await supabase
+            .from('telesales_daily_activities')
+            .select('fb_group_posts, fb_comments, fb_friends, fb_personal_posts, zalo_posts')
+            .eq('user_id', userId)
+            .gte('report_date', startDateStr)
+            .lte('report_date', endDateStr);
+
+        let fbGroupPosts = 0, fbComments = 0, fbFriends = 0, fbPersonalPosts = 0, zaloPosts = 0;
+        for (const r of (dailyData || [])) {
+            fbGroupPosts += (r as any).fb_group_posts || 0;
+            fbComments += (r as any).fb_comments || 0;
+            fbFriends += (r as any).fb_friends || 0;
+            fbPersonalPosts += (r as any).fb_personal_posts || 0;
+            zaloPosts += (r as any).zalo_posts || 0;
+        }
+        actuals['fb_group_posts'] = fbGroupPosts;
+        actuals['fb_comments'] = fbComments;
+        actuals['fb_friends'] = fbFriends;
+        actuals['fb_personal_posts'] = fbPersonalPosts;
+        actuals['zalo_posts'] = zaloPosts;
     }
-    actuals['fb_group_posts'] = fbGroupPosts;
-    actuals['fb_comments'] = fbComments;
-    actuals['fb_friends'] = fbFriends;
-    actuals['fb_personal_posts'] = fbPersonalPosts;
-    actuals['zalo_posts'] = zaloPosts;
 
     // 3b. Zalo outreach (auto - count distinct customers messaged via Zalo)
     const { data: zaloOutreach1 } = await supabase
@@ -326,7 +353,7 @@ export const calculateKpiSalary = async (
     const userTargetMap = new Map(userTargets.map(t => [t.metric_key, t.monthly_target]));
 
     // 3. Get actual values
-    const actuals = await getMonthlyKpiActuals(userId, month, year);
+    const actuals = await getMonthlyKpiActuals(userId, month, year, role);
 
     // 4. Build salary line items
     const items: KpiSalaryLineItem[] = [];
@@ -373,7 +400,8 @@ export const calculateKpiSalary = async (
 export const getKpiActualsForRange = async (
     userId: string,
     startDate: Date,
-    endDate: Date
+    endDate: Date,
+    role?: string
 ): Promise<Record<string, number>> => {
     const startStr = startDate.toISOString();
     const endStr = endDate.toISOString();
@@ -420,27 +448,52 @@ export const getKpiActualsForRange = async (
 
     actuals['self_contact'] = (selfContactData || []).length;
 
-    // 3. Manual KPIs from daily activities
-    const { data: dailyData } = await supabase
-        .from('telesales_daily_activities')
-        .select('fb_group_posts, fb_comments, fb_friends, fb_personal_posts, zalo_posts')
-        .eq('user_id', userId)
-        .gte('report_date', startDateStr)
-        .lte('report_date', endDateStr);
+    // 3. Social media activity KPIs
+    if (role === 'recruiter') {
+        // RECRUITER: Read from recruitment_post_logs
+        const { data: postLogs } = await supabase
+            .from('recruitment_post_logs')
+            .select('activity_type, platform')
+            .eq('user_id', userId)
+            .gte('date', startDateStr)
+            .lte('date', endDateStr);
 
-    let fbGroupPosts = 0, fbComments = 0, fbFriends = 0, fbPersonalPosts = 0, zaloPosts = 0;
-    for (const r of (dailyData || [])) {
-        fbGroupPosts += (r as any).fb_group_posts || 0;
-        fbComments += (r as any).fb_comments || 0;
-        fbFriends += (r as any).fb_friends || 0;
-        fbPersonalPosts += (r as any).fb_personal_posts || 0;
-        zaloPosts += (r as any).zalo_posts || 0;
+        const logs = postLogs || [];
+        actuals['fb_group_posts'] = logs.filter((l: any) => l.activity_type === 'post' && ['facebook_group', 'facebook_page'].includes(l.platform)).length;
+        actuals['fb_comments'] = logs.filter((l: any) => l.activity_type === 'comment' && ['facebook_group', 'facebook_page'].includes(l.platform)).length;
+        actuals['fb_friends'] = logs.filter((l: any) => l.activity_type === 'friend').length;
+        actuals['fb_personal_posts'] = logs.filter((l: any) => l.activity_type === 'post' && l.platform === 'facebook_personal').length;
+        actuals['zalo_posts'] = logs.filter((l: any) => l.activity_type === 'post' && l.platform === 'zalo').length;
+        actuals['threads_posts'] = logs.filter((l: any) => l.activity_type === 'post' && l.platform === 'threads').length;
+        actuals['threads_comments'] = logs.filter((l: any) => l.activity_type === 'comment' && l.platform === 'threads').length;
+        actuals['tiktok_posts'] = logs.filter((l: any) => l.activity_type === 'post' && l.platform === 'tiktok').length;
+        actuals['tiktok_comments'] = logs.filter((l: any) => l.activity_type === 'comment' && l.platform === 'tiktok').length;
+        actuals['linkedin_posts'] = logs.filter((l: any) => l.activity_type === 'post' && l.platform === 'linkedin').length;
+        actuals['zalo_friends'] = logs.filter((l: any) => l.activity_type === 'friend' && l.platform === 'zalo').length;
+        actuals['zalo_diary'] = logs.filter((l: any) => l.activity_type === 'post' && l.platform === 'zalo').length;
+    } else {
+        // TELESALES: Read from telesales_daily_activities
+        const { data: dailyData } = await supabase
+            .from('telesales_daily_activities')
+            .select('fb_group_posts, fb_comments, fb_friends, fb_personal_posts, zalo_posts')
+            .eq('user_id', userId)
+            .gte('report_date', startDateStr)
+            .lte('report_date', endDateStr);
+
+        let fbGroupPosts = 0, fbComments = 0, fbFriends = 0, fbPersonalPosts = 0, zaloPosts = 0;
+        for (const r of (dailyData || [])) {
+            fbGroupPosts += (r as any).fb_group_posts || 0;
+            fbComments += (r as any).fb_comments || 0;
+            fbFriends += (r as any).fb_friends || 0;
+            fbPersonalPosts += (r as any).fb_personal_posts || 0;
+            zaloPosts += (r as any).zalo_posts || 0;
+        }
+        actuals['fb_group_posts'] = fbGroupPosts;
+        actuals['fb_comments'] = fbComments;
+        actuals['fb_friends'] = fbFriends;
+        actuals['fb_personal_posts'] = fbPersonalPosts;
+        actuals['zalo_posts'] = zaloPosts;
     }
-    actuals['fb_group_posts'] = fbGroupPosts;
-    actuals['fb_comments'] = fbComments;
-    actuals['fb_friends'] = fbFriends;
-    actuals['fb_personal_posts'] = fbPersonalPosts;
-    actuals['zalo_posts'] = zaloPosts;
 
     // 3b. Zalo outreach (auto - count distinct customers messaged via Zalo)
     const { data: zaloOutreach2 } = await supabase
@@ -499,7 +552,7 @@ export const calculateKpiSalaryForRange = async (
     const userTargetMap = new Map(userTargets.map(t => [t.metric_key, t.monthly_target]));
 
     // Get actuals for the specified date range
-    const actuals = await getKpiActualsForRange(userId, startDate, endDate);
+    const actuals = await getKpiActualsForRange(userId, startDate, endDate, role);
 
     const scaledBaseSalary = Math.round(baseSalary / divisor);
     const items: KpiSalaryLineItem[] = [];
