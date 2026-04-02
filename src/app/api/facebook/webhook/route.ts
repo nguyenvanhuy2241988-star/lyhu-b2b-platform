@@ -209,45 +209,68 @@ export async function POST(request: Request) {
                         console.error('[Comment Webhook] Reply error:', e);
                     }
 
-                    // 2. Send private inbox message via Private Replies API
+                    // 2. Send private inbox message via me/messages with comment_id
                     const inboxEnabled = commentConfig.auto_comment_inbox_enabled !== false;
                     if (inboxEnabled) {
                         const inboxText = commentConfig.auto_comment_inbox_text ||
                             `Chào bạn! 👋\nCảm ơn bạn đã quan tâm đến sản phẩm LYHU!\nBạn vui lòng cho mình xin SĐT để tư vấn chi tiết hơn nhé ❤️`;
 
+                        let inboxSuccess = false;
+
+                        // Method 1: me/messages with comment_id (Facebook recommended)
                         try {
-                            const privateReplyRes = await fetch(
-                                `https://graph.facebook.com/v19.0/${commentId}/private_replies?access_token=${pageDataComment.access_token}`,
+                            const m1Res = await fetch(
+                                `https://graph.facebook.com/v19.0/me/messages?access_token=${pageDataComment.access_token}`,
                                 {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ message: inboxText })
+                                    body: JSON.stringify({
+                                        recipient: { comment_id: commentId },
+                                        message: { text: inboxText },
+                                        messaging_type: 'RESPONSE'
+                                    })
                                 }
                             );
-                            const privateReplyData = await privateReplyRes.json();
+                            const m1Data = await m1Res.json();
+                            if (!m1Data.error) {
+                                inboxSuccess = true;
+                                console.log(`[Comment Webhook] Inbox sent via comment_id to ${commenterName} (${commenterId})`);
+                            } else {
+                                console.error(`[Comment Webhook] comment_id method failed: code=${m1Data.error.code} subcode=${m1Data.error.error_subcode} msg=${m1Data.error.message}`);
+                            }
+                        } catch (e) {
+                            console.error('[Comment Webhook] comment_id method error:', e);
+                        }
 
-                            if (privateReplyData.error) {
-                                console.error('[Comment Webhook] Private reply error:', privateReplyData.error.message);
-                                // Fallback: try sending via Messenger API directly 
-                                // (only works if user has messaged page before)
-                                try {
-                                    await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${pageDataComment.access_token}`, {
+                        // Method 2: Fallback to user ID (works if user messaged page before)
+                        if (!inboxSuccess) {
+                            try {
+                                const m2Res = await fetch(
+                                    `https://graph.facebook.com/v19.0/me/messages?access_token=${pageDataComment.access_token}`,
+                                    {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({
                                             recipient: { id: commenterId },
-                                            message: { text: inboxText }
+                                            message: { text: inboxText },
+                                            messaging_type: 'RESPONSE'
                                         })
-                                    });
-                                    console.log(`[Comment Webhook] Fallback messenger sent to ${commenterId}`);
-                                } catch (fallbackErr) {
-                                    console.error('[Comment Webhook] Fallback messenger error:', fallbackErr);
+                                    }
+                                );
+                                const m2Data = await m2Res.json();
+                                if (!m2Data.error) {
+                                    inboxSuccess = true;
+                                    console.log(`[Comment Webhook] Inbox sent via user_id fallback to ${commenterName} (${commenterId})`);
+                                } else {
+                                    console.error(`[Comment Webhook] user_id fallback failed: code=${m2Data.error.code} subcode=${m2Data.error.error_subcode} msg=${m2Data.error.message}`);
                                 }
-                            } else {
-                                console.log(`[Comment Webhook] Private reply sent to ${commenterName} (${commenterId})`);
+                            } catch (e) {
+                                console.error('[Comment Webhook] user_id fallback error:', e);
                             }
-                        } catch (e) {
-                            console.error('[Comment Webhook] Private reply failed:', e);
+                        }
+
+                        if (!inboxSuccess) {
+                            console.error(`[Comment Webhook] ALL inbox methods failed for comment ${commentId} from ${commenterName}`);
                         }
                     }
                 }

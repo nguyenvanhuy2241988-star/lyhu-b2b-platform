@@ -23,6 +23,9 @@ export async function POST(request: Request) {
             .single();
 
         const config = (pageData?.chatbot_config as any) || {};
+        const inboxEnabled = config.auto_comment_inbox_enabled !== false;
+        const inboxText = config.auto_comment_inbox_text ||
+            'Chào bạn! 👋\nCảm ơn bạn đã quan tâm đến sản phẩm LYHU!\nBạn vui lòng cho mình xin SĐT để tư vấn chi tiết hơn nhé ❤️';
 
         // Get chatbot rules
         const { data: rules } = await supabase
@@ -73,12 +76,13 @@ export async function POST(request: Request) {
         }
 
         if (allPosts.length === 0) {
-            return NextResponse.json({ success: true, processed: 0, hidden: 0, replied: 0 });
+            return NextResponse.json({ success: true, processed: 0, hidden: 0, replied: 0, inboxed: 0 });
         }
 
         let totalProcessed = 0;
         let totalHidden = 0;
         let totalReplied = 0;
+        let totalInboxed = 0;
 
         for (const post of allPosts) {
             const isAdPost = post._is_ad;
@@ -102,6 +106,7 @@ export async function POST(request: Request) {
                 const msgLower = comment.message.toLowerCase();
                 let shouldHide = false;
                 let shouldReply = false;
+                let didReply = false;
 
                 // 1. Check phone hide (applies to ALL posts)
                 if (config.auto_hide_phone) {
@@ -154,6 +159,7 @@ export async function POST(request: Request) {
                                     });
                                     totalReplied++;
                                     shouldReply = true;
+                                    didReply = true;
                                 }
                             }
 
@@ -178,10 +184,60 @@ export async function POST(request: Request) {
                             body: JSON.stringify({ message: config.auto_reply_comment_text })
                         });
                         totalReplied++;
+                        didReply = true;
                     }
                 }
 
-                // 5. Auto-hide on AD POSTS only (not regular posts)
+                // 5. Send inbox message after reply (if reply was sent)
+                if (didReply && inboxEnabled && comment.from?.id) {
+                    let inboxSuccess = false;
+
+                    // Method 1: me/messages with comment_id (Facebook recommended)
+                    try {
+                        const m1Res = await fetch(
+                            `https://graph.facebook.com/v19.0/me/messages?access_token=${access_token}`,
+                            {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    recipient: { comment_id: comment.id },
+                                    message: { text: inboxText },
+                                    messaging_type: 'RESPONSE'
+                                })
+                            }
+                        );
+                        const m1Data = await m1Res.json();
+                        if (!m1Data.error) {
+                            inboxSuccess = true;
+                        }
+                    } catch (e) { }
+
+                    // Method 2: fallback to user ID
+                    if (!inboxSuccess) {
+                        try {
+                            const m2Res = await fetch(
+                                `https://graph.facebook.com/v19.0/me/messages?access_token=${access_token}`,
+                                {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        recipient: { id: comment.from.id },
+                                        message: { text: inboxText },
+                                        messaging_type: 'RESPONSE'
+                                    })
+                                }
+                            );
+                            const m2Data = await m2Res.json();
+                            if (!m2Data.error) {
+                                inboxSuccess = true;
+                            }
+                        } catch (e) { }
+                    }
+
+                    if (inboxSuccess) totalInboxed++;
+                }
+
+                // 6. Auto-hide on AD POSTS only (not regular posts)
                 if (!shouldHide && config.auto_hide_all && isAdPost) {
                     shouldHide = true;
                 }
@@ -202,7 +258,8 @@ export async function POST(request: Request) {
             success: true,
             processed: totalProcessed,
             hidden: totalHidden,
-            replied: totalReplied
+            replied: totalReplied,
+            inboxed: totalInboxed
         });
 
     } catch (error: any) {
@@ -210,3 +267,4 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: error.message || 'Scan failed' }, { status: 500 });
     }
 }
+

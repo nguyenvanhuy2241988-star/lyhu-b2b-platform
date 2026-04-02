@@ -188,13 +188,13 @@ export async function GET(request: NextRequest) {
                                 const m1Res = await fetch(
                                     `https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`,
                                     { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ recipient: { comment_id: comment.id }, message: { text: inboxText } }) }
+                                      body: JSON.stringify({ recipient: { comment_id: comment.id }, message: { text: inboxText }, messaging_type: 'RESPONSE' }) }
                                 );
                                 const m1Data = await m1Res.json();
                                 if (!m1Data.error) {
                                     inboxSuccess = true;
                                 } else {
-                                    inboxError = `comment_id: ${m1Data.error.message}`;
+                                    inboxError = `comment_id: code=${m1Data.error.code} subcode=${m1Data.error.error_subcode} msg=${m1Data.error.message}`;
                                 }
                             } catch (e) { inboxError = 'comment_id: network error'; }
 
@@ -204,14 +204,14 @@ export async function GET(request: NextRequest) {
                                     const m2Res = await fetch(
                                         `https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`,
                                         { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                                          body: JSON.stringify({ recipient: { id: comment.from.id }, message: { text: inboxText } }) }
+                                          body: JSON.stringify({ recipient: { id: comment.from.id }, message: { text: inboxText }, messaging_type: 'RESPONSE' }) }
                                     );
                                     const m2Data = await m2Res.json();
                                     if (!m2Data.error) {
                                         inboxSuccess = true;
                                         inboxError = '';
                                     } else {
-                                        inboxError += ` | user_id: ${m2Data.error.message}`;
+                                        inboxError += ` | user_id: code=${m2Data.error.code} subcode=${m2Data.error.error_subcode} msg=${m2Data.error.message}`;
                                     }
                                 } catch (e) { inboxError += ' | user_id: network error'; }
                             }
