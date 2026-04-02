@@ -134,38 +134,89 @@ export async function GET(request: NextRequest) {
 
                         totalProcessed++;
 
-                        // DB DEDUP
+                        // DB DEDUP - only skip if BOTH replied AND inboxed
                         const { data: existing } = await supabase
                             .from('comment_auto_replies')
-                            .select('id, replied')
+                            .select('id, replied, inboxed')
                             .eq('comment_id', comment.id)
                             .maybeSingle();
 
-                        if (existing?.replied) {
+                        if (existing?.replied && existing?.inboxed) {
                             totalSkipped++;
                             pageSkipped++;
                             continue;
                         }
 
-                        // FB DOUBLE-CHECK: skip if page already replied
+                        // FB DOUBLE-CHECK: if page already replied, skip reply but STILL try inbox
+                        let alreadyRepliedOnFb = false;
                         try {
                             const repliesRes = await fetch(
                                 `https://graph.facebook.com/v19.0/${comment.id}/comments?fields=from&limit=5&access_token=${page.access_token}`
                             );
                             const repliesData = await repliesRes.json();
-                            const alreadyReplied = repliesData.data?.some((r: any) => r.from?.id === page.page_id);
-                            if (alreadyReplied) {
-                                await supabase.from('comment_auto_replies').upsert({
-                                    comment_id: comment.id, post_id: post.id, page_id: page.id,
-                                    commenter_id: comment.from?.id || '', commenter_name: comment.from?.name || '',
-                                    comment_text: comment.message || '', replied: true, inboxed: false,
-                                    created_at: new Date().toISOString()
-                                }, { onConflict: 'comment_id' });
-                                totalAlreadyReplied++;
-                                pageSkipped++;
-                                continue;
-                            }
+                            alreadyRepliedOnFb = repliesData.data?.some((r: any) => r.from?.id === page.page_id) || false;
                         } catch (e) { }
+
+                        // If already replied on FB but inbox not sent yet, try inbox then skip
+                        if (alreadyRepliedOnFb || existing?.replied) {
+                            const needsInbox = !existing?.inboxed && inboxEnabled && comment.from?.id;
+                            let inboxSuccess = false;
+                            let inboxError = '';
+
+                            if (needsInbox) {
+                                // Method 1: me/messages with comment_id
+                                try {
+                                    const m1Res = await fetch(
+                                        `https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`,
+                                        { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ recipient: { comment_id: comment.id }, message: { text: inboxText }, messaging_type: 'RESPONSE' }) }
+                                    );
+                                    const m1Data = await m1Res.json();
+                                    if (!m1Data.error) {
+                                        inboxSuccess = true;
+                                    } else {
+                                        inboxError = `comment_id: code=${m1Data.error.code} subcode=${m1Data.error.error_subcode} msg=${m1Data.error.message}`;
+                                    }
+                                } catch (e) { inboxError = 'comment_id: network error'; }
+
+                                // Method 2: fallback to user ID
+                                if (!inboxSuccess) {
+                                    try {
+                                        const m2Res = await fetch(
+                                            `https://graph.facebook.com/v19.0/me/messages?access_token=${page.access_token}`,
+                                            { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                                              body: JSON.stringify({ recipient: { id: comment.from.id }, message: { text: inboxText }, messaging_type: 'RESPONSE' }) }
+                                        );
+                                        const m2Data = await m2Res.json();
+                                        if (!m2Data.error) {
+                                            inboxSuccess = true;
+                                            inboxError = '';
+                                        } else {
+                                            inboxError += ` | user_id: code=${m2Data.error.code} subcode=${m2Data.error.error_subcode} msg=${m2Data.error.message}`;
+                                        }
+                                    } catch (e) { inboxError += ' | user_id: network error'; }
+                                }
+
+                                if (inboxSuccess) totalInboxed++;
+                            }
+
+                            // Add inbox error to debug
+                            if (inboxError && monitoredPostIds.length > 0 && postDebugList.length > 0) {
+                                const lastDebug = postDebugList[postDebugList.length - 1];
+                                if (lastDebug.inbox_errors) lastDebug.inbox_errors.push(inboxError);
+                            }
+
+                            // Save dedup record
+                            await supabase.from('comment_auto_replies').upsert({
+                                comment_id: comment.id, post_id: post.id, page_id: page.id,
+                                commenter_id: comment.from?.id || '', commenter_name: comment.from?.name || '',
+                                comment_text: comment.message || '', replied: true, inboxed: inboxSuccess || existing?.inboxed || false,
+                                created_at: new Date().toISOString()
+                            }, { onConflict: 'comment_id' });
+                            totalAlreadyReplied++;
+                            pageSkipped++;
+                            continue;
+                        }
 
                         // 1. REPLY
                         let replySuccess = false;
