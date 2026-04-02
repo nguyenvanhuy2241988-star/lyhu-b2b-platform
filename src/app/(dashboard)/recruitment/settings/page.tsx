@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabaseClient";
-import { Loader2, Save, Upload, X, Building, Globe, ImageIcon } from "lucide-react";
+import { Loader2, Save, Upload, X, Building, Globe, ImageIcon, Eye, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner"; // Using alert if sonner not available
 
 export default function RecruitmentSettingsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
     // Settings State
     const [settings, setSettings] = useState({
@@ -245,12 +246,22 @@ export default function RecruitmentSettingsPage() {
                             {settings.culture_images.map((img, idx) => (
                                 <div key={idx} className="relative aspect-video rounded-lg overflow-hidden border border-slate-200 group">
                                     <img src={img} alt="Culture" className="w-full h-full object-cover" />
-                                    <button
-                                        onClick={() => removeCultureImage(idx)}
-                                        className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition"
-                                    >
-                                        <X className="w-3 h-3" />
-                                    </button>
+                                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center gap-2">
+                                        <button
+                                            onClick={() => setLightboxIndex(idx)}
+                                            className="p-2 bg-white/90 rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-white shadow-sm"
+                                            title="Xem ảnh"
+                                        >
+                                            <Eye className="w-4 h-4 text-slate-700" />
+                                        </button>
+                                        <button
+                                            onClick={() => removeCultureImage(idx)}
+                                            className="p-2 bg-red-500/90 text-white rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-red-600 shadow-sm"
+                                            title="Xóa ảnh"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
 
@@ -263,6 +274,54 @@ export default function RecruitmentSettingsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Image Lightbox */}
+            {lightboxIndex !== null && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+                    onClick={() => setLightboxIndex(null)}
+                >
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setLightboxIndex(null); }}
+                        className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+
+                    {/* Prev */}
+                    {lightboxIndex > 0 && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex - 1); }}
+                            className="absolute left-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition"
+                        >
+                            <ChevronLeft className="w-6 h-6" />
+                        </button>
+                    )}
+
+                    {/* Image */}
+                    <img
+                        src={settings.culture_images[lightboxIndex]}
+                        alt={`Preview ${lightboxIndex + 1}`}
+                        className="max-w-[90vw] max-h-[85vh] object-contain rounded-lg"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+
+                    {/* Next */}
+                    {lightboxIndex < settings.culture_images.length - 1 && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex + 1); }}
+                            className="absolute right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition"
+                        >
+                            <ChevronRight className="w-6 h-6" />
+                        </button>
+                    )}
+
+                    {/* Counter */}
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/70 text-sm">
+                        {lightboxIndex + 1} / {settings.culture_images.length}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

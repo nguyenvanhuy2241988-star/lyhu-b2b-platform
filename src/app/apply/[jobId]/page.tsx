@@ -15,6 +15,8 @@ type PublicJob = {
     requirements?: string;
     benefits?: string;
     banner_url?: string;
+    salary_range?: string;
+    employment_type?: string;
 };
 
 type CompanySettings = {
@@ -23,6 +25,14 @@ type CompanySettings = {
     description: string;
     culture_description?: string;
     culture_images: string[];
+};
+
+// LYHU Brand Colors
+const BRAND = {
+    teal: '#0d9488',      // primary-600 (teal-600)
+    tealDark: '#0f766e',  // primary-700
+    tealLight: '#ccfbf1',  // teal-100
+    tealBg: '#f0fdfa',    // teal-50
 };
 
 export default function ApplyPage() {
@@ -52,14 +62,12 @@ export default function ApplyPage() {
             if (!jobId) return;
             const supabase = createClient();
 
-            // 1. Fetch Job
             const jobReq = supabase
                 .from('recruitment_jobs')
-                .select('id, title, location, status, description, requirements, benefits, banner_url')
+                .select('id, title, location, status, description, requirements, benefits, banner_url, salary_range, employment_type')
                 .eq('id', jobId)
                 .single();
 
-            // 2. Fetch Company Settings
             const settingsReq = supabase
                 .from('recruitment_settings')
                 .select('company_name, logo_url, description, culture_description, culture_images')
@@ -78,8 +86,7 @@ export default function ApplyPage() {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            // Simple validation
-            if (file.size > 15 * 1024 * 1024) { // 15MB
+            if (file.size > 15 * 1024 * 1024) {
                 alert("File quá lớn! Vui lòng chọn file dưới 15MB.");
                 return;
             }
@@ -101,7 +108,6 @@ export default function ApplyPage() {
 
             if (uploadError) throw uploadError;
 
-            // Get Public URL
             const { data } = supabase.storage
                 .from('recruitment_cvs')
                 .getPublicUrl(filePath);
@@ -121,19 +127,17 @@ export default function ApplyPage() {
         try {
             let cvUrl = "";
 
-            // 1. Upload CV if exists
             if (selectedFile) {
                 const url = await uploadCV(selectedFile);
                 if (!url) {
                     setIsSubmitting(false);
-                    return; // Stop if upload failed
+                    return;
                 }
                 cvUrl = url;
             }
 
             const supabase = createClient();
 
-            // 2. Submit Application
             const { error: rpcError } = await supabase.rpc('submit_application', {
                 p_job_id: jobId,
                 p_full_name: formData.full_name,
@@ -155,56 +159,30 @@ export default function ApplyPage() {
         }
     };
 
-    // Render Helpers
-    const renderHeader = () => {
-        if (!job) return null;
-        const banner = job.banner_url || "https://images.unsplash.com/photo-1497215728101-856f4ea42174?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80"; // Default banner
-
-        return (
-            <div className="relative h-[250px] md:h-[350px] w-full bg-slate-900 group overflow-hidden">
-                <img src={banner} alt="Banner" className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700" />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent flex flex-col justify-end p-6 md:p-12">
-                    <div className="max-w-5xl mx-auto w-full">
-                        <div className="flex items-center gap-4 mb-4">
-                            {company?.logo_url && (
-                                <img src={company.logo_url} alt="Logo" className="w-16 h-16 bg-white rounded-xl p-2 object-contain shadow-lg ring-1 ring-white/20" />
-                            )}
-                            <h1 className="text-3xl md:text-5xl font-bold text-white tracking-tight shadow-sm text-shadow-sm">{job.title}</h1>
-                        </div>
-                        <div className="flex flex-wrap gap-4 text-white/90 text-sm md:text-base font-medium">
-                            <span className="flex items-center gap-2"><Briefcase className="w-4 h-4" /> {company?.company_name || "LYHU Careers"}</span>
-                            <span className="flex items-center gap-2 text-white/40">•</span>
-                            <span className="flex items-center gap-2"><MapPin className="w-4 h-4" /> {job.location}</span>
-                            {source !== "Direct Link" && (
-                                <span className="bg-white/20 backdrop-blur-sm px-2.5 py-0.5 rounded text-xs ml-2 border border-white/10">Ref: {source}</span>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <Loader2 className="w-8 h-8 text-primary-600 animate-spin" />
+            <div className="min-h-screen flex items-center justify-center bg-white">
+                <Loader2 className="w-6 h-6 animate-spin" style={{ color: BRAND.teal }} />
             </div>
         );
     }
 
     if (isSuccess) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
-                <div className="bg-white max-w-md w-full p-8 rounded-2xl shadow-xl text-center border border-slate-100">
-                    <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4 ring-8 ring-green-50">
-                        <CheckCircle className="w-8 h-8" />
+            <div className="min-h-screen flex items-center justify-center bg-white p-4">
+                <div className="max-w-md w-full p-8 text-center">
+                    <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5" style={{ backgroundColor: BRAND.tealBg, color: BRAND.teal }}>
+                        <CheckCircle className="w-7 h-7" />
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-900 mb-2">Ứng tuyển thành công!</h2>
-                    <p className="text-slate-600 mb-8 leading-relaxed">
-                        Cảm ơn bạn đã quan tâm đến LYHU. Hồ sơ của bạn đã được ghi nhận và bộ phận tuyển dụng sẽ liên hệ sớm nhất.
+                    <h2 className="text-xl font-bold text-slate-900 mb-2">Ứng tuyển thành công!</h2>
+                    <p className="text-slate-500 text-sm mb-8 leading-relaxed">
+                        Cảm ơn bạn đã quan tâm đến {company?.company_name || 'LYHU'}. Hồ sơ của bạn đã được ghi nhận và bộ phận tuyển dụng sẽ liên hệ sớm nhất.
                     </p>
-                    <Link href="/" className="inline-flex items-center justify-center px-6 py-3 bg-primary-600 text-white font-medium rounded-xl hover:bg-primary-700 transition-all shadow-lg shadow-primary-600/20 w-full">
+                    <Link
+                        href="/"
+                        className="inline-flex items-center justify-center px-6 py-2.5 text-white font-medium rounded-lg text-sm w-full transition-colors"
+                        style={{ backgroundColor: BRAND.teal }}
+                    >
                         Về trang chủ
                     </Link>
                 </div>
@@ -213,110 +191,128 @@ export default function ApplyPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50/50 font-sans pb-20">
-            {/* Header / Brand */}
-            <div className="bg-white border-b border-slate-200/60 sticky top-0 z-20 backdrop-blur-md bg-white/90">
+        <div className="min-h-screen bg-white font-sans">
+            {/* Header Bar — Clean, minimal */}
+            <header className="border-b border-slate-100 sticky top-0 z-20 bg-white">
                 <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-                    <div className="font-bold text-xl text-primary-600 tracking-tight flex items-center gap-2">
-                        <Briefcase className="w-6 h-6" />
-                        LYHU CAREER
+                    <div className="font-bold text-lg tracking-tight flex items-center gap-2" style={{ color: BRAND.teal }}>
+                        {company?.logo_url ? (
+                            <img src={company.logo_url} alt="Logo" className="w-7 h-7 object-contain" />
+                        ) : (
+                            <Briefcase className="w-5 h-5" />
+                        )}
+                        {company?.company_name || 'LYHU CAREER'}
                     </div>
                     {job && (
-                        <div className="text-sm text-slate-500 hidden sm:block">
-                            Đang xem: <span className="font-medium text-slate-900">{job.title}</span>
+                        <div className="text-xs text-slate-400 hidden sm:block">
+                            Đang xem: <span className="font-medium text-slate-600">{job.title}</span>
                         </div>
                     )}
                 </div>
-            </div>
+            </header>
 
-            {renderHeader()}
+            {/* Banner — Solid teal or custom image */}
+            {job?.banner_url ? (
+                <div className="w-full h-[160px] md:h-[200px] overflow-hidden">
+                    <img src={job.banner_url} alt="Banner" className="w-full h-full object-cover" />
+                </div>
+            ) : (
+                <div className="w-full h-[80px] md:h-[100px]" style={{ backgroundColor: BRAND.teal }} />
+            )}
 
+            {/* Main Content */}
             <main className="max-w-5xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-                {/* LEFT: JOB DETAILS & INFO (8 cols) */}
-                <div className="lg:col-span-8 space-y-8">
+                {/* LEFT: JOB DETAILS (8 cols) */}
+                <div className="lg:col-span-8 space-y-6">
                     {/* Job Details Card */}
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-10">
+                    <div className="bg-white border border-slate-100 rounded-lg p-6 md:p-8">
                         {job ? (
                             <>
-                                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-6">{job.title}</h1>
+                                <h1 className="text-xl md:text-2xl font-bold text-slate-900 mb-4">{job.title}</h1>
 
-                                <div className="flex flex-wrap gap-3 text-sm text-slate-700 mb-8">
-                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg">
-                                        <Briefcase className="w-4 h-4 text-slate-500" />
-                                        <span>Toàn thời gian</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg">
-                                        <MapPin className="w-4 h-4 text-slate-500" />
-                                        <span>{job.location || 'Hồ Chí Minh'}</span>
-                                    </div>
+                                <div className="flex flex-wrap gap-2 text-xs text-slate-600 mb-6">
+                                    <span className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 rounded border border-slate-100">
+                                        <Briefcase className="w-3.5 h-3.5 text-slate-400" />
+                                        {job.employment_type || 'Toàn thời gian'}
+                                    </span>
+                                    <span className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 rounded border border-slate-100">
+                                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                                        {job.location || 'Hà Nội'}
+                                    </span>
                                     {source !== "Direct Link" && (
-                                        <div className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold">
+                                        <span className="px-2.5 py-1 rounded text-xs font-medium border" style={{ backgroundColor: BRAND.tealBg, color: BRAND.teal, borderColor: BRAND.tealLight }}>
                                             Nguồn: {source}
-                                        </div>
+                                        </span>
                                     )}
                                 </div>
 
-                                <div className="prose prose-slate max-w-none prose-headings:font-bold prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-li:text-slate-600">
-                                    <h3 className="text-xl">Mô tả công việc</h3>
-                                    <div className="whitespace-pre-wrap mb-8">
-                                        {job.description || "Chưa có mô tả chi tiết."}
+                                <div className="space-y-6 text-sm text-slate-600 leading-relaxed">
+                                    <div>
+                                        <h3 className="text-base font-semibold text-slate-900 mb-2">Mô tả công việc</h3>
+                                        <div className="whitespace-pre-wrap">
+                                            {job.description || "Chưa có mô tả chi tiết."}
+                                        </div>
                                     </div>
 
-                                    <h3 className="text-xl">Yêu cầu ứng viên</h3>
-                                    <div className="whitespace-pre-wrap mb-8">
-                                        {job.requirements || "Chưa có yêu cầu chi tiết."}
+                                    <div>
+                                        <h3 className="text-base font-semibold text-slate-900 mb-2">Yêu cầu ứng viên</h3>
+                                        <div className="whitespace-pre-wrap">
+                                            {job.requirements || "Chưa có yêu cầu chi tiết."}
+                                        </div>
                                     </div>
 
                                     {job.benefits && (
-                                        <>
-                                            <h3 className="text-xl">Quyền lợi</h3>
-                                            <div className="whitespace-pre-wrap mb-8">
+                                        <div>
+                                            <h3 className="text-base font-semibold text-slate-900 mb-2">Quyền lợi</h3>
+                                            <div className="whitespace-pre-wrap">
                                                 {job.benefits}
                                             </div>
-                                        </>
+                                        </div>
                                     )}
                                 </div>
                             </>
                         ) : (
                             <div className="flex justify-center py-12">
-                                <Loader2 className="w-8 h-8 text-slate-300 animate-spin" />
+                                <Loader2 className="w-6 h-6 text-slate-300 animate-spin" />
                             </div>
                         )}
                     </div>
 
                     {/* Company Info Card */}
                     {company && (
-                        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
-                            <h2 className="text-xl font-bold text-slate-900 pb-4 border-b border-slate-100 mb-6 flex items-center gap-2">
-                                <span className="bg-primary-100 p-2 rounded-lg text-primary-600"><Briefcase className="w-5 h-5" /></span>
+                        <div className="bg-white border border-slate-100 rounded-lg p-6 md:p-8">
+                            <h2 className="text-base font-bold text-slate-900 pb-3 border-b border-slate-50 mb-4 flex items-center gap-2">
+                                <span className="p-1.5 rounded" style={{ backgroundColor: BRAND.tealBg, color: BRAND.teal }}>
+                                    <Briefcase className="w-4 h-4" />
+                                </span>
                                 Về {company.company_name}
                             </h2>
 
-                            <div className={`relative ${!showFullCompanyInfo ? 'max-h-[200px] overflow-hidden' : ''} transition-all duration-500`}>
+                            <div className={`relative ${!showFullCompanyInfo ? 'max-h-[180px] overflow-hidden' : ''}`}>
                                 {company.description && (
-                                    <div className="prose prose-slate max-w-none prose-p:text-slate-600 mb-6">
-                                        <div className="whitespace-pre-wrap">{company.description}</div>
+                                    <div className="text-sm text-slate-600 leading-relaxed mb-4 whitespace-pre-wrap">
+                                        {company.description}
                                     </div>
                                 )}
 
                                 {(company.culture_description || (company.culture_images && company.culture_images.length > 0)) && (
-                                    <div className="space-y-6 pt-4 border-t border-slate-100">
+                                    <div className="space-y-4 pt-3 border-t border-slate-50">
                                         {company.culture_description && (
-                                            <div className="prose prose-slate max-w-none prose-p:text-slate-600">
-                                                <h3 className="text-lg font-bold text-slate-900">Văn hóa doanh nghiệp</h3>
-                                                <div className="whitespace-pre-wrap">{company.culture_description}</div>
+                                            <div>
+                                                <h3 className="text-sm font-semibold text-slate-900 mb-1.5">Văn hóa doanh nghiệp</h3>
+                                                <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{company.culture_description}</div>
                                             </div>
                                         )}
 
                                         {company.culture_images && company.culture_images.length > 0 && (
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-2">
+                                            <div className="grid grid-cols-2 gap-3">
                                                 {company.culture_images.map((img, idx) => (
-                                                    <div key={idx} className="group relative aspect-video rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
+                                                    <div key={idx} className="aspect-video rounded overflow-hidden bg-slate-50 border border-slate-100">
                                                         <img
                                                             src={img}
-                                                            alt={`Culture ${idx + 1}`}
-                                                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                                            alt={`Hoạt động ${idx + 1}`}
+                                                            className="w-full h-full object-cover"
                                                         />
                                                     </div>
                                                 ))}
@@ -326,42 +322,43 @@ export default function ApplyPage() {
                                 )}
 
                                 {!showFullCompanyInfo && (
-                                    <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white via-white/80 to-transparent flex items-end justify-center pb-2">
-                                    </div>
+                                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent" />
                                 )}
                             </div>
 
                             <button
                                 onClick={() => setShowFullCompanyInfo(!showFullCompanyInfo)}
-                                className="w-full mt-4 py-2 flex items-center justify-center gap-2 text-primary-600 hover:text-primary-700 font-medium transition-colors border border-primary-100 rounded-xl hover:bg-primary-50"
+                                className="w-full mt-3 py-2 text-sm font-medium rounded transition-colors border"
+                                style={{
+                                    color: BRAND.teal,
+                                    borderColor: BRAND.tealLight,
+                                    backgroundColor: showFullCompanyInfo ? 'white' : BRAND.tealBg
+                                }}
                             >
-                                {showFullCompanyInfo ? (
-                                    <>Thu gọn <Briefcase className="w-4 h-4 rotate-180" /></>
-                                ) : (
-                                    <>Xem thêm về công ty <Briefcase className="w-4 h-4" /></>
-                                )}
+                                {showFullCompanyInfo ? 'Thu gọn' : 'Xem thêm về công ty'}
                             </button>
                         </div>
                     )}
                 </div>
 
-                {/* RIGHT: FORM (4 cols) */}
+                {/* RIGHT: APPLICATION FORM (4 cols) */}
                 <div className="lg:col-span-4">
-                    <div className="sticky top-24 space-y-4">
-                        <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden ring-1 ring-slate-900/5">
-                            <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-5">
-                                <h2 className="text-lg font-bold text-white">Ứng tuyển ngay</h2>
-                                <p className="text-primary-100 text-sm mt-1">Điền thông tin để bắt đầu hành trình mới</p>
+                    <div className="sticky top-16 space-y-3">
+                        <div className="bg-white rounded-lg border border-slate-100 overflow-hidden">
+                            {/* Form Header */}
+                            <div className="px-5 py-4" style={{ backgroundColor: BRAND.teal }}>
+                                <h2 className="text-base font-bold text-white">Ứng tuyển ngay</h2>
+                                <p className="text-white/80 text-xs mt-0.5">Điền thông tin để bắt đầu hành trình mới</p>
                             </div>
 
-                            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                            <form onSubmit={handleSubmit} className="p-5 space-y-4">
                                 {/* Name */}
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-semibold text-slate-700">Họ và tên <span className="text-red-500">*</span></label>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-600">Họ và tên <span className="text-red-500">*</span></label>
                                     <input
                                         type="text"
                                         required
-                                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all placeholder:text-slate-400 text-slate-900"
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-teal-500 outline-none text-sm text-slate-900 placeholder:text-slate-400"
                                         placeholder="Ví dụ: Nguyễn Văn A"
                                         value={formData.full_name}
                                         onChange={e => setFormData({ ...formData, full_name: e.target.value })}
@@ -369,13 +366,13 @@ export default function ApplyPage() {
                                 </div>
 
                                 {/* Phone */}
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-semibold text-slate-700">Số điện thoại <span className="text-red-500">*</span></label>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-600">Số điện thoại <span className="text-red-500">*</span></label>
                                     <input
                                         type="tel"
                                         required
                                         pattern="[0-9]{10,11}"
-                                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all placeholder:text-slate-400 text-slate-900"
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-teal-500 outline-none text-sm text-slate-900 placeholder:text-slate-400"
                                         placeholder="Ví dụ: 0912..."
                                         value={formData.phone}
                                         onChange={e => setFormData({ ...formData, phone: e.target.value })}
@@ -383,11 +380,11 @@ export default function ApplyPage() {
                                 </div>
 
                                 {/* Email */}
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-semibold text-slate-700">Email (nếu có)</label>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-600">Email (nếu có)</label>
                                     <input
                                         type="email"
-                                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all placeholder:text-slate-400 text-slate-900"
+                                        className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:border-teal-500 outline-none text-sm text-slate-900 placeholder:text-slate-400"
                                         placeholder="email@example.com"
                                         value={formData.email}
                                         onChange={e => setFormData({ ...formData, email: e.target.value })}
@@ -395,33 +392,29 @@ export default function ApplyPage() {
                                 </div>
 
                                 {/* CV Upload */}
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-semibold text-slate-700">CV đính kèm (PDF/Ảnh)</label>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-600">CV đính kèm (PDF/Ảnh)</label>
                                     <div
-                                        className={`border-2 border-dashed rounded-xl p-6 text-center transition-all cursor-pointer relative group ${selectedFile ? 'border-primary-500 bg-primary-50' : 'border-slate-300 hover:border-primary-400 hover:bg-slate-50'}`}
+                                        className={`border-2 border-dashed rounded-lg p-5 text-center relative ${selectedFile ? 'border-teal-400 bg-teal-50/30' : 'border-slate-200 hover:border-slate-300'}`}
                                     >
                                         <input
                                             type="file"
                                             accept=".pdf,.doc,.docx,.jpg,.png"
                                             onChange={handleFileChange}
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50"
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                         />
 
                                         {selectedFile ? (
-                                            <div className="relative z-20 flex flex-col items-center">
-                                                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm mb-2 text-primary-600">
-                                                    <FileUp className="w-5 h-5" />
-                                                </div>
-                                                <span className="text-sm font-medium text-primary-700 truncate max-w-full px-2 block">{selectedFile.name}</span>
-                                                <p className="text-xs text-primary-500 mt-1">Đã chọn file</p>
+                                            <div className="flex flex-col items-center">
+                                                <FileUp className="w-5 h-5 mb-1.5" style={{ color: BRAND.teal }} />
+                                                <span className="text-xs font-medium text-slate-700 truncate max-w-full px-2 block">{selectedFile.name}</span>
+                                                <p className="text-[10px] mt-0.5" style={{ color: BRAND.teal }}>Đã chọn file</p>
                                             </div>
                                         ) : (
-                                            <div className="relative z-20 flex flex-col items-center">
-                                                <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center mb-3 text-slate-400 group-hover:bg-white group-hover:text-primary-500 transition-colors shadow-sm">
-                                                    <Upload className="w-5 h-5" />
-                                                </div>
-                                                <p className="text-sm font-medium text-slate-600">Chạm để tải file</p>
-                                                <p className="text-xs text-slate-400 mt-1">PDF, DOC, Ảnh (Max 15MB)</p>
+                                            <div className="flex flex-col items-center">
+                                                <Upload className="w-5 h-5 text-slate-400 mb-1.5" />
+                                                <p className="text-xs font-medium text-slate-500">Chạm để tải file</p>
+                                                <p className="text-[10px] text-slate-400 mt-0.5">PDF, DOC, Ảnh (Max 15MB)</p>
                                             </div>
                                         )}
                                     </div>
@@ -429,7 +422,7 @@ export default function ApplyPage() {
                                         <button
                                             type="button"
                                             onClick={() => setSelectedFile(null)}
-                                            className="text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1 justify-end px-1"
+                                            className="text-[10px] text-red-500 hover:text-red-700 font-medium flex items-center gap-0.5 px-1"
                                         >
                                             <X className="w-3 h-3" /> Bỏ chọn
                                         </button>
@@ -437,20 +430,21 @@ export default function ApplyPage() {
                                 </div>
 
                                 {/* Submit Button */}
-                                <div className="pt-2">
+                                <div className="pt-1">
                                     <button
                                         type="submit"
                                         disabled={isSubmitting}
-                                        className="w-full bg-primary-600 hover:bg-primary-700 active:scale-[0.98] text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary-600/20 disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100"
+                                        className="w-full text-white font-semibold py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm transition-colors disabled:opacity-70"
+                                        style={{ backgroundColor: BRAND.teal }}
                                     >
                                         {isSubmitting ? (
                                             <>
-                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                                <Loader2 className="w-4 h-4 animate-spin" />
                                                 Đang gửi...
                                             </>
                                         ) : (
                                             <>
-                                                <Send className="w-5 h-5" />
+                                                <Send className="w-4 h-4" />
                                                 Nộp hồ sơ ngay
                                             </>
                                         )}
@@ -459,11 +453,9 @@ export default function ApplyPage() {
                             </form>
                         </div>
 
-                        <div className="text-center">
-                            <p className="text-xs text-slate-400">
-                                Bằng việc nộp hồ sơ, bạn đồng ý với chính sách bảo mật của chúng tôi.
-                            </p>
-                        </div>
+                        <p className="text-center text-[10px] text-slate-400">
+                            Bằng việc nộp hồ sơ, bạn đồng ý với chính sách bảo mật của chúng tôi.
+                        </p>
                     </div>
                 </div>
             </main>
