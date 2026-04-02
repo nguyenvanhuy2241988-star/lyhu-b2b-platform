@@ -316,6 +316,7 @@ export default function PostLogManager({ userId, date, onUpdate, readOnly = fals
                                 <option value="facebook_page">Facebook Page</option>
                                 <option value="facebook_personal">Facebook Cá nhân</option>
                                 <option value="threads">Threads</option>
+                                <option value="tiktok">TikTok</option>
                                 <option value="zalo">Zalo</option>
                                 <option value="linkedin">LinkedIn</option>
                                 <option value="other">Khác</option>

@@ -329,6 +329,61 @@ export const getMonthlyKpiActuals = async (
     return actuals;
 };
 
+// =====================================================
+// KEY RESOLVER: Maps metric key/label to standardized actuals key
+// Admin creates metrics with Vietnamese labels → garbled auto-keys.
+// This function resolves them to the standard keys from getMonthlyKpiActuals.
+// =====================================================
+
+const STANDARD_KEYS = [
+    'fb_friends', 'fb_personal_posts', 'fb_group_posts', 'fb_comments',
+    'zalo_posts', 'zalo_friends', 'zalo_diary',
+    'threads_posts', 'threads_comments',
+    'tiktok_posts', 'tiktok_comments',
+    'linkedin_posts',
+    'calls', 'self_sourced', 'self_contact', 'zalo_outreach', 'revenue', 'new_outlets'
+];
+
+function resolveActualKey(metricKey: string, metricLabel: string): string {
+    // 1. Direct match: key is already a standard actuals key?
+    if (STANDARD_KEYS.includes(metricKey)) return metricKey;
+
+    // 2. Label-based fuzzy matching (Vietnamese labels → standard keys)
+    const label = metricLabel.toLowerCase();
+
+    // Facebook metrics
+    if ((label.includes('kết bạn') || label.includes('ket ban')) && label.includes('facebook')) return 'fb_friends';
+    if ((label.includes('đăng bài') || label.includes('dang bai') || label.includes('đăng') || label.includes('bài')) && (label.includes('cá nhân') || label.includes('ca nhan'))) return 'fb_personal_posts';
+    if ((label.includes('đăng') || label.includes('hội nhóm') || label.includes('group') || label.includes('nhóm'))) {
+        if (label.includes('facebook') || label.includes('fb')) return 'fb_group_posts';
+    }
+    if ((label.includes('comment') || label.includes('seeding') || label.includes('bình luận')) && label.includes('facebook')) return 'fb_comments';
+
+    // Zalo metrics
+    if ((label.includes('kết bạn') || label.includes('ket ban')) && label.includes('zalo')) return 'zalo_friends';
+    if ((label.includes('đăng bài') || label.includes('nhật ký') || label.includes('diary')) && label.includes('zalo')) return 'zalo_diary';
+    if (label.includes('zalo') && (label.includes('bài') || label.includes('post'))) return 'zalo_posts';
+
+    // Threads metrics
+    if (label.includes('threads') && (label.includes('comment') || label.includes('cmt') || label.includes('bình luận'))) return 'threads_comments';
+    if (label.includes('threads') && (label.includes('bài') || label.includes('post') || label.includes('đăng'))) return 'threads_posts';
+
+    // TikTok metrics
+    if (label.includes('tiktok') && (label.includes('comment') || label.includes('seeding') || label.includes('đạo'))) return 'tiktok_comments';
+    if (label.includes('tiktok') && (label.includes('bài') || label.includes('post') || label.includes('đăng'))) return 'tiktok_posts';
+
+    // LinkedIn
+    if (label.includes('linkedin')) return 'linkedin_posts';
+
+    // CRM/Sales metrics
+    if (label.includes('gọi') || label.includes('call')) return 'calls';
+    if (label.includes('tự kiếm') || label.includes('self') && label.includes('found')) return 'self_sourced';
+    if (label.includes('doanh số') || label.includes('revenue')) return 'revenue';
+
+    // Fallback: return original key (might match if admin used English keys)
+    return metricKey;
+}
+
 /**
  * Calculate KPI-based salary for a user in a month.
  * Formula: baseSalary × Σ(min(actual/target, 1) × salary_percent%)
@@ -365,7 +420,7 @@ export const calculateKpiSalary = async (
 
         // Priority: user_kpi_settings.kpi_targets > kpi_user_targets > metric default
         const target = userTargetsJson[metric.key] || userTargetMap.get(metric.key) || metric.monthly_target;
-        const actual = actuals[metric.key] || 0;
+        const actual = actuals[resolveActualKey(metric.key, metric.label)] || 0;
 
         const completion = target > 0 ? Math.min(actual / target, 1) : (actual > 0 ? 1 : 0);
         const salaryAmount = baseSalary * (metric.salary_percent / 100) * completion;
@@ -564,7 +619,7 @@ export const calculateKpiSalaryForRange = async (
 
         const monthlyTarget = userTargetsJson[metric.key] || userTargetMap.get(metric.key) || metric.monthly_target;
         const scaledTarget = Math.round(monthlyTarget / divisor);
-        const actual = actuals[metric.key] || 0;
+        const actual = actuals[resolveActualKey(metric.key, metric.label)] || 0;
 
         const completion = scaledTarget > 0 ? Math.min(actual / scaledTarget, 1) : (actual > 0 ? 1 : 0);
         const salaryAmount = scaledBaseSalary * (metric.salary_percent / 100) * completion;
