@@ -40,6 +40,7 @@ export default function MediaLibraryPage() {
     const [uploadPercent, setUploadPercent] = useState(0);
     const fileRef = useRef<HTMLInputElement>(null);
     const abortRef = useRef<AbortController | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
 
     // Folder
     const [showNewFolder, setShowNewFolder] = useState(false);
@@ -245,9 +246,8 @@ export default function MediaLibraryPage() {
         if (!cr2.ok) throw new Error((await cr2.json()).error);
     };
 
-    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files || !user) return;
+    const processFiles = async (files: FileList | File[]) => {
+        if (!files || files.length === 0 || !user) return;
         const controller = new AbortController(); abortRef.current = controller; setUploading(true);
         try {
             const arr = Array.from(files);
@@ -262,6 +262,32 @@ export default function MediaLibraryPage() {
             }
             loadFolder(currentFolderId, true);
         } finally { setUploading(false); setUploadProgress(""); setUploadPercent(0); if (fileRef.current) fileRef.current.value = ""; }
+    };
+
+    const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) processFiles(e.target.files);
+    };
+
+    const onDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isDragging) setIsDragging(true);
+    };
+
+    const onDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.relatedTarget && e.currentTarget.contains(e.relatedTarget as Node)) return;
+        setIsDragging(false);
+    };
+
+    const onDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            processFiles(e.dataTransfer.files);
+        }
     };
 
     // Helpers
@@ -293,7 +319,22 @@ export default function MediaLibraryPage() {
     const files2 = filteredSorted.filter(i => !i.isFolder);
 
     return (
-        <div className="space-y-4">
+        <div 
+            className={`space-y-4 min-h-[calc(100vh-120px)] relative ${isDragging ? 'bg-blue-50/30' : ''}`}
+            onDragOver={onDragOver}
+            onDragLeave={onDragLeave}
+            onDrop={onDrop}
+        >
+            {isDragging && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-blue-500/10 border-4 border-dashed border-blue-400 rounded-xl pointer-events-none">
+                    <div className="bg-white px-8 py-6 rounded-2xl shadow-xl flex flex-col items-center">
+                        <Upload className="w-16 h-16 text-blue-500 mb-3" />
+                        <h3 className="text-xl font-bold text-blue-700">Thả file để tải lên</h3>
+                        <p className="text-sm text-blue-500 font-medium">Bỏ tay ra để bắt đầu upload</p>
+                    </div>
+                </div>
+            )}
+            
             {/* Toast */}
             {toast && (
                 <div className="fixed top-4 right-4 z-50 bg-emerald-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm flex items-center gap-2 animate-[slideIn_0.3s_ease]">
