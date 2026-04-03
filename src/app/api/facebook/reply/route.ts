@@ -82,9 +82,28 @@ export async function POST(request: Request) {
             body: JSON.stringify(body)
         });
 
-        const data = await res.json();
+        let data = await res.json();
 
-        if (data.error) {
+        // Fallback for Error 10 (Outside 24-hour standard messaging window)
+        // We retry using the HUMAN_AGENT tag which extends the window to 7 days for humans
+        if (data.error && data.error.code === 10) {
+            console.log('[Facebook Reply] Error 10 detected. Retrying with HUMAN_AGENT tag...');
+            body.messaging_type = 'MESSAGE_TAG';
+            body.tag = 'HUMAN_AGENT';
+            
+            const fallbackRes = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            const fallbackData = await fallbackRes.json();
+            
+            if (fallbackData.error) {
+                return NextResponse.json({ error: fallbackData.error.message }, { status: 400 });
+            }
+            // Success with fallback
+            data = fallbackData;
+        } else if (data.error) {
             return NextResponse.json({ error: data.error.message }, { status: 400 });
         }
 
