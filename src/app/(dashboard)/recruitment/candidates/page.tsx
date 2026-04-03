@@ -148,7 +148,20 @@ export default function CandidatesPage() {
             const candidate = candidates.find(c => c.id === candidateId);
             // Protect against dropping in same col, or logic error
             if (candidate && candidate.status !== targetColumnId) {
+                const oldStatus = candidate.status;
                 await handleStatusChange(candidateId, targetColumnId);
+
+                // Sync interview tasks to admin board if moving into/out of interview column
+                const interviewColIds = columns
+                    .filter(c => c.label.toLowerCase().includes('phỏng vấn') || c.id === 'interview')
+                    .map(c => c.id);
+                const isEnteringInterview = interviewColIds.includes(targetColumnId);
+                const isLeavingInterview = interviewColIds.includes(oldStatus);
+
+                if (isEnteringInterview || isLeavingInterview) {
+                    // Fire and forget - sync in background
+                    fetch('/api/recruitment/sync-interview-tasks').catch(() => {});
+                }
             }
         }
         setDraggedCandidateId(null);

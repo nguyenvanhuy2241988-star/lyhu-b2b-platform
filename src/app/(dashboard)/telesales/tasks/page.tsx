@@ -203,9 +203,15 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
             >
                 {/* Type Badge - LYHU Minimal */}
                 <div className="mb-2">
-                    <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs font-medium border border-slate-200">
-                        Công việc
-                    </span>
+                    {task.title.startsWith('📋 PV:') ? (
+                        <span className="inline-block px-2 py-0.5 bg-primary-50 text-primary-700 rounded text-xs font-medium border border-primary-200">
+                            📋 Phỏng vấn
+                        </span>
+                    ) : (
+                        <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs font-medium border border-slate-200">
+                            Công việc
+                        </span>
+                    )}
                 </div>
 
                 {/* Header: Title + Prio */}
@@ -567,6 +573,39 @@ export default function TelesalesTasksPage() {
         const visibleCols = fetchedDbCols.filter(c => c.is_visible !== false);
         await Promise.all(visibleCols.map(col => loadTasksForColumn(col.id, 1, false, col.column_type)));
 
+        // Admin-only: Inject interview candidates into inbox column
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+        console.log('[Interview Sync] pathname:', currentPath);
+        if (currentPath.includes('/admin/tasks')) {
+            console.log('[Interview Sync] ✅ Admin tasks page detected, fetching interview candidates...');
+            console.log('[Interview Sync] Available columns:', fetchedDbCols.map(c => ({ id: c.id, type: c.column_type, label: c.label })));
+            try {
+                const res = await fetch('/api/recruitment/sync-interview-tasks');
+                const data = await res.json();
+                console.log('[Interview Sync] API response:', JSON.stringify(data));
+                if (data.success && data.tasks?.length > 0) {
+                    const inboxCol = fetchedDbCols.find(c => c.column_type === 'system_inbox');
+                    console.log('[Interview Sync] Inbox column found:', inboxCol?.id, inboxCol?.label);
+                    if (inboxCol) {
+                        setColumnTasks(prev => {
+                            const existing = prev[inboxCol.id] || [];
+                            console.log('[Interview Sync] Existing inbox tasks:', existing.length);
+                            const newTasks = data.tasks.filter((t: any) => !existing.some((e: any) => e.id === t.id));
+                            console.log('[Interview Sync] New tasks to inject:', newTasks.length);
+                            if (newTasks.length === 0) return prev;
+                            return { ...prev, [inboxCol.id]: [...newTasks, ...existing] };
+                        });
+                    } else {
+                        console.warn('[Interview Sync] ❌ No inbox column found!');
+                    }
+                } else {
+                    console.log('[Interview Sync] No tasks to sync or API error');
+                }
+            } catch (e) {
+                console.error('[Interview Sync] ❌ Fetch failed:', e);
+            }
+        }
+
         setIsLoading(false);
     }, [user, loadTasksForColumn]);
 
@@ -596,6 +635,9 @@ export default function TelesalesTasksPage() {
         const handleColumnUpdate = () => refreshData();
 
         window.addEventListener("telesales-columns-updated", handleColumnUpdate);
+
+
+
 
         // --- REALTIME SUBSCRIPTION ---
         let channel: any = null;
