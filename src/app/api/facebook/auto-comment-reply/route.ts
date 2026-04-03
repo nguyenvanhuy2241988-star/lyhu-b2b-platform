@@ -59,10 +59,20 @@ export async function GET(request: NextRequest) {
                 for (const postIdOrUrl of monitoredPostIds) {
                     let resolvedId = postIdOrUrl;
 
-                    // Extract numeric ID from URL
+                    // Parse standard post forms
                     if (postIdOrUrl.includes('facebook.com') || postIdOrUrl.startsWith('http')) {
-                        const numericMatch = postIdOrUrl.match(/\/(\d{10,})/);
-                        if (numericMatch) resolvedId = numericMatch[1];
+                        const urlMatch = postIdOrUrl.match(/(\d+)[\/_]posts[\/_](\d+)/);
+                        if (urlMatch) {
+                            resolvedId = `${urlMatch[1]}_${urlMatch[2]}`;
+                        } else {
+                            const pfbidMatch = postIdOrUrl.match(/pfbid\w+/);
+                            if (pfbidMatch) {
+                                resolvedId = `${page.page_id}_${pfbidMatch[0]}`;
+                            } else {
+                                const numericMatch = postIdOrUrl.match(/\/(\d{10,})/);
+                                if (numericMatch) resolvedId = numericMatch[1];
+                            }
+                        }
                     }
 
                     // For pure numeric IDs (likely video IDs), try page_id_numericId format
