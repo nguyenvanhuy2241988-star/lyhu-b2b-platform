@@ -848,8 +848,11 @@ export default function TelesalesTasksPage() {
                                 return current;
                             });
 
-                            const checkTaskBelongsToColumn = (task: any, colId: string): boolean => {
-                                if (task.status === 'done' && colId === 'done') return true;
+                            const checkTaskBelongsToColumn = (task: any, colId: string, currentList: any[]): boolean => {
+                                const colDef = columns.find(c => c.id === colId);
+                                const cType = colDef?.column_type || colId;
+
+                                if (task.status === 'done' && (cType === 'system_done' || colId === 'done')) return true;
                                 if (task.status === 'done') return false; // Done tasks only in Done column usually
 
                                 const today = new Date();
@@ -857,26 +860,30 @@ export default function TelesalesTasksPage() {
                                 const taskDate = task.due_date ? new Date(task.due_date) : null;
                                 if (taskDate) taskDate.setHours(0, 0, 0, 0);
 
-                                if (colId === 'today') {
+                                if (cType === 'date_today' || colId === 'today') {
                                     return taskDate ? taskDate.getTime() === today.getTime() : false;
                                 }
-                                if (colId === 'tomorrow') {
+                                if (cType === 'date_tomorrow' || colId === 'tomorrow') {
                                     const tmr = new Date(today);
                                     tmr.setDate(tmr.getDate() + 1);
                                     return taskDate ? taskDate.getTime() === tmr.getTime() : false;
                                 }
-                                if (colId === 'this_week') {
-                                    // Complex logic, simplify to: if within next 7 days? 
-                                    // Store says: Today+2 -> Today+7. 
-                                    // Let's approximate or just map 'status' if date logic is too complex for now?
-                                    // Better: check if data logic matches `loadTasksForColumn`.
-                                    // For safety, if task has date, we assume it's handled by date columns.
-                                    // But let's stick to status for non-date columns.
-                                    return false; // Skip complex week logic for now to avoid duplications, or implement properly if critical.
+                                if (cType === 'date_this_week' || colId === 'this_week') {
+                                    return false; // Skip complex week logic for now
                                 }
-                                if (colId === 'overdue') {
-                                    // Check if overdue
+                                if (cType === 'date_overdue' || colId === 'overdue') {
                                     return taskDate ? taskDate.getTime() < today.getTime() : false;
+                                }
+                                if (cType === 'system_inbox' || colId === 'inbox') {
+                                    // For inbox, it usually matches status 'inbox' OR it is placed there.
+                                    // But realistically, if it's already there and we do an update (like tick handled_date), keep it.
+                                    if (currentList.some(t => t.id === task.id) && task.status !== 'done') return true;
+                                    return task.status === 'inbox';
+                                }
+                                if (cType === 'custom') {
+                                    // We can't know custom placements from task payload alone.
+                                    // So if it's currently in this column, and not marked 'done', it belongs.
+                                    return currentList.some(t => t.id === task.id) && task.status !== 'done';
                                 }
 
                                 // Default/Legacy columns: match status
@@ -891,7 +898,7 @@ export default function TelesalesTasksPage() {
                                 Object.keys(newCols).forEach(colId => {
                                     const currentList = newCols[colId] || [];
                                     const exists = currentList.find(t => t.id === updatedTask.id);
-                                    const belongs = checkTaskBelongsToColumn(updatedTask, colId);
+                                    const belongs = checkTaskBelongsToColumn(updatedTask, colId, currentList);
 
                                     if (belongs) {
                                         if (exists) {
