@@ -9,10 +9,11 @@ import {
     QUOTE_STATUS_LABELS, QUOTE_STATUS_COLORS
 } from '@/lib/quotesStore';
 import { loadProducts } from '@/lib/supabase/products';
+import QuotePrintView from '@/components/quotes/QuotePrintView';
 import {
     Plus, Search, FileText, Trash2, Edit, CheckCircle, XCircle,
     Send, ArrowRight, ShoppingCart, Loader2, Eye, Copy,
-    Calculator, Calendar, Clock, Package
+    Calculator, Calendar, Clock, Package, Printer
 } from 'lucide-react';
 
 const fmtPrice = (n: number) => new Intl.NumberFormat('vi-VN').format(n) + ' đ';
@@ -29,6 +30,7 @@ export default function SaleAdminQuotesPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<QuoteStatus | 'all'>('all');
     const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
+    const [printingQuote, setPrintingQuote] = useState<Quote | null>(null);
     const [isCreating, setIsCreating] = useState(false);
     const [saving, setSaving] = useState(false);
 
@@ -211,6 +213,11 @@ export default function SaleAdminQuotesPage() {
                                                 <Edit className="w-4 h-4" />
                                             </button>
 
+                                            <button onClick={() => setPrintingQuote(q)}
+                                                className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="In / PDF">
+                                                <Printer className="w-4 h-4" />
+                                            </button>
+
                                             {q.status === 'draft' && (
                                                 <button onClick={() => handleStatusChange(q.id, 'sent')}
                                                     className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Gửi">
@@ -247,6 +254,14 @@ export default function SaleAdminQuotesPage() {
                     </table>
                 </div>
             </div>
+
+            {/* Print Modal */}
+            {printingQuote && (
+                <QuotePrintView
+                    quote={printingQuote}
+                    onClose={() => setPrintingQuote(null)}
+                />
+            )}
 
             {/* Create/Edit Modal */}
             {isCreating && (
