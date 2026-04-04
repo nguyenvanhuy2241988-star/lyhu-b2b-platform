@@ -96,6 +96,27 @@ function formatRangeDisplay(from: Date, to: Date): string {
 }
 
 // ========== SHOPEE-STYLE DATE PICKER ==========
+type DrillMode = 'none' | 'day' | 'week' | 'month' | 'year';
+
+const WEEKDAYS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
+const MONTH_NAMES = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+
+function getDaysInMonth(year: number, month: number) {
+    return new Date(year, month + 1, 0).getDate();
+}
+
+function getFirstDayOfWeek(year: number, month: number) {
+    const d = new Date(year, month, 1).getDay();
+    return d === 0 ? 6 : d - 1; // Mon=0
+}
+
+function getWeekRange(year: number, month: number, weekRowStart: number) {
+    const from = new Date(year, month, weekRowStart);
+    const to = new Date(year, month, weekRowStart + 6);
+    to.setHours(23, 59, 59, 999);
+    return { from, to };
+}
+
 function DateRangePicker({
     preset, customFrom, customTo,
     onPresetChange, onCustomChange
@@ -107,12 +128,18 @@ function DateRangePicker({
     onCustomChange: (from: string, to: string) => void;
 }) {
     const [open, setOpen] = useState(false);
+    const [drillMode, setDrillMode] = useState<DrillMode>('none');
     const ref = useRef<HTMLDivElement>(null);
 
-    // Close on outside click
+    // Calendar state
+    const now = new Date();
+    const [calYear, setCalYear] = useState(now.getFullYear());
+    const [calMonth, setCalMonth] = useState(now.getMonth());
+    const [yearPageStart, setYearPageStart] = useState(Math.floor(now.getFullYear() / 10) * 10);
+
     useEffect(() => {
         const handler = (e: MouseEvent) => {
-            if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+            if (ref.current && !ref.current.contains(e.target as Node)) { setOpen(false); setDrillMode('none'); }
         };
         document.addEventListener('mousedown', handler);
         return () => document.removeEventListener('mousedown', handler);
@@ -128,15 +155,75 @@ function DateRangePicker({
 
     const displayRange = formatRangeDisplay(range.from, range.to);
 
+    const selectDay = (day: number) => {
+        const d = new Date(calYear, calMonth, day);
+        onCustomChange(toDateStr(d), toDateStr(d));
+        setOpen(false);
+        setDrillMode('none');
+    };
+
+    const selectWeek = (startDay: number) => {
+        const wr = getWeekRange(calYear, calMonth, startDay);
+        onCustomChange(toDateStr(wr.from), toDateStr(wr.to));
+        setOpen(false);
+        setDrillMode('none');
+    };
+
+    const selectMonth = (month: number) => {
+        const from = new Date(calYear, month, 1);
+        const to = new Date(calYear, month + 1, 0);
+        onCustomChange(toDateStr(from), toDateStr(to));
+        setOpen(false);
+        setDrillMode('none');
+    };
+
+    const selectYear = (year: number) => {
+        const from = new Date(year, 0, 1);
+        const to = new Date(year, 11, 31);
+        onCustomChange(toDateStr(from), toDateStr(to));
+        setOpen(false);
+        setDrillMode('none');
+    };
+
+    // Build calendar grid
+    const daysInMonth = getDaysInMonth(calYear, calMonth);
+    const firstDay = getFirstDayOfWeek(calYear, calMonth);
+    const prevMonthDays = getDaysInMonth(calYear, calMonth - 1);
+    const calendarCells: { day: number; current: boolean }[] = [];
+    for (let i = firstDay - 1; i >= 0; i--) calendarCells.push({ day: prevMonthDays - i, current: false });
+    for (let i = 1; i <= daysInMonth; i++) calendarCells.push({ day: i, current: true });
+    const remaining = 7 - (calendarCells.length % 7);
+    if (remaining < 7) for (let i = 1; i <= remaining; i++) calendarCells.push({ day: i, current: false });
+
+    // Week rows for "Theo tuần"
+    const weekRows: number[][] = [];
+    for (let i = 0; i < calendarCells.length; i += 7) {
+        weekRows.push(calendarCells.slice(i, i + 7).map(c => c.current ? c.day : 0));
+    }
+
+    const todayDate = now.getDate();
+    const todayMonth = now.getMonth();
+    const todayYear = now.getFullYear();
+
+    const presetItems = [
+        ...QUICK_PRESETS.map(p => ({ ...p, type: 'preset' as const })),
+    ];
+
+    const drillItems: { key: DrillMode; label: string }[] = [
+        { key: 'day', label: 'Theo ngày' },
+        { key: 'week', label: 'Theo tuần' },
+        { key: 'month', label: 'Theo tháng' },
+        { key: 'year', label: 'Theo năm' },
+    ];
+
     return (
         <div ref={ref} className="relative">
-            {/* Trigger Button */}
+            {/* Trigger */}
             <button
-                onClick={() => setOpen(!open)}
+                onClick={() => { setOpen(!open); if (!open) setDrillMode('none'); }}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${
-                    open
-                        ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-primary-300 hover:bg-primary-50/30'
+                    open ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm'
+                         : 'border-slate-200 bg-white text-slate-700 hover:border-primary-300 hover:bg-primary-50/30'
                 }`}
             >
                 <Calendar className="w-4 h-4 text-primary-500" />
@@ -146,94 +233,223 @@ function DateRangePicker({
                 <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
             </button>
 
-            {/* Dropdown Panel */}
+            {/* Dropdown */}
             {open && (
-                <div className="absolute left-0 top-full mt-2 z-50 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden min-w-[420px] animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="absolute right-0 top-full mt-2 z-50 bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
                     <div className="flex">
-                        {/* Left: Preset list */}
-                        <div className="w-[200px] border-r border-slate-100 py-2 bg-slate-50/50">
+                        {/* LEFT: Presets + Drill */}
+                        <div className="w-[170px] border-r border-slate-100 py-2 bg-slate-50/50 shrink-0">
                             {/* Quick presets */}
-                            <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nhanh</div>
-                            {QUICK_PRESETS.map(p => (
+                            {presetItems.map(p => (
                                 <button
                                     key={p.key}
-                                    onClick={() => { onPresetChange(p.key); setOpen(false); }}
-                                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between ${
-                                        preset === p.key
-                                            ? 'bg-primary-50 text-primary-700 font-bold border-l-3 border-primary-500'
+                                    onClick={() => {
+                                        onPresetChange(p.key);
+                                        setDrillMode('none');
+                                        setOpen(false);
+                                    }}
+                                    className={`w-full text-left px-4 py-2 text-[13px] transition-colors ${
+                                        preset === p.key && drillMode === 'none'
+                                            ? 'text-primary-600 font-bold bg-primary-50'
                                             : 'text-slate-700 hover:bg-slate-100 font-medium'
                                     }`}
                                 >
                                     {p.label}
-                                    {preset === p.key && <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />}
                                 </button>
                             ))}
 
-                            {/* Divider */}
                             <div className="mx-3 my-2 border-t border-slate-200" />
 
-                            {/* Period presets */}
-                            <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Theo kỳ</div>
-                            {PERIOD_PRESETS.map(p => (
+                            {/* Drill-down items */}
+                            {drillItems.map(d => (
                                 <button
-                                    key={p.key}
-                                    onClick={() => { onPresetChange(p.key); setOpen(false); }}
-                                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between ${
-                                        preset === p.key
-                                            ? 'bg-primary-50 text-primary-700 font-bold border-l-3 border-primary-500'
+                                    key={d.key}
+                                    onClick={() => {
+                                        setDrillMode(d.key);
+                                        setCalYear(now.getFullYear());
+                                        setCalMonth(now.getMonth());
+                                        setYearPageStart(Math.floor(now.getFullYear() / 10) * 10);
+                                    }}
+                                    className={`w-full text-left px-4 py-2 text-[13px] transition-colors flex items-center justify-between ${
+                                        drillMode === d.key
+                                            ? 'text-primary-600 font-bold bg-primary-50'
                                             : 'text-slate-700 hover:bg-slate-100 font-medium'
                                     }`}
                                 >
-                                    {p.label}
-                                    {preset === p.key && <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />}
+                                    {d.label}
+                                    <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                                 </button>
                             ))}
                         </div>
 
-                        {/* Right: Custom date inputs + preview */}
-                        <div className="flex-1 p-5 space-y-4">
-                            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Tùy chọn khoảng thời gian</div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="text-xs font-semibold text-slate-500 mb-1 block">Từ ngày</label>
-                                    <input
-                                        type="date"
-                                        value={customFrom || (preset !== 'custom' ? toDateStr(range.from) : '')}
-                                        onChange={e => {
-                                            const to = customTo || toDateStr(range.to);
-                                            onCustomChange(e.target.value, to);
-                                        }}
-                                        className="w-full px-3 py-2.5 border-2 border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all"
-                                    />
+                        {/* RIGHT: Contextual picker */}
+                        <div className="w-[260px] p-4">
+                            {drillMode === 'none' && (
+                                <div className="space-y-3">
+                                    <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Khoảng thời gian</div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        {PERIOD_PRESETS.map(p => (
+                                            <button
+                                                key={p.key}
+                                                onClick={() => { onPresetChange(p.key); setOpen(false); }}
+                                                className={`px-3 py-2 rounded-lg text-xs font-bold transition-colors ${
+                                                    preset === p.key
+                                                        ? 'bg-primary-500 text-white'
+                                                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
+                                                }`}
+                                            >
+                                                {p.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {/* Preview */}
+                                    <div className="bg-primary-50/60 border border-primary-100 rounded-lg p-2.5 flex items-center gap-2 mt-3">
+                                        <Calendar className="w-3.5 h-3.5 text-primary-600 shrink-0" />
+                                        <span className="text-xs font-semibold text-primary-700">{displayRange}</span>
+                                    </div>
                                 </div>
+                            )}
+
+                            {/* === THEO NGÀY: Calendar === */}
+                            {drillMode === 'day' && (
                                 <div>
-                                    <label className="text-xs font-semibold text-slate-500 mb-1 block">Đến ngày</label>
-                                    <input
-                                        type="date"
-                                        value={customTo || (preset !== 'custom' ? toDateStr(range.to) : '')}
-                                        onChange={e => {
-                                            const from = customFrom || toDateStr(range.from);
-                                            onCustomChange(from, e.target.value);
-                                        }}
-                                        className="w-full px-3 py-2.5 border-2 border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none transition-all"
-                                    />
+                                    {/* Month nav */}
+                                    <div className="flex items-center justify-between mb-3">
+                                        <button onClick={() => { if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11); } else setCalMonth(m => m - 1); }}
+                                            className="text-slate-400 hover:text-slate-600 p-1"><span className="text-sm font-bold">‹</span></button>
+                                        <span className="text-sm font-bold text-slate-800">Tháng {calMonth + 1}/{calYear}</span>
+                                        <button onClick={() => { if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0); } else setCalMonth(m => m + 1); }}
+                                            className="text-slate-400 hover:text-slate-600 p-1"><span className="text-sm font-bold">›</span></button>
+                                    </div>
+                                    {/* Weekday headers */}
+                                    <div className="grid grid-cols-7 gap-0 mb-1">
+                                        {WEEKDAYS.map(w => (
+                                            <div key={w} className="text-center text-[10px] font-bold text-slate-400 py-1">{w}</div>
+                                        ))}
+                                    </div>
+                                    {/* Days grid */}
+                                    <div className="grid grid-cols-7 gap-0">
+                                        {calendarCells.map((cell, i) => {
+                                            const isToday = cell.current && cell.day === todayDate && calMonth === todayMonth && calYear === todayYear;
+                                            return (
+                                                <button
+                                                    key={i}
+                                                    disabled={!cell.current}
+                                                    onClick={() => cell.current && selectDay(cell.day)}
+                                                    className={`h-8 text-xs font-semibold rounded-lg transition-colors ${
+                                                        !cell.current
+                                                            ? 'text-slate-300'
+                                                            : isToday
+                                                                ? 'bg-primary-500 text-white hover:bg-primary-600'
+                                                                : 'text-slate-700 hover:bg-primary-50 hover:text-primary-700'
+                                                    }`}
+                                                >
+                                                    {cell.day}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
-                            {/* Preview range */}
-                            <div className="bg-primary-50/60 border border-primary-100 rounded-xl p-3 flex items-center gap-2">
-                                <Calendar className="w-4 h-4 text-primary-600 shrink-0" />
-                                <span className="text-sm font-semibold text-primary-700">{displayRange}</span>
-                            </div>
+                            {/* === THEO TUẦN: Week rows === */}
+                            {drillMode === 'week' && (
+                                <div>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <button onClick={() => { if (calMonth === 0) { setCalYear(y => y - 1); setCalMonth(11); } else setCalMonth(m => m - 1); }}
+                                            className="text-slate-400 hover:text-slate-600 p-1"><span className="text-sm font-bold">‹</span></button>
+                                        <span className="text-sm font-bold text-slate-800">Tháng {calMonth + 1}/{calYear}</span>
+                                        <button onClick={() => { if (calMonth === 11) { setCalYear(y => y + 1); setCalMonth(0); } else setCalMonth(m => m + 1); }}
+                                            className="text-slate-400 hover:text-slate-600 p-1"><span className="text-sm font-bold">›</span></button>
+                                    </div>
+                                    <div className="grid grid-cols-7 gap-0 mb-1">
+                                        {WEEKDAYS.map(w => (
+                                            <div key={w} className="text-center text-[10px] font-bold text-slate-400 py-1">{w}</div>
+                                        ))}
+                                    </div>
+                                    <div className="space-y-1">
+                                        {weekRows.map((row, ri) => {
+                                            const validDays = row.filter(d => d > 0);
+                                            if (validDays.length === 0) return null;
+                                            const firstValid = validDays[0];
+                                            return (
+                                                <button
+                                                    key={ri}
+                                                    onClick={() => selectWeek(firstValid)}
+                                                    className="w-full grid grid-cols-7 gap-0 rounded-lg hover:bg-primary-50 transition-colors group"
+                                                >
+                                                    {row.map((d, di) => (
+                                                        <div key={di} className={`h-8 flex items-center justify-center text-xs font-semibold ${
+                                                            d === 0 ? 'text-slate-300' : 'text-slate-700 group-hover:text-primary-700'
+                                                        }`}>
+                                                            {d > 0 ? d : ''}
+                                                        </div>
+                                                    ))}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
 
-                            {/* Apply button for custom */}
-                            <button
-                                onClick={() => setOpen(false)}
-                                className="w-full py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition-colors"
-                            >
-                                Áp dụng
-                            </button>
+                            {/* === THEO THÁNG: Month grid === */}
+                            {drillMode === 'month' && (
+                                <div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <button onClick={() => setCalYear(y => y - 1)} className="text-slate-400 hover:text-slate-600 p-1"><span className="text-sm font-bold">‹‹</span></button>
+                                        <span className="text-sm font-bold text-slate-800">{calYear}</span>
+                                        <button onClick={() => setCalYear(y => y + 1)} className="text-slate-400 hover:text-slate-600 p-1"><span className="text-sm font-bold">››</span></button>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {MONTH_NAMES.map((name, idx) => {
+                                            const isCurrent = calYear === todayYear && idx === todayMonth;
+                                            return (
+                                                <button
+                                                    key={idx}
+                                                    onClick={() => selectMonth(idx)}
+                                                    className={`px-2 py-3 rounded-lg text-xs font-bold transition-colors ${
+                                                        isCurrent
+                                                            ? 'bg-primary-500 text-white hover:bg-primary-600'
+                                                            : 'text-slate-700 hover:bg-primary-50 hover:text-primary-700'
+                                                    }`}
+                                                >
+                                                    {name}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* === THEO NĂM: Year grid === */}
+                            {drillMode === 'year' && (
+                                <div>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <button onClick={() => setYearPageStart(y => y - 10)} className="text-slate-400 hover:text-slate-600 p-1"><span className="text-sm font-bold">‹‹</span></button>
+                                        <span className="text-sm font-bold text-slate-800">{yearPageStart} — {yearPageStart + 9}</span>
+                                        <button onClick={() => setYearPageStart(y => y + 10)} className="text-slate-400 hover:text-slate-600 p-1"><span className="text-sm font-bold">››</span></button>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {Array.from({ length: 12 }, (_, i) => yearPageStart - 1 + i).map(year => {
+                                            const isInRange = year >= yearPageStart && year <= yearPageStart + 9;
+                                            const isCurrent = year === todayYear;
+                                            return (
+                                                <button
+                                                    key={year}
+                                                    onClick={() => selectYear(year)}
+                                                    className={`px-2 py-3 rounded-lg text-xs font-bold transition-colors ${
+                                                        !isInRange ? 'text-slate-300'
+                                                        : isCurrent ? 'bg-primary-500 text-white hover:bg-primary-600'
+                                                        : 'text-slate-700 hover:bg-primary-50 hover:text-primary-700'
+                                                    }`}
+                                                >
+                                                    {year}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
