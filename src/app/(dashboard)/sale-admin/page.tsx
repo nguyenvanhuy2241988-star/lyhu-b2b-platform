@@ -18,13 +18,7 @@ import Link from 'next/link';
 
 // ========== HELPERS ==========
 const fmt = (n: number) => new Intl.NumberFormat('vi-VN').format(n);
-const fmtPrice = (n: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(n);
-const fmtCompact = (n: number) => {
-    if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)} Tỷ`;
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(0)} Tr đ`;
-    if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K đ`;
-    return `${n} đ`;
-};
+const fmtPrice = (n: number) => new Intl.NumberFormat('vi-VN').format(n) + ' đ';
 const fmtDate = (s: string) => { try { return new Date(s).toLocaleDateString('vi-VN'); } catch { return s; } };
 const toDateStr = (d: Date) => d.toISOString().split('T')[0];
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -377,11 +371,11 @@ export default function SaleAdminDashboard() {
 
     // ========== KPI CARDS ==========
     const statCards = [
-        { label: 'Chờ duyệt', value: allPending.length, icon: AlertCircle, color: 'text-amber-600', bgIcon: 'bg-amber-50', highlight: allPending.length > 0, global: true },
-        { label: 'Xử lý hôm nay', value: todayProcessed.length, icon: ClipboardCheck, color: 'text-primary-600', bgIcon: 'bg-primary-50', global: true },
-        { label: 'Đang giao', value: allDelivering.length, icon: Truck, color: 'text-indigo-600', bgIcon: 'bg-indigo-50', global: true },
-        { label: 'Doanh thu', value: fmtCompact(filteredRevenue), icon: DollarSign, color: 'text-emerald-600', bgIcon: 'bg-emerald-50' },
-        { label: 'Tổng đơn', value: filteredOrders.length, icon: ShoppingCart, color: 'text-primary-700', bgIcon: 'bg-primary-50' },
+        { label: 'Chờ duyệt', value: String(allPending.length), icon: AlertCircle, color: 'text-amber-600', bgIcon: 'bg-amber-50', highlight: allPending.length > 0, global: true },
+        { label: 'Xử lý hôm nay', value: String(todayProcessed.length), icon: ClipboardCheck, color: 'text-primary-600', bgIcon: 'bg-primary-50', global: true },
+        { label: 'Đang giao', value: String(allDelivering.length), icon: Truck, color: 'text-indigo-600', bgIcon: 'bg-indigo-50', global: true },
+        { label: 'Doanh thu', value: fmtPrice(filteredRevenue), icon: DollarSign, color: 'text-emerald-600', bgIcon: 'bg-emerald-50', isPrice: true },
+        { label: 'Tổng đơn', value: String(filteredOrders.length), icon: ShoppingCart, color: 'text-primary-700', bgIcon: 'bg-primary-50' },
         { label: 'Giao thành công', value: filteredOrders.length > 0 ? `${deliveryRate}%` : '—', icon: CheckCircle, color: 'text-secondary-600', bgIcon: 'bg-secondary-50' },
     ];
 
@@ -445,7 +439,7 @@ export default function SaleAdminDashboard() {
                                 )}
                             </div>
                             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider leading-tight">{stat.label}</p>
-                            <h3 className={`text-xl font-extrabold mt-0.5 ${stat.color}`}>
+                            <h3 className={`font-extrabold mt-0.5 ${stat.color} ${(stat as any).isPrice ? 'text-[15px] leading-snug' : 'text-xl'}`}>
                                 {isLoading ? <span className="inline-block w-10 h-5 bg-slate-100 rounded animate-pulse" /> : stat.value}
                             </h3>
                         </div>
@@ -521,7 +515,7 @@ export default function SaleAdminDashboard() {
                                     <p className="text-sm font-semibold text-slate-800 truncate">{s.name}</p>
                                     <p className="text-[11px] text-slate-400">{s.count} đơn</p>
                                 </div>
-                                <p className="text-sm font-bold text-primary-600 shrink-0">{fmtCompact(s.revenue)}</p>
+                                <p className="text-xs font-bold text-primary-600 shrink-0">{fmtPrice(s.revenue)}</p>
                             </div>
                         )) : (
                             <p className="text-sm text-slate-300 text-center py-8">Chưa có dữ liệu</p>
