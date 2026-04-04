@@ -250,14 +250,38 @@ export default function QuotePrintView({ quote, onClose }: QuotePrintViewProps) 
                                         // Price List mode
                                         const groups: { category: string, items: QuoteItem[] }[] = [];
                                         items.forEach(item => {
-                                            const cat = (item.category || '').trim() || 'SẢN PHẨM KHÁC';
-                                            let group = groups.find(g => g.category.toUpperCase() === cat.toUpperCase());
+                                            let detectedCat = (item.category || '').trim();
+                                            if (!detectedCat) {
+                                                const nameLower = (item.name || '').toLowerCase();
+                                                if (nameLower.includes('abi')) {
+                                                    detectedCat = 'BÁNH TRÁNG ABI SNACK';
+                                                } else if (nameLower.includes('boyo')) {
+                                                    detectedCat = 'BỘT PHÔ MAI BOYO';
+                                                } else if (nameLower.includes('mèo food')) {
+                                                    detectedCat = 'BÁNH TRÁNG MÈO FOOD';
+                                                } else if (nameLower.includes('twitchui')) {
+                                                    detectedCat = 'KẸO DẺO TWITCHUI';
+                                                } else {
+                                                    detectedCat = 'SẢN PHẨM KHÁC';
+                                                }
+                                            }
+                                            
+                                            const cat = detectedCat.toUpperCase();
+                                            let group = groups.find(g => g.category === cat);
                                             if (!group) {
-                                                group = { category: cat.toUpperCase(), items: [] };
+                                                group = { category: cat, items: [] };
                                                 groups.push(group);
                                             }
                                             group.items.push(item);
                                         });
+                                        
+                                        // Sort groups alphabetically, put 'SẢN PHẨM KHÁC' at the end
+                                        groups.sort((a, b) => {
+                                            if (a.category === 'SẢN PHẨM KHÁC') return 1;
+                                            if (b.category === 'SẢN PHẨM KHÁC') return -1;
+                                            return a.category.localeCompare(b.category);
+                                        });
+
 
                                         let globalIdx = 1;
                                         return groups.map((group, gIdx) => (

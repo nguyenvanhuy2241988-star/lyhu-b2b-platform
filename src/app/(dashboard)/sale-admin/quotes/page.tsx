@@ -330,22 +330,44 @@ function QuoteEditorModal({
     const addProduct = (productId: string) => {
         const prod = products.find(p => p.id === productId);
         if (!prod) return;
-        setItems(prev => [...prev, {
-            productId: prod.id,
-            name: prod.name || prod.title || '',
-            sku: prod.sku || '',
-            quantity: 1,
-            unitPrice: prod.price || 0,
-            subtotal: prod.price || 0,
-            imageUrl: '',
-            unit: 'Cái',
-            weight: '',
-            expiry: '',
-            packSize: '1',
-            retailPrice: prod.price || 0,
-            wholesalePrice: prod.price || 0,
-            category: ''
-        }]);
+        
+        const name = prod.name || prod.title || '';
+        let detectedCategory = '';
+        const nameLower = name.toLowerCase();
+        if (nameLower.includes('abi')) {
+            detectedCategory = 'BÁNH TRÁNG ABI SNACK';
+        } else if (nameLower.includes('boyo')) {
+            detectedCategory = 'BỘT PHÔ MAI BOYO';
+        } else if (nameLower.includes('mèo food')) {
+            detectedCategory = 'BÁNH TRÁNG MÈO FOOD';
+        } else if (nameLower.includes('twitchui')) {
+            detectedCategory = 'KẸO DẺO TWITCHUI';
+        }
+
+        setItems(prev => {
+            const newItems = [...prev, {
+                productId: prod.id,
+                name: name,
+                sku: prod.sku || '',
+                quantity: 1,
+                unitPrice: prod.price || 0,
+                subtotal: prod.price || 0,
+                imageUrl: '',
+                unit: 'Cái',
+                weight: '100g',
+                expiry: '12 tháng',
+                packSize: '1',
+                retailPrice: prod.price || 0,
+                wholesalePrice: prod.price || 0,
+                category: detectedCategory
+            }];
+            
+            // Auto-sort items by category so they group naturally in the UI too
+            if (isPriceList) {
+                return newItems.sort((a, b) => (a.category || 'Z').localeCompare(b.category || 'Z'));
+            }
+            return newItems;
+        });
     };
 
     const updateItem = (idx: number, field: keyof QuoteItem, value: any) => {
@@ -487,7 +509,10 @@ function QuoteEditorModal({
                                                         className="w-full font-semibold text-slate-800 outline-none bg-transparent mb-1"
                                                     />
                                                     {isPriceList ? (
-                                                        <input type="text" placeholder="Mã SKU" value={item.sku || ''} onChange={e => updateItem(idx, 'sku', e.target.value)} className="w-20 bg-transparent border-b border-dashed border-slate-300 text-[10px] text-slate-500 outline-none" />
+                                                        <div className="flex items-center gap-2">
+                                                            <input type="text" placeholder="Thương hiệu / Nhóm" value={item.category || ''} onChange={e => updateItem(idx, 'category', e.target.value)} className="w-[120px] bg-transparent border-b border-dashed border-slate-300 text-[10px] text-slate-500 outline-none focus:border-primary-400" />
+                                                            <input type="text" placeholder="Mã SKU" value={item.sku || ''} onChange={e => updateItem(idx, 'sku', e.target.value)} className="w-[70px] bg-transparent border-b border-dashed border-slate-300 text-[10px] text-slate-500 outline-none focus:border-primary-400" />
+                                                        </div>
                                                     ) : (
                                                         item.sku && <span className="block text-[10px] text-slate-400">SKU: {item.sku}</span>
                                                     )}
