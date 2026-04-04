@@ -8,6 +8,7 @@ export default function SaleAdminOrdersPage() {
             readOnly={false}
             maskSensitiveData={false}
             hideRevenue={false}
+            canEditShipping={true}
         />
     );
 }

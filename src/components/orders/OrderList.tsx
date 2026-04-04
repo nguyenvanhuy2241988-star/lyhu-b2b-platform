@@ -503,16 +503,29 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                                                             <Eye className="w-4 h-4" />
                                                         </button>
 
-                                                        {!readOnly && (
+                                                        {!readOnly && order.status === 'pending' && (
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     setEditOrder(order);
                                                                 }}
                                                                 className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                                title="Sửa đơn hàng"
+                                                                title="Sửa thông tin đơn hàng"
                                                             >
                                                                 <Edit className="w-4 h-4" />
+                                                            </button>
+                                                        )}
+
+                                                        {!readOnly && order.status !== 'pending' && canEditShipping && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setShippingEditOrder(order);
+                                                                }}
+                                                                className="p-2 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                                                                title="Sửa thông tin vận chuyển"
+                                                            >
+                                                                <Truck className="w-4 h-4" />
                                                             </button>
                                                         )}
 
@@ -564,14 +577,7 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                                                                 <Trash2 className="w-4 h-4" />
                                                             </button>
                                                         )}
-                                                        {canEditShipping && (
-                                                            <button
-                                                                onClick={() => setShippingEditOrder(order)}
-                                                                className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium"
-                                                            >
-                                                                <Edit className="w-3 h-3" /> Sửa
-                                                            </button>
-                                                        )}
+
                                                     </div>
                                                 </td>
                                             </tr>
