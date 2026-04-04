@@ -116,7 +116,7 @@ import { CreateTaskModal } from "@/components/telesales/CreateTaskModal";
 import { LogCallModal } from "@/components/telesales/LogCallModal";
 import { TaskSimpleModal } from "@/components/telesales/TaskSimpleModal";
 import { CreateLeadModal } from "@/components/telesales/CreateLeadModal";
-import { FileText, Link as LinkIcon, Image as ImageIcon, CheckCircle, ChevronDown, MoreHorizontal, UserPlus, Paperclip } from "lucide-react";
+import { FileText, Link as LinkIcon, Image as ImageIcon, CheckCircle, ChevronDown, MoreHorizontal, UserPlus, Paperclip, CheckSquare } from "lucide-react";
 
 // --- Components ---
 
@@ -159,14 +159,19 @@ interface TaskCardProps {
     isOverdue?: boolean;
     isHighlighted?: boolean;
     profiles?: Profile[];
+    onHandledToday?: (task: TelesalesTask) => void;
 }
 
-const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, onLogCall, onEdit, onToggleStatus, onRefresh, isOverdue, isHighlighted, profiles = [] }: TaskCardProps) => {
+const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, onLogCall, onEdit, onToggleStatus, onRefresh, isOverdue, isHighlighted, profiles = [], onHandledToday }: TaskCardProps) => {
     // Toggle Complete Handler - Option A: Direct Refresh
     const handleComplete = (e: React.MouseEvent) => {
         e.stopPropagation();
         onToggleStatus(task);
     };
+
+    const now = new Date();
+    const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const isHandledToday = task.handled_date === localDate;
 
     return (
         <>
@@ -201,8 +206,7 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
                 ${isDragging ? '' : 'active:cursor-grabbing'}
             `}
             >
-                {/* Type Badge - LYHU Minimal */}
-                <div className="mb-2">
+                <div className="mb-2 flex items-center justify-between">
                     {task.title.startsWith('📋 PV:') ? (
                         <span className="inline-block px-2 py-0.5 bg-primary-50 text-primary-700 rounded text-xs font-medium border border-primary-200">
                             📋 Phỏng vấn
@@ -210,6 +214,12 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
                     ) : (
                         <span className="inline-block px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-xs font-medium border border-slate-200">
                             Công việc
+                        </span>
+                    )}
+                    {isHandledToday && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-50 text-green-700 text-[10px] font-bold rounded border border-green-100">
+                            <CheckSquare className="w-2.5 h-2.5" />
+                            Đã xử lý hôm nay
                         </span>
                     )}
                 </div>
@@ -323,6 +333,16 @@ const TaskCard = ({ task, isDragging, onDragStart, onDragOver, dropIndicator, on
                                 title="Gọi ngay"
                             >
                                 <Phone className="w-3.5 h-3.5" />
+                            </button>
+                        )}
+
+                        {onHandledToday && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onHandledToday(task); }}
+                                className={`p-1 rounded transition-colors ${isHandledToday ? 'text-green-600 bg-green-100 hover:bg-green-200' : 'text-slate-400 hover:bg-green-50 hover:text-green-600'}`}
+                                title="Đã xử lý hôm nay"
+                            >
+                                <CheckSquare className="w-3.5 h-3.5" />
                             </button>
                         )}
 
@@ -494,6 +514,29 @@ export default function TelesalesTasksPage() {
         } else {
             // Refresh to show task in correct column
             refreshData();
+        }
+    };
+
+    const handleHandledToday = async (task: TelesalesTask) => {
+        const taskId = task.id;
+        const now = new Date();
+        const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        
+        // 🚀 Optimistic update
+        setColumnTasks(prev => {
+            const newColumnTasks = { ...prev };
+            for (const colId in newColumnTasks) {
+                newColumnTasks[colId] = newColumnTasks[colId].map(t =>
+                    t.id === taskId ? { ...t, handled_date: localDate } : t
+                );
+            }
+            return newColumnTasks;
+        });
+
+        const success = await updateTaskSupabase(taskId, { handled_date: localDate }, session?.access_token);
+        if (!success) {
+            refreshData();
+            alert("Lỗi: Không thể cập nhật trạng thái xử lý.");
         }
     };
 
@@ -1627,6 +1670,7 @@ export default function TelesalesTasksPage() {
                                                             isOverdue={isOverdueTask}
                                                             isHighlighted={highlightedTaskId === task.id}
                                                             profiles={profiles}
+                                                            onHandledToday={handleHandledToday}
                                                         />
                                                     )
                                                 })}

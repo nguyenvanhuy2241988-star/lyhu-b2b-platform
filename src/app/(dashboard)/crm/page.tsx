@@ -1213,8 +1213,8 @@ export default function CRMPage() {
 
         const matchesPriority = filterPriority === "all" || deal.priority === filterPriority;
 
-        // Always show deals in 'done' stage (won/lost), or match status filter
-        const matchesStatus = filterStatus === "all" || deal.status === filterStatus || deal.stage === 'done';
+        // Always show deals in 'done' or 'order' stage, or match status filter
+        const matchesStatus = filterStatus === "all" || deal.status === filterStatus || deal.stage === 'done' || deal.stage === 'order';
 
         // Customer type filter
         const matchesCustomerType = filterCustomerType === "all" || deal.customer?.type === filterCustomerType;

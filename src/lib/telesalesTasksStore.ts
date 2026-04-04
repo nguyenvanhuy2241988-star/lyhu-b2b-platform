@@ -167,6 +167,7 @@ export type TelesalesTask = {
 
     due_date?: string | null;      // ISO string
     completed_at?: string | null;  // ISO string
+    handled_date?: string | null;  // Date string YYYY-MM-DD
 
     assigned_to?: string | null;   // User ID of assignee (legacy)
     assignee_ids?: string[] | null; // Array of user IDs
@@ -290,6 +291,7 @@ export async function fetchUnifiedTasks(input: {
             is_overdue: t.is_overdue,
             assignee_ids: t.assignee_ids, // NEW
             leader_id: t.leader_id,      // NEW
+            handled_date: t.handled_date, // NEW
             attachments: t.attachments || [] // NEW
         })) as TelesalesTask[];
 
@@ -402,6 +404,7 @@ export async function updateTaskSupabase(taskId: string, patch: Partial<Telesale
         priority: patch.priority,
         due_date: patch.due_date ?? null, // FIX: Don't auto-assign due_date
         completed_at: patch.completed_at ?? null,
+        handled_date: patch.handled_date ?? undefined,
         order: patch.order ?? undefined,
         type: patch.type,
         assigned_to: patch.assigned_to ?? undefined,
