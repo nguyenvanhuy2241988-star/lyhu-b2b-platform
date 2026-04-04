@@ -331,9 +331,12 @@ export default function SaleAdminDashboard() {
             const dayOrders = orders.filter(o => toDateStr(new Date(o.createdAt)) === ds);
             days.push({
                 label: d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }),
-                total: dayOrders.length,
+                pending: dayOrders.filter(o => o.status === 'pending').length,
+                processing: dayOrders.filter(o => o.status === 'processing').length,
+                delivering: dayOrders.filter(o => o.status === 'delivering').length,
                 delivered: dayOrders.filter(o => o.status === 'delivered').length,
                 cancelled: dayOrders.filter(o => o.status === 'cancelled').length,
+                total: dayOrders.length,
             });
         }
         return days;
@@ -467,30 +470,70 @@ export default function SaleAdminDashboard() {
                             <div className="flex items-center justify-center h-full text-slate-300 text-sm">Chưa có dữ liệu</div>
                         ) : (
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={chartData} barCategoryGap="25%">
+                                <BarChart data={chartData} barCategoryGap="30%">
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                                     <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false}
                                         interval={chartData.length > 15 ? Math.floor(chartData.length / 8) : 0} />
                                     <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} allowDecimals={false} width={30} />
                                     <Tooltip
-                                        contentStyle={{ borderRadius: 10, border: '1px solid #e2e8f0', fontSize: 13 }}
-                                        formatter={(value: any, name: any) => {
-                                            const l: Record<string, string> = { total: 'Tổng', delivered: 'Đã giao', cancelled: 'Hủy' };
-                                            return [value, l[name] || name];
+                                        cursor={{ fill: 'rgba(0,175,169,0.06)' }}
+                                        content={({ active, payload, label }: any) => {
+                                            if (!active || !payload?.length) return null;
+                                            const data = payload[0]?.payload;
+                                            if (!data) return null;
+                                            const items = [
+                                                { label: 'Chờ duyệt', value: data.pending, color: STATUS_COLORS.pending },
+                                                { label: 'Đang xử lý', value: data.processing, color: STATUS_COLORS.processing },
+                                                { label: 'Đang giao', value: data.delivering, color: STATUS_COLORS.delivering },
+                                                { label: 'Đã giao', value: data.delivered, color: STATUS_COLORS.delivered },
+                                                { label: 'Đã hủy', value: data.cancelled, color: STATUS_COLORS.cancelled },
+                                            ];
+                                            return (
+                                                <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-3 min-w-[160px]">
+                                                    <p className="text-xs font-bold text-slate-800 mb-2 pb-1.5 border-b border-slate-100">
+                                                        Ngày {label} — <span className="text-primary-600">{data.total} đơn</span>
+                                                    </p>
+                                                    <div className="space-y-1">
+                                                        {items.filter(i => i.value > 0).map((item, idx) => (
+                                                            <div key={idx} className="flex items-center justify-between text-xs">
+                                                                <span className="flex items-center gap-1.5">
+                                                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                                                                    <span className="text-slate-600">{item.label}</span>
+                                                                </span>
+                                                                <span className="font-bold text-slate-800">{item.value}</span>
+                                                            </div>
+                                                        ))}
+                                                        {items.every(i => i.value === 0) && (
+                                                            <p className="text-xs text-slate-400">Không có đơn</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
                                         }}
                                     />
-                                    <Bar dataKey="total" name="total" radius={[4, 4, 0, 0]} fill={BRAND.teal} opacity={0.85} />
-                                    <Bar dataKey="delivered" name="delivered" radius={[4, 4, 0, 0]} fill={BRAND.lime} />
-                                    <Bar dataKey="cancelled" name="cancelled" radius={[4, 4, 0, 0]} fill="#ef4444" opacity={0.6} />
+                                    <Bar dataKey="delivered" name="Đã giao" stackId="orders" fill={BRAND.teal} />
+                                    <Bar dataKey="delivering" name="Đang giao" stackId="orders" fill="#6366f1" />
+                                    <Bar dataKey="processing" name="Đang xử lý" stackId="orders" fill="#3b82f6" />
+                                    <Bar dataKey="pending" name="Chờ duyệt" stackId="orders" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="cancelled" name="Đã hủy" stackId="orders" fill="#ef4444" opacity={0.7} />
                                 </BarChart>
                             </ResponsiveContainer>
                         )}
                     </div>
                     {/* Chart legend */}
-                    <div className="flex items-center gap-5 mt-3 pt-3 border-t border-slate-50">
-                        <span className="flex items-center gap-1.5 text-xs text-slate-500"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: BRAND.teal }} /> Tổng đơn</span>
-                        <span className="flex items-center gap-1.5 text-xs text-slate-500"><span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: BRAND.lime }} /> Đã giao</span>
-                        <span className="flex items-center gap-1.5 text-xs text-slate-500"><span className="w-2.5 h-2.5 rounded-sm bg-red-400" /> Đã hủy</span>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 pt-3 border-t border-slate-50">
+                        {[
+                            { label: 'Đã giao', color: BRAND.teal },
+                            { label: 'Đang giao', color: '#6366f1' },
+                            { label: 'Đang xử lý', color: '#3b82f6' },
+                            { label: 'Chờ duyệt', color: '#f59e0b' },
+                            { label: 'Đã hủy', color: '#ef4444' },
+                        ].map((l, i) => (
+                            <span key={i} className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                                <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: l.color }} />
+                                {l.label}
+                            </span>
+                        ))}
                     </div>
                 </div>
 
