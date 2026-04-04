@@ -2,12 +2,45 @@ import { supabase } from './supabaseClient';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+// Circuit-breaker: once an inventory RPC returns 404,
+// disable ALL inventory calls for this session to avoid spamming console.
+let _inventoryDisabled = false;
+const SKIP_RESPONSE: RPCResponse = { success: false, message: 'Inventory module not active' };
+
 const getHeaders = (token?: string) => ({
     'Content-Type': 'application/json',
     'apikey': SUPABASE_KEY || '',
     'Authorization': `Bearer ${token || SUPABASE_KEY}`,
-    'Prefer': 'return=representation' // Useful for RPCs sometimes
+    'Prefer': 'return=representation'
 });
+
+/** Internal helper: call an inventory RPC safely. On 404 → disable module. */
+async function callInventoryRPC(
+    fnName: string,
+    body: Record<string, any>,
+    token?: string
+): Promise<RPCResponse> {
+    if (_inventoryDisabled) return SKIP_RESPONSE;
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fnName}`, {
+            method: 'POST',
+            headers: getHeaders(token),
+            body: JSON.stringify(body)
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ message: `${fnName} failed` }));
+            if (res.status === 404) {
+                _inventoryDisabled = true;
+                console.warn(`[inventoryStore] ${fnName} not found on DB → inventory module disabled for this session.`);
+                return SKIP_RESPONSE;
+            }
+            return { success: false, message: err.message };
+        }
+        return (await res.json()) as RPCResponse;
+    } catch {
+        return SKIP_RESPONSE;
+    }
+}
 
 // Types matching DB schema
 export interface InventoryLevel {
@@ -40,124 +73,37 @@ export interface RPCResponse {
 }
 
 // ==========================================================
-// CORE FUNCTIONS (Calling RPCs)
+// CORE FUNCTIONS (Calling RPCs via circuit-breaker)
 // ==========================================================
 
-/**
- * Reserve stock for an order (Giữ hàng)
- * Use when Order is CREATED or CONFIRMED
- */
 export async function reserveStock(
-    warehouseId: string,
-    productId: string,
-    quantity: number,
-    orderId: string,
-    userId: string,
-    token?: string
+    warehouseId: string, productId: string, quantity: number,
+    orderId: string, userId: string, token?: string
 ): Promise<RPCResponse> {
-    try {
-        const headers = getHeaders(token);
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/fn_reserve_stock`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-                p_warehouse_id: warehouseId,
-                p_product_id: productId,
-                p_quantity: quantity,
-                p_ref_id: orderId,
-                p_user_id: userId
-            })
-        });
-
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.message || 'Error calling fn_reserve_stock');
-        }
-
-        const data = await res.json();
-        return data as RPCResponse;
-    } catch (err: any) {
-        console.warn('[inventoryStore] reserveStock skipped:', err.message || err);
-        return { success: false, message: err.message || 'Lỗi giữ hàng' };
-    }
+    return callInventoryRPC('fn_reserve_stock', {
+        p_warehouse_id: warehouseId, p_product_id: productId,
+        p_quantity: quantity, p_ref_id: orderId, p_user_id: userId
+    }, token);
 }
 
-/**
- * Release stock (Nhả hàng)
- * Use when Order is CANCELLED
- */
 export async function releaseStock(
-    warehouseId: string,
-    productId: string,
-    quantity: number,
-    orderId: string,
-    userId: string,
-    token?: string
+    warehouseId: string, productId: string, quantity: number,
+    orderId: string, userId: string, token?: string
 ): Promise<RPCResponse> {
-    try {
-        const headers = getHeaders(token);
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/fn_release_stock`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-                p_warehouse_id: warehouseId,
-                p_product_id: productId,
-                p_quantity: quantity,
-                p_ref_id: orderId,
-                p_user_id: userId
-            })
-        });
-
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.message || 'Error calling fn_release_stock');
-        }
-
-        const data = await res.json();
-        return data as RPCResponse;
-    } catch (err: any) {
-        console.warn('[inventoryStore] releaseStock skipped:', err.message || err);
-        return { success: false, message: err.message || 'Lỗi nhả hàng' };
-    }
+    return callInventoryRPC('fn_release_stock', {
+        p_warehouse_id: warehouseId, p_product_id: productId,
+        p_quantity: quantity, p_ref_id: orderId, p_user_id: userId
+    }, token);
 }
 
-/**
- * Ship stock (Xuất kho)
- * Use when Order is SHIPPED/COMPLETED
- */
 export async function shipStock(
-    warehouseId: string,
-    productId: string,
-    quantity: number,
-    orderId: string,
-    userId: string,
-    token?: string
+    warehouseId: string, productId: string, quantity: number,
+    orderId: string, userId: string, token?: string
 ): Promise<RPCResponse> {
-    try {
-        const headers = getHeaders(token);
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/fn_ship_stock`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-                p_warehouse_id: warehouseId,
-                p_product_id: productId,
-                p_quantity: quantity,
-                p_ref_id: orderId,
-                p_user_id: userId
-            })
-        });
-
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.message || 'Error calling fn_ship_stock');
-        }
-
-        const data = await res.json();
-        return data as RPCResponse;
-    } catch (err: any) {
-        console.warn('[inventoryStore] shipStock skipped:', err.message || err);
-        return { success: false, message: err.message || 'Lỗi xuất kho' };
-    }
+    return callInventoryRPC('fn_ship_stock', {
+        p_warehouse_id: warehouseId, p_product_id: productId,
+        p_quantity: quantity, p_ref_id: orderId, p_user_id: userId
+    }, token);
 }
 
 /**
