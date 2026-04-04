@@ -2,9 +2,10 @@ import { supabase } from './supabaseClient';
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// Circuit-breaker: once an inventory RPC returns 404,
-// disable ALL inventory calls for this session to avoid spamming console.
-let _inventoryDisabled = false;
+// Circuit-breaker with sessionStorage persistence:
+// After first 404, remember across page refreshes → never call again.
+const INVENTORY_DISABLED_KEY = 'lyhu_inventory_module_disabled';
+let _inventoryDisabled = typeof window !== 'undefined' && sessionStorage.getItem(INVENTORY_DISABLED_KEY) === '1';
 const SKIP_RESPONSE: RPCResponse = { success: false, message: 'Inventory module not active' };
 
 const getHeaders = (token?: string) => ({
@@ -14,7 +15,7 @@ const getHeaders = (token?: string) => ({
     'Prefer': 'return=representation'
 });
 
-/** Internal helper: call an inventory RPC safely. On 404 → disable module. */
+/** Internal helper: call an inventory RPC safely. On 404 → disable module persistently. */
 async function callInventoryRPC(
     fnName: string,
     body: Record<string, any>,
@@ -28,12 +29,12 @@ async function callInventoryRPC(
             body: JSON.stringify(body)
         });
         if (!res.ok) {
-            const err = await res.json().catch(() => ({ message: `${fnName} failed` }));
             if (res.status === 404) {
                 _inventoryDisabled = true;
-                console.warn(`[inventoryStore] ${fnName} not found on DB → inventory module disabled for this session.`);
+                try { sessionStorage.setItem(INVENTORY_DISABLED_KEY, '1'); } catch {}
                 return SKIP_RESPONSE;
             }
+            const err = await res.json().catch(() => ({ message: `${fnName} failed` }));
             return { success: false, message: err.message };
         }
         return (await res.json()) as RPCResponse;
