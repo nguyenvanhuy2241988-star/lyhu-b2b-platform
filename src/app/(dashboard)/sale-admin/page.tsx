@@ -467,11 +467,42 @@ export default function SaleAdminDashboard() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [newOrderToast, setNewOrderToast] = useState<string | null>(null);
 
     // Time filter state
     const [timePreset, setTimePreset] = useState<TimePreset>('this_month');
     const [customFrom, setCustomFrom] = useState('');
     const [customTo, setCustomTo] = useState('');
+
+    // Beep sound using Web Audio API
+    const playBeep = useCallback(() => {
+        try {
+            const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = 880;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.4);
+            // Second beep
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+            osc2.frequency.value = 1100;
+            osc2.type = 'sine';
+            gain2.gain.setValueAtTime(0.3, ctx.currentTime + 0.15);
+            gain2.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.55);
+            osc2.start(ctx.currentTime + 0.15);
+            osc2.stop(ctx.currentTime + 0.55);
+        } catch (e) { /* Audio not available */ }
+    }, []);
+
+    const prevPendingCountRef = useRef(0);
 
     const loadData = useCallback(async () => {
         setIsLoading(true);
@@ -493,7 +524,16 @@ export default function SaleAdminDashboard() {
         loadData();
         const channel = supabase
             .channel('sale-admin-dashboard')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => loadData())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload: any) => {
+                // Detect new pending order
+                if (payload.eventType === 'INSERT' && payload.new?.status === 'pending') {
+                    playBeep();
+                    const name = payload.new.customer_name || 'Khách hàng';
+                    setNewOrderToast(`🛒 Đơn mới — ${name}`);
+                    setTimeout(() => setNewOrderToast(null), 4000);
+                }
+                loadData();
+            })
             .subscribe();
         return () => { supabase.removeChannel(channel); };
     }, [loadData]);
@@ -895,6 +935,19 @@ export default function SaleAdminDashboard() {
                     </div>
                 </div>
             </div>
+
+            {/* New order toast notification */}
+            {newOrderToast && (
+                <div className="fixed bottom-6 right-6 z-50 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-right-4 duration-300">
+                    <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center shrink-0">
+                        <ShoppingCart className="w-4 h-4" />
+                    </div>
+                    <div>
+                        <p className="text-sm font-bold">{newOrderToast}</p>
+                        <p className="text-[10px] text-slate-400">Vừa tạo</p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

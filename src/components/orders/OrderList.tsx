@@ -14,16 +14,18 @@ import { supabase } from "@/lib/supabaseClient";
 import { scanOrdersForFraud } from "@/lib/fraudScan";
 import {
     Package, Clock, CheckCircle, XCircle, Search, Calendar,
-    AlertTriangle, ShieldAlert, ArrowUpDown, Filter, Download, MessageCircle, Eye, Trash2, Truck, RotateCcw, Edit, User as UserIcon, Scale, UserCheck, StickyNote
+    AlertTriangle, ShieldAlert, ArrowUpDown, Filter, Download, MessageCircle, Eye, Trash2, Truck, RotateCcw, Edit, User as UserIcon, Scale, UserCheck, StickyNote,
+    CheckSquare, Square, Printer, Loader2
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { exportOrdersToCSV } from "@/lib/exportCSV";
 import { notifyNewOrder } from "@/hooks/useNotification";
 import { OrderChatModal } from "@/components/orders/OrderChatModal";
-import { OrderDetailsModal } from "@/components/orders/OrderDetailsModal"; // Added import
+import { OrderDetailsModal } from "@/components/orders/OrderDetailsModal";
 import { getOrdersWithUnreadMessages } from "@/lib/orderChatStore";
 import { OrderEditModal } from "@/components/orders/OrderEditModal";
-import { fetchUsers, type User } from "@/lib/usersStore"; // Import fetchUsers
+import { fetchUsers, type User } from "@/lib/usersStore";
+import DeliverySlip from "@/components/orders/DeliverySlip";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -101,6 +103,9 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
     const [editOrder, setEditOrder] = useState<Order | null>(null);
     const [shippingEditOrder, setShippingEditOrder] = useState<Order | null>(null);
     const [unreadOrders, setUnreadOrders] = useState<Set<string>>(new Set());
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [batchLoading, setBatchLoading] = useState(false);
+    const [printOrder, setPrintOrder] = useState<Order | null>(null);
 
     // User Filter State
     const [users, setUsers] = useState<User[]>([]);
@@ -224,6 +229,43 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
         } else {
             alert("❌ Lỗi: Không thể cập nhật trạng thái.");
         }
+    };
+
+    // Batch operations
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            return next;
+        });
+    };
+    const toggleSelectAll = () => {
+        if (selectedIds.size === filteredOrders.length) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(filteredOrders.map(o => o.id)));
+        }
+    };
+    const handleBatchStatus = async (newStatus: OrderStatus) => {
+        if (readOnly || selectedIds.size === 0) return;
+        const statusLabels: Record<string, string> = { processing: 'Duyệt', delivering: 'Chuyển giao hàng', cancelled: 'Hủy' };
+        const confirmed = window.confirm(
+            `⚠️ Bạn có chắc chắn muốn ${statusLabels[newStatus] || newStatus} ${selectedIds.size} đơn hàng?\n\nHành động này sẽ áp dụng cho tất cả đơn đã chọn.`
+        );
+        if (!confirmed) return;
+
+        const userId = user?.id;
+        if (!userId) { alert('❌ Vui lòng đăng nhập lại'); return; }
+
+        setBatchLoading(true);
+        const results = await Promise.allSettled(
+            Array.from(selectedIds).map(id => updateOrderStatus(id, newStatus, userId, session?.access_token))
+        );
+        const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value)).length;
+        setBatchLoading(false);
+        setSelectedIds(new Set());
+        loadData(true);
+        if (failed > 0) alert(`⚠️ ${failed}/${selectedIds.size} đơn không cập nhật được.`);
     };
 
     const filteredOrders = orders.filter(order => {
@@ -398,6 +440,15 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                     <table className="w-full text-left text-sm">
                         <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                             <tr>
+                                {!readOnly && (
+                                    <th className="px-3 py-3 w-10">
+                                        <button onClick={toggleSelectAll} className="p-0.5 hover:text-primary-600 transition-colors">
+                                            {selectedIds.size > 0 && selectedIds.size === filteredOrders.length
+                                                ? <CheckSquare className="w-4 h-4 text-primary-600" />
+                                                : <Square className="w-4 h-4 text-slate-400" />}
+                                        </button>
+                                    </th>
+                                )}
                                 <th className="px-6 py-3 font-medium">Mã đơn</th>
                                 <th className="px-6 py-3 font-medium">Khách hàng</th>
                                 <th className="px-6 py-3 font-medium">Nguồn</th>
@@ -431,8 +482,17 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                                     return (
                                         <React.Fragment key={order.id}>
                                             <tr
-                                                className={`hover:bg-slate-50 transition-colors ${isCompleted ? "opacity-75" : ""}`}
+                                                className={`hover:bg-slate-50 transition-colors ${isCompleted ? "opacity-75" : ""} ${selectedIds.has(order.id) ? 'bg-primary-50/50' : ''}`}
                                             >
+                                                {!readOnly && (
+                                                    <td className="px-3 py-4 w-10">
+                                                        <button onClick={() => toggleSelect(order.id)} className="p-0.5">
+                                                            {selectedIds.has(order.id)
+                                                                ? <CheckSquare className="w-4 h-4 text-primary-600" />
+                                                                : <Square className="w-4 h-4 text-slate-300 hover:text-slate-500" />}
+                                                        </button>
+                                                    </td>
+                                                )}
                                                 <td className="px-6 py-4 font-medium text-slate-900">
                                                     {order.readableId ? `#${order.readableId}` : order.id}
                                                     {order.flagged && (
@@ -501,6 +561,14 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                                                             title="Xem chi tiết"
                                                         >
                                                             <Eye className="w-4 h-4" />
+                                                        </button>
+
+                                                        <button
+                                                            onClick={() => setPrintOrder(order)}
+                                                            className="p-2 text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                                            title="In phiếu giao hàng"
+                                                        >
+                                                            <Printer className="w-4 h-4" />
                                                         </button>
 
                                                         {!readOnly && order.status === 'pending' && (
@@ -641,6 +709,46 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                 </div>
             </div>
 
+            {/* Batch Action Bar */}
+            {!readOnly && selectedIds.size > 0 && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white rounded-2xl shadow-2xl px-6 py-3 flex items-center gap-4 animate-in slide-in-from-bottom-4 duration-200">
+                    <span className="text-sm font-bold">
+                        {selectedIds.size} đơn đã chọn
+                    </span>
+                    <div className="w-px h-6 bg-slate-700" />
+                    <button
+                        onClick={() => handleBatchStatus('processing')}
+                        disabled={batchLoading}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
+                    >
+                        {batchLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle className="w-3.5 h-3.5" />}
+                        Duyệt
+                    </button>
+                    <button
+                        onClick={() => handleBatchStatus('delivering')}
+                        disabled={batchLoading}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
+                    >
+                        {batchLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Truck className="w-3.5 h-3.5" />}
+                        Giao hàng
+                    </button>
+                    <button
+                        onClick={() => handleBatchStatus('cancelled')}
+                        disabled={batchLoading}
+                        className="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
+                    >
+                        {batchLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
+                        Hủy
+                    </button>
+                    <button
+                        onClick={() => setSelectedIds(new Set())}
+                        className="ml-2 px-3 py-2 text-xs font-medium text-slate-400 hover:text-white transition-colors"
+                    >
+                        Bỏ chọn
+                    </button>
+                </div>
+            )}
+
             {/* Order Details Modal */}
             <OrderDetailsModal
                 isOpen={!!selectedOrder}
@@ -678,6 +786,14 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                             return next;
                         });
                     }}
+                />
+            )}
+
+            {/* Delivery Slip Print Modal */}
+            {printOrder && (
+                <DeliverySlip
+                    order={printOrder}
+                    onClose={() => setPrintOrder(null)}
                 />
             )}
         </div>
