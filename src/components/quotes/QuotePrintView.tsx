@@ -219,51 +219,93 @@ export default function QuotePrintView({ quote, onClose }: QuotePrintViewProps) 
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {items.map((item, idx) => {
-                                        const lineTotal = item.subtotal || (item.unitPrice || 0) * (item.quantity || 0);
-                                        const isEven = idx % 2 === 0;
-                                        return (
-                                            <tr key={idx} style={{ backgroundColor: isEven ? '#ffffff' : '#f8fafc' }}>
-                                                <td className="px-1.5 py-2 text-center border border-slate-300 font-semibold text-slate-600 align-middle">
-                                                    {idx + 1}
-                                                </td>
-                                                <td className="px-1.5 py-2 text-center border border-slate-300 text-slate-700 font-medium align-middle">
-                                                    {item.sku || '---'}
-                                                </td>
-                                                <td className="px-2 py-2 border border-slate-300 align-middle">
-                                                    <p className="font-semibold text-slate-800">{item.name}</p>
-                                                    {item.isGift && (
-                                                        <span className="inline-block text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded mt-0.5 font-bold">🎁 Quà tặng</span>
-                                                    )}
-                                                </td>
-                                                {isPriceList ? (
-                                                    <>
-                                                        <td className="px-1.5 py-2 text-center border border-slate-300 text-slate-700 align-middle">{item.unit || '-'}</td>
-                                                        <td className="px-1.5 py-2 text-center border border-slate-300 text-slate-700 align-middle">{item.weight || '-'}</td>
-                                                        <td className="px-1.5 py-2 text-center border border-slate-300 text-slate-700 align-middle">{item.expiry || '-'}</td>
-                                                        <td className="px-1.5 py-2 text-center border border-slate-300 text-slate-700 align-middle">{item.packSize || '-'}</td>
-                                                        <td className="px-1.5 py-2 text-right border border-slate-300 font-bold text-slate-700 align-middle">{fmtPrice(item.retailPrice || 0)}</td>
-                                                        <td className="px-1.5 py-2 text-right border border-slate-300 font-bold text-primary-700 align-middle">{fmtPrice(item.wholesalePrice || 0)}</td>
-                                                        <td className="px-1.5 py-1 text-center border border-slate-300 align-middle">
-                                                            {item.imageUrl ? (
-                                                                <div className="w-12 h-12 mx-auto overflow-hidden rounded bg-white">
-                                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                    <img src={item.imageUrl} alt={item.name} className="w-full h-full object-contain" />
-                                                                </div>
-                                                            ) : '-'}
+                                    {(() => {
+                                        if (!isPriceList) {
+                                            return items.map((item, idx) => {
+                                                const lineTotal = item.subtotal || (item.unitPrice || 0) * (item.quantity || 0);
+                                                const isEven = idx % 2 === 0;
+                                                return (
+                                                    <tr key={idx} style={{ backgroundColor: isEven ? '#ffffff' : '#f8fafc', pageBreakInside: 'avoid' }}>
+                                                        <td className="px-1.5 py-2 text-center border border-slate-300 font-semibold text-slate-600 align-middle">
+                                                            {idx + 1}
                                                         </td>
-                                                    </>
-                                                ) : (
-                                                    <>
+                                                        <td className="px-1.5 py-2 text-center border border-slate-300 text-slate-700 font-medium align-middle">
+                                                            {item.sku || '---'}
+                                                        </td>
+                                                        <td className="px-2 py-2 border border-slate-300 align-middle">
+                                                            <p className="font-semibold text-slate-800">{item.name}</p>
+                                                            {item.isGift && (
+                                                                <span className="inline-block text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded mt-0.5 font-bold">🎁 Quà tặng</span>
+                                                            )}
+                                                        </td>
                                                         <td className="px-2 py-2 text-center border border-slate-300 text-slate-600 align-middle">{item.isGift ? 'KM' : 'Cái'}</td>
                                                         <td className="px-2 py-2 text-center border border-slate-300 font-bold text-slate-700 align-middle">{item.quantity}</td>
                                                         <td className="px-2 py-2 text-right border border-slate-300 text-slate-700 align-middle">{item.isGift ? '—' : fmtPrice(item.unitPrice || 0)}</td>
                                                         <td className="px-2 py-2 text-right border border-slate-300 font-bold text-slate-800 align-middle">{item.isGift ? 'Miễn phí' : fmtPrice(lineTotal)}</td>
-                                                    </>
-                                                )}
-                                            </tr>
-                                        );
-                                    })}
+                                                    </tr>
+                                                );
+                                            });
+                                        }
+
+                                        // Price List mode
+                                        const groups: { category: string, items: QuoteItem[] }[] = [];
+                                        items.forEach(item => {
+                                            const cat = (item.category || '').trim() || 'SẢN PHẨM KHÁC';
+                                            let group = groups.find(g => g.category.toUpperCase() === cat.toUpperCase());
+                                            if (!group) {
+                                                group = { category: cat.toUpperCase(), items: [] };
+                                                groups.push(group);
+                                            }
+                                            group.items.push(item);
+                                        });
+
+                                        let globalIdx = 1;
+                                        return groups.map((group, gIdx) => (
+                                            <React.Fragment key={gIdx}>
+                                                {groups.length > 1 || group.category !== 'SẢN PHẨM KHÁC' ? (
+                                                    <tr style={{ backgroundColor: '#48adb9', pageBreakInside: 'avoid' }}>
+                                                        <td colSpan={10} className="px-2 py-2 text-white text-center font-extrabold uppercase tracking-wide border border-white/30 text-[12px]">
+                                                            {group.category}
+                                                        </td>
+                                                    </tr>
+                                                ) : null}
+                                                {group.items.map((item, iIdx) => {
+                                                    const isEven = iIdx % 2 === 0;
+                                                    const currentIdx = globalIdx++;
+                                                    return (
+                                                        <tr key={`${gIdx}-${iIdx}`} style={{ backgroundColor: isEven ? '#ffffff' : '#f8fafc', pageBreakInside: 'avoid' }}>
+                                                            <td className="px-1.5 py-2 text-center border border-slate-300 font-semibold text-slate-600 align-middle">
+                                                                {currentIdx}
+                                                            </td>
+                                                            <td className="px-1.5 py-2 text-center border border-slate-300 text-slate-700 font-medium align-middle">
+                                                                {item.sku || '---'}
+                                                            </td>
+                                                            <td className="px-2 py-2 border border-slate-300 align-middle">
+                                                                <p className="font-semibold text-slate-800">{item.name}</p>
+                                                                {item.isGift && (
+                                                                    <span className="inline-block text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded mt-0.5 font-bold">🎁 Quà tặng</span>
+                                                                )}
+                                                            </td>
+                                                            <td className="px-1.5 py-2 text-center border border-slate-300 text-slate-700 align-middle">{item.unit || '-'}</td>
+                                                            <td className="px-1.5 py-2 text-center border border-slate-300 text-slate-700 align-middle">{item.weight || '-'}</td>
+                                                            <td className="px-1.5 py-2 text-center border border-slate-300 text-slate-700 align-middle">{item.expiry || '-'}</td>
+                                                            <td className="px-1.5 py-2 text-center border border-slate-300 text-slate-700 align-middle">{item.packSize || '-'}</td>
+                                                            <td className="px-1.5 py-2 text-right border border-slate-300 font-bold text-slate-700 align-middle">{fmtPrice(item.retailPrice || 0)}</td>
+                                                            <td className="px-1.5 py-2 text-right border border-slate-300 font-bold text-primary-700 align-middle">{fmtPrice(item.wholesalePrice || 0)}</td>
+                                                            <td className="px-1.5 py-1 text-center border border-slate-300 align-middle">
+                                                                {item.imageUrl ? (
+                                                                    <div className="w-12 h-12 mx-auto overflow-hidden rounded bg-white">
+                                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-contain" />
+                                                                    </div>
+                                                                ) : '-'}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </React.Fragment>
+                                        ));
+                                    })()}
                                 </tbody>
                             </table>
                         </div>
