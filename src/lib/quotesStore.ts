@@ -106,6 +106,7 @@ export async function createQuote(quote: Partial<Quote>, token?: string): Promis
             terms: quote.terms || null,
             created_by: quote.created_by || null,
             creator_name: quote.creator_name || null,
+            sales_phone: quote.sales_phone || null,
         };
 
         const { data, error } = await supabase
@@ -143,6 +144,8 @@ export async function updateQuote(id: string, updates: Partial<Quote>, token?: s
         if (updates.valid_until !== undefined) payload.valid_until = updates.valid_until;
         if (updates.notes !== undefined) payload.notes = updates.notes;
         if (updates.terms !== undefined) payload.terms = updates.terms;
+        if (updates.creator_name !== undefined) payload.creator_name = updates.creator_name;
+        if (updates.sales_phone !== undefined) payload.sales_phone = updates.sales_phone;
 
         const { error } = await supabase
             .from('quotes')
