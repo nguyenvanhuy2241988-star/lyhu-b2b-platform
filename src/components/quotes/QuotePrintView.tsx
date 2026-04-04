@@ -107,8 +107,9 @@ export default function QuotePrintView({ quote, onClose }: QuotePrintViewProps) 
                             <div className="flex items-start justify-between gap-6">
                                 {/* Logo + Company info */}
                                 <div className="flex items-start gap-4">
-                                    <div className="w-16 h-16 bg-primary-500 rounded-xl flex items-center justify-center shrink-0">
-                                        <span className="text-white font-extrabold text-xl tracking-tighter">LYHU</span>
+                                    <div className="w-32 shrink-0 flex items-center justify-center relative -top-3">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src="/logo-full.png" alt="LYHU" className="w-full object-contain" />
                                     </div>
                                     <div>
                                         <h1 className="text-base font-extrabold text-slate-900 uppercase">{COMPANY_INFO.name}</h1>
@@ -169,12 +170,16 @@ export default function QuotePrintView({ quote, onClose }: QuotePrintViewProps) 
                                                 <span className="text-sm text-slate-700">{quote.customer_address}</span>
                                             </div>
                                         )}
-                                        {quote.creator_name && (
-                                            <div className="flex items-baseline gap-2">
-                                                <span className="text-xs text-slate-400 w-16 shrink-0">NV bán:</span>
-                                                <span className="text-sm text-slate-700">{quote.creator_name}</span>
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-baseline gap-2">
+                                                    <span className="text-xs text-slate-400 w-16 shrink-0">NV kinh doanh:</span>
+                                                    <span className="text-sm text-slate-700 font-semibold">{quote.creator_name || '-'}</span>
+                                                </div>
+                                                <div className="flex items-baseline gap-2">
+                                                    <span className="text-xs text-slate-400 w-16 shrink-0">SĐT hỗ trợ:</span>
+                                                    <span className="text-sm text-slate-700">{quote.sales_phone || COMPANY_INFO.hotline}</span>
+                                                </div>
                                             </div>
-                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -203,7 +208,7 @@ export default function QuotePrintView({ quote, onClose }: QuotePrintViewProps) 
                                                 <th className="px-1.5 py-2 text-white text-center font-bold border border-white/30" style={{ width: '6%' }}>Đơn Vị</th>
                                                 <th className="px-1.5 py-2 text-white text-center font-bold border border-white/30" style={{ width: '8%' }}>Tr.Lượng</th>
                                                 <th className="px-1.5 py-2 text-white text-center font-bold border border-white/30" style={{ width: '6%' }}>HSD</th>
-                                                <th className="px-1.5 py-2 text-white text-center font-bold border border-white/30" style={{ width: '8%' }}>Quy Cách</th>
+                                                <th className="px-1.5 py-2 text-white text-center font-bold border border-white/30" style={{ width: '8%' }}>Quy Cách<br/><span className="text-[9px] font-normal italic">(Thùng)</span></th>
                                                 <th className="px-1.5 py-2 text-white text-right font-bold border border-white/30" style={{ width: '10%' }}>Giá Lẻ</th>
                                                 <th className="px-1.5 py-2 text-white text-right font-bold border border-white/30" style={{ width: '10%' }}>Giá Sỉ</th>
                                                 <th className="px-1.5 py-2 text-white text-center font-bold border border-white/30" style={{ width: '10%' }}>Hình Ảnh</th>
@@ -434,22 +439,15 @@ export default function QuotePrintView({ quote, onClose }: QuotePrintViewProps) 
 
                         {/* ===== SIGNATURE ===== */}
                         <div className="px-10 pb-6">
-                            <div className="grid grid-cols-2 gap-8 pt-4">
-                                <div className="text-center">
-                                    <p className="text-xs font-bold text-slate-700 uppercase">Khách hàng</p>
-                                    <p className="text-[10px] text-slate-400 italic mt-1">(Ký, ghi rõ họ tên)</p>
-                                    <div className="h-16" />
-                                    <div className="border-t border-dashed border-slate-300 pt-1 mx-8">
-                                        <p className="text-xs text-slate-500">{quote.customer_name}</p>
-                                    </div>
-                                </div>
-                                <div className="text-center">
+                            <div className="flex justify-end pt-4 pr-16">
+                                <div className="text-center w-64">
                                     <p className="text-xs font-bold text-slate-700 uppercase">Đại diện {COMPANY_INFO.name}</p>
-                                    <p className="text-[10px] text-slate-400 italic mt-1">(Ký, ghi rõ họ tên)</p>
-                                    <div className="h-16" />
-                                    <div className="border-t border-dashed border-slate-300 pt-1 mx-8">
-                                        <p className="text-xs text-slate-500">{quote.creator_name || '—'}</p>
+                                    <p className="text-[10px] text-slate-400 italic mt-1">(Ký, đóng dấu và ghi rõ họ tên)</p>
+                                    <div className="relative h-24 flex items-center justify-center">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src="/stamp.png" className="absolute opacity-80 h-32 w-32 -top-4 pointer-events-none" alt="seal" onError={e => e.currentTarget.style.display='none'} />
                                     </div>
+                                    <p className="font-bold text-[13px] text-slate-800 uppercase">GIÁM ĐỐC</p>
                                 </div>
                             </div>
                         </div>

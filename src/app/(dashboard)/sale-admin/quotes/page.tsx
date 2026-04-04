@@ -322,6 +322,8 @@ function QuoteEditorModal({
     const [shippingFee, setShippingFee] = useState(quote?.shipping_fee || 0);
     const [notes, setNotes] = useState(quote?.notes || '');
     const [validUntil, setValidUntil] = useState(quote?.valid_until ? quote.valid_until.split('T')[0] : '');
+    const [salesName, setSalesName] = useState(quote?.creator_name || userName);
+    const [salesPhone, setSalesPhone] = useState(quote?.sales_phone || '');
 
     const subtotal = items.reduce((s, i) => s + i.subtotal, 0);
     const vatAmount = subtotal * vatPercent / 100;
@@ -403,7 +405,8 @@ function QuoteEditorModal({
             valid_until: validUntil ? new Date(validUntil).toISOString() : undefined,
             status: quote?.status || 'draft',
             created_by: userId,
-            creator_name: userName,
+            creator_name: salesName,
+            sales_phone: salesPhone,
         });
     };
 
@@ -602,6 +605,24 @@ function QuoteEditorModal({
                                 value={notes} onChange={e => setNotes(e.target.value)}
                                 rows={2} placeholder="Ghi chú thêm..."
                                 className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none resize-none"
+                            />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 mb-1 block">Tên phụ trách kinh doanh</label>
+                            <input
+                                type="text" value={salesName}
+                                onChange={e => setSalesName(e.target.value)}
+                                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 mb-1 block">SĐT Kinh doanh</label>
+                            <input
+                                type="text" value={salesPhone}
+                                onChange={e => setSalesPhone(e.target.value)}
+                                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none"
                             />
                         </div>
                     </div>

@@ -47,6 +47,7 @@ export interface Quote {
     converted_order_id?: string;
     created_by?: string;
     creator_name?: string;
+    sales_phone?: string;
     created_at: string;
     updated_at: string;
 }
@@ -251,6 +252,7 @@ function mapQuoteFromDb(row: any): Quote {
         converted_order_id: row.converted_order_id,
         created_by: row.created_by,
         creator_name: row.creator_name,
+        sales_phone: row.sales_phone,
         created_at: row.created_at,
         updated_at: row.updated_at,
     };
