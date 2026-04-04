@@ -77,7 +77,7 @@ export async function reserveStock(
         const data = await res.json();
         return data as RPCResponse;
     } catch (err: any) {
-        console.error('reserveStock error:', err);
+        console.warn('[inventoryStore] reserveStock skipped:', err.message || err);
         return { success: false, message: err.message || 'Lỗi giữ hàng' };
     }
 }
@@ -116,7 +116,7 @@ export async function releaseStock(
         const data = await res.json();
         return data as RPCResponse;
     } catch (err: any) {
-        console.error('releaseStock error:', err);
+        console.warn('[inventoryStore] releaseStock skipped:', err.message || err);
         return { success: false, message: err.message || 'Lỗi nhả hàng' };
     }
 }
@@ -155,7 +155,7 @@ export async function shipStock(
         const data = await res.json();
         return data as RPCResponse;
     } catch (err: any) {
-        console.error('shipStock error:', err);
+        console.warn('[inventoryStore] shipStock skipped:', err.message || err);
         return { success: false, message: err.message || 'Lỗi xuất kho' };
     }
 }

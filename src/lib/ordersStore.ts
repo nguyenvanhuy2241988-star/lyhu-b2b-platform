@@ -210,19 +210,20 @@ export const updateOrderStatus = async (
             return false;
         }
 
-        // 3. Inventory Actions based on status change
+        // 3. Inventory Actions based on status change (graceful — won't block status update)
         if (userId && oldStatus && oldStatus !== newStatus) {
-            if (newStatus === 'delivered' && oldStatus !== 'delivered') {
-                await shipOrderInventory(orderId, userId, token);
-                // Update Bonus status to finalized
-                await updateTransactionStatus(orderId, 'finalized', token);
-            } else if (newStatus === 'cancelled' && oldStatus !== 'cancelled') {
-                await releaseOrderInventory(orderId, userId, token);
-                // Delete bonus if order is cancelled
-                await deleteFinancialTransactions(orderId, token);
+            try {
+                if (newStatus === 'delivered' && oldStatus !== 'delivered') {
+                    await shipOrderInventory(orderId, userId, token);
+                    await updateTransactionStatus(orderId, 'finalized', token);
+                } else if (newStatus === 'cancelled' && oldStatus !== 'cancelled') {
+                    await releaseOrderInventory(orderId, userId, token);
+                    await deleteFinancialTransactions(orderId, token);
+                }
+            } catch (invErr) {
+                // Inventory module may not be set up yet — silently skip
+                console.warn('[updateOrderStatus] Inventory side-effects skipped (module may not be active):', invErr);
             }
-        } else if (!userId) {
-            console.warn("[updateOrderStatus] No userId provided - skipping inventory actions");
         }
         return true;
     }
@@ -231,80 +232,61 @@ export const updateOrderStatus = async (
 
 // Helper: Ship all items in an order (when delivered)
 async function shipOrderInventory(orderId: string, userId: string, token?: string) {
-    const warehouseId = await getDefaultWarehouseId(token);
-    if (!warehouseId) {
-        console.warn("[shipOrderInventory] No warehouse found");
-        return;
-    }
+    try {
+        const warehouseId = await getDefaultWarehouseId(token);
+        if (!warehouseId) return; // No warehouse set up — skip silently
 
-    // Fetch order items using RPC (Reusing get_orders_v3 to bypass RLS)
-    const headers = getHeaders(token);
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_orders_v3`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ p_id: orderId })
-    });
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_orders_v3`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ p_id: orderId })
+        });
 
-    if (!res.ok) {
-        console.error("[shipOrderInventory] Failed to fetch order items (RPC):", await res.text());
-        return;
-    }
+        if (!res.ok) return; // RPC failed — skip
 
-    const data = await res.json();
-    if (!data || data.length === 0) return;
+        const data = await res.json();
+        if (!data || data.length === 0) return;
 
-    const items = data[0].items || [];
-
-    // Ship each item
-    for (const item of items) {
-        try {
-            // Check if item has product_id (RPC maps it as product_id in json)
-            const pid = item.product_id;
-            if (pid) {
-                await shipStock(warehouseId, pid, item.quantity, orderId, userId, token);
-            }
-        } catch (err) {
-            console.error("[shipOrderInventory] Failed to ship:", item.product_id, err);
+        const items = data[0].items || [];
+        for (const item of items) {
+            try {
+                const pid = item.product_id;
+                if (pid) await shipStock(warehouseId, pid, item.quantity, orderId, userId, token);
+            } catch { /* skip individual item errors */ }
         }
+    } catch {
+        // Inventory module not active — skip entirely
     }
 }
 
 // Helper: Release all items in an order (when cancelled)
 async function releaseOrderInventory(orderId: string, userId: string, token?: string) {
-    const warehouseId = await getDefaultWarehouseId(token);
-    if (!warehouseId) {
-        console.warn("[releaseOrderInventory] No warehouse found");
-        return;
-    }
+    try {
+        const warehouseId = await getDefaultWarehouseId(token);
+        if (!warehouseId) return; // No warehouse set up — skip silently
 
-    // Fetch order items using RPC (Reusing get_orders_v3)
-    const headers = getHeaders(token);
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_orders_v3`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ p_id: orderId })
-    });
+        const headers = getHeaders(token);
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_orders_v3`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ p_id: orderId })
+        });
 
-    if (!res.ok) {
-        console.error("[releaseOrderInventory] Failed to fetch order items (RPC):", await res.text());
-        return;
-    }
+        if (!res.ok) return; // RPC failed — skip
 
-    const data = await res.json();
-    if (!data || data.length === 0) return;
+        const data = await res.json();
+        if (!data || data.length === 0) return;
 
-    const items = data[0].items || [];
-
-    // Release each item
-    for (const item of items) {
-        try {
-            const pid = item.product_id;
-            if (pid) {
-                await releaseStock(warehouseId, pid, item.quantity, orderId, userId, token);
-            }
-        } catch (err) {
-            console.error("[releaseOrderInventory] Failed to release:", item.product_id, err);
+        const items = data[0].items || [];
+        for (const item of items) {
+            try {
+                const pid = item.product_id;
+                if (pid) await releaseStock(warehouseId, pid, item.quantity, orderId, userId, token);
+            } catch { /* skip individual item errors */ }
         }
+    } catch {
+        // Inventory module not active — skip entirely
     }
 }
 
