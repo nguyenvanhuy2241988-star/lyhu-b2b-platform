@@ -33,17 +33,31 @@ export default function QuotePrintView({ quote, onClose }: QuotePrintViewProps) 
             {/* Print styles */}
             <style>{`
                 @media print {
-                    body > *:not(.quote-print-overlay) { display: none !important; }
-                    .quote-print-overlay { position: static !important; }
-                    .quote-print-overlay > .quote-controls { display: none !important; }
-                    .quote-print-overlay > .quote-scroll-container {
+                    body {
+                        visibility: hidden;
+                    }
+                    .quote-print-overlay {
+                        visibility: visible !important;
+                        position: absolute !important;
+                        left: 0;
+                        top: 0;
+                        width: 100vw;
+                        background: white !important;
+                    }
+                    .quote-controls { display: none !important; }
+                    .quote-scroll-container {
                         max-height: none !important;
+                        height: auto !important;
                         overflow: visible !important;
+                        background: white !important;
+                        padding: 0 !important;
                     }
                     .quote-print-page {
                         box-shadow: none !important;
                         margin: 0 !important;
                         border-radius: 0 !important;
+                        width: 100% !important;
+                        max-width: 100% !important;
                     }
                     @page { size: ${paperSize}; margin: 12mm 15mm; }
                 }
