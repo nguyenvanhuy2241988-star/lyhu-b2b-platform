@@ -397,20 +397,20 @@ export async function updateTaskSupabase(taskId: string, patch: Partial<Telesale
     const headers = await getAuthHeaders(token);
     const body = {
         title: patch.title,
-        customer_name: patch.customer_name ?? null,
-        phone: patch.phone ?? null,
-        note: patch.note ?? null,
+        customer_name: patch.customer_name,
+        phone: patch.phone,
+        note: patch.note,
         status: patch.status,
         priority: patch.priority,
-        due_date: patch.due_date ?? null, // FIX: Don't auto-assign due_date
-        completed_at: patch.completed_at ?? null,
-        handled_date: patch.handled_date ?? undefined,
-        order: patch.order ?? undefined,
+        due_date: patch.due_date,
+        completed_at: patch.completed_at,
+        handled_date: patch.handled_date,
+        order: patch.order,
         type: patch.type,
-        assigned_to: patch.assigned_to ?? undefined,
-        assignee_ids: patch.assignee_ids ?? undefined,
-        leader_id: patch.leader_id ?? undefined,
-        attachments: patch.attachments ?? undefined, // NEW
+        assigned_to: patch.assigned_to,
+        assignee_ids: patch.assignee_ids,
+        leader_id: patch.leader_id,
+        attachments: patch.attachments,
         updated_at: new Date().toISOString(),
     };
 

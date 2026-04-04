@@ -521,19 +521,20 @@ export default function TelesalesTasksPage() {
         const taskId = task.id;
         const now = new Date();
         const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const newHandledDate = task.handled_date === localDate ? null : localDate;
         
         // 🚀 Optimistic update
         setColumnTasks(prev => {
             const newColumnTasks = { ...prev };
             for (const colId in newColumnTasks) {
                 newColumnTasks[colId] = newColumnTasks[colId].map(t =>
-                    t.id === taskId ? { ...t, handled_date: localDate } : t
+                    t.id === taskId ? { ...t, handled_date: newHandledDate } : t
                 );
             }
             return newColumnTasks;
         });
 
-        const success = await updateTaskSupabase(taskId, { handled_date: localDate }, session?.access_token);
+        const success = await updateTaskSupabase(taskId, { handled_date: newHandledDate }, session?.access_token);
         if (!success) {
             refreshData();
             alert("Lỗi: Không thể cập nhật trạng thái xử lý.");
