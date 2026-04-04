@@ -120,7 +120,9 @@ export default function QuotePrintView({ quote, onClose }: QuotePrintViewProps) 
                                             Địa chỉ: {COMPANY_INFO.address}
                                         </p>
                                         <p className="text-[11px] text-slate-500 leading-relaxed">
-                                            Hotline: <strong>{COMPANY_INFO.hotline}</strong> &nbsp;|&nbsp; Email: {COMPANY_INFO.email}
+                                            Hotline: <strong>{quote.sales_phone || COMPANY_INFO.hotline}</strong>
+                                            {quote.creator_name && <span> (NV Kinh Doanh: {quote.creator_name})</span>}
+                                            &nbsp;|&nbsp; Email: {COMPANY_INFO.email}
                                         </p>
                                     </div>
                                 </div>

@@ -26,6 +26,7 @@ export default function SaleAdminQuotesPage() {
 
     const [quotes, setQuotes] = useState<Quote[]>([]);
     const [products, setProducts] = useState<any[]>([]);
+    const [usersList, setUsersList] = useState<{id: string, full_name: string, email: string, phone: string | null}[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<QuoteStatus | 'all'>('all');
@@ -37,12 +38,14 @@ export default function SaleAdminQuotesPage() {
     const loadData = useCallback(async () => {
         setIsLoading(true);
         try {
-            const [q, p] = await Promise.all([
+            const [q, p, uRes] = await Promise.all([
                 fetchQuotes(token),
                 loadProducts(token),
+                supabase.from('profiles').select('id, full_name, email, phone').order('full_name')
             ]);
             setQuotes(q);
             setProducts(p || []);
+            setUsersList(uRes.data || []);
         } catch (err) {
             console.error('[Quotes] Error:', err);
         } finally {
@@ -277,6 +280,7 @@ export default function SaleAdminQuotesPage() {
                     quote={editingQuote}
                     quoteType={isCreating}
                     products={products}
+                    usersList={usersList}
                     userId={user?.id || ''}
                     userName={user?.user_metadata?.name || user?.email || ''}
                     onSave={async (data) => {
@@ -301,11 +305,12 @@ export default function SaleAdminQuotesPage() {
 
 // ========== QUOTE EDITOR MODAL ==========
 function QuoteEditorModal({
-    quote, quoteType, products, userId, userName, onSave, onClose, saving
+    quote, quoteType, products, usersList, userId, userName, onSave, onClose, saving
 }: {
     quote: Quote | null;
     quoteType: QuoteType;
     products: any[];
+    usersList: {id: string, full_name: string, email: string, phone: string | null}[];
     userId: string;
     userName: string;
     onSave: (data: Partial<Quote>) => Promise<void>;
@@ -608,13 +613,35 @@ function QuoteEditorModal({
                             />
                         </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                    
+                    <hr className="my-6 border-slate-100" />
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Người phụ trách (Hiển thị trên báo giá)</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
                         <div>
-                            <label className="text-xs font-bold text-slate-500 mb-1 block">Tên phụ trách kinh doanh</label>
+                            <label className="text-xs font-bold text-slate-500 mb-1 block">Chọn hệ thống (tuỳ chọn)</label>
+                            <select
+                                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none bg-slate-50"
+                                onChange={(e) => {
+                                    const u = usersList.find(x => x.id === e.target.value);
+                                    if (u) {
+                                        setSalesName(u.full_name || u.email);
+                                        setSalesPhone(u.phone || '');
+                                    }
+                                }}
+                            >
+                                <option value="">-- Mặc định / Nhập tay --</option>
+                                {usersList.map((u, idx) => (
+                                    <option key={u.id || idx} value={u.id}>{u.full_name || u.email}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 mb-1 block">Tên hiển thị</label>
                             <input
                                 type="text" value={salesName}
                                 onChange={e => setSalesName(e.target.value)}
                                 className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none"
+                                placeholder="Nhập tên NV..."
                             />
                         </div>
                         <div>
@@ -623,6 +650,7 @@ function QuoteEditorModal({
                                 type="text" value={salesPhone}
                                 onChange={e => setSalesPhone(e.target.value)}
                                 className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none"
+                                placeholder="Nếu trống sẽ tự lấy Hotline Cty"
                             />
                         </div>
                     </div>
