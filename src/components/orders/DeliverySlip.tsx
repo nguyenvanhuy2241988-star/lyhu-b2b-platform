@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef } from 'react';
-import type { Order, OrderItem, ShippingBox } from '@/lib/ordersStore';
+import type { Order } from '@/lib/ordersStore';
 
 const formatPrice = (price: number) =>
     new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
