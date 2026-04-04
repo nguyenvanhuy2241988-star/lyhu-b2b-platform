@@ -35,6 +35,8 @@ export default function QuotePrintView({ quote, onClose }: QuotePrintViewProps) 
                 @media print {
                     body {
                         visibility: hidden;
+                        -webkit-print-color-adjust: exact !important;
+                        print-color-adjust: exact !important;
                     }
                     .quote-print-overlay {
                         visibility: visible !important;
