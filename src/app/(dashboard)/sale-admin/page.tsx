@@ -11,9 +11,6 @@ import {
     Loader2, CheckCircle, BarChart3, RefreshCw,
     Calendar, ChevronDown, ChevronRight
 } from 'lucide-react';
-import {
-    BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
-} from 'recharts';
 import Link from 'next/link';
 
 // ========== HELPERS ==========
@@ -461,80 +458,113 @@ export default function SaleAdminDashboard() {
                         </h3>
                         <span className="text-[11px] text-slate-400 font-medium bg-slate-50 px-2 py-1 rounded-lg">{rangeLabel}</span>
                     </div>
-                    <div className="h-[260px]">
-                        {isLoading ? (
-                            <div className="flex items-center justify-center h-full text-slate-300">
-                                <Loader2 className="w-5 h-5 animate-spin mr-2" /> Đang tải...
+                    {/* Table view - each day is a row */}
+                    {isLoading ? (
+                        <div className="flex items-center justify-center py-12 text-slate-300">
+                            <Loader2 className="w-5 h-5 animate-spin mr-2" /> Đang tải...
+                        </div>
+                    ) : chartData.length === 0 ? (
+                        <div className="text-center py-12 text-slate-300 text-sm">Chưa có dữ liệu</div>
+                    ) : (
+                        <>
+                            {/* Legend */}
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-4">
+                                {[
+                                    { label: 'Đã giao', color: BRAND.teal },
+                                    { label: 'Đang giao', color: '#6366f1' },
+                                    { label: 'Đang XL', color: '#3b82f6' },
+                                    { label: 'Chờ duyệt', color: '#f59e0b' },
+                                    { label: 'Đã hủy', color: '#ef4444' },
+                                ].map((l, i) => (
+                                    <span key={i} className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+                                        <span className="w-2 h-2 rounded-sm" style={{ backgroundColor: l.color }} />
+                                        {l.label}
+                                    </span>
+                                ))}
                             </div>
-                        ) : chartData.length === 0 ? (
-                            <div className="flex items-center justify-center h-full text-slate-300 text-sm">Chưa có dữ liệu</div>
-                        ) : (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={chartData} barCategoryGap="30%">
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false}
-                                        interval={chartData.length > 15 ? Math.floor(chartData.length / 8) : 0} />
-                                    <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} tickLine={false} axisLine={false} allowDecimals={false} width={30} />
-                                    <Tooltip
-                                        cursor={{ fill: 'rgba(0,175,169,0.06)' }}
-                                        content={({ active, payload, label }: any) => {
-                                            if (!active || !payload?.length) return null;
-                                            const data = payload[0]?.payload;
-                                            if (!data) return null;
-                                            const items = [
-                                                { label: 'Chờ duyệt', value: data.pending, color: STATUS_COLORS.pending },
-                                                { label: 'Đang xử lý', value: data.processing, color: STATUS_COLORS.processing },
-                                                { label: 'Đang giao', value: data.delivering, color: STATUS_COLORS.delivering },
-                                                { label: 'Đã giao', value: data.delivered, color: STATUS_COLORS.delivered },
-                                                { label: 'Đã hủy', value: data.cancelled, color: STATUS_COLORS.cancelled },
-                                            ];
-                                            return (
-                                                <div className="bg-white rounded-xl shadow-lg border border-slate-200 p-3 min-w-[160px]">
-                                                    <p className="text-xs font-bold text-slate-800 mb-2 pb-1.5 border-b border-slate-100">
-                                                        Ngày {label} — <span className="text-primary-600">{data.total} đơn</span>
-                                                    </p>
-                                                    <div className="space-y-1">
-                                                        {items.filter(i => i.value > 0).map((item, idx) => (
-                                                            <div key={idx} className="flex items-center justify-between text-xs">
-                                                                <span className="flex items-center gap-1.5">
-                                                                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                                                                    <span className="text-slate-600">{item.label}</span>
-                                                                </span>
-                                                                <span className="font-bold text-slate-800">{item.value}</span>
-                                                            </div>
+
+                            {/* Day rows */}
+                            <div className="space-y-1.5 max-h-[320px] overflow-y-auto">
+                                {[...chartData].reverse().map((day, idx) => {
+                                    const maxTotal = Math.max(...chartData.map(d => d.total), 1);
+                                    const barWidth = Math.max((day.total / maxTotal) * 100, day.total > 0 ? 8 : 0);
+                                    const segments = [
+                                        { key: 'delivered', val: day.delivered, color: BRAND.teal },
+                                        { key: 'delivering', val: day.delivering, color: '#6366f1' },
+                                        { key: 'processing', val: day.processing, color: '#3b82f6' },
+                                        { key: 'pending', val: day.pending, color: '#f59e0b' },
+                                        { key: 'cancelled', val: day.cancelled, color: '#ef4444' },
+                                    ].filter(s => s.val > 0);
+
+                                    const isToday = day.label === new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+
+                                    return (
+                                        <div
+                                            key={idx}
+                                            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                                                isToday ? 'bg-primary-50/60 border border-primary-100' : 'hover:bg-slate-50'
+                                            }`}
+                                        >
+                                            {/* Date */}
+                                            <div className="w-[52px] shrink-0">
+                                                <span className={`text-xs font-bold ${isToday ? 'text-primary-700' : 'text-slate-600'}`}>
+                                                    {day.label}
+                                                </span>
+                                                {isToday && <span className="block text-[9px] text-primary-500 font-bold">Hôm nay</span>}
+                                            </div>
+
+                                            {/* Total count */}
+                                            <div className="w-[36px] text-right shrink-0">
+                                                <span className={`text-sm font-extrabold ${day.total > 0 ? 'text-slate-800' : 'text-slate-300'}`}>
+                                                    {day.total}
+                                                </span>
+                                            </div>
+
+                                            {/* Stacked bar */}
+                                            <div className="flex-1 h-5 bg-slate-100 rounded-full overflow-hidden flex" style={{ maxWidth: '100%' }}>
+                                                {day.total === 0 ? (
+                                                    <div className="w-full h-full" />
+                                                ) : (
+                                                    <div className="flex h-full rounded-full overflow-hidden" style={{ width: `${barWidth}%` }}>
+                                                        {segments.map((seg, si) => (
+                                                            <div
+                                                                key={si}
+                                                                className="h-full transition-all duration-300"
+                                                                style={{
+                                                                    width: `${(seg.val / day.total) * 100}%`,
+                                                                    backgroundColor: seg.color,
+                                                                }}
+                                                                title={`${seg.key}: ${seg.val}`}
+                                                            />
                                                         ))}
-                                                        {items.every(i => i.value === 0) && (
-                                                            <p className="text-xs text-slate-400">Không có đơn</p>
-                                                        )}
                                                     </div>
-                                                </div>
-                                            );
-                                        }}
-                                    />
-                                    <Bar dataKey="delivered" name="Đã giao" stackId="orders" fill={BRAND.teal} />
-                                    <Bar dataKey="delivering" name="Đang giao" stackId="orders" fill="#6366f1" />
-                                    <Bar dataKey="processing" name="Đang xử lý" stackId="orders" fill="#3b82f6" />
-                                    <Bar dataKey="pending" name="Chờ duyệt" stackId="orders" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-                                    <Bar dataKey="cancelled" name="Đã hủy" stackId="orders" fill="#ef4444" opacity={0.7} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        )}
-                    </div>
-                    {/* Chart legend */}
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 pt-3 border-t border-slate-50">
-                        {[
-                            { label: 'Đã giao', color: BRAND.teal },
-                            { label: 'Đang giao', color: '#6366f1' },
-                            { label: 'Đang xử lý', color: '#3b82f6' },
-                            { label: 'Chờ duyệt', color: '#f59e0b' },
-                            { label: 'Đã hủy', color: '#ef4444' },
-                        ].map((l, i) => (
-                            <span key={i} className="flex items-center gap-1.5 text-[11px] text-slate-500">
-                                <span className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: l.color }} />
-                                {l.label}
-                            </span>
-                        ))}
-                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Status breakdown numbers */}
+                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                {day.delivered > 0 && (
+                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ color: BRAND.tealDark, backgroundColor: BRAND.tealLight }}>
+                                                        {day.delivered} giao
+                                                    </span>
+                                                )}
+                                                {day.pending > 0 && (
+                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 text-amber-700">
+                                                        {day.pending} chờ
+                                                    </span>
+                                                )}
+                                                {day.cancelled > 0 && (
+                                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-50 text-red-600">
+                                                        {day.cancelled} hủy
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Top Sales (1/3) */}
