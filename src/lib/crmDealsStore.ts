@@ -164,6 +164,7 @@ export interface CRMDeal {
     stage: DealStage;
     priority: DealPriority;
     next_action_at?: string | null;
+    handled_date?: string | null;
     note?: string | null;
     source?: DealSource; // Original source enum
     source_category?: string; // New: SELF_FOUND | COMPANY
@@ -607,7 +608,7 @@ export async function deleteCustomer(id: string, token?: string): Promise<boolea
 // =====================================================
 
 // Optimized select: only columns needed for CRM kanban/list display
-const CRM_DEAL_SELECT = 'id,title,stage,status,priority,customer_id,owner_user_id,next_action_at,expected_value,source_category,source,created_at,note,potential_level,customer_type,is_new_customer,tags';
+const CRM_DEAL_SELECT = 'id,title,stage,status,priority,customer_id,owner_user_id,next_action_at,handled_date,expected_value,source_category,source,created_at,note,potential_level,customer_type,is_new_customer,tags';
 const CRM_CUSTOMER_SELECT = 'id,name,phone,address,province';
 
 // Fetch deals for a specific owner (Telesales, Sales use this) - Using PURE FETCH

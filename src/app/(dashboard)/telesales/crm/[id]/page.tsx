@@ -159,8 +159,8 @@ export default function DealDetailPage() {
 
     const handleMarkWon = async () => {
         if (!deal) return;
-        await updateDeal(deal.id, { status: 'won', stage: 'done' }, session?.access_token);
-        setDeal(prev => prev ? { ...prev, status: 'won', stage: 'done' } : null);
+        await updateDeal(deal.id, { status: 'won', stage: 'order' }, session?.access_token);
+        setDeal(prev => prev ? { ...prev, status: 'won', stage: 'order' } : null);
     };
 
     const handleMarkLost = () => {

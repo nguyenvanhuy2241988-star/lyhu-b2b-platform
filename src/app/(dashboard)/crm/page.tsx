@@ -10,6 +10,7 @@ import {
     Calendar,
     Phone,
     CheckCircle2,
+    CheckSquare,
     Trash2,
     Edit2,
     Settings,
@@ -181,12 +182,13 @@ interface DealCardProps {
     onCreateOrder: (deal: CRMDeal) => void;
     onMarkWon: (deal: CRMDeal) => void;
     onMarkLost: (deal: CRMDeal) => void;
+    onHandledToday: (deal: CRMDeal) => void;
     onRefresh: () => Promise<void>;
     isOverdue?: boolean;
     isHighlighted?: boolean;
 }
 
-const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIndicator, onEdit, onViewDetails, onCreateOrder, onMarkWon, onMarkLost, onRefresh, isOverdue, isHighlighted }: DealCardProps) => {
+const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIndicator, onEdit, onViewDetails, onCreateOrder, onMarkWon, onMarkLost, onHandledToday, onRefresh, isOverdue, isHighlighted }: DealCardProps) => {
     const { session } = useAuth();
 
     const handleMarkWon = (e: React.MouseEvent) => {
@@ -198,6 +200,19 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
         e.stopPropagation();
         onMarkLost(deal);
     };
+
+    const handleHandledToday = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        onHandledToday(deal);
+    };
+
+    // Calculate if it's handled today
+    const isHandledToday = (() => {
+        if (!deal.handled_date) return false;
+        const now = new Date();
+        const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        return deal.handled_date === localDate;
+    })();
 
     return (
         <>
@@ -261,12 +276,18 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
                 <h4 className="font-medium text-slate-800 text-sm mb-2 line-clamp-2">{deal.title}</h4>
 
                 {/* Badges Row */}
-                {(deal.potential_level || deal.source_category) && (
+                {(deal.potential_level || deal.source_category || isHandledToday) && (
                     <div className="flex gap-1 mb-2">
                         <PotentialBadge level={deal.potential_level} />
                         {deal.source_category && (
                             <span className="px-1.5 py-0.5 rounded text-[9px] bg-slate-100 text-slate-600 border border-slate-200">
                                 {deal.source_category === 'SELF_FOUND' ? 'Tự tìm' : deal.source_category === 'SELF_CONTACT' ? 'Tự liên hệ' : deal.source_category === 'MARKETING' ? 'Marketing' : 'Cty cấp'}
+                            </span>
+                        )}
+                        {isHandledToday && (
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-green-100 text-green-700 flex items-center gap-1 border border-green-200">
+                                <CheckSquare className="w-2.5 h-2.5" />
+                                Đã xử lý hôm nay
                             </span>
                         )}
                     </div>
@@ -341,6 +362,13 @@ const DealCard = ({ deal, isDragging, onDragStart, onDragOver, onDragEnd, dropIn
                             title="Lên đơn"
                         >
                             <ShoppingCart className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                            onClick={handleHandledToday}
+                            className={`p-1 rounded ${isHandledToday ? 'text-green-600 bg-green-100 hover:bg-green-200' : 'text-slate-400 hover:bg-green-50 hover:text-green-600'}`}
+                            title="Đã xử lý hôm nay"
+                        >
+                            <CheckSquare className="w-3.5 h-3.5" />
                         </button>
                         {deal.status === 'open' ? (
                             <>
@@ -976,13 +1004,13 @@ export default function CRMPage() {
 
         // 🚀 Optimistic update
         setDeals(prev => prev.map(d =>
-            d.id === dealId ? { ...d, status: 'won', stage: 'done' } : d
+            d.id === dealId ? { ...d, status: 'won', stage: 'order' } : d
         ));
         logDebug(`Optimistically marked deal ${deal.title} as WON.`);
 
         const success = await updateDeal(dealId, {
             status: 'won',
-            stage: 'done'
+            stage: 'order'
         }, session?.access_token);
 
         if (!success) {
@@ -991,6 +1019,28 @@ export default function CRMPage() {
             alert("Lỗi: Không thể cập nhật trạng thái Thắng.");
         } else {
             logDebug(`SUCCESS marked deal as WON.`, 'info');
+        }
+    };
+
+    const handleHandledToday = async (deal: CRMDeal) => {
+        const originalDeals = [...deals];
+        const dealId = deal.id;
+        
+        const now = new Date();
+        const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        
+        // Optimistic update
+        setDeals(prev => prev.map(d => 
+            d.id === dealId ? { ...d, handled_date: localDate } : d
+        ));
+        
+        const success = await updateDeal(dealId, {
+            handled_date: localDate
+        }, session?.access_token);
+        
+        if (!success) {
+            setDeals(originalDeals);
+            alert("Lỗi: Không thể cập nhật trạng thái xử lý.");
         }
     };
 
@@ -1591,6 +1641,7 @@ export default function CRMPage() {
                                                                 onCreateOrder={handleCreateOrder}
                                                                 onMarkWon={handleMarkWon}
                                                                 onMarkLost={handleOpenLostModal}
+                                                                onHandledToday={handleHandledToday}
                                                                 onRefresh={refreshData}
                                                                 isOverdue={isOverdue}
                                                                 isHighlighted={highlightedDealId === deal.id}
