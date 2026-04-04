@@ -412,6 +412,11 @@ export default function TelesalesTasksPage() {
 
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [columns, setColumns] = useState<(TelesalesColumn & { column_type?: string })[]>([]);
+    const columnsRef = useRef<(TelesalesColumn & { column_type?: string })[]>([]);
+    useEffect(() => {
+        columnsRef.current = columns;
+    }, [columns]);
+
     const [dbColumns, setDbColumns] = useState<DbColumn[]>([]);
     const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
     const [isLoading, setIsLoading] = useState(false);
@@ -850,7 +855,7 @@ export default function TelesalesTasksPage() {
                             });
 
                             const checkTaskBelongsToColumn = (task: any, colId: string, currentList: any[]): boolean => {
-                                const colDef = columns.find(c => c.id === colId);
+                                const colDef = columnsRef.current.find(c => c.id === colId);
                                 const cType = colDef?.column_type || colId;
 
                                 if (task.status === 'done' && (cType === 'system_done' || colId === 'done')) return true;
