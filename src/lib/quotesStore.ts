@@ -12,11 +12,23 @@ export interface QuoteItem {
     discountType?: 'amount' | 'percent';
     subtotal: number;
     isGift?: boolean;
+    // Bảng báo giá (Price List) specific fields
+    imageUrl?: string;
+    unit?: string;
+    weight?: string;
+    expiry?: string;
+    packSize?: string;
+    retailPrice?: number;
+    wholesalePrice?: number;
+    category?: string;
 }
+
+export type QuoteType = 'order_quote' | 'price_list';
 
 export interface Quote {
     id: string;
     readable_id: number;
+    quote_type: QuoteType;
     customer_id?: string;
     customer_name: string;
     customer_phone?: string;
@@ -75,6 +87,7 @@ export async function fetchQuotes(token?: string): Promise<Quote[]> {
 export async function createQuote(quote: Partial<Quote>, token?: string): Promise<Quote | null> {
     try {
         const payload = {
+            quote_type: quote.quote_type || 'order_quote',
             customer_id: quote.customer_id || null,
             customer_name: quote.customer_name || '',
             customer_phone: quote.customer_phone || null,
@@ -114,6 +127,7 @@ export async function createQuote(quote: Partial<Quote>, token?: string): Promis
 export async function updateQuote(id: string, updates: Partial<Quote>, token?: string): Promise<boolean> {
     try {
         const payload: any = { updated_at: new Date().toISOString() };
+        if (updates.quote_type !== undefined) payload.quote_type = updates.quote_type;
         if (updates.customer_name !== undefined) payload.customer_name = updates.customer_name;
         if (updates.customer_phone !== undefined) payload.customer_phone = updates.customer_phone;
         if (updates.customer_address !== undefined) payload.customer_address = updates.customer_address;
@@ -218,6 +232,7 @@ function mapQuoteFromDb(row: any): Quote {
     return {
         id: row.id,
         readable_id: row.readable_id,
+        quote_type: row.quote_type || 'order_quote',
         customer_id: row.customer_id,
         customer_name: row.customer_name || '',
         customer_phone: row.customer_phone,

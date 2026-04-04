@@ -5,7 +5,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { createClient } from '@/lib/supabaseClient';
 import {
     fetchQuotes, createQuote, updateQuote, deleteQuote, convertQuoteToOrder,
-    type Quote, type QuoteItem, type QuoteStatus,
+    type Quote, type QuoteItem, type QuoteStatus, type QuoteType,
     QUOTE_STATUS_LABELS, QUOTE_STATUS_COLORS
 } from '@/lib/quotesStore';
 import { loadProducts } from '@/lib/supabase/products';
@@ -31,7 +31,7 @@ export default function SaleAdminQuotesPage() {
     const [statusFilter, setStatusFilter] = useState<QuoteStatus | 'all'>('all');
     const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
     const [printingQuote, setPrintingQuote] = useState<Quote | null>(null);
-    const [isCreating, setIsCreating] = useState(false);
+    const [isCreating, setIsCreating] = useState<'order_quote' | 'price_list' | false>(false);
     const [saving, setSaving] = useState(false);
 
     const loadData = useCallback(async () => {
@@ -108,12 +108,20 @@ export default function SaleAdminQuotesPage() {
                     <h1 className="text-2xl font-bold text-slate-900">Báo giá</h1>
                     <p className="text-sm text-slate-500 mt-0.5">Tạo và quản lý báo giá cho khách hàng</p>
                 </div>
-                <button
-                    onClick={() => { setIsCreating(true); setEditingQuote(null); }}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm"
-                >
-                    <Plus className="w-4 h-4" /> Tạo báo giá
-                </button>
+                <div className="relative group">
+                    <button className="flex items-center gap-2 px-5 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition-colors shadow-sm">
+                        <Plus className="w-4 h-4" /> Tạo báo giá
+                    </button>
+                    <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-20 overflow-hidden">
+                        <button onClick={() => { setIsCreating('price_list'); setEditingQuote(null); }} className="w-full flex items-center gap-3 text-left px-4 py-3 hover:bg-slate-50 text-sm font-semibold text-slate-700">
+                            <FileText className="w-4 h-4 text-emerald-600" /> Bảng báo giá chung
+                        </button>
+                        <div className="h-px bg-slate-100" />
+                        <button onClick={() => { setIsCreating('order_quote'); setEditingQuote(null); }} className="w-full flex items-center gap-3 text-left px-4 py-3 hover:bg-slate-50 text-sm font-semibold text-slate-700">
+                            <ShoppingCart className="w-4 h-4 text-blue-600" /> Báo giá đơn hàng
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {/* Stats */}
@@ -208,7 +216,7 @@ export default function SaleAdminQuotesPage() {
                                     <td className="px-5 py-3 text-slate-500 text-xs">{fmtDate(q.created_at)}</td>
                                     <td className="px-5 py-3 text-right">
                                         <div className="flex items-center justify-end gap-1.5">
-                                            <button onClick={() => { setEditingQuote(q); setIsCreating(true); }}
+                                            <button onClick={() => { setEditingQuote(q); setIsCreating(q.quote_type || 'order_quote'); }}
                                                 className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Sửa">
                                                 <Edit className="w-4 h-4" />
                                             </button>
@@ -267,6 +275,7 @@ export default function SaleAdminQuotesPage() {
             {isCreating && (
                 <QuoteEditorModal
                     quote={editingQuote}
+                    quoteType={isCreating}
                     products={products}
                     userId={user?.id || ''}
                     userName={user?.user_metadata?.name || user?.email || ''}
@@ -292,9 +301,10 @@ export default function SaleAdminQuotesPage() {
 
 // ========== QUOTE EDITOR MODAL ==========
 function QuoteEditorModal({
-    quote, products, userId, userName, onSave, onClose, saving
+    quote, quoteType, products, userId, userName, onSave, onClose, saving
 }: {
     quote: Quote | null;
+    quoteType: QuoteType;
     products: any[];
     userId: string;
     userName: string;
@@ -302,7 +312,8 @@ function QuoteEditorModal({
     onClose: () => void;
     saving: boolean;
 }) {
-    const [customerName, setCustomerName] = useState(quote?.customer_name || '');
+    const isPriceList = quoteType === 'price_list';
+    const [customerName, setCustomerName] = useState(quote?.customer_name || (isPriceList ? 'Kính gửi Quý khách hàng' : ''));
     const [customerPhone, setCustomerPhone] = useState(quote?.customer_phone || '');
     const [customerAddress, setCustomerAddress] = useState(quote?.customer_address || '');
     const [items, setItems] = useState<QuoteItem[]>(quote?.items || []);
@@ -326,6 +337,14 @@ function QuoteEditorModal({
             quantity: 1,
             unitPrice: prod.price || 0,
             subtotal: prod.price || 0,
+            imageUrl: '',
+            unit: 'Cái',
+            weight: '',
+            expiry: '',
+            packSize: '1',
+            retailPrice: prod.price || 0,
+            wholesalePrice: prod.price || 0,
+            category: ''
         }]);
     };
 
@@ -345,10 +364,11 @@ function QuoteEditorModal({
     };
 
     const handleSubmit = () => {
-        if (!customerName.trim()) { alert('Vui lòng nhập tên khách hàng'); return; }
+        if (!isPriceList && !customerName.trim()) { alert('Vui lòng nhập tên khách hàng'); return; }
         if (items.length === 0) { alert('Vui lòng thêm ít nhất 1 sản phẩm'); return; }
         onSave({
-            customer_name: customerName.trim(),
+            quote_type: quoteType,
+            customer_name: customerName.trim() || 'Khách hàng',
             customer_phone: customerPhone || undefined,
             customer_address: customerAddress || undefined,
             items,
@@ -367,22 +387,22 @@ function QuoteEditorModal({
 
     return (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[800px] max-h-[90vh] overflow-y-auto">
-                <div className="sticky top-0 bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+            <div className={`bg-white rounded-2xl shadow-2xl w-full ${isPriceList ? 'max-w-[1200px]' : 'max-w-[800px]'} max-h-[90vh] overflow-hidden flex flex-col`}>
+                <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10 shrink-0">
                     <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                         <FileText className="w-5 h-5 text-primary-500" />
-                        {quote ? `Sửa báo giá #${quote.readable_id}` : 'Tạo báo giá mới'}
+                        {quote ? `Sửa báo giá #${quote.readable_id}` : (isPriceList ? 'Tạo Bảng báo giá chung' : 'Tạo Báo giá đơn hàng')}
                     </h2>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
                 </div>
 
-                <div className="p-6 space-y-6">
+                <div className="p-6 space-y-6 overflow-y-auto flex-1 block">
                     {/* Customer */}
                     <div>
-                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Thông tin khách hàng</h3>
+                        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Thông tin {isPriceList ? 'tiêu đề' : 'khách hàng'}</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <input
-                                type="text" placeholder="Tên khách hàng *" value={customerName}
+                                type="text" placeholder={isPriceList ? 'Tiêu đề khách hàng (vd: Kính gửi...)' : 'Tên khách hàng *'} value={customerName}
                                 onChange={e => setCustomerName(e.target.value)}
                                 className="px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none"
                             />
@@ -421,94 +441,128 @@ function QuoteEditorModal({
                                 <p className="text-sm">Chọn sản phẩm từ danh sách</p>
                             </div>
                         ) : (
-                            <table className="w-full text-xs border border-slate-200 rounded-xl overflow-hidden">
-                                <thead className="bg-slate-50">
-                                    <tr>
-                                        <th className="px-3 py-2 text-left font-semibold text-slate-600">Sản phẩm</th>
-                                        <th className="px-3 py-2 text-center font-semibold text-slate-600 w-20">SL</th>
-                                        <th className="px-3 py-2 text-right font-semibold text-slate-600 w-28">Đơn giá</th>
-                                        <th className="px-3 py-2 text-right font-semibold text-slate-600 w-28">Thành tiền</th>
-                                        <th className="px-3 py-2 w-10"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {items.map((item, idx) => (
-                                        <tr key={idx}>
-                                            <td className="px-3 py-2">
-                                                <input
-                                                    type="text" value={item.name}
-                                                    onChange={e => updateItem(idx, 'name', e.target.value)}
-                                                    className="w-full bg-transparent font-semibold text-slate-800 outline-none"
-                                                />
-                                                {item.sku && <span className="text-[10px] text-slate-400">SKU: {item.sku}</span>}
-                                            </td>
-                                            <td className="px-3 py-2 text-center">
-                                                <input
-                                                    type="number" min="1" value={item.quantity}
-                                                    onChange={e => updateItem(idx, 'quantity', parseInt(e.target.value) || 1)}
-                                                    className="w-16 text-center bg-slate-50 border border-slate-200 rounded px-1 py-1 font-bold outline-none focus:border-primary-400"
-                                                />
-                                            </td>
-                                            <td className="px-3 py-2 text-right">
-                                                <input
-                                                    type="number" value={item.unitPrice}
-                                                    onChange={e => updateItem(idx, 'unitPrice', parseInt(e.target.value) || 0)}
-                                                    className="w-24 text-right bg-slate-50 border border-slate-200 rounded px-1 py-1 font-semibold outline-none focus:border-primary-400"
-                                                />
-                                            </td>
-                                            <td className="px-3 py-2 text-right font-bold text-slate-800">{fmtPrice(item.subtotal)}</td>
-                                            <td className="px-3 py-2">
-                                                <button onClick={() => removeItem(idx)} className="text-red-400 hover:text-red-600">
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            </td>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs border border-slate-200 rounded-xl min-w-[800px]">
+                                    <thead className="bg-slate-50 font-semibold text-slate-600 text-left">
+                                        <tr>
+                                            {isPriceList && <th className="px-2 py-2.5 w-24 border-b border-slate-200">Hình ảnh (URL)</th>}
+                                            <th className="px-3 py-2.5 border-b border-slate-200">Sản phẩm</th>
+                                            {isPriceList ? (
+                                                <>
+                                                    <th className="px-2 py-2.5 border-b border-slate-200 text-center w-16">Đơn vị</th>
+                                                    <th className="px-2 py-2.5 border-b border-slate-200 text-center w-16">Tr.lượng</th>
+                                                    <th className="px-2 py-2.5 border-b border-slate-200 text-center w-20">HSD</th>
+                                                    <th className="px-2 py-2.5 border-b border-slate-200 text-center w-16">QC</th>
+                                                    <th className="px-2 py-2.5 border-b border-slate-200 text-right w-24">Giá lẻ</th>
+                                                    <th className="px-2 py-2.5 border-b border-slate-200 text-right w-24">Giá sỉ</th>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <th className="px-3 py-2.5 border-b border-slate-200 text-center w-20">SL</th>
+                                                    <th className="px-3 py-2.5 border-b border-slate-200 text-right w-28">Đơn giá</th>
+                                                    <th className="px-3 py-2.5 border-b border-slate-200 text-right w-28">Thành tiền</th>
+                                                </>
+                                            )}
+                                            <th className="px-2 py-2.5 w-10 border-b border-slate-200"></th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {items.map((item, idx) => (
+                                            <tr key={idx} className="hover:bg-slate-50/50">
+                                                {isPriceList && (
+                                                    <td className="px-2 py-2 align-top">
+                                                        <input type="text" placeholder="URL ảnh..." value={item.imageUrl || ''} onChange={e => updateItem(idx, 'imageUrl', e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded px-1.5 py-1.5 outline-none focus:border-primary-400 text-[10px]" />
+                                                        {item.imageUrl && (
+                                                            <div className="mt-1 h-10 w-10 border border-slate-200 rounded overflow-hidden">
+                                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                <img src={item.imageUrl} alt="" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                )}
+                                                <td className="px-3 py-2 align-top">
+                                                    <input
+                                                        type="text" value={item.name}
+                                                        onChange={e => updateItem(idx, 'name', e.target.value)}
+                                                        className="w-full font-semibold text-slate-800 outline-none bg-transparent mb-1"
+                                                    />
+                                                    {isPriceList ? (
+                                                        <input type="text" placeholder="Mã SKU" value={item.sku || ''} onChange={e => updateItem(idx, 'sku', e.target.value)} className="w-20 bg-transparent border-b border-dashed border-slate-300 text-[10px] text-slate-500 outline-none" />
+                                                    ) : (
+                                                        item.sku && <span className="block text-[10px] text-slate-400">SKU: {item.sku}</span>
+                                                    )}
+                                                </td>
+                                                {isPriceList ? (
+                                                    <>
+                                                        <td className="px-2 py-2 align-top"><input type="text" value={item.unit || ''} onChange={e => updateItem(idx, 'unit', e.target.value)} className="w-full text-center bg-transparent outline-none border-b border-dashed border-slate-300 focus:border-primary-400" placeholder="Gói" /></td>
+                                                        <td className="px-2 py-2 align-top"><input type="text" value={item.weight || ''} onChange={e => updateItem(idx, 'weight', e.target.value)} className="w-full text-center bg-transparent outline-none border-b border-dashed border-slate-300 focus:border-primary-400" placeholder="100g" /></td>
+                                                        <td className="px-2 py-2 align-top"><input type="text" value={item.expiry || ''} onChange={e => updateItem(idx, 'expiry', e.target.value)} className="w-full text-center bg-transparent outline-none border-b border-dashed border-slate-300 focus:border-primary-400" placeholder="12 tháng" /></td>
+                                                        <td className="px-2 py-2 align-top"><input type="text" value={item.packSize || ''} onChange={e => updateItem(idx, 'packSize', e.target.value)} className="w-full text-center bg-transparent outline-none border-b border-dashed border-slate-300 focus:border-primary-400" placeholder="60" /></td>
+                                                        <td className="px-2 py-2 align-top"><input type="number" value={item.retailPrice || 0} onChange={e => updateItem(idx, 'retailPrice', parseInt(e.target.value) || 0)} className="w-full text-right bg-transparent outline-none border-b border-dashed border-slate-300 focus:border-primary-400 font-semibold" /></td>
+                                                        <td className="px-2 py-2 align-top"><input type="number" value={item.wholesalePrice || 0} onChange={e => updateItem(idx, 'wholesalePrice', parseInt(e.target.value) || 0)} className="w-full text-right bg-transparent outline-none border-b border-dashed border-slate-300 focus:border-primary-400 font-semibold text-primary-600" /></td>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <td className="px-3 py-2 text-center align-top">
+                                                            <input
+                                                                type="number" min="1" value={item.quantity}
+                                                                onChange={e => updateItem(idx, 'quantity', parseInt(e.target.value) || 1)}
+                                                                className="w-16 text-center bg-slate-50 border border-slate-200 rounded px-1 py-1 font-bold outline-none focus:border-primary-400"
+                                                            />
+                                                        </td>
+                                                        <td className="px-3 py-2 text-right align-top">
+                                                            <input
+                                                                type="number" value={item.unitPrice}
+                                                                onChange={e => updateItem(idx, 'unitPrice', parseInt(e.target.value) || 0)}
+                                                                className="w-24 text-right bg-slate-50 border border-slate-200 rounded px-1 py-1 font-semibold outline-none focus:border-primary-400"
+                                                            />
+                                                        </td>
+                                                        <td className="px-3 py-2 text-right font-bold text-slate-800 align-top">{fmtPrice(item.subtotal)}</td>
+                                                    </>
+                                                )}
+                                                <td className="px-2 py-2 text-center align-top">
+                                                    <button onClick={() => removeItem(idx)} className="text-red-400 hover:text-red-600 p-1">
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         )}
                     </div>
 
-                    {/* Totals */}
-                    <div className="flex justify-end">
-                        <div className="w-[300px] space-y-2 bg-slate-50 rounded-xl p-4 border border-slate-200">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-slate-500">Tạm tính</span>
-                                <span className="font-semibold">{fmtPrice(subtotal)}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-slate-500">Chiết khấu</span>
-                                <input
-                                    type="number" value={discountAmount}
-                                    onChange={e => setDiscountAmount(parseInt(e.target.value) || 0)}
-                                    className="w-28 text-right bg-white border border-slate-200 rounded px-2 py-1 text-xs font-semibold outline-none focus:border-primary-400"
-                                />
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-slate-500">VAT (%)</span>
-                                <input
-                                    type="number" value={vatPercent} min="0" max="100"
-                                    onChange={e => setVatPercent(parseInt(e.target.value) || 0)}
-                                    className="w-20 text-right bg-white border border-slate-200 rounded px-2 py-1 text-xs font-semibold outline-none focus:border-primary-400"
-                                />
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                                <span className="text-slate-500">Phí vận chuyển</span>
-                                <input
-                                    type="number" value={shippingFee}
-                                    onChange={e => setShippingFee(parseInt(e.target.value) || 0)}
-                                    className="w-28 text-right bg-white border border-slate-200 rounded px-2 py-1 text-xs font-semibold outline-none focus:border-primary-400"
-                                />
-                            </div>
-                            <div className="flex justify-between pt-2 border-t border-slate-300 text-base">
-                                <span className="font-bold text-slate-800">TỔNG</span>
-                                <span className="font-extrabold text-primary-700">{fmtPrice(Math.max(total, 0))}</span>
+                    {/* Totals - Only for Order Quote */}
+                    {!isPriceList && (
+                        <div className="flex justify-end">
+                            <div className="w-[300px] space-y-2 bg-slate-50 rounded-xl p-4 border border-slate-200">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">Tạm tính</span>
+                                    <span className="font-semibold">{fmtPrice(subtotal)}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-slate-500">Chiết khấu</span>
+                                    <input type="number" value={discountAmount} onChange={e => setDiscountAmount(parseInt(e.target.value) || 0)} className="w-28 text-right bg-white border border-slate-200 rounded px-2 py-1 text-xs font-semibold outline-none focus:border-primary-400" />
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-slate-500">VAT (%)</span>
+                                    <input type="number" value={vatPercent} min="0" max="100" onChange={e => setVatPercent(parseInt(e.target.value) || 0)} className="w-20 text-right bg-white border border-slate-200 rounded px-2 py-1 text-xs font-semibold outline-none focus:border-primary-400" />
+                                </div>
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-slate-500">Phí vận chuyển</span>
+                                    <input type="number" value={shippingFee} onChange={e => setShippingFee(parseInt(e.target.value) || 0)} className="w-28 text-right bg-white border border-slate-200 rounded px-2 py-1 text-xs font-semibold outline-none focus:border-primary-400" />
+                                </div>
+                                <div className="flex justify-between pt-2 border-t border-slate-300 text-base">
+                                    <span className="font-bold text-slate-800">TỔNG</span>
+                                    <span className="font-extrabold text-primary-700">{fmtPrice(Math.max(total, 0))}</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Extra */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                         <div>
                             <label className="text-xs font-bold text-slate-500 mb-1 block">Hiệu lực đến</label>
                             <input
@@ -521,7 +575,7 @@ function QuoteEditorModal({
                             <label className="text-xs font-bold text-slate-500 mb-1 block">Ghi chú</label>
                             <textarea
                                 value={notes} onChange={e => setNotes(e.target.value)}
-                                rows={2} placeholder="Ghi chú cho báo giá..."
+                                rows={2} placeholder="Ghi chú thêm..."
                                 className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none resize-none"
                             />
                         </div>
@@ -529,7 +583,7 @@ function QuoteEditorModal({
                 </div>
 
                 {/* Footer */}
-                <div className="sticky bottom-0 bg-white border-t border-slate-200 px-6 py-4 flex items-center justify-end gap-3 rounded-b-2xl">
+                <div className="bg-white border-t border-slate-200 px-6 py-4 flex items-center justify-end gap-3 rounded-b-2xl shrink-0">
                     <button onClick={onClose} className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-semibold rounded-xl transition-colors">
                         Hủy
                     </button>
@@ -539,7 +593,7 @@ function QuoteEditorModal({
                         className="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center gap-2"
                     >
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Calculator className="w-4 h-4" />}
-                        {quote ? 'Cập nhật' : 'Tạo báo giá'}
+                        {quote ? 'Cập nhật' : 'Lưu lại'}
                     </button>
                 </div>
             </div>

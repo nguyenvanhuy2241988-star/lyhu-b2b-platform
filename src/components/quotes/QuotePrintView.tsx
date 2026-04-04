@@ -26,6 +26,7 @@ export default function QuotePrintView({ quote, onClose }: QuotePrintViewProps) 
 
     const items = quote.items || [];
     const validDate = quote.valid_until ? fmtDate(quote.valid_until) : null;
+    const isPriceList = quote.quote_type === 'price_list';
 
     return (
         <>
@@ -131,52 +132,74 @@ export default function QuotePrintView({ quote, onClose }: QuotePrintViewProps) 
                         <div className="mx-10 h-[2px] bg-gradient-to-r from-primary-500 via-primary-400 to-secondary-400" />
 
                         {/* ===== CUSTOMER INFO ===== */}
-                        <div className="px-10 py-5">
-                            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Thông tin khách hàng</p>
-                                <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-xs text-slate-400 w-16 shrink-0">Khách hàng:</span>
-                                        <span className="text-sm font-bold text-slate-800">{quote.customer_name}</span>
+                        {(!isPriceList || quote.customer_name !== 'Kính gửi Quý khách hàng') && (
+                            <div className="px-10 py-5">
+                                <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Thông tin khách hàng</p>
+                                    <div className="grid grid-cols-2 gap-x-6 gap-y-1.5">
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-xs text-slate-400 w-16 shrink-0">Khách hàng:</span>
+                                            <span className="text-sm font-bold text-slate-800">{quote.customer_name}</span>
+                                        </div>
+                                        {quote.customer_phone && (
+                                            <div className="flex items-baseline gap-2">
+                                                <span className="text-xs text-slate-400 w-12 shrink-0">SĐT:</span>
+                                                <span className="text-sm font-semibold text-slate-700">{quote.customer_phone}</span>
+                                            </div>
+                                        )}
+                                        {quote.customer_address && (
+                                            <div className="flex items-baseline gap-2 col-span-2">
+                                                <span className="text-xs text-slate-400 w-16 shrink-0">Địa chỉ:</span>
+                                                <span className="text-sm text-slate-700">{quote.customer_address}</span>
+                                            </div>
+                                        )}
+                                        {quote.creator_name && (
+                                            <div className="flex items-baseline gap-2">
+                                                <span className="text-xs text-slate-400 w-16 shrink-0">NV bán:</span>
+                                                <span className="text-sm text-slate-700">{quote.creator_name}</span>
+                                            </div>
+                                        )}
                                     </div>
-                                    {quote.customer_phone && (
-                                        <div className="flex items-baseline gap-2">
-                                            <span className="text-xs text-slate-400 w-12 shrink-0">SĐT:</span>
-                                            <span className="text-sm font-semibold text-slate-700">{quote.customer_phone}</span>
-                                        </div>
-                                    )}
-                                    {quote.customer_address && (
-                                        <div className="flex items-baseline gap-2 col-span-2">
-                                            <span className="text-xs text-slate-400 w-16 shrink-0">Địa chỉ:</span>
-                                            <span className="text-sm text-slate-700">{quote.customer_address}</span>
-                                        </div>
-                                    )}
-                                    {quote.creator_name && (
-                                        <div className="flex items-baseline gap-2">
-                                            <span className="text-xs text-slate-400 w-16 shrink-0">NV bán:</span>
-                                            <span className="text-sm text-slate-700">{quote.creator_name}</span>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
+                        )}
 
-                            {/* Intro text */}
-                            <p className="text-xs text-slate-500 mt-4 italic leading-relaxed">
-                                Kính gửi Quý khách hàng! Công ty TNHH LYHU xin trân trọng giới thiệu bảng báo giá các sản phẩm như sau:
-                            </p>
-                        </div>
+                        {isPriceList && (
+                            <div className="px-10 pb-4 pt-2">
+                                <p className="text-[13px] font-bold text-slate-800 uppercase">Kính gửi: Quý khách hàng!</p>
+                                <p className="text-[12px] text-slate-700 leading-relaxed italic">
+                                    Công ty TNHH LYHU là đơn vị sản xuất, phân phối các mặt hàng tiêu dùng nhanh.<br/>
+                                    Cảm ơn quý khách hàng đã quan tâm đến các sản phẩm của Công ty LYHU. Chúng tôi xin trân trọng giới thiệu bảng báo giá các sản phẩm như sau:
+                                </p>
+                            </div>
+                        )}
 
                         {/* ===== PRODUCTS TABLE ===== */}
                         <div className="px-10 pb-6">
-                            <table className="w-full border-collapse" style={{ fontSize: '12px' }}>
+                            <table className="w-full border-collapse" style={{ fontSize: '11px' }}>
                                 <thead>
                                     <tr style={{ backgroundColor: '#00afa9' }}>
-                                        <th className="px-2 py-2.5 text-white text-center font-bold border border-white/30" style={{ width: '5%' }}>STT</th>
-                                        <th className="px-2 py-2.5 text-white text-left font-bold border border-white/30" style={{ width: '35%' }}>Tên sản phẩm</th>
-                                        <th className="px-2 py-2.5 text-white text-center font-bold border border-white/30" style={{ width: '10%' }}>Đơn vị</th>
-                                        <th className="px-2 py-2.5 text-white text-center font-bold border border-white/30" style={{ width: '10%' }}>SL</th>
-                                        <th className="px-2 py-2.5 text-white text-right font-bold border border-white/30" style={{ width: '18%' }}>Đơn giá</th>
-                                        <th className="px-2 py-2.5 text-white text-right font-bold border border-white/30" style={{ width: '22%' }}>Thành tiền</th>
+                                        <th className="px-1.5 py-2 text-white text-center font-bold border border-white/30" style={{ width: '4%' }}>STT</th>
+                                        <th className="px-1.5 py-2 text-white text-center font-bold border border-white/30" style={{ width: '12%' }}>Mã Sản Phẩm</th>
+                                        <th className="px-2 py-2 text-white text-left font-bold border border-white/30" style={{ width: '20%' }}>Tên Sản Phẩm</th>
+                                        {isPriceList ? (
+                                            <>
+                                                <th className="px-1.5 py-2 text-white text-center font-bold border border-white/30" style={{ width: '6%' }}>Đơn Vị</th>
+                                                <th className="px-1.5 py-2 text-white text-center font-bold border border-white/30" style={{ width: '8%' }}>Tr.Lượng</th>
+                                                <th className="px-1.5 py-2 text-white text-center font-bold border border-white/30" style={{ width: '6%' }}>HSD</th>
+                                                <th className="px-1.5 py-2 text-white text-center font-bold border border-white/30" style={{ width: '8%' }}>Quy Cách</th>
+                                                <th className="px-1.5 py-2 text-white text-right font-bold border border-white/30" style={{ width: '10%' }}>Giá Lẻ</th>
+                                                <th className="px-1.5 py-2 text-white text-right font-bold border border-white/30" style={{ width: '10%' }}>Giá Sỉ</th>
+                                                <th className="px-1.5 py-2 text-white text-center font-bold border border-white/30" style={{ width: '10%' }}>Hình Ảnh</th>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <th className="px-2 py-2 text-white text-center font-bold border border-white/30" style={{ width: '10%' }}>Đơn vị</th>
+                                                <th className="px-2 py-2 text-white text-center font-bold border border-white/30" style={{ width: '10%' }}>SL</th>
+                                                <th className="px-2 py-2 text-white text-right font-bold border border-white/30" style={{ width: '18%' }}>Đơn giá</th>
+                                                <th className="px-2 py-2 text-white text-right font-bold border border-white/30" style={{ width: '22%' }}>Thành tiền</th>
+                                            </>
+                                        )}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -184,101 +207,104 @@ export default function QuotePrintView({ quote, onClose }: QuotePrintViewProps) 
                                         const lineTotal = item.subtotal || (item.unitPrice || 0) * (item.quantity || 0);
                                         const isEven = idx % 2 === 0;
                                         return (
-                                            <tr key={idx} style={{ backgroundColor: isEven ? '#ffffff' : '#f1f5f9' }}>
-                                                <td className="px-2 py-2 text-center border border-slate-200 font-semibold text-slate-500">
+                                            <tr key={idx} style={{ backgroundColor: isEven ? '#ffffff' : '#f8fafc' }}>
+                                                <td className="px-1.5 py-2 text-center border border-slate-300 font-semibold text-slate-600 align-middle">
                                                     {idx + 1}
                                                 </td>
-                                                <td className="px-2 py-2 border border-slate-200">
+                                                <td className="px-1.5 py-2 text-center border border-slate-300 text-slate-700 font-medium align-middle">
+                                                    {item.sku || '---'}
+                                                </td>
+                                                <td className="px-2 py-2 border border-slate-300 align-middle">
                                                     <p className="font-semibold text-slate-800">{item.name}</p>
-                                                    {item.sku && (
-                                                        <p className="text-[10px] text-slate-400 mt-0.5">Mã: {item.sku}</p>
-                                                    )}
                                                     {item.isGift && (
                                                         <span className="inline-block text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded mt-0.5 font-bold">🎁 Quà tặng</span>
                                                     )}
                                                 </td>
-                                                <td className="px-2 py-2 text-center border border-slate-200 text-slate-600">
-                                                    {item.isGift ? 'KM' : 'Cái'}
-                                                </td>
-                                                <td className="px-2 py-2 text-center border border-slate-200 font-bold text-slate-700">
-                                                    {item.quantity}
-                                                </td>
-                                                <td className="px-2 py-2 text-right border border-slate-200 text-slate-700">
-                                                    {item.isGift ? '—' : fmtPrice(item.unitPrice || 0)}
-                                                </td>
-                                                <td className="px-2 py-2 text-right border border-slate-200 font-bold text-slate-800">
-                                                    {item.isGift ? 'Miễn phí' : fmtPrice(lineTotal)}
-                                                </td>
+                                                {isPriceList ? (
+                                                    <>
+                                                        <td className="px-1.5 py-2 text-center border border-slate-300 text-slate-700 align-middle">{item.unit || '-'}</td>
+                                                        <td className="px-1.5 py-2 text-center border border-slate-300 text-slate-700 align-middle">{item.weight || '-'}</td>
+                                                        <td className="px-1.5 py-2 text-center border border-slate-300 text-slate-700 align-middle">{item.expiry || '-'}</td>
+                                                        <td className="px-1.5 py-2 text-center border border-slate-300 text-slate-700 align-middle">{item.packSize || '-'}</td>
+                                                        <td className="px-1.5 py-2 text-right border border-slate-300 font-bold text-slate-700 align-middle">{fmtPrice(item.retailPrice || 0)}</td>
+                                                        <td className="px-1.5 py-2 text-right border border-slate-300 font-bold text-primary-700 align-middle">{fmtPrice(item.wholesalePrice || 0)}</td>
+                                                        <td className="px-1.5 py-1 text-center border border-slate-300 align-middle">
+                                                            {item.imageUrl ? (
+                                                                <div className="w-12 h-12 mx-auto overflow-hidden rounded bg-white">
+                                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                                    <img src={item.imageUrl} alt={item.name} className="w-full h-full object-contain" />
+                                                                </div>
+                                                            ) : '-'}
+                                                        </td>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <td className="px-2 py-2 text-center border border-slate-300 text-slate-600 align-middle">{item.isGift ? 'KM' : 'Cái'}</td>
+                                                        <td className="px-2 py-2 text-center border border-slate-300 font-bold text-slate-700 align-middle">{item.quantity}</td>
+                                                        <td className="px-2 py-2 text-right border border-slate-300 text-slate-700 align-middle">{item.isGift ? '—' : fmtPrice(item.unitPrice || 0)}</td>
+                                                        <td className="px-2 py-2 text-right border border-slate-300 font-bold text-slate-800 align-middle">{item.isGift ? 'Miễn phí' : fmtPrice(lineTotal)}</td>
+                                                    </>
+                                                )}
                                             </tr>
                                         );
                                     })}
-
-                                    {/* Empty rows if less than 3 items */}
-                                    {items.length < 3 && Array.from({ length: 3 - items.length }).map((_, i) => (
-                                        <tr key={`empty-${i}`}>
-                                            <td className="px-2 py-2 text-center border border-slate-200 text-slate-300">{items.length + i + 1}</td>
-                                            <td className="px-2 py-2 border border-slate-200">&nbsp;</td>
-                                            <td className="px-2 py-2 border border-slate-200">&nbsp;</td>
-                                            <td className="px-2 py-2 border border-slate-200">&nbsp;</td>
-                                            <td className="px-2 py-2 border border-slate-200">&nbsp;</td>
-                                            <td className="px-2 py-2 border border-slate-200">&nbsp;</td>
-                                        </tr>
-                                    ))}
                                 </tbody>
                             </table>
                         </div>
 
                         {/* ===== TOTALS ===== */}
-                        <div className="px-10 pb-6">
-                            <div className="flex justify-end">
-                                <div className="w-[320px]">
-                                    <table className="w-full border-collapse" style={{ fontSize: '12px' }}>
-                                        <tbody>
-                                            <tr>
-                                                <td className="px-3 py-2 border border-slate-200 text-slate-600 font-medium">Tạm tính</td>
-                                                <td className="px-3 py-2 border border-slate-200 text-right font-semibold text-slate-800 w-36">
-                                                    {fmtPrice(quote.subtotal)} đ
-                                                </td>
-                                            </tr>
-                                            {quote.discount_amount > 0 && (
+                        {!isPriceList && (
+                            <div className="px-10 pb-6">
+                                <div className="flex justify-end">
+                                    <div className="w-[320px]">
+                                        <table className="w-full border-collapse" style={{ fontSize: '12px' }}>
+                                            <tbody>
                                                 <tr>
-                                                    <td className="px-3 py-2 border border-slate-200 text-slate-600 font-medium">Chiết khấu</td>
-                                                    <td className="px-3 py-2 border border-slate-200 text-right font-semibold text-red-600 w-36">
-                                                        - {fmtPrice(quote.discount_amount)} đ
-                                                    </td>
-                                                </tr>
-                                            )}
-                                            {quote.vat_percent > 0 && (
-                                                <tr>
-                                                    <td className="px-3 py-2 border border-slate-200 text-slate-600 font-medium">
-                                                        VAT ({quote.vat_percent}%)
-                                                    </td>
+                                                    <td className="px-3 py-2 border border-slate-200 text-slate-600 font-medium">Tạm tính</td>
                                                     <td className="px-3 py-2 border border-slate-200 text-right font-semibold text-slate-800 w-36">
-                                                        {fmtPrice(Math.round(quote.subtotal * quote.vat_percent / 100))} đ
+                                                        {fmtPrice(quote.subtotal)} đ
                                                     </td>
                                                 </tr>
-                                            )}
-                                            {quote.shipping_fee > 0 && (
-                                                <tr>
-                                                    <td className="px-3 py-2 border border-slate-200 text-slate-600 font-medium">Phí vận chuyển</td>
-                                                    <td className="px-3 py-2 border border-slate-200 text-right font-semibold text-slate-800 w-36">
-                                                        {fmtPrice(quote.shipping_fee)} đ
+                                                {quote.discount_amount > 0 && (
+                                                    <tr>
+                                                        <td className="px-3 py-2 border border-slate-200 text-slate-600 font-medium">Chiết khấu</td>
+                                                        <td className="px-3 py-2 border border-slate-200 text-right font-semibold text-red-600 w-36">
+                                                            - {fmtPrice(quote.discount_amount)} đ
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                                {quote.vat_percent > 0 && (
+                                                    <tr>
+                                                        <td className="px-3 py-2 border border-slate-200 text-slate-600 font-medium">
+                                                            VAT ({quote.vat_percent}%)
+                                                        </td>
+                                                        <td className="px-3 py-2 border border-slate-200 text-right font-semibold text-slate-800 w-36">
+                                                            {fmtPrice(Math.round(quote.subtotal * quote.vat_percent / 100))} đ
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                                {quote.shipping_fee > 0 && (
+                                                    <tr>
+                                                        <td className="px-3 py-2 border border-slate-200 text-slate-600 font-medium">Phí vận chuyển</td>
+                                                        <td className="px-3 py-2 border border-slate-200 text-right font-semibold text-slate-800 w-36">
+                                                            {fmtPrice(quote.shipping_fee)} đ
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                                <tr style={{ backgroundColor: '#00afa9' }}>
+                                                    <td className="px-3 py-3 border border-primary-400 text-white font-extrabold text-sm uppercase">
+                                                        Tổng cộng
+                                                    </td>
+                                                    <td className="px-3 py-3 border border-primary-400 text-right font-extrabold text-white text-sm w-36">
+                                                        {fmtPrice(quote.total)} đ
                                                     </td>
                                                 </tr>
-                                            )}
-                                            <tr style={{ backgroundColor: '#00afa9' }}>
-                                                <td className="px-3 py-3 border border-primary-400 text-white font-extrabold text-sm uppercase">
-                                                    Tổng cộng
-                                                </td>
-                                                <td className="px-3 py-3 border border-primary-400 text-right font-extrabold text-white text-sm w-36">
-                                                    {fmtPrice(quote.total)} đ
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* ===== NOTES & TERMS ===== */}
                         <div className="px-10 pb-6 space-y-4">
