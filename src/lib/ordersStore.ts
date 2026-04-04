@@ -467,7 +467,7 @@ export const addOrderSupabase = async (orderData: any, token?: string) => {
 
         // Prepare Items
         const itemsToInsert = (orderData.items || []).map((item: any) => ({
-            product_id: item.productId,
+            product_id: item.productId || item.product_id || item.product?.id,
             quantity: item.quantity,
             price: item.unitPrice || item.price || 0,
             discount: item.discount || 0,
@@ -642,7 +642,7 @@ export const updateOrderSupabase = async (orderId: string, updateData: any, toke
         };
 
         const itemsToInsert = (updateData.items || []).map((item: any) => ({
-            product_id: item.productId || item.product.id,
+            product_id: item.productId || item.product_id || item.product?.id,
             quantity: item.quantity,
             price: item.unitPrice || item.price || 0,
             discount: item.discount || 0,
