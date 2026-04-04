@@ -265,7 +265,7 @@ export default function SaleAdminDashboard() {
                                     <YAxis tick={{ fontSize: 12, fill: '#94a3b8' }} tickLine={false} axisLine={false} allowDecimals={false} />
                                     <Tooltip
                                         contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgba(0,0,0,.1)' }}
-                                        formatter={(value: any, name: string) => {
+                                        formatter={(value: any, name: any) => {
                                             const labels: Record<string, string> = { total: 'Tổng đơn', delivered: 'Đã giao', pending: 'Chờ duyệt', cancelled: 'Đã hủy' };
                                             return [value, labels[name] || name];
                                         }}
