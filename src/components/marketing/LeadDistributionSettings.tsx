@@ -135,7 +135,10 @@ export default function LeadDistributionSettings() {
     // Debounced search values — only trigger API after 500ms pause
     const [debouncedLeadsSearch, setDebouncedLeadsSearch] = useState('');
     const [debouncedFollowupsSearch, setDebouncedFollowupsSearch] = useState('');
-    const [chatStats, setChatStats] = useState({ totalConv: 0, hasPhone: 0, aiFollowed: 0, phoneAfterAi: 0 });
+    const [chatStats, setChatStats] = useState({
+        totalConv: 0, hasPhone: 0, aiFollowed: 0, phoneAfterAi: 0,
+        tier1Sent: 0, tier1Phone: 0, tier2Sent: 0, tier2Phone: 0, tier3Sent: 0, tier3Phone: 0
+    });
     const leadsTimerRef = useRef<ReturnType<typeof setTimeout>>();
     const fuTimerRef = useRef<ReturnType<typeof setTimeout>>();
     const isInitialLoad = useRef(true);
@@ -253,13 +256,33 @@ export default function LeadDistributionSettings() {
             if (followupCount !== null) setTotalFollowups(followupCount);
 
             // --- Chatbot & AI Stats ---
-            const [ { count: tc }, { count: hp }, { count: af }, { count: paa } ] = await Promise.all([
+            const [
+                { count: tc }, { count: hp }, { count: af }, { count: paa },
+                { count: t1s }, { count: t1p }, { count: t2s }, { count: t2p }, { count: t3s }, { count: t3p }
+            ] = await Promise.all([
                 supabase.from('social_conversations').select('*', { count: 'exact', head: true }).gte('created_at', dateStart).lte('created_at', dateEnd),
                 supabase.from('social_conversations').select('*', { count: 'exact', head: true }).gte('created_at', dateStart).lte('created_at', dateEnd).not('customer_phone', 'is', null),
                 supabase.from('social_conversations').select('*', { count: 'exact', head: true }).gte('created_at', dateStart).lte('created_at', dateEnd).gt('followup_count', 0),
-                supabase.from('social_conversations').select('*', { count: 'exact', head: true }).gte('created_at', dateStart).lte('created_at', dateEnd).not('customer_phone', 'is', null).gt('followup_count', 0)
+                supabase.from('social_conversations').select('*', { count: 'exact', head: true }).gte('created_at', dateStart).lte('created_at', dateEnd).not('customer_phone', 'is', null).gt('followup_count', 0),
+                
+                // Tier 1 (>=1 sent, =1 phone)
+                supabase.from('social_conversations').select('*', { count: 'exact', head: true }).gte('created_at', dateStart).lte('created_at', dateEnd).gte('followup_count', 1),
+                supabase.from('social_conversations').select('*', { count: 'exact', head: true }).gte('created_at', dateStart).lte('created_at', dateEnd).not('customer_phone', 'is', null).eq('followup_count', 1),
+
+                // Tier 2 (>=2 sent, =2 phone)
+                supabase.from('social_conversations').select('*', { count: 'exact', head: true }).gte('created_at', dateStart).lte('created_at', dateEnd).gte('followup_count', 2),
+                supabase.from('social_conversations').select('*', { count: 'exact', head: true }).gte('created_at', dateStart).lte('created_at', dateEnd).not('customer_phone', 'is', null).eq('followup_count', 2),
+
+                // Tier 3 (>=3 sent, =3 phone)
+                supabase.from('social_conversations').select('*', { count: 'exact', head: true }).gte('created_at', dateStart).lte('created_at', dateEnd).gte('followup_count', 3),
+                supabase.from('social_conversations').select('*', { count: 'exact', head: true }).gte('created_at', dateStart).lte('created_at', dateEnd).not('customer_phone', 'is', null).eq('followup_count', 3)
             ]);
-            setChatStats({ totalConv: tc || 0, hasPhone: hp || 0, aiFollowed: af || 0, phoneAfterAi: paa || 0 });
+            setChatStats({
+                totalConv: tc || 0, hasPhone: hp || 0, aiFollowed: af || 0, phoneAfterAi: paa || 0,
+                tier1Sent: t1s || 0, tier1Phone: t1p || 0,
+                tier2Sent: t2s || 0, tier2Phone: t2p || 0,
+                tier3Sent: t3s || 0, tier3Phone: t3p || 0,
+            });
 
         } catch (err) {
             console.error('Load lead dist data error:', err);
@@ -524,31 +547,85 @@ export default function LeadDistributionSettings() {
 
             {/* Chatbot & AI Stats */}
             <div className="bg-white rounded-xl border border-slate-200 p-5">
-                <h4 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-purple-600" />
-                    Hiệu quả Chatbot & AI Follow-up <span className="text-xs font-normal text-slate-400">({DATE_FILTER_LABELS[dateFilterMode]})</span>
+                <h4 className="font-bold text-slate-800 mb-4 flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4 text-purple-600" />
+                        Hiệu quả Chatbot & AI Follow-up
+                    </span>
+                    <span className="text-xs font-normal text-slate-400 bg-slate-100 px-2 py-1 rounded">Dữ liệu: {DATE_FILTER_LABELS[dateFilterMode]}</span>
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                        <span className="text-xs font-medium uppercase text-slate-600">Tổng khách Inbox</span>
-                        <p className="text-2xl font-bold text-slate-800 mt-1">{chatStats.totalConv}</p>
-                        <p className="text-[10px] text-slate-400">người</p>
+                
+                {/* Row 1: Tổng quan Chatbot */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div className="p-3 rounded-lg border border-slate-100">
+                        <span className="text-[11px] font-medium uppercase text-slate-500">📥 Tổng Inbox</span>
+                        <p className="text-xl font-bold text-slate-800 mt-1">{chatStats.totalConv}</p>
+                        <p className="text-[10px] text-slate-400">Khách hàng mới</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-teal-50 border border-teal-100">
-                        <span className="text-xs font-medium uppercase text-teal-600">Để lại SĐT</span>
-                        <p className="text-2xl font-bold text-slate-800 mt-1">{chatStats.hasPhone}</p>
-                        <p className="text-[10px] text-slate-400">Tỉ lệ {chatStats.totalConv ? Math.round((chatStats.hasPhone / chatStats.totalConv) * 100) : 0}%</p>
+                    <div className="p-3 rounded-lg border border-emerald-100 bg-emerald-50/30">
+                        <span className="text-[11px] font-medium uppercase text-emerald-600">✅ SĐT Tự nhiên</span>
+                        <p className="text-xl font-bold text-emerald-700 mt-1">{chatStats.hasPhone - chatStats.phoneAfterAi}</p>
+                        <p className="text-[10px] text-emerald-600/70">Không cần AI nhắc ({chatStats.totalConv ? Math.round(((chatStats.hasPhone - chatStats.phoneAfterAi) / chatStats.totalConv) * 100) : 0}%)</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-purple-50 border border-purple-100">
-                        <span className="text-xs font-medium uppercase text-purple-600">Được AI xin số tự động</span>
-                        <p className="text-2xl font-bold text-slate-800 mt-1">{chatStats.aiFollowed}</p>
-                        <p className="text-[10px] text-slate-400">khách hàng</p>
+                    <div className="p-3 rounded-lg border border-purple-100 bg-purple-50/30">
+                        <span className="text-[11px] font-medium uppercase text-purple-600">🤖 AI Đã Xử Lý</span>
+                        <p className="text-xl font-bold text-purple-700 mt-1">{chatStats.aiFollowed}</p>
+                        <p className="text-[10px] text-purple-600/70">Khách cần Follow-up</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
-                        <span className="text-xs font-medium uppercase text-emerald-600">SĐT chốt từ AI Follow-up</span>
-                        <p className="text-2xl font-bold text-slate-800 mt-1">{chatStats.phoneAfterAi}</p>
-                        <p className="text-[10px] text-slate-400">Tỉ lệ chuyển đổi {chatStats.aiFollowed ? Math.round((chatStats.phoneAfterAi / chatStats.aiFollowed) * 100) : 0}%</p>
+                    <div className="p-3 rounded-lg border border-teal-100 bg-teal-50">
+                        <span className="text-[11px] font-medium uppercase text-teal-600">🏆 Chốt nhờ AI</span>
+                        <p className="text-xl font-bold text-teal-700 mt-1">{chatStats.phoneAfterAi}</p>
+                        <p className="text-[10px] text-teal-600/70">Tỉ lệ chốt {chatStats.aiFollowed ? Math.round((chatStats.phoneAfterAi / chatStats.aiFollowed) * 100) : 0}%</p>
                     </div>
+                </div>
+
+                {/* Row 2: Phễu AI (Funnel) */}
+                <div className="bg-slate-50 border border-slate-100 rounded-lg p-4">
+                    <span className="text-[11px] font-medium uppercase text-slate-500 mb-3 block">Chi tiết Funnel (Nhắn sau bao lần thì để lại số)</span>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="bg-white p-3 rounded shadow-sm border border-slate-100">
+                            <span className="text-xs font-semibold text-purple-600 flex items-center gap-1">⏱️ Lần 1 (Sau 1h)</span>
+                            <div className="mt-2 flex justify-between items-end">
+                                <div>
+                                    <p className="text-[10px] text-slate-400 mb-0.5">Đã nhắc</p>
+                                    <p className="text-sm font-medium text-slate-700">{chatStats.tier1Sent} <span className="text-[10px] font-normal text-slate-400">khách</span></p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] text-emerald-600 mb-0.5">Chốt được</p>
+                                    <p className="text-sm font-bold text-emerald-600">{chatStats.tier1Phone} <span className="text-[10px] font-medium bg-emerald-100 px-1 py-0.5 rounded">{chatStats.tier1Sent ? Math.round((chatStats.tier1Phone / chatStats.tier1Sent) * 100) : 0}%</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-3 rounded shadow-sm border border-slate-100">
+                            <span className="text-xs font-semibold text-purple-600 flex items-center gap-1">⏱️ Lần 2 (Sau 6h)</span>
+                            <div className="mt-2 flex justify-between items-end">
+                                <div>
+                                    <p className="text-[10px] text-slate-400 mb-0.5">Đã nhắc</p>
+                                    <p className="text-sm font-medium text-slate-700">{chatStats.tier2Sent} <span className="text-[10px] font-normal text-slate-400">khách</span></p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] text-emerald-600 mb-0.5">Chốt được</p>
+                                    <p className="text-sm font-bold text-emerald-600">{chatStats.tier2Phone} <span className="text-[10px] font-medium bg-emerald-100 px-1 py-0.5 rounded">{chatStats.tier2Sent ? Math.round((chatStats.tier2Phone / chatStats.tier2Sent) * 100) : 0}%</span></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white p-3 rounded shadow-sm border border-slate-100">
+                            <span className="text-xs font-semibold text-purple-600 flex items-center gap-1">⏱️ Lần 3 (Sau 18h)</span>
+                            <div className="mt-2 flex justify-between items-end">
+                                <div>
+                                    <p className="text-[10px] text-slate-400 mb-0.5">Đã nhắc</p>
+                                    <p className="text-sm font-medium text-slate-700">{chatStats.tier3Sent} <span className="text-[10px] font-normal text-slate-400">khách</span></p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] text-emerald-600 mb-0.5">Chốt được</p>
+                                    <p className="text-sm font-bold text-emerald-600">{chatStats.tier3Phone} <span className="text-[10px] font-medium bg-emerald-100 px-1 py-0.5 rounded">{chatStats.tier3Sent ? Math.round((chatStats.tier3Phone / chatStats.tier3Sent) * 100) : 0}%</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <p className="text-[9px] text-slate-400 mt-2 text-center">Lưu ý: Khách để lại SĐT ở lần nào sẽ dừng nhắc các lần sau.</p>
                 </div>
             </div>
 
