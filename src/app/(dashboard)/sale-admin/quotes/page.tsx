@@ -326,6 +326,7 @@ function QuoteEditorModal({
     const [vatPercent, setVatPercent] = useState(quote?.vat_percent || 0);
     const [shippingFee, setShippingFee] = useState(quote?.shipping_fee || 0);
     const [notes, setNotes] = useState(quote?.notes || '');
+    const [terms, setTerms] = useState(quote?.terms || `Giá trên chưa bao gồm phí vận chuyển (nếu có).\nBáo giá có hiệu lực 30 ngày kể từ ngày phát hành.\nThanh toán: Chuyển khoản trước khi giao hàng hoặc COD.\nHàng hóa được đổi trả trong vòng 7 ngày nếu có lỗi từ nhà sản xuất.`);
     const [validUntil, setValidUntil] = useState(quote?.valid_until ? quote.valid_until.split('T')[0] : '');
     const [salesName, setSalesName] = useState(quote?.creator_name || userName);
     const [salesPhone, setSalesPhone] = useState(quote?.sales_phone || '');
@@ -407,6 +408,7 @@ function QuoteEditorModal({
             shipping_fee: shippingFee,
             total: Math.max(total, 0),
             notes: notes || undefined,
+            terms: terms || undefined,
             valid_until: validUntil ? new Date(validUntil).toISOString() : undefined,
             status: quote?.status || 'draft',
             created_by: userId,
@@ -605,13 +607,25 @@ function QuoteEditorModal({
                             />
                         </div>
                         <div>
-                            <label className="text-xs font-bold text-slate-500 mb-1 block">Ghi chú</label>
+                            <label className="text-xs font-bold text-slate-500 mb-1 block">Ghi chú (Nội bộ / Thêm)</label>
                             <textarea
                                 value={notes} onChange={e => setNotes(e.target.value)}
                                 rows={2} placeholder="Ghi chú thêm..."
                                 className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none resize-none"
                             />
                         </div>
+                    </div>
+
+                    <div className="mt-4">
+                        <label className="text-xs font-bold text-slate-500 mb-1 block flex justify-between items-center">
+                            <span>Điều khoản & Điều kiện (Hiển thị trên ấn bản)</span>
+                            <span className="text-[10px] text-slate-400 font-normal">Mỗi dòng là 1 gạch đầu dòng</span>
+                        </label>
+                        <textarea
+                            value={terms} onChange={e => setTerms(e.target.value)}
+                            rows={4} placeholder="Nhập các điều khoản..."
+                            className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none resize-none"
+                        />
                     </div>
                     
                     <hr className="my-6 border-slate-100" />

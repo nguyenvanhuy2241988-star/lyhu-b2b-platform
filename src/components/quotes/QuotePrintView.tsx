@@ -409,7 +409,9 @@ export default function QuotePrintView({ quote, onClose }: QuotePrintViewProps) 
                                 <p className="text-[10px] font-bold text-slate-500 uppercase mb-1.5">Điều khoản & Điều kiện</p>
                                 <ul className="text-[11px] text-slate-600 space-y-1 leading-relaxed list-disc list-inside">
                                     {quote.terms ? (
-                                        <li className="whitespace-pre-line">{quote.terms}</li>
+                                        quote.terms.split('\n').filter(t => t.trim()).map((t, idx) => (
+                                            <li key={idx} className="whitespace-pre-line">{t}</li>
+                                        ))
                                     ) : (
                                         <>
                                             <li>Giá trên chưa bao gồm phí vận chuyển (nếu có).</li>
