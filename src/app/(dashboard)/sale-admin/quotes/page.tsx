@@ -620,18 +620,24 @@ function QuoteEditorModal({
                         <div>
                             <label className="text-xs font-bold text-slate-500 mb-1 block">Chọn hệ thống (tuỳ chọn)</label>
                             <select
+                                value={usersList.find(u => (u.full_name || u.email) === salesName)?.id || ""}
                                 className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm font-medium focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none bg-slate-50"
                                 onChange={(e) => {
                                     const u = usersList.find(x => x.id === e.target.value);
                                     if (u) {
                                         setSalesName(u.full_name || u.email);
                                         setSalesPhone(u.phone || '');
+                                    } else {
+                                        setSalesName('');
+                                        setSalesPhone('');
                                     }
                                 }}
                             >
                                 <option value="">-- Mặc định / Nhập tay --</option>
                                 {usersList.map((u, idx) => (
-                                    <option key={u.id || idx} value={u.id}>{u.full_name || u.email}</option>
+                                    <option key={u.id || idx} value={u.id}>
+                                        {u.full_name ? `${u.full_name} (${u.email})` : u.email}
+                                    </option>
                                 ))}
                             </select>
                         </div>
