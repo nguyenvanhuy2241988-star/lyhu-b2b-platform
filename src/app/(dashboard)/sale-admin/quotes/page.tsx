@@ -365,15 +365,16 @@ function QuoteEditorModal({
     const vatAmount = subtotal * vatPercent / 100;
     const total = subtotal - discountAmount + vatAmount + shippingFee;
 
-    const addProduct = (productId: string) => {
-        const prod = products.find(p => p.id === productId);
-        if (!prod) return;
-        
-        const name = prod.name || prod.title || '';
-        const detectedCategory = prod.brand || 'SẢN PHẨM KHÁC';
+    const handleAddMultipleProducts = (productIds: string[]) => {
+        const newItemsToAdd: QuoteItem[] = [];
+        for (const productId of productIds) {
+            const prod = products.find(p => p.id === productId);
+            if (!prod) continue;
+            
+            const name = prod.name || prod.title || '';
+            const detectedCategory = prod.brand || 'SẢN PHẨM KHÁC';
 
-        setItems(prev => {
-            const newItems = [...prev, {
+            newItemsToAdd.push({
                 productId: prod.id,
                 name: name,
                 sku: prod.sku || '',
@@ -388,14 +389,17 @@ function QuoteEditorModal({
                 retailPrice: prod.price || 0,
                 wholesalePrice: prod.price || 0,
                 category: detectedCategory
-            }];
-            
-            // Auto-sort items by category so they group naturally in the UI too
+            });
+        }
+        
+        setItems(prev => {
+            const newItems = [...prev, ...newItemsToAdd];
             if (isPriceList) {
                 return newItems.sort((a, b) => (a.category || 'Z').localeCompare(b.category || 'Z'));
             }
             return newItems;
         });
+        setIsProductSelectorOpen(false);
     };
 
     const updateItem = (idx: number, field: keyof QuoteItem, value: any) => {
@@ -752,6 +756,141 @@ function QuoteEditorModal({
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Calculator className="w-4 h-4" />}
                         {quote ? 'Cập nhật' : 'Lưu lại'}
                     </button>
+                </div>
+            </div>
+
+            <ProductMultiSelector 
+                isOpen={isProductSelectorOpen} 
+                onClose={() => setIsProductSelectorOpen(false)} 
+                products={products} 
+                onAddProducts={handleAddMultipleProducts} 
+            />
+        </div>
+    );
+}
+
+// ========== PRODUCT MULTI SELECTOR ==========
+function ProductMultiSelector({ 
+    products, 
+    onAddProducts, 
+    isOpen, 
+    onClose 
+}: { 
+    products: any[]; 
+    onAddProducts: (productIds: string[]) => void; 
+    isOpen: boolean; 
+    onClose: () => void; 
+}) {
+    const [searchTerm, setSearchTerm] = React.useState('');
+    const [brandFilter, setBrandFilter] = React.useState('');
+    const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
+    
+    // just use standard React useState imports for simplicity since it's already in the file at the top
+    // wait, I can just use useState. It was imported.
+
+    if (!isOpen) return null;
+
+    const brands = Array.from(new Set(products.map(p => p.brand || 'LHU'))).filter(Boolean);
+
+    const filtered = products.filter(p => {
+        const matchSearch = (p.name || p.title || '').toLowerCase().includes(searchTerm.toLowerCase()) || (p.sku || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const matchBrand = brandFilter ? (p.brand || 'LHU') === brandFilter : true;
+        return matchSearch && matchBrand;
+    });
+
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    };
+
+    const handleConfirm = () => {
+        onAddProducts(selectedIds);
+        setSelectedIds([]);
+        setSearchTerm('');
+        setBrandFilter('');
+    };
+
+    return (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 shrink-0">
+                    <div>
+                        <h3 className="font-bold text-slate-800 text-lg">Thêm sản phẩm</h3>
+                        <p className="text-xs text-slate-500 mt-1">Chọn nhiều sản phẩm để thêm vào báo giá cùng lúc</p>
+                    </div>
+                    <button type="button" onClick={onClose} className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                        <XCircle className="w-5 h-5" />
+                    </button>
+                </div>
+                
+                <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row items-center gap-3 shrink-0">
+                    <div className="relative flex-1 w-full">
+                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input 
+                            type="text" placeholder="Tìm tên SP, mã SKU..." 
+                            value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
+                            className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                        />
+                    </div>
+                    <select 
+                        value={brandFilter} onChange={e => setBrandFilter(e.target.value)}
+                        className="w-full sm:w-48 px-3 py-2 text-sm border border-slate-200 rounded-lg outline-none focus:border-primary-500 bg-white"
+                    >
+                        <option value="">Tất cả thương hiệu</option>
+                        {brands.map(b => <option key={b} value={b}>{b}</option>)}
+                    </select>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-4 bg-slate-50/50">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {filtered.length === 0 && (
+                            <div className="p-8 text-center text-slate-400 col-span-full">Không tìm thấy sản phẩm nào</div>
+                        )}
+                        {filtered.map(p => {
+                            const isSelected = selectedIds.includes(p.id);
+                            return (
+                                <div 
+                                    key={p.id} 
+                                    onClick={() => toggleSelect(p.id)}
+                                    className={`p-3 rounded-xl border flex items-start gap-3 cursor-pointer transition-all ${
+                                        isSelected ? 'bg-primary-50 border-primary-400 shadow-sm' : 'bg-white border-slate-200 hover:border-slate-300'
+                                    }`}
+                                >
+                                    <div className={`w-5 h-5 mt-0.5 rounded border flex shrink-0 items-center justify-center transition-colors ${
+                                        isSelected ? 'bg-primary-500 border-primary-500 text-white' : 'border-slate-300'
+                                    }`}>
+                                        {isSelected && <Check className="w-3.5 h-3.5" />}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-bold text-slate-800 line-clamp-2">{p.name || p.title}</p>
+                                        <div className="flex items-center justify-between mt-1">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded uppercase">{p.brand || 'LHU'}</span>
+                                                <span className="text-[11px] text-slate-400">{p.sku}</span>
+                                            </div>
+                                            <span className="text-xs font-bold text-primary-600">{new Intl.NumberFormat('vi-VN').format(p.price || 0)} đ</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                <div className="p-4 border-t border-slate-200 bg-white flex items-center justify-between shrink-0">
+                    <p className="text-sm font-medium text-slate-600">Đã chọn: <span className="font-bold text-primary-600">{selectedIds.length}</span> sản phẩm</p>
+                    <div className="flex gap-2">
+                        <button type="button" onClick={onClose} className="px-5 py-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg">Hủy</button>
+                        <button 
+                            type="button"
+                            onClick={handleConfirm}
+                            disabled={selectedIds.length === 0}
+                            className={`px-5 py-2 text-sm font-bold text-white rounded-lg flex items-center gap-2 transition-all ${
+                                selectedIds.length > 0 ? 'bg-primary-600 hover:bg-primary-700 shadow-md' : 'bg-slate-300 cursor-not-allowed opacity-70'
+                            }`}
+                        >
+                            <PackagePlus className="w-4 h-4" /> Xác nhận thêm
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
