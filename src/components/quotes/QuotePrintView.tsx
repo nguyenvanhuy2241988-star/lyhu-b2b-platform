@@ -8,6 +8,32 @@ import { Printer, Download, X, FileText } from 'lucide-react';
 const fmtPrice = (n: number) => new Intl.NumberFormat('vi-VN').format(n);
 const fmtDate = (s: string) => new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
+const getWeightInGrams = (name: string): number => {
+    const match = name.toLowerCase().match(/([\d.]+)\s*(g|kg|ml|l)/);
+    if (!match) return 0;
+    const value = parseFloat(match[1]) || 0;
+    const unit = match[2];
+    if (unit === 'kg' || unit === 'l') return value * 1000;
+    return value;
+};
+
+const getBaseName = (name: string): string => {
+    return name.toLowerCase().replace(/([\d.]+)\s*(g|kg|ml|l)/g, '').replace(/(\/|\s+)-|\s+/g, ' ').trim();
+};
+
+const naturalSort = (aName: string, bName: string) => {
+    const baseA = getBaseName(aName);
+    const baseB = getBaseName(bName);
+    if (baseA === baseB) {
+        const weightA = getWeightInGrams(aName);
+        const weightB = getWeightInGrams(bName);
+        if (weightA !== 0 || weightB !== 0) {
+            return weightA - weightB;
+        }
+    }
+    return aName.localeCompare(bName, 'vi', { numeric: true });
+};
+
 interface QuotePrintViewProps {
     quote: Quote;
     onClose: () => void;
@@ -283,7 +309,7 @@ export default function QuotePrintView({ quote, onClose, products }: QuotePrintV
 
                                         // Sort items alphabetically inside each group
                                         groups.forEach(group => {
-                                            group.items.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'vi'));
+                                            group.items.sort((a, b) => naturalSort(a.name || '', b.name || ''));
                                         });
 
                                         let globalIdx = 1;

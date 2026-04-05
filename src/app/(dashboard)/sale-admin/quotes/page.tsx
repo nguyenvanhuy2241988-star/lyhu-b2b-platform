@@ -19,6 +19,34 @@ import {
 const fmtPrice = (n: number) => new Intl.NumberFormat('vi-VN').format(n) + ' đ';
 const fmtDate = (s: string) => new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
+export const getWeightInGrams = (name: string): number => {
+    const match = name.toLowerCase().match(/([\d.]+)\s*(g|kg|ml|l)/);
+    if (!match) return 0;
+    const value = parseFloat(match[1]) || 0;
+    const unit = match[2];
+    if (unit === 'kg' || unit === 'l') return value * 1000;
+    return value;
+};
+
+export const getBaseName = (name: string): string => {
+    return name.toLowerCase().replace(/([\d.]+)\s*(g|kg|ml|l)/g, '').replace(/(\/|\s+)-|\s+/g, ' ').trim();
+};
+
+export const naturalSort = (aName: string, bName: string) => {
+    const baseA = getBaseName(aName);
+    const baseB = getBaseName(bName);
+    
+    if (baseA === baseB) {
+        const weightA = getWeightInGrams(aName);
+        const weightB = getWeightInGrams(bName);
+        if (weightA !== 0 || weightB !== 0) {
+            return weightA - weightB; // Tăng dần theo khối lượng (ví dụ 45g -> 1kg)
+        }
+    }
+    
+    return aName.localeCompare(bName, 'vi', { numeric: true });
+};
+
 export default function SaleAdminQuotesPage() {
     const { user, session } = useAuth();
     const supabase = createClient();
@@ -405,7 +433,7 @@ function QuoteEditorModal({
                 if (catA !== catB) {
                     return catA.localeCompare(catB, 'vi');
                 }
-                return (a.name || '').localeCompare(b.name || '', 'vi');
+                return naturalSort(a.name || '', b.name || '');
             });
         });
         
