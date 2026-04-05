@@ -12,11 +12,34 @@ const normalizeStr = (str: string) => {
     return (str || '').normalize('NFC').replace(/\s+/g, ' ').trim();
 };
 
+const getFlavorBase = (str: string) => {
+    const lower = str.toLowerCase();
+    const idx = lower.lastIndexOf(' vị ');
+    if (idx !== -1) {
+        return lower.substring(idx + 4)
+            .replace(/([\d.]+)\s*(g|kg|ml|l)\b/gi, '')
+            .replace(/gói nhỏ|thùng|hộp|loại/gi, '')
+            .replace(/[\/\-\(\)]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+    return '';
+};
+
 const naturalSort = (a: string, b: string) => {
     const nA = normalizeStr(a);
     const nB = normalizeStr(b);
     
-    // Tách chuỗi thành từng mảnh: chữ riêng, số riêng -> ["Khoai ", "2.5", "kg"]
+    // 1. Phân nhóm ưu tiên theo "Vị" (Flavor Grouping)
+    const flavA = getFlavorBase(nA);
+    const flavB = getFlavorBase(nB);
+    
+    // Nếu cả hai đều chứa chữ "vị" nhưng khác vị, nhóm theo vị trước
+    if (flavA && flavB && flavA !== flavB) {
+        return flavA.localeCompare(flavB, 'vi');
+    }
+    
+    // 2. Tách chuỗi thành từng mảnh: chữ riêng, số riêng -> ["Khoai ", "2.5", "kg"]
     const chunkify = (s: string) => s.match(/([^\d]+|\d+(?:\.\d+)?)/g) || [];
     const chunksA = chunkify(nA);
     const chunksB = chunkify(nB);
