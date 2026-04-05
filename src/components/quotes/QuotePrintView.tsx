@@ -8,111 +8,7 @@ import { Printer, Download, X, FileText } from 'lucide-react';
 const fmtPrice = (n: number) => new Intl.NumberFormat('vi-VN').format(n);
 const fmtDate = (s: string) => new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-const normalizeStr = (str: string) => {
-    return (str || '').normalize('NFC').replace(/\s+/g, ' ').trim();
-};
 
-const getFlavorBase = (str: string) => {
-    const lower = str.toLowerCase();
-    const idx = lower.lastIndexOf(' vị ');
-    if (idx !== -1) {
-        return lower.substring(idx + 4)
-            .replace(/([\d.]+)\s*(g|kg|ml|l)\b/gi, '')
-            .replace(/gói nhỏ|thùng|hộp|loại/gi, '')
-            .replace(/[\/\-\(\)]/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
-    }
-    return '';
-};
-
-const getWeightInGrams = (name: string): number => {
-    const match = name.toLowerCase().match(/([\d.]+)\s*(g|kg|ml|l)\b/);
-    if (!match) return 0;
-    const value = parseFloat(match[1]) || 0;
-    const unit = match[2];
-    if (unit === 'kg' || unit === 'l') return value * 1000;
-    return value;
-};
-
-const getBaseName = (str: string) => {
-    return str.toLowerCase()
-        .replace(/([\d.]+)\s*(g|kg|ml|l)\b/gi, '')
-        .replace(/(\/|\s+)-|\s+/g, ' ')
-        .trim();
-};
-
-const naturalSort = (a: string, b: string) => {
-    const nA = normalizeStr(a);
-    const nB = normalizeStr(b);
-    
-    // 1. Phân nhóm ưu tiên theo "Vị" (Flavor Grouping)
-    const flavA = getFlavorBase(nA);
-    const flavB = getFlavorBase(nB);
-    
-    if (flavA && flavB) {
-        if (flavA !== flavB) {
-            return flavA.localeCompare(flavB, 'vi');
-        } else {
-            // Cùng Vị -> ưu tiên xếp theo khối lượng ngay lập tức để gom Snack 25g và Khoai 100g cùng vị
-            const wA = getWeightInGrams(nA);
-            const wB = getWeightInGrams(nB);
-            if (wA !== wB && (wA !== 0 || wB !== 0)) return wA - wB;
-        }
-    }
-    
-    // 2. Không có Vị (hoặc có nhưng cùng vị mà khối lượng giống hệt nhau) -> Nhóm theo Base Name
-    const baseA = getBaseName(nA);
-    const baseB = getBaseName(nB);
-    
-    if (baseA === baseB) {
-        const wA = getWeightInGrams(nA);
-        const wB = getWeightInGrams(nB);
-        if (wA !== wB && (wA !== 0 || wB !== 0)) return wA - wB;
-    }
-    
-    // 3. Tách chuỗi thành từng mảnh: chữ riêng, số riêng -> ["Khoai ", "2.5", "kg"]
-    const chunkify = (s: string) => s.match(/([^\d]+|\d+(?:\.\d+)?)/g) || [];
-    const chunksA = chunkify(nA);
-    const chunksB = chunkify(nB);
-    
-    const len = Math.max(chunksA.length, chunksB.length);
-    for (let i = 0; i < len; i++) {
-        if (i >= chunksA.length) return -1;
-        if (i >= chunksB.length) return 1;
-        
-        let cA = chunksA[i];
-        let cB = chunksB[i];
-        
-        const isNumA = !isNaN(parseFloat(cA));
-        const isNumB = !isNaN(parseFloat(cB));
-        
-        if (isNumA && isNumB) {
-            const numA = parseFloat(cA);
-            const numB = parseFloat(cB);
-            
-            // Xử lý nhân hệ số nếu mảnh tiếp theo là kg, lít
-            let multA = 1, multB = 1;
-            if (i + 1 < chunksA.length) {
-                const nxt = chunksA[i+1].toLowerCase().trim();
-                if (nxt.startsWith('kg') || nxt.startsWith('lít') || nxt.startsWith('l')) multA = 1000;
-            }
-            if (i + 1 < chunksB.length) {
-                const nxt = chunksB[i+1].toLowerCase().trim();
-                if (nxt.startsWith('kg') || nxt.startsWith('lít') || nxt.startsWith('l')) multB = 1000;
-            }
-            
-            const adjA = numA * multA;
-            const adjB = numB * multB;
-            
-            if (adjA !== adjB) return adjA - adjB;
-        } else if (cA !== cB) {
-            // So sánh chuỗi thường
-            return cA.localeCompare(cB, 'vi');
-        }
-    }
-    return 0;
-};
 
 interface QuotePrintViewProps {
     quote: Quote;
@@ -387,10 +283,6 @@ export default function QuotePrintView({ quote, onClose, products }: QuotePrintV
                                             return a.category.localeCompare(b.category);
                                         });
 
-                                        // Sort items alphabetically inside each group
-                                        groups.forEach(group => {
-                                            group.items.sort((a, b) => naturalSort(a.name || '', b.name || ''));
-                                        });
 
                                         let globalIdx = 1;
                                         return groups.map((group, gIdx) => (
