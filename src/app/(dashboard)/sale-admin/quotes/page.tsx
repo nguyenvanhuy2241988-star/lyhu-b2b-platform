@@ -19,32 +19,55 @@ import {
 const fmtPrice = (n: number) => new Intl.NumberFormat('vi-VN').format(n) + ' đ';
 const fmtDate = (s: string) => new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-const getWeightInGrams = (name: string): number => {
-    const match = name.toLowerCase().match(/([\d.]+)\s*(g|kg|ml|l)/);
-    if (!match) return 0;
-    const value = parseFloat(match[1]) || 0;
-    const unit = match[2];
-    if (unit === 'kg' || unit === 'l') return value * 1000;
-    return value;
+const normalizeStr = (str: string) => {
+    return (str || '').normalize('NFC').replace(/\s+/g, ' ').trim();
 };
 
-const getBaseName = (name: string): string => {
-    return name.toLowerCase().replace(/([\d.]+)\s*(g|kg|ml|l)/g, '').replace(/(\/|\s+)-|\s+/g, ' ').trim();
-};
-
-const naturalSort = (aName: string, bName: string) => {
-    const baseA = getBaseName(aName);
-    const baseB = getBaseName(bName);
+const naturalSort = (a: string, b: string) => {
+    const nA = normalizeStr(a);
+    const nB = normalizeStr(b);
     
-    if (baseA === baseB) {
-        const weightA = getWeightInGrams(aName);
-        const weightB = getWeightInGrams(bName);
-        if (weightA !== 0 || weightB !== 0) {
-            return weightA - weightB; // Tăng dần theo khối lượng (ví dụ 45g -> 1kg)
+    // Tách chuỗi thành từng mảnh: chữ riêng, số riêng -> ["Khoai ", "2.5", "kg"]
+    const chunkify = (s: string) => s.match(/([^\d]+|\d+(?:\.\d+)?)/g) || [];
+    const chunksA = chunkify(nA);
+    const chunksB = chunkify(nB);
+    
+    const len = Math.max(chunksA.length, chunksB.length);
+    for (let i = 0; i < len; i++) {
+        if (i >= chunksA.length) return -1;
+        if (i >= chunksB.length) return 1;
+        
+        let cA = chunksA[i];
+        let cB = chunksB[i];
+        
+        const isNumA = !isNaN(parseFloat(cA));
+        const isNumB = !isNaN(parseFloat(cB));
+        
+        if (isNumA && isNumB) {
+            const numA = parseFloat(cA);
+            const numB = parseFloat(cB);
+            
+            // Xử lý nhân hệ số nếu mảnh tiếp theo là kg, lít
+            let multA = 1, multB = 1;
+            if (i + 1 < chunksA.length) {
+                const nxt = chunksA[i+1].toLowerCase().trim();
+                if (nxt.startsWith('kg') || nxt.startsWith('lít') || nxt.startsWith('l')) multA = 1000;
+            }
+            if (i + 1 < chunksB.length) {
+                const nxt = chunksB[i+1].toLowerCase().trim();
+                if (nxt.startsWith('kg') || nxt.startsWith('lít') || nxt.startsWith('l')) multB = 1000;
+            }
+            
+            const adjA = numA * multA;
+            const adjB = numB * multB;
+            
+            if (adjA !== adjB) return adjA - adjB;
+        } else if (cA !== cB) {
+            // So sánh chuỗi thường
+            return cA.localeCompare(cB, 'vi');
         }
     }
-    
-    return aName.localeCompare(bName, 'vi', { numeric: true });
+    return 0;
 };
 
 export default function SaleAdminQuotesPage() {
