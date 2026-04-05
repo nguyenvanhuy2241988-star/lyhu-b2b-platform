@@ -266,8 +266,10 @@ export default function QuotePrintView({ quote, onClose }: QuotePrintViewProps) 
                                                     detectedCat = 'BỘT PHÔ MAI BOYO';
                                                 } else if (nameLower.includes('mèo food')) {
                                                     detectedCat = 'BÁNH TRÁNG MÈO FOOD';
-                                                } else if (nameLower.includes('twitchui')) {
+                                                } else if (nameLower.includes('twitchui') || nameLower.includes('kẹo dẻo siêu chua') || nameLower.includes('kẹo dẻo bóc vỏ')) {
                                                     detectedCat = 'KẸO DẺO TWITCHUI';
+                                                } else if (nameLower.includes('khoai môn') || nameLower.includes('cà phê') || nameLower.includes('snack da cá')) {
+                                                    detectedCat = 'SẢN PHẨM CVT';
                                                 } else {
                                                     detectedCat = 'SẢN PHẨM KHÁC';
                                                 }
