@@ -141,7 +141,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                 </div>
             </div>
 
-            <div className="flex flex-1 overflow-hidden pb-[100px] sm:pb-0">
+            <div className="handover-print-wrapper flex flex-1 overflow-hidden pb-[100px] sm:pb-0">
                 {/* SETTINGS SIDEBAR */}
                 <div className="handover-controls w-[300px] sm:w-[350px] md:w-[450px] bg-white border-r border-slate-200 p-6 overflow-y-auto shrink-0 shadow-lg z-10">
                     <h3 className="font-bold text-slate-800 mb-6 uppercase text-sm tracking-wide border-b border-teal-500 pb-2 inline-block">Cấu hình biên bản</h3>
@@ -308,12 +308,20 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                                 background: white !important;
                                 padding: 0 !important;
                             }
+                            .handover-print-wrapper {
+                                display: block !important;
+                                overflow: visible !important;
+                            }
                             .handover-print-page {
+                                display: block !important;
                                 box-shadow: none !important;
                                 margin: 0 !important;
                                 border-radius: 0 !important;
                                 width: 100% !important;
                                 max-width: 100% !important;
+                                overflow: visible !important;
+                                height: auto !important;
+                                min-height: auto !important;
                             }
                             @page { size: A4; margin: 15mm; }
                         }
