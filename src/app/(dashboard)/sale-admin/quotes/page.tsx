@@ -366,39 +366,49 @@ function QuoteEditorModal({
     const total = subtotal - discountAmount + vatAmount + shippingFee;
 
     const handleAddMultipleProducts = (productIds: string[]) => {
-        const newItemsToAdd: QuoteItem[] = [];
-        for (const productId of productIds) {
-            const prod = products.find(p => p.id === productId);
-            if (!prod) continue;
-            
-            const name = prod.name || prod.title || '';
-            const detectedCategory = prod.brand || 'SẢN PHẨM KHÁC';
-
-            newItemsToAdd.push({
-                productId: prod.id,
-                name: name,
-                sku: prod.sku || '',
-                quantity: 1,
-                unitPrice: prod.price || 0,
-                subtotal: prod.price || 0,
-                imageUrl: prod.image_url || '',
-                unit: 'Cái',
-                weight: '100g',
-                expiry: '12 tháng',
-                packSize: '1',
-                retailPrice: prod.price || 0,
-                wholesalePrice: prod.price || 0,
-                category: detectedCategory
-            });
-        }
-        
         setItems(prev => {
-            const newItems = [...prev, ...newItemsToAdd];
-            if (isPriceList) {
-                return newItems.sort((a, b) => (a.category || 'Z').localeCompare(b.category || 'Z'));
+            const newItemsToAdd: QuoteItem[] = [];
+            for (const productId of productIds) {
+                // chống trùng lặp (nếu đã có trong prev rồi thì bỏ qua)
+                if (prev.some(item => item.productId === productId)) {
+                    continue;
+                }
+                const prod = products.find(p => p.id === productId);
+                if (!prod) continue;
+                
+                const name = prod.name || prod.title || '';
+                const detectedCategory = prod.brand || 'SẢN PHẨM KHÁC';
+
+                newItemsToAdd.push({
+                    productId: prod.id,
+                    name: name,
+                    sku: prod.sku || '',
+                    quantity: 1,
+                    unitPrice: prod.price || 0,
+                    subtotal: prod.price || 0,
+                    imageUrl: prod.image_url || '',
+                    unit: 'Cái',
+                    weight: '100g',
+                    expiry: '12 tháng',
+                    packSize: '1',
+                    retailPrice: prod.price || 0,
+                    wholesalePrice: prod.price || 0,
+                    category: detectedCategory
+                });
             }
-            return newItems;
+            
+            const newItems = [...prev, ...newItemsToAdd];
+            // Sắp xếp lại theo Brand -> Tên sản phẩm
+            return newItems.sort((a, b) => {
+                const catA = (a.category || 'Z');
+                const catB = (b.category || 'Z');
+                if (catA !== catB) {
+                    return catA.localeCompare(catB, 'vi');
+                }
+                return (a.name || '').localeCompare(b.name || '', 'vi');
+            });
         });
+        
         setIsProductSelectorOpen(false);
     };
 

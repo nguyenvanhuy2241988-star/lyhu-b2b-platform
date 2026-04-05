@@ -281,6 +281,10 @@ export default function QuotePrintView({ quote, onClose, products }: QuotePrintV
                                             return a.category.localeCompare(b.category);
                                         });
 
+                                        // Sort items alphabetically inside each group
+                                        groups.forEach(group => {
+                                            group.items.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'vi'));
+                                        });
 
                                         let globalIdx = 1;
                                         return groups.map((group, gIdx) => (
