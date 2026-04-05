@@ -49,7 +49,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
         // Load user profiles for autocomplete
         const loadUsers = async () => {
             const { data } = await supabase.from('profiles').select('id, full_name').order('full_name');
-            if (data) setProfileList(data.filter(u => u.full_name));
+            if (data) setProfileList((data as any[]).filter((u: any) => u.full_name));
         };
         loadUsers();
     }, [supabase]);
