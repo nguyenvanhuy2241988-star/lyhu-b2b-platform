@@ -19,7 +19,7 @@ import {
 const fmtPrice = (n: number) => new Intl.NumberFormat('vi-VN').format(n) + ' đ';
 const fmtDate = (s: string) => new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-export const getWeightInGrams = (name: string): number => {
+const getWeightInGrams = (name: string): number => {
     const match = name.toLowerCase().match(/([\d.]+)\s*(g|kg|ml|l)/);
     if (!match) return 0;
     const value = parseFloat(match[1]) || 0;
@@ -28,11 +28,11 @@ export const getWeightInGrams = (name: string): number => {
     return value;
 };
 
-export const getBaseName = (name: string): string => {
+const getBaseName = (name: string): string => {
     return name.toLowerCase().replace(/([\d.]+)\s*(g|kg|ml|l)/g, '').replace(/(\/|\s+)-|\s+/g, ' ').trim();
 };
 
-export const naturalSort = (aName: string, bName: string) => {
+const naturalSort = (aName: string, bName: string) => {
     const baseA = getBaseName(aName);
     const baseB = getBaseName(bName);
     
