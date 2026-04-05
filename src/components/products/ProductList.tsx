@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Product } from "@/mocks/data";
-import { Package, Search, Loader2, Plus, Pencil, Trash2, X, Check, Settings2, Filter, ArrowUpDown } from "lucide-react";
+import { Package, Search, Loader2, Plus, Pencil, Trash2, X, Check, Settings2, Filter, ArrowUpDown, ImageIcon, UploadCloud } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { supabase } from "@/lib/supabaseClient";
@@ -41,6 +41,8 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [dragImage, setDragImage] = useState(false);
 
     // Edit/Create State
     const [editingProduct, setEditingProduct] = useState<AppProduct | null>(null);
@@ -61,6 +63,31 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
     }>({ field: 'stock', value: 0 });
 
     const { session } = useAuth();
+
+    const uploadProductImage = async (file: File) => {
+        try {
+            setIsUploadingImage(true);
+            const fileExt = file.name?.split('.').pop() || 'png';
+            const fileName = `product_img_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+            
+            const { error: uploadError } = await supabase.storage
+                .from('report-images')
+                .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data } = supabase.storage
+                .from('report-images')
+                .getPublicUrl(fileName);
+
+            setFormData(prev => ({ ...prev, image_url: data.publicUrl }));
+            toast.success("Tải ảnh lên thành công");
+        } catch (error: any) {
+            toast.error('Lỗi upload ảnh: ' + error.message);
+        } finally {
+            setIsUploadingImage(false);
+        }
+    };
 
     // Helper to get headers
     const getHeaders = useCallback(() => {
@@ -515,6 +542,7 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
                                             />
                                         )}
                                     </th>
+                                    <th className="px-6 py-3 font-medium w-16 text-center">Ảnh</th>
                                     <th className="px-6 py-3 font-medium">SKU</th>
                                     <th className="px-6 py-3 font-medium">Tên sản phẩm</th>
                                     <th className="px-6 py-3 font-medium">Thương hiệu</th>
@@ -536,6 +564,16 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
                                                     onChange={() => handleSelectOne(product.id)}
                                                 />
                                             )}
+                                        </td>
+                                        <td className="px-3 py-4 text-center">
+                                            <div className="w-10 h-10 mx-auto rounded-lg overflow-hidden border border-slate-200 bg-white flex items-center justify-center">
+                                                {product.image_url ? (
+                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                    <img src={product.image_url} alt="" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <Package className="w-5 h-5 text-slate-300" />
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className="font-mono text-xs text-slate-600 bg-slate-100 px-2 py-1 rounded">
@@ -645,8 +683,63 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Link Ảnh</label>
-                                <input className="w-full border rounded-lg px-3 py-2" placeholder="https://..." value={formData.image_url} onChange={e => setFormData({ ...formData, image_url: e.target.value })} />
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Hình ảnh sản phẩm (Link hoặc Tải lên)</label>
+                                <div 
+                                    className={`w-full rounded-lg p-1.5 border-2 transition-all ${dragImage ? 'border-dashed border-blue-500 bg-blue-50' : 'border-transparent'}`}
+                                    onDragOver={(e) => { e.preventDefault(); setDragImage(true); }}
+                                    onDragLeave={(e) => { e.preventDefault(); setDragImage(false); }}
+                                    onDrop={(e) => {
+                                        e.preventDefault();
+                                        setDragImage(false);
+                                        const file = e.dataTransfer.files?.[0];
+                                        if (file && file.type.startsWith('image/')) uploadProductImage(file);
+                                    }}
+                                >
+                                    <input 
+                                        type="text" 
+                                        placeholder="URL hoặc dán ảnh (Ctrl+V) vào đây..." 
+                                        value={formData.image_url} 
+                                        onChange={e => setFormData({ ...formData, image_url: e.target.value })} 
+                                        onPaste={(e) => {
+                                            const items = e.clipboardData?.items;
+                                            if (!items) return;
+                                            for (const item of Array.from(items)) {
+                                                if (item.type.startsWith('image/')) {
+                                                    e.preventDefault();
+                                                    const file = item.getAsFile();
+                                                    if (file) uploadProductImage(file);
+                                                    return;
+                                                }
+                                            }
+                                        }}
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:border-blue-500 disabled:opacity-50"
+                                        disabled={isUploadingImage}
+                                    />
+                                    
+                                    <div className="mt-2 flex items-center justify-between gap-3">
+                                        <label className={`cursor-pointer ${isUploadingImage ? 'bg-slate-100 text-slate-400 pointer-events-none' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'} px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 font-medium w-full border border-slate-200 shadow-sm text-sm`}>
+                                            {isUploadingImage ? <Loader2 className="w-4 h-4 animate-spin text-blue-500"/> : <UploadCloud className="w-4 h-4 text-blue-600" />}
+                                            {isUploadingImage ? 'Đang tải lên...' : 'Tải ảnh từ máy'}
+                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => {
+                                                if (e.target.files && e.target.files[0]) uploadProductImage(e.target.files[0]);
+                                            }} />
+                                        </label>
+                                    </div>
+                                </div>
+                                {formData.image_url && (
+                                    <div className="mt-3 mx-1.5 h-32 w-32 border border-slate-200 rounded-lg overflow-hidden relative group/img cursor-pointer">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={formData.image_url} alt="" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} onClick={() => window.open(formData.image_url, '_blank')} />
+                                        <button
+                                            type="button"
+                                            title="Xoá ảnh"
+                                            className="absolute inset-0 bg-black/50 hidden group-hover/img:flex items-center justify-center text-white transition-opacity"
+                                            onClick={(e) => { e.stopPropagation(); setFormData(prev => ({ ...prev, image_url: '' })); }}
+                                        >
+                                            <Trash2 className="w-6 h-6 text-red-200" />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                             <div className="pt-4 flex justify-end gap-3">
                                 <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">Hủy bỏ</button>

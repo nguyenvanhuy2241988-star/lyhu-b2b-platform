@@ -388,7 +388,7 @@ function QuoteEditorModal({
                 quantity: 1,
                 unitPrice: prod.price || 0,
                 subtotal: prod.price || 0,
-                imageUrl: '',
+                imageUrl: prod.image_url || '',
                 unit: 'Cái',
                 weight: '100g',
                 expiry: '12 tháng',
