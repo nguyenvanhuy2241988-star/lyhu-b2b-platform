@@ -319,9 +319,8 @@ export default function QuotePrintView({ quote, onClose, products }: QuotePrintV
                                                             <td className="px-1.5 py-2 text-right border border-slate-300 font-bold text-primary-700 align-middle">{fmtPrice(item.wholesalePrice || 0)}</td>
                                                             <td className="px-1.5 py-1 text-center border border-slate-300 align-middle">
                                                                 {item.imageUrl ? (
-                                                                    <div className="w-12 h-12 mx-auto overflow-hidden rounded bg-white">
-                                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                                                        <img src={item.imageUrl} alt={item.name} className="w-full h-full object-contain" />
+                                                                    <div className="w-12 h-12 mx-auto overflow-hidden rounded bg-white relative">
+                                                                        <img src={item.imageUrl.includes('supabase.co') && !item.imageUrl.includes('localhost') ? `/_next/image?url=${encodeURIComponent(item.imageUrl)}&w=128&q=75` : item.imageUrl} alt={item.name} className="w-full h-full object-contain absolute inset-0" style={{ objectFit: 'contain' }} />
                                                                     </div>
                                                                 ) : '-'}
                                                             </td>
