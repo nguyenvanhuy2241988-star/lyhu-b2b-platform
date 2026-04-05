@@ -11,9 +11,9 @@ import {
 import { loadProducts } from '@/lib/supabase/products';
 import QuotePrintView from '@/components/quotes/QuotePrintView';
 import {
-    Plus, Search, FileText, Trash2, Edit, CheckCircle, XCircle,
+    Plus, Search, FileText, Trash2, Edit, CheckCircle, XCircle, Check,
     Send, ArrowRight, ShoppingCart, Loader2, Eye, Copy,
-    Calculator, Calendar, Clock, Package, Printer, ImageIcon, UploadCloud
+    Calculator, Calendar, Clock, Package, PackagePlus, Printer, ImageIcon, UploadCloud
 } from 'lucide-react';
 
 const fmtPrice = (n: number) => new Intl.NumberFormat('vi-VN').format(n) + ' đ';
@@ -331,6 +331,7 @@ function QuoteEditorModal({
     const [validUntil, setValidUntil] = useState(quote?.valid_until ? quote.valid_until.split('T')[0] : '');
     const [salesName, setSalesName] = useState(quote?.creator_name || userName);
     const [salesPhone, setSalesPhone] = useState(quote?.sales_phone || '');
+    const [isProductSelectorOpen, setIsProductSelectorOpen] = useState(false);
 
     const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
     const [dragIdx, setDragIdx] = useState<number | null>(null);
@@ -474,16 +475,12 @@ function QuoteEditorModal({
                     <div>
                         <div className="flex items-center justify-between mb-3">
                             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Sản phẩm</h3>
-                            <select
-                                className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 font-medium text-slate-600 bg-white"
-                                value=""
-                                onChange={e => { if (e.target.value) addProduct(e.target.value); e.target.value = ''; }}
+                            <button
+                                onClick={() => setIsProductSelectorOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-primary-50 text-primary-600 hover:bg-primary-100 font-bold text-xs rounded-xl transition-colors border border-primary-200"
                             >
-                                <option value="">+ Thêm sản phẩm</option>
-                                {products.map(p => (
-                                    <option key={p.id} value={p.id}>{p.name || p.title} — {fmtPrice(p.price || 0)}</option>
-                                ))}
-                            </select>
+                                <Plus className="w-4 h-4" /> Thêm sản phẩm
+                            </button>
                         </div>
 
                         {items.length === 0 ? (
