@@ -117,9 +117,9 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex flex-col bg-slate-900/40 backdrop-blur-sm print:block print:bg-white print:static">
+        <div className="handover-print-overlay fixed inset-0 z-[100] flex flex-col bg-slate-900/40 backdrop-blur-sm">
             {/* Control Header */}
-            <div className="bg-slate-900 text-white p-4 shadow-xl flex items-center justify-between shrink-0 relative z-10 print:hidden">
+            <div className="handover-controls bg-slate-900 text-white p-4 shadow-xl flex items-center justify-between shrink-0 relative z-10">
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 text-teal-400 font-bold px-4 py-1.5 bg-teal-950/50 border border-teal-800 rounded-lg">
                         <FileText className="w-4 h-4" /> BIÊN BẢN BÀN GIAO THIẾT BỊ
@@ -141,9 +141,9 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                 </div>
             </div>
 
-            <div className="flex flex-1 overflow-hidden print:overflow-visible print:block pb-[100px] print:pb-0">
+            <div className="flex flex-1 overflow-hidden pb-[100px] sm:pb-0">
                 {/* SETTINGS SIDEBAR */}
-                <div className="w-[300px] sm:w-[350px] md:w-[450px] bg-white border-r border-slate-200 p-6 overflow-y-auto shrink-0 print:hidden shadow-lg z-10">
+                <div className="handover-controls w-[300px] sm:w-[350px] md:w-[450px] bg-white border-r border-slate-200 p-6 overflow-y-auto shrink-0 shadow-lg z-10">
                     <h3 className="font-bold text-slate-800 mb-6 uppercase text-sm tracking-wide border-b border-teal-500 pb-2 inline-block">Cấu hình biên bản</h3>
                     
                     <div className="space-y-8">
@@ -284,28 +284,42 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                 </div>
 
                 {/* PREVIEW PANEL */}
-                <div className="flex-1 overflow-y-auto bg-slate-200 p-4 sm:p-8 handover-scroll-container print:overflow-visible print:block print:p-0 print:bg-white">
+                <div className="handover-scroll-container flex-1 overflow-y-auto bg-slate-200 p-4 sm:p-8">
                     <style>{`
                         @media print {
-                            @page {
-                                size: A4;
-                                margin: 15mm;
-                            }
                             body {
                                 visibility: hidden;
-                                background: white;
+                                -webkit-print-color-adjust: exact !important;
+                                print-color-adjust: exact !important;
                             }
-                            .handover-scroll-container {
+                            .handover-print-overlay {
                                 visibility: visible !important;
-                                position: absolute;
+                                position: absolute !important;
                                 left: 0;
                                 top: 0;
                                 width: 100vw;
+                                background: white !important;
                             }
+                            .handover-controls { display: none !important; }
+                            .handover-scroll-container {
+                                max-height: none !important;
+                                height: auto !important;
+                                overflow: visible !important;
+                                background: white !important;
+                                padding: 0 !important;
+                            }
+                            .handover-print-page {
+                                box-shadow: none !important;
+                                margin: 0 !important;
+                                border-radius: 0 !important;
+                                width: 100% !important;
+                                max-width: 100% !important;
+                            }
+                            @page { size: A4; margin: 15mm; }
                         }
                     `}</style>
                     <div ref={printRef}
-                        className="print:shadow-none print:mx-0 print:my-0 bg-white w-full max-w-[800px] mx-auto min-h-[1100px] rounded-sm shadow-2xl flex flex-col relative print:border-none"
+                        className="handover-print-page bg-white w-full max-w-[800px] mx-auto min-h-[1100px] rounded-sm shadow-2xl flex flex-col relative"
                         style={{ fontFamily: "'Times New Roman', Times, serif", color: '#000' }}>
                         
                         {/* HEADER */}
