@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { COMPANY_INFO } from '@/lib/companyConfig';
-import { Printer, Download, X, FileText, Check } from 'lucide-react';
+import { Printer, Download, X, FileText } from 'lucide-react';
 import { createClient } from '@/lib/supabaseClient';
 
 const fmtPrice = (n: number | null | undefined) => new Intl.NumberFormat('vi-VN').format(n || 0);
@@ -54,7 +54,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
     
     const [companyInfo, setCompanyInfo] = useState({
         name: COMPANY_INFO.name,
-        taxCode: '0110940697', // Placeholder
+        taxCode: '0110940697',
         phone: COMPANY_INFO.hotline,
         email: COMPANY_INFO.email,
         website: COMPANY_INFO.website,
@@ -80,7 +80,6 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
     const [terms, setTerms] = useState(DEFAULT_TERMS);
 
     useEffect(() => {
-        // Load user profiles for autocomplete
         const loadUsers = async () => {
             const { data } = await supabase.from('profiles').select('*').order('full_name');
             if (data) setProfileList(data.filter((u: any) => u.full_name));
@@ -97,42 +96,38 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
     const totalValue = items.reduce((sum, item) => sum + (Number(item.value_amount) || 0), 0);
     const today = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-    // AI logic parsing
     const renderTermLine = (t: string, idx: number) => {
         const text = t.trim();
-        // Matching "Điều 1.", "ĐIỀU X:", etc.
         const isHeading = /^điều\s*\d+[:.]?/i.test(text);
         if (isHeading) {
-            return <p key={idx} className="mt-4 mb-2 uppercase font-bold text-[14px] text-slate-800">{text}</p>;
+            return <p key={idx} className="mt-4 mb-2 uppercase font-bold text-[14px] text-teal-800">{text}</p>;
         }
         
-        // Matching "1.1.", "4.2."
         const isSubHeading = /^\d+\.\d+\.?/.test(text);
         if (isSubHeading) {
             return (
                 <p key={idx} className="mb-2 text-justify leading-relaxed ml-2 text-[13px]">
-                    <span className="font-semibold text-slate-800 underline mr-1">{text.match(/^\d+\.\d+\.?/)?.[0]}</span>
+                    <span className="font-semibold text-teal-800 underline mr-1">{text.match(/^\d+\.\d+\.?/)?.[0]}</span>
                     <span>{text.replace(/^\d+\.\d+\.?/, '').trim()}</span>
                 </p>
             );
         }
 
-        // Generic text
-        return <p key={idx} className="mb-2 text-justify leading-relaxed italic text-[13px] text-slate-700">{text}</p>;
+        return <p key={idx} className="mb-2 text-justify leading-relaxed italic text-[13px] text-slate-800">{text}</p>;
     };
 
     return (
-        <div className="handover-print-overlay fixed inset-0 z-[100] flex flex-col bg-slate-900/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex flex-col bg-slate-900/40 backdrop-blur-sm print:block print:bg-white print:static">
             {/* Control Header */}
             <div className="bg-slate-900 text-white p-4 shadow-xl flex items-center justify-between shrink-0 relative z-10 print:hidden">
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 text-primary-400 font-bold px-4 py-1.5 bg-primary-950/50 border border-primary-800 rounded-lg">
+                    <div className="flex items-center gap-2 text-teal-400 font-bold px-4 py-1.5 bg-teal-950/50 border border-teal-800 rounded-lg">
                         <FileText className="w-4 h-4" /> BIÊN BẢN BÀN GIAO THIẾT BỊ
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
                     <button onClick={handlePrint}
-                        className="flex items-center gap-2 px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition-colors">
+                        className="flex items-center gap-2 px-5 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-bold rounded-xl transition-colors">
                         <Printer className="w-4 h-4" /> In
                     </button>
                     <button onClick={handleExportPDF}
@@ -146,15 +141,15 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                 </div>
             </div>
 
-            <div className="flex flex-1 overflow-hidden">
+            <div className="flex flex-1 overflow-hidden print:overflow-visible print:block pb-[100px] print:pb-0">
                 {/* SETTINGS SIDEBAR */}
                 <div className="w-[300px] sm:w-[350px] md:w-[450px] bg-white border-r border-slate-200 p-6 overflow-y-auto shrink-0 print:hidden shadow-lg z-10">
-                    <h3 className="font-bold text-slate-800 mb-6 uppercase text-sm tracking-wide border-b border-primary-500 pb-2 inline-block">Cấu hình biên bản</h3>
+                    <h3 className="font-bold text-slate-800 mb-6 uppercase text-sm tracking-wide border-b border-teal-500 pb-2 inline-block">Cấu hình biên bản</h3>
                     
                     <div className="space-y-8">
                         {/* Company Info */}
                         <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                            <h4 className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-widest flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full" /> THÔNG TIN CÔNG TY</h4>
+                            <h4 className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-widest flex items-center gap-2"><div className="w-1.5 h-1.5 bg-teal-500 rounded-full" /> THÔNG TIN CÔNG TY</h4>
                             <div className="space-y-3">
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-700 mb-1">Tên công ty</label>
@@ -211,14 +206,14 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                         </div>
 
                         {/* Receiver Info */}
-                        <div className="bg-primary-50/50 p-4 rounded-xl border border-primary-200">
-                            <h4 className="text-xs font-bold text-primary-700 mb-3 uppercase tracking-widest flex items-center gap-2"><div className="w-1.5 h-1.5 bg-primary-600 rounded-full" /> BÊN NHẬN (NGƯỜI MƯỢN)</h4>
+                        <div className="bg-teal-50/50 p-4 rounded-xl border border-teal-200">
+                            <h4 className="text-xs font-bold text-teal-700 mb-3 uppercase tracking-widest flex items-center gap-2"><div className="w-1.5 h-1.5 bg-teal-600 rounded-full" /> BÊN NHẬN (NGƯỜI MƯỢN)</h4>
                             <div className="space-y-3">
                                 <div className="relative">
-                                    <label className="block text-xs font-semibold text-primary-900 mb-1">Họ và tên *</label>
+                                    <label className="block text-xs font-semibold text-teal-900 mb-1">Họ và tên *</label>
                                     <input
                                         type="text"
-                                        className="w-full px-3 py-2 border border-primary-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500 font-bold bg-white shadow-sm placeholder:font-normal placeholder:text-slate-400"
+                                        className="w-full px-3 py-2 border border-teal-300 rounded-md text-sm focus:ring-2 focus:ring-teal-500 font-bold bg-white shadow-sm placeholder:font-normal placeholder:text-slate-400"
                                         placeholder="Gõ tên để tìm trên hệ thống..."
                                         value={receiverInfo.name}
                                         onChange={(e) => {
@@ -232,7 +227,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                                         <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto">
                                             {profileList.filter(p => (p.full_name || '').toLowerCase().includes(receiverInfo.name.toLowerCase())).map(p => (
                                                 <div key={p.id} 
-                                                    className="px-3 py-2 text-sm text-slate-700 hover:bg-primary-50 cursor-pointer border-b border-slate-50 last:border-0"
+                                                    className="px-3 py-2 text-sm text-slate-700 hover:bg-teal-50 cursor-pointer border-b border-slate-50 last:border-0"
                                                     onClick={() => {
                                                         setReceiverInfo({
                                                             ...receiverInfo,
@@ -280,7 +275,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                             <h4 className="text-xs font-bold text-slate-500 mb-3 uppercase tracking-widest flex items-center gap-2"><div className="w-1.5 h-1.5 bg-slate-400 rounded-full" /> ĐIỀU KHOẢN (AI Auto Parse Định Dạng)</h4>
                             <p className="text-[10px] text-slate-400 mb-2 italic">Mẹo: Bắt đầu dòng bằng "Điều 1." máy sẽ tự IN ĐẬM. Bắt đầu bằng "1.1." máy sẽ căn lề tạo điểm nhấn.</p>
                             <textarea
-                                className="w-full px-3 py-2 border border-slate-300 bg-white rounded-lg text-[13px] font-mono text-slate-700 focus:ring-2 focus:ring-primary-500 min-h-[300px] shadow-inner leading-relaxed"
+                                className="w-full px-3 py-2 border border-slate-300 bg-white rounded-lg text-[13px] font-mono text-slate-700 focus:ring-2 focus:ring-teal-500 min-h-[300px] shadow-inner leading-relaxed"
                                 value={terms}
                                 onChange={(e) => setTerms(e.target.value)}
                             />
@@ -289,63 +284,42 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                 </div>
 
                 {/* PREVIEW PANEL */}
-                <div className="flex-1 overflow-y-auto bg-slate-200 p-4 sm:p-8 handover-scroll-container">
+                <div className="flex-1 overflow-y-auto bg-slate-200 p-4 sm:p-8 handover-scroll-container print:overflow-visible print:block print:p-0 print:bg-white">
                     <style>{`
                         @media print {
+                            @page {
+                                size: A4;
+                                margin: 15mm;
+                            }
                             body {
                                 visibility: hidden;
-                                -webkit-print-color-adjust: exact !important;
-                                print-color-adjust: exact !important;
+                                background: white;
                             }
-                            .handover-print-overlay {
+                            .handover-scroll-container {
                                 visibility: visible !important;
-                                position: absolute !important;
+                                position: absolute;
                                 left: 0;
                                 top: 0;
                                 width: 100vw;
-                                background: white !important;
-                                display: block !important;
                             }
-                            .handover-print-overlay > div {
-                                display: block !important;
-                                overflow: visible !important;
-                            }
-                            .handover-controls { display: none !important; }
-                            .handover-scroll-container {
-                                max-height: none !important;
-                                height: auto !important;
-                                overflow: visible !important;
-                                background: white !important;
-                                padding: 0 !important;
-                                display: block !important;
-                            }
-                            .handover-print-page {
-                                box-shadow: none !important;
-                                margin: 0 !important;
-                                border-radius: 0 !important;
-                                width: 100% !important;
-                                max-width: 100% !important;
-                                display: block !important;
-                            }
-                            @page { size: A4; margin: 15mm; }
                         }
                     `}</style>
                     <div ref={printRef}
-                        className="handover-print-page bg-white w-full max-w-[800px] mx-auto min-h-[1122px] rounded-sm shadow-2xl overflow-hidden flex flex-col relative"
-                        style={{ fontFamily: "'Times New Roman', Times, serif" }}>
+                        className="print:shadow-none print:mx-0 print:my-0 bg-white w-full max-w-[800px] mx-auto min-h-[1100px] rounded-sm shadow-2xl flex flex-col relative print:border-none"
+                        style={{ fontFamily: "'Times New Roman', Times, serif", color: '#000' }}>
                         
                         {/* HEADER */}
-                        <div className="px-10 pt-12 pb-4 flex justify-between items-start border-b-2 border-red-700 mx-10">
+                        <div className="px-10 pt-10 pb-4 flex justify-between items-start border-b-[3px] border-teal-700 mx-10 mb-6">
                             <div className="flex items-start gap-4">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src="/logo-full.png" alt="LYHU" className="h-14 object-contain mt-1" />
+                                <img src="/logo-full.png" alt="LYHU" className="h-12 object-contain mt-1" />
                                 <div>
-                                    <p className="font-bold text-[15px] tracking-wide text-slate-900 uppercase">{companyInfo.name}</p>
-                                    <div className="text-[12px] text-slate-700 mt-1.5 space-y-0.5">
+                                    <p className="font-bold text-[14px] tracking-wide text-teal-800 uppercase">{companyInfo.name}</p>
+                                    <div className="text-[11px] text-slate-800 mt-1 space-y-0.5">
                                         <p>Đ/C: {companyInfo.address}</p>
                                         <div className="flex items-center gap-4">
                                             <p>MST: {companyInfo.taxCode}</p>
-                                            <p>ĐT: {companyInfo.phone}</p>
+                                            <p>Hotline: {companyInfo.phone}</p>
                                         </div>
                                         <div className="flex items-center gap-4">
                                             <p>Website: {companyInfo.website}</p>
@@ -354,11 +328,15 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                                     </div>
                                 </div>
                             </div>
+                            <div className="text-center font-bold">
+                                <p className="text-[14px]">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</p>
+                                <p className="text-[13px] underline underline-offset-4 mt-0.5">Độc lập - Tự do - Hạnh phúc</p>
+                            </div>
                         </div>
 
                         {/* TITLE */}
-                        <div className="text-center mt-8 mb-6 px-10">
-                            <h1 className="text-[26px] font-bold uppercase tracking-wide">BIÊN BẢN BÀN GIAO THIẾT BỊ MEDIA</h1>
+                        <div className="text-center mb-6 px-10">
+                            <h1 className="text-[22px] font-bold uppercase tracking-wide">BIÊN BẢN BÀN GIAO THIẾT BỊ MEDIA</h1>
                             <p className="text-sm italic mt-2">Hà Nội, ngày {today.split('/')[0]} tháng {today.split('/')[1]} năm {today.split('/')[2]}</p>
                         </div>
 
@@ -366,65 +344,76 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                             <p className="italic">Hôm nay, ngày {today}, chúng tôi gồm có:</p>
                             
                             {/* PARTIES */}
-                            <div className="space-y-4 bg-slate-50 border border-slate-200 p-4 rounded-lg">
+                            <div className="space-y-4">
                                 {/* Bên Giao */}
                                 <div>
-                                    <p className="font-bold uppercase tracking-wide text-red-800">I. BÊN GIAO: ĐẠI DIỆN {companyInfo.name}</p>
-                                    <ul className="list-disc pl-6 mt-2 space-y-1">
+                                    <p className="font-bold uppercase tracking-wide text-teal-800">I. BÊN GIAO: ĐẠI DIỆN {companyInfo.name}</p>
+                                    <ul className="list-disc pl-6 mt-1 space-y-1">
                                         <li>Người bàn giao: <strong className="uppercase">{giverInfo.name}</strong></li>
                                         <li>Điện thoại liên hệ: {giverInfo.phone}</li>
                                     </ul>
                                 </div>
                                 {/* Bên Nhận */}
                                 <div>
-                                    <p className="font-bold uppercase tracking-wide text-blue-800">II. BÊN NHẬN: NGƯỜI CHỊU TRÁCH NHIỆM BẢO QUẢN</p>
-                                    <div className="grid grid-cols-2 mt-2">
-                                        <ul className="list-disc pl-6 space-y-1">
-                                            <li>Họ và tên: <strong className="uppercase">{receiverInfo.name || '..............................................'}</strong></li>
-                                            <li>CCCD/CMND: <strong>{receiverInfo.idCard || '..............................................'}</strong></li>
-                                            <li>Điện thoại: <strong>{receiverInfo.phone || '..............................................'}</strong></li>
-                                        </ul>
-                                        <ul className="list-none space-y-1">
-                                            <li>Vị trí: <strong>{receiverInfo.position || '..............................................'}</strong></li>
-                                            <li>Địa chỉ thường trú: <strong>{receiverInfo.address || '..............................................'}</strong></li>
-                                        </ul>
-                                    </div>
+                                    <p className="font-bold uppercase tracking-wide text-teal-800">II. BÊN NHẬN (NGƯỜI CHỊU TRÁCH NHIỆM BẢO QUẢN)</p>
+                                    <ul className="list-disc pl-6 mt-1 space-y-1">
+                                        <li className="grid grid-cols-[120px_1fr] items-center">
+                                            <span>Họ và tên:</span>
+                                            <strong className="uppercase border-b border-dotted border-slate-400 leading-tight pb-0.5 block">{receiverInfo.name || '\u00A0'}</strong>
+                                        </li>
+                                        <li className="grid grid-cols-[120px_1fr] items-center">
+                                            <span>CCCD/CMND:</span>
+                                            <strong className="border-b border-dotted border-slate-400 leading-tight pb-0.5 block">{receiverInfo.idCard || '\u00A0'}</strong>
+                                        </li>
+                                        <li className="grid grid-cols-[120px_1fr] items-center">
+                                            <span>Điện thoại:</span>
+                                            <strong className="border-b border-dotted border-slate-400 leading-tight pb-0.5 block">{receiverInfo.phone || '\u00A0'}</strong>
+                                        </li>
+                                        <li className="grid grid-cols-[120px_1fr] items-center">
+                                            <span>Vị trí công tác:</span>
+                                            <strong className="border-b border-dotted border-slate-400 leading-tight pb-0.5 block">{receiverInfo.position || '\u00A0'}</strong>
+                                        </li>
+                                        <li className="grid grid-cols-[120px_1fr] items-center">
+                                            <span>Địa chỉ:</span>
+                                            <strong className="border-b border-dotted border-slate-400 leading-tight pb-0.5 block">{receiverInfo.address || '\u00A0'}</strong>
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
 
                             <p className="pt-2 font-bold italic">Bên Giao đồng ý bàn giao và Bên Nhận đồng ý nhận các trang thiết bị với chi tiết như sau:</p>
 
                             {/* TABLE */}
-                            <div className="border border-slate-900 mx-auto w-full">
-                                <table className="w-full text-[13px] border-collapse">
+                            <div className="border border-slate-800 mx-auto w-full">
+                                <table className="w-full text-[13px] border-collapse relative z-10 bg-transparent">
                                     <thead>
-                                        <tr className="bg-slate-100">
-                                            <th className="border border-slate-900 p-2.5 text-center w-12 font-bold">STT</th>
-                                            <th className="border border-slate-900 p-2.5 text-left font-bold w-[35%]">TÊN THIẾT BỊ / MODEL</th>
-                                            <th className="border border-slate-900 p-2.5 text-center font-bold">SERIAL NO.</th>
-                                            <th className="border border-slate-900 p-2.5 text-center font-bold">TÌNH TRẠNG</th>
-                                            <th className="border border-slate-900 p-2.5 text-center font-bold">HẠN BẢO HÀNH</th>
-                                            <th className="border border-slate-900 p-2.5 text-right font-bold">GIÁ TRỊ (VNĐ)</th>
+                                        <tr className="bg-teal-50">
+                                            <th className="border border-slate-800 p-2 text-center w-12 font-bold">STT</th>
+                                            <th className="border border-slate-800 p-2 text-left font-bold w-[35%]">TÊN THIẾT BỊ / MODEL</th>
+                                            <th className="border border-slate-800 p-2 text-center font-bold">SERIAL NO.</th>
+                                            <th className="border border-slate-800 p-2 text-center font-bold">TÌNH TRẠNG</th>
+                                            <th className="border border-slate-800 p-2 text-center font-bold">HẠN BẢO HÀNH</th>
+                                            <th className="border border-slate-800 p-2 text-right font-bold">GIÁ TRỊ (VNĐ)</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody className="bg-white">
                                         {items.map((it, idx) => (
                                             <tr key={idx}>
-                                                <td className="border border-slate-900 p-2 text-center">{idx + 1}</td>
-                                                <td className="border border-slate-900 p-2">
+                                                <td className="border border-slate-800 p-2 text-center">{idx + 1}</td>
+                                                <td className="border border-slate-800 p-2">
                                                     <div className="font-bold">{it.name}</div>
                                                     {it.model && <div className="text-[11px] text-slate-600 mt-0.5">{it.model}</div>}
                                                 </td>
-                                                <td className="border border-slate-900 p-2 text-center font-mono text-xs">{it.serial_number || '-'}</td>
-                                                <td className="border border-slate-900 p-2 text-center">{it.condition === 'excellent' ? 'Rất tốt' : it.condition === 'good' ? 'Tốt' : it.condition === 'fair' ? 'Trung bình' : 'Cần sửa'}</td>
-                                                <td className="border border-slate-900 p-2 text-center">{it.warranty_expiry ? new Date(it.warranty_expiry).toLocaleDateString('vi-VN') : '-'}</td>
-                                                <td className="border border-slate-900 p-2 text-right font-bold">{fmtPrice(it.value_amount)}</td>
+                                                <td className="border border-slate-800 p-2 text-center font-mono text-xs">{it.serial_number || '-'}</td>
+                                                <td className="border border-slate-800 p-2 text-center">{it.condition === 'excellent' ? 'Rất tốt' : it.condition === 'good' ? 'Tốt' : it.condition === 'fair' ? 'Trung bình' : 'Cần sửa'}</td>
+                                                <td className="border border-slate-800 p-2 text-center">{it.warranty_expiry ? new Date(it.warranty_expiry).toLocaleDateString('vi-VN') : '-'}</td>
+                                                <td className="border border-slate-800 p-2 text-right font-bold">{fmtPrice(it.value_amount)}</td>
                                             </tr>
                                         ))}
                                         {/* Total Summary */}
-                                        <tr className="bg-slate-50">
-                                            <td colSpan={5} className="border border-slate-900 p-2 text-right font-bold uppercase text-red-700">TỔNG CỘNG GIÁ TRỊ BÀN GIAO:</td>
-                                            <td className="border border-slate-900 p-2 text-right font-bold text-[15px]">{fmtPrice(totalValue)}</td>
+                                        <tr className="bg-teal-50">
+                                            <td colSpan={5} className="border border-slate-800 p-2 text-right font-bold uppercase text-teal-800">TỔNG CỘNG GIÁ TRỊ BÀN GIAO:</td>
+                                            <td className="border border-slate-800 p-2 text-right font-bold text-[15px] text-teal-900">{fmtPrice(totalValue)}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -435,20 +424,20 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                                 {terms.split('\n').filter(t => t.trim()).map((t, i) => renderTermLine(t, i))}
                             </div>
                             
-                            <p className="pt-2 italic text-[13px] text-center font-medium mt-4 border-t border-slate-200 mt-6 pt-4">
+                            <p className="pt-2 italic text-[13px] text-center font-medium mt-4 border-t border-slate-200 pt-4">
                                 Biên bản này được lập thành 02 (hai) bản có giá trị pháp lý như nhau, mỗi bên giữ 01 (một) bản kể từ ngày ký.
                             </p>
                         </div>
 
                         {/* SIGNATURES - Kept Together */}
-                        <div className="mt-8 px-12 pb-20 flex justify-between" style={{ pageBreakInside: 'avoid' }}>
+                        <div className="mt-8 px-12 pb-[100px] flex justify-between" style={{ pageBreakInside: 'avoid' }}>
                             <div className="text-center w-64">
                                 <p className="font-bold text-[15px] uppercase">ĐẠI DIỆN BÊN GIAO</p>
                                 <p className="text-[13px] italic mt-1">(Ký và ghi rõ họ tên)</p>
                                 {/* Leave blank vertical space for signature */}
                                 <div className="h-32"></div>
                                 <div className="border-b border-dotted border-slate-400 w-3/4 mx-auto mb-1"></div>
-                                <p className="font-bold">{giverInfo.name}</p>
+                                <p className="font-bold uppercase">{giverInfo.name}</p>
                             </div>
                             <div className="text-center w-64">
                                 <p className="font-bold text-[15px] uppercase">ĐẠI DIỆN BÊN NHẬN</p>
