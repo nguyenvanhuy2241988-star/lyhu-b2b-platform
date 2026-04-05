@@ -368,34 +368,7 @@ function QuoteEditorModal({
         if (!prod) return;
         
         const name = prod.name || prod.title || '';
-        let detectedCategory = '';
-        if (prod.brand) {
-            const b = prod.brand.toUpperCase();
-            if (b === 'ABI') detectedCategory = 'BÁNH TRÁNG ABI SNACK';
-            else if (b === 'BOYO') detectedCategory = 'BỘT PHÔ MAI BOYO';
-            else if (b === 'MÈO FOOD' || b === 'MÈOFOOD') detectedCategory = 'BÁNH TRÁNG MÈO FOOD';
-            else if (b === 'TWITCHUI') detectedCategory = 'KẸO DẺO TWITCHUI';
-            else if (b === 'CVT') detectedCategory = 'SẢN PHẨM CVT';
-            else if (b === 'UHI') detectedCategory = 'SẢN PHẨM UHI';
-            else if (b !== 'LHU' && b !== 'LYHU') detectedCategory = `SẢN PHẨM ${b}`;
-        }
-        
-        if (!detectedCategory) {
-            const nameLower = name.toLowerCase();
-            if (nameLower.includes('abi')) {
-                detectedCategory = 'BÁNH TRÁNG ABI SNACK';
-            } else if (nameLower.includes('boyo')) {
-                detectedCategory = 'BỘT PHÔ MAI BOYO';
-            } else if (nameLower.includes('mèo food')) {
-                detectedCategory = 'BÁNH TRÁNG MÈO FOOD';
-            } else if (nameLower.includes('twitchui') || nameLower.includes('kẹo dẻo siêu chua') || nameLower.includes('kẹo dẻo bóc vỏ')) {
-                detectedCategory = 'KẸO DẺO TWITCHUI';
-            } else if (nameLower.includes('khoai môn') || nameLower.includes('cà phê') || nameLower.includes('snack da cá')) {
-                detectedCategory = 'SẢN PHẨM CVT';
-            } else {
-                detectedCategory = 'SẢN PHẨM KHÁC';
-            }
-        }
+        const detectedCategory = prod.brand || 'SẢN PHẨM KHÁC';
 
         setItems(prev => {
             const newItems = [...prev, {

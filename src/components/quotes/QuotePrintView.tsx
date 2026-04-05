@@ -257,25 +257,7 @@ export default function QuotePrintView({ quote, onClose }: QuotePrintViewProps) 
                                         // Price List mode
                                         const groups: { category: string, items: QuoteItem[] }[] = [];
                                         items.forEach(item => {
-                                            let detectedCat = (item.category || '').trim();
-                                            if (!detectedCat) {
-                                                const nameLower = (item.name || '').toLowerCase();
-                                                if (nameLower.includes('abi')) {
-                                                    detectedCat = 'BÁNH TRÁNG ABI SNACK';
-                                                } else if (nameLower.includes('boyo')) {
-                                                    detectedCat = 'BỘT PHÔ MAI BOYO';
-                                                } else if (nameLower.includes('mèo food')) {
-                                                    detectedCat = 'BÁNH TRÁNG MÈO FOOD';
-                                                } else if (nameLower.includes('twitchui') || nameLower.includes('kẹo dẻo siêu chua') || nameLower.includes('kẹo dẻo bóc vỏ')) {
-                                                    detectedCat = 'KẸO DẺO TWITCHUI';
-                                                } else if (nameLower.includes('khoai môn') || nameLower.includes('cà phê') || nameLower.includes('snack da cá')) {
-                                                    detectedCat = 'SẢN PHẨM CVT';
-                                                } else {
-                                                    detectedCat = 'SẢN PHẨM KHÁC';
-                                                }
-                                            }
-                                            
-                                            const cat = detectedCat.toUpperCase();
+                                            const cat = (item.category || 'SẢN PHẨM KHÁC').trim().toUpperCase();
                                             let group = groups.find(g => g.category === cat);
                                             if (!group) {
                                                 group = { category: cat, items: [] };
