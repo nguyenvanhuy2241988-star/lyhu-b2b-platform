@@ -271,6 +271,7 @@ export default function SaleAdminQuotesPage() {
                 <QuotePrintView
                     quote={printingQuote}
                     onClose={() => setPrintingQuote(null)}
+                    products={products}
                 />
             )}
 

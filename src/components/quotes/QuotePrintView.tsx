@@ -11,9 +11,10 @@ const fmtDate = (s: string) => new Date(s).toLocaleDateString('vi-VN', { day: '2
 interface QuotePrintViewProps {
     quote: Quote;
     onClose: () => void;
+    products?: any[];
 }
 
-export default function QuotePrintView({ quote, onClose }: QuotePrintViewProps) {
+export default function QuotePrintView({ quote, onClose, products }: QuotePrintViewProps) {
     const printRef = useRef<HTMLDivElement>(null);
     const [paperSize, setPaperSize] = useState<'A4' | 'A5'>('A4');
 
@@ -257,7 +258,14 @@ export default function QuotePrintView({ quote, onClose }: QuotePrintViewProps) 
                                         // Price List mode
                                         const groups: { category: string, items: QuoteItem[] }[] = [];
                                         items.forEach(item => {
-                                            const cat = (item.category || 'SẢN PHẨM KHÁC').trim().toUpperCase();
+                                            let finalCategory = item.category;
+                                            if (products && item.productId) {
+                                                const p = products.find((p: any) => p.id === item.productId);
+                                                if (p && p.brand) {
+                                                    finalCategory = p.brand;
+                                                }
+                                            }
+                                            const cat = (finalCategory || 'SẢN PHẨM KHÁC').trim().toUpperCase();
                                             let group = groups.find(g => g.category === cat);
                                             if (!group) {
                                                 group = { category: cat, items: [] };
