@@ -39,8 +39,25 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
     const supabase = createClient();
     const printRef = useRef<HTMLDivElement>(null);
     
-    const [receiverName, setReceiverName] = useState('');
-    const [profileList, setProfileList] = useState<{ id: string, full_name: string }[]>([]);
+    const [companyInfo, setCompanyInfo] = useState({
+        name: COMPANY_INFO.name,
+        taxCode: '0110940697', // Placeholder
+    });
+    
+    const [giverInfo, setGiverInfo] = useState({
+        name: 'Thủ kho / Quản lý Media',
+        phone: COMPANY_INFO.hotline,
+    });
+
+    const [receiverInfo, setReceiverInfo] = useState({
+        name: '',
+        phone: '',
+        idCard: '',
+        position: '',
+        address: ''
+    });
+
+    const [profileList, setProfileList] = useState<any[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
     
     const [terms, setTerms] = useState(DEFAULT_TERMS);
@@ -48,8 +65,8 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
     useEffect(() => {
         // Load user profiles for autocomplete
         const loadUsers = async () => {
-            const { data } = await supabase.from('profiles').select('id, full_name').order('full_name');
-            if (data) setProfileList((data as any[]).filter((u: any) => u.full_name));
+            const { data } = await supabase.from('profiles').select('*').order('full_name');
+            if (data) setProfileList(data.filter((u: any) => u.full_name));
         };
         loadUsers();
     }, [supabase]);
@@ -90,46 +107,113 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
 
             <div className="flex flex-1 overflow-hidden">
                 {/* SETTINGS SIDEBAR */}
-                <div className="w-[300px] sm:w-[350px] bg-white border-r border-slate-200 p-6 overflow-y-auto shrink-0 print:hidden">
+                <div className="w-[300px] sm:w-[350px] md:w-[400px] bg-white border-r border-slate-200 p-6 overflow-y-auto shrink-0 print:hidden">
                     <h3 className="font-bold text-slate-800 mb-6 uppercase text-sm tracking-wide">Cấu hình biên bản</h3>
                     
-                    <div className="space-y-6">
-                        {/* Receiver Combobox */}
-                        <div className="relative">
-                            <label className="block text-xs font-bold text-slate-500 mb-2 uppercase">Bên nhận (Người mượn)</label>
-                            <input
-                                type="text"
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                placeholder="Gõ tên hoặc chọn danh sách..."
-                                value={receiverName}
-                                onChange={(e) => {
-                                    setReceiverName(e.target.value);
-                                    setShowDropdown(true);
-                                }}
-                                onFocus={() => setShowDropdown(true)}
-                                onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-                            />
-                            {showDropdown && profileList.length > 0 && (
-                                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto">
-                                    {profileList.filter(p => p.full_name?.toLowerCase().includes(receiverName.toLowerCase())).map(p => (
-                                        <div key={p.id} 
-                                            className="px-3 py-2 text-sm text-slate-700 hover:bg-primary-50 cursor-pointer"
-                                            onClick={() => {
-                                                setReceiverName(p.full_name);
-                                                setShowDropdown(false);
-                                            }}
-                                        >
-                                            {p.full_name}
-                                        </div>
-                                    ))}
+                    <div className="space-y-8">
+                        {/* Company Info */}
+                        <div>
+                            <h4 className="text-xs font-bold text-slate-400 mb-3 border-b border-slate-100 pb-2">THÔNG TIN CÔNG TY</h4>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Tên công ty</label>
+                                    <input type="text" className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-sm"
+                                        value={companyInfo.name} onChange={e => setCompanyInfo({...companyInfo, name: e.target.value})} />
                                 </div>
-                            )}
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Mã số thuế</label>
+                                    <input type="text" className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-sm"
+                                        value={companyInfo.taxCode} onChange={e => setCompanyInfo({...companyInfo, taxCode: e.target.value})} />
+                                </div>
+                            </div>
                         </div>
 
+                        {/* Giver Info */}
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 mb-2 uppercase">Điều khoản & Trách nhiệm</label>
+                            <h4 className="text-xs font-bold text-slate-400 mb-3 border-b border-slate-100 pb-2">ĐẠI DIỆN BÊN GIAO</h4>
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Người bàn giao</label>
+                                    <input type="text" className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-sm"
+                                        value={giverInfo.name} onChange={e => setGiverInfo({...giverInfo, name: e.target.value})} />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Điện thoại</label>
+                                    <input type="text" className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-sm"
+                                        value={giverInfo.phone} onChange={e => setGiverInfo({...giverInfo, phone: e.target.value})} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Receiver Info */}
+                        <div>
+                            <h4 className="text-xs font-bold text-slate-400 mb-3 border-b border-slate-100 pb-2">BÊN NHẬN (NGƯỜI MƯỢN)</h4>
+                            <div className="space-y-3">
+                                <div className="relative">
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Họ và tên</label>
+                                    <input
+                                        type="text"
+                                        className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-primary-500 font-bold"
+                                        placeholder="Tìm nhân viên hoặc gõ tay..."
+                                        value={receiverInfo.name}
+                                        onChange={(e) => {
+                                            setReceiverInfo({...receiverInfo, name: e.target.value});
+                                            setShowDropdown(true);
+                                        }}
+                                        onFocus={() => setShowDropdown(true)}
+                                        onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+                                    />
+                                    {showDropdown && profileList.length > 0 && (
+                                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto">
+                                            {profileList.filter(p => p.full_name?.toLowerCase().includes(receiverInfo.name.toLowerCase())).map(p => (
+                                                <div key={p.id} 
+                                                    className="px-3 py-2 text-sm text-slate-700 hover:bg-primary-50 cursor-pointer"
+                                                    onClick={() => {
+                                                        setReceiverInfo({
+                                                            ...receiverInfo,
+                                                            name: p.full_name,
+                                                            phone: p.phone || '',
+                                                            position: p.role || ''
+                                                        });
+                                                        setShowDropdown(false);
+                                                    }}
+                                                >
+                                                    {p.full_name}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Số CCCD / CMND</label>
+                                    <input type="text" className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-sm"
+                                        value={receiverInfo.idCard} onChange={e => setReceiverInfo({...receiverInfo, idCard: e.target.value})} />
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-600 mb-1">Điện thoại</label>
+                                        <input type="text" className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-sm"
+                                            value={receiverInfo.phone} onChange={e => setReceiverInfo({...receiverInfo, phone: e.target.value})} />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-600 mb-1">Vị trí công tác</label>
+                                        <input type="text" className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-sm"
+                                            value={receiverInfo.position} onChange={e => setReceiverInfo({...receiverInfo, position: e.target.value})} />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-600 mb-1">Địa chỉ thường trú</label>
+                                    <input type="text" className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-sm"
+                                        value={receiverInfo.address} onChange={e => setReceiverInfo({...receiverInfo, address: e.target.value})} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Terms */}
+                        <div>
+                            <h4 className="text-xs font-bold text-slate-400 mb-3 border-b border-slate-100 pb-2">ĐIỀU KHOẢN</h4>
                             <textarea
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-h-[250px]"
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-primary-500 min-h-[150px]"
                                 value={terms}
                                 onChange={(e) => setTerms(e.target.value)}
                             />
@@ -189,8 +273,8 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src="/logo-full.png" alt="LYHU" className="h-12 object-contain" />
                                 <div>
-                                    <p className="font-bold text-sm tracking-wide text-slate-900 uppercase">{COMPANY_INFO.name}</p>
-                                    <p className="text-xs text-slate-600 mt-0.5">Mã số thuế: 0110940697</p>
+                                    <p className="font-bold text-sm tracking-wide text-slate-900 uppercase">{companyInfo.name}</p>
+                                    <p className="text-xs text-slate-600 mt-0.5">Mã số thuế: {companyInfo.taxCode}</p>
                                 </div>
                             </div>
                             <div className="text-center">
@@ -200,7 +284,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                         </div>
 
                         {/* TITLE */}
-                        <div className="text-center mt-4 mb-8 px-10">
+                        <div className="text-center mt-2 mb-6 px-10">
                             <h1 className="text-2xl font-bold uppercase tracking-wide">BIÊN BẢN BÀN GIAO THIẾT BỊ MEDIA</h1>
                             <p className="text-sm italic mt-2">Hà Nội, ngày {today.split('/')[0]} tháng {today.split('/')[1]} năm {today.split('/')[2]}</p>
                         </div>
@@ -209,26 +293,30 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                             <p>Hôm nay, ngày {today}, chúng tôi gồm có:</p>
                             
                             {/* PARTIES */}
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 <div>
-                                    <p className="font-bold uppercase tracking-wide">BÊN GIAO: ĐẠI DIỆN {COMPANY_INFO.name}</p>
+                                    <p className="font-bold uppercase tracking-wide">BÊN GIAO: ĐẠI DIỆN CÔNG TY</p>
                                     <ul className="list-disc pl-5 mt-1 space-y-1">
-                                        <li>Người bàn giao: <strong>Thủ kho / Quản lý Media</strong></li>
-                                        <li>Điện thoại liên hệ: {COMPANY_INFO.hotline}</li>
+                                        <li>Người bàn giao: <strong>{giverInfo.name}</strong></li>
+                                        <li>Điện thoại liên hệ: {giverInfo.phone}</li>
                                     </ul>
                                 </div>
                                 <div>
-                                    <p className="font-bold uppercase tracking-wide">BÊN NHẬN (NGƯỜI CHỊU TRÁCH NHIỆM CHÍNH):</p>
+                                    <p className="font-bold uppercase tracking-wide">BÊN NHẬN (NGƯỜI MƯỢN / BẢO QUẢN CHÍNH):</p>
                                     <ul className="list-disc pl-5 mt-1 space-y-1">
-                                        <li>Họ và tên: <strong className="uppercase">{receiverName || '...................................................'}</strong></li>
+                                        <li>Họ và tên: <strong className="uppercase">{receiverInfo.name || '........................................................'}</strong></li>
+                                        {(receiverInfo.position || !receiverInfo.name) && <li>Vị trí công tác: {receiverInfo.position || '........................................................'}</li>}
+                                        {(receiverInfo.idCard || !receiverInfo.name) && <li>Số CCCD / CMND: {receiverInfo.idCard || '........................................................'}</li>}
+                                        {(receiverInfo.phone || !receiverInfo.name) && <li>Điện thoại: {receiverInfo.phone || '........................................................'}</li>}
+                                        {(receiverInfo.address || !receiverInfo.name) && <li>Địa chỉ: {receiverInfo.address || '........................................................'}</li>}
                                     </ul>
                                 </div>
                             </div>
 
-                            <p>Bên Giao đồng ý bàn giao và Bên Nhận đồng ý nhận các trang thiết bị với chi tiết như sau:</p>
+                            <p className="pt-2">Bên Giao đồng ý bàn giao và Bên Nhận đồng ý nhận các trang thiết bị với chi tiết như sau:</p>
 
                             {/* TABLE */}
-                            <div className="mt-4 border border-slate-900 mx-auto w-full">
+                            <div className="border border-slate-900 mx-auto w-full">
                                 <table className="w-full text-[13px] border-collapse">
                                     <thead>
                                         <tr className="bg-slate-100/50">
@@ -263,8 +351,8 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                                 </table>
                             </div>
 
-                            {/* TERMS & CONDITIONS (Kept together with signatures if possible, but standard layout allows breaking) */}
-                            <div className="pt-4 space-y-2">
+                            {/* TERMS & CONDITIONS */}
+                            <div className="pt-2 space-y-2">
                                 <p className="font-bold uppercase tracking-wide">CAM KẾT & TRÁCH NHIỆM BÊN NHẬN:</p>
                                 <div className="pl-4">
                                     {terms.split('\n').filter(t => t.trim()).map((t, i) => (
@@ -273,13 +361,13 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                                 </div>
                             </div>
                             
-                            <p className="pt-2 italic text-[13px] text-justify">
-                                Biên bản này được lập thành 02 (hai) bản có giá trị pháp lý như nhau, mỗi bên giữ 01 (một) bản kể từ ngày lý. Mọi vấn đề phát sinh sẽ được giải quyết dựa trên quy định bồi thường trang thiết bị của công ty.
+                            <p className="pt-1 italic text-[13px] text-justify">
+                                Biên bản này được lập thành 02 (hai) bản có giá trị pháp lý như nhau, mỗi bên giữ 01 (một) bản kể từ ngày ký. Mọi vấn đề phát sinh sẽ được giải quyết dựa trên quy định bồi thường trang thiết bị của công ty.
                             </p>
                         </div>
 
                         {/* SIGNATURES - Kept Together */}
-                        <div className="mt-12 px-10 pb-20 flex justify-between" style={{ pageBreakInside: 'avoid' }}>
+                        <div className="mt-8 px-10 pb-20 flex justify-between" style={{ pageBreakInside: 'avoid' }}>
                             <div className="text-center w-64">
                                 <p className="font-bold text-sm uppercase">ĐẠI DIỆN BÊN GIAO</p>
                                 <p className="text-xs italic mt-1">(Ký và ghi rõ họ tên)</p>
@@ -302,4 +390,3 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
         </div>
     );
 }
-
