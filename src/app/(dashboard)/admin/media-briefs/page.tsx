@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { FileInput, Clock, CheckCircle, XCircle, Plus, X, Save, Pencil, Trash2, Calendar, FileText, User } from "lucide-react";
+import { FileInput, Clock, CheckCircle, XCircle, Plus, X, Save, Pencil, Trash2, Calendar, FileText, User, Search, Filter } from "lucide-react";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
     pending: { label: "Chờ xử lý", color: "bg-amber-100 text-amber-700", icon: Clock },
@@ -37,7 +37,7 @@ const EMPTY_FORM = {
     deadline: "",
     requested_department: "Marketing",
     status: "pending",
-    assigned_to: "",
+    assignees: [] as string[],
 };
 
 export default function AdminMediaBriefsPage() {
@@ -47,7 +47,12 @@ export default function AdminMediaBriefsPage() {
     const [briefs, setBriefs] = useState<any[]>([]);
     const [mediaUsers, setMediaUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState<string>("all");
+    
+    // Filters and Search
+    const [filterStatus, setFilterStatus] = useState<string>("all");
+    const [searchQuery, setSearchQuery] = useState("");
+    const [dateFrom, setDateFrom] = useState("");
+    const [dateTo, setDateTo] = useState("");
 
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -64,7 +69,6 @@ export default function AdminMediaBriefsPage() {
                 .order("full_name");
             
             if (usersData) {
-                // Filter only those who might receive media tasks (media_creator or generally anyone for flexible logic)
                 const mediaStaff = usersData.filter((u: any) => u.role === 'media_creator' || u.full_name);
                 setMediaUsers(mediaStaff);
             }
@@ -73,20 +77,41 @@ export default function AdminMediaBriefsPage() {
             let query = supabase
                 .from("media_briefs")
                 .select("*")
+                .order("deadline", { ascending: true, nullsFirst: false }) // Sort by deadline earliest first
                 .order("created_at", { ascending: false });
 
-            if (filter !== "all") {
-                query = query.eq("status", filter);
+            if (filterStatus !== "all") {
+                query = query.eq("status", filterStatus);
+            }
+            if (dateFrom) {
+                query = query.gte("created_at", new Date(dateFrom).toISOString());
+            }
+            if (dateTo) {
+                // Add 1 day to include the end date fully
+                const toDate = new Date(dateTo);
+                toDate.setDate(toDate.getDate() + 1);
+                query = query.lt("created_at", toDate.toISOString());
             }
 
             const { data: briefsData } = await query;
-            setBriefs(briefsData || []);
+            
+            // Client side search filter
+            let filtered = briefsData || [];
+            if (searchQuery.trim()) {
+                const term = searchQuery.toLowerCase();
+                filtered = filtered.filter((b: any) => 
+                    b.title.toLowerCase().includes(term) || 
+                    (b.description && b.description.toLowerCase().includes(term))
+                );
+            }
+
+            setBriefs(filtered);
         } catch (err) {
             console.error("loadData error:", err);
         } finally {
             setLoading(false);
         }
-    }, [supabase, filter]);
+    }, [supabase, filterStatus, searchQuery, dateFrom, dateTo]);
 
     useEffect(() => { loadData(); }, [loadData]);
 
@@ -100,6 +125,12 @@ export default function AdminMediaBriefsPage() {
         setEditingId(brief.id);
         const deadlineDate = brief.deadline ? new Date(brief.deadline).toISOString().split('T')[0] : "";
         
+        let initialAssignees = brief.assignees || [];
+        // Migration fallback if old assigned_to still holding value
+        if (initialAssignees.length === 0 && brief.assigned_to) {
+            initialAssignees = [brief.assigned_to];
+        }
+
         setForm({
             title: brief.title,
             description: brief.description || "",
@@ -108,14 +139,26 @@ export default function AdminMediaBriefsPage() {
             deadline: deadlineDate,
             requested_department: brief.requested_department || "",
             status: brief.status,
-            assigned_to: brief.assigned_to || "",
+            assignees: initialAssignees,
         });
         setShowForm(true);
     };
 
+    const handleToggleAssignee = (userId: string) => {
+        setForm(prev => {
+            const isSelected = prev.assignees.includes(userId);
+            return {
+                ...prev,
+                assignees: isSelected 
+                    ? prev.assignees.filter(id => id !== userId)
+                    : [...prev.assignees, userId]
+            };
+        });
+    };
+
     const handleSave = async () => {
         if (!form.title.trim()) { alert("Vui lòng nhập tên công việc / dự án!"); return; }
-        if (!form.assigned_to) { alert("Vui lòng chọn nhân viên phụ trách!"); return; }
+        if (form.assignees.length === 0) { alert("Vui lòng chọn ít nhất 1 nhân viên phụ trách!"); return; }
 
         setSaving(true);
         try {
@@ -127,16 +170,16 @@ export default function AdminMediaBriefsPage() {
                 deadline: form.deadline ? new Date(form.deadline).toISOString() : null,
                 requested_department: form.requested_department || null,
                 status: form.status,
-                assigned_to: form.assigned_to,
+                assignees: form.assignees,
+                // Optional: keep assigned_to synced to the first user for backward compatibility
+                assigned_to: form.assignees[0] || null,
                 created_by: user?.id,
             };
 
             if (editingId) {
-                // Update
                 const { error } = await supabase.from("media_briefs").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", editingId);
                 if (error) throw error;
             } else {
-                // Insert
                 const { error } = await supabase.from("media_briefs").insert(payload);
                 if (error) throw error;
             }
@@ -166,9 +209,14 @@ export default function AdminMediaBriefsPage() {
         loadData();
     };
 
-    const getUserName = (id: string) => {
-        const u = mediaUsers.find(user => user.id === id);
-        return u ? u.full_name : "Chưa phân công";
+    const getAssigneeNames = (assigneeIds: string[], fallbackId: string) => {
+        let ids = assigneeIds && assigneeIds.length > 0 ? assigneeIds : fallbackId ? [fallbackId] : [];
+        if (ids.length === 0) return "Chưa phân công";
+        
+        return ids.map(id => {
+            const u = mediaUsers.find(mu => mu.id === id);
+            return u ? u.full_name : "Ẩn danh";
+        }).join(", ");
     };
 
     return (
@@ -185,34 +233,52 @@ export default function AdminMediaBriefsPage() {
                 </button>
             </div>
 
-            {/* Stats Overview */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-white p-4 rounded-xl border border-amber-100 shadow-sm border-b-4 border-b-amber-500">
-                    <p className="text-xs text-amber-600 font-bold uppercase mb-1">Mới Giao</p>
-                    <p className="text-2xl font-black text-slate-800">{briefs.filter(b => b.status === 'pending').length}</p>
+            {/* Filters & Search Toolbar */}
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <div className="flex flex-col md:flex-row gap-4 items-end">
+                    {/* Search */}
+                    <div className="flex-1 w-full">
+                        <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Tìm kiếm từ khóa</label>
+                        <div className="relative">
+                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                            <input type="text"
+                                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 outline-none"
+                                placeholder="Tên dự án, nội dung brief..."
+                                value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                    </div>
+                    {/* Date Filters */}
+                    <div className="flex gap-4 w-full md:w-auto">
+                        <div className="flex-1 md:w-36">
+                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Từ ngày</label>
+                            <input type="date"
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-teal-500 outline-none"
+                                value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+                            />
+                        </div>
+                        <div className="flex-1 md:w-36">
+                            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 block">Đến ngày</label>
+                            <input type="date"
+                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-teal-500 outline-none"
+                                value={dateTo} onChange={e => setDateTo(e.target.value)}
+                            />
+                        </div>
+                    </div>
                 </div>
-                <div className="bg-white p-4 rounded-xl border border-blue-100 shadow-sm border-b-4 border-b-blue-500">
-                    <p className="text-xs text-blue-600 font-bold uppercase mb-1">Đang Thực Hiện</p>
-                    <p className="text-2xl font-black text-slate-800">{briefs.filter(b => b.status === 'in_progress').length}</p>
+                
+                {/* Status Tabs */}
+                <div className="flex gap-2 flex-wrap pt-2 border-t border-slate-100">
+                    <div className="flex items-center gap-1.5 mr-2 text-slate-400">
+                        <Filter className="w-4 h-4" /> <span className="text-[11px] font-bold uppercase tracking-wider">Trạng thái:</span>
+                    </div>
+                    {[{ key: "all", label: "Tất cả" }, ...Object.entries(STATUS_CONFIG).map(([k, v]) => ({ key: k, label: v.label }))].map(opt => (
+                        <button key={opt.key} onClick={() => setFilterStatus(opt.key)}
+                            className={`px-3 py-1 text-xs font-bold rounded-md transition-colors border ${filterStatus === opt.key ? 'bg-pink-50 text-pink-700 border-pink-200' : 'bg-transparent text-slate-600 border-transparent hover:bg-slate-50'}`}>
+                            {opt.label}
+                        </button>
+                    ))}
                 </div>
-                <div className="bg-white p-4 rounded-xl border border-green-100 shadow-sm border-b-4 border-b-green-500">
-                    <p className="text-xs text-green-600 font-bold uppercase mb-1">Đã Hoàn Thành</p>
-                    <p className="text-2xl font-black text-slate-800">{briefs.filter(b => b.status === 'completed').length}</p>
-                </div>
-                <div className="bg-white p-4 rounded-xl border border-red-100 shadow-sm border-b-4 border-b-red-500">
-                    <p className="text-xs text-red-600 font-bold uppercase mb-1">Cần Xử Lý Gấp</p>
-                    <p className="text-2xl font-black text-slate-800">{briefs.filter(b => b.priority === 'urgent' && b.status !== 'completed').length}</p>
-                </div>
-            </div>
-
-            {/* Filter */}
-            <div className="flex gap-2 flex-wrap">
-                {[{ key: "all", label: "Tất cả" }, ...Object.entries(STATUS_CONFIG).map(([k, v]) => ({ key: k, label: v.label }))].map(opt => (
-                    <button key={opt.key} onClick={() => setFilter(opt.key)}
-                        className={`px-4 py-1.5 text-xs font-bold rounded-full transition-colors border ${filter === opt.key ? 'bg-pink-600 text-white border-pink-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
-                        {opt.label}
-                    </button>
-                ))}
             </div>
 
             {/* Briefs List */}
@@ -225,12 +291,8 @@ export default function AdminMediaBriefsPage() {
             ) : briefs.length === 0 ? (
                 <div className="bg-white rounded-xl border border-slate-200 p-16 text-center shadow-sm">
                     <Calendar className="w-16 h-16 mx-auto mb-4 text-slate-200" />
-                    <p className="text-base text-slate-600 font-bold">Chưa có Kế hoạch & Brief nào được giao!</p>
-                    <p className="text-sm text-slate-400 mt-1 mb-4">Mọi công việc bạn gắn cho nhân sự sẽ hiển thị trực tiếp ở máy của họ.</p>
-                    <button onClick={handleOpenAdd}
-                        className="text-sm text-pink-600 hover:text-pink-700 font-bold underline underline-offset-4">
-                        Bắt đầu giao việc đầu tiên
-                    </button>
+                    <p className="text-base text-slate-600 font-bold">Không tìm thấy Kế hoạch / Brief nào!</p>
+                    <p className="text-sm text-slate-400 mt-1 mb-4">Bạn có thể thay đổi bộ lọc thời gian hoặc Tạo mới ngay.</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -250,17 +312,16 @@ export default function AdminMediaBriefsPage() {
                                                 {MEDIA_TYPE_LABELS[brief.media_type] || brief.media_type}
                                             </span>
                                         </div>
-                                        {/* Quick Actions (Admin Only) */}
-                                        <div className="flex opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleOpenEdit(brief)} className="p-1 text-slate-400 hover:text-blue-600"><Pencil className="w-3.5 h-3.5" /></button>
-                                            <button onClick={() => handleDelete(brief.id)} className="p-1 text-slate-400 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
+                                        <div className="flex bg-slate-50 rounded border border-slate-100 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => handleOpenEdit(brief)} className="p-1.5 text-slate-400 hover:text-blue-600"><Pencil className="w-3.5 h-3.5" /></button>
+                                            <button onClick={() => handleDelete(brief.id)} className="p-1.5 text-slate-400 hover:text-red-600"><Trash2 className="w-3.5 h-3.5" /></button>
                                         </div>
                                     </div>
                                     
                                     <h3 className="font-bold text-slate-900 text-[15px] mb-2 leading-snug">{brief.title}</h3>
                                     
                                     {brief.description && (
-                                        <p className="text-xs text-slate-500 line-clamp-3 mb-4 bg-slate-50 p-2 rounded border border-slate-100">
+                                        <p className="text-xs text-slate-500 line-clamp-3 mb-4 bg-slate-50 p-2 text-justify rounded border border-slate-100">
                                             {brief.description}
                                         </p>
                                     )}
@@ -268,9 +329,11 @@ export default function AdminMediaBriefsPage() {
                                     <div className="space-y-2 mt-auto pt-3 border-t border-slate-100">
                                         <div className="flex items-center justify-between text-xs">
                                             <span className="flex items-center gap-1.5 text-slate-500 font-medium">
-                                                <User className="w-3.5 h-3.5 text-slate-400" /> Phụ trách:
+                                                <User className="w-3.5 h-3.5 text-slate-400" /> Nhóm phụ trách:
                                             </span>
-                                            <span className="font-bold text-slate-800">{getUserName(brief.assigned_to)}</span>
+                                            <span className="font-bold text-teal-700 max-w-[140px] truncate" title={getAssigneeNames(brief.assignees, brief.assigned_to)}>
+                                                {getAssigneeNames(brief.assignees, brief.assigned_to)}
+                                            </span>
                                         </div>
                                         
                                         {brief.deadline && (
@@ -284,9 +347,9 @@ export default function AdminMediaBriefsPage() {
                                         
                                         <div className="flex items-center justify-between text-xs">
                                             <span className="flex items-center gap-1.5 text-slate-500 font-medium">
-                                                <FileText className="w-3.5 h-3.5 text-slate-400" /> Nguồn phát:
+                                                <FileText className="w-3.5 h-3.5 text-slate-400" /> Ngày phát lệnh:
                                             </span>
-                                            <span className="text-slate-600">{brief.requested_department || "Khác"}</span>
+                                            <span className="text-slate-600">{new Date(brief.created_at).toLocaleDateString('vi-VN')}</span>
                                         </div>
 
                                         <div className="mt-3 pt-3 border-t border-slate-50 flex items-center justify-between">
@@ -335,39 +398,48 @@ export default function AdminMediaBriefsPage() {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                <div>
-                                    <label className="text-xs font-bold uppercase tracking-wide text-slate-500 block mb-1.5">Người phụ trách <span className="text-red-500">*</span></label>
-                                    <select className="w-full py-2.5 px-3 rounded-lg border border-slate-300 text-sm bg-white font-medium focus:ring-2 focus:ring-teal-500 outline-none"
-                                        value={form.assigned_to} onChange={e => setForm({ ...form, assigned_to: e.target.value })}>
-                                        <option value="">-- Chỉ định nhân sự Media --</option>
+                                <div className="row-span-2 border border-slate-200 rounded-lg p-3 bg-slate-50">
+                                    <label className="text-xs font-bold uppercase tracking-wide text-slate-500 block mb-2">Nhóm phụ trách <span className="text-red-500">*</span></label>
+                                    <p className="text-[10px] text-slate-400 mb-2 italic">Có thể chọn nhiều người để làm việc nhóm</p>
+                                    <div className="space-y-1.5 max-h-36 overflow-y-auto pr-2">
                                         {mediaUsers.map(u => (
-                                            <option key={u.id} value={u.id}>{u.full_name} ({u.role})</option>
+                                            <label key={u.id} className="flex items-center gap-2 cursor-pointer p-1.5 hover:bg-white rounded">
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={form.assignees.includes(u.id)}
+                                                    onChange={() => handleToggleAssignee(u.id)}
+                                                    className="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+                                                />
+                                                <span className="text-sm font-medium text-slate-700">{u.full_name} <span className="text-xs text-slate-400">({u.role})</span></span>
+                                            </label>
                                         ))}
-                                    </select>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="text-xs font-bold uppercase tracking-wide text-slate-500 block mb-1.5">Thời hạn (Deadline)</label>
-                                    <input type="date" className="w-full py-2.5 px-3 rounded-lg border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-teal-500 outline-none"
-                                        value={form.deadline} onChange={e => setForm({ ...form, deadline: e.target.value })} />
+                                <div className="space-y-5">
+                                    <div>
+                                        <label className="text-xs font-bold uppercase tracking-wide text-slate-500 block mb-1.5">Thời hạn (Deadline)</label>
+                                        <input type="date" className="w-full py-2.5 px-3 rounded-lg border border-slate-300 text-sm font-medium focus:ring-2 focus:ring-teal-500 outline-none"
+                                            value={form.deadline} onChange={e => setForm({ ...form, deadline: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold uppercase tracking-wide text-slate-500 block mb-1.5">Mức độ ưu tiên</label>
+                                        <select className="w-full py-2.5 px-3 rounded-lg border border-slate-300 text-sm font-medium bg-white"
+                                            value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })}>
+                                            {Object.entries(PRIORITY_CONFIG).map(([k, v]) => (
+                                                <option key={k} value={k}>{v.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div>
                                     <label className="text-xs font-bold uppercase tracking-wide text-slate-500 block mb-1.5">Hình thức</label>
                                     <select className="w-full py-2 px-3 rounded-lg border border-slate-300 text-sm bg-white"
                                         value={form.media_type} onChange={e => setForm({ ...form, media_type: e.target.value })}>
                                         {Object.entries(MEDIA_TYPE_LABELS).map(([k, v]) => (
                                             <option key={k} value={k}>{v}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold uppercase tracking-wide text-slate-500 block mb-1.5">Mức độ ưu tiên</label>
-                                    <select className="w-full py-2 px-3 rounded-lg border border-slate-300 text-sm bg-white"
-                                        value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })}>
-                                        {Object.entries(PRIORITY_CONFIG).map(([k, v]) => (
-                                            <option key={k} value={k}>{v.label}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -387,7 +459,7 @@ export default function AdminMediaBriefsPage() {
                                 <label className="text-xs font-bold uppercase tracking-wide text-slate-500 block mb-1.5">Kịch bản / Nội dung Brief chi tiết</label>
                                 <textarea className="w-full py-3 px-3 rounded-lg border border-slate-300 text-sm focus:ring-2 focus:ring-teal-500 outline-none leading-relaxed" 
                                     rows={5}
-                                    placeholder={'Ví dụ:\n- Concept ánh sáng: Bright & Airy\n- Yêu cầu thiết bị: Máy quay góc rộng, chân Tripod\n- Lưu ý: Dán kèm Link file Kịch bản Driver nếu dài...'}
+                                    placeholder={'Ví dụ:\n- Concept ánh sáng: Bright & Airy\n- Yêu cầu thiết bị: Máy quay góc rộng, chân Tripod\n- Phân đoạn: 3 scene (Intro 5s - Body 10s - Outro 5s)'}
                                     value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
                             </div>
                         </div>

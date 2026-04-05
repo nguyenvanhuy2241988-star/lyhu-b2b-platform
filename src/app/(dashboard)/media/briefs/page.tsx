@@ -39,7 +39,9 @@ export default function MediaBriefsPage() {
             let query = supabase
                 .from("media_briefs")
                 .select("*")
-                .eq("assigned_to", user.id)
+                // Using OR to support backward compatibility + new multi-select format
+                .or(`assigned_to.eq.${user.id},assignees.cs.{${user.id}}`)
+                .order("deadline", { ascending: true, nullsFirst: false })
                 .order("created_at", { ascending: false });
 
             if (filter !== "all") {
@@ -97,7 +99,7 @@ export default function MediaBriefsPage() {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {briefs.map(brief => {
+                    {briefs.map((brief: any) => {
                         const status = STATUS_CONFIG[brief.status] || STATUS_CONFIG.pending;
                         const priority = PRIORITY_CONFIG[brief.priority] || PRIORITY_CONFIG.normal;
                         return (
