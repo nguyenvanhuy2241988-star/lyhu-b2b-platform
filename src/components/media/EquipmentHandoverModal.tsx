@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { COMPANY_INFO } from '@/lib/companyConfig';
 import { Printer, Download, X, FileText } from 'lucide-react';
 import { createClient } from '@/lib/supabaseClient';
@@ -51,6 +52,7 @@ Mọi dữ liệu hình ảnh, video lưu trữ trên thẻ nhớ hoặc máy �
 export default function EquipmentHandoverModal({ items, onClose }: EquipmentHandoverModalProps) {
     const supabase = createClient();
     const printRef = useRef<HTMLDivElement>(null);
+    const [mounted, setMounted] = useState(false);
     
     const [companyInfo, setCompanyInfo] = useState({
         name: COMPANY_INFO.name,
@@ -80,6 +82,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
     const [terms, setTerms] = useState(DEFAULT_TERMS);
 
     useEffect(() => {
+        setMounted(true);
         const loadUsers = async () => {
             const { data } = await supabase.from('profiles').select('*').order('full_name');
             if (data) setProfileList(data.filter((u: any) => u.full_name));
@@ -100,24 +103,87 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
         const text = t.trim();
         const isHeading = /^điều\s*\d+[:.]?/i.test(text);
         if (isHeading) {
-            return <p key={idx} className="mt-4 mb-2 uppercase font-bold text-[14px] text-teal-800">{text}</p>;
+            return <p key={idx} className="mt-4 mb-2 uppercase font-bold text-[14px] text-teal-800 break-inside-avoid">{text}</p>;
         }
         
         const isSubHeading = /^\d+\.\d+\.?/.test(text);
         if (isSubHeading) {
             return (
-                <p key={idx} className="mb-2 text-justify leading-relaxed ml-2 text-[13px]">
+                <p key={idx} className="mb-2 text-justify leading-relaxed ml-2 text-[13px] break-inside-avoid">
                     <span className="font-semibold text-teal-800 underline mr-1">{text.match(/^\d+\.\d+\.?/)?.[0]}</span>
                     <span>{text.replace(/^\d+\.\d+\.?/, '').trim()}</span>
                 </p>
             );
         }
 
-        return <p key={idx} className="mb-2 text-justify leading-relaxed italic text-[13px] text-slate-800">{text}</p>;
+        return <p key={idx} className="mb-2 text-justify leading-relaxed italic text-[13px] text-slate-800 break-inside-avoid">{text}</p>;
     };
 
-    return (
-        <div className="handover-print-overlay fixed inset-0 z-[100] flex flex-col bg-slate-900/40 backdrop-blur-sm">
+    if (!mounted) return null;
+
+    const modalContent = (
+        <div className="handover-print-portal fixed inset-0 z-[100] flex flex-col bg-slate-900/40 backdrop-blur-sm">
+            <style>{`
+                @media print {
+                    /* Hide EVERYTHING in the body except our portal */
+                    body > *:not(.handover-print-portal) {
+                        display: none !important;
+                    }
+                    
+                    /* Reset body to allow native printing flow */
+                    html, body {
+                        height: auto !important;
+                        overflow: visible !important;
+                        background: white !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                    }
+
+                    /* Allow the portal to behave natively in document flow */
+                    .handover-print-portal {
+                        display: block !important;
+                        position: static !important;
+                        visibility: visible !important;
+                        background: transparent !important;
+                    }
+
+                    /* Hide interactive UI */
+                    .handover-controls { 
+                        display: none !important; 
+                    }
+
+                    /* Expand the preview wrapper */
+                    .handover-print-wrapper {
+                        display: block !important;
+                        overflow: visible !important;
+                        background: transparent !important;
+                        padding: 0 !important;
+                    }
+
+                    /* Flatten the printable document container */
+                    .handover-print-page {
+                        display: block !important;
+                        box-shadow: none !important;
+                        margin: 0 !important;
+                        border-radius: 0 !important;
+                        width: 100% !important;
+                        max-width: 100% !important;
+                        overflow: visible !important;
+                        height: auto !important;
+                        min-height: auto !important;
+                        border: none !important;
+                    }
+
+                    /* Ensure tables can break normally */
+                    table { page-break-inside: auto; }
+                    tr { page-break-inside: avoid; page-break-after: auto; }
+                    thead { display: table-header-group; }
+                    tfoot { display: table-footer-group; }
+
+                    @page { size: A4; margin: 15mm; }
+                }
+            `}</style>
+            
             {/* Control Header */}
             <div className="handover-controls bg-slate-900 text-white p-4 shadow-xl flex items-center justify-between shrink-0 relative z-10">
                 <div className="flex items-center gap-4">
@@ -141,7 +207,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                 </div>
             </div>
 
-            <div className="handover-print-wrapper flex flex-1 overflow-hidden pb-[100px] sm:pb-0">
+            <div className="flex flex-1 overflow-hidden pb-[100px] sm:pb-0 handover-print-wrapper">
                 {/* SETTINGS SIDEBAR */}
                 <div className="handover-controls w-[300px] sm:w-[350px] md:w-[450px] bg-white border-r border-slate-200 p-6 overflow-y-auto shrink-0 shadow-lg z-10">
                     <h3 className="font-bold text-slate-800 mb-6 uppercase text-sm tracking-wide border-b border-teal-500 pb-2 inline-block">Cấu hình biên bản</h3>
@@ -182,7 +248,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                                 </div>
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-700 mb-1">Địa chỉ trụ sở</label>
-                                    <textarea className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-sm shadow-sm" rows={2}
+                                    <textarea className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-sm shadow-sm rows-2"
                                         value={companyInfo.address} onChange={e => setCompanyInfo({...companyInfo, address: e.target.value})} />
                                 </div>
                             </div>
@@ -264,7 +330,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                                 </div>
                                 <div>
                                     <label className="block text-xs font-semibold text-slate-700 mb-1">Địa chỉ thường trú</label>
-                                    <textarea className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-sm shadow-sm bg-white" rows={2} placeholder="Số nhà, đường, phường/xã..."
+                                    <textarea className="w-full px-3 py-1.5 border border-slate-300 rounded-md text-sm shadow-sm bg-white rows-2" placeholder="Số nhà, đường, phường/xã..."
                                         value={receiverInfo.address} onChange={e => setReceiverInfo({...receiverInfo, address: e.target.value})} />
                                 </div>
                             </div>
@@ -284,48 +350,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                 </div>
 
                 {/* PREVIEW PANEL */}
-                <div className="handover-scroll-container flex-1 overflow-y-auto bg-slate-200 p-4 sm:p-8">
-                    <style>{`
-                        @media print {
-                            body {
-                                visibility: hidden;
-                                -webkit-print-color-adjust: exact !important;
-                                print-color-adjust: exact !important;
-                            }
-                            .handover-print-overlay {
-                                visibility: visible !important;
-                                position: absolute !important;
-                                left: 0;
-                                top: 0;
-                                width: 100vw;
-                                background: white !important;
-                            }
-                            .handover-controls { display: none !important; }
-                            .handover-scroll-container {
-                                max-height: none !important;
-                                height: auto !important;
-                                overflow: visible !important;
-                                background: white !important;
-                                padding: 0 !important;
-                            }
-                            .handover-print-wrapper {
-                                display: block !important;
-                                overflow: visible !important;
-                            }
-                            .handover-print-page {
-                                display: block !important;
-                                box-shadow: none !important;
-                                margin: 0 !important;
-                                border-radius: 0 !important;
-                                width: 100% !important;
-                                max-width: 100% !important;
-                                overflow: visible !important;
-                                height: auto !important;
-                                min-height: auto !important;
-                            }
-                            @page { size: A4; margin: 15mm; }
-                        }
-                    `}</style>
+                <div className="handover-print-wrapper flex-1 overflow-y-auto bg-slate-200 p-4 sm:p-8">
                     <div ref={printRef}
                         className="handover-print-page bg-white w-full max-w-[800px] mx-auto min-h-[1100px] rounded-sm shadow-2xl flex flex-col relative"
                         style={{ fontFamily: "'Times New Roman', Times, serif", color: '#000' }}>
@@ -368,7 +393,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                             {/* PARTIES */}
                             <div className="space-y-4">
                                 {/* Bên Giao */}
-                                <div>
+                                <div className="break-inside-avoid">
                                     <p className="font-bold uppercase tracking-wide text-teal-800">I. BÊN GIAO: ĐẠI DIỆN {companyInfo.name}</p>
                                     <ul className="list-disc pl-6 mt-1 space-y-1">
                                         <li>Người bàn giao: <strong className="uppercase">{giverInfo.name}</strong></li>
@@ -376,7 +401,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                                     </ul>
                                 </div>
                                 {/* Bên Nhận */}
-                                <div>
+                                <div className="break-inside-avoid">
                                     <p className="font-bold uppercase tracking-wide text-teal-800">II. BÊN NHẬN (NGƯỜI CHỊU TRÁCH NHIỆM BẢO QUẢN)</p>
                                     <ul className="list-disc pl-6 mt-1 space-y-1">
                                         <li className="grid grid-cols-[120px_1fr] items-center">
@@ -446,13 +471,13 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                                 {terms.split('\n').filter(t => t.trim()).map((t, i) => renderTermLine(t, i))}
                             </div>
                             
-                            <p className="pt-2 italic text-[13px] text-center font-medium mt-4 border-t border-slate-200 pt-4">
+                            <p className="pt-2 italic text-[13px] text-center font-medium mt-4 border-t border-slate-200 pt-4 break-inside-avoid">
                                 Biên bản này được lập thành 02 (hai) bản có giá trị pháp lý như nhau, mỗi bên giữ 01 (một) bản kể từ ngày ký.
                             </p>
                         </div>
 
                         {/* SIGNATURES - Kept Together */}
-                        <div className="mt-8 px-12 pb-[100px] flex justify-between" style={{ pageBreakInside: 'avoid' }}>
+                        <div className="mt-8 px-12 pb-[100px] flex justify-between break-inside-avoid" style={{ pageBreakInside: 'avoid' }}>
                             <div className="text-center w-64">
                                 <p className="font-bold text-[15px] uppercase">ĐẠI DIỆN BÊN GIAO</p>
                                 <p className="text-[13px] italic mt-1">(Ký và ghi rõ họ tên)</p>
@@ -476,4 +501,6 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 }
