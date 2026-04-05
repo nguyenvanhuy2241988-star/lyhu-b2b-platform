@@ -802,6 +802,19 @@ function ProductMultiSelector({
         setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
     };
 
+    const toggleSelectAll = () => {
+        const filteredIds = filtered.map(p => p.id);
+        // check if all currently filtered items are already selected
+        const allSelected = filteredIds.length > 0 && filteredIds.every(id => selectedIds.includes(id));
+        if (allSelected) {
+            // deselect them all
+            setSelectedIds(prev => prev.filter(id => !filteredIds.includes(id)));
+        } else {
+            // select them all
+            setSelectedIds(prev => Array.from(new Set([...prev, ...filteredIds])));
+        }
+    };
+
     const handleConfirm = () => {
         onAddProducts(selectedIds);
         setSelectedIds([]);
@@ -841,6 +854,19 @@ function ProductMultiSelector({
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 bg-slate-50/50">
+                    {filtered.length > 0 && (
+                        <div className="mb-3 flex items-center justify-between">
+                            <p className="text-xs font-medium text-slate-500">Hiển thị {filtered.length} kết quả</p>
+                            <button 
+                                type="button" 
+                                onClick={toggleSelectAll}
+                                className="text-xs font-bold text-primary-600 hover:text-primary-700 bg-primary-50 py-1.5 px-3 rounded-lg transition-colors border border-primary-200 flex items-center gap-1.5"
+                            >
+                                <CheckCircle className="w-3.5 h-3.5" />
+                                {filtered.every(p => selectedIds.includes(p.id)) ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                            </button>
+                        </div>
+                    )}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {filtered.length === 0 && (
                             <div className="p-8 text-center text-slate-400 col-span-full">Không tìm thấy sản phẩm nào</div>
