@@ -64,7 +64,7 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
     const today = new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
     return (
-        <div className="fixed inset-0 z-[100] flex flex-col bg-slate-900/40 backdrop-blur-sm">
+        <div className="handover-print-overlay fixed inset-0 z-[100] flex flex-col bg-slate-900/40 backdrop-blur-sm">
             {/* Control Header */}
             <div className="bg-slate-900 text-white p-4 shadow-xl flex items-center justify-between shrink-0 relative z-10 print:hidden">
                 <div className="flex items-center gap-4">
@@ -138,28 +138,49 @@ export default function EquipmentHandoverModal({ items, onClose }: EquipmentHand
                 </div>
 
                 {/* PREVIEW PANEL */}
-                <div className="flex-1 overflow-y-auto bg-slate-100 p-8 flex justify-center quote-scroll-container">
+                <div className="flex-1 overflow-y-auto bg-slate-100 p-8 handover-scroll-container">
                     <style>{`
                         @media print {
-                            body * { visibility: hidden; }
-                            .handover-print-page, .handover-print-page * { visibility: visible !important; }
-                            .handover-print-page {
-                                position: absolute;
+                            body {
+                                visibility: hidden;
+                                -webkit-print-color-adjust: exact !important;
+                                print-color-adjust: exact !important;
+                            }
+                            .handover-print-overlay {
+                                visibility: visible !important;
+                                position: absolute !important;
                                 left: 0;
                                 top: 0;
+                                width: 100vw;
+                                background: white !important;
+                                display: block !important;
+                            }
+                            .handover-print-overlay > div {
+                                display: block !important;
+                                overflow: visible !important;
+                            }
+                            .handover-controls { display: none !important; }
+                            .handover-scroll-container {
+                                max-height: none !important;
+                                height: auto !important;
+                                overflow: visible !important;
+                                background: white !important;
+                                padding: 0 !important;
+                                display: block !important;
+                            }
+                            .handover-print-page {
+                                box-shadow: none !important;
+                                margin: 0 !important;
+                                border-radius: 0 !important;
                                 width: 100% !important;
                                 max-width: 100% !important;
-                                margin: 0 !important;
-                                padding: 0 !important;
-                                box-shadow: none !important;
-                                -webkit-print-color-adjust: exact !important;
-                                color-adjust: exact !important;
-                                page-break-after: auto;
+                                display: block !important;
                             }
+                            @page { size: A4; margin: 15mm; }
                         }
                     `}</style>
                     <div ref={printRef}
-                        className="handover-print-page bg-white w-full max-w-[800px] rounded-xl shadow-2xl overflow-hidden flex flex-col"
+                        className="handover-print-page bg-white w-full max-w-[800px] mx-auto rounded-xl shadow-2xl overflow-hidden flex flex-col"
                         style={{ fontFamily: "'Times New Roman', Times, serif" }}>
                         
                         {/* HEADER */}
