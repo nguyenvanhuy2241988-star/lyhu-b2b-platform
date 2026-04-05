@@ -389,77 +389,63 @@ export default function QuotePrintView({ quote, onClose, products }: QuotePrintV
                             </div>
                         )}
 
-                        {/* ===== NOTES & TERMS ===== */}
-                        <div className="px-10 pb-6 space-y-4">
-                            {quote.notes && (
-                                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                                    <p className="text-[10px] font-bold text-amber-600 uppercase mb-1">Ghi chú</p>
-                                    <p className="text-xs text-slate-700 whitespace-pre-line leading-relaxed">{quote.notes}</p>
-                                </div>
-                            )}
-
-                            {/* Default terms */}
-                            <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
-                                <p className="text-[10px] font-bold text-slate-500 uppercase mb-1.5">Điều khoản & Điều kiện</p>
-                                <ul className="text-[11px] text-slate-600 space-y-1 leading-relaxed list-disc list-inside">
-                                    {quote.terms ? (
-                                        quote.terms.split('\n').filter(t => t.trim()).map((t, idx) => (
-                                            <li key={idx} className="whitespace-pre-line">{t}</li>
-                                        ))
-                                    ) : (
-                                        <>
-                                            <li>Giá trên chưa bao gồm phí vận chuyển (nếu có).</li>
-                                            <li>Báo giá có hiệu lực {validDate ? `đến ${validDate}` : '30 ngày'} kể từ ngày phát hành.</li>
-                                            <li>Thanh toán: Chuyển khoản trước khi giao hàng hoặc COD.</li>
-                                            <li>Hàng hóa được đổi trả trong vòng 7 ngày nếu có lỗi từ nhà sản xuất.</li>
-                                        </>
-                                    )}
-                                </ul>
-                            </div>
-                        </div>
-
-                        {/* ===== BANK INFO ===== */}
-                        <div className="px-10 pb-6">
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                <p className="text-[10px] font-bold text-blue-600 uppercase mb-1.5">Thông tin thanh toán</p>
-                                <div className="grid grid-cols-2 gap-3">
-                                    {COMPANY_INFO.bankAccounts.map((bank, idx) => (
-                                        <div key={idx} className="text-[11px] text-slate-700 space-y-0.5">
-                                            <p className="font-bold text-slate-800">{bank.bankName}</p>
-                                            <p>STK: <strong className="tracking-wide">{bank.accountNumber}</strong></p>
-                                            <p>Chủ TK: {bank.accountName}</p>
-                                            <p className="text-slate-500">{bank.branch}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* ===== SIGNATURE ===== */}
-                        <div className="px-10 pb-6">
-                            <div className="flex justify-end pt-4 pr-16">
-                                <div className="text-center w-64">
-                                    <p className="text-xs font-bold text-slate-700 uppercase">Đại diện {COMPANY_INFO.name}</p>
-                                    <p className="text-[10px] text-slate-400 italic mt-1">(Ký, đóng dấu và ghi rõ họ tên)</p>
-                                    <div className="relative h-24 flex items-center justify-center">
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img src="/stamp.png" className="absolute opacity-80 h-32 w-32 -top-4 pointer-events-none" alt="seal" onError={e => e.currentTarget.style.display='none'} />
+                        {/* ===== BOTTOM SECTION (Prevent page breaks inside) ===== */}
+                        <div style={{ pageBreakInside: 'avoid' }}>
+                            {/* ===== NOTES & TERMS ===== */}
+                            <div className="px-10 pb-6 space-y-4">
+                                {quote.notes && (
+                                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                        <p className="text-[10px] font-bold text-amber-600 uppercase mb-1">Ghi chú</p>
+                                        <p className="text-xs text-slate-700 whitespace-pre-line leading-relaxed">{quote.notes}</p>
                                     </div>
-                                    <p className="font-bold text-[13px] text-slate-800 uppercase">GIÁM ĐỐC</p>
+                                )}
+
+                                {/* Default terms */}
+                                <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase mb-1.5">Điều khoản & Điều kiện</p>
+                                    <ul className="text-[11px] text-slate-600 space-y-1 leading-relaxed list-disc list-inside">
+                                        {quote.terms ? (
+                                            quote.terms.split('\n').filter(t => t.trim()).map((t, idx) => (
+                                                <li key={idx} className="whitespace-pre-line">{t}</li>
+                                            ))
+                                        ) : (
+                                            <>
+                                                <li>Giá trên chưa bao gồm phí vận chuyển (nếu có).</li>
+                                                <li>Báo giá có hiệu lực {validDate ? `đến ${validDate}` : '30 ngày'} kể từ ngày phát hành.</li>
+                                                <li>Thanh toán: Chuyển khoản trước khi giao hàng hoặc COD.</li>
+                                                <li>Hàng hóa được đổi trả trong vòng 7 ngày nếu có lỗi từ nhà sản xuất.</li>
+                                            </>
+                                        )}
+                                    </ul>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* ===== FOOTER ===== */}
-                        <div className="px-10 py-4" style={{ backgroundColor: '#00afa9' }}>
-                            <div className="flex items-center justify-between text-white">
-                                <div>
-                                    <p className="text-xs font-bold">CÔNG TY TNHH LYHU</p>
-                                    <p className="text-[10px] opacity-80">Green Solutions for Life</p>
+                            {/* ===== SIGNATURE ===== */}
+                            <div className="px-10 pb-6">
+                                <div className="flex justify-end pt-4 pr-16">
+                                    <div className="text-center w-64">
+                                        <p className="text-xs font-bold text-slate-700 uppercase">Đại diện {COMPANY_INFO.name}</p>
+                                        <p className="text-[10px] text-slate-400 italic mt-1">(Ký, đóng dấu và ghi rõ họ tên)</p>
+                                        <div className="relative h-24 flex items-center justify-center">
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img src="/stamp.png" className="absolute opacity-80 h-32 w-32 -top-4 pointer-events-none" alt="seal" onError={e => e.currentTarget.style.display='none'} />
+                                        </div>
+                                        <p className="font-bold text-[13px] text-slate-800 uppercase">GIÁM ĐỐC</p>
+                                    </div>
                                 </div>
-                                <div className="text-right text-[10px] opacity-80">
-                                    <p>Hotline: {COMPANY_INFO.hotline}</p>
-                                    <p>{COMPANY_INFO.email} | {COMPANY_INFO.website}</p>
+                            </div>
+
+                            {/* ===== FOOTER ===== */}
+                            <div className="px-10 py-4" style={{ backgroundColor: '#00afa9' }}>
+                                <div className="flex items-center justify-between text-white">
+                                    <div>
+                                        <p className="text-xs font-bold">CÔNG TY TNHH LYHU</p>
+                                        <p className="text-[10px] opacity-80">Green Solutions for Life</p>
+                                    </div>
+                                    <div className="text-right text-[10px] opacity-80">
+                                        <p>Hotline: {COMPANY_INFO.hotline}</p>
+                                        <p>{COMPANY_INFO.email} | {COMPANY_INFO.website}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
