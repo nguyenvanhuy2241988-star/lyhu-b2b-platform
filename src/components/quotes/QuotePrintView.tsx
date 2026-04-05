@@ -26,6 +26,22 @@ const getFlavorBase = (str: string) => {
     return '';
 };
 
+const getWeightInGrams = (name: string): number => {
+    const match = name.toLowerCase().match(/([\d.]+)\s*(g|kg|ml|l)\b/);
+    if (!match) return 0;
+    const value = parseFloat(match[1]) || 0;
+    const unit = match[2];
+    if (unit === 'kg' || unit === 'l') return value * 1000;
+    return value;
+};
+
+const getBaseName = (str: string) => {
+    return str.toLowerCase()
+        .replace(/([\d.]+)\s*(g|kg|ml|l)\b/gi, '')
+        .replace(/(\/|\s+)-|\s+/g, ' ')
+        .trim();
+};
+
 const naturalSort = (a: string, b: string) => {
     const nA = normalizeStr(a);
     const nB = normalizeStr(b);
@@ -34,12 +50,28 @@ const naturalSort = (a: string, b: string) => {
     const flavA = getFlavorBase(nA);
     const flavB = getFlavorBase(nB);
     
-    // Nếu cả hai đều chứa chữ "vị" nhưng khác vị, nhóm theo vị trước
-    if (flavA && flavB && flavA !== flavB) {
-        return flavA.localeCompare(flavB, 'vi');
+    if (flavA && flavB) {
+        if (flavA !== flavB) {
+            return flavA.localeCompare(flavB, 'vi');
+        } else {
+            // Cùng Vị -> ưu tiên xếp theo khối lượng ngay lập tức để gom Snack 25g và Khoai 100g cùng vị
+            const wA = getWeightInGrams(nA);
+            const wB = getWeightInGrams(nB);
+            if (wA !== wB && (wA !== 0 || wB !== 0)) return wA - wB;
+        }
     }
     
-    // 2. Tách chuỗi thành từng mảnh: chữ riêng, số riêng -> ["Khoai ", "2.5", "kg"]
+    // 2. Không có Vị (hoặc có nhưng cùng vị mà khối lượng giống hệt nhau) -> Nhóm theo Base Name
+    const baseA = getBaseName(nA);
+    const baseB = getBaseName(nB);
+    
+    if (baseA === baseB) {
+        const wA = getWeightInGrams(nA);
+        const wB = getWeightInGrams(nB);
+        if (wA !== wB && (wA !== 0 || wB !== 0)) return wA - wB;
+    }
+    
+    // 3. Tách chuỗi thành từng mảnh: chữ riêng, số riêng -> ["Khoai ", "2.5", "kg"]
     const chunkify = (s: string) => s.match(/([^\d]+|\d+(?:\.\d+)?)/g) || [];
     const chunksA = chunkify(nA);
     const chunksB = chunkify(nB);
