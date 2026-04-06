@@ -33,6 +33,7 @@ export default function MediaProjectsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [priorityFilter, setPriorityFilter] = useState("all");
     const [typeFilter, setTypeFilter] = useState("all");
+    const [modalDefaultStatus, setModalDefaultStatus] = useState<string>("planned");
 
     // Drag and Drop State
     const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -118,6 +119,12 @@ export default function MediaProjectsPage() {
         }
     };
 
+    const openModalForNew = (defaultStatus: string = "planned") => {
+        setSelectedProject(null);
+        setModalDefaultStatus(defaultStatus);
+        setIsModalOpen(true);
+    };
+
     const filteredProjects = projects.filter(p => {
         if (searchQuery && !p.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
         if (priorityFilter !== 'all' && p.priority !== priorityFilter) return false;
@@ -136,7 +143,7 @@ export default function MediaProjectsPage() {
                     <p className="text-sm text-slate-500 mt-1">Sắp xếp, kéo thả dự án theo tiến trình Sản xuất</p>
                 </div>
                 <button
-                    onClick={() => { setSelectedProject(null); setIsModalOpen(true); }}
+                    onClick={() => openModalForNew("planned")}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition font-medium text-sm"
                 >
                     <Plus className="w-4 h-4" />
@@ -211,7 +218,7 @@ export default function MediaProjectsPage() {
                                     </span>
                                 </div>
                                 
-                                <div className={`flex-1 overflow-y-auto space-y-3 p-2 -mx-2 rounded-xl transition-colors ${isOver ? 'bg-slate-100 ring-2 ring-blue-400 ring-inset' : 'bg-slate-50/50'}`}>
+                                <div className={`flex-1 overflow-y-auto space-y-3 p-2 -mx-2 rounded-xl transition-colors flex flex-col ${isOver ? 'bg-slate-100 ring-2 ring-blue-400 ring-inset' : 'bg-slate-50/50'}`}>
                                     {colProjects.map(project => (
                                         <div 
                                             key={project.id} 
@@ -265,13 +272,22 @@ export default function MediaProjectsPage() {
                                     ))}
                                     
                                     {colProjects.length === 0 && (
-                                        <div className={`flex flex-col items-center justify-center py-10 text-xs font-medium border-2 border-dashed rounded-xl transition-colors ${isOver ? 'border-blue-400 text-blue-500 bg-blue-50' : 'border-slate-200 text-slate-400'}`}>
-                                            <div className={`p-3 rounded-full mb-2 ${isOver ? 'bg-blue-100' : 'bg-slate-100'}`}>
-                                                <Plus className={`w-5 h-5 ${isOver ? 'text-blue-500 animate-bounce' : 'text-slate-400'}`} />
+                                        <div className={`flex flex-col items-center justify-center py-6 text-xs font-medium border-2 border-dashed rounded-xl transition-colors ${isOver ? 'border-blue-400 text-blue-500 bg-blue-50' : 'border-slate-200 text-slate-400'}`}>
+                                            <div className={`p-2 rounded-full mb-1 ${isOver ? 'bg-blue-100' : 'bg-slate-100'}`}>
+                                                <Plus className={`w-4 h-4 ${isOver ? 'text-blue-500 animate-bounce' : 'text-slate-400'}`} />
                                             </div>
                                             {isOver ? "Thả dự án vào đây" : "Kéo thả dự án vào cột"}
                                         </div>
                                     )}
+
+                                    {/* Add Button per Column */}
+                                    <button
+                                        onClick={() => openModalForNew(col.key)}
+                                        className="mt-auto flex items-center justify-center gap-2 w-full py-2.5 text-xs font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-200/50 rounded-xl transition-colors group"
+                                    >
+                                        <Plus className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                                        Thêm thẻ mới
+                                    </button>
                                 </div>
                             </div>
                         );
@@ -286,6 +302,7 @@ export default function MediaProjectsPage() {
                 currentUser={user}
                 isAdmin={false} // Since this is media creator view
                 project={selectedProject}
+                defaultStatus={modalDefaultStatus}
             />
         </div>
     );

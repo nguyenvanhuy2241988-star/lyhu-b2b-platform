@@ -12,9 +12,10 @@ interface MediaProjectModalProps {
     currentUser: any;
     isAdmin?: boolean;
     project?: any | null; // Pass null for create, project object for edit
+    defaultStatus?: string; // Tùy chọn trạng thái mặc định khi tạo mới
 }
 
-export default function MediaProjectModal({ isOpen, onClose, onSuccess, currentUser, isAdmin, project }: MediaProjectModalProps) {
+export default function MediaProjectModal({ isOpen, onClose, onSuccess, currentUser, isAdmin, project, defaultStatus }: MediaProjectModalProps) {
     const supabase = createClient();
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
@@ -119,7 +120,7 @@ export default function MediaProjectModal({ isOpen, onClose, onSuccess, currentU
                     .from("media_projects")
                     .insert({
                         ...savePayload,
-                        status: "planned" // Default status
+                        status: defaultStatus || "planned" // Default status is set via prop or fallback to planned
                     });
                 if (error) throw error;
                 showToast("Tạo dự án mới thành công!", "success");
