@@ -180,7 +180,7 @@ export default function LeadDistributionSettings() {
             const { data: usersData } = await supabase.rpc('get_users_activity_stats');
             if (usersData) {
                 const telesales = usersData
-                    .filter((u: any) => u.role === 'telesales' || u.role === 'sale_admin')
+                    .filter((u: any) => u.role === 'telesales' || u.role === 'sale_admin' || u.role === 'admin')
                     .map((u: any) => ({
                         id: u.user_id,
                         full_name: u.full_name,
