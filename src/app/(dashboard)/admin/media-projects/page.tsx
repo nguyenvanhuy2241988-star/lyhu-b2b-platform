@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { ClipboardList, Camera, Film, Plus, Clock, CheckCircle, XCircle, Pencil, Search, Filter } from "lucide-react";
+import { ClipboardList, Camera, Film, Plus, Clock, CheckCircle, XCircle, Pencil, Search, Filter, Users } from "lucide-react";
 import MediaProjectModal from "@/components/media/MediaProjectModal";
 
 const STATUS_COLUMNS = [
@@ -21,10 +21,11 @@ const PRIORITY_BADGES: Record<string, string> = {
     low: "bg-slate-50 text-slate-400",
 };
 
-export default function MediaProjectsPage() {
+export default function AdminMediaProjectsPage() {
     const supabase = createClient();
     const { user } = useAuth();
     const [projects, setProjects] = useState<any[]>([]);
+    const [mediaUsers, setMediaUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     
     // UI States
@@ -33,30 +34,37 @@ export default function MediaProjectsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [priorityFilter, setPriorityFilter] = useState("all");
     const [typeFilter, setTypeFilter] = useState("all");
+    const [assigneeFilter, setAssigneeFilter] = useState("all");
 
     // Drag and Drop State
     const [draggingId, setDraggingId] = useState<string | null>(null);
     const [dragOverCol, setDragOverCol] = useState<string | null>(null);
 
-    const loadProjects = useCallback(async () => {
-        if (!user) return;
+    const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            const { data } = await supabase
+            // Load all projects except cancelled
+            const { data: pData } = await supabase
                 .from("media_projects")
-                .select("*")
-                .eq("assigned_to", user.id)
+                .select("*, assignee:assigned_to(full_name)")
                 .neq("status", "cancelled")
                 .order("created_at", { ascending: false });
-            setProjects(data || []);
+            
+            // Load media users for filter
+            const { data: uData } = await supabase.rpc('get_users_activity_stats');
+            if (uData) {
+                setMediaUsers(uData.filter((u: any) => u.role === 'media_creator' || u.role === 'admin' || u.role === 'marketing'));
+            }
+
+            setProjects(pData || []);
         } catch (err) {
-            console.error("loadProjects error:", err);
+            console.error("loadData error:", err);
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, [supabase]);
 
-    useEffect(() => { loadProjects(); }, [loadProjects]);
+    useEffect(() => { loadData(); }, [loadData]);
 
     const updateStatus = async (id: string, newStatus: string) => {
         // Optimistic update
@@ -66,14 +74,8 @@ export default function MediaProjectsPage() {
         if (newStatus === "completed") updates.completed_at = new Date().toISOString();
         
         await supabase.from("media_projects").update(updates).eq("id", id);
-        // Silently reload in background to ensure consistency
-        const { data } = await supabase
-                .from("media_projects")
-                .select("*")
-                .eq("assigned_to", user?.id)
-                .neq("status", "cancelled")
-                .order("created_at", { ascending: false });
-        if (data) setProjects(data);
+        // Background sync
+        loadData();
     };
 
     // Drag and Drop Handlers
@@ -81,9 +83,8 @@ export default function MediaProjectsPage() {
         setDraggingId(id);
         e.dataTransfer.effectAllowed = "move";
         e.dataTransfer.setData("text/plain", id);
-        // Slightly delay styling to keep the dragged element opaque
         setTimeout(() => {
-            const el = document.getElementById(`project-${id}`);
+            const el = document.getElementById(`admin-project-${id}`);
             if (el) el.classList.add("opacity-50");
         }, 0);
     };
@@ -91,12 +92,12 @@ export default function MediaProjectsPage() {
     const handleDragEnd = (e: React.DragEvent, id: string) => {
         setDraggingId(null);
         setDragOverCol(null);
-        const el = document.getElementById(`project-${id}`);
+        const el = document.getElementById(`admin-project-${id}`);
         if (el) el.classList.remove("opacity-50");
     };
 
     const handleDragOver = (e: React.DragEvent, colKey: string) => {
-        e.preventDefault(); // Necessary to allow dropping
+        e.preventDefault(); 
         e.dataTransfer.dropEffect = "move";
         if (dragOverCol !== colKey) setDragOverCol(colKey);
     };
@@ -122,6 +123,10 @@ export default function MediaProjectsPage() {
         if (searchQuery && !p.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
         if (priorityFilter !== 'all' && p.priority !== priorityFilter) return false;
         if (typeFilter !== 'all' && p.media_type !== typeFilter) return false;
+        if (assigneeFilter !== 'all') {
+            if (assigneeFilter === "unassigned" && p.assigned_to !== null) return false;
+            if (assigneeFilter !== "unassigned" && p.assigned_to !== assigneeFilter) return false;
+        }
         return true;
     });
 
@@ -132,15 +137,15 @@ export default function MediaProjectsPage() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-xl font-bold text-slate-900">Dự án Media</h1>
-                    <p className="text-sm text-slate-500 mt-1">Sắp xếp, kéo thả dự án theo tiến trình Sản xuất</p>
+                    <h1 className="text-xl font-bold text-slate-900">Quản trị Dự án Media</h1>
+                    <p className="text-sm text-slate-500 mt-1">Giám sát và điều phối toàn bộ dự án của phòng Media</p>
                 </div>
                 <button
                     onClick={() => { setSelectedProject(null); setIsModalOpen(true); }}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition font-medium text-sm"
                 >
                     <Plus className="w-4 h-4" />
-                    Tạo Dự án mới
+                    Tạo & Giao Dự án
                 </button>
             </div>
 
@@ -156,16 +161,27 @@ export default function MediaProjectsPage() {
                         className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
-                <div className="flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-slate-400" />
+                <div className="flex flex-wrap items-center gap-2">
+                    <Filter className="w-4 h-4 text-slate-400 ml-1" />
+                    <select
+                        value={assigneeFilter}
+                        onChange={(e) => setAssigneeFilter(e.target.value)}
+                        className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-blue-500 font-medium text-slate-700"
+                    >
+                        <option value="all">Tất cả nhân sự</option>
+                        <option value="unassigned">⚠ Chưa phân công</option>
+                        {mediaUsers.map(u => (
+                            <option key={u.user_id} value={u.user_id}>{u.full_name}</option>
+                        ))}
+                    </select>
                     <select
                         value={typeFilter}
                         onChange={(e) => setTypeFilter(e.target.value)}
                         className="text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white outline-none focus:ring-2 focus:ring-blue-500"
                     >
                         <option value="all">Tất cả loại hình</option>
-                        <option value="photo">Ảnh (Photo)</option>
-                        <option value="video">Video</option>
+                        <option value="photo">Chỉ Ảnh</option>
+                        <option value="video">Chỉ Video</option>
                         <option value="both">Ảnh + Video</option>
                     </select>
                     <select
@@ -215,14 +231,13 @@ export default function MediaProjectsPage() {
                                     {colProjects.map(project => (
                                         <div 
                                             key={project.id} 
-                                            id={`project-${project.id}`}
+                                            id={`admin-project-${project.id}`}
                                             draggable
                                             onDragStart={(e) => handleDragStart(e, project.id)}
                                             onDragEnd={(e) => handleDragEnd(e, project.id)}
                                             onClick={() => { setSelectedProject(project); setIsModalOpen(true); }}
-                                            className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-grab active:cursor-grabbing group relative"
+                                            className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm hover:shadow-md hover:border-blue-400 transition-all cursor-grab active:cursor-grabbing group relative"
                                         >
-                                            {/* Edit Hover Overlay */}
                                             <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button className="p-1.5 bg-slate-100 hover:bg-blue-100 hover:text-blue-600 text-slate-500 rounded-lg">
                                                     <Pencil className="w-3.5 h-3.5" />
@@ -233,21 +248,27 @@ export default function MediaProjectsPage() {
                                                 <h4 className="text-sm font-semibold text-slate-900 line-clamp-2 leading-snug">{project.title}</h4>
                                             </div>
                                             
-                                            <div className="flex flex-wrap gap-1.5 mb-3">
-                                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${PRIORITY_BADGES[project.priority] || PRIORITY_BADGES.normal}`}>
-                                                    {project.priority === "urgent" ? "Urgent" : project.priority === "high" ? "High" : project.priority === "low" ? "Low" : "Normal"}
-                                                </span>
-                                                {project.brief_id && (
-                                                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">
-                                                        🔗 Linked Brief
+                                            {/* Assignee Badge */}
+                                            <div className="mb-2">
+                                                {project.assignee ? (
+                                                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 bg-slate-100 px-2 py-1 rounded-md border border-slate-200 max-w-full">
+                                                        <Users className="w-3 h-3 shrink-0" />
+                                                        <span className="truncate">{project.assignee.full_name}</span>
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-red-600 bg-red-50 px-2 py-1 rounded-md border border-red-100">
+                                                        <Users className="w-3 h-3" />
+                                                        Chưa gán người
                                                     </span>
                                                 )}
                                             </div>
 
-                                            {project.description && (
-                                                <p className="text-xs text-slate-500 line-clamp-2 mb-3 bg-slate-50 p-2 rounded-lg border border-slate-100">{project.description}</p>
-                                            )}
-                                            
+                                            <div className="flex flex-wrap gap-1.5 mb-3">
+                                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${PRIORITY_BADGES[project.priority] || PRIORITY_BADGES.normal}`}>
+                                                    {project.priority === "urgent" ? "Urgent" : project.priority === "high" ? "High" : project.priority === "low" ? "Low" : "Normal"}
+                                                </span>
+                                            </div>
+
                                             <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
                                                 <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-md">
                                                     {project.media_type === "video" ? <Film className="w-3.5 h-3.5" /> : project.media_type === "both" ? <div className="flex"><Camera className="w-3 h-3"/><Film className="w-3 h-3 -ml-1"/></div> : <Camera className="w-3.5 h-3.5" />}
@@ -282,9 +303,9 @@ export default function MediaProjectsPage() {
             <MediaProjectModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                onSuccess={loadProjects}
+                onSuccess={loadData}
                 currentUser={user}
-                isAdmin={false} // Since this is media creator view
+                isAdmin={true} // Allow unassigned editing & assigning any user
                 project={selectedProject}
             />
         </div>

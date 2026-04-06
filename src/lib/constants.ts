@@ -157,6 +157,7 @@ export const NAV_ITEMS = {
         { label: "Báo cáo Sales GT", href: "/admin/gt-reports", icon: MapPin },
         { label: "Báo cáo Media", href: "/admin/media-reports", icon: Camera },
         { label: "Lịch quay & Brief", href: "/admin/media-briefs", icon: FileInput },
+        { label: "Dự án Media", href: "/admin/media-projects", icon: ClipboardList },
         { label: "Thiết bị Media", href: "/admin/media-equipment", icon: Wrench },
         { label: "Thư viện Media", href: "/admin/media-library", icon: FolderOpen },
         { label: "------------", href: "#", icon: List }, // Separator
