@@ -68,6 +68,18 @@ export default function SaleAdminCustomersPage() {
         });
     }, [selectedType, searchQuery, customers]);
 
+    // Pagination
+    const PAGE_SIZE = 50;
+    const [currentPage, setCurrentPage] = useState(1);
+
+    // Reset page to 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [selectedType, searchQuery]);
+
+    const totalPages = Math.ceil(filteredCustomers.length / PAGE_SIZE);
+    const paginatedCustomers = filteredCustomers.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
     const handleEditClick = (customer: Customer) => {
         setEditingCustomer(customer);
         setEditForm({
@@ -164,7 +176,8 @@ export default function SaleAdminCustomersPage() {
                         <p className="text-slate-500">Không tìm thấy khách hàng nào.</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
+                    <>
+                        <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm min-w-[800px]">
                             <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-medium">
                                 <tr>
@@ -176,7 +189,7 @@ export default function SaleAdminCustomersPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-200">
-                                {filteredCustomers.map((customer) => (
+                                {paginatedCustomers.map((customer) => (
                                     <tr key={customer.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="font-semibold text-slate-900">{customer.name}</div>
@@ -236,6 +249,33 @@ export default function SaleAdminCustomersPage() {
                             </tbody>
                         </table>
                     </div>
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
+                            <span className="text-xs text-slate-500">
+                                Hiển thị {((currentPage - 1) * PAGE_SIZE) + 1}-{Math.min(currentPage * PAGE_SIZE, filteredCustomers.length)} / {filteredCustomers.length} KH
+                            </span>
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    ← Trước
+                                </button>
+                                <span className="px-3 py-1.5 text-xs font-bold text-slate-700">
+                                    Trang {currentPage}/{totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    Sau →
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </>
                 )}
             </div>
 
