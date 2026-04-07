@@ -4,44 +4,49 @@ import React, { useState } from "react";
 import DashboardShell from "@/components/layout/DashboardShell";
 import { 
     BookOpen,
-    Target, 
-    Zap, 
-    Users, 
-    Gem, 
-    TrendingUp, 
-    Globe,
-    CheckCircle2,
+    Info, 
+    Palette, 
+    Scale, 
+    HeartHandshake, 
+    Map,
+    ArrowRight,
+    MapPin,
     Building2,
-    ShieldCheck,
-    Coffee,
-    ArrowRight
+    Award,
+    CheckCircle2
 } from "lucide-react";
 
 export default function CulturePage() {
     const [activeTab, setActiveTab] = useState('intro');
 
+    // MÀU THƯƠNG HIỆU LYHU TỪ TÀI LIỆU CỐT LÕI
+    const BRAND = {
+        teal: '#04ACA9',  // Xanh ngọc
+        green: '#8FC842'  // Xanh lá
+    };
+
     const TABS = [
-        { id: 'intro', label: "Lời mở đầu", icon: BookOpen },
-        { id: 'vision', label: "Tầm nhìn & Sứ mệnh", icon: Target },
-        { id: 'core', label: "Giá trị Cốt lõi", icon: Gem },
-        { id: 'environment', label: "Môi trường & Chế độ", icon: Building2 },
-        { id: 'conduct', label: "Quy tắc ứng xử", icon: ShieldCheck },
+        { id: 'intro', label: "Lời mở đầu & Giới thiệu", icon: Info },
+        { id: 'brand', label: "ADN Thương hiệu", icon: Palette },
+        { id: 'core', label: "Giá trị cốt lõi 3K1C", icon: Scale },
+        { id: 'philosophy', label: "Triết lý hành động", icon: HeartHandshake },
+        { id: 'vision', label: "Định hướng tương lai", icon: Map },
     ];
 
     return (
         <DashboardShell title="Văn hóa doanh nghiệp">
-            <div className="flex h-[calc(100vh-140px)] w-full bg-white shadow-sm rounded-2xl border border-slate-200 overflow-hidden">
+            <div className="flex h-[calc(100vh-140px)] w-full bg-white shadow-sm rounded-xl border border-slate-200 overflow-hidden font-sans">
                 
                 {/* LEFT SIDEBAR (Slider) */}
-                <div className="w-64 shrink-0 bg-slate-50 border-r border-slate-200 flex flex-col h-full z-10 hidden md:flex">
-                    <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50 shrink-0">
-                        <div className="flex items-center gap-2 text-slate-800 font-bold uppercase tracking-wider text-sm">
-                            <BookOpen className="w-4 h-4 text-indigo-500" />
-                            <span>Mục Lục Văn Hóa</span>
+                <div className="w-72 shrink-0 bg-slate-50 border-r border-slate-200 flex flex-col h-full z-10 hidden md:flex">
+                    <div className="p-6 border-b border-slate-200 bg-white shrink-0">
+                        <div className="flex items-center gap-2.5 text-slate-800 font-bold uppercase tracking-widest text-[13px]">
+                            <BookOpen className="w-5 h-5" style={{ color: BRAND.teal }} />
+                            <span>Cẩm Nang Nội Bộ</span>
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-3 space-y-2 scrollbar-thin">
+                    <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin">
                         {TABS.map((tab) => {
                             const isActive = tab.id === activeTab;
                             const Icon = tab.icon;
@@ -49,29 +54,33 @@ export default function CulturePage() {
                                 <div 
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id)}
-                                    className={`group flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all duration-300 \${
+                                    className={`group flex items-center justify-between px-4 py-3.5 rounded-lg cursor-pointer transition-all duration-200 \${
                                         isActive 
-                                        ? "bg-white text-indigo-700 font-semibold border-l-4 border-indigo-600 shadow-sm" 
-                                        : "text-slate-500 hover:bg-slate-100/50 hover:text-slate-800 border-l-4 border-transparent"
+                                        ? "bg-white text-slate-900 border border-slate-200 shadow-sm font-semibold" 
+                                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent"
                                     }`}
                                 >
                                     <div className="flex items-center gap-3">
-                                        <Icon className={`w-4 h-4 \${isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-400'} transition-colors`} />
+                                        <Icon 
+                                            className="w-4 h-4 transition-colors" 
+                                            style={{ color: isActive ? BRAND.teal : '#94a3b8' }} 
+                                        />
                                         <span className="text-[14px]">{tab.label}</span>
                                     </div>
-                                    <ArrowRight className={`w-4 h-4 \${isActive ? 'opacity-100 text-indigo-400' : 'opacity-0 -translate-x-2'} transition-all`} />
+                                    <ArrowRight className={`w-4 h-4 transition-all \${isActive ? 'opacity-100' : 'opacity-0 -translate-x-2'}`} style={{ color: isActive ? BRAND.teal : '' }} />
                                 </div>
                             );
                         })}
                     </div>
                 </div>
 
-                {/* Mobile Menu Dropdown */}
+                {/* Mobile Menu */}
                 <div className="md:hidden absolute top-4 left-4 z-50">
                     <select 
                         value={activeTab} 
                         onChange={(e) => setActiveTab(e.target.value)}
-                        className="bg-white border border-slate-200 rounded-lg px-4 py-2 shadow-sm text-slate-700 font-medium focus:ring-2 focus:ring-indigo-500 w-[200px]"
+                        className="bg-white border border-slate-200 rounded-md px-4 py-2 text-sm text-slate-700 font-medium focus:outline-none w-[220px]"
+                        style={{ borderLeft: `3px solid \${BRAND.teal}` }}
                     >
                         {TABS.map(t => (
                             <option key={t.id} value={t.id}>{t.label}</option>
@@ -80,13 +89,13 @@ export default function CulturePage() {
                 </div>
 
                 {/* RIGHT CONTENT AREA */}
-                <div className="flex-1 flex flex-col h-full bg-slate-50 relative overflow-y-auto scrollbar-thin">
-                    <div className="max-w-5xl mx-auto w-full">
-                        {activeTab === 'intro' && <IntroductionView />}
-                        {activeTab === 'vision' && <VisionMissionView />}
-                        {activeTab === 'core' && <CoreValuesView />}
-                        {activeTab === 'environment' && <EnvironmentView />}
-                        {activeTab === 'conduct' && <ConductView />}
+                <div className="flex-1 flex flex-col h-full bg-white relative overflow-y-auto scrollbar-thin">
+                    <div className="max-w-4xl mx-auto w-full p-8 md:p-14 lg:p-20">
+                        {activeTab === 'intro' && <IntroductionView brand={BRAND} />}
+                        {activeTab === 'brand' && <BrandIdentityView brand={BRAND} />}
+                        {activeTab === 'core' && <CoreValuesView brand={BRAND} />}
+                        {activeTab === 'philosophy' && <PhilosophyView brand={BRAND} />}
+                        {activeTab === 'vision' && <VisionView brand={BRAND} />}
                     </div>
                 </div>
             </div>
@@ -95,62 +104,121 @@ export default function CulturePage() {
 }
 
 /* =========================================
-   HARDCODED PREMIUM TEMPLATE COMPONENTS
+   UI COMPONENTS (MINIMALIST & BRANDED)
    ========================================= */
 
-function IntroductionView() {
+function IntroductionView({ brand }: { brand: any }) {
     return (
-        <div className="p-8 md:p-12 lg:p-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="bg-white rounded-[2rem] overflow-hidden border border-slate-100 shadow-xl shadow-slate-200/40">
-                {/* Hero Banner Area */}
-                <div className="relative h-64 md:h-80 bg-slate-900 w-full overflow-hidden">
-                    {/* Hướng dẫn thay ảnh: Đổi đường dẫn src của thẻ img này */}
-                    <img 
-                        src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2000" 
-                        alt="LYHU Office" 
-                        className="w-full h-full object-cover opacity-60 mix-blend-overlay"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent" />
-                    
-                    <div className="absolute bottom-0 left-0 p-8 md:p-12 w-full">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 text-white font-medium text-xs mb-4 backdrop-blur-md border border-white/20 uppercase tracking-widest">
-                            <Gem className="w-3.5 h-3.5" />
-                            Lời Mở Đầu
-                        </div>
-                        <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight">Chào Mừng Đến Với LYHU</h1>
+        <div className="animate-in fade-in duration-500 space-y-12">
+            <div>
+                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Văn hóa Doanh nghiệp LYHU</h1>
+                <div className="h-1 w-16 mt-4" style={{ backgroundColor: brand.teal }}></div>
+            </div>
+
+            <div className="space-y-6 text-slate-600 text-lg leading-relaxed">
+                <p><strong>Thân gửi toàn thể nhân sự LYHU,</strong></p>
+                <p>
+                    Từ những ngày đầu khởi nghiệp, chúng ta đã cùng nhau vượt qua nhiều thử thách. LYHU được xây dựng bằng sự nỗ lực, niềm tin và tinh thần gắn kết của từng thành viên.
+                </p>
+                <p>
+                    Chúng tôi tin rằng, kinh doanh không chỉ là bán sản phẩm, mà còn là tạo ra một môi trường làm việc để mọi người cảm thấy được tôn trọng, cùng nhau trưởng thành và bền vững.
+                </p>
+                <p>
+                    Cuốn "Văn hóa Doanh nghiệp LYHU" này là nơi chúng ta ghi lại những giá trị chung để nhắc nhở và định hướng mỗi ngày. Văn hóa không phải điều xa vời, mà là cách chúng ta làm việc, ứng xử, chia sẻ và gắn bó với nhau.
+                </p>
+                <p>
+                    Chúng tôi hy vọng cuốn cẩm nang này sẽ giúp mỗi thành viên LYHU có thêm niềm tin, động lực và sự đồng lòng để cùng nhau đi thật xa.
+                </p>
+
+                <div className="pt-8 mt-12 border-t border-slate-100 flex items-center justify-between">
+                    <div>
+                        <h4 className="font-bold text-slate-800 uppercase tracking-wide">KẾT NỐI CHÂN THÀNH – HỢP TÁC BỀN VỮNG</h4>
+                        <p className="mt-2 text-slate-500 italic">Trân trọng,</p>
+                        <p className="font-semibold text-slate-700">Ban Lãnh đạo LYHU</p>
                     </div>
                 </div>
+            </div>
 
-                {/* Content Area */}
-                <div className="p-8 md:p-12 lg:p-16 space-y-8 bg-white">
-                    <p className="text-xl md:text-2xl text-slate-700 font-medium leading-relaxed font-serif italic text-indigo-900 border-l-4 border-indigo-500 pl-6">
-                        "Khởi nguồn từ những khao khát kết nối, LYHU được tạo dựng không chỉ là một doanh nghiệp, mà là một cộng đồng trân trọng sự đóng góp của mọi cá nhân."
-                    </p>
+            <div className="pt-12">
+                <div className="bg-slate-50 p-8 rounded-2xl border border-slate-100">
+                    <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                        Lĩnh vực Hoạt động
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="p-4 bg-white rounded-lg border border-slate-100 text-center font-medium text-slate-700">Sản xuất</div>
+                        <div className="p-4 bg-white rounded-lg border border-slate-100 text-center font-medium text-slate-700">Nhập khẩu</div>
+                        <div className="p-4 bg-white rounded-lg border border-slate-100 text-center font-medium text-slate-700">Thương mại</div>
+                        <div className="p-4 bg-white rounded-lg border border-slate-100 text-center font-medium text-slate-700">Bán lẻ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
 
-                    <div className="space-y-6 text-slate-600 leading-loose text-lg">
-                        <p>
-                            Thân gửi toàn thể nhân sự LYHU,
-                        </p>
-                        <p>
-                            Từ những ngày đầu khởi nghiệp với muôn vàn khó khăn, chúng ta đã cùng nhau vượt qua nhiều thử thách. LYHU được xây dựng bằng sự nỗ lực, niềm tin và tinh thần gắn kết của từng thành viên. Chúng tôi tin rằng, kinh doanh không chỉ là mang sản phẩm tới khách hàng, mà cốt lõi là tạo ra một môi trường làm việc để mọi người cảm thấy được tôn trọng, cùng nhau trưởng thành và bền vững.
-                        </p>
-                        <p>
-                            Cuốn **"Văn hóa Doanh nghiệp LYHU"** này là nơi chúng ta ghi lại những giá trị chung để nhắc nhở và định hướng mỗi ngày. Văn hóa không phải điều xa vời, mà là cách chúng ta làm việc, ứng xử, chia sẻ và gắn bó với nhau. 
-                        </p>
-                        <p>
-                            Chúng tôi hy vọng cuốn cẩm nang này sẽ giúp mỗi thành viên LYHU có thêm niềm tin, động lực và sự đồng lòng để cùng nhau đi thật xa.
-                        </p>
+function BrandIdentityView({ brand }: { brand: any }) {
+    return (
+        <div className="animate-in fade-in duration-500 space-y-16">
+            <div>
+                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">ADN LYHU – Sức mạnh của số 4</h1>
+                <div className="h-1 w-16 mt-4" style={{ backgroundColor: brand.teal }}></div>
+            </div>
 
-                        <div className="pt-8 mt-8 border-t border-slate-100 flex items-center justify-between">
-                            <div>
-                                <h4 className="font-bold text-slate-800 text-lg">KẾT NỐI CHÂN THÀNH – HỢP TÁC BỀN VỮNG</h4>
-                                <p className="text-indigo-600 font-medium mt-1">Trân trọng,</p>
-                                <p className="text-slate-500 italic">Ban Lãnh đạo LYHU</p>
-                            </div>
-                            <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm ring-4 ring-indigo-50">
-                                {/* Thay Logo LYHU tại đây */}
-                                <img src="/logo-icon.png" alt="Logo" className="w-12 h-12 object-contain" />
-                            </div>
+            {/* Màu sắc */}
+            <div>
+                <h2 className="text-xl font-bold text-slate-800 mb-6">Ý nghĩa Điểm Mẫu</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex border border-slate-100 rounded-xl overflow-hidden shadow-sm">
+                        <div className="w-24 shrink-0 flex items-center justify-center text-white text-xs font-mono" style={{ backgroundColor: brand.teal }}>#04ACA9</div>
+                        <div className="p-6 bg-white flex-1">
+                            <h3 className="font-bold text-slate-800 text-lg mb-1">Xanh Ngọc</h3>
+                            <p className="text-slate-600">Mang ý nghĩa chân thành, hiện đại, trẻ trung.</p>
+                        </div>
+                    </div>
+                    <div className="flex border border-slate-100 rounded-xl overflow-hidden shadow-sm">
+                        <div className="w-24 shrink-0 flex items-center justify-center text-white text-xs font-mono" style={{ backgroundColor: brand.green }}>#8FC842</div>
+                        <div className="p-6 bg-white flex-1">
+                            <h3 className="font-bold text-slate-800 text-lg mb-1">Xanh Lá</h3>
+                            <p className="text-slate-600">Mang ý nghĩa phát triển, bền vững, tươi mới.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Sức mạnh số 4 */}
+            <div>
+                <h2 className="text-xl font-bold text-slate-800 mb-4">Mã Gen 4 Chữ Cái</h2>
+                <p className="text-slate-600 mb-8 text-lg">
+                    Tên công ty LYHU có 4 ký tự, mỗi chữ là một giá trị cốt lõi đại diện cho niềm tin của doanh nghiệp.
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    <div className="p-6 rounded-xl border border-slate-100 bg-slate-50 flex items-start gap-4">
+                        <div className="text-4xl font-black opacity-20 mt-1" style={{ color: brand.teal }}>L</div>
+                        <div>
+                            <h4 className="font-bold text-slate-800 text-xl tracking-widest">LOVE</h4>
+                            <p className="text-slate-600 mt-2">Yêu thương công việc.</p>
+                        </div>
+                    </div>
+                    <div className="p-6 rounded-xl border border-slate-100 bg-slate-50 flex items-start gap-4">
+                        <div className="text-4xl font-black opacity-20 mt-1" style={{ color: brand.green }}>Y</div>
+                        <div>
+                            <h4 className="font-bold text-slate-800 text-xl tracking-widest">YEARN</h4>
+                            <p className="text-slate-600 mt-2">Mong đợi thành công lớn.</p>
+                        </div>
+                    </div>
+                    <div className="p-6 rounded-xl border border-slate-100 bg-slate-50 flex items-start gap-4">
+                        <div className="text-4xl font-black opacity-20 mt-1" style={{ color: brand.teal }}>H</div>
+                        <div>
+                            <h4 className="font-bold text-slate-800 text-xl tracking-widest">HARMONIZE</h4>
+                            <p className="text-slate-600 mt-2">Hòa hợp trong tập thể.</p>
+                        </div>
+                    </div>
+                    <div className="p-6 rounded-xl border border-slate-100 bg-slate-50 flex items-start gap-4">
+                        <div className="text-4xl font-black opacity-20 mt-1" style={{ color: brand.green }}>U</div>
+                        <div>
+                            <h4 className="font-bold text-slate-800 text-xl tracking-widest">UNIFY</h4>
+                            <p className="text-slate-600 mt-2">Thống nhất cùng mục tiêu chung.</p>
                         </div>
                     </div>
                 </div>
@@ -159,164 +227,155 @@ function IntroductionView() {
     );
 }
 
-function VisionMissionView() {
+function CoreValuesView({ brand }: { brand: any }) {
     return (
-        <div className="p-8 md:p-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="text-center mb-16">
-                <h2 className="text-sm font-bold tracking-widest text-indigo-500 uppercase mb-3">Định hướng tương lai</h2>
-                <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Tầm nhìn & Sứ mệnh</h1>
-                <p className="mt-4 text-slate-500 max-w-2xl mx-auto">Kim chỉ nam định hướng cho mọi chiến lược hoạt động và thước đo sự phát triển của công ty.</p>
+        <div className="animate-in fade-in duration-500 space-y-12">
+            <div>
+                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Giá Trị Cốt Lõi 3K1C</h1>
+                <div className="h-1 w-16 mt-4" style={{ backgroundColor: brand.teal }}></div>
+                <p className="mt-6 text-slate-600 text-lg leading-relaxed">
+                    3K1C không chỉ là nguyên tắc làm việc, mà còn là thái độ sống, giúp mỗi thành viên LYHU cùng nhau trưởng thành, gắn kết và kiến tạo giá trị lâu dài.
+                </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
-                {/* Sứ Mệnh */}
-                <div className="relative bg-white p-10 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -z-0 transition-transform duration-500 group-hover:scale-150" />
-                    <div className="relative z-10">
-                        <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-blue-600/30">
-                            <Target className="w-8 h-8 text-white" />
+            <div className="space-y-6">
+                {[
+                    { 
+                        title: "KỶ LUẬT", 
+                        subtitle: "Kỷ luật là hành vi",
+                        desc: "Là nền móng để mọi người làm đúng nguyên tắc, quy chuẩn, và giữ sự ổn định trong hành động. Nếu thiếu kỷ luật, kiên trì và kiên nhẫn sẽ dễ bị phá vỡ."
+                    },
+                    { 
+                        title: "KIÊN TRÌ", 
+                        subtitle: "Kiên trì là thói quen",
+                        desc: "Sau khi có kỷ luật, chúng ta mới duy trì được hành động đều đặn và không bỏ cuộc khi gặp khó khăn. Kiên trì là 'máy phát lực' giúp kỷ luật không bị nguội lạnh."
+                    },
+                    { 
+                        title: "KIÊN NHẪN", 
+                        subtitle: "Kiên nhẫn là thái độ",
+                        desc: "Kiên trì là hành động liên tục, còn kiên nhẫn là thái độ chấp nhận nhịp độ và thời gian cần thiết để thấy kết quả. Giúp chúng ta tránh nóng vội và giảm áp lực tâm lý."
+                    },
+                    { 
+                        title: "CHẤP NHẬN QUÁ TRÌNH", 
+                        subtitle: "Chấp nhận quá trình là tư duy",
+                        desc: "Là tư duy cao nhất: hiểu rằng mọi thành quả đều đến từ hành trình, không chỉ đích đến. Giúp chúng ta gắn bó lâu dài và sẵn sàng đối mặt với thăng trầm."
+                    }
+                ].map((item, idx) => (
+                    <div key={idx} className="p-8 rounded-2xl bg-white border border-slate-200 flex flex-col md:flex-row gap-6 shadow-sm hover:border-slate-300 transition-colors">
+                        <div className="w-16 h-16 rounded-xl flex items-center justify-center shrink-0 border-2" style={{ borderColor: brand.teal, color: brand.teal }}>
+                            <span className="text-2xl font-black">{idx + 1}</span>
                         </div>
-                        <h3 className="text-3xl font-bold text-slate-900 mb-6">Sứ mệnh</h3>
-                        <p className="text-slate-600 leading-relaxed text-lg">
-                            Cung cấp những giải pháp tiếp thị và bán hàng tối ưu, mang lại giá trị cao nhất cho khách hàng, đồng thời tạo ra một môi trường làm việc hạnh phúc, thu nhập cao cho đội ngũ nhân sự.
-                        </p>
-                    </div>
-                </div>
-
-                {/* Tầm Nhìn */}
-                <div className="relative bg-white p-10 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-bl-full -z-0 transition-transform duration-500 group-hover:scale-150" />
-                    <div className="relative z-10">
-                        <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mb-8 shadow-lg shadow-indigo-600/30">
-                            <Globe className="w-8 h-8 text-white" />
+                        <div>
+                            <h3 className="text-2xl font-bold uppercase tracking-tight text-slate-900">{item.title}</h3>
+                            <p className="text-sm font-semibold tracking-wider uppercase mb-3" style={{ color: brand.green }}>{item.subtitle}</p>
+                            <p className="text-slate-600 leading-relaxed text-lg">{item.desc}</p>
                         </div>
-                        <h3 className="text-3xl font-bold text-slate-900 mb-6">Tầm nhìn</h3>
-                        <p className="text-slate-600 leading-relaxed text-lg">
-                            Trở thành hệ sinh thái nền tảng số và thương mại hàng đầu, thay đổi cách thức các doanh nghiệp kết nối, phân phối và phục vụ khách hàng trên toàn cầu.
-                        </p>
-                    </div>
-                </div>
-            </div>
-            
-            {/* Slogan */}
-            <div className="mt-16 bg-slate-900 rounded-[2rem] p-10 text-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.05]" />
-                <h3 className="relative z-10 text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-teal-300 via-blue-300 to-indigo-300">
-                    "Tốc độ bứt phá - Bền vững vươn xa"
-                </h3>
-            </div>
-        </div>
-    );
-}
-
-function CoreValuesView() {
-    const values = [
-        { title: "Khách hàng là đích đến", desc: "Mọi quyết định đều lấy sự hài lòng của khách hàng làm thước đo.", color: "text-blue-600", bg: "bg-blue-50" },
-        { title: "Chủ động sáng tạo", desc: "Không gò bó trong khuôn khổ, luôn tìm kiếm giải pháp đột phá.", color: "text-indigo-600", bg: "bg-indigo-50" },
-        { title: "Nói lời giữ lấy lời", desc: "Cam kết trách nhiệm tuyệt đối với công việc và lời hứa.", color: "text-emerald-600", bg: "bg-emerald-50" },
-        { title: "Sức mạnh tập thể", desc: "Không có ngôi sao đơn độc, chỉ có dải ngân hà lấp lánh cùng nhau.", color: "text-rose-600", bg: "bg-rose-50" },
-        { title: "Hành động thần tốc", desc: "Thực thi mọi ý tưởng ngay khi nó còn nằm trên giấy.", color: "text-amber-600", bg: "bg-amber-50" },
-        { title: "Học hỏi không ngừng", desc: "Liên tục nâng cấp bản thân để không bị thụt lùi lại phía sau.", color: "text-purple-600", bg: "bg-purple-50" }
-    ];
-
-    return (
-        <div className="p-8 md:p-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="mb-12">
-                <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">6 Giá Trị Cốt Lõi</h1>
-                <p className="mt-4 text-slate-500 text-lg">Mã gen nhận diện của con người LYHU.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {values.map((v, i) => (
-                    <div key={i} className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300">
-                        <div className={`w-14 h-14 rounded-2xl \${v.bg} \${v.color} flex items-center justify-center font-black text-2xl mb-6`}>
-                            {i+1}
-                        </div>
-                        <h3 className="text-xl font-bold text-slate-800 mb-3">{v.title}</h3>
-                        <p className="text-slate-600 leading-relaxed">{v.desc}</p>
                     </div>
                 ))}
             </div>
-        </div>
-    );
-}
-
-function EnvironmentView() {
-    return (
-        <div className="p-8 md:p-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight mb-4">Môi trường & Chế độ</h1>
-            <p className="text-slate-500 text-lg mb-12">LYHU không chỉ là nơi làm việc, mà là ngôi nhà thứ hai.</p>
-
-            <div className="flex flex-col lg:flex-row gap-12">
-                {/* Images Masonry */}
-                <div className="flex-1 grid grid-cols-2 gap-4">
-                    <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=800" alt="Team" className="rounded-3xl w-full h-64 object-cover shadow-sm hover:shadow-md transition-shadow" />
-                    <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=800" alt="Office" className="rounded-3xl w-full h-64 object-cover shadow-sm translate-y-8 hover:shadow-md transition-shadow" />
-                </div>
-
-                {/* List Details */}
-                <div className="flex-1 space-y-8 lg:py-8">
-                    <div className="flex gap-4">
-                        <div className="mt-1 shrink-0"><CheckCircle2 className="w-6 h-6 text-emerald-500" /></div>
-                        <div>
-                            <h4 className="text-xl font-bold text-slate-800">Không gian mở</h4>
-                            <p className="text-slate-600 mt-2">Văn phòng thiết kế hiện đại, nhiều không gian xanh, khích lệ sự trao đổi thẳng thắn và tư duy mở.</p>
-                        </div>
-                    </div>
-                    <div className="flex gap-4">
-                        <div className="mt-1 shrink-0"><CheckCircle2 className="w-6 h-6 text-emerald-500" /></div>
-                        <div>
-                            <h4 className="text-xl font-bold text-slate-800">Cơ hội thăng tiến</h4>
-                            <p className="text-slate-600 mt-2">Đánh giá năng lực 100% dựa trên hiệu quả thực tế công việc. Đường thăng tiến rõ ràng (Leader, Manager, Director).</p>
-                        </div>
-                    </div>
-                    <div className="flex gap-4">
-                        <div className="mt-1 shrink-0"><CheckCircle2 className="w-6 h-6 text-emerald-500" /></div>
-                        <div>
-                            <h4 className="text-xl font-bold text-slate-800">Đãi ngộ xứng đáng</h4>
-                            <p className="text-slate-600 mt-2">Thưởng KPIs hàng tháng, thưởng nóng đột xuất, du lịch thường niên và các chế độ bảo hiểm tiêu chuẩn Quốc gia.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function ConductView() {
-    return (
-        <div className="p-8 md:p-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight mb-4">Quy tắc ứng xử</h1>
-            <p className="text-slate-500 text-lg mb-12">Chuẩn mực giao tiếp nội bộ và trong công việc tại tổ chức.</p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-emerald-50 p-8 rounded-3xl border border-emerald-100">
-                    <h3 className="text-2xl font-bold text-emerald-800 mb-6 flex items-center gap-2">
-                        <CheckCircle2 className="w-6 h-6" /> NÊN LÀM
-                    </h3>
-                    <ul className="space-y-4">
-                        <li className="flex gap-3 text-emerald-900"><span className="font-bold">•</span> Giao tiếp lịch sự, tôn trọng cấp trên và hòa nhã với đồng nghiệp.</li>
-                        <li className="flex gap-3 text-emerald-900"><span className="font-bold">•</span> Chủ động đưa ra sáng kiến và nhận lỗi khi phạm sai lầm.</li>
-                        <li className="flex gap-3 text-emerald-900"><span className="font-bold">•</span> Ăn mặc lịch sự, phù hợp với tác phong công sở.</li>
-                        <li className="flex gap-3 text-emerald-900"><span className="font-bold">•</span> Bảo mật tuyệt đối dữ liệu khách hàng và bí mật kinh doanh.</li>
-                    </ul>
-                </div>
-
-                <div className="bg-rose-50 p-8 rounded-3xl border border-rose-100">
-                    <h3 className="text-2xl font-bold text-rose-800 mb-6 flex items-center gap-2">
-                        <Zap className="w-6 h-6" /> KHÔNG NÊN LÀM
-                    </h3>
-                    <ul className="space-y-4">
-                        <li className="flex gap-3 text-rose-900"><span className="font-bold">•</span> Chia bè phái, nói xấu đồng nghiệp gây mất đoàn kết nội bộ.</li>
-                        <li className="flex gap-3 text-rose-900"><span className="font-bold">•</span> Tư lợi cá nhân, gian lận trong báo cáo doanh số, KPI.</li>
-                        <li className="flex gap-3 text-rose-900"><span className="font-bold">•</span> Trễ giờ làm việc và tham gia các cuộc họp chung không lý do.</li>
-                        <li className="flex gap-3 text-rose-900"><span className="font-bold">•</span> Đổ lỗi cho ngoại cảnh thay vì tìm kiếm giải pháp giải quyết điểm tắc nghẽn.</li>
-                    </ul>
-                </div>
-            </div>
             
-            <div className="mt-8 text-center text-slate-400 italic text-sm">
-                * Các vi phạm quy tắc ứng xử nghiêm trọng có thể xem xét kỷ luật theo quy định công ty.
+            <div className="p-8 mt-12 bg-slate-50 border-l-4 rounded-r-xl italic text-slate-600 text-lg leading-relaxed" style={{ borderColor: brand.teal }}>
+                "Chọn đúng thời gian, sự bền bỉ và mười năm nỗ lực rồi cuối cùng sẽ khiến bạn có vẻ như thành công chỉ trong một đêm." <br/><span className="font-semibold text-slate-800 not-italic block mt-2">— Biz Stone (Đồng sáng lập Twitter)</span>
+            </div>
+        </div>
+    );
+}
+
+function PhilosophyView({ brand }: { brand: any }) {
+    return (
+        <div className="animate-in fade-in duration-500 space-y-12">
+            <div>
+                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Triết Lý Hành Động</h1>
+                <div className="h-1 w-16 mt-4" style={{ backgroundColor: brand.teal }}></div>
+            </div>
+
+            <div className="text-center py-16 px-8 rounded-3xl" style={{ backgroundColor: brand.teal, color: '#ffffff' }}>
+                <h2 className="text-4xl md:text-5xl font-black uppercase tracking-widest mb-4">GẮN KẾT</h2>
+                <h3 className="text-2xl font-light opacity-90 tracking-widest">CHÂN THÀNH – BỀN VỮNG</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div>
+                    <h3 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-3">
+                        <CheckCircle2 className="w-6 h-6" style={{ color: brand.teal }} />
+                        Kết Nối Chân Thành
+                    </h3>
+                    <p className="text-slate-600 text-lg leading-loose">
+                        Tại LYHU, chúng tôi tin rằng mọi mối quan hệ đều bắt đầu từ sự chân thành. Từ người lao động cho đến đối tác và khách hàng, chúng tôi tạo ra một môi trường làm việc nơi mọi ý kiến đều được trân trọng, và mọi người không chỉ là đồng nghiệp mà còn là gia đình của chúng ta.
+                    </p>
+                </div>
+                <div>
+                    <h3 className="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-3">
+                        <CheckCircle2 className="w-6 h-6" style={{ color: brand.green }} />
+                        Hợp Tác Bền Vững
+                    </h3>
+                    <p className="text-slate-600 text-lg leading-loose">
+                        Chúng tôi không chỉ tập trung vào kết quả ngắn hạn mà còn chú trọng sự bền vững lâu dài. Trong quá trình làm việc với đối tác, khách hàng và đội ngũ, chúng tôi hướng đến sự công bằng, minh bạch và tin cậy. Hợp tác của LYHU không chỉ là một thỏa thuận kinh doanh, mà còn là sự gắn kết để cùng phát triển.
+                    </p>
+                </div>
+            </div>
+
+            <div className="bg-slate-50 p-8 rounded-2xl border border-slate-100 text-slate-600 leading-relaxed text-lg text-center mx-auto max-w-3xl">
+                Chúng tôi tin rằng giá trị "Kết Nối Chân Thành – Hợp Tác Bền Vững" không chỉ là khẩu hiệu, mà là cách chúng tôi chọn để làm việc và sống cùng nhau. Ở LYHU, mỗi sản phẩm hay mỗi bữa ăn đều gắn liền với sự sẻ chia, tin tưởng và thật lòng.
+            </div>
+        </div>
+    );
+}
+
+function VisionView({ brand }: { brand: any }) {
+    return (
+        <div className="animate-in fade-in duration-500 space-y-12">
+            <div>
+                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Chúng ta hướng về đâu?</h1>
+                <div className="h-1 w-16 mt-4" style={{ backgroundColor: brand.teal }}></div>
+            </div>
+
+            <div className="space-y-6">
+                <div className="p-8 border border-slate-200 rounded-2xl hover:border-slate-300 transition-colors bg-white">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 bg-slate-50 rounded-xl">
+                            <Building2 className="w-8 h-8" style={{ color: brand.teal }} />
+                        </div>
+                        <h3 className="text-2xl font-bold text-slate-800 uppercase tracking-wide">Chuỗi Hệ thống Siêu thị</h3>
+                    </div>
+                    <p className="text-slate-600 text-lg ml-16">Hướng tới mở rộng quy mô điểm bán siêu thị khang trang, đáp ứng vạn nhu cầu cho tệp khách hàng tiêu dùng lớn.</p>
+                </div>
+
+                <div className="p-8 border border-slate-200 rounded-2xl hover:border-slate-300 transition-colors bg-white">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 bg-slate-50 rounded-xl">
+                            <Award className="w-8 h-8" style={{ color: brand.green }} />
+                        </div>
+                        <h3 className="text-2xl font-bold text-slate-800 uppercase tracking-wide">Cửa hàng tiện lợi LYHU</h3>
+                    </div>
+                    <p className="text-slate-600 text-lg ml-16">Phát triển chuỗi cửa hàng tiện lợi mang thương hiệu riêng, phủ sóng tận ngõ ngách, đồng hành liên tục với người dân.</p>
+                </div>
+
+                <div className="p-8 border border-slate-200 rounded-2xl hover:border-slate-300 transition-colors bg-white">
+                    <div className="flex items-center gap-4 mb-4">
+                        <div className="p-3 bg-slate-50 rounded-xl">
+                            <MapPin className="w-8 h-8" style={{ color: brand.teal }} />
+                        </div>
+                        <h3 className="text-2xl font-bold text-slate-800 uppercase tracking-wide">Hệ thống GT Toàn Quốc</h3>
+                    </div>
+                    
+                    <div className="ml-16 mt-6 p-6 bg-slate-50 rounded-xl border border-slate-100">
+                        <div className="grid grid-cols-2 gap-4 text-slate-700 font-medium">
+                            <div className="flex items-center gap-2">• Đồng bằng sông Hồng</div>
+                            <div className="flex items-center gap-2">• Đồng bằng sông Cửu Long</div>
+                            <div className="flex items-center gap-2">• Trung du & Miền núi phía Bắc</div>
+                            <div className="flex items-center gap-2">• Bắc Trung Bộ</div>
+                            <div className="flex items-center gap-2">• Duyên hải Nam Trung Bộ</div>
+                            <div className="flex items-center gap-2">• Tây Nguyên</div>
+                            <div className="flex items-center gap-2">• Đông Nam Bộ</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="pt-12 text-center text-slate-500">
+                <p className="italic font-serif text-xl border-t border-slate-100 pt-12">"Tập hợp cùng nhau là điểm bắt đầu. Gắn bó cùng nhau là tiến triển. Làm việc cùng nhau là thành công."</p>
+                <p className="mt-2 text-slate-400">— Henry Ford</p>
             </div>
         </div>
     );
