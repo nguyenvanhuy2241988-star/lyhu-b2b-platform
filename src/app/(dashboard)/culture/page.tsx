@@ -48,42 +48,79 @@ function EditableText({ id, defaultText, className = "", multiline = false }: { 
 }
 
 function EditableImage({ id, label, className = "aspect-video" }: { id: string, label: string, className?: string }) {
-    const { content, isEditMode, uploadImage, uploadingId } = useContext(CultureContext);
+    const { content, isEditMode, updateContent, uploadImage, uploadingId } = useContext(CultureContext);
     const imageUrl = content[id];
+    const shape = content[`${id}_shape`];
+    const size = content[`${id}_size`];
     const isUploading = uploadingId === id;
+
+    let dynamicClasses = "";
+    if (shape === 'square') dynamicClasses += " !aspect-square !rounded-2xl";
+    else if (shape === 'video') dynamicClasses += " !aspect-video !rounded-2xl";
+    else if (shape === 'cinema') dynamicClasses += " !aspect-[21/9] !rounded-2xl";
+    else if (shape === 'circle') dynamicClasses += " !aspect-square !rounded-full";
+    else if (shape === 'auto') dynamicClasses += " !aspect-auto !rounded-2xl";
+
+    if (size === 'sm') dynamicClasses += " !w-full !max-w-[150px] !mx-auto";
+    else if (size === 'md') dynamicClasses += " !w-full !max-w-[300px] !mx-auto";
+    else if (size === 'lg') dynamicClasses += " !w-full !max-w-[500px] !mx-auto";
+    else if (size === 'full') dynamicClasses += " !w-full !max-w-none";
+
+    const finalClasses = `${className} ${dynamicClasses}`.trim();
 
     if (!isEditMode) {
         if (!imageUrl) return (
-            <div className={`w-full bg-slate-100 rounded-2xl flex flex-col items-center justify-center text-slate-400 ${className}`}>
+            <div className={`w-full flex-col items-center justify-center text-slate-400 outline-none flex bg-slate-100 ${finalClasses}`}>
                 <ImageIcon className="w-8 h-8 opacity-50" />
             </div>
         );
-        return <img src={imageUrl} alt={label} className={`object-cover rounded-2xl ${className}`} />;
+        return <img src={imageUrl} alt={label} className={`object-cover outline-none ${finalClasses}`} /> ;
     }
 
     return (
-        <div className={`relative group overflow-hidden rounded-2xl border-2 border-dashed border-teal-400 ${className}`}>
+        <div className={`relative group overflow-hidden border-2 border-dashed border-teal-400 ${finalClasses}`}>
            {imageUrl ? <img src={imageUrl} alt={label} className="w-full h-full object-cover opacity-60" /> : <div className="w-full h-full bg-teal-50" />}
-           <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-slate-900/40 backdrop-blur-[2px] cursor-pointer hover:bg-slate-900/60 transition-all z-10">
+           
+           <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 opacity-0 group-hover:opacity-100 transition-opacity z-10 backdrop-blur-sm">
                {isUploading ? (
                    <span className="text-white text-sm font-bold flex items-center gap-2">
                        <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span> 
                        Đang tải ảnh...
                    </span>
                ) : (
-                   <>
-                       <ImageIcon className="w-8 h-8 text-white mb-2" />
-                       <span className="text-white text-sm font-medium text-center">Click đổi ảnh (Upload)</span>
-                       <span className="text-teal-200 text-xs mt-1">{label}</span>
-                   </>
+                   <div className="flex flex-col items-center gap-3 w-max p-2">
+                       {/* Upload Button */}
+                       <label className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg cursor-pointer text-sm font-bold flex items-center gap-2 shadow-lg mb-1">
+                           <ImageIcon className="w-4 h-4" /> Chọn ảnh mới
+                           <input 
+                                type="file" 
+                                accept="image/*" 
+                                className="hidden" 
+                                onChange={e => uploadImage(id, e.target.files?.[0])} 
+                           />
+                       </label>
+                       
+                       {/* Controls Panel */}
+                       <div className="flex flex-col gap-2 bg-slate-900/80 p-2.5 rounded-xl border border-slate-700 shadow-xl" onClick={e => e.stopPropagation()}>
+                           <div className="flex items-center gap-2 text-xs">
+                               <span className="text-slate-300 w-10 font-medium tracking-wide">DÁNG:</span>
+                               <button onClick={() => updateContent(`${id}_shape`, 'square')} className={`p-1.5 rounded ${shape==='square'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Vuông">⏹️</button>
+                               <button onClick={() => updateContent(`${id}_shape`, 'video')} className={`p-1.5 rounded ${shape==='video'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Ngang">🖥️</button>
+                               <button onClick={() => updateContent(`${id}_shape`, 'cinema')} className={`p-1.5 rounded ${shape==='cinema'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Banner siêu rộng">▭</button>
+                               <button onClick={() => updateContent(`${id}_shape`, 'circle')} className={`p-1.5 rounded ${shape==='circle'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Tròn">🔵</button>
+                               <button onClick={() => updateContent(`${id}_shape`, '')} className={`p-1.5 rounded font-bold ${!shape?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Mặc định">MĐ</button>
+                           </div>
+                           <div className="flex items-center gap-2 text-xs">
+                               <span className="text-slate-300 w-10 font-medium tracking-wide">CỠ:</span>
+                               <button onClick={() => updateContent(`${id}_size`, 'sm')} className={`px-2 py-1 rounded font-bold ${size==='sm'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>S</button>
+                               <button onClick={() => updateContent(`${id}_size`, 'md')} className={`px-2 py-1 rounded font-bold ${size==='md'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>M</button>
+                               <button onClick={() => updateContent(`${id}_size`, 'lg')} className={`px-2 py-1 rounded font-bold ${size==='lg'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>L</button>
+                               <button onClick={() => updateContent(`${id}_size`, 'full')} className={`px-2 py-1 rounded font-bold ${size==='full'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>Full</button>
+                               <button onClick={() => updateContent(`${id}_size`, '')} className={`px-2 py-1 rounded font-bold ${!size?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>MĐ</button>
+                           </div>
+                       </div>
+                   </div>
                )}
-               <input 
-                    type="file" 
-                    accept="image/*" 
-                    className="absolute inset-0 opacity-0 cursor-pointer" 
-                    disabled={isUploading}
-                    onChange={e => uploadImage(id, e.target.files?.[0])} 
-               />
            </div>
         </div>
     );
