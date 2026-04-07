@@ -396,7 +396,28 @@ function BrandIdentityView({ brand }: { brand: any }) {
                         </div>
                     ))}
                 </div>
-                
+                {/* Ý Nghĩa Logo */}
+                <div className="mt-16 pt-12 border-t border-slate-100">
+                    <h2 className="text-2xl font-black text-slate-800 mb-10 uppercase tracking-widest text-center">Ý TƯỞNG THIẾT KẾ & Ý NGHĨA LOGO</h2>
+                    <div className="flex flex-col md:flex-row gap-10 items-center">
+                        <div className="w-full md:w-1/2">
+                            <EditableImage id="img_brand_logo_meaning" className="aspect-[4/3] w-full p-4 md:p-8 bg-slate-50 border border-slate-100 rounded-3xl" label="Hình khối Logo" />
+                        </div>
+                        <div className="w-full md:w-1/2 space-y-5">
+                            <h3 className="text-3xl font-bold text-slate-800 tracking-tight">
+                                <EditableText id="logo_title" defaultText="Biểu Tượng Của Sự Gắn Kết" />
+                            </h3>
+                            <div className="h-1 w-16 rounded" style={{ backgroundColor: brand.teal }}></div>
+                            <p className="text-slate-600 text-lg leading-relaxed">
+                                <EditableText id="logo_desc_1" multiline defaultText="Logo LYHU là sự kết hợp tinh tế giữa đường nét mềm mại và kết cấu vững chãi. Thiết kế không chỉ thể hiện tên thương hiệu mà còn ẩn chứa khát vọng kiến tạo một hệ sinh thái tuần hoàn và phát triển bền vững." />
+                            </p>
+                            <p className="text-slate-600 text-lg leading-relaxed">
+                                <EditableText id="logo_desc_2" multiline defaultText="Sự liên kết tinh tế giữa các khối màu đại diện cho sự cộng hưởng của các thành viên cùng chung một mục đích, tượng trưng cho thông điệp cốt lõi: Kết nối chân thành - Hợp tác bền vững." />
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Ý Nghĩa Màu Sắc */}
                 <div className="mt-16 pt-12 border-t border-slate-100">
                     <h2 className="text-2xl font-bold text-slate-800 mb-6 uppercase tracking-wide text-center">Ý Nghĩa Gam Màu Thương Hiệu</h2>
