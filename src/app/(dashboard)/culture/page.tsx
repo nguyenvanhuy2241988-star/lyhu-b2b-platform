@@ -333,9 +333,9 @@ function IntroductionView({ brand }: { brand: any }) {
                 <h3 className="text-2xl font-black text-slate-800 mb-8 text-center uppercase tracking-widest">4 TRỤ CỘT HOẠT ĐỘNG</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                     {["Sản xuất", "Nhập khẩu", "Thương mại", "Bán lẻ"].map((label, i) => (
-                        <div key={i} className="p-4 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col items-center text-center shadow-sm hover:shadow-md transition-shadow">
-                            <EditableImage id={`img_pillar_${i}`} className="w-full aspect-[3/4] rounded-2xl mb-5 !border border-slate-200 bg-white" label={`Poster ${label}`} />
-                            <span className="font-extrabold uppercase text-slate-800 tracking-widest pb-2">
+                        <div key={i} className="p-4 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col items-stretch text-center shadow-sm hover:shadow-md transition-shadow">
+                            <EditableImage id={`img_pillar_${i}`} className="w-full aspect-[3/4] rounded-2xl mb-5 !border border-slate-200 bg-white mx-auto" label={`Poster ${label}`} />
+                            <span className="font-extrabold uppercase text-slate-800 tracking-widest pb-2 mt-auto">
                                 <EditableText id={`pillar_txt_${i}`} defaultText={label} />
                             </span>
                         </div>
