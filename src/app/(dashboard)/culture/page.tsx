@@ -144,7 +144,7 @@ export default function CulturePage() {
     const supabase = createClient();
 
     // MÀU THƯƠNG HIỆU
-    const BRAND = { teal: '#04ACA9', green: '#8FC842' };
+    const BRAND = { teal: '#00afa9', green: '#98c93c' };
 
     const TABS = [
         { id: 'intro', label: "Thông điệp mở đầu", icon: Info },
@@ -232,7 +232,7 @@ export default function CulturePage() {
                             <button onClick={() => setIsEditMode(false)} className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-colors">
                                 Hủy Sửa
                             </button>
-                            <button onClick={saveChanges} disabled={isSaving} className="flex items-center gap-2 px-6 py-2 text-sm font-bold text-white bg-slate-900 rounded-lg shadow-md hover:bg-slate-800 transition-colors disabled:opacity-70">
+                            <button onClick={saveChanges} disabled={isSaving} className="flex items-center gap-2 px-6 py-2 text-sm font-bold text-white bg-primary-600 rounded-lg shadow-md hover:bg-primary-700 transition-colors disabled:opacity-70">
                                 <Save className="w-4 h-4" />
                                 {isSaving ? "Đang lưu..." : "Lưu Thay Đổi"}
                             </button>
@@ -355,7 +355,7 @@ function BrandIdentityView({ brand }: { brand: any }) {
     return (
         <div className="animate-in fade-in duration-500 space-y-10">
             {/* Slogan Banner */}
-            <div className="relative rounded-3xl overflow-hidden bg-slate-900 border border-slate-200">
+            <div className="relative rounded-3xl overflow-hidden bg-primary-900 border border-primary-800">
                 <EditableImage id="img_brand_hero" className="aspect-[21/9] w-full !border-none !rounded-none opacity-40 mix-blend-overlay" label="Ảnh nền đội ngũ" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center text-white z-10 pointer-events-none">
                     <h2 className="text-3xl md:text-5xl font-black uppercase tracking-widest mb-4 inline-block pointer-events-auto">
@@ -479,7 +479,7 @@ function LogoView({ brand }: { brand: any }) {
                         ))}
                     </div>
 
-                    <div className="mt-12 bg-slate-900 text-white p-8 md:p-12 rounded-3xl relative overflow-hidden">
+                    <div className="mt-12 bg-primary-900 text-white p-8 md:p-12 rounded-3xl relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
                         <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3"></div>
 
@@ -544,7 +544,7 @@ function CoreValuesView({ brand }: { brand: any }) {
                         <EditableImage id="img_core_quote" className="aspect-square !bg-slate-50" label="Đồ họa trích dẫn" />
                     </div>
                     <div className="flex-1 w-full">
-                        <div className="italic font-serif text-slate-700 text-2xl leading-relaxed mb-6">
+                        <div className="italic font-light tracking-wide text-slate-700 text-2xl leading-relaxed mb-6">
                             <EditableText id="quote1_txt" multiline defaultText="Chọn đúng thời gian, sự bền bỉ và mười năm nỗ lực rồi cuối cùng sẽ khiến bạn có vẻ như thành công chỉ trong một đêm." />
                         </div>
                         <p className="font-bold text-slate-900 tracking-wide uppercase">— <EditableText id="quote1_author" defaultText="BIZ STONE (Đồng sáng lập Twitter)" /></p>
@@ -593,10 +593,10 @@ function PhilosophyView({ brand }: { brand: any }) {
                 </div>
             </div>
 
-            <div className="relative rounded-3xl overflow-hidden bg-slate-900 border border-slate-200">
+            <div className="relative rounded-3xl overflow-hidden bg-primary-900 border border-primary-800">
                 <EditableImage id="img_phil_team" className="aspect-[21/9] !border-none w-full !rounded-none opacity-50 mix-blend-overlay" label="Ảnh team LYHU" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center text-white z-10 pointer-events-none">
-                    <div className="text-2xl md:text-3xl font-serif italic mb-6 leading-relaxed max-w-4xl inline-block pointer-events-auto">
+                    <div className="text-2xl md:text-3xl italic mb-6 leading-relaxed max-w-4xl inline-block pointer-events-auto">
                         <EditableText id="quote2_txt" multiline defaultText="Đoàn kết không chỉ là đứng cạnh nhau, mà là cùng nhìn về một hướng." />
                     </div>
                     <p className="text-lg font-bold tracking-widest uppercase inline-block pointer-events-auto">— <EditableText id="quote2_author" defaultText="Antoine de Saint-Exupéry" /></p>
@@ -659,10 +659,10 @@ function VisionView({ brand }: { brand: any }) {
                 </div>
             </div>
 
-            <div className="relative rounded-3xl overflow-hidden bg-slate-900 border border-slate-200">
+            <div className="relative rounded-3xl overflow-hidden bg-primary-900 border border-primary-800">
                 <EditableImage id="img_vis_final" className="aspect-[21/9] !border-none !rounded-none w-full opacity-40 mix-blend-overlay" label="Ảnh leo núi" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-8 md:p-16 text-center text-white z-10 pointer-events-none">
-                    <div className="text-xl md:text-4xl font-serif italic mb-8 max-w-4xl leading-relaxed inline-block pointer-events-auto">
+                    <div className="text-xl md:text-4xl italic mb-8 max-w-4xl leading-relaxed inline-block pointer-events-auto font-light">
                         <EditableText id="quote3_txt" multiline defaultText="Tập hợp cùng nhau là điểm bắt đầu. Gắn bó cùng nhau là tiến triển. Làm việc cùng nhau là thành công." />
                     </div>
                     <p className="text-xl font-bold uppercase tracking-widest text-slate-300 inline-block pointer-events-auto">— <EditableText id="quote3_author" defaultText="Henry Ford" /></p>
