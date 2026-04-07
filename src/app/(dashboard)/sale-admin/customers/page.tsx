@@ -2,10 +2,11 @@
 
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { fetchCustomers, Customer, updateCustomer, deleteCustomer } from "@/lib/crmDealsStore";
+import { useRouter } from "next/navigation";
 import {
     Phone, Mail, MapPin, Loader2, Building2,
     MoreHorizontal, Pencil, Trash2, X, Save,
-    UserCircle, Search, Filter, AlertCircle
+    UserCircle, Search, Filter, AlertCircle, ShoppingCart
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 
@@ -29,6 +30,7 @@ const reverseTypeMap: Record<string, string> = {
 
 export default function SaleAdminCustomersPage() {
     const { session } = useAuth();
+    const router = useRouter();
     const [selectedType, setSelectedType] = useState<string>("Tất cả");
     const [searchQuery, setSearchQuery] = useState("");
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -206,6 +208,13 @@ export default function SaleAdminCustomersPage() {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end gap-2">
+                                                <button
+                                                    onClick={() => router.push(`/sale-admin/create-order?customer_id=${customer.id}`)}
+                                                    className="p-2 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                                                    title="Tạo đơn hàng"
+                                                >
+                                                    <ShoppingCart className="w-4 h-4" />
+                                                </button>
                                                 <button
                                                     onClick={() => handleEditClick(customer)}
                                                     className="p-2 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
