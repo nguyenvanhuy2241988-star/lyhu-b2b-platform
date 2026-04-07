@@ -8,6 +8,9 @@ const config: Config = {
     ],
     theme: {
         extend: {
+            fontFamily: {
+                sans: ['var(--font-be-vietnam-pro)', 'sans-serif'],
+            },
             colors: {
                 // LYHU brand colors
                 primary: {
