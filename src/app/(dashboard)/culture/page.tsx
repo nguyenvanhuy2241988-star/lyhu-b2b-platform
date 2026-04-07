@@ -56,6 +56,7 @@ function EditableImage({ id, label, className = "aspect-video" }: { id: string, 
 
     let dynamicClasses = "";
     if (shape === 'square') dynamicClasses += " !aspect-square !rounded-2xl";
+    else if (shape === 'portrait') dynamicClasses += " !aspect-[3/4] !rounded-2xl";
     else if (shape === 'video') dynamicClasses += " !aspect-video !rounded-2xl";
     else if (shape === 'cinema') dynamicClasses += " !aspect-[21/9] !rounded-2xl";
     else if (shape === 'circle') dynamicClasses += " !aspect-square !rounded-full";
@@ -82,8 +83,8 @@ function EditableImage({ id, label, className = "aspect-video" }: { id: string, 
     }
 
     return (
-        <div className={`relative group overflow-hidden border-2 border-dashed border-teal-400 ${finalClasses}`}>
-           {imageUrl ? <img src={imageUrl} alt={label} className="w-full h-full object-cover opacity-60" /> : <div className="w-full h-full bg-teal-50" />}
+        <div className={`relative group overflow-hidden border-2 border-dashed border-teal-400 flex items-center justify-center ${finalClasses}`}>
+           {imageUrl ? <img src={imageUrl} alt={label} className="absolute inset-0 w-full h-full object-cover opacity-60" /> : <div className="absolute inset-0 w-full h-full bg-teal-50" />}
            
            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 opacity-0 group-hover:opacity-100 transition-opacity z-10 backdrop-blur-sm">
                {isUploading ? (
@@ -109,8 +110,9 @@ function EditableImage({ id, label, className = "aspect-video" }: { id: string, 
                            <div className="flex items-center gap-2 text-xs">
                                <span className="text-slate-300 w-10 font-medium tracking-wide">DÁNG:</span>
                                <button onClick={() => updateContent(`${id}_shape`, 'square')} className={`p-1.5 rounded ${shape==='square'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Vuông">⏹️</button>
+                               <button onClick={() => updateContent(`${id}_shape`, 'portrait')} className={`p-1.5 rounded ${shape==='portrait'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Dọc A4">📄</button>
                                <button onClick={() => updateContent(`${id}_shape`, 'video')} className={`p-1.5 rounded ${shape==='video'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Ngang">🖥️</button>
-                               <button onClick={() => updateContent(`${id}_shape`, 'cinema')} className={`p-1.5 rounded ${shape==='cinema'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Banner siêu rộng">▭</button>
+                               <button onClick={() => updateContent(`${id}_shape`, 'cinema')} className={`p-1.5 rounded ${shape==='cinema'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Banner">▭</button>
                                <button onClick={() => updateContent(`${id}_shape`, 'circle')} className={`p-1.5 rounded ${shape==='circle'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Tròn">🔵</button>
                                <button onClick={() => updateContent(`${id}_shape`, '')} className={`p-1.5 rounded font-bold ${!shape?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Mặc định">MĐ</button>
                            </div>
