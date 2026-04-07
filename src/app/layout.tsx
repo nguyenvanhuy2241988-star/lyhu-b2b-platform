@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Be_Vietnam_Pro } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ToastProvider } from "@/components/ui/toast";
@@ -12,11 +12,7 @@ export const metadata: Metadata = {
     description: "B2B Application for LYHU",
 };
 
-const beVietnamPro = Be_Vietnam_Pro({ 
-    subsets: ["latin", "vietnamese"],
-    weight: ["300", "400", "500", "600", "700", "800", "900"],
-    variable: "--font-be-vietnam-pro"
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export default function RootLayout({
     children,
@@ -24,8 +20,8 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="vi">
-            <body className={cn(beVietnamPro.className, "min-h-screen bg-gray-50")}>
+        <html lang="en">
+            <body className={cn(inter.className, "min-h-screen bg-gray-50")}>
                 <AuthProvider>
                     <ToastProvider>
                         {children}
