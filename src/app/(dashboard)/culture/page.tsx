@@ -17,7 +17,8 @@ import {
     ImageIcon,
     Quote,
     Save,
-    Edit3
+    Edit3,
+    Shapes
 } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 
@@ -148,6 +149,7 @@ export default function CulturePage() {
     const TABS = [
         { id: 'intro', label: "Thông điệp mở đầu", icon: Info },
         { id: 'brand', label: "ADN Thương hiệu", icon: Palette },
+        { id: 'logo', label: "Thiết kế & Ý nghĩa Logo", icon: Shapes },
         { id: 'core', label: "Giá trị cốt lõi 3K1C", icon: Scale },
         { id: 'philosophy', label: "Triết lý hành động", icon: HeartHandshake },
         { id: 'vision', label: "Định hướng tương lai", icon: Map },
@@ -283,6 +285,7 @@ export default function CulturePage() {
                         <div className="max-w-5xl mx-auto w-full p-6 md:p-10 lg:p-14 pb-24">
                             {activeTab === 'intro' && <IntroductionView brand={BRAND} />}
                             {activeTab === 'brand' && <BrandIdentityView brand={BRAND} />}
+                            {activeTab === 'logo' && <LogoView brand={BRAND} />}
                             {activeTab === 'core' && <CoreValuesView brand={BRAND} />}
                             {activeTab === 'philosophy' && <PhilosophyView brand={BRAND} />}
                             {activeTab === 'vision' && <VisionView brand={BRAND} />}
@@ -396,27 +399,6 @@ function BrandIdentityView({ brand }: { brand: any }) {
                         </div>
                     ))}
                 </div>
-                {/* Ý Nghĩa Logo */}
-                <div className="mt-16 pt-12 border-t border-slate-100">
-                    <h2 className="text-2xl font-black text-slate-800 mb-10 uppercase tracking-widest text-center">Ý TƯỞNG THIẾT KẾ & Ý NGHĨA LOGO</h2>
-                    <div className="flex flex-col md:flex-row gap-10 items-center">
-                        <div className="w-full md:w-1/2">
-                            <EditableImage id="img_brand_logo_meaning" className="aspect-[4/3] w-full p-4 md:p-8 bg-slate-50 border border-slate-100 rounded-3xl" label="Hình khối Logo" />
-                        </div>
-                        <div className="w-full md:w-1/2 space-y-5">
-                            <h3 className="text-3xl font-bold text-slate-800 tracking-tight">
-                                <EditableText id="logo_title" defaultText="Biểu Tượng Của Sự Gắn Kết" />
-                            </h3>
-                            <div className="h-1 w-16 rounded" style={{ backgroundColor: brand.teal }}></div>
-                            <p className="text-slate-600 text-lg leading-relaxed">
-                                <EditableText id="logo_desc_1" multiline defaultText="Logo LYHU là sự kết hợp tinh tế giữa đường nét mềm mại và kết cấu vững chãi. Thiết kế không chỉ thể hiện tên thương hiệu mà còn ẩn chứa khát vọng kiến tạo một hệ sinh thái tuần hoàn và phát triển bền vững." />
-                            </p>
-                            <p className="text-slate-600 text-lg leading-relaxed">
-                                <EditableText id="logo_desc_2" multiline defaultText="Sự liên kết tinh tế giữa các khối màu đại diện cho sự cộng hưởng của các thành viên cùng chung một mục đích, tượng trưng cho thông điệp cốt lõi: Kết nối chân thành - Hợp tác bền vững." />
-                            </p>
-                        </div>
-                    </div>
-                </div>
 
                 {/* Ý Nghĩa Màu Sắc */}
                 <div className="mt-16 pt-12 border-t border-slate-100">
@@ -436,6 +418,62 @@ function BrandIdentityView({ brand }: { brand: any }) {
                                 <p className="text-slate-600 text-sm leading-relaxed"><EditableText id="color2_d" multiline defaultText="Xanh lá - Mang năng lượng của sự sinh trưởng, bền vững, thân thiện và không ngừng phát triển." /></p>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function LogoView({ brand }: { brand: any }) {
+    return (
+        <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-16">
+            <div className="bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200">
+                <div>
+                    <h2 className="text-3xl font-black text-slate-800 mb-10 tracking-tight uppercase">Ý TƯỞNG THIẾT KẾ & Ý NGHĨA LOGO</h2>
+                    <div className="h-1 w-16 mb-10 mt-[-10px]" style={{ backgroundColor: brand.teal }}></div>
+                    <div className="flex flex-col xl:flex-row gap-12 items-center">
+                        <div className="w-full xl:w-5/12">
+                            <EditableImage id="img_brand_logo_meaning" className="aspect-[4/3] w-full p-4 md:p-8 bg-slate-50 border border-slate-100 rounded-3xl" label="Hình khối Logo" />
+                        </div>
+                        <div className="w-full xl:w-7/12 space-y-5">
+                            <h3 className="text-3xl font-bold text-slate-800 tracking-tight">
+                                <EditableText id="logo_title" defaultText="Biểu Tượng Của Sự Gắn Kết" />
+                            </h3>
+                            <div className="h-1 w-16 rounded" style={{ backgroundColor: brand.teal }}></div>
+                            <p className="text-slate-600 text-lg leading-relaxed">
+                                <EditableText id="logo_desc_1" multiline defaultText="Logo LYHU là sự kết hợp tinh tế giữa đường nét mềm mại và kết cấu vững chãi. Thiết kế không chỉ thể hiện tên thương hiệu mà còn ẩn chứa khát vọng kiến tạo một hệ sinh thái tuần hoàn và phát triển bền vững." />
+                            </p>
+                            <p className="text-slate-600 text-lg leading-relaxed">
+                                <EditableText id="logo_desc_2" multiline defaultText="Sự liên kết tinh tế giữa các khối màu đại diện cho sự cộng hưởng của các thành viên cùng chung một mục đích, tượng trưng cho thông điệp cốt lõi: Kết nối chân thành - Hợp tác bền vững." />
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-16 pt-12 border-t border-slate-100">
+                    <h2 className="text-2xl font-black text-slate-800 mb-10 tracking-tight uppercase text-center">Ý NGHĨA CỦA SỐ 4 TRONG BIỂU TƯỢNG LYHU</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {[
+                            { n: 1, title: '4 Hạt nhân sáng lập', desc: 'Đại diện cho 4 mảnh ghép nền móng đầu tiên, dạn dày kinh nghiệm.' },
+                            { n: 2, title: '4 Giá trị cốt lõi', desc: 'Định hình mọi cách thức hoạt động: Lắng nghe, Yêu thương, Hòa hợp, Ước mơ.' },
+                            { n: 3, title: '4 Trụ cột kinh doanh', desc: 'Sản xuất - Thương mại - Dịch vụ - Bán lẻ, tạo thành mũi nhọn khép kín.' },
+                            { n: 4, title: '4 Phương hội tụ', desc: 'Sự quy tụ của nhân tài từ khắp nơi tạo sức mạnh tổng hợp.' },
+                        ].map((item, idx) => (
+                            <div key={idx} className="bg-slate-50 border border-slate-100 p-6 rounded-2xl flex gap-6 hover:shadow-md transition-shadow group">
+                                <div className="w-20 shrink-0">
+                                    <EditableImage id={`img_logo_num4_${idx}`} className="w-full aspect-square bg-white rounded-xl shadow-sm border border-slate-100 p-2" label={`Icon ${idx+1}`} />
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="text-xl font-bold text-slate-800 mb-2">
+                                        <EditableText id={`logo_num4_t_${idx}`} defaultText={item.title} />
+                                    </h4>
+                                    <p className="text-slate-600 leading-relaxed text-sm">
+                                        <EditableText id={`logo_num4_d_${idx}`} multiline defaultText={item.desc} />
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>
