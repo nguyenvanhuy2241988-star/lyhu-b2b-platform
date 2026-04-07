@@ -438,27 +438,30 @@ function LogoView({ brand }: { brand: any }) {
                         </div>
                         <div className="w-full xl:w-7/12 space-y-5">
                             <h3 className="text-3xl font-bold text-slate-800 tracking-tight">
-                                <EditableText id="logo_title" defaultText="Biểu Tượng Của Sự Gắn Kết" />
+                                <EditableText id="logo_title" defaultText="Biểu Tượng Cho Sự Hòa Hợp" />
                             </h3>
                             <div className="h-1 w-16 rounded" style={{ backgroundColor: brand.teal }}></div>
                             <p className="text-slate-600 text-lg leading-relaxed">
-                                <EditableText id="logo_desc_1" multiline defaultText="Logo LYHU là sự kết hợp tinh tế giữa đường nét mềm mại và kết cấu vững chãi. Thiết kế không chỉ thể hiện tên thương hiệu mà còn ẩn chứa khát vọng kiến tạo một hệ sinh thái tuần hoàn và phát triển bền vững." />
+                                <EditableText id="logo_desc_1" multiline defaultText="Logo LYHU là sự kết hợp tinh tế giữa đường nét hiện đại và kết cấu vững chãi. Thiết kế không chỉ thể hiện tên thương hiệu mà còn ẩn chứa khát vọng kiến tạo một hệ sinh thái tuần hoàn và phát triển bền vững." />
                             </p>
                             <p className="text-slate-600 text-lg leading-relaxed">
-                                <EditableText id="logo_desc_2" multiline defaultText="Sự liên kết tinh tế giữa các khối màu đại diện cho sự cộng hưởng của các thành viên cùng chung một mục đích, tượng trưng cho thông điệp cốt lõi: Kết nối chân thành - Hợp tác bền vững." />
+                                <EditableText id="logo_desc_2" multiline defaultText="Sự liên kết tiếp nối giữa các khối màu đại diện cho sự cộng hưởng của các thành viên cùng chung một mục đích, tượng trưng cho thông điệp cốt lõi: Kết nối chân thành - Hợp tác bền vững." />
                             </p>
                         </div>
                     </div>
                 </div>
 
                 <div className="mt-16 pt-12 border-t border-slate-100">
-                    <h2 className="text-2xl font-black text-slate-800 mb-10 tracking-tight uppercase text-center">Ý NGHĨA CỦA SỐ 4 TRONG BIỂU TƯỢNG LYHU</h2>
+                    <h2 className="text-3xl font-black text-slate-800 mb-6 tracking-tight uppercase text-center">ADN LYHU – Sức mạnh của số 4</h2>
+                    <p className="text-xl text-slate-500 font-medium text-center mb-10 max-w-3xl mx-auto">
+                        <EditableText id="logo_num4_intro" multiline defaultText="Với LYHU, số 4 không chỉ là một con số. Nó chính là linh hồn của văn hóa doanh nghiệp." />
+                    </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {[
-                            { n: 1, title: '4 Hạt nhân sáng lập', desc: 'Đại diện cho 4 mảnh ghép nền móng đầu tiên, dạn dày kinh nghiệm.' },
-                            { n: 2, title: '4 Giá trị cốt lõi', desc: 'Định hình mọi cách thức hoạt động: Lắng nghe, Yêu thương, Hòa hợp, Ước mơ.' },
-                            { n: 3, title: '4 Trụ cột kinh doanh', desc: 'Sản xuất - Thương mại - Dịch vụ - Bán lẻ, tạo thành mũi nhọn khép kín.' },
-                            { n: 4, title: '4 Phương hội tụ', desc: 'Sự quy tụ của nhân tài từ khắp nơi tạo sức mạnh tổng hợp.' },
+                            { n: 1, title: '4 Cánh nối tiếp nhau', desc: 'Logo của LYHU có 4 cánh, biểu tượng cho sức mạnh của tinh thần đoàn kết, gắn bó bền chặt.' },
+                            { n: 2, title: '4 Ký tự tên công ty', desc: 'Mỗi chữ cái là một giá trị cốt lõi: Love (Yêu thương), Yearn (Khao khát), Harmonize (Hòa hợp), Unify (Thống nhất).' },
+                            { n: 3, title: '4 Nguyên tắc cốt lõi', desc: 'Văn hóa LYHU tôn vinh 4 nguyên tắc: Kỷ luật – Kiên trì – Kiên nhẫn – Chấp nhận quá trình.' },
+                            { n: 4, title: 'Slogan có vần điệu', desc: 'Slogan của LYHU có 2 vế, mỗi vế chứa trọn 4 từ đắt giá: "Kết nối chân thành – Hợp tác bền vững".' },
                         ].map((item, idx) => (
                             <div key={idx} className="bg-slate-50 border border-slate-100 p-6 rounded-2xl flex gap-6 hover:shadow-md transition-shadow group">
                                 <div className="w-20 shrink-0">
@@ -474,6 +477,23 @@ function LogoView({ brand }: { brand: any }) {
                                 </div>
                             </div>
                         ))}
+                    </div>
+                    
+                    <div className="mt-12 bg-slate-900 text-white p-8 md:p-12 rounded-3xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3"></div>
+                        
+                        <div className="relative z-10 space-y-6 text-lg tracking-wide font-light">
+                            <p className="italic text-teal-300 font-medium pb-2 border-b border-white/10">
+                                <EditableText id="logo_quote_0" multiline defaultText="Trong thế giới quanh ta, số 4 xuất hiện ở khắp nơi. Bốn mùa luân chuyển – Xuân, Hạ, Thu, Đông. Bốn phương định hướng – Đông, Tây, Nam, Bắc. Bốn yếu tố tự nhiên – Đất, Nước, Lửa, Khí. Tất cả tạo nên một vòng tròn cân bằng, đầy đủ và vững chãi." />
+                            </p>
+                            <p>
+                                <EditableText id="logo_quote_1" multiline defaultText="Số 4 vì thế trở thành ADN của LYHU – một lời nhắc nhở rằng, chỉ khi có nền tảng vững chắc, sự cân bằng toàn diện, kỷ luật và sự đoàn kết, chúng ta mới có thể phát triển lâu dài." />
+                            </p>
+                            <p>
+                                <EditableText id="logo_quote_2" multiline defaultText="Văn hóa doanh nghiệp LYHU được xây trên tinh thần ấy: giản dị mà bền chặt, chân thành mà vững vàng. Để mỗi nhân sự, khi khoác lên mình màu áo xanh ngọc, đều hiểu rằng mình đang đứng trên một nền tảng 4 trụ cột vững vàng, cùng hướng tới tương lai." />
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
