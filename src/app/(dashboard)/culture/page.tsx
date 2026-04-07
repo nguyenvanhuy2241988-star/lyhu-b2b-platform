@@ -1,173 +1,263 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import DashboardShell from "@/components/layout/DashboardShell";
+import { useAuth } from "@/components/auth/AuthProvider";
+import RichTextEditor from "@/components/ui/RichTextEditor";
+import DOMPurify from "isomorphic-dompurify";
 import { 
-    Heart, 
-    Target, 
-    Zap, 
-    Users, 
-    Gem, 
-    TrendingUp, 
-    Sparkles, 
-    Globe,
-    Search
+    Plus, 
+    Pencil, 
+    Trash2, 
+    Save, 
+    X,
+    BookOpen,
+    AlignLeft
 } from "lucide-react";
+import { 
+    CultureSection, 
+    getCultureSections, 
+    createCultureSection, 
+    updateCultureSection, 
+    deleteCultureSection 
+} from "@/lib/cultureStore";
 
 export default function CulturePage() {
-    const coreValues = [
-        {
-            title: "Khách hàng là Trọng tâm",
-            description: "Mọi quyết định và hành động đều xuất phát từ lợi ích và sự hài lòng của khách hàng. Chúng ta nỗ lực vượt trên cả sự kỳ vọng.",
-            icon: Heart,
-            color: "text-rose-500",
-            bg: "bg-rose-50"
-        },
-        {
-            title: "Đổi mới & Sáng tạo",
-            description: "Không ngừng tìm kiếm giải pháp mới, phá bỏ giới hạn cũ để dẫn đầu xu hướng thị trường và tối ưu hóa quy trình.",
-            icon: Sparkles,
-            color: "text-amber-500",
-            bg: "bg-amber-50"
-        },
-        {
-            title: "Hành động Thần tốc",
-            description: "Tốc độ là vũ khí. Ra quyết định nhanh, thực thi dứt khoát, linh hoạt thích ứng với sự thay đổi của công nghệ và thương trường.",
-            icon: Zap,
-            color: "text-blue-500",
-            bg: "bg-blue-50"
-        },
-        {
-            title: "Đoàn kết & Tôn trọng",
-            description: "Xây dựng môi trường bình đẳng, giao tiếp minh bạch, tôn trọng sự khác biệt và khai thác sức mạnh của từng cá nhân vào tập thể.",
-            icon: Users,
-            color: "text-indigo-500",
-            bg: "bg-indigo-50"
-        },
-        {
-            title: "Trách nhiệm Cao",
-            description: "Chủ động nhận việc, làm đến cùng và sẵn sàng chịu trách nhiệm cho mọi kết quả. Không đổ lỗi, luôn tìm kiếm giải pháp.",
-            icon: Target,
-            color: "text-emerald-500",
-            bg: "bg-emerald-50"
-        },
-        {
-            title: "Học hỏi Không ngừng",
-            description: "Luôn trau dồi kiến thức mới nhất, nâng cấp giới hạn bản thân để cùng LYHU vươn tới những đỉnh cao mới mỗi ngày.",
-            icon: TrendingUp,
-            color: "text-purple-500",
-            bg: "bg-purple-50"
+    const { role } = useAuth();
+    const isAdmin = role === 'admin';
+
+    const [sections, setSections] = useState<CultureSection[]>([]);
+    const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Editor states
+    const [isEditing, setIsEditing] = useState(false);
+    const [editContent, setEditContent] = useState("");
+    const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const loadData = async () => {
+        try {
+            setIsLoading(true);
+            const data = await getCultureSections();
+            setSections(data);
+            if (data.length > 0 && !activeSectionId) {
+                setActiveSectionId(data[0].id);
+            }
+        } catch (error) {
+            console.error("Lỗi khi tải Danh mục Văn hóa:", error);
+        } finally {
+            setIsLoading(false);
         }
-    ];
+    };
+
+    const handleAddSection = async () => {
+        const title = window.prompt("Nhập tên danh mục mới (vd: Tầm nhìn & Sứ mệnh):");
+        if (!title?.trim()) return;
+
+        try {
+            const newIndex = sections.length;
+            const newSection = await createCultureSection(title.trim(), newIndex);
+            setSections([...sections, newSection]);
+            setActiveSectionId(newSection.id);
+        } catch (error) {
+            alert("Đã xảy ra lỗi khi tạo nhanh mục mới.");
+            console.error(error);
+        }
+    };
+
+    const handleRenameSection = async (id: string, currentTitle: string) => {
+        const newTitle = window.prompt("Nhập tên danh mục mới:", currentTitle);
+        if (!newTitle?.trim() || newTitle === currentTitle) return;
+
+        try {
+            await updateCultureSection(id, { title: newTitle.trim() });
+            setSections(sections.map(s => s.id === id ? { ...s, title: newTitle.trim() } : s));
+        } catch (error) {
+            alert("Lỗi đổi tên!");
+        }
+    };
+
+    const handleDeleteSection = async (id: string, title: string) => {
+        if (!window.confirm(`Bạn có chắc muốn xóa vĩnh viễn chuyên mục "${title}"?`)) return;
+
+        try {
+            await deleteCultureSection(id);
+            const remaining = sections.filter(s => s.id !== id);
+            setSections(remaining);
+            if (activeSectionId === id) {
+                setActiveSectionId(remaining.length > 0 ? remaining[0].id : null);
+            }
+        } catch (error) {
+            alert("Lỗi xóa danh mục.");
+        }
+    };
+
+    const handleStartEdit = (content: string) => {
+        setEditContent(content);
+        setIsEditing(true);
+    };
+
+    const handleSaveEdit = async (id: string) => {
+        try {
+            setIsSaving(true);
+            await updateCultureSection(id, { content: editContent });
+            setSections(sections.map(s => s.id === id ? { ...s, content: editContent } : s));
+            setIsEditing(false);
+        } catch (error) {
+            alert("Lỗi lưu nội dung. Vui lòng thử lại!");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const activeSection = sections.find(s => s.id === activeSectionId);
 
     return (
         <DashboardShell title="Văn hóa doanh nghiệp">
-            <div className="w-full max-w-6xl mx-auto space-y-12 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex h-[calc(100vh-140px)] w-full overflow-hidden bg-white shadow-sm rounded-2xl border border-slate-200">
                 
-                {/* Hero Section */}
-                <div className="relative overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-sm">
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-sky-50 opacity-80" />
-                    <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.04] mix-blend-overlay" />
-                    
-                    <div className="relative z-10 px-6 py-20 md:py-24 text-center">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 text-indigo-600 font-semibold text-sm mb-6 border border-indigo-100 shadow-sm">
-                            <Gem className="w-4 h-4" />
-                            Văn Hóa Doanh Nghiệp LYHU
+                {/* LEFT SIDEBAR (Slider) */}
+                <div className="w-64 shrink-0 bg-slate-50 border-r border-slate-200 flex flex-col h-full">
+                    <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50 shrink-0">
+                        <div className="flex items-center gap-2 text-slate-700 font-semibold">
+                            <BookOpen className="w-5 h-5 text-indigo-500" />
+                            <span>Mục Lục</span>
                         </div>
-                        <h1 className="text-4xl md:text-5xl font-extrabold text-slate-800 tracking-tight leading-tight mb-6">
-                            Kiến tạo giá trị, <br className="hidden md:block"/>
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">
-                                Dẫn đầu xu hướng
-                            </span>
-                        </h1>
-                        <p className="text-lg md:text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
-                            Chìa khóa mang lại sự thành công của LYHU không chỉ là chiến lược nhạy bén, 
-                            mà cốt lõi là tư duy phát triển bền vững và tinh thần nhiệt huyết của từng thành viên.
-                        </p>
-                    </div>
-                </div>
-
-                {/* Vision & Mission */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="group relative bg-white p-8 md:p-10 rounded-3xl shadow-sm border border-slate-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 overflow-hidden">
-                        <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] rotate-12 group-hover:scale-110 transition-transform duration-500">
-                            <Target className="w-64 h-64 text-blue-600" />
-                        </div>
-                        <div className="relative z-10">
-                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 text-blue-600 flex items-center justify-center mb-6 ring-4 ring-blue-50 border border-blue-200 shadow-sm group-hover:scale-110 transition-transform duration-300">
-                                <Target className="w-7 h-7" />
-                            </div>
-                            <h2 className="text-3xl font-bold text-slate-800 mb-4">Sứ mệnh</h2>
-                            <p className="text-slate-600 text-lg leading-relaxed group-hover:text-slate-800 transition-colors">
-                                Cung cấp những giải pháp tiếp thị và bán hàng tối ưu nhất, mang lại luồng giá trị khổng lồ cho khách hàng. Đồng thời kiến tạo ra một môi trường làm việc hạnh phúc, thu nhập cao và cơ hội thăng tiến không giới hạn cho đội ngũ nhân sự.
-                            </p>
-                        </div>
+                        {isAdmin && (
+                            <button 
+                                onClick={handleAddSection}
+                                className="p-1.5 hover:bg-indigo-100 text-indigo-600 rounded-md transition-colors"
+                                title="Thêm mục mới"
+                            >
+                                <Plus className="w-4 h-4" />
+                            </button>
+                        )}
                     </div>
 
-                    <div className="group relative bg-white p-8 md:p-10 rounded-3xl shadow-sm border border-slate-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-2 overflow-hidden">
-                        <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] -rotate-12 group-hover:scale-110 transition-transform duration-500">
-                            <Globe className="w-64 h-64 text-indigo-600" />
-                        </div>
-                        <div className="relative z-10">
-                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-indigo-100 text-indigo-600 flex items-center justify-center mb-6 ring-4 ring-indigo-50 border border-indigo-200 shadow-sm group-hover:scale-110 transition-transform duration-300">
-                                <Search className="w-7 h-7" />
-                            </div>
-                            <h2 className="text-3xl font-bold text-slate-800 mb-4">Tầm nhìn</h2>
-                            <p className="text-slate-600 text-lg leading-relaxed group-hover:text-slate-800 transition-colors">
-                                Trở thành hệ sinh thái nền tảng số và thương mại hàng đầu tại khu vực, thay đổi cách thức các doanh nghiệp kết nối, phân phối sản phẩm và phục vụ khách hàng trên toàn cầu bằng công nghệ tiên tiến nhất.
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                    <div className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin">
+                        {isLoading ? (
+                            <div className="text-center py-4 text-slate-400 text-sm">Đang tải...</div>
+                        ) : sections.length === 0 ? (
+                            <div className="text-center py-8 text-slate-400 text-sm">Chưa có danh mục nào.</div>
+                        ) : (
+                            sections.map((section) => {
+                                const isActive = section.id === activeSectionId;
+                                return (
+                                    <div 
+                                        key={section.id}
+                                        className={`group flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-all \${
+                                            isActive 
+                                            ? "bg-indigo-50 text-indigo-700 font-medium border border-indigo-100" 
+                                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent"
+                                        }`}
+                                        onClick={() => !isEditing && setActiveSectionId(section.id)}
+                                    >
+                                        <div className="flex items-center gap-2 overflow-hidden">
+                                            <AlignLeft className={`w-4 h-4 shrink-0 \${isActive ? 'text-indigo-500' : 'text-slate-400'}`} />
+                                            <span className="truncate text-sm">{section.title}</span>
+                                        </div>
 
-                {/* Core Values */}
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 md:p-12">
-                    <div className="text-center mb-14">
-                        <h2 className="text-4xl font-extrabold text-slate-800 mb-4 tracking-tight">6 Giá trị cốt lõi</h2>
-                        <div className="w-24 h-1.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full mx-auto mb-6" />
-                        <p className="text-lg text-slate-500 max-w-2xl mx-auto">
-                            Những nguyên tắc định hình lối sống, phương pháp làm việc và cách đánh giá năng lực con người tại LYHU.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {coreValues.map((value, idx) => {
-                            const Icon = value.icon;
-                            return (
-                                <div key={idx} className="group flex flex-col bg-slate-50 p-8 rounded-2xl border border-slate-100 hover:bg-white hover:border-slate-200 hover:shadow-xl transition-all duration-300 cursor-default">
-                                    <div className={`w-14 h-14 rounded-2xl \${value.bg} \${value.color} flex items-center justify-center mb-6 ring-4 ring-slate-50 border border-slate-100 group-hover:scale-110 group-hover:shadow-md transition-all duration-300`}>
-                                        <Icon className="w-7 h-7" />
+                                        {isAdmin && (
+                                            <div className={`flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity \${isActive ? 'opacity-100' : ''}`}>
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleRenameSection(section.id, section.title); }}
+                                                    className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                                                    title="Đổi tên"
+                                                >
+                                                    <Pencil className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteSection(section.id, section.title); }}
+                                                    className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded"
+                                                    title="Xóa"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
-                                    <h3 className="text-xl font-bold text-slate-800 mb-3">{value.title}</h3>
-                                    <p className="text-base text-slate-600 leading-relaxed">
-                                        {value.description}
-                                    </p>
-                                </div>
-                            )
-                        })}
+                                );
+                            })
+                        )}
                     </div>
                 </div>
 
-                {/* Workplace Section */}
-                <div className="bg-slate-900 rounded-3xl p-8 md:p-12 overflow-hidden relative shadow-2xl">
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-blue-500/20 to-indigo-500/20 blur-3xl rounded-full translate-x-1/3 -translate-y-1/3" />
-                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-purple-500/20 to-pink-500/20 blur-3xl rounded-full -translate-x-1/3 translate-y-1/3" />
-                    
-                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-12">
-                        <div className="flex-1 text-center md:text-left">
-                            <h3 className="text-3xl font-bold text-white mb-4">Tinh thần đồng đội vô song</h3>
-                            <p className="text-slate-300 text-lg leading-relaxed mb-8 max-w-xl">
-                                Ở LYHU, không có khái niệm "làm việc đơn độc". Chúng tôi chia sẻ mục tiêu, san sẻ áp lực và cùng nhau đứng trên đỉnh vinh quang. Mỗi cá nhân là một mảnh ghép không thể thiếu của bức tranh tương lai.
-                            </p>
-                            <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                                <span className="px-4 py-2 bg-white/10 text-white rounded-full font-medium border border-white/20 backdrop-blur-sm">Trao quyền năng</span>
-                                <span className="px-4 py-2 bg-white/10 text-white rounded-full font-medium border border-white/20 backdrop-blur-sm">Kỷ luật tự giác</span>
-                                <span className="px-4 py-2 bg-white/10 text-white rounded-full font-medium border border-white/20 backdrop-blur-sm">Chung mục tiêu</span>
+                {/* RIGHT CONTENT AREA */}
+                <div className="flex-1 flex flex-col h-full min-w-0 bg-white relative">
+                    {activeSection ? (
+                        <>
+                            {/* Content Topbar */}
+                            <div className="h-16 shrink-0 border-b border-slate-100 flex items-center justify-between px-8 bg-white z-10 shadow-sm">
+                                <h1 className="text-xl font-bold text-slate-800 tracking-tight">{activeSection.title}</h1>
+                                
+                                {isAdmin && !isEditing && (
+                                    <button 
+                                        onClick={() => handleStartEdit(activeSection.content)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition-colors"
+                                    >
+                                        <Pencil className="w-4 h-4" />
+                                        <span>Soạn thảo nội dung</span>
+                                    </button>
+                                )}
+
+                                {isAdmin && isEditing && (
+                                    <div className="flex items-center gap-3">
+                                        <button 
+                                            onClick={() => setIsEditing(false)}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 text-slate-500 hover:bg-slate-100 rounded-md text-sm font-medium transition-colors"
+                                        >
+                                            <X className="w-4 h-4" />
+                                            Hủy
+                                        </button>
+                                        <button 
+                                            onClick={() => handleSaveEdit(activeSection.id)}
+                                            disabled={isSaving}
+                                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors shadow-sm disabled:opacity-50"
+                                        >
+                                            {isSaving ? (
+                                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            ) : (
+                                                <Save className="w-4 h-4" />
+                                            )}
+                                            <span>Lưu thay đổi</span>
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                        </div>
-                    </div>
-                </div>
 
+                            {/* Content Viewer / Editor */}
+                            <div className="flex-1 overflow-y-auto p-8 lg:p-12 scrollbar-thin">
+                                <div className="max-w-4xl mx-auto">
+                                    {isEditing ? (
+                                        <RichTextEditor 
+                                            content={editContent} 
+                                            onChange={setEditContent} 
+                                            placeholder="Bắt đầu viết nội dung văn hóa tại đây..."
+                                        />
+                                    ) : (
+                                        <div 
+                                            className="prose prose-slate prose-lg max-w-none 
+                                            prose-headings:font-bold prose-headings:text-slate-800 
+                                            prose-p:text-slate-700 prose-p:leading-relaxed 
+                                            prose-a:text-indigo-600 hover:prose-a:text-indigo-500
+                                            prose-img:rounded-xl prose-img:shadow-sm"
+                                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(activeSection.content) }}
+                                        />
+                                    )}
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-4">
+                            <BookOpen className="w-16 h-16 opacity-20" />
+                            <p>Vui lòng chọn hoặc tạo một Danh mục bên trái để xem nội dung.</p>
+                        </div>
+                    )}
+                </div>
             </div>
         </DashboardShell>
     );
