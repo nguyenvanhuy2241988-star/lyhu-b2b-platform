@@ -20,16 +20,27 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
     // Multi-profile Support
     const [profiles, setProfiles] = useState<any[]>([]);
     const [selectedProfileId, setSelectedProfileId] = useState<string>("");
+    
+    // Content Library Integration
+    const [categories, setCategories] = useState<string[]>([]);
 
     useEffect(() => {
         if (!isOpen) return;
-        const fetchProfiles = async () => {
-            const { data, error } = await supabase.from('bot_profiles').select('*').order('created_at', { ascending: true });
-            if (!error && data) {
-                setProfiles(data);
+        const fetchData = async () => {
+            const [profilesRes, contentsRes] = await Promise.all([
+                supabase.from('bot_profiles').select('*').order('created_at', { ascending: true }),
+                supabase.from('bot_contents').select('category')
+            ]);
+            
+            if (!profilesRes.error && profilesRes.data) {
+                setProfiles(profilesRes.data);
+            }
+            if (!contentsRes.error && contentsRes.data) {
+                const uniqueCategories = Array.from(new Set(contentsRes.data.map((c: any) => c.category)));
+                setCategories(uniqueCategories as string[]);
             }
         };
-        fetchProfiles();
+        fetchData();
     }, [isOpen]);
 
     if (!isOpen) return null;
@@ -202,8 +213,9 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
                             <label className="block text-sm font-medium text-slate-700 mb-1">Tên Kho Nội Dung (Category)</label>
                             <input
                                 type="text"
+                                list="modal-category-suggestions"
                                 className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                placeholder="VD: Kho Bán Hàng Máy Tính (Bỏ trống = Mặc định)"
+                                placeholder="Gõ tên hoặc chọn Kho có sẵn (Bỏ trống = Mặc định)"
                                 value={scriptName === 'auto_post_group.js' || scriptName === 'auto_comment_group.js' ? arg.split('|')[1]?.trim() || '' : arg}
                                 onChange={(e) => {
                                     if (scriptName === 'auto_post_group.js' || scriptName === 'auto_comment_group.js') {
@@ -214,6 +226,12 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
                                     }
                                 }}
                             />
+                            <datalist id="modal-category-suggestions">
+                                {categories.map(cat => (
+                                    <option key={cat} value={cat} />
+                                ))}
+                                <option value="Mặc định" />
+                            </datalist>
                         </div>
                         <p className="text-xs text-slate-500">Mẹo: Cần tạo sẵn mồi trong Tab 5: Kho Nội Dung.</p>
                     </div>
