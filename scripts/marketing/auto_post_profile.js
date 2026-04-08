@@ -189,25 +189,42 @@ function spinText(text) {
             }
         }
 
-        // === SUBMIT: Bấm nút Đăng bằng evaluate (không dùng Puppeteer .click()) ===
+        // === SUBMIT: Tìm nút Đăng bằng evaluateHandle rồi click bằng mouse coordinate ===
         console.log("[POST] Sẵn sàng đăng bài...");
-        await delay(rdn(1000, 2000));
+        await delay(rdn(2000, 3000)); // Chờ lâu hơn để nút "Đăng" enable
         
-        const posted = await page.evaluate(() => {
-            // Tìm nút "Đăng" hoặc "Post"
+        // Tìm nút Đăng/Post bằng evaluateHandle (trả về element reference)
+        const postBtnHandle = await page.evaluateHandle(() => {
             const buttons = Array.from(document.querySelectorAll('div[role="button"], button'));
             const postBtn = buttons.find(btn => {
                 const label = btn.getAttribute('aria-label') || '';
                 const txt = (btn.innerText || '').trim();
-                return (label === 'Đăng' || label === 'Post' || txt === 'Đăng' || txt === 'Post') &&
-                       btn.getAttribute('aria-disabled') !== 'true';
+                return (label === 'Đăng' || label === 'Post' || txt === 'Đăng' || txt === 'Post');
             });
-            if (postBtn) {
-                postBtn.click();
-                return true;
-            }
-            return false;
+            return postBtn || null;
         });
+        
+        const postBtnElement = postBtnHandle.asElement();
+        let posted = false;
+        
+        if (postBtnElement) {
+            // Chờ nút enable (Facebook cần 1-2s sau khi gõ xong)
+            for (let i = 0; i < 5; i++) {
+                const isDisabled = await page.evaluate(el => el.getAttribute('aria-disabled'), postBtnElement);
+                if (isDisabled !== 'true') break;
+                console.log(`[POST] Nút Đăng chưa active, chờ thêm... (${i+1}/5)`);
+                await delay(1500);
+            }
+            
+            const box = await postBtnElement.boundingBox();
+            if (box && box.width > 0 && box.height > 0) {
+                // Click bằng mouse coordinate → isTrusted: true → React accepts
+                console.log(`[POST] Click nút Đăng tại tọa độ (${Math.round(box.x + box.width/2)}, ${Math.round(box.y + box.height/2)})`);
+                await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+                posted = true;
+            }
+            await postBtnHandle.dispose();
+        }
 
         if (posted) {
             await delay(rdn(6000, 10000));

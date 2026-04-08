@@ -150,37 +150,47 @@ function spinText(text) {
             await delay(rdn(1000, 2000));
         }
 
-        // Submit bằng evaluate (KHÔNG dùng Puppeteer .click())
+        // Submit bằng evaluateHandle + mouse coordinate
         console.log("[GROUP_POST] Sẵn sàng đăng bài...");
-        await delay(rdn(1000, 2000));
+        await delay(rdn(2000, 3000));
         
-        const posted = await page.evaluate(() => {
+        const postBtnHandle = await page.evaluateHandle(() => {
             const buttons = Array.from(document.querySelectorAll('div[role="button"], button'));
             const postBtn = buttons.find(btn => {
                 const label = btn.getAttribute('aria-label') || '';
                 const txt = (btn.innerText || '').trim();
-                return (label === 'Đăng' || label === 'Post' || txt === 'Đăng' || txt === 'Post') &&
-                       btn.getAttribute('aria-disabled') !== 'true';
+                return (label === 'Đăng' || label === 'Post' || txt === 'Đăng' || txt === 'Post');
             });
-            if (postBtn) {
-                postBtn.click();
-                return true;
-            }
-            return false;
+            return postBtn || null;
         });
+        
+        const postBtnElement = postBtnHandle.asElement();
+        let posted = false;
+        
+        if (postBtnElement) {
+            for (let i = 0; i < 5; i++) {
+                const isDisabled = await page.evaluate(el => el.getAttribute('aria-disabled'), postBtnElement);
+                if (isDisabled !== 'true') break;
+                console.log(`[GROUP_POST] Nút Đăng chưa active, chờ thêm... (${i+1}/5)`);
+                await delay(1500);
+            }
+            
+            const box = await postBtnElement.boundingBox();
+            if (box && box.width > 0 && box.height > 0) {
+                console.log(`[GROUP_POST] Click nút Đăng tại tọa độ (${Math.round(box.x + box.width/2)}, ${Math.round(box.y + box.height/2)})`);
+                await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+                posted = true;
+            }
+            await postBtnHandle.dispose();
+        }
 
         if (posted) {
             await delay(rdn(6000, 10000));
             console.log("[GROUP_POST] 🟢 Hoàn thành đăng bài vào Group!");
             await logAction('post', 'success', `Đã rải 1 bài seeding vào Group (Kho: ${category})`);
         } else {
-            console.log("[GROUP_POST] Không tìm thấy nút Đăng, thử Ctrl+Enter...");
-            await page.keyboard.down('Control');
-            await page.keyboard.press('Enter');
-            await page.keyboard.up('Control');
-            await delay(rdn(6000, 10000));
-            console.log("[GROUP_POST] 🟢 Đã gửi bài bằng Ctrl+Enter!");
-            await logAction('post', 'success', `Đã rải 1 bài seeding vào Group (Kho: ${category})`);
+            console.log("[GROUP_POST] Không tìm thấy nút Đăng.");
+            throw new Error("Nút Đăng Bài bị ẩn hoặc không tìm thấy.");
         }
 
     } catch (e) {
