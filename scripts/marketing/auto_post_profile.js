@@ -95,24 +95,34 @@ function spinText(text) {
             throw new Error("Chưa đăng nhập Facebook! Chạy manual_login.js trước.");
         }
 
-        // BƯỚC 4a: Click vào "Bạn đang nghĩ gì?" bằng MOUSE COORDINATE
-        console.log("[POST] Bước 2: Tìm và click 'Bạn đang nghĩ gì?'...");
+        // BƯỚC 4a: Scroll lên đầu trang trước (tránh click nhầm vào comment box)
+        console.log("[POST] Bước 2: Scroll lên đầu trang...");
+        await page.evaluate(() => window.scrollTo(0, 0));
+        await delay(1000);
         
-        // Tìm element bằng evaluateHandle (không phải evaluate)
+        console.log("[POST] Tìm ô 'Bạn đang nghĩ gì?' (KHÔNG phải comment box)...");
+        
+        // Tìm element bằng evaluateHandle - CHỈ tìm composer, LOẠI BỎ comment box
         const composerHandle = await page.evaluateHandle(() => {
-            // Tìm theo aria-placeholder (Facebook dùng cái này cho ô compose)
-            let el = document.querySelector('div[aria-placeholder]');
+            // Chiến lược 1: Tìm div[aria-placeholder] chứa "nghĩ gì" (composer)
+            // LOẠI BỎ những cái chứa "bình luận" hoặc "comment" (comment box)
+            const placeholders = Array.from(document.querySelectorAll('div[aria-placeholder]'));
+            let el = placeholders.find(p => {
+                const ph = (p.getAttribute('aria-placeholder') || '').toLowerCase();
+                // CHỈ match composer, KHÔNG match comment box
+                return (ph.includes('nghĩ gì') || ph.includes('on your mind') || ph.includes('suy nghĩ')) &&
+                       !ph.includes('bình luận') && !ph.includes('comment') && !ph.includes('trả lời');
+            });
             if (el) return el;
             
-            // Tìm theo role="button" chứa text - bao gồm Text trên trang Profile
+            // Chiến lược 2: Tìm theo role="button" chứa text "Bạn đang nghĩ gì?"
             const buttons = Array.from(document.querySelectorAll('div[role="button"], span'));
             el = buttons.find(b => {
                 const txt = (b.innerText || '').trim();
                 return txt.length > 3 && txt.length < 50 && (
                     txt.includes("Bạn đang nghĩ gì") || 
                     txt.includes("What's on your mind") ||
-                    txt.includes("Có gì mới") ||
-                    txt.includes("Chia sẻ suy nghĩ") // Text trên trang Profile!
+                    txt.includes("Chia sẻ suy nghĩ")
                 );
             });
             return el || null;
@@ -142,25 +152,40 @@ function spinText(text) {
             await page.keyboard.press('p');
         }
         
-        // Chờ composer dialog xuất hiện
-        console.log("[POST] Bước 3: Chờ composer dialog mở...");
+        // Chờ composer dialog xuất hiện - PHẢI là dialog "Tạo bài viết"
+        console.log("[POST] Bước 3: Chờ composer dialog 'Tạo bài viết'...");
         await delay(rdn(2000, 3000));
         
         // Debug screenshot
         await page.screenshot({ path: path.join(debugDir, 'step2_after_click.png') });
         console.log("[POST] Screenshot step2 saved.");
         
-        // Xác nhận dialog đã mở
+        // Xác nhận dialog "Tạo bài viết" đã mở (KHÔNG phải comment box)
         let dialogOpened = false;
         for (let attempt = 0; attempt < 3; attempt++) {
-            const hasDialog = await page.$('div[role="dialog"]');
-            const hasTextbox = await page.$('div[role="textbox"][contenteditable="true"]');
-            if (hasDialog || hasTextbox) {
+            const dialogCheck = await page.evaluate(() => {
+                const dialog = document.querySelector('div[role="dialog"]');
+                if (!dialog) return { found: false, reason: 'no dialog element' };
+                
+                // Kiểm tra title dialog có chứa "Tạo bài viết" / "Create post"
+                const text = dialog.innerText || '';
+                const isCreatePost = text.includes('Tạo bài viết') || text.includes('Create post') || text.includes('Create Post');
+                
+                // Kiểm tra có textbox trong dialog
+                const hasTextbox = !!dialog.querySelector('div[role="textbox"][contenteditable="true"]');
+                
+                return { found: true, isCreatePost, hasTextbox, titlePreview: text.substring(0, 60) };
+            });
+            
+            console.log(`[POST] Dialog check: ${JSON.stringify(dialogCheck)}`);
+            
+            if (dialogCheck.found && dialogCheck.isCreatePost) {
                 dialogOpened = true;
-                console.log("[POST] ✅ Composer dialog đã mở!");
+                console.log("[POST] ✅ Dialog 'Tạo bài viết' đã mở!");
                 break;
             }
-            console.log(`[POST] Dialog chưa mở, thử lại... (${attempt + 1}/3)`);
+            
+            console.log(`[POST] Dialog chưa đúng, thử lại... (${attempt + 1}/3)`);
             // Thử click lại
             await page.mouse.click(683, 384); // Click giữa màn hình
             await delay(2000);
@@ -176,9 +201,18 @@ function spinText(text) {
         // ============================================================
         console.log("[POST] Bước 4: Gõ nội dung...");
         if (finalMessage) {
-            // Focus textbox bằng evaluate, gõ bằng keyboard
+            // Focus textbox TRONG dialog (không phải comment box ngoài trang)
             const focused = await page.evaluate(() => {
-                const textbox = document.querySelector('div[role="textbox"][contenteditable="true"]');
+                // Ưu tiên: tìm textbox trong dialog
+                const dialog = document.querySelector('div[role="dialog"]');
+                let textbox = null;
+                if (dialog) {
+                    textbox = dialog.querySelector('div[role="textbox"][contenteditable="true"]');
+                }
+                // Fallback: tìm textbox bất kỳ (nhưng rủi ro nhầm comment box)
+                if (!textbox) {
+                    textbox = document.querySelector('div[role="textbox"][contenteditable="true"]');
+                }
                 if (textbox) {
                     textbox.focus();
                     return true;
