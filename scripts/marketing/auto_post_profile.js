@@ -76,12 +76,14 @@ function spinText(text) {
         // ============================================================
         // BƯỚC 4: Vào Facebook và MỞ COMPOSER DIALOG
         // ============================================================
-        console.log("[POST] Bước 1: Vào trang chủ Facebook...");
-        await page.goto("https://www.facebook.com/", { waitUntil: 'networkidle2', timeout: 30000 });
+        // Vào TRANG CÁ NHÂN (không phải newsfeed!) 
+        await page.goto("https://www.facebook.com/me", { waitUntil: 'networkidle2', timeout: 30000 });
         await delay(rdn(3000, 5000));
         
         // Debug: Chụp screenshot xem trang đang hiển thị gì
-        await page.screenshot({ path: path.join(debugDir, 'step1_homepage.png') });
+        const currentUrl = page.url();
+        console.log(`[POST] Bước 1: Đã vào trang cá nhân. URL: ${currentUrl}`);
+        await page.screenshot({ path: path.join(debugDir, 'step1_profile.png') });
         console.log("[POST] Screenshot step1 saved.");
 
         // Kiểm tra đã login chưa (nếu thấy nút login thì dừng)
@@ -102,14 +104,15 @@ function spinText(text) {
             let el = document.querySelector('div[aria-placeholder]');
             if (el) return el;
             
-            // Tìm theo role="button" chứa text
+            // Tìm theo role="button" chứa text - bao gồm Text trên trang Profile
             const buttons = Array.from(document.querySelectorAll('div[role="button"], span'));
             el = buttons.find(b => {
                 const txt = (b.innerText || '').trim();
-                return txt.length > 5 && txt.length < 50 && (
+                return txt.length > 3 && txt.length < 50 && (
                     txt.includes("Bạn đang nghĩ gì") || 
                     txt.includes("What's on your mind") ||
-                    txt.includes("Có gì mới")
+                    txt.includes("Có gì mới") ||
+                    txt.includes("Chia sẻ suy nghĩ") // Text trên trang Profile!
                 );
             });
             return el || null;
