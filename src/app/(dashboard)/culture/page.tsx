@@ -84,19 +84,21 @@ function EditableImage({ id, label, className = "aspect-video" }: { id: string, 
     }
 
     return (
-        <div className={`relative group overflow-hidden border-2 border-dashed border-teal-400 flex items-center justify-center ${finalClasses}`}>
-           {imageUrl ? <img src={imageUrl} alt={label} className="absolute inset-0 w-full h-full object-cover opacity-60" /> : <div className="absolute inset-0 w-full h-full bg-teal-50" />}
+        <div className={`relative group border-2 border-dashed border-teal-400 flex items-center justify-center hover:z-50 ${finalClasses}`}>
+           {imageUrl ? <img src={imageUrl} alt={label} className="absolute inset-0 w-full h-full object-cover opacity-60 rounded-[inherit]" /> : <div className="absolute inset-0 w-full h-full bg-teal-50 rounded-[inherit]" />}
 
-           <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 opacity-0 group-hover:opacity-100 transition-opacity z-10 backdrop-blur-sm">
+           <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-[inherit] z-10 backdrop-blur-sm pointer-events-none"></div>
+           
+           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
                {isUploading ? (
-                   <span className="text-white text-sm font-bold flex items-center gap-2">
+                   <span className="text-white text-sm font-bold flex items-center gap-2 whitespace-nowrap bg-slate-900/80 px-4 py-2 rounded-xl shadow-xl">
                        <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span> 
                        Đang tải ảnh...
                    </span>
                ) : (
-                   <div className="flex flex-col items-center gap-3 w-max p-2">
+                   <div className="flex flex-col items-center gap-3 w-max p-2 hover:z-50">
                        {/* Upload Button */}
-                       <label className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg cursor-pointer text-sm font-bold flex items-center gap-2 shadow-lg mb-1">
+                       <label className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg cursor-pointer text-sm font-bold flex items-center gap-2 shadow-lg mb-1 pointer-events-auto transition hover:scale-105 active:scale-95">
                            <ImageIcon className="w-4 h-4" /> Chọn ảnh mới
                            <input 
                                 type="file" 
@@ -107,23 +109,23 @@ function EditableImage({ id, label, className = "aspect-video" }: { id: string, 
                        </label>
 
                        {/* Controls Panel */}
-                       <div className="flex flex-col gap-2 bg-slate-900/80 p-2.5 rounded-xl border border-slate-700 shadow-xl" onClick={e => e.stopPropagation()}>
+                       <div className="flex flex-col gap-2 bg-slate-900/90 p-2.5 rounded-xl border border-slate-700 shadow-xl pointer-events-auto" onClick={e => e.stopPropagation()}>
                            <div className="flex items-center gap-2 text-xs">
                                <span className="text-slate-300 w-10 font-medium tracking-wide">DÁNG:</span>
-                               <button onClick={() => updateContent(`${id}_shape`, 'square')} className={`p-1.5 rounded ${shape==='square'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Vuông">⏹️</button>
-                               <button onClick={() => updateContent(`${id}_shape`, 'portrait')} className={`p-1.5 rounded ${shape==='portrait'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Dọc A4">📄</button>
-                               <button onClick={() => updateContent(`${id}_shape`, 'video')} className={`p-1.5 rounded ${shape==='video'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Ngang">🖥️</button>
-                               <button onClick={() => updateContent(`${id}_shape`, 'cinema')} className={`p-1.5 rounded ${shape==='cinema'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Banner">▭</button>
-                               <button onClick={() => updateContent(`${id}_shape`, 'circle')} className={`p-1.5 rounded ${shape==='circle'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Tròn">🔵</button>
-                               <button onClick={() => updateContent(`${id}_shape`, '')} className={`p-1.5 rounded font-bold ${!shape?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Mặc định">MĐ</button>
+                               <button onClick={() => updateContent(`${id}_shape`, 'square')} className={`p-1.5 rounded transition ${shape==='square'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Vuông">⏹️</button>
+                               <button onClick={() => updateContent(`${id}_shape`, 'portrait')} className={`p-1.5 rounded transition ${shape==='portrait'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Dọc A4">📄</button>
+                               <button onClick={() => updateContent(`${id}_shape`, 'video')} className={`p-1.5 rounded transition ${shape==='video'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Ngang">🖥️</button>
+                               <button onClick={() => updateContent(`${id}_shape`, 'cinema')} className={`p-1.5 rounded transition ${shape==='cinema'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Banner">▭</button>
+                               <button onClick={() => updateContent(`${id}_shape`, 'circle')} className={`p-1.5 rounded transition ${shape==='circle'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Tròn">🔵</button>
+                               <button onClick={() => updateContent(`${id}_shape`, '')} className={`p-1.5 rounded font-bold transition ${!shape?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Mặc định">MĐ</button>
                            </div>
                            <div className="flex items-center gap-2 text-xs">
                                <span className="text-slate-300 w-10 font-medium tracking-wide">CỠ:</span>
-                               <button onClick={() => updateContent(`${id}_size`, 'sm')} className={`px-2 py-1 rounded font-bold ${size==='sm'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>S</button>
-                               <button onClick={() => updateContent(`${id}_size`, 'md')} className={`px-2 py-1 rounded font-bold ${size==='md'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>M</button>
-                               <button onClick={() => updateContent(`${id}_size`, 'lg')} className={`px-2 py-1 rounded font-bold ${size==='lg'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>L</button>
-                               <button onClick={() => updateContent(`${id}_size`, 'full')} className={`px-2 py-1 rounded font-bold ${size==='full'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>Full</button>
-                               <button onClick={() => updateContent(`${id}_size`, '')} className={`px-2 py-1 rounded font-bold ${!size?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>MĐ</button>
+                               <button onClick={() => updateContent(`${id}_size`, 'sm')} className={`px-2 py-1 rounded font-bold transition ${size==='sm'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>S</button>
+                               <button onClick={() => updateContent(`${id}_size`, 'md')} className={`px-2 py-1 rounded font-bold transition ${size==='md'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>M</button>
+                               <button onClick={() => updateContent(`${id}_size`, 'lg')} className={`px-2 py-1 rounded font-bold transition ${size==='lg'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>L</button>
+                               <button onClick={() => updateContent(`${id}_size`, 'full')} className={`px-2 py-1 rounded font-bold transition ${size==='full'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>Full</button>
+                               <button onClick={() => updateContent(`${id}_size`, '')} className={`px-2 py-1 rounded font-bold transition ${!size?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>MĐ</button>
                            </div>
                        </div>
                    </div>
