@@ -714,15 +714,21 @@ export default function LeadDistributionSettings() {
                                         {user.is_online ? 'Online' : 'Offline'}
                                     </span>
                                     {user.is_online && user.current_ip && config.company_ips.length > 0 && (
-                                        <span className={`inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-medium ${
-                                            config.company_ips.includes(user.current_ip)
-                                                ? 'bg-blue-100 text-blue-700'
-                                                : 'bg-orange-100 text-orange-600'
-                                        }`}>
-                                            {config.company_ips.includes(user.current_ip)
-                                                ? <><Building2 className="w-2.5 h-2.5" /> Công ty</>
-                                                : <><Home className="w-2.5 h-2.5" /> Ngoài</>}
-                                        </span>
+                                        (() => {
+                                            const normalizedCurrentIp = user.current_ip.replace(/^::ffff:/, '').trim();
+                                            const isCompanyIp = config.company_ips.some(ip => ip.replace(/^::ffff:/, '').trim() === normalizedCurrentIp);
+                                            return (
+                                                <span className={`inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-full font-medium ${
+                                                    isCompanyIp
+                                                        ? 'bg-blue-100 text-blue-700'
+                                                        : 'bg-orange-100 text-orange-600'
+                                                }`}>
+                                                    {isCompanyIp
+                                                        ? <><Building2 className="w-2.5 h-2.5" /> Công ty</>
+                                                        : <><Home className="w-2.5 h-2.5" /> Ngoài</>}
+                                                </span>
+                                            );
+                                        })()
                                     )}
                                 </div>
                             </div>
