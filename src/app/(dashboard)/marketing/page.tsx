@@ -6,8 +6,6 @@ import Link from 'next/link';
 import { useAuth } from "@/components/auth/AuthProvider";
 import { StatsSkeleton } from "@/components/ui/SkeletonUI";
 import { fetchMarketingStats, fetchCampaignPerformance, CampaignPerformance } from "@/lib/marketingStore";
-import BotActivityLog from "@/components/marketing/BotActivityLog";
-import BotConfigModal from "@/components/marketing/BotConfigModal";
 
 export default function MarketingDashboard() {
     const { user, session, isLoading: authIsLoading } = useAuth();
@@ -19,7 +17,6 @@ export default function MarketingDashboard() {
     });
     const [performance, setPerformance] = useState<CampaignPerformance[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [activeScript, setActiveScript] = useState<{ name: string, title: string } | null>(null);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -122,8 +119,6 @@ export default function MarketingDashboard() {
                 })}
             </div>
 
-
-
             {/* Campaign Performance Report */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="p-6 border-b border-slate-200 flex items-center justify-between">
@@ -145,7 +140,7 @@ export default function MarketingDashboard() {
                                     start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
                                 }
                                 // Trigger refetch with start date
-                                const fetchPerfData = async () => { // Renamed to avoid conflict with useEffect's fetchStats
+                                const fetchPerfData = async () => {
                                     if (!session?.access_token) return;
                                     const perfData = await fetchCampaignPerformance(session.access_token, start);
                                     setPerformance(perfData);
@@ -222,119 +217,8 @@ export default function MarketingDashboard() {
                         </tbody>
                     </table>
                 </div>
-
-                {/* COMMAND CENTER & LOGS */}
-                <div className="mt-8 grid grid-cols-1 xl:grid-cols-3 gap-6">
-                    {/* LEFT: CONTROLS */}
-                    <div className="xl:col-span-2 bg-white p-6 rounded-xl border border-slate-200 shadow-sm relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                            <Bot className="w-24 h-24 text-blue-600" />
-                        </div>
-
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="p-3 bg-blue-100 rounded-lg">
-                                <Bot className="w-6 h-6 text-blue-600" />
-                            </div>
-                            <div>
-                                <h2 className="text-xl font-bold text-slate-800">Command Center</h2>
-                                <p className="text-slate-500">Trung tâm điều khiển BOT tự động</p>
-                            </div>
-                            <Link
-                                href="/marketing/leads"
-                                className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 text-sm font-medium transition-colors"
-                            >
-                                <Users className="w-4 h-4" />
-                                Sổ Địa Chỉ (Leads)
-                            </Link>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <CommandCard
-                                title="Săn Khách Hàng"
-                                desc="Tìm & Kết bạn theo từ khóa"
-                                icon={<Search className="w-5 h-5" />}
-                                color="blue"
-                                onClick={() => setActiveScript({ name: 'execute_search_add.js', title: 'Săn Khách Hàng' })}
-                            />
-                            <CommandCard
-                                title="Quét Hội Nhóm"
-                                desc="Tìm & Xin vào nhóm tiềm năng"
-                                icon={<Users className="w-5 h-5" />}
-                                color="indigo"
-                                onClick={() => setActiveScript({ name: 'group_finder.js', title: 'Quét Hội Nhóm' })}
-                            />
-                            <CommandCard
-                                title="Mời Bạn Bè"
-                                desc="Mời bạn bè Like Page (Traffic)"
-                                icon={<UserPlus className="w-5 h-5" />}
-                                color="green"
-                                onClick={() => setActiveScript({ name: 'invite_friend_page.js', title: 'Mời Bạn Bè' })}
-                            />
-                            <CommandCard
-                                title="Lá Chắn Ảo"
-                                desc="Giả lập hành vi & Nuôi nick"
-                                icon={<Shield className="w-5 h-5" />}
-                                color="slate"
-                                onClick={() => setActiveScript({ name: 'defense_engine.js', title: 'Lá Chắn Ảo' })}
-                            />
-                            <CommandCard
-                                title="Đăng Nhập"
-                                desc="Mở trình duyệt để Login tay"
-                                icon={<Key className="w-5 h-5" />}
-                                color="orange"
-                                onClick={() => setActiveScript({ name: 'manual_login.js', title: 'Đăng Nhập' })}
-                            />
-                        </div>
-                    </div>
-
-                    {/* RIGHT: LIVE LOGS */}
-                    <div className="xl:col-span-1">
-                        <BotActivityLog />
-                    </div>
-                </div>
-
             </div>
-
-
-            {/* Config Modal */}
-            {
-                activeScript && (
-                    <BotConfigModal
-                        isOpen={!!activeScript}
-                        onClose={() => setActiveScript(null)}
-                        scriptName={activeScript.name}
-                        title={activeScript.title}
-                    />
-                )
-            }
         </div >
-    );
-}
-
-function CommandCard({ title, desc, icon, color, onClick }: { title: string, desc: string, icon: React.ReactNode, color: string, onClick: () => void }) {
-
-    // Simplification: CommandCard is now just a trigger button. Running logic moved to Modal.
-    const colors: any = {
-        blue: "bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200",
-        indigo: "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border-indigo-200",
-        green: "bg-green-50 text-green-600 hover:bg-green-100 border-green-200",
-        slate: "bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200",
-        orange: "bg-orange-50 text-orange-600 hover:bg-orange-100 border-orange-200"
-    };
-
-    return (
-        <button
-            onClick={onClick}
-            className={`flex flex-col items-start p-4 rounded-xl border transition-all ${colors[color]} hover:-translate-y-1`}
-        >
-            <div className="flex items-center justify-between w-full mb-3">
-                <div className="p-2 bg-white rounded-lg shadow-sm">
-                    {icon}
-                </div>
-            </div>
-            <h3 className="font-bold text-lg mb-1">{title}</h3>
-            <p className="text-sm opacity-80 text-left">{desc}</p>
-        </button>
     );
 }
 

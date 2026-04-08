@@ -43,6 +43,7 @@ import {
     Wrench,         // Equipment
     FileInput,      // Brief
     Heart,
+    Bot,
 } from "lucide-react";
 import { MODULES } from '@/modules/registry';
 

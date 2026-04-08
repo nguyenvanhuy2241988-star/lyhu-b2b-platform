@@ -3,53 +3,62 @@ const { createClient } = require('@supabase/supabase-js');
 const { exec } = require('child_process');
 const path = require('path');
 
-// Khởi tạo Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-    console.error("❌ THIẾU CẤU HÌNH: Hãy đảm bảo file .env.local đã có đủ NEXT_PUBLIC_SUPABASE_URL và NEXT_PUBLIC_SUPABASE_ANON_KEY.");
+    console.error("❌ THIẾU CẤU HÌNH: Hãy đảm bảo file .env.local có đủ biến của Supabase.");
     process.exit(1);
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 console.log("==========================================");
-console.log("🚀 KHỞI ĐỘNG CỖ MÁY: BOT WORKER (HYBRID)");
-console.log("🎧 Đang lắng nghe kênh Vệ tinh (marketing_bot_commands)...");
+console.log("🚀 KHỞI ĐỘNG CỖ MÁY: BOT WORKER (HYBRID - LITE V2)");
+console.log("🎧 Đang Quét tín hiệu từ trạm Supabase mỗi 2 giây...");
 console.log("==========================================");
 
-// Lắng nghe realtime từ bảng marketing_bot_commands
-const channel = supabase.channel('bot-worker-room')
-    .on(
-        'postgres_changes',
-        {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'marketing_bot_commands',
-            filter: "status=eq.pending"
-        },
-        async (payload) => {
-            const command = payload.new;
+let isWorking = false;
+
+// Dùng kỹ thuật Polling (Quét liên tục) thay vì WebSocket để đảm bảo 100% không bị miss mạng
+setInterval(async () => {
+    if (isWorking) return; // Đang chạy Bot thì không nhận thêm
+
+    try {
+        // Tìm 1 lệnh đang ở trạng thái pending cũ nhất
+        const { data, error } = await supabase
+            .from('marketing_bot_commands')
+            .select('*')
+            .eq('status', 'pending')
+            .order('created_at', { ascending: true })
+            .limit(1);
+
+        if (error) {
+            console.error("Lỗi khi quét database:", error.message);
+            return;
+        }
+
+        if (data && data.length > 0) {
+            const command = data[0];
+            isWorking = true;
             console.log(`\n🔔 [TÍN HIỆU MỚI] Nhận được lệnh kích hoạt: ${command.script_name}`);
             
-            // Đổi trạng thái thành running
+            // Đánh dấu là đang chạy
             await supabase
                 .from('marketing_bot_commands')
                 .update({ status: 'running' })
                 .eq('id', command.id);
 
-            // Chạy lệnh CMD y như cũ
             const scriptPath = path.join(__dirname, 'marketing', command.script_name);
             const safeArgs = command.args ? `"${command.args.replace(/[&|<>^%]/g, '')}"` : '';
             
-            // Gọi màn hình CMD ảo y như cách cũ
             console.log(`💻 Đang gọi Terminal cho Bot...`);
             let execCommand = `start cmd /k "node ${scriptPath} ${safeArgs}"`;
             
-            exec(execCommand, async (error) => {
-                if (error) {
-                    console.error(`❌ Lỗi khởi chạy Bot: ${error.message}`);
+            exec(execCommand, async (err) => {
+                isWorking = false; // Xong việc, sẵn sàng nhận ca mới
+                if (err) {
+                    console.error(`❌ Lỗi khởi chạy Bot: ${err.message}`);
                     await supabase
                         .from('marketing_bot_commands')
                         .update({ status: 'error' })
@@ -58,26 +67,18 @@ const channel = supabase.channel('bot-worker-room')
                 }
                 
                 console.log(`✅ Đã đẩy lệnh thành công! Đang chờ tín hiệu tiếp theo...`);
-                // Note: Trạng thái complete nên do chính bản thân script (ví dụ defense_engine.js) cập nhật 
-                // sau khi chạy xong. Tuy nhiên ở đây tạm coi như mở bảng cmd lên là success.
                 await supabase
                     .from('marketing_bot_commands')
                     .update({ status: 'completed' })
                     .eq('id', command.id);
             });
         }
-    )
-    .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-            console.log("📡 Đã kết nối Mạng lưới Vệ tinh Supabase Realtime thành công!");
-        } else if (status === 'CHANNEL_ERROR') {
-            console.error("❌ Mất kết nối Realtime...");
-        }
-    });
+    } catch (e) {
+        console.error("Lỗi:", e);
+    }
+}, 2000); // 2 giây quét 1 lần
 
-// Chặn tắt app đột xuất
 process.on('SIGINT', () => {
-    console.log("\n🛑 Đang ngắt kết nối Worker...");
-    supabase.removeChannel(channel);
+    console.log("\n🛑 Đang tắt Worker...");
     process.exit(0);
 });
