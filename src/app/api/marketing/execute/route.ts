@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { exec } from 'child_process';
-import path from 'path';
+import { createClient } from '@/lib/supabaseClient';
 
 export async function POST(req: Request) {
     try {
@@ -23,26 +22,27 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Invalid script name' }, { status: 400 });
         }
 
-        const scriptPath = path.join(process.cwd(), 'scripts', 'marketing', scriptName);
+        const supabase = createClient();
 
-        // Execute the script
-        // Note: We use 'start' on Windows to open a new terminal window so the user can see the bot running.
-        // For 'defense_engine.js', capturing output might be better, but for Puppeteer scripts with 'headless: false',
-        // seeing the valid browser window + terminal logs is best.
+        // Lấy thông tin user hiện tại (để biết ai ra lệnh bot)
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        // Insert lệnh vào database để Bot Worker ở Local nghe lén và chạy
+        const { error } = await supabase
+            .from('marketing_bot_commands')
+            .insert({
+                script_name: scriptName,
+                args: args || '',
+                status: 'pending',
+                created_by: session?.user?.id || null
+            });
 
-        // Sanitize args to prevent command injection (basic check)
-        const safeArgs = args ? `"${args.replace(/[&|<>^%]/g, '')}"` : '';
+        if (error) {
+            console.error("Lỗi insert lệnh bot vào Supabase:", error);
+            return NextResponse.json({ error: 'Database insert failed' }, { status: 500 });
+        }
 
-        let command = `start cmd /k "node ${scriptPath} ${safeArgs}"`;
-
-        exec(command, (error, stdout, stderr) => {
-            if (error) {
-                console.error(`exec error: ${error}`);
-                return;
-            }
-        });
-
-        return NextResponse.json({ success: true, message: `Launched ${scriptName} in new terminal` });
+        return NextResponse.json({ success: true, message: `Lệnh [${scriptName}] đã được chuyển vào hàng đợi thành công!` });
 
     } catch (error) {
         console.error('API Error:', error);
