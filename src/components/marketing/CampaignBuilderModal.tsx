@@ -28,6 +28,9 @@ export default function CampaignBuilderModal({ isOpen, onClose, onSaved }: Campa
         { id: 'execute_post_scan.js', label: '🕵️ Quét Comment Bài Viết' },
         { id: 'execute_suggestion_scan.js', label: '🌊 Kết bạn Theo Đề Xuất (Gợi ý)' },
         { id: 'execute_rival_scan.js', label: '🎯 Cướp Khách Đối Thủ' },
+        { id: 'auto_post_profile.js', label: '✍️ Đăng Bài Cá Nhân (Auto Post)' },
+        { id: 'auto_post_group.js', label: '📢 Đăng Bài Hội Nhóm (Seeding)' },
+        { id: 'auto_comment_group.js', label: '💬 Đi Comment Dạo (Top Đỉnh)' },
         { id: 'defense_engine.js', label: '🛡️ Bật Lá Chắn Ảo (Nuôi Trast)' },
         { id: 'manual_login.js', label: '🔑 Tạm dừng để Đăng Nhập Tay' }
     ];

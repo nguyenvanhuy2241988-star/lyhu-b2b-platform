@@ -7,11 +7,12 @@ import BotActivityLog from "@/components/marketing/BotActivityLog";
 import BotConfigModal from "@/components/marketing/BotConfigModal";
 import CampaignBuilderModal from "@/components/marketing/CampaignBuilderModal";
 import CampaignRunModal from "@/components/marketing/CampaignRunModal";
+import TabContentLibrary from "@/components/marketing/TabContentLibrary";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from 'sonner';
 
 export default function BotCenterPage() {
-    const [activeTab, setActiveTab] = useState<'commands' | 'profiles' | 'queue' | 'campaigns'>('commands');
+    const [activeTab, setActiveTab] = useState<'commands' | 'profiles' | 'queue' | 'campaigns' | 'contents'>('commands');
     const [activeScript, setActiveScript] = useState<{ name: string, title: string } | null>(null);
 
     const tabs = [
@@ -19,6 +20,7 @@ export default function BotCenterPage() {
         { id: 'profiles', label: 'Đa Tài Khoản (Profiles)', icon: Users },
         { id: 'queue', label: 'Hàng Đợi & Lịch Sử', icon: History },
         { id: 'campaigns', label: 'Chiến Dịch Liên Hoàn', icon: FolderOpen },
+        { id: 'contents', label: 'Kho Nội Dung', icon: FolderOpen },
     ];
 
     return (
@@ -60,8 +62,9 @@ export default function BotCenterPage() {
                     />
                 )}
                 {activeTab === 'profiles' && <TabProfiles />}
-                {activeTab === 'queue' && <TabQueue />}
-                {activeTab === 'campaigns' && <TabCampaigns />}
+                { activeTab === 'queue' && <TabQueue /> }
+                { activeTab === 'campaigns' && <TabCampaigns /> }
+                { activeTab === 'contents' && <TabContentLibrary /> }
             </div>
 
             {/* CONFIG MODAL */}
@@ -126,6 +129,27 @@ function TabCommands({ onRunScript }: { onRunScript: (s: any) => void }) {
                         icon={<Key className="w-5 h-5" />}
                         color="orange"
                         onClick={() => onRunScript({ name: 'manual_login.js', title: 'Đăng Nhập' })}
+                    />
+                    <CommandCard
+                        title="Đăng Bài Cá Nhân"
+                        desc="Đăng Text/Ảnh lên Profile"
+                        icon={<Users className="w-5 h-5" />}
+                        color="indigo"
+                        onClick={() => onRunScript({ name: 'auto_post_profile.js', title: 'Đăng Bài Cá Nhân' })}
+                    />
+                    <CommandCard
+                        title="Đăng Bài Hội Nhóm"
+                        desc="Mở Group & Đăng bài Bán hàng"
+                        icon={<Users className="w-5 h-5" />}
+                        color="green"
+                        onClick={() => onRunScript({ name: 'auto_post_group.js', title: 'Đăng Bài Hội Nhóm' })}
+                    />
+                    <CommandCard
+                        title="Đi Comment Dạo"
+                        desc="Quét Top post Group & Bình luận"
+                        icon={<Search className="w-5 h-5" />}
+                        color="blue"
+                        onClick={() => onRunScript({ name: 'auto_comment_group.js', title: 'Đi Comment Dạo' })}
                     />
                 </div>
             </div>
