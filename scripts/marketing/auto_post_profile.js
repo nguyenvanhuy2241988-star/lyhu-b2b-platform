@@ -1,5 +1,5 @@
 const { launchBrowser, delay, rdn } = require('./setup_browser');
-const { logTask } = require('./supabase_logger');
+const { logAction } = require('./supabase_logger');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
@@ -59,7 +59,7 @@ function spinText(text) {
 
         if (error || !data || data.length === 0) {
             console.error(`[POST] Không tìm thấy bài đăng nào trong kho "${category}". Dừng lệnh.`);
-            await logTask(null, `Đăng Bài: Lỗi - Kho "${category}" trống`);
+            await logAction('post', 'error', `Đăng Bài: Lỗi - Kho "${category}" trống`);
             process.exit(1);
         }
 
@@ -80,111 +80,161 @@ function spinText(text) {
         }
 
         // 3. Khởi chạy Trình duyệt
-        const { browser: b, page } = await launchBrowser();
-        browser = b;
+        browser = await launchBrowser();
+        const pages = await browser.pages();
+        const page = pages.length > 0 ? pages[0] : await browser.newPage();
 
-        await logTask(null, `Tiến hành Đăng Bài lên Cá nhân...`);
-        
-        await page.goto("https://www.facebook.com/", { waitUntil: 'domcontentloaded' });
-        await delay(rdn(3000, 5000));
+        await logAction('post', 'info', `Tiến hành Đăng Bài lên Cá nhân...`);
 
-        // 4. Click ô Bạn đang nghĩ gì
-        console.log("[POST] Đang tìm ô cảm nghĩ...");
-        const postBoxSelectors = [
-            `div[role="button"]:has-text("Bạn đang nghĩ gì")`,
-            `div[role="button"]:has-text("What's on your mind")`,
-            `span:has-text("Bạn đang nghĩ gì")`,
-            `span:has-text("What's on your mind")`
-        ];
+        // ===== CHIẾN LƯỢC MỚI: Dùng mbasic.facebook.com =====
+        // mbasic là phiên bản HTML thuần của Facebook, KHÔNG có React, 
+        // KHÔNG có overlay/dialog, KHÔNG cần click phức tạp.
+        // Chỉ cần fill form và submit - 100% ổn định.
 
-        let clicked = false;
-        for (const sel of postBoxSelectors) {
-            try {
-                await page.waitForSelector(sel, { timeout: 3000 });
-                await page.click(sel);
-                clicked = true;
-                break;
-            } catch (e) {}
-        }
-
-        if (!clicked) {
-            // Fallback: Click profile -> click post
-            await page.goto("https://www.facebook.com/me");
-            await delay(4000);
-            const box = await page.$('div[role="button"]:has-text("Bạn đang nghĩ gì"), div[role="button"]:has-text("What\'s on your mind")');
-            if (box) await box.click();
-            else throw new Error("Không thể tìm thấy Ô Đăng Bài");
-        }
-
-        await delay(rdn(2000, 3000));
-
-        // 5. Gõ nội dung (Bắt buộc phải chờ popup)
-        const activeDialog = await page.$('div[role="dialog"]');
-        if (!activeDialog) throw new Error("Chưa mở được giao diện nhập chữ");
-
-        if (finalMessage) {
-            const textBox = await page.$('div[role="textbox"][contenteditable="true"]');
-            if (textBox) {
-                await textBox.click();
-                await delay(1000);
-                await textBox.type(finalMessage, { delay: rdn(30, 80) }); // Gõ như người thật
-                console.log("[POST] Đã gõ chữ xong.");
-                await delay(rdn(1000, 2000));
-            }
-        }
-
-        // 6. Tải media lên (Móc nối thần tốc)
+        // Bước 4a: Nếu có ảnh, dùng flow upload ảnh trước
         if (tempImagePath) {
-            const inputUploadHandle = await page.$('input[type=file]');
-            if (inputUploadHandle) {
-                console.log(`[POST] Móc file vào Trình duyệt: ${tempImagePath}`);
-                await inputUploadHandle.uploadFile(tempImagePath);
-                
-                // Nếu là Video thì cần thời gian đẩy File to hơn
-                const isVideo = tempImagePath.match(/\.(mp4|mov|avi|wmv)$/i);
-                if (isVideo) {
-                    console.log("[POST] Phát hiện Đính kèm Video! Chờ 20 - 40 giây để upload...");
-                    await delay(rdn(20000, 40000));
+            console.log("[POST] Chế độ: Đăng bài CÓ ảnh (mbasic)...");
+            
+            // Bước 1: Vào trang chính mbasic để tìm link "Ảnh/Photo" 
+            await page.goto("https://mbasic.facebook.com/", { waitUntil: 'networkidle2', timeout: 30000 });
+            await delay(rdn(2000, 3000));
+
+            // Bước 2: Tìm link "Ảnh" hoặc "Photo" trên composer  
+            const photoLink = await page.evaluate(() => {
+                const links = Array.from(document.querySelectorAll('a'));
+                const match = links.find(a => {
+                    const txt = (a.textContent || '').trim().toLowerCase();
+                    return txt.includes('ảnh') || txt.includes('photo') || txt.includes('hình ảnh');
+                });
+                return match ? match.href : null;
+            });
+
+            if (!photoLink) {
+                // Fallback: Đăng text-only nếu không tìm thấy link upload ảnh
+                console.log("[POST] Không tìm thấy link upload ảnh, chuyển sang đăng text-only...");
+                const textArea = await page.$('textarea[name="xc_message"]');
+                if (textArea && finalMessage) {
+                    await textArea.click();
+                    await delay(500);
+                    await textArea.type(finalMessage, { delay: rdn(20, 50) });
+                }
+                const postBtn = await page.$('input[type="submit"][name="view_post"], input[type="submit"][value="Đăng"], input[type="submit"][value="Post"]');
+                if (postBtn) {
+                    await postBtn.click();
+                    await delay(rdn(5000, 8000));
+                    console.log("[POST] 🟢 Đã đăng bài TEXT (không upload được ảnh)!");
+                    await logAction('post', 'success', `Thành công: Đã đăng 1 Status Cá Nhân, text-only (Kho: ${category})`);
                 } else {
-                    await delay(rdn(4000, 7000)); // Chờ FB load ảnh lên cache
+                    throw new Error("Không tìm thấy nút Đăng trên mbasic.");
                 }
             } else {
-                console.log("[POST] Cảnh báo: Không tìm thấy nút Upload file.");
-            }
-        }
+                // Bước 3: Vào trang upload ảnh
+                console.log(`[POST] Tìm thấy link upload: ${photoLink}`);
+                await page.goto(photoLink, { waitUntil: 'networkidle2', timeout: 30000 });
+                await delay(rdn(2000, 3000));
 
-        // 7. Ấn Nút Đăng (Post)
-        console.log("[POST] Sẵn sàng đẩy nòng... Đăng bài!");
-        const postButtonSelectors = [
-            `div[aria-label="Đăng"][role="button"]`,
-            `div[aria-label="Post"][role="button"]`
-        ];
-        
-        let posted = false;
-        for (const btnSel of postButtonSelectors) {
-            const btn = await page.$(btnSel);
-            if (btn) {
-                // Kiểm tra xem nút có bị vô hiệu hóa (aria-disabled) không
-                const isDisabled = await page.evaluate(el => el.getAttribute('aria-disabled'), btn);
-                if (isDisabled !== 'true') {
-                    await btn.click();
-                    posted = true;
-                    break;
+                // Bước 4: Tìm file input và upload
+                const fileInput = await page.$('input[type="file"]');
+                if (fileInput) {
+                    console.log(`[POST] Đang upload ảnh: ${tempImagePath}`);
+                    await fileInput.uploadFile(tempImagePath);
+                    await delay(rdn(3000, 5000));
+
+                    // Gõ caption/text nếu có
+                    const captionBox = await page.$('textarea');
+                    if (captionBox && finalMessage) {
+                        await captionBox.click();
+                        await delay(500);
+                        await captionBox.type(finalMessage, { delay: rdn(20, 50) });
+                        console.log("[POST] Đã gõ nội dung kèm ảnh.");
+                    }
+
+                    const isVideo = tempImagePath.match(/\.(mp4|mov|avi|wmv)$/i);
+                    if (isVideo) {
+                        console.log("[POST] Phát hiện Video! Chờ upload...");
+                        await delay(rdn(20000, 40000));
+                    }
+
+                    // Submit
+                    const submitBtn = await page.$('input[type="submit"]');
+                    if (submitBtn) {
+                        await submitBtn.click();
+                        await delay(rdn(5000, 8000));
+                        console.log("[POST] 🟢 Đã đăng bài CÓ ẢNH thành công!");
+                        await logAction('post', 'success', `Thành công: Đã đăng 1 Status Cá Nhân có ảnh (Kho: ${category})`);
+                    } else {
+                        throw new Error("Không tìm thấy nút Submit trên trang upload ảnh.");
+                    }
+                } else {
+                    throw new Error("Không tìm thấy input file trên trang upload ảnh mbasic.");
                 }
             }
-        }
-
-        if (posted) {
-            await delay(rdn(6000, 10000)); // Chờ FB nhả bài lên newsfeed
-            console.log("[POST] 🟢 Hoàn thành lệnh Đăng Bài Hành Động!");
-            await logTask(null, `Thành công: Đã đăng 1 Status Cá Nhân (Kho: ${category})`);
         } else {
-            throw new Error("Nút Đăng Bài bị ẩn hoặc bị khóa.");
+            // Bước 4b: Đăng bài CHỈ có text (không ảnh)
+            console.log("[POST] Chế độ: Đăng bài CHỈ TEXT (mbasic)...");
+            await page.goto("https://mbasic.facebook.com/", { waitUntil: 'networkidle2', timeout: 30000 });
+            await delay(rdn(2000, 3000));
+
+            // Trên mbasic, ô đăng bài là textarea name="xc_message"
+            const textArea = await page.$('textarea[name="xc_message"]');
+            if (textArea && finalMessage) {
+                await textArea.click();
+                await delay(500);
+                await textArea.type(finalMessage, { delay: rdn(20, 50) });
+                console.log("[POST] Đã gõ nội dung bài viết.");
+                await delay(rdn(1000, 2000));
+            } else if (!textArea) {
+                // Fallback: thử tìm link "Bạn đang nghĩ gì" trên mbasic rồi click vào
+                console.log("[POST] Không thấy textarea trực tiếp, thử tìm link composer...");
+                const composerLink = await page.evaluate(() => {
+                    const links = Array.from(document.querySelectorAll('a'));
+                    const match = links.find(a => {
+                        const txt = (a.textContent || '').trim();
+                        return txt.includes("đang nghĩ gì") || txt.includes("on your mind") || txt.includes("Viết gì đó");
+                    });
+                    return match ? match.href : null;
+                });
+
+                if (composerLink) {
+                    await page.goto(composerLink, { waitUntil: 'networkidle2', timeout: 30000 });
+                    await delay(rdn(2000, 3000));
+                    
+                    const composerTextArea = await page.$('textarea');
+                    if (composerTextArea && finalMessage) {
+                        await composerTextArea.click();
+                        await delay(500);
+                        await composerTextArea.type(finalMessage, { delay: rdn(20, 50) });
+                        console.log("[POST] Đã gõ nội dung (qua composer link).");
+                    }
+                } else {
+                    throw new Error("Không tìm thấy ô đăng bài trên mbasic.facebook.com");
+                }
+            }
+
+            // Submit form
+            const postBtn = await page.$('input[type="submit"][name="view_post"], input[type="submit"][value="Đăng"], input[type="submit"][value="Post"]');
+            if (postBtn) {
+                await postBtn.click();
+                await delay(rdn(5000, 8000));
+                console.log("[POST] 🟢 Đã đăng bài TEXT thành công!");
+                await logAction('post', 'success', `Thành công: Đã đăng 1 Status Cá Nhân (Kho: ${category})`);
+            } else {
+                // Fallback: submit bất kỳ
+                const anySubmit = await page.$('input[type="submit"]');
+                if (anySubmit) {
+                    await anySubmit.click();
+                    await delay(rdn(5000, 8000));
+                    console.log("[POST] 🟢 Đã đăng bài TEXT thành công (fallback)!");
+                    await logAction('post', 'success', `Thành công: Đã đăng 1 Status Cá Nhân (Kho: ${category})`);
+                } else {
+                    throw new Error("Không tìm thấy nút Đăng trên mbasic.");
+                }
+            }
         }
 
     } catch (e) {
         console.error("[POST_ERROR]", e);
-        await logTask(null, `Lỗi đăng bài: ${e.message}`);
+        await logAction('post', 'error', `Lỗi đăng bài: ${e.message}`);
     } finally {
         if (browser) await browser.close();
         if (tempImagePath && fs.existsSync(tempImagePath)) {

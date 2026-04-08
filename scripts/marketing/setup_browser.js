@@ -59,4 +59,12 @@ if (require.main === module) {
     })();
 }
 
-module.exports = { launchBrowser };
+function delay(time) {
+    return new Promise(resolve => setTimeout(resolve, time));
+}
+
+function rdn(min, max) {
+    return Math.floor(Math.random() * (max - min) + min);
+}
+
+module.exports = { launchBrowser, delay, rdn };

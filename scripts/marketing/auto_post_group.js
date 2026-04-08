@@ -1,5 +1,5 @@
 const { launchBrowser, delay, rdn } = require('./setup_browser');
-const { logTask } = require('./supabase_logger');
+const { logAction } = require('./supabase_logger');
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
@@ -73,94 +73,119 @@ function spinText(text) {
         }
 
         // 3. Boot Trình duyệt
-        const { browser: b, page } = await launchBrowser();
-        browser = b;
+        browser = await launchBrowser();
+        const pages = await browser.pages();
+        const page = pages.length > 0 ? pages[0] : await browser.newPage();
 
         // 4. Tìm Group để đăng
+        // Chuyển đổi URL sang mbasic format
+        let mbasicGroupUrl = null;
+        
         if (groupUrl) {
-            await page.goto(groupUrl, { waitUntil: 'domcontentloaded' });
+            // Extract group ID/slug from URL
+            const groupMatch = groupUrl.match(/groups\/([^\/\?]+)/);
+            if (groupMatch) {
+                mbasicGroupUrl = `https://mbasic.facebook.com/groups/${groupMatch[1]}`;
+            } else {
+                mbasicGroupUrl = groupUrl.replace('www.facebook.com', 'mbasic.facebook.com');
+            }
         } else {
-            // Đăng lên 1 nhóm ngẫu nhiên
-            await page.goto("https://www.facebook.com/groups/joins", { waitUntil: 'domcontentloaded' });
-            await delay(rdn(3000, 5000));
-            const groupLinks = await page.$$eval('a[href*="/groups/"]:not([href*="category"])', links => links.map(l => l.href));
+            // Đăng lên 1 nhóm ngẫu nhiên - cần tìm danh sách nhóm trước
+            await page.goto("https://mbasic.facebook.com/groups/?category=membership", { waitUntil: 'networkidle2', timeout: 30000 });
+            await delay(rdn(2000, 3000));
+            
+            const groupLinks = await page.evaluate(() => {
+                const links = Array.from(document.querySelectorAll('a[href*="/groups/"]'));
+                return links
+                    .map(l => l.href)
+                    .filter(h => h.includes('/groups/') && !h.includes('category') && !h.includes('discover'));
+            });
+            
             if (groupLinks.length === 0) throw new Error("Nick chưa tham gia Hội nhóm nào!");
-            // Lọc ra các Group ID gốc
             const uniqueLinks = [...new Set(groupLinks.map(l => l.split('?')[0]))];
             const randomTarget = uniqueLinks[Math.floor(Math.random() * uniqueLinks.length)];
             console.log(`[GROUP_POST] Chuyển hướng tới Nhóm rando: ${randomTarget}`);
-            await page.goto(randomTarget, { waitUntil: 'domcontentloaded' });
+            mbasicGroupUrl = randomTarget;
         }
-        await delay(rdn(3000, 5000));
-
-        // 5. Cắm ô Đăng Bài
-        const postBoxSelectors = [
-            `div[role="button"]:has-text("Viết gì đó")`,
-            `div[role="button"]:has-text("Write something")`,
-            `span:has-text("Viết gì đó")`,
-            `span:has-text("Write something")`
-        ];
-
-        let clicked = false;
-        for (const sel of postBoxSelectors) {
-            try {
-                await page.waitForSelector(sel, { timeout: 3000 });
-                await page.click(sel);
-                clicked = true;
-                break;
-            } catch (e) {}
-        }
-        if (!clicked) throw new Error("Nhóm này có thể không cho phép thành viên tự đăng bài (Need approval/Disabled).");
-
+        
+        console.log(`[GROUP_POST] Mở mbasic group: ${mbasicGroupUrl}`);
+        await page.goto(mbasicGroupUrl, { waitUntil: 'networkidle2', timeout: 30000 });
         await delay(rdn(2000, 3000));
 
-        // 6. Điền nội dung
-        if (finalMessage) {
-            const textBox = await page.$('div[role="textbox"][contenteditable="true"]');
-            if (textBox) {
-                await textBox.click();
-                await delay(1000);
-                await textBox.type(finalMessage, { delay: rdn(20, 60) });
-                await delay(1000);
+        // ===== CHIẾN LƯỢC MBASIC: Không có React, chỉ HTML form thuần =====
+        
+        // Bước 5: Tìm textarea trên mbasic group page
+        // mbasic group page có textarea hoặc link "Write Post"/"Viết gì đó"
+        let textArea = await page.$('textarea[name="xc_message"]');
+        
+        if (!textArea) {
+            // Thử tìm link composer (mbasic có thể dùng link để mở form viết bài)
+            console.log("[GROUP_POST] Tìm link composer trên mbasic...");
+            const composerLink = await page.evaluate(() => {
+                const links = Array.from(document.querySelectorAll('a'));
+                const match = links.find(a => {
+                    const txt = (a.textContent || '').trim().toLowerCase();
+                    return txt.includes("viết gì đó") || txt.includes("write something") || 
+                           txt.includes("write post") || txt.includes("đăng bài") ||
+                           txt.includes("bạn đang nghĩ") || txt.includes("what's on your");
+                });
+                return match ? match.href : null;
+            });
+
+            if (composerLink) {
+                await page.goto(composerLink, { waitUntil: 'networkidle2', timeout: 30000 });
+                await delay(rdn(2000, 3000));
+                textArea = await page.$('textarea');
             }
         }
 
-        // 7. Nhét Media
+        if (!textArea) {
+            throw new Error("Nhóm này có thể không cho phép thành viên tự đăng bài (Need approval/Disabled).");
+        }
+        
+        // Bước 6: Gõ nội dung
+        if (finalMessage) {
+            await textArea.click();
+            await delay(500);
+            await textArea.type(finalMessage, { delay: rdn(20, 50) });
+            console.log("[GROUP_POST] Đã gõ nội dung bài viết.");
+            await delay(rdn(1000, 2000));
+        }
+
+        // Bước 7: Upload ảnh nếu có
         if (tempImagePath) {
-            const inputUploadHandle = await page.$('input[type=file]');
-            if (inputUploadHandle) {
-                await inputUploadHandle.uploadFile(tempImagePath);
+            const fileInput = await page.$('input[type="file"]');
+            if (fileInput) {
+                console.log(`[GROUP_POST] Đang upload ảnh: ${tempImagePath}`);
+                await fileInput.uploadFile(tempImagePath);
                 const isVideo = tempImagePath.match(/\.(mp4|mov|avi|wmv)$/i);
                 if (isVideo) {
                     console.log("[GROUP_POST] File Video nặng, chờ 20-40s để upload...");
                     await delay(rdn(20000, 40000));
                 } else {
-                    await delay(rdn(3000, 6000)); // Chờ FB load ảnh
+                    await delay(rdn(3000, 6000));
                 }
             }
         }
 
-        // 8. Chốt Đăng
-        const postButtonSelectors = [`div[aria-label="Đăng"][role="button"]`, `div[aria-label="Post"][role="button"]`];
-        let posted = false;
-        for (const btnSel of postButtonSelectors) {
-            const btn = await page.$(btnSel);
-            if (btn) {
-                const isDisabled = await page.evaluate(el => el.getAttribute('aria-disabled'), btn);
-                if (isDisabled !== 'true') {
-                    await btn.click();
-                    posted = true;
-                    break;
-                }
-            }
-        }
-
-        if (posted) {
+        // Bước 8: Submit form đăng bài
+        const postBtn = await page.$('input[type="submit"][name="view_post"], input[type="submit"][value="Đăng"], input[type="submit"][value="Post"]');
+        if (postBtn) {
+            await postBtn.click();
             await delay(rdn(5000, 8000));
-            console.log("[GROUP_POST] Hoàn thành đi Bài vào Group!");
-            await logTask(null, `Đã rải 1 bài seeding vào Group (Kho: ${category})`);
+            console.log("[GROUP_POST] 🟢 Hoàn thành đăng bài vào Group (mbasic)!");
+            await logAction('post', 'success', `Đã rải 1 bài seeding vào Group (Kho: ${category})`);
         } else {
-            throw new Error("Nút Đăng Bài bị ẩn");
+            // Fallback: tìm bất kỳ nút submit nào
+            const anySubmit = await page.$('input[type="submit"]');
+            if (anySubmit) {
+                await anySubmit.click();
+                await delay(rdn(5000, 8000));
+                console.log("[GROUP_POST] 🟢 Hoàn thành đăng bài vào Group (mbasic, fallback)!");
+                await logAction('post', 'success', `Đã rải 1 bài seeding vào Group (Kho: ${category})`);
+            } else {
+                throw new Error("Nút Đăng Bài bị ẩn trên mbasic.");
+            }
         }
 
     } catch (e) {

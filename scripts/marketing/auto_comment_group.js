@@ -57,8 +57,9 @@ function downloadImage(url, dest) {
         }
 
         // 2. Boot
-        const { browser: b, page } = await launchBrowser();
-        browser = b;
+        browser = await launchBrowser();
+        const pages = await browser.pages();
+        const page = pages.length > 0 ? pages[0] : await browser.newPage();
 
         // 3. Navigate
         if (groupUrl) {

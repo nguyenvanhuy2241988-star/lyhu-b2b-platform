@@ -1,7 +1,8 @@
 require('dotenv').config({ path: __dirname + '/../.env.local' });
 const { createClient } = require('@supabase/supabase-js');
-const { exec } = require('child_process');
+const { spawn } = require('child_process');
 const path = require('path');
+const fs = require('fs');
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -57,25 +58,47 @@ setInterval(async () => {
             const safeArgs = command.args ? `"${command.args.replace(/[&|<>^%]/g, '')}"` : '';
             
             console.log(`💻 Đang gọi Terminal cho Bot...`);
-            let execCommand = `start "BotTerminal" cmd /k node "${scriptPath}" ${safeArgs} --profile=${profileFolder}`;
             
-            exec(execCommand, async (err) => {
-                isWorking = false; // Xong việc, sẵn sàng nhận ca mới
-                if (err) {
-                    console.error(`❌ Lỗi khởi chạy Bot: ${err.message}`);
-                    await supabase
-                        .from('marketing_bot_commands')
-                        .update({ status: 'error' })
-                        .eq('id', command.id);
-                    return;
-                }
-                
-                console.log(`✅ Đã đẩy lệnh thành công! Đang chờ tín hiệu tiếp theo...`);
-                await supabase
-                    .from('marketing_bot_commands')
-                    .update({ status: 'completed' })
-                    .eq('id', command.id);
+            // Xây dựng file .bat để chạy lệnh node mượt mà, tránh 100% lỗi thoát chuỗi dính ngoặc kép của CMD Windows
+            const batContent = `
+@echo off
+title BotTerminal - LYHU Automation
+chcp 65001 > nul
+cd /d "${path.join(__dirname, '..')}"
+echo --- DEBUG INFO ---
+echo Script: "%scriptPath%"
+echo Args: %safeArgs%
+echo Profile: "%profileFolder%"
+echo CMD Line: node "%scriptPath%" %safeArgs% --profile="%profileFolder%"
+echo --- END DEBUG ---
+node "${scriptPath}" ${safeArgs} --profile="${profileFolder}"
+echo.
+echo HOAN THANH - CUA SO SE TU DONG TONG SAU 30 GIAY
+timeout /t 30 >nul
+            `;
+            
+            const batPath = path.join(__dirname, `run_bot_${command.id}.bat`);
+            
+            // QUAN TRỌNG: Windows CMD chcp 65001 bị lỗi đọc sai ký tự nếu file dùng LF (\n). Bắt buộc phải dùng CRLF (\r\n)!
+            const crlfContent = batContent.trim().replace(/\r?\n/g, '\r\n');
+            fs.writeFileSync(batPath, crlfContent);
+            
+            const botProcess = spawn('cmd.exe', ['/c', 'start', '"BotTerminal"', batPath], {
+                detached: true,
+                stdio: 'ignore',
+                windowsHide: false
             });
+            
+            botProcess.unref();
+
+            isWorking = false; // Xong việc, sẵn sàng nhận ca mới
+            console.log(`✅ Đã đẩy lệnh khởi động Terminal mượt mà! Đang chờ tín hiệu tiếp theo...`);
+            
+            await supabase
+                .from('marketing_bot_commands')
+                .update({ status: 'completed' })
+                .eq('id', command.id);
+            
         }
     } catch (e) {
         console.error("Lỗi:", e);
