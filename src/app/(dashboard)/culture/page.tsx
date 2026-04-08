@@ -286,103 +286,124 @@ export default function CulturePage() {
     return (
         <CultureContext.Provider value={{ content, isEditMode, updateContent, uploadImage, uploadingId, goToNextTab, activeTab, TABS }}>
             <DashboardShell title="Văn hóa doanh nghiệp">
-                {/* Thanh công cụ Admin */}
-                <div className="mb-4 flex items-center justify-end gap-3 px-2">
-                    {isEditMode ? (
-                        <>
-                            <button onClick={() => setIsEditMode(false)} className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition-colors">
-                                Hủy Sửa
-                            </button>
-                            <button onClick={saveChanges} disabled={isSaving} className="flex items-center gap-2 px-6 py-2 text-sm font-bold text-white bg-primary-600 rounded-lg shadow-md hover:bg-primary-700 transition-colors disabled:opacity-70">
-                                <Save className="w-4 h-4" />
-                                {isSaving ? "Đang lưu..." : "Lưu Thay Đổi"}
-                            </button>
-                        </>
-                    ) : (
-                        <button onClick={() => setIsEditMode(true)} className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-slate-700 bg-white border-2 border-dashed border-teal-500 rounded-lg shadow-sm hover:bg-teal-50 transition-colors tooltip" title="Chỉ bật khi muốn thay ảnh, gắn chữ">
-                            <Edit3 className="w-4 h-4 text-teal-600" />
-                            Sửa Nội Dung In-place
-                        </button>
-                    )}
-                </div>
-
-                <div className="flex h-[calc(100vh-180px)] w-full bg-white shadow-sm rounded-xl border border-slate-200 overflow-hidden font-sans relative">
-                    {/* LEFT SIDEBAR */}
-                    <div className="w-72 shrink-0 bg-slate-50 border-r border-slate-200 flex flex-col h-full z-10 hidden md:flex">
-                        <div className="p-6 border-b border-slate-200 bg-white shrink-0">
-                            <div className="flex items-center gap-2.5 text-slate-800 font-bold uppercase tracking-widest text-[13px]">
-                                <BookOpen className="w-5 h-5" style={{ color: BRAND.teal }} />
-                                <span>Cẩm Nang Nội Bộ</span>
+                <div className="min-h-[calc(100vh-4rem)] bg-slate-50/40 flex flex-col -m-4 md:-m-8">
+                    {/* Header - Sticky Top */}
+                    <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-6 py-4 flex items-center justify-between shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center border border-teal-100 hidden sm:flex">
+                                <BookOpen className="w-5 h-5 text-teal-600" />
+                            </div>
+                            <div>
+                                <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-0.5">Cẩm nang nội bộ LYHU</div>
+                                <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight uppercase">Văn Hóa Doanh Nghiệp</h1>
                             </div>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin">
-                            {TABS.map((tab) => {
-                                const isActive = tab.id === activeTab;
-                                const Icon = tab.icon;
-                                return (
-                                    <div 
-                                        key={tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
-                                        className={`group flex items-center justify-between px-4 py-3.5 rounded-lg cursor-pointer transition-all duration-200 border-l-4 ${
-                                            isActive 
-                                            ? "bg-white text-slate-900 border-teal-500 shadow-sm font-semibold" 
-                                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 border-transparent hover:border-slate-300"
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <Icon className="w-4 h-4 transition-colors" style={{ color: isActive ? BRAND.teal : '#94a3b8' }} />
-                                            <span className="text-[14px]">{tab.label}</span>
-                                        </div>
-                                        <ArrowRight className={`w-4 h-4 transition-all ${isActive ? 'opacity-100' : 'opacity-0 -translate-x-2'}`} style={{ color: isActive ? BRAND.teal : '' }} />
-                                    </div>
-                                );
-                            })}
+                        <div className="flex items-center gap-3">
+                            {isEditMode ? (
+                                <>
+                                    <button onClick={() => setIsEditMode(false)} className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg max-md:hidden shadow-sm hover:bg-slate-50 transition-colors">
+                                        Hủy Sửa
+                                    </button>
+                                    <button onClick={saveChanges} disabled={isSaving} className="flex items-center gap-2 px-6 py-2 text-sm font-bold text-white bg-primary-600 rounded-lg shadow-md hover:bg-primary-700 transition-colors disabled:opacity-70">
+                                        <Save className="w-4 h-4" />
+                                        <span className="hidden sm:inline">{isSaving ? "Đang lưu..." : "Lưu Cẩm Nang"}</span>
+                                        <span className="sm:hidden">{isSaving ? "..." : "Lưu"}</span>
+                                    </button>
+                                </>
+                            ) : (
+                                <button onClick={() => setIsEditMode(true)} className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-200 hover:border-teal-400 rounded-xl shadow-sm hover:bg-teal-50 hover:text-teal-700 transition-colors tooltip group" title="Bật lên để thay ảnh, gắn chữ">
+                                    <Edit3 className="w-4 h-4 text-slate-400 group-hover:text-teal-600 transition-colors" />
+                                    <span className="hidden sm:inline">Biên Tập Nội Dung</span>
+                                    <span className="sm:hidden">Biên Tập</span>
+                                </button>
+                            )}
                         </div>
                     </div>
 
-                    {/* RIGHT CONTENT AREA */}
-                    <div id="culture-scroll-container" className="flex-1 flex flex-col h-full bg-slate-50 relative overflow-y-auto scrollbar-thin">
-                        {/* Mobile Nav Top Bar */}
-                        <div className="md:hidden border-b border-slate-200 bg-white sticky top-0 z-40">
-                            <button 
-                                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-                                className="w-full p-4 flex items-center justify-between text-slate-800 font-bold"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <Menu className="w-5 h-5" style={{ color: BRAND.teal }} />
-                                    <span>{TABS.find(t => t.id === activeTab)?.label}</span>
+                    {/* Content Body - 2 Columns */}
+                    <div className="flex flex-1 overflow-hidden w-full max-w-[1400px] mx-auto">
+                        {/* LEFT SIDEBAR (Mục Lục) */}
+                        <div className="hidden lg:block w-72 shrink-0 border-r border-slate-200/50 bg-slate-50/50 overflow-y-auto h-[calc(100vh-[73px]-4rem)] sticky top-[73px]">
+                            <div className="p-8">
+                                <div className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 mb-6 flex items-center gap-2">
+                                    <div className="w-4 h-[1px] bg-slate-300"></div> Mục Lục
                                 </div>
-                                <ChevronDown className={`w-5 h-5 transition-transform ${isMobileMenuOpen ? 'rotate-180' : ''}`} />
-                            </button>
-                            {isMobileMenuOpen && (
-                                <div className="absolute top-14 left-0 w-full bg-white border-b border-slate-200 shadow-xl overflow-y-auto max-h-[60vh] z-50">
+                                <nav className="flex flex-col gap-1.5 relative">
+                                    <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-slate-100 rounded-full" />
                                     {TABS.map((tab) => {
                                         const isActive = tab.id === activeTab;
                                         const Icon = tab.icon;
                                         return (
                                             <div 
                                                 key={tab.id}
-                                                onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
-                                                className={`flex items-center gap-3 p-4 cursor-pointer border-b border-slate-50 ${isActive ? 'bg-teal-50 text-teal-800 font-bold' : 'text-slate-600 hover:bg-slate-50'}`}
+                                                onClick={() => setActiveTab(tab.id)}
+                                                className={`group relative flex items-center justify-between px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                                                    isActive 
+                                                    ? "bg-white text-slate-900 shadow-sm font-bold ring-1 ring-slate-900/5" 
+                                                    : "text-slate-500 hover:bg-slate-100/80 hover:text-slate-900"
+                                                }`}
                                             >
-                                                <Icon className="w-4 h-4" style={{ color: isActive ? BRAND.teal : '' }} />
-                                                {tab.label}
+                                                {isActive && <div className="absolute -left-[1px] top-1/2 -translate-y-1/2 w-[3px] h-6 bg-teal-500 rounded-r-full" />}
+                                                <div className="flex items-center gap-3">
+                                                    <Icon className="w-4 h-4 transition-colors" style={{ color: isActive ? BRAND.teal : '#cbd5e1' }} />
+                                                    <span className="text-[14px] leading-tight">{tab.label}</span>
+                                                </div>
+                                                <ArrowRight className={`w-3.5 h-3.5 transition-all ${isActive ? 'opacity-100 text-teal-600' : 'opacity-0 -translate-x-2 text-slate-300 group-hover:opacity-100 group-hover:translate-x-0'}`} />
                                             </div>
                                         );
                                     })}
-                                </div>
-                            )}
+                                </nav>
+                            </div>
                         </div>
 
-                        <div className="max-w-5xl mx-auto w-full p-6 md:p-10 lg:p-14 pb-24">
-                            {activeTab === 'intro' && <IntroductionView brand={BRAND} />}
-                            {activeTab === 'brand' && <BrandIdentityView brand={BRAND} />}
-                            {activeTab === 'logo' && <LogoView brand={BRAND} />}
-                            {activeTab === 'core' && <CoreValuesView brand={BRAND} />}
-                            {activeTab === 'philosophy' && <PhilosophyView brand={BRAND} />}
-                            {activeTab === 'brands' && <BrandsView brand={BRAND} />}
-                            {activeTab === 'vision' && <VisionView brand={BRAND} />}
+                        {/* RIGHT CONTENT AREA */}
+                        <div id="culture-scroll-container" className="flex-1 flex flex-col h-[calc(100vh-[73px]-4rem)] overflow-y-auto w-full relative bg-white">
+                            {/* Mobile Nav Top Bar */}
+                            <div className="lg:hidden border-b border-slate-200 bg-white/90 backdrop-blur-md sticky top-0 z-40">
+                                <button 
+                                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+                                    className="w-full p-4 flex items-center justify-between text-slate-800 font-bold"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center">
+                                            <Menu className="w-4 h-4 text-teal-600" />
+                                        </div>
+                                        <span>{TABS.find(t => t.id === activeTab)?.label}</span>
+                                    </div>
+                                    <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isMobileMenuOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {isMobileMenuOpen && (
+                                    <div className="absolute top-full left-0 w-full bg-white border-b border-slate-200 shadow-xl overflow-y-auto max-h-[60vh] z-50">
+                                        <div className="p-2 space-y-1">
+                                            {TABS.map((tab) => {
+                                                const isActive = tab.id === activeTab;
+                                                const Icon = tab.icon;
+                                                return (
+                                                    <div 
+                                                        key={tab.id}
+                                                        onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
+                                                        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer ${isActive ? 'bg-teal-50 text-teal-800 font-bold' : 'text-slate-600 hover:bg-slate-50'}`}
+                                                    >
+                                                        <Icon className="w-4 h-4" style={{ color: isActive ? BRAND.teal : '' }} />
+                                                        {tab.label}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="w-full max-w-4xl mx-auto p-6 md:p-12 lg:p-16 xl:p-20 lg:pt-12 pb-32">
+                                {activeTab === 'intro' && <IntroductionView brand={BRAND} />}
+                                {activeTab === 'brand' && <BrandIdentityView brand={BRAND} />}
+                                {activeTab === 'logo' && <LogoView brand={BRAND} />}
+                                {activeTab === 'core' && <CoreValuesView brand={BRAND} />}
+                                {activeTab === 'philosophy' && <PhilosophyView brand={BRAND} />}
+                                {activeTab === 'brands' && <BrandsView brand={BRAND} />}
+                                {activeTab === 'vision' && <VisionView brand={BRAND} />}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -415,7 +436,7 @@ function NextTabButton() {
 
 function IntroductionView({ brand }: { brand: any }) {
     return (
-        <div className="animate-in fade-in duration-500 space-y-12 bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200 relative">
+        <div className="animate-in fade-in duration-500 space-y-16">
             <div>
                 <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Thông Điệp Từ Ban Lãnh Đạo</h1>
                 <div className="h-1 w-16 mt-4" style={{ backgroundColor: brand.teal }}></div>
@@ -493,7 +514,7 @@ function BrandIdentityView({ brand }: { brand: any }) {
             </div>
         ),
         adn: (
-            <div key="adn" className="relative group/sort bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200">
+            <div key="adn" className="relative group/sort w-full text-slate-800">
                 {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'adn')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'adn')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
                 <div>
                     <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">ADN LYHU – Sức mạnh của 4 chữ cái</h1>
@@ -555,7 +576,7 @@ function LogoView({ brand }: { brand: any }) {
 
     const blocks: any = {
         meaning: (
-            <div key="meaning" className="relative group/sort bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200">
+            <div key="meaning" className="relative group/sort w-full text-slate-800">
                 {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'meaning')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'meaning')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
                 <h2 className="text-3xl font-black text-slate-800 mb-10 tracking-tight uppercase">Ý TƯỞNG THIẾT KẾ & Ý NGHĨA LOGO</h2>
                 <div className="h-1 w-16 mb-10 mt-[-10px]" style={{ backgroundColor: brand.teal }}></div>
@@ -579,7 +600,7 @@ function LogoView({ brand }: { brand: any }) {
             </div>
         ),
         structure: (
-            <div key="structure" className="relative group/sort bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200">
+            <div key="structure" className="relative group/sort w-full text-slate-800">
                 {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'structure')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'structure')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
                 
                 <h2 className="text-3xl font-black text-slate-800 mb-6 tracking-tight uppercase text-center">Tiêu Chuẩn Lưới Cấu Trúc & Tỷ Lệ Vàng</h2>
@@ -648,7 +669,7 @@ function LogoView({ brand }: { brand: any }) {
             </div>
         ),
         colors: (
-            <div key="colors" className="relative group/sort bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200">
+            <div key="colors" className="relative group/sort w-full text-slate-800">
                 {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'colors')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'colors')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
                 <h2 className="text-2xl font-bold text-slate-800 mb-6 uppercase tracking-wide text-center">Ý Nghĩa Gam Màu Thương Hiệu</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -670,7 +691,7 @@ function LogoView({ brand }: { brand: any }) {
             </div>
         ),
         num4: (
-            <div key="num4" className="relative group/sort bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200">
+            <div key="num4" className="relative group/sort w-full text-slate-800">
                 {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'num4')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'num4')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
                 <h2 className="text-3xl font-black text-slate-800 mb-6 tracking-tight uppercase text-center">ADN LYHU – Sức mạnh của số 4</h2>
                 <p className="text-xl text-slate-500 font-medium text-center mb-10 max-w-3xl mx-auto">
@@ -732,7 +753,7 @@ function LogoView({ brand }: { brand: any }) {
 function CoreValuesView({ brand }: { brand: any }) {
     return (
         <div className="animate-in fade-in duration-500 space-y-10">
-            <div className="bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200">
+            <div className="w-full text-slate-800">
                 <div className="flex flex-col md:flex-row gap-12 items-center">
                     <div className="flex-1 w-full">
                         <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Giá Trị Cốt Lõi 3K1C</h1>
@@ -787,7 +808,7 @@ function CoreValuesView({ brand }: { brand: any }) {
 function PhilosophyView({ brand }: { brand: any }) {
     return (
         <div className="animate-in fade-in duration-500 space-y-10">
-            <div className="bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200">
+            <div className="w-full text-slate-800">
                 <div className="text-center mb-12">
                     <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Triết Lý Làm Việc Của Chúng Ta</h1>
                     <div className="h-1 w-16 mx-auto mt-4" style={{ backgroundColor: brand.teal }}></div>
@@ -839,7 +860,7 @@ function PhilosophyView({ brand }: { brand: any }) {
 function VisionView({ brand }: { brand: any }) {
     return (
         <div className="animate-in fade-in duration-500 space-y-10">
-            <div className="bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200">
+            <div className="w-full text-slate-800">
                 <div>
                     <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Chúng Ta Hướng Về Đâu?</h1>
                     <div className="h-1 w-16 mt-4 mb-10" style={{ backgroundColor: brand.teal }}></div>
@@ -910,7 +931,7 @@ function VisionView({ brand }: { brand: any }) {
 function BrandsView({ brand }: { brand: any }) {
     return (
         <div className="animate-in fade-in duration-500 space-y-10">
-            <div className="bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200">
+            <div className="w-full text-slate-800">
                 <div className="text-center mb-12">
                     <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Danh Mục Nhãn Hàng & Sản Phẩm</h1>
                     <div className="h-1 w-16 mx-auto mt-4" style={{ backgroundColor: brand.teal }}></div>
@@ -920,21 +941,32 @@ function BrandsView({ brand }: { brand: any }) {
                 </div>
                 
                 {/* Lĩnh Vực Hoạt Động */}
-                <div className="mb-16 border-b border-slate-100 pb-12">
-                    <h2 className="text-3xl font-black text-slate-800 tracking-tight uppercase text-center mb-12">Lĩnh Vực Hoạt Động</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <div className="mb-20">
+                    <div className="flex items-center gap-4 mb-10">
+                         <div className="w-8 h-8 rounded-full bg-teal-50 flex items-center justify-center shrink-0">
+                             <div className="w-2.5 h-2.5 rounded-full bg-teal-500"></div>
+                         </div>
+                         <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Lĩnh Vực Hoạt Động</h2>
+                         <div className="flex-1 h-px bg-slate-200"></div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         {[
-                            { name: "Sản xuất", color: brand.teal },
-                            { name: "Nhập khẩu", color: brand.green },
-                            { name: "Bán lẻ", color: brand.green },
-                            { name: "Thương mại", color: brand.teal }
+                            { name: "Sản xuất", color: brand.teal, icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" },
+                            { name: "Nhập khẩu", color: brand.green, icon: "M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z m4 -4l4 4m0 0l4-4m-4 4V7" },
+                            { name: "Bán lẻ", color: brand.green, icon: "M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" },
+                            { name: "Thương mại", color: brand.teal, icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" }
                         ].map((item, idx) => (
-                            <div key={idx} className="bg-slate-50 border border-slate-100 rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center hover:-translate-y-1 transition-transform group">
-                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 text-white text-2xl font-black shadow-md transition-transform group-hover:scale-110" style={{ backgroundColor: item.color }}>
-                                    {idx + 1}
+                            <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-teal-300 transition-all group flex flex-col items-start gap-4">
+                                <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm" style={{ backgroundColor: `${item.color}15`, color: item.color }}>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d={item.icon} /></svg>
                                 </div>
-                                <div className="font-bold text-slate-800 uppercase tracking-widest md:text-lg">
-                                    <EditableText id={`brand_lv_${idx}`} defaultText={item.name} />
+                                <div>
+                                    <div className="text-xs font-bold text-slate-400 mb-1 tracking-widest uppercase">0{idx + 1}</div>
+                                    <div className="font-extrabold text-slate-800 uppercase tracking-widest text-lg group-hover:text-teal-700 transition-colors">
+                                        <EditableText id={`brand_lv_${idx}`} defaultText={item.name} />
+                                    </div>
+                                    <p className="text-sm text-slate-500 mt-2 line-clamp-2 leading-relaxed"><EditableText id={`brand_lv_desc_${idx}`} defaultText="Nền tảng vững chắc trong chuỗi cung ứng." /></p>
                                 </div>
                             </div>
                         ))}
@@ -943,32 +975,46 @@ function BrandsView({ brand }: { brand: any }) {
 
                 {/* Nhãn Hàng */}
                 <div>
-                     <h2 className="text-3xl font-black text-slate-800 tracking-tight uppercase text-center mb-12">Hệ Thống Nhãn Hàng</h2>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                     <div className="flex items-center gap-4 mb-10">
+                         <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                             <div className="w-2.5 h-2.5 rounded-full bg-slate-400"></div>
+                         </div>
+                         <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Hệ Thống Nhãn Hàng</h2>
+                         <div className="flex-1 h-px bg-slate-200"></div>
+                     </div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                          {[
                              { name: "BOYO", desc: "Thương hiệu riêng" },
                              { name: "CVT", desc: "Nhập khẩu (Trung Quốc)" },
                              { name: "ABI SNACK", desc: "Phân phối độc quyền (Việt Nam)" },
                              { name: "UHi", desc: "Nhập khẩu (Hàn Quốc)" },
                          ].map((l, i) => (
-                             <div key={i} className="bg-slate-50 border border-slate-200 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                                 {/* Hình ảnh Logo nhãn */}
-                                 <div className="bg-white border-b border-slate-100 p-8 flex flex-col items-center justify-center h-[200px] relative w-full">
-                                     <EditableImage id={`logo_brand_${i}`} className="w-full h-full max-w-[200px] max-h-[120px] mx-auto object-contain !border-none !rounded-none !aspect-auto" label={`Logo ${l.name}`} />
-                                 </div>
-                                 <div className="p-8">
-                                     <div className="text-center mb-8 border-b border-slate-200/60 pb-6 text-slate-800">
-                                        <h3 className="font-black text-2xl tracking-widest uppercase mb-2"><EditableText id={`name_brand_${i}`} defaultText={l.name} /></h3>
-                                        <p className="font-medium text-lg uppercase tracking-wide opacity-80" style={{ color: brand.teal }}><EditableText id={`desc_brand_${i}`} defaultText={l.desc} /></p>
+                             <div key={i} className="bg-white border border-slate-200 rounded-3xl overflow-hidden hover:shadow-xl hover:border-slate-300 transition-all duration-300 transform flex flex-col">
+                                 {/* Header Info */}
+                                 <div className="p-8 flex flex-col md:flex-row gap-6 items-center md:items-start border-b border-slate-100">
+                                     <div className="w-32 h-32 md:w-24 md:h-24 bg-slate-50 rounded-2xl border border-slate-100 shrink-0 flex items-center justify-center overflow-hidden p-2">
+                                         <EditableImage id={`logo_brand_${i}`} className="w-full h-full object-contain !border-none !rounded-none !aspect-auto" label={`Logo ${l.name}`} />
                                      </div>
-                                     <h4 className="font-bold text-sm text-slate-500 uppercase tracking-widest mb-4 flex items-center justify-center gap-2">
-                                        <div className="h-px bg-slate-300 w-12"></div>
-                                        <span>Hình ảnh Sản phẩm</span>
-                                        <div className="h-px bg-slate-300 w-12"></div>
-                                     </h4>
+                                     <div className="text-center md:text-left flex-1">
+                                        <h3 className="font-extrabold text-2xl tracking-widest uppercase text-slate-900 mb-1"><EditableText id={`name_brand_${i}`} defaultText={l.name} /></h3>
+                                        <p className="font-semibold text-sm uppercase tracking-wider mb-3" style={{ color: brand.teal }}><EditableText id={`desc_brand_${i}`} defaultText={l.desc} /></p>
+                                        <p className="text-slate-500 text-sm leading-relaxed"><EditableText id={`brand_intro_long_${i}`} multiline defaultText="Sản phẩm chất lượng cao, cung ứng trực tiếp đến người tiêu dùng nội địa." /></p>
+                                     </div>
+                                 </div>
+                                 
+                                 {/* Images Area */}
+                                 <div className="p-6 bg-slate-50 flex-1">
+                                    <div className="flex items-center gap-2 mb-4 px-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                                        <h4 className="font-bold text-xs text-slate-400 uppercase tracking-widest">Sản Phẩm Tiêu Biểu</h4>
+                                    </div>
                                      <div className="grid grid-cols-2 gap-4">
-                                         <EditableImage id={`img_brand_prod_${i}_1`} className="aspect-square w-full rounded-2xl shadow-sm border border-slate-200 bg-white" label={`Sản phẩm ${l.name} 1`} />
-                                         <EditableImage id={`img_brand_prod_${i}_2`} className="aspect-square w-full rounded-2xl shadow-sm border border-slate-200 bg-white" label={`Sản phẩm ${l.name} 2`} />
+                                         <div className="relative group/img">
+                                            <EditableImage id={`img_brand_prod_${i}_1`} className="aspect-square w-full rounded-2xl shadow-sm border border-slate-200 bg-white object-cover group-hover/img:shadow-md transition-shadow" label={`Sản phẩm ${l.name} 1`} />
+                                         </div>
+                                         <div className="relative group/img">
+                                            <EditableImage id={`img_brand_prod_${i}_2`} className="aspect-square w-full rounded-2xl shadow-sm border border-slate-200 bg-white object-cover group-hover/img:shadow-md transition-shadow" label={`Sản phẩm ${l.name} 2`} />
+                                         </div>
                                      </div>
                                  </div>
                              </div>
