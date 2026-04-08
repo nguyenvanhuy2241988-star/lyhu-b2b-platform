@@ -477,7 +477,7 @@ function BrandIdentityView({ brand }: { brand: any }) {
         hero: (
             <div key="hero" className="relative group/sort">
                 {isEditMode && <div className="absolute top-2 left-2 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'hero')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'hero')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
-                <div className="relative rounded-3xl overflow-hidden bg-primary-900 border border-primary-800">
+                <div className="relative rounded-3xl overflow-hidden" style={{ backgroundColor: brand.teal }}>
                     <EditableImage id="img_brand_hero" className="aspect-[21/9] w-full !border-none !rounded-none opacity-40 mix-blend-overlay" label="Ảnh nền đội ngũ" />
                     <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center text-white z-10 pointer-events-none">
                         <h2 className="text-3xl md:text-5xl font-black uppercase tracking-widest mb-4 inline-block pointer-events-auto">
@@ -697,7 +697,7 @@ function LogoView({ brand }: { brand: any }) {
                     ))}
                 </div>
 
-                <div className="mt-12 bg-primary-900 text-white p-8 md:p-12 rounded-3xl relative overflow-hidden">
+                <div className="mt-12 text-white p-8 md:p-12 rounded-3xl relative overflow-hidden shadow-xl" style={{ backgroundColor: brand.teal }}>
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3"></div>
 
@@ -820,7 +820,7 @@ function PhilosophyView({ brand }: { brand: any }) {
                 </div>
             </div>
 
-            <div className="relative rounded-3xl overflow-hidden bg-primary-900 border border-primary-800">
+            <div className="relative rounded-3xl overflow-hidden shadow-lg" style={{ backgroundColor: brand.teal }}>
                 <EditableImage id="img_phil_team" className="aspect-[21/9] !border-none w-full !rounded-none opacity-50 mix-blend-overlay" label="Ảnh team LYHU" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center text-white z-10 pointer-events-none">
                     <div className="text-2xl md:text-3xl italic mb-6 leading-relaxed max-w-4xl inline-block pointer-events-auto">
@@ -887,7 +887,7 @@ function VisionView({ brand }: { brand: any }) {
                 </div>
             </div>
 
-            <div className="relative rounded-3xl overflow-hidden bg-primary-900 border border-primary-800">
+            <div className="relative rounded-3xl overflow-hidden shadow-lg" style={{ backgroundColor: brand.teal }}>
                 <EditableImage id="img_vis_final" className="aspect-[21/9] !border-none !rounded-none w-full opacity-40 mix-blend-overlay" label="Ảnh leo núi" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-8 md:p-16 text-center text-white z-10 pointer-events-none">
                     <div className="text-xl md:text-4xl italic mb-8 max-w-4xl leading-relaxed inline-block pointer-events-auto font-light">
