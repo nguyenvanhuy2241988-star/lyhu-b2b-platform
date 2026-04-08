@@ -228,14 +228,56 @@ function spinText(text) {
         // Debug screenshot trước khi submit
         await page.screenshot({ path: path.join(debugDir, 'step3_before_submit.png') });
         
-        // Tìm nút Đăng bằng evaluateHandle
+        
+        // Tìm nút Đăng - thử nhiều cách
         const postBtnHandle = await page.evaluateHandle(() => {
-            const buttons = Array.from(document.querySelectorAll('div[role="button"][aria-label], button'));
-            return buttons.find(btn => {
-                const label = (btn.getAttribute('aria-label') || '').trim();
-                return label === 'Đăng' || label === 'Post';
-            }) || null;
+            // Chiến lược 1: Tìm theo aria-label
+            let btn = document.querySelector('div[aria-label="Đăng"][role="button"]') ||
+                      document.querySelector('div[aria-label="Post"][role="button"]') ||
+                      document.querySelector('span[aria-label="Đăng"]') ||
+                      document.querySelector('span[aria-label="Post"]');
+            if (btn) return btn;
+            
+            // Chiến lược 2: Tìm TRONG dialog bằng text content
+            const dialog = document.querySelector('div[role="dialog"]');
+            if (dialog) {
+                const allBtns = Array.from(dialog.querySelectorAll('div[role="button"]'));
+                btn = allBtns.find(b => {
+                    const txt = (b.innerText || '').trim();
+                    return txt === 'Đăng' || txt === 'Post';
+                });
+                if (btn) return btn;
+            }
+            
+            // Chiến lược 3: Tìm toàn trang bằng text content
+            const allButtons = Array.from(document.querySelectorAll('div[role="button"], button'));
+            btn = allButtons.find(b => {
+                const txt = (b.innerText || '').trim();
+                const label = (b.getAttribute('aria-label') || '').trim();
+                return (txt === 'Đăng' || txt === 'Post' || label === 'Đăng' || label === 'Post') &&
+                       b.offsetParent !== null; // Phải visible
+            });
+            if (btn) return btn;
+            
+            return null;
         });
+        
+        // Debug: Log tất cả nút trong dialog
+        const dialogBtns = await page.evaluate(() => {
+            const dialog = document.querySelector('div[role="dialog"]');
+            if (!dialog) return { hasDialog: false, buttons: [] };
+            const btns = Array.from(dialog.querySelectorAll('div[role="button"]'));
+            return {
+                hasDialog: true,
+                buttons: btns.map(b => ({
+                    text: (b.innerText || '').trim().substring(0, 30),
+                    ariaLabel: b.getAttribute('aria-label'),
+                    ariaDisabled: b.getAttribute('aria-disabled'),
+                    visible: b.offsetParent !== null
+                }))
+            };
+        });
+        console.log("[POST] Debug buttons trong dialog:", JSON.stringify(dialogBtns, null, 2));
         
         const postBtnElement = postBtnHandle.asElement();
         let posted = false;
@@ -264,7 +306,7 @@ function spinText(text) {
             await postBtnHandle.dispose();
         } else {
             await postBtnHandle.dispose();
-            console.log("[POST] ⚠ Không tìm thấy nút Đăng bằng aria-label.");
+            console.log("[POST] ⚠ Không tìm thấy nút Đăng. Xem debug buttons ở trên.");
         }
 
         if (posted) {
