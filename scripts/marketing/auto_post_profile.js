@@ -104,17 +104,18 @@ function spinText(text) {
         
         // Tìm NÚT BỌC NGOÀI (visible, clickable), KHÔNG phải textbox ẩn bên trong
         const composerHandle = await page.evaluateHandle(() => {
-            // Chiến lược 1 (ưu tiên): Tìm SPAN/DIV chứa text "Bạn đang nghĩ gì?" - đây là nút visible
+            // Chiến lược 1: Tìm SPAN/DIV chứa CHÍNH XÁC text "Bạn đang nghĩ gì?"
+            // KHÔNG tìm "Chia sẻ suy nghĩ" (đó là nút Notes/Ghi chú, không phải composer)
             const allElements = Array.from(document.querySelectorAll('div[role="button"], span'));
             let el = allElements.find(b => {
                 const txt = (b.innerText || '').trim();
                 const rect = b.getBoundingClientRect();
-                // Phải visible (có kích thước > 0) và chứa đúng text
-                return rect.width > 50 && rect.height > 10 && 
-                       txt.length > 3 && txt.length < 50 && (
+                // Phải visible, kích thước lớn (ô composer rộng ~300px+), và chứa đúng text
+                return rect.width > 200 && rect.height > 10 && 
+                       txt.length > 5 && txt.length < 50 && (
                     txt.includes("Bạn đang nghĩ gì") || 
-                    txt.includes("What's on your mind") ||
-                    txt.includes("Chia sẻ suy nghĩ")
+                    txt.includes("What's on your mind")
+                    // KHÔNG bao gồm "Chia sẻ suy nghĩ" - đó là Notes!
                 );
             });
             if (el) return el;
