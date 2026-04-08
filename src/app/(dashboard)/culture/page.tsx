@@ -53,6 +53,7 @@ function EditableImage({ id, label, className = "aspect-video" }: { id: string, 
     const imageUrl = content[id];
     const shape = content[`${id}_shape`];
     const size = content[`${id}_size`];
+    const radius = content[`${id}_radius`];
     const isUploading = uploadingId === id;
 
     let dynamicClasses = "";
@@ -67,6 +68,8 @@ function EditableImage({ id, label, className = "aspect-video" }: { id: string, 
     else if (size === 'md') dynamicClasses += " !w-full !max-w-[300px] !mx-auto";
     else if (size === 'lg') dynamicClasses += " !w-full !max-w-[500px] !mx-auto";
     else if (size === 'full') dynamicClasses += " !w-full !max-w-none";
+
+    if (radius === 'none') dynamicClasses += " !rounded-none";
 
     const finalClasses = `${className} ${dynamicClasses}`.trim();
 
@@ -126,6 +129,11 @@ function EditableImage({ id, label, className = "aspect-video" }: { id: string, 
                                <button onClick={() => updateContent(`${id}_size`, 'lg')} className={`px-2 py-1 rounded font-bold transition ${size==='lg'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>L</button>
                                <button onClick={() => updateContent(`${id}_size`, 'full')} className={`px-2 py-1 rounded font-bold transition ${size==='full'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>Full</button>
                                <button onClick={() => updateContent(`${id}_size`, '')} className={`px-2 py-1 rounded font-bold transition ${!size?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}>MĐ</button>
+                           </div>
+                           <div className="flex items-center gap-2 text-xs border-t border-slate-700/50 pt-2 mt-0.5">
+                               <span className="text-slate-300 w-10 font-medium tracking-wide">GÓC:</span>
+                               <button onClick={() => updateContent(`${id}_radius`, 'none')} className={`px-2 py-1 rounded font-bold transition ${radius==='none'?'bg-red-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Bỏ bo góc (Vuông vắn)">0px</button>
+                               <button onClick={() => updateContent(`${id}_radius`, '')} className={`px-2 py-1 rounded font-bold transition ${!radius?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Bo góc mặc định theo khung">MĐ</button>
                            </div>
                        </div>
                    </div>
