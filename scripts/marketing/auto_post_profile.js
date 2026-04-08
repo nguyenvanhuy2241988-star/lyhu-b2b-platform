@@ -95,37 +95,74 @@ function spinText(text) {
         if (tempImagePath) {
             console.log("[POST] Chế độ: Đăng bài CÓ ảnh (mbasic)...");
             
-            // Bước 1: Vào trang chính mbasic để tìm link "Ảnh/Photo" 
+            // Bước 1: Vào trang chính mbasic
             await page.goto("https://mbasic.facebook.com/", { waitUntil: 'networkidle2', timeout: 30000 });
             await delay(rdn(2000, 3000));
 
-            // Bước 2: Tìm link "Ảnh" hoặc "Photo" trên composer  
+            // DEBUG: Chụp screenshot + dump cấu trúc trang để biết mbasic hiện gì
+            const debugScreenPath = path.join(__dirname, '../../debug_mbasic.png');
+            await page.screenshot({ path: debugScreenPath, fullPage: true });
+            console.log(`[DEBUG] Screenshot saved: ${debugScreenPath}`);
+            
+            const pageDebug = await page.evaluate(() => {
+                const info = {
+                    url: window.location.href,
+                    title: document.title,
+                    textareas: Array.from(document.querySelectorAll('textarea')).map(t => ({
+                        name: t.name, id: t.id, placeholder: t.placeholder
+                    })),
+                    forms: Array.from(document.querySelectorAll('form')).map(f => ({
+                        action: f.action, method: f.method, id: f.id
+                    })),
+                    inputs: Array.from(document.querySelectorAll('input')).map(i => ({
+                        type: i.type, name: i.name, value: i.value
+                    })),
+                    links: Array.from(document.querySelectorAll('a')).slice(0, 30).map(a => ({
+                        text: a.textContent.trim().substring(0, 50), href: a.href
+                    }))
+                };
+                return info;
+            });
+            console.log("[DEBUG] Page structure:", JSON.stringify(pageDebug, null, 2));
+
+            // Bước 2: Tìm link upload ảnh (tìm rộng hơn)
             const photoLink = await page.evaluate(() => {
                 const links = Array.from(document.querySelectorAll('a'));
+                // Tìm link chứa keyword ảnh/photo trong text hoặc href
                 const match = links.find(a => {
                     const txt = (a.textContent || '').trim().toLowerCase();
-                    return txt.includes('ảnh') || txt.includes('photo') || txt.includes('hình ảnh');
+                    const href = (a.href || '').toLowerCase();
+                    return txt.includes('ảnh') || txt.includes('photo') || txt.includes('hình ảnh') ||
+                           href.includes('photo') || href.includes('composer') || href.includes('upload');
                 });
                 return match ? match.href : null;
             });
 
+            // Bước 2b: Nếu không tìm thấy link, thử tìm form trực tiếp có file input
+            let fileInput = null;
             if (!photoLink) {
-                // Fallback: Đăng text-only nếu không tìm thấy link upload ảnh
-                console.log("[POST] Không tìm thấy link upload ảnh, chuyển sang đăng text-only...");
-                const textArea = await page.$('textarea[name="xc_message"]');
+                fileInput = await page.$('input[type="file"]');
+            }
+
+            if (!photoLink && !fileInput) {
+                // Fallback: thử đăng bài text qua bất kỳ textarea nào trên trang
+                console.log("[POST] Không tìm thấy link upload ảnh, thử đăng text-only...");
+                const textArea = await page.$('textarea');
                 if (textArea && finalMessage) {
                     await textArea.click();
                     await delay(500);
                     await textArea.type(finalMessage, { delay: rdn(20, 50) });
+                    console.log("[POST] Đã gõ nội dung vào textarea.");
                 }
-                const postBtn = await page.$('input[type="submit"][name="view_post"], input[type="submit"][value="Đăng"], input[type="submit"][value="Post"]');
+                // Tìm submit button - thử nhiều selector
+                const postBtn = await page.$('input[type="submit"], button[type="submit"]');
                 if (postBtn) {
                     await postBtn.click();
                     await delay(rdn(5000, 8000));
                     console.log("[POST] 🟢 Đã đăng bài TEXT (không upload được ảnh)!");
                     await logAction('post', 'success', `Thành công: Đã đăng 1 Status Cá Nhân, text-only (Kho: ${category})`);
                 } else {
-                    throw new Error("Không tìm thấy nút Đăng trên mbasic.");
+                    throw new Error("Không tìm thấy nút Đăng trên mbasic. Xem debug_mbasic.png để biết trang hiện gì.");
                 }
             } else {
                 // Bước 3: Vào trang upload ảnh - PHẢI giữ trên mbasic domain
