@@ -277,23 +277,152 @@ function TabProfiles() {
 }
 
 function TabQueue() {
+    const [commands, setCommands] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchQueue = async () => {
+        setIsLoading(true);
+        // Fetch commands joining with bot_profiles to get the profile name
+        const { data, error } = await supabase
+            .from('marketing_bot_commands')
+            .select(`
+                *,
+                bot_profiles (
+                    profile_name
+                )
+            `)
+            .order('created_at', { ascending: false })
+            .limit(50); // Get latest 50
+            
+        if (!error && data) {
+            setCommands(data);
+        }
+        setIsLoading(false);
+    };
+
+    useEffect(() => {
+        fetchQueue();
+    }, []);
+
+    const handleCancel = async (id: string) => {
+        const { error } = await supabase.from('marketing_bot_commands').update({ status: 'error' }).eq('id', id);
+        if (!error) {
+            toast.success("Đã hủy lệnh chờ.");
+            fetchQueue();
+        }
+    };
+
+    const handleRetry = async (cmd: any) => {
+        const { error } = await supabase.from('marketing_bot_commands').insert({
+            script_name: cmd.script_name,
+            args: cmd.args,
+            profile_id: cmd.profile_id,
+            status: 'pending'
+        });
+        if (!error) {
+            toast.success("Đã đưa lệnh vào cuối hàng đợi.");
+            fetchQueue();
+        }
+    };
+
+    const getStatusBadge = (status: string) => {
+        switch(status) {
+            case 'pending': return <span className="bg-amber-100 text-amber-700 px-2 py-1 rounded-md text-xs font-semibold animate-pulse">Đang Chờ...</span>;
+            case 'running': return <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-md text-xs font-semibold animate-pulse">Đang Chạy Máy</span>;
+            case 'completed': return <span className="bg-green-100 text-green-700 px-2 py-1 rounded-md text-xs font-semibold">Hoàn Thành</span>;
+            case 'error': return <span className="bg-red-100 text-red-700 px-2 py-1 rounded-md text-xs font-semibold">Lỗi / Hủy bỏ</span>;
+            default: return <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded-md text-xs font-semibold">{status}</span>;
+        }
+    };
+
+    const formatScript = (script: string) => {
+        const map: any = {
+            'execute_search_add.js': '🔍 Săn Khách Hàng',
+            'group_finder.js': '👥 Quét Hội Nhóm',
+            'invite_friend_page.js': '📩 Mời Bạn Bè',
+            'defense_engine.js': '🛡️ Lá Chắn Ảo',
+            'manual_login.js': '🔑 Mở Trình Duyệt',
+            'master_commander.js': '🧠 Chỉ Huy Bằng Lời',
+            'execute_post_scan.js': '🕵️ Quét Bài Viết',
+            'execute_suggestion_scan.js': '🌊 Quét Đề Xuất',
+            'execute_rival_scan.js': '🎯 Quét Đối Thủ'
+        };
+        return map[script] || script;
+    };
+
     return (
         <div className="p-6">
              <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h2 className="text-lg font-bold text-slate-800">Hàng Đợi Lệnh (Queue)</h2>
-                    <p className="text-sm text-slate-500">Danh sách các lệnh đang chờ xử lý từ trung tâm máy chủ.</p>
+                    <h2 className="text-lg font-bold text-slate-800">Hàng Đợi Lệnh (Queue) & Lịch sử</h2>
+                    <p className="text-sm text-slate-500">Giám sát các thao tác máy tính đang xếp hàng hoặc đã thực hiện.</p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white text-slate-700 rounded-lg font-medium hover:bg-slate-50">
-                    <RefreshCw className="w-4 h-4" />
+                <button onClick={fetchQueue} disabled={isLoading} className="flex items-center gap-2 px-4 py-2 border border-slate-200 bg-white text-slate-700 rounded-lg font-medium hover:bg-slate-50 disabled:opacity-50 transition-all">
+                    <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
                     Làm mới
                 </button>
             </div>
-            <div className="border border-slate-200 rounded-lg bg-slate-50 p-12 text-center">
-                <History className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                <h3 className="font-semibold text-slate-700">Hàng đợi đang trống</h3>
-                <p className="text-sm text-slate-500 mt-1">Hệ thống cỗ máy BOT hiện đang rảnh rỗi.</p>
-            </div>
+            
+            {isLoading ? (
+                <div className="text-center py-10 text-slate-500">Đang đồng bộ Hàng đợi từ Máy chủ...</div>
+            ) : commands.length === 0 ? (
+                <div className="border border-slate-200 rounded-lg bg-slate-50 p-12 text-center">
+                    <History className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                    <h3 className="font-semibold text-slate-700">Hàng đợi đang trống</h3>
+                    <p className="text-sm text-slate-500 mt-1">Hệ thống cỗ máy BOT hiện đang rảnh rỗi.</p>
+                </div>
+            ) : (
+                <div className="overflow-hidden border border-slate-200 rounded-lg">
+                    <table className="w-full text-sm text-left bg-white">
+                        <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b">
+                            <tr>
+                                <th className="px-5 py-3 font-medium">Lệnh (Task)</th>
+                                <th className="px-5 py-3 font-medium">Tham Số / Mục Tiêu</th>
+                                <th className="px-5 py-3 font-medium">Profile (Vân tay)</th>
+                                <th className="px-5 py-3 font-medium">Trạng thái</th>
+                                <th className="px-5 py-3 font-medium">Thời gian tạo</th>
+                                <th className="px-5 py-3 font-medium text-right">Điều khiển</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {commands.map(cmd => (
+                                <tr key={cmd.id} className="hover:bg-slate-50 transition-colors">
+                                    <td className="px-5 py-4 font-semibold text-slate-800">
+                                        {formatScript(cmd.script_name)}
+                                    </td>
+                                    <td className="px-5 py-4 text-slate-600 max-w-[200px] truncate" title={cmd.args}>
+                                        {cmd.args ? `"${cmd.args}"` : <span className="text-slate-400 italic">Mặc định</span>}
+                                    </td>
+                                    <td className="px-5 py-4">
+                                        {cmd.bot_profiles?.profile_name ? (
+                                            <span className="font-medium text-purple-700 bg-purple-50 px-2 py-1 rounded-md">{cmd.bot_profiles.profile_name}</span>
+                                        ) : (
+                                            <span className="text-slate-500 italic text-xs">🌍 Mặc định</span>
+                                        )}
+                                    </td>
+                                    <td className="px-5 py-4">
+                                        {getStatusBadge(cmd.status)}
+                                    </td>
+                                    <td className="px-5 py-4 text-slate-500 text-xs">
+                                        {new Date(cmd.created_at).toLocaleString('vi-VN')}
+                                    </td>
+                                    <td className="px-5 py-4 text-right">
+                                        {cmd.status === 'pending' ? (
+                                            <button onClick={() => handleCancel(cmd.id)} className="text-xs font-semibold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition-colors">
+                                                Hủy Lệnh
+                                            </button>
+                                        ) : (
+                                            <button onClick={() => handleRetry(cmd)} className="text-xs font-semibold text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-full transition-colors">
+                                                🔃 Chạy Lại
+                                            </button>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
         </div>
     )
 }
