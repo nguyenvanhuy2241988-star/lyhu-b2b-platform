@@ -20,9 +20,13 @@ import {
     Edit3,
     Shapes,
     Eye,
-    X
+    X,
+    Menu,
+    ChevronDown
 } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
+import { useToast } from "@/components/ui/toast";
+import { createPortal } from "react-dom";
 
 // --- CONTEXT CHO CMS ---
 const CultureContext = createContext<any>(null);
@@ -90,13 +94,14 @@ function EditableImage({ id, label = "Ảnh", className = "aspect-video" }: { id
                         <Eye className="w-6 h-6" />
                     </div>
                 </div>
-                {isPreviewOpen && (
+                {isPreviewOpen && typeof document !== 'undefined' && createPortal(
                     <div className="fixed inset-0 z-[9999] bg-slate-900/95 flex flex-col items-center justify-center p-4 backdrop-blur-md !cursor-default" onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(false); }}>
                         <button className="absolute top-6 right-6 text-white/50 hover:text-white transition bg-white/10 hover:bg-white/20 p-2 rounded-full cursor-pointer z-50 pointer-events-auto" onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(false); }}>
                             <X className="w-8 h-8" />
                         </button>
                         <img src={imageUrl} alt={label} className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
-                    </div>
+                    </div>,
+                    document.body
                 )}
             </div>
         );
@@ -163,13 +168,14 @@ function EditableImage({ id, label = "Ảnh", className = "aspect-video" }: { id
            </div>
 
            {/* Preview Modal in Edit Mode */}
-           {isPreviewOpen && imageUrl && (
+           {isPreviewOpen && imageUrl && typeof document !== 'undefined' && createPortal(
                 <div className="fixed inset-0 z-[9999] bg-slate-900/95 flex flex-col items-center justify-center p-4 backdrop-blur-md cursor-default" onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(false); }}>
                     <button className="absolute top-6 right-6 text-white/50 hover:text-white transition bg-white/10 hover:bg-white/20 p-2 rounded-full cursor-pointer z-50 pointer-events-auto" onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(false); }}>
                         <X className="w-8 h-8" />
                     </button>
                     <img src={imageUrl} alt={label} className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
-                </div>
+                </div>,
+                document.body
            )}
         </div>
     );
@@ -183,7 +189,9 @@ export default function CulturePage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [uploadingId, setUploadingId] = useState<string | null>(null);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const supabase = createClient();
+    const { showToast } = useToast();
 
     // MÀU THƯƠNG HIỆU
     const BRAND = { teal: '#00afa9', green: '#98c93c' };
@@ -224,6 +232,16 @@ export default function CulturePage() {
         setContent(prev => ({ ...prev, [key]: value }));
     };
 
+    const goToNextTab = () => {
+        const currentIndex = TABS.findIndex(t => t.id === activeTab);
+        if (currentIndex < TABS.length - 1) {
+            setActiveTab(TABS[currentIndex + 1].id);
+            // Scroll right pane to top
+            const container = document.getElementById('culture-scroll-container');
+            if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
     const uploadImage = async (id: string, file: File | undefined) => {
         if (!file) return;
         setUploadingId(id);
@@ -239,7 +257,7 @@ export default function CulturePage() {
             const { data } = supabase.storage.from('media').getPublicUrl(`culture/${fileName}`);
             updateContent(id, data.publicUrl);
         } catch (err: any) {
-            alert("Lỗi upload ảnh: " + err.message);
+            showToast("Lỗi upload ảnh: " + err.message, "error");
         }
         setUploadingId(null);
     };
@@ -252,10 +270,10 @@ export default function CulturePage() {
                 .upsert({ slug: 'main_content', content: content }, { onConflict: 'slug' });
 
             if (error) throw error;
-            alert("Đã lưu nội dung cực thành công! Các tab khác kể cả Sale/Telesales cũng sẽ thấy nội dung mới nhất.");
+            showToast("Đã lưu nội dung cẩm nang thành công!", "success");
             setIsEditMode(false);
         } catch (err: any) {
-            alert("Lỗi khi lưu bảng db: " + err.message);
+            showToast("Lỗi khi lưu bảng db: " + err.message, "error");
         }
         setIsSaving(false);
     };
@@ -265,7 +283,7 @@ export default function CulturePage() {
     }
 
     return (
-        <CultureContext.Provider value={{ content, isEditMode, updateContent, uploadImage, uploadingId }}>
+        <CultureContext.Provider value={{ content, isEditMode, updateContent, uploadImage, uploadingId, goToNextTab, activeTab, TABS }}>
             <DashboardShell title="Văn hóa doanh nghiệp">
                 {/* Thanh công cụ Admin */}
                 <div className="mb-4 flex items-center justify-end gap-3 px-2">
@@ -305,10 +323,10 @@ export default function CulturePage() {
                                     <div 
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`group flex items-center justify-between px-4 py-3.5 rounded-lg cursor-pointer transition-all duration-200 ${
+                                        className={`group flex items-center justify-between px-4 py-3.5 rounded-lg cursor-pointer transition-all duration-200 border-l-4 ${
                                             isActive 
-                                            ? "bg-white text-slate-900 border border-slate-200 shadow-sm font-semibold" 
-                                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent"
+                                            ? "bg-white text-slate-900 border-teal-500 shadow-sm font-semibold" 
+                                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 border-transparent hover:border-slate-300"
                                         }`}
                                     >
                                         <div className="flex items-center gap-3">
@@ -323,7 +341,39 @@ export default function CulturePage() {
                     </div>
 
                     {/* RIGHT CONTENT AREA */}
-                    <div className="flex-1 flex flex-col h-full bg-slate-50 relative overflow-y-auto scrollbar-thin">
+                    <div id="culture-scroll-container" className="flex-1 flex flex-col h-full bg-slate-50 relative overflow-y-auto scrollbar-thin">
+                        {/* Mobile Nav Top Bar */}
+                        <div className="md:hidden border-b border-slate-200 bg-white sticky top-0 z-40">
+                            <button 
+                                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
+                                className="w-full p-4 flex items-center justify-between text-slate-800 font-bold"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Menu className="w-5 h-5" style={{ color: BRAND.teal }} />
+                                    <span>{TABS.find(t => t.id === activeTab)?.label}</span>
+                                </div>
+                                <ChevronDown className={`w-5 h-5 transition-transform ${isMobileMenuOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                            {isMobileMenuOpen && (
+                                <div className="absolute top-14 left-0 w-full bg-white border-b border-slate-200 shadow-xl overflow-y-auto max-h-[60vh] z-50">
+                                    {TABS.map((tab) => {
+                                        const isActive = tab.id === activeTab;
+                                        const Icon = tab.icon;
+                                        return (
+                                            <div 
+                                                key={tab.id}
+                                                onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
+                                                className={`flex items-center gap-3 p-4 cursor-pointer border-b border-slate-50 ${isActive ? 'bg-teal-50 text-teal-800 font-bold' : 'text-slate-600 hover:bg-slate-50'}`}
+                                            >
+                                                <Icon className="w-4 h-4" style={{ color: isActive ? BRAND.teal : '' }} />
+                                                {tab.label}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
                         <div className="max-w-5xl mx-auto w-full p-6 md:p-10 lg:p-14 pb-24">
                             {activeTab === 'intro' && <IntroductionView brand={BRAND} />}
                             {activeTab === 'brand' && <BrandIdentityView brand={BRAND} />}
@@ -342,6 +392,24 @@ export default function CulturePage() {
 /* =========================================
    UI VIEWS W/ EDITABLE CONTEXT
    ========================================= */
+
+function NextTabButton() {
+    const { activeTab, TABS, goToNextTab } = useContext(CultureContext);
+    const currentIndex = TABS.findIndex((t: any) => t.id === activeTab);
+    
+    if (currentIndex >= TABS.length - 1) return null;
+    
+    const nextTab = TABS[currentIndex + 1];
+    
+    return (
+        <div className="mt-16 flex justify-end">
+            <button onClick={goToNextTab} className="group flex items-center gap-3 bg-teal-50 hover:bg-teal-500 text-teal-700 hover:text-white px-8 py-4 rounded-2xl transition-all shadow-sm hover:shadow-md">
+                <span className="font-semibold text-lg">Tiếp theo: {nextTab.label}</span>
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+            </button>
+        </div>
+    );
+}
 
 function IntroductionView({ brand }: { brand: any }) {
     return (
@@ -389,13 +457,15 @@ function IntroductionView({ brand }: { brand: any }) {
                     ))}
                 </div>
             </div>
+            
+            <NextTabButton />
         </div>
     );
 }
 
 function BrandIdentityView({ brand }: { brand: any }) {
     const { content, isEditMode, updateContent } = useContext(CultureContext);
-    const order = content.brand_order || ['hero', 'adn'];
+    const order = content.brand_order ? [...content.brand_order] : ['hero', 'adn'];
     
     const move = (dir: number, id: string) => {
         const idx = order.indexOf(id);
@@ -461,6 +531,7 @@ function BrandIdentityView({ brand }: { brand: any }) {
     return (
         <div className="animate-in fade-in duration-500 space-y-10">
             {order.map((id: string) => blocks[id])}
+            <NextTabButton />
         </div>
     );
 }
@@ -469,7 +540,7 @@ function LogoView({ brand }: { brand: any }) {
     const { content, isEditMode, updateContent } = useContext(CultureContext);
     
     // Ensure 'structure' is part of the order array even if saved context lacks it
-    let savedOrder = content.logo_order || ['meaning', 'structure', 'colors', 'num4'];
+    let savedOrder = content.logo_order ? [...content.logo_order] : ['meaning', 'structure', 'colors', 'num4'];
     if (!savedOrder.includes('structure')) savedOrder.splice(1, 0, 'structure');
     
     const order = savedOrder;
@@ -523,7 +594,7 @@ function LogoView({ brand }: { brand: any }) {
                     </div>
                     <div className="flex flex-col">
                         <h3 className="text-xl font-bold text-slate-800 mb-4 tracking-tight uppercase border-b border-slate-100 pb-2">Bản Vẽ Lưới Sinh Tự Động</h3>
-                        <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden flex-1 relative shadow-inner">
+                        <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden flex-1 relative shadow-inner min-h-[300px] md:min-h-[400px]">
                             {content.img_logo_full ? (
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     {/* Base Drafting Paper Grid */}
@@ -651,6 +722,7 @@ function LogoView({ brand }: { brand: any }) {
             <div className="space-y-10">
                 {order.map((id: string) => blocks[id])}
             </div>
+            <NextTabButton />
         </div>
     );
 }
@@ -705,6 +777,7 @@ function CoreValuesView({ brand }: { brand: any }) {
                     </div>
                 </div>
             </div>
+            <NextTabButton />
         </div>
     );
 }
@@ -756,6 +829,7 @@ function PhilosophyView({ brand }: { brand: any }) {
                     <p className="text-lg font-bold tracking-widest uppercase inline-block pointer-events-auto">— <EditableText id="quote2_author" defaultText="Antoine de Saint-Exupéry" /></p>
                 </div>
             </div>
+            <NextTabButton />
         </div>
     );
 }

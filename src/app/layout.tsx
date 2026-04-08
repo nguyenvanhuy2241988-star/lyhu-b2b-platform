@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     description: "B2B Application for LYHU",
 };
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin", "vietnamese"] });
 
 export default function RootLayout({
     children,
