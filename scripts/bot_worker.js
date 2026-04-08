@@ -57,7 +57,7 @@ setInterval(async () => {
             const safeArgs = command.args ? `"${command.args.replace(/[&|<>^%]/g, '')}"` : '';
             
             console.log(`💻 Đang gọi Terminal cho Bot...`);
-            let execCommand = `start "BotTerminal" cmd /k "node \\"${scriptPath}\\" ${safeArgs} --profile=${profileFolder}"`;
+            let execCommand = `start "BotTerminal" cmd /k node "${scriptPath}" ${safeArgs} --profile=${profileFolder}`;
             
             exec(execCommand, async (err) => {
                 isWorking = false; // Xong việc, sẵn sàng nhận ca mới

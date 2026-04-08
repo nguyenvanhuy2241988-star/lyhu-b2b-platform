@@ -181,6 +181,43 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
                         <p className="text-xs text-slate-500 mt-1">Nên để dưới 50 người/lần để tránh Checkpoint.</p>
                     </div>
                 );
+            case 'auto_post_profile.js':
+            case 'auto_post_group.js':
+            case 'auto_comment_group.js':
+                return (
+                    <div className="space-y-3">
+                        {scriptName === 'auto_post_group.js' || scriptName === 'auto_comment_group.js' ? (
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Đường dẫn FB Group (Tùy chọn)</label>
+                                <input
+                                    type="text"
+                                    className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    placeholder="Bỏ trống để tự chọn Group ngẫu nhiên"
+                                    value={arg}
+                                    onChange={(e) => setArg(e.target.value)}
+                                />
+                            </div>
+                        ) : null}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Tên Kho Nội Dung (Category)</label>
+                            <input
+                                type="text"
+                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                placeholder="VD: Kho Bán Hàng Máy Tính (Bỏ trống = Mặc định)"
+                                value={scriptName === 'auto_post_group.js' || scriptName === 'auto_comment_group.js' ? arg.split('|')[1]?.trim() || '' : arg}
+                                onChange={(e) => {
+                                    if (scriptName === 'auto_post_group.js' || scriptName === 'auto_comment_group.js') {
+                                        const groupUrl = arg.split('|')[0]?.trim() || '';
+                                        setArg(groupUrl ? `${groupUrl} | ${e.target.value}` : e.target.value);
+                                    } else {
+                                        setArg(e.target.value);
+                                    }
+                                }}
+                            />
+                        </div>
+                        <p className="text-xs text-slate-500">Mẹo: Cần tạo sẵn mồi trong Tab 5: Kho Nội Dung.</p>
+                    </div>
+                );
             default:
                 return <p className="text-slate-600">Bot này sẽ chạy với tham số mặc định. Vui lòng chọn Profile thực thi ở bên dưới.</p>;
         }
@@ -230,7 +267,7 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
                     </button>
                     <button
                         onClick={handleRun}
-                        disabled={isLoading || (scriptName !== 'defense_engine.js' && scriptName !== 'manual_login.js' && !arg)}
+                        disabled={isLoading || (scriptName === 'execute_search_add.js' && !arg) || (scriptName === 'group_finder.js' && !arg) || (scriptName === 'invite_friend_page.js' && !arg)}
                         className="px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                         {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
