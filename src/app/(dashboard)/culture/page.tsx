@@ -435,7 +435,12 @@ function BrandIdentityView({ brand }: { brand: any }) {
 
 function LogoView({ brand }: { brand: any }) {
     const { content, isEditMode, updateContent } = useContext(CultureContext);
-    const order = content.logo_order || ['meaning', 'colors', 'num4'];
+    
+    // Ensure 'structure' is part of the order array even if saved context lacks it
+    let savedOrder = content.logo_order || ['meaning', 'structure', 'colors', 'num4'];
+    if (!savedOrder.includes('structure')) savedOrder.splice(1, 0, 'structure');
+    
+    const order = savedOrder;
     
     const move = (dir: number, id: string) => {
         const idx = order.indexOf(id);
@@ -464,6 +469,31 @@ function LogoView({ brand }: { brand: any }) {
                         <p className="text-slate-600 text-lg leading-relaxed">
                             <EditableText id="logo_desc_2" multiline defaultText="Sự liên kết tiếp nối giữa các khối màu đại diện cho sự cộng hưởng của các thành viên cùng chung một mục đích, tượng trưng cho thông điệp cốt lõi: Kết nối chân thành - Hợp tác bền vững." />
                         </p>
+                    </div>
+                </div>
+            </div>
+        ),
+        structure: (
+            <div key="structure" className="relative group/sort bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200">
+                {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'structure')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'structure')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
+                
+                <h2 className="text-3xl font-black text-slate-800 mb-6 tracking-tight uppercase text-center">Tiêu Chuẩn Lưới Cấu Trúc & Tỷ Lệ Vàng</h2>
+                <p className="text-xl text-slate-500 font-medium text-center mb-10 max-w-3xl mx-auto">
+                    <EditableText id="logo_structure_intro" multiline defaultText="Thiết kế logo LYHU dựa trên hệ thống lưới (Grid System) chuẩn mực, đảm bảo tỷ lệ vàng và tính cân bằng tuyệt đối trong khả năng nhận diện." />
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                    <div className="flex flex-col">
+                        <h3 className="text-xl font-bold text-slate-800 mb-4 tracking-tight uppercase border-b border-slate-100 pb-2">Logo Có Chữ Kèm Biểu Tượng</h3>
+                        <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 flex-1 flex items-center justify-center relative">
+                            <EditableImage id="img_logo_full" className="w-full aspect-[2/1] mix-blend-multiply opacity-90" label="Logo đầy đủ (Lockup)" />
+                        </div>
+                    </div>
+                    <div className="flex flex-col">
+                        <h3 className="text-xl font-bold text-slate-800 mb-4 tracking-tight uppercase border-b border-slate-100 pb-2">Bản Vẽ Lưới (Grid Construction)</h3>
+                        <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 flex-1 flex items-center justify-center relative">
+                            <EditableImage id="img_logo_grid" className="w-full aspect-[2/1] mix-blend-multiply opacity-90" label="Bản vẽ lưới tỷ lệ" />
+                        </div>
                     </div>
                 </div>
             </div>
