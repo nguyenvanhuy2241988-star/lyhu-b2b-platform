@@ -128,9 +128,13 @@ function spinText(text) {
                     throw new Error("Không tìm thấy nút Đăng trên mbasic.");
                 }
             } else {
-                // Bước 3: Vào trang upload ảnh
-                console.log(`[POST] Tìm thấy link upload: ${photoLink}`);
-                await page.goto(photoLink, { waitUntil: 'networkidle2', timeout: 30000 });
+                // Bước 3: Vào trang upload ảnh - PHẢI giữ trên mbasic domain
+                let mbasicPhotoLink = photoLink
+                    .replace('www.facebook.com', 'mbasic.facebook.com')
+                    .replace('m.facebook.com', 'mbasic.facebook.com')
+                    .replace('web.facebook.com', 'mbasic.facebook.com');
+                console.log(`[POST] Tìm thấy link upload: ${mbasicPhotoLink}`);
+                await page.goto(mbasicPhotoLink, { waitUntil: 'networkidle2', timeout: 30000 });
                 await delay(rdn(2000, 3000));
 
                 // Bước 4: Tìm file input và upload
