@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: Request) {
     try {
@@ -22,11 +22,13 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Invalid script name' }, { status: 400 });
         }
 
-        const supabase = createClient();
-
-        // Lấy thông tin user hiện tại (để biết ai ra lệnh bot)
-        const { data: { session } } = await supabase.auth.getSession();
+        // Lấy client chuẩn để bỏ qua lỗi Proxy trên Vercel SSR
+        const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key"
+        );
         
+        // Bỏ qua bước lấy session vì RLS đã cho phép public insert
         // Insert lệnh vào database để Bot Worker ở Local nghe lén và chạy
         const { error } = await supabase
             .from('marketing_bot_commands')
@@ -34,7 +36,7 @@ export async function POST(req: Request) {
                 script_name: scriptName,
                 args: args || '',
                 status: 'pending',
-                created_by: session?.user?.id || null
+                created_by: null
             });
 
         if (error) {
