@@ -490,9 +490,53 @@ function LogoView({ brand }: { brand: any }) {
                         </div>
                     </div>
                     <div className="flex flex-col">
-                        <h3 className="text-xl font-bold text-slate-800 mb-4 tracking-tight uppercase border-b border-slate-100 pb-2">Bản Vẽ Lưới (Grid Construction)</h3>
-                        <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 flex-1 flex items-center justify-center relative">
-                            <EditableImage id="img_logo_grid" className="w-full aspect-[2/1] mix-blend-multiply opacity-90" label="Bản vẽ lưới tỷ lệ" />
+                        <h3 className="text-xl font-bold text-slate-800 mb-4 tracking-tight uppercase border-b border-slate-100 pb-2">Bản Vẽ Lưới Sinh Tự Động</h3>
+                        <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden flex-1 relative shadow-inner">
+                            {content.img_logo_full ? (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    {/* Base Drafting Paper Grid */}
+                                    <div className="absolute inset-0 opacity-[0.15] z-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(#1e293b 1px, transparent 1px), linear-gradient(90deg, #1e293b 1px, transparent 1px)`, backgroundSize: `12px 12px`, backgroundPosition: `center center` }}></div>
+                                    <div className="absolute inset-0 opacity-30 z-0 pointer-events-none" style={{ backgroundImage: `linear-gradient(#db2777 1px, transparent 1px), linear-gradient(90deg, #db2777 1px, transparent 1px)`, backgroundSize: `60px 60px`, backgroundPosition: `center center` }}></div>
+
+                                    {/* Uploaded Logo (Watermark mode) */}
+                                    <img src={content.img_logo_full} className="absolute inset-0 w-full h-full object-contain filter grayscale opacity-40 z-10 p-8 pointer-events-none" alt="Base Logo" />
+
+                                    {/* Dynamic Geometry Overlay */}
+                                    <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center overflow-hidden">
+                                        {/* Center Construction Axes */}
+                                        <div className="absolute top-0 bottom-0 left-1/2 w-px bg-pink-500 opacity-60"></div>
+                                        <div className="absolute left-0 right-0 top-1/2 h-px bg-pink-500 opacity-60"></div>
+                                        <div className="absolute top-1/4 bottom-1/4 left-1/4 w-px bg-pink-500 opacity-30 border-l border-dashed"></div>
+                                        <div className="absolute top-1/4 bottom-1/4 right-1/4 w-px bg-pink-500 opacity-30 border-l border-dashed"></div>
+
+                                        {/* Bounding Box with Diagonal Alignments */}
+                                        <div className="w-[65%] h-[55%] border border-pink-500 opacity-50 absolute flex items-center justify-center">
+                                            <svg className="w-full h-full absolute inset-0 opacity-40" preserveAspectRatio="none">
+                                                <line x1="0" y1="0" x2="100%" y2="100%" stroke="#db2777" strokeWidth="1" strokeDasharray="4 4" />
+                                                <line x1="100%" y1="0" x2="0" y2="100%" stroke="#db2777" strokeWidth="1" strokeDasharray="4 4" />
+                                            </svg>
+                                        </div>
+
+                                        {/* Fibonacci / Golden Ratio Circles */}
+                                        <div className="w-[50%] aspect-square border border-pink-500 rounded-full opacity-60 absolute mix-blend-multiply flex items-center justify-center">
+                                            <div className="w-[61.8%] aspect-square border border-pink-500 rounded-full opacity-70 absolute mix-blend-multiply -translate-x-[20%] translate-y-[20%]"></div>
+                                            <div className="w-[38.2%] aspect-square border-2 border-pink-400 rounded-full opacity-80 absolute mix-blend-multiply translate-x-[40%] -translate-y-[40%]"></div>
+                                        </div>
+
+                                        {/* Tech Annotations */}
+                                        <div className="absolute top-[20%] left-[15%] text-[10px] text-pink-600 font-mono tracking-widest opacity-80 bg-white/50 px-1 rounded">R = 1.618X</div>
+                                        <div className="absolute bottom-[20%] right-[15%] text-[10px] text-pink-600 font-mono tracking-widest opacity-80 bg-white/50 px-1 rounded">ø = X</div>
+                                        <div className="absolute top-1/2 mt-2 ml-2 left-1/2 text-[10px] text-pink-600 font-mono tracking-widest opacity-80">CENTER (0,0)</div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 p-8 text-center bg-slate-50">
+                                    <div className="w-16 h-16 mb-4 rounded-full border-2 border-dashed border-slate-300 flex items-center justify-center">
+                                        <span className="text-slate-300 transform rotate-45 text-2xl">+</span>
+                                    </div>
+                                    <p className="text-sm">Vui lòng tải ảnh logo đầy đủ (định dạng PNG trong suốt) ở bên trái để tự động sinh bản vẽ lưới <strong>Tỷ Lệ Vàng</strong>.</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
