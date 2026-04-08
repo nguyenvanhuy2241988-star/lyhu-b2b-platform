@@ -102,30 +102,45 @@ function spinText(text) {
         
         console.log("[POST] Tìm ô 'Bạn đang nghĩ gì?' (KHÔNG phải comment box)...");
         
-        // Tìm element bằng evaluateHandle - CHỈ tìm composer, LOẠI BỎ comment box
+        // Tìm NÚT BỌC NGOÀI (visible, clickable), KHÔNG phải textbox ẩn bên trong
         const composerHandle = await page.evaluateHandle(() => {
-            // Chiến lược 1: Tìm div[aria-placeholder] chứa "nghĩ gì" (composer)
-            // LOẠI BỎ những cái chứa "bình luận" hoặc "comment" (comment box)
-            const placeholders = Array.from(document.querySelectorAll('div[aria-placeholder]'));
-            let el = placeholders.find(p => {
-                const ph = (p.getAttribute('aria-placeholder') || '').toLowerCase();
-                // CHỈ match composer, KHÔNG match comment box
-                return (ph.includes('nghĩ gì') || ph.includes('on your mind') || ph.includes('suy nghĩ')) &&
-                       !ph.includes('bình luận') && !ph.includes('comment') && !ph.includes('trả lời');
-            });
-            if (el) return el;
-            
-            // Chiến lược 2: Tìm theo role="button" chứa text "Bạn đang nghĩ gì?"
-            const buttons = Array.from(document.querySelectorAll('div[role="button"], span'));
-            el = buttons.find(b => {
+            // Chiến lược 1 (ưu tiên): Tìm SPAN/DIV chứa text "Bạn đang nghĩ gì?" - đây là nút visible
+            const allElements = Array.from(document.querySelectorAll('div[role="button"], span'));
+            let el = allElements.find(b => {
                 const txt = (b.innerText || '').trim();
-                return txt.length > 3 && txt.length < 50 && (
+                const rect = b.getBoundingClientRect();
+                // Phải visible (có kích thước > 0) và chứa đúng text
+                return rect.width > 50 && rect.height > 10 && 
+                       txt.length > 3 && txt.length < 50 && (
                     txt.includes("Bạn đang nghĩ gì") || 
                     txt.includes("What's on your mind") ||
                     txt.includes("Chia sẻ suy nghĩ")
                 );
             });
-            return el || null;
+            if (el) return el;
+            
+            // Chiến lược 2: Tìm div[aria-placeholder] chứa "nghĩ gì" 
+            // rồi lấy PARENT có kích thước lớn hơn (nút bọc ngoài)
+            const placeholders = Array.from(document.querySelectorAll('div[aria-placeholder]'));
+            let textbox = placeholders.find(p => {
+                const ph = (p.getAttribute('aria-placeholder') || '').toLowerCase();
+                return (ph.includes('nghĩ gì') || ph.includes('on your mind')) &&
+                       !ph.includes('bình luận') && !ph.includes('comment');
+            });
+            if (textbox) {
+                // Walk up đến parent có kích thước lớn - đó là nút click được
+                let parent = textbox.parentElement;
+                for (let i = 0; i < 5 && parent; i++) {
+                    const rect = parent.getBoundingClientRect();
+                    if (rect.width > 100 && rect.height > 20) {
+                        return parent;
+                    }
+                    parent = parent.parentElement;
+                }
+                return textbox; // Fallback: trả về textbox gốc
+            }
+            
+            return null;
         });
         
         const composerElement = composerHandle.asElement();
@@ -137,19 +152,25 @@ function spinText(text) {
             const box = await composerElement.boundingBox();
             if (box && box.width > 0 && box.height > 0) {
                 console.log(`[POST] Tìm thấy composer tại (${Math.round(box.x)}, ${Math.round(box.y)}), size ${Math.round(box.width)}x${Math.round(box.height)}`);
-                // Click bằng mouse coordinate → isTrusted: true
                 await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
                 console.log("[POST] Đã click vào ô compose.");
             } else {
-                console.log("[POST] Composer có size 0, thử click bằng Puppeteer...");
-                await composerElement.click();
+                // Size 0: thử Tab + Enter (keyboard navigation)
+                console.log("[POST] Composer size 0, thử keyboard Tab navigation...");
+                // Focus body rồi Tab cho đến khi focus vào composer
+                await page.keyboard.press('Tab');
+                await delay(300);
+                await page.keyboard.press('Tab');
+                await delay(300);
+                await page.keyboard.press('Tab');
+                await delay(300);
+                await page.keyboard.press('Enter');
+                console.log("[POST] Đã thử mở composer bằng Tab+Enter.");
             }
             await composerHandle.dispose();
         } else {
             await composerHandle.dispose();
-            console.log("[POST] Không tìm thấy ô compose, thử bấm phím 'p'...");
-            // Fallback: keyboard shortcut
-            await page.keyboard.press('p');
+            console.log("[POST] Không tìm thấy ô compose trên trang cá nhân.");
         }
         
         // Chờ composer dialog xuất hiện - PHẢI là dialog "Tạo bài viết"
