@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { X, Play, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Play, Loader2, Users } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabaseClient";
 
 interface BotConfigModalProps {
     isOpen: boolean;
@@ -15,6 +16,21 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
     const [arg, setArg] = useState("");
     const [strategy, setStrategy] = useState<'name' | 'post' | 'commander' | 'suggestion' | 'rival'>('commander'); // Default to NLP Commander
     const [isLoading, setIsLoading] = useState(false);
+    
+    // Multi-profile Support
+    const [profiles, setProfiles] = useState<any[]>([]);
+    const [selectedProfileId, setSelectedProfileId] = useState<string>("");
+
+    useEffect(() => {
+        if (!isOpen) return;
+        const fetchProfiles = async () => {
+            const { data, error } = await supabase.from('bot_profiles').select('*').order('created_at', { ascending: true });
+            if (!error && data) {
+                setProfiles(data);
+            }
+        };
+        fetchProfiles();
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
@@ -36,7 +52,8 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     scriptName: finalScriptName,
-                    args: arg
+                    args: arg,
+                    profileId: selectedProfileId || null // Pass selected profile to API
                 })
             });
 
@@ -165,7 +182,7 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
                     </div>
                 );
             default:
-                return <p className="text-slate-600">Bot này sẽ chạy với cấu hình mặc định. Bạn có chắc chắn muốn chạy?</p>;
+                return <p className="text-slate-600">Bot này sẽ chạy với tham số mặc định. Vui lòng chọn Profile thực thi ở bên dưới.</p>;
         }
     };
 
@@ -183,6 +200,24 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
                 {/* Body */}
                 <div className="p-6">
                     {getConfigUI()}
+
+                    {/* Profile Selector */}
+                    <div className="mt-6 border-t pt-4">
+                        <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
+                            <Users className="w-4 h-4 text-blue-600"/>
+                            Chọn Tài khoản (Profile)
+                        </label>
+                        <select 
+                            className="w-full p-2 border border-slate-300 rounded-lg text-sm bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500"
+                            value={selectedProfileId}
+                            onChange={(e) => setSelectedProfileId(e.target.value)}
+                        >
+                            <option value="">-- Profile Ẩn danh Mặc định --</option>
+                            {profiles.map(p => (
+                                <option key={p.id} value={p.id}>{p.profile_name} ({p.folder_name})</option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 {/* Footer */}

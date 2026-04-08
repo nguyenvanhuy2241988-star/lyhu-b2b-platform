@@ -12,15 +12,23 @@ const path = require('path');
 // Add stealth plugin to evade detection
 puppeteer.use(StealthPlugin());
 
+// Extract dynamic profile folder from process arguments
+let profileFolder = '.bot_profile'; // fallback default
+const profileArg = process.argv.find(a => a.startsWith('--profile='));
+if (profileArg) {
+    profileFolder = profileArg.split('=')[1];
+}
+
 // Config
-const USER_DATA_DIR = path.join(__dirname, '../../.bot_profile'); // Persistent profile
+const USER_DATA_DIR = path.join(__dirname, '../../', profileFolder); // Dynamic profile
 const SCREEN_WIDTH = 1366;
 const SCREEN_HEIGHT = 768;
 
 async function launchBrowser() {
     console.log('[Setup] Launching Stealth Browser...');
 
-    console.log(`[Setup] Using Profile Path: ${USER_DATA_DIR}`);
+    console.log(`[Setup] Using Profile: ${profileFolder}`);
+    console.log(`[Setup] Physical Path: ${USER_DATA_DIR}`);
 
     const browser = await puppeteer.launch({
         headless: false, // Run visible for testing/visual verification

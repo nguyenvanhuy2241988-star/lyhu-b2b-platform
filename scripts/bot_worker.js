@@ -25,10 +25,10 @@ setInterval(async () => {
     if (isWorking) return; // Đang chạy Bot thì không nhận thêm
 
     try {
-        // Tìm 1 lệnh đang ở trạng thái pending cũ nhất
+        // Tìm 1 lệnh đang ở trạng thái pending cũ nhất kèm thông tin Profile
         const { data, error } = await supabase
             .from('marketing_bot_commands')
-            .select('*')
+            .select('*, bot_profiles(folder_name)')
             .eq('status', 'pending')
             .order('created_at', { ascending: true })
             .limit(1);
@@ -41,7 +41,11 @@ setInterval(async () => {
         if (data && data.length > 0) {
             const command = data[0];
             isWorking = true;
-            console.log(`\n🔔 [TÍN HIỆU MỚI] Nhận được lệnh kích hoạt: ${command.script_name}`);
+            
+            // Lấy folder name từ Profile được cài đặt, mặc định là .bot_profile
+            const profileFolder = command.bot_profiles?.folder_name || '.bot_profile';
+            
+            console.log(`\n🔔 [TÍN HIỆU MỚI] Nhận được lệnh kích hoạt: ${command.script_name} - [Profile: ${profileFolder}]`);
             
             // Đánh dấu là đang chạy
             await supabase
@@ -53,7 +57,7 @@ setInterval(async () => {
             const safeArgs = command.args ? `"${command.args.replace(/[&|<>^%]/g, '')}"` : '';
             
             console.log(`💻 Đang gọi Terminal cho Bot...`);
-            let execCommand = `start cmd /k "node ${scriptPath} ${safeArgs}"`;
+            let execCommand = `start cmd /k "node ${scriptPath} ${safeArgs} --profile=${profileFolder}"`;
             
             exec(execCommand, async (err) => {
                 isWorking = false; // Xong việc, sẵn sàng nhận ca mới

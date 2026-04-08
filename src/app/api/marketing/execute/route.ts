@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: Request) {
     try {
-        const { scriptName, args } = await req.json();
+        const { scriptName, args, profileId } = await req.json();
 
         // Whitelist allowed scripts for security
         const ALLOWED_SCRIPTS = [
@@ -36,7 +36,8 @@ export async function POST(req: Request) {
                 script_name: scriptName,
                 args: args || '',
                 status: 'pending',
-                created_by: null
+                created_by: null,
+                profile_id: profileId || null
             });
 
         if (error) {
