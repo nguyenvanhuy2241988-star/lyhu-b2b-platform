@@ -18,7 +18,9 @@ import {
     Quote,
     Save,
     Edit3,
-    Shapes
+    Shapes,
+    Eye,
+    X
 } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 
@@ -48,8 +50,9 @@ function EditableText({ id, defaultText, className = "", multiline = false }: { 
     />
 }
 
-function EditableImage({ id, label, className = "aspect-video" }: { id: string, label: string, className?: string }) {
+function EditableImage({ id, label = "Ảnh", className = "aspect-video" }: { id: string, label?: string, className?: string }) {
     const { content, isEditMode, updateContent, uploadImage, uploadingId } = useContext(CultureContext);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const imageUrl = content[id];
     const shape = content[`${id}_shape`];
     const size = content[`${id}_size`];
@@ -80,8 +83,21 @@ function EditableImage({ id, label, className = "aspect-video" }: { id: string, 
             </div>
         );
         return (
-            <div className={`relative overflow-hidden flex items-center justify-center ${finalClasses}`}>
+            <div className={`relative overflow-hidden flex items-center justify-center group/preview cursor-pointer ${finalClasses}`} onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(true); }}>
                 <img src={imageUrl} alt={label} className="absolute inset-0 w-full h-full object-cover outline-none" />
+                <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover/preview:opacity-100 transition-opacity z-10 pointer-events-none backdrop-blur-[2px]">
+                    <div className="bg-white/20 p-3 rounded-full text-white backdrop-blur-md shadow-xl border border-white/20 transform scale-50 group-hover/preview:scale-100 transition-transform">
+                        <Eye className="w-6 h-6" />
+                    </div>
+                </div>
+                {isPreviewOpen && (
+                    <div className="fixed inset-0 z-[9999] bg-slate-900/95 flex flex-col items-center justify-center p-4 backdrop-blur-md !cursor-default" onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(false); }}>
+                        <button className="absolute top-6 right-6 text-white/50 hover:text-white transition bg-white/10 hover:bg-white/20 p-2 rounded-full cursor-pointer z-50 pointer-events-auto" onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(false); }}>
+                            <X className="w-8 h-8" />
+                        </button>
+                        <img src={imageUrl} alt={label} className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+                    </div>
+                )}
             </div>
         );
     }
@@ -134,11 +150,27 @@ function EditableImage({ id, label, className = "aspect-video" }: { id: string, 
                                <span className="text-slate-300 w-10 font-medium tracking-wide">GÓC:</span>
                                <button onClick={() => updateContent(`${id}_radius`, 'none')} className={`px-2 py-1 rounded font-bold transition ${radius==='none'?'bg-red-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Bỏ bo góc (Vuông vắn)">0px</button>
                                <button onClick={() => updateContent(`${id}_radius`, '')} className={`px-2 py-1 rounded font-bold transition ${!radius?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Bo góc mặc định theo khung">MĐ</button>
+                               
+                               {imageUrl && (
+                                   <button onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(true); }} className="ml-auto flex items-center gap-1 bg-blue-500/20 text-blue-300 hover:bg-blue-500 hover:text-white px-2 py-1 rounded transition pointer-events-auto" title="Xem trước ảnh">
+                                       <Eye className="w-3 h-3" /> Xem
+                                   </button>
+                               )}
                            </div>
                        </div>
                    </div>
                )}
            </div>
+
+           {/* Preview Modal in Edit Mode */}
+           {isPreviewOpen && imageUrl && (
+                <div className="fixed inset-0 z-[9999] bg-slate-900/95 flex flex-col items-center justify-center p-4 backdrop-blur-md cursor-default" onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(false); }}>
+                    <button className="absolute top-6 right-6 text-white/50 hover:text-white transition bg-white/10 hover:bg-white/20 p-2 rounded-full cursor-pointer z-50 pointer-events-auto" onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(false); }}>
+                        <X className="w-8 h-8" />
+                    </button>
+                    <img src={imageUrl} alt={label} className="max-w-full max-h-[90vh] object-contain rounded-xl shadow-2xl z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
+                </div>
+           )}
         </div>
     );
 }
