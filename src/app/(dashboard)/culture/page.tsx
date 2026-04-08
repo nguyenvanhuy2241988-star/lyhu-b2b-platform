@@ -362,22 +362,35 @@ function IntroductionView({ brand }: { brand: any }) {
 }
 
 function BrandIdentityView({ brand }: { brand: any }) {
-    return (
-        <div className="animate-in fade-in duration-500 space-y-10">
-            {/* Slogan Banner */}
-            <div className="relative rounded-3xl overflow-hidden bg-primary-900 border border-primary-800">
-                <EditableImage id="img_brand_hero" className="aspect-[21/9] w-full !border-none !rounded-none opacity-40 mix-blend-overlay" label="Ảnh nền đội ngũ" />
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center text-white z-10 pointer-events-none">
-                    <h2 className="text-3xl md:text-5xl font-black uppercase tracking-widest mb-4 inline-block pointer-events-auto">
-                        <EditableText id="brand_hero_title" defaultText="CHÚNG TA CÓ THỂ" />
-                    </h2>
-                    <p className="text-xl md:text-2xl font-light tracking-wide text-slate-200 inline-block pointer-events-auto">
-                        <EditableText id="brand_hero_sub" defaultText="Vươn lên và vượt qua mọi thách thức" className="!w-[300px]" />
-                    </p>
+    const { content, isEditMode, updateContent } = useContext(CultureContext);
+    const order = content.brand_order || ['hero', 'adn'];
+    
+    const move = (dir: number, id: string) => {
+        const idx = order.indexOf(id);
+        if (dir === -1 && idx > 0) { const a=[...order]; a[idx]=a[idx-1]; a[idx-1]=id; updateContent('brand_order', a); }
+        if (dir === 1 && idx < order.length - 1) { const a=[...order]; a[idx]=a[idx+1]; a[idx+1]=id; updateContent('brand_order', a); }
+    }
+
+    const blocks: any = {
+        hero: (
+            <div key="hero" className="relative group/sort">
+                {isEditMode && <div className="absolute top-2 left-2 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'hero')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'hero')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
+                <div className="relative rounded-3xl overflow-hidden bg-primary-900 border border-primary-800">
+                    <EditableImage id="img_brand_hero" className="aspect-[21/9] w-full !border-none !rounded-none opacity-40 mix-blend-overlay" label="Ảnh nền đội ngũ" />
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center text-white z-10 pointer-events-none">
+                        <h2 className="text-3xl md:text-5xl font-black uppercase tracking-widest mb-4 inline-block pointer-events-auto">
+                            <EditableText id="brand_hero_title" defaultText="CHÚNG TA CÓ THỂ" />
+                        </h2>
+                        <p className="text-xl md:text-2xl font-light tracking-wide text-slate-200 inline-block pointer-events-auto">
+                            <EditableText id="brand_hero_sub" defaultText="Vươn lên và vượt qua mọi thách thức" className="!w-[300px]" />
+                        </p>
+                    </div>
                 </div>
             </div>
-
-            <div className="bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200">
+        ),
+        adn: (
+            <div key="adn" className="relative group/sort bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200">
+                {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'adn')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'adn')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
                 <div>
                     <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">ADN LYHU – Sức mạnh của 4 chữ cái</h1>
                     <div className="h-1 w-16 mt-4 mb-10" style={{ backgroundColor: brand.teal }}></div>
@@ -409,103 +422,128 @@ function BrandIdentityView({ brand }: { brand: any }) {
                         </div>
                     ))}
                 </div>
-
-                {/* Ý Nghĩa Màu Sắc */}
-                <div className="mt-16 pt-12 border-t border-slate-100">
-                    <h2 className="text-2xl font-bold text-slate-800 mb-6 uppercase tracking-wide text-center">Ý Nghĩa Gam Màu Thương Hiệu</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="flex bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 p-2">
-                            <div className="w-24 shrink-0 rounded-xl flex items-center justify-center text-white text-xs font-mono font-bold shadow-sm" style={{ backgroundColor: brand.teal }}>#04ACA9</div>
-                            <div className="pl-6 py-4 flex-1">
-                                <h3 className="font-bold text-slate-800 text-xl tracking-tight mb-2"><EditableText id="color1_t" defaultText="Thanh Lịch & Uy Tín" /></h3>
-                                <p className="text-slate-600 text-sm leading-relaxed"><EditableText id="color1_d" multiline defaultText="Xanh ngọc - Biểu trưng cho sự hiện đại, chân thành, sâu sắc và độ tin cậy tuyệt đối." /></p>
-                            </div>
-                        </div>
-                        <div className="flex bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 p-2">
-                            <div className="w-24 shrink-0 rounded-xl flex items-center justify-center text-white text-xs font-mono font-bold shadow-sm" style={{ backgroundColor: brand.green }}>#8FC842</div>
-                            <div className="pl-6 py-4 flex-1">
-                                <h3 className="font-bold text-slate-800 text-xl tracking-tight mb-2"><EditableText id="color2_t" defaultText="Tươi Mới & Vững Bền" /></h3>
-                                <p className="text-slate-600 text-sm leading-relaxed"><EditableText id="color2_d" multiline defaultText="Xanh lá - Mang năng lượng của sự sinh trưởng, bền vững, thân thiện và không ngừng phát triển." /></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
+        )
+    };
+
+    return (
+        <div className="animate-in fade-in duration-500 space-y-10">
+            {order.map((id: string) => blocks[id])}
         </div>
     );
 }
 
 function LogoView({ brand }: { brand: any }) {
+    const { content, isEditMode, updateContent } = useContext(CultureContext);
+    const order = content.logo_order || ['meaning', 'colors', 'num4'];
+    
+    const move = (dir: number, id: string) => {
+        const idx = order.indexOf(id);
+        if (dir === -1 && idx > 0) { const a=[...order]; a[idx]=a[idx-1]; a[idx-1]=id; updateContent('logo_order', a); }
+        if (dir === 1 && idx < order.length - 1) { const a=[...order]; a[idx]=a[idx+1]; a[idx+1]=id; updateContent('logo_order', a); }
+    }
+
+    const blocks: any = {
+        meaning: (
+            <div key="meaning" className="relative group/sort bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200">
+                {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'meaning')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'meaning')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
+                <h2 className="text-3xl font-black text-slate-800 mb-10 tracking-tight uppercase">Ý TƯỞNG THIẾT KẾ & Ý NGHĨA LOGO</h2>
+                <div className="h-1 w-16 mb-10 mt-[-10px]" style={{ backgroundColor: brand.teal }}></div>
+                <div className="flex flex-col xl:flex-row gap-12 items-center">
+                    <div className="w-full xl:w-5/12">
+                        <EditableImage id="img_brand_logo_meaning" className="aspect-[4/3] w-full p-4 md:p-8 bg-slate-50 border border-slate-100 rounded-3xl" label="Hình khối Logo" />
+                    </div>
+                    <div className="w-full xl:w-7/12 space-y-5">
+                        <h3 className="text-3xl font-bold text-slate-800 tracking-tight">
+                            <EditableText id="logo_title" defaultText="Biểu Tượng Cho Sự Hòa Hợp" />
+                        </h3>
+                        <div className="h-1 w-16 rounded" style={{ backgroundColor: brand.teal }}></div>
+                        <p className="text-slate-600 text-lg leading-relaxed">
+                            <EditableText id="logo_desc_1" multiline defaultText="Logo LYHU là sự kết hợp tinh tế giữa đường nét hiện đại và kết cấu vững chãi. Thiết kế không chỉ thể hiện tên thương hiệu mà còn ẩn chứa khát vọng kiến tạo một hệ sinh thái tuần hoàn và phát triển bền vững." />
+                        </p>
+                        <p className="text-slate-600 text-lg leading-relaxed">
+                            <EditableText id="logo_desc_2" multiline defaultText="Sự liên kết tiếp nối giữa các khối màu đại diện cho sự cộng hưởng của các thành viên cùng chung một mục đích, tượng trưng cho thông điệp cốt lõi: Kết nối chân thành - Hợp tác bền vững." />
+                        </p>
+                    </div>
+                </div>
+            </div>
+        ),
+        colors: (
+            <div key="colors" className="relative group/sort bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200">
+                {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'colors')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'colors')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
+                <h2 className="text-2xl font-bold text-slate-800 mb-6 uppercase tracking-wide text-center">Ý Nghĩa Gam Màu Thương Hiệu</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="flex bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 p-2">
+                        <div className="w-24 shrink-0 rounded-xl flex items-center justify-center text-white text-xs font-mono font-bold shadow-sm" style={{ backgroundColor: brand.teal }}>#04ACA9</div>
+                        <div className="pl-6 py-4 flex-1">
+                            <h3 className="font-bold text-slate-800 text-xl tracking-tight mb-2"><EditableText id="color1_t" defaultText="Thanh Lịch & Uy Tín" /></h3>
+                            <p className="text-slate-600 text-sm leading-relaxed"><EditableText id="color1_d" multiline defaultText="Xanh ngọc - Biểu trưng cho sự hiện đại, chân thành, sâu sắc và độ tin cậy tuyệt đối." /></p>
+                        </div>
+                    </div>
+                    <div className="flex bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 p-2">
+                        <div className="w-24 shrink-0 rounded-xl flex items-center justify-center text-white text-xs font-mono font-bold shadow-sm" style={{ backgroundColor: brand.green }}>#8FC842</div>
+                        <div className="pl-6 py-4 flex-1">
+                            <h3 className="font-bold text-slate-800 text-xl tracking-tight mb-2"><EditableText id="color2_t" defaultText="Tươi Mới & Vững Bền" /></h3>
+                            <p className="text-slate-600 text-sm leading-relaxed"><EditableText id="color2_d" multiline defaultText="Xanh lá - Mang năng lượng của sự sinh trưởng, bền vững, thân thiện và không ngừng phát triển." /></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        ),
+        num4: (
+            <div key="num4" className="relative group/sort bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200">
+                {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'num4')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'num4')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
+                <h2 className="text-3xl font-black text-slate-800 mb-6 tracking-tight uppercase text-center">ADN LYHU – Sức mạnh của số 4</h2>
+                <p className="text-xl text-slate-500 font-medium text-center mb-10 max-w-3xl mx-auto">
+                    <EditableText id="logo_num4_intro" multiline defaultText="Với LYHU, số 4 không chỉ là một con số. Nó chính là linh hồn của văn hóa doanh nghiệp." />
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {[
+                        { n: 1, title: '4 Cánh nối tiếp nhau', desc: 'Logo của LYHU có 4 cánh, biểu tượng cho sức mạnh của tinh thần đoàn kết, gắn bó bền chặt.' },
+                        { n: 2, title: '4 Ký tự tên công ty', desc: 'Mỗi chữ cái là một giá trị cốt lõi: Love (Yêu thương), Yearn (Khao khát), Harmonize (Hòa hợp), Unify (Thống nhất).' },
+                        { n: 3, title: '4 Nguyên tắc cốt lõi', desc: 'Văn hóa LYHU tôn vinh 4 nguyên tắc: Kỷ luật – Kiên trì – Kiên nhẫn – Chấp nhận quá trình.' },
+                        { n: 4, title: 'Slogan có vần điệu', desc: 'Slogan của LYHU có 2 vế, mỗi vế chứa trọn 4 từ đắt giá: "Kết nối chân thành – Hợp tác bền vững".' },
+                    ].map((item, idx) => (
+                        <div key={idx} className="bg-slate-50 border border-slate-100 p-6 rounded-2xl flex gap-6 hover:shadow-md transition-shadow group">
+                            <div className="w-20 shrink-0">
+                                <EditableImage id={`img_logo_num4_${idx}`} className="w-full aspect-square bg-white rounded-xl shadow-sm border border-slate-100 p-2" label={`Icon ${idx+1}`} />
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="text-xl font-bold text-slate-800 mb-2">
+                                    <EditableText id={`logo_num4_t_${idx}`} defaultText={item.title} />
+                                </h4>
+                                <p className="text-slate-600 leading-relaxed text-sm">
+                                    <EditableText id={`logo_num4_d_${idx}`} multiline defaultText={item.desc} />
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="mt-12 bg-primary-900 text-white p-8 md:p-12 rounded-3xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3"></div>
+
+                    <div className="relative z-10 space-y-6 text-lg tracking-wide font-light">
+                        <p className="italic text-teal-300 font-medium pb-2 border-b border-white/10">
+                            <EditableText id="logo_quote_0" multiline defaultText="Trong thế giới quanh ta, số 4 xuất hiện ở khắp nơi. Bốn mùa luân chuyển – Xuân, Hạ, Thu, Đông. Bốn phương định hướng – Đông, Tây, Nam, Bắc. Bốn yếu tố tự nhiên – Đất, Nước, Lửa, Khí. Tất cả tạo nên một vòng tròn cân bằng, đầy đủ và vững chãi." />
+                        </p>
+                        <p>
+                            <EditableText id="logo_quote_1" multiline defaultText="Số 4 vì thế trở thành ADN của LYHU – một lời nhắc nhở rằng, chỉ khi có nền tảng vững chắc, sự cân bằng toàn diện, kỷ luật và sự đoàn kết, chúng ta mới có thể phát triển lâu dài." />
+                        </p>
+                        <p>
+                            <EditableText id="logo_quote_2" multiline defaultText="Văn hóa doanh nghiệp LYHU được xây trên tinh thần ấy: giản dị mà bền chặt, chân thành mà vững vàng. Để mỗi nhân sự, khi khoác lên mình màu áo xanh ngọc, đều hiểu rằng mình đang đứng trên một nền tảng 4 trụ cột vững vàng, cùng hướng tới tương lai." />
+                        </p>
+                    </div>
+                </div>
+            </div>
+        )
+    };
+
     return (
         <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-16">
-            <div className="bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200">
-                <div>
-                    <h2 className="text-3xl font-black text-slate-800 mb-10 tracking-tight uppercase">Ý TƯỞNG THIẾT KẾ & Ý NGHĨA LOGO</h2>
-                    <div className="h-1 w-16 mb-10 mt-[-10px]" style={{ backgroundColor: brand.teal }}></div>
-                    <div className="flex flex-col xl:flex-row gap-12 items-center">
-                        <div className="w-full xl:w-5/12">
-                            <EditableImage id="img_brand_logo_meaning" className="aspect-[4/3] w-full p-4 md:p-8 bg-slate-50 border border-slate-100 rounded-3xl" label="Hình khối Logo" />
-                        </div>
-                        <div className="w-full xl:w-7/12 space-y-5">
-                            <h3 className="text-3xl font-bold text-slate-800 tracking-tight">
-                                <EditableText id="logo_title" defaultText="Biểu Tượng Cho Sự Hòa Hợp" />
-                            </h3>
-                            <div className="h-1 w-16 rounded" style={{ backgroundColor: brand.teal }}></div>
-                            <p className="text-slate-600 text-lg leading-relaxed">
-                                <EditableText id="logo_desc_1" multiline defaultText="Logo LYHU là sự kết hợp tinh tế giữa đường nét hiện đại và kết cấu vững chãi. Thiết kế không chỉ thể hiện tên thương hiệu mà còn ẩn chứa khát vọng kiến tạo một hệ sinh thái tuần hoàn và phát triển bền vững." />
-                            </p>
-                            <p className="text-slate-600 text-lg leading-relaxed">
-                                <EditableText id="logo_desc_2" multiline defaultText="Sự liên kết tiếp nối giữa các khối màu đại diện cho sự cộng hưởng của các thành viên cùng chung một mục đích, tượng trưng cho thông điệp cốt lõi: Kết nối chân thành - Hợp tác bền vững." />
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="mt-16 pt-12 border-t border-slate-100">
-                    <h2 className="text-3xl font-black text-slate-800 mb-6 tracking-tight uppercase text-center">ADN LYHU – Sức mạnh của số 4</h2>
-                    <p className="text-xl text-slate-500 font-medium text-center mb-10 max-w-3xl mx-auto">
-                        <EditableText id="logo_num4_intro" multiline defaultText="Với LYHU, số 4 không chỉ là một con số. Nó chính là linh hồn của văn hóa doanh nghiệp." />
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {[
-                            { n: 1, title: '4 Cánh nối tiếp nhau', desc: 'Logo của LYHU có 4 cánh, biểu tượng cho sức mạnh của tinh thần đoàn kết, gắn bó bền chặt.' },
-                            { n: 2, title: '4 Ký tự tên công ty', desc: 'Mỗi chữ cái là một giá trị cốt lõi: Love (Yêu thương), Yearn (Khao khát), Harmonize (Hòa hợp), Unify (Thống nhất).' },
-                            { n: 3, title: '4 Nguyên tắc cốt lõi', desc: 'Văn hóa LYHU tôn vinh 4 nguyên tắc: Kỷ luật – Kiên trì – Kiên nhẫn – Chấp nhận quá trình.' },
-                            { n: 4, title: 'Slogan có vần điệu', desc: 'Slogan của LYHU có 2 vế, mỗi vế chứa trọn 4 từ đắt giá: "Kết nối chân thành – Hợp tác bền vững".' },
-                        ].map((item, idx) => (
-                            <div key={idx} className="bg-slate-50 border border-slate-100 p-6 rounded-2xl flex gap-6 hover:shadow-md transition-shadow group">
-                                <div className="w-20 shrink-0">
-                                    <EditableImage id={`img_logo_num4_${idx}`} className="w-full aspect-square bg-white rounded-xl shadow-sm border border-slate-100 p-2" label={`Icon ${idx+1}`} />
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className="text-xl font-bold text-slate-800 mb-2">
-                                        <EditableText id={`logo_num4_t_${idx}`} defaultText={item.title} />
-                                    </h4>
-                                    <p className="text-slate-600 leading-relaxed text-sm">
-                                        <EditableText id={`logo_num4_d_${idx}`} multiline defaultText={item.desc} />
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="mt-12 bg-primary-900 text-white p-8 md:p-12 rounded-3xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-                        <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3"></div>
-
-                        <div className="relative z-10 space-y-6 text-lg tracking-wide font-light">
-                            <p className="italic text-teal-300 font-medium pb-2 border-b border-white/10">
-                                <EditableText id="logo_quote_0" multiline defaultText="Trong thế giới quanh ta, số 4 xuất hiện ở khắp nơi. Bốn mùa luân chuyển – Xuân, Hạ, Thu, Đông. Bốn phương định hướng – Đông, Tây, Nam, Bắc. Bốn yếu tố tự nhiên – Đất, Nước, Lửa, Khí. Tất cả tạo nên một vòng tròn cân bằng, đầy đủ và vững chãi." />
-                            </p>
-                            <p>
-                                <EditableText id="logo_quote_1" multiline defaultText="Số 4 vì thế trở thành ADN của LYHU – một lời nhắc nhở rằng, chỉ khi có nền tảng vững chắc, sự cân bằng toàn diện, kỷ luật và sự đoàn kết, chúng ta mới có thể phát triển lâu dài." />
-                            </p>
-                            <p>
-                                <EditableText id="logo_quote_2" multiline defaultText="Văn hóa doanh nghiệp LYHU được xây trên tinh thần ấy: giản dị mà bền chặt, chân thành mà vững vàng. Để mỗi nhân sự, khi khoác lên mình màu áo xanh ngọc, đều hiểu rằng mình đang đứng trên một nền tảng 4 trụ cột vững vàng, cùng hướng tới tương lai." />
-                            </p>
-                        </div>
-                    </div>
-                </div>
+            <div className="space-y-10">
+                {order.map((id: string) => blocks[id])}
             </div>
         </div>
     );
