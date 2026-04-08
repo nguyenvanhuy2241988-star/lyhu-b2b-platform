@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Users, UserPlus, Shield, Bot, Key, Power, Play, StopCircle, RefreshCw, FolderOpen, History, Plus, Zap, Trash2 } from 'lucide-react';
+import { Search, Users, UserPlus, Shield, Bot, Key, Power, Play, StopCircle, RefreshCw, FolderOpen, History, Plus, Zap, Trash2, PlayCircle } from 'lucide-react';
 import Link from 'next/link';
 import BotActivityLog from "@/components/marketing/BotActivityLog";
 import BotConfigModal from "@/components/marketing/BotConfigModal";
+import CampaignBuilderModal from "@/components/marketing/CampaignBuilderModal";
+import CampaignRunModal from "@/components/marketing/CampaignRunModal";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from 'sonner';
 
@@ -428,19 +430,125 @@ function TabQueue() {
 }
 
 function TabCampaigns() {
+    const [campaigns, setCampaigns] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    
+    // Modals
+    const [isBuilderOpen, setIsBuilderOpen] = useState(false);
+    const [isRunOpen, setIsRunOpen] = useState(false);
+    
+    const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+    const [selectedCampaignName, setSelectedCampaignName] = useState("");
+
+    const fetchCampaigns = async () => {
+        setIsLoading(true);
+        const { data, error } = await supabase
+            .from('bot_campaigns')
+            .select('*')
+            .order('created_at', { ascending: false });
+            
+        if (!error && data) {
+            setCampaigns(data);
+        }
+        setIsLoading(false);
+    };
+
+    useEffect(() => {
+        fetchCampaigns();
+    }, []);
+
+    const handleDelete = async (id: string, name: string) => {
+        if (!confirm(`Bạn có chắc chắn muốn xóa chiến dịch "${name}"?`)) return;
+        const { error } = await supabase.from('bot_campaigns').delete().eq('id', id);
+        if (!error) {
+            toast.success("Đã xóa chiến dịch");
+            fetchCampaigns();
+        } else {
+            toast.error("Lỗi xóa: " + error.message);
+        }
+    };
+
+    const openTriggerModal = (c: any) => {
+        setSelectedCampaignId(c.id);
+        setSelectedCampaignName(c.name);
+        setIsRunOpen(true);
+    };
+
     return (
-        <div className="p-6">
-             <div className="flex items-center justify-between mb-6">
+        <div className="p-6 min-h-[500px]">
+            <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h2 className="text-lg font-bold text-slate-800">Kịch Bản Liên Hoàn (Macro)</h2>
-                    <p className="text-sm text-slate-500">Xâu chuỗi nhiều lệnh với nhau tạo thành một kịch bản cày tự động hóa hoàn toàn.</p>
+                    <h2 className="text-xl font-bold text-slate-800">Chiến Dịch Liên Hoàn</h2>
+                    <p className="text-sm text-slate-500 mt-1">Xây dựng Macro tự động hóa - Đóng gói nhiều bước thành 1 nút Kích Nổ bão táp.</p>
                 </div>
+                <button onClick={() => setIsBuilderOpen(true)} className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-md shadow-blue-500/20">
+                    <Plus className="w-5 h-5" /> Mở Máy Dệt Lệnh
+                </button>
             </div>
-            <div className="border border-slate-200 rounded-lg bg-slate-50 p-12 text-center">
-                <FolderOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                <h3 className="font-semibold text-slate-700">Tính năng đang phát triển</h3>
-                <p className="text-sm text-slate-500 mt-1">Sắp ra mắt trong phiên bản V3.0</p>
-            </div>
+
+            {isLoading ? (
+                <div className="text-center py-20 text-slate-500 font-medium">Đang đồng bộ Blueprint từ máy chủ...</div>
+            ) : campaigns.length === 0 ? (
+                <div className="border border-dashed border-slate-300 rounded-2xl bg-slate-50 p-16 text-center">
+                    <FolderOpen className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                    <h3 className="font-bold text-slate-700 text-lg">Chưa có Chiến Dịch nào</h3>
+                    <p className="text-slate-500 mt-2 max-w-sm mx-auto">Tạo ra các khuôn đúc chứa sẵn chuỗi chu trình tương tác để rảnh tay thực sự.</p>
+                    <button onClick={() => setIsBuilderOpen(true)} className="mt-6 px-6 py-2.5 bg-white border border-slate-200 text-blue-600 font-bold rounded-xl hover:bg-slate-50 shadow-sm transition-all">
+                        Tạo Blueprint Đầu Tiên
+                    </button>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {campaigns.map(c => (
+                        <div key={c.id} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                            
+                            {/* Run Overlay */}
+                            <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-white via-white to-transparent translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-10 flex gap-2">
+                                <button onClick={() => openTriggerModal(c)} className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30">
+                                    <PlayCircle className="w-5 h-5"/> Kích Nổ Ngay
+                                </button>
+                                <button onClick={() => handleDelete(c.id, c.name)} className="px-4 py-3 bg-red-50 hover:bg-red-100 text-red-500 rounded-xl transition-colors">
+                                    <Trash2 className="w-5 h-5"/>
+                                </button>
+                            </div>
+
+                            <div className="flex items-start justify-between mb-4">
+                                <h3 className="font-bold text-slate-800 text-lg line-clamp-2">{c.name}</h3>
+                                <span className="bg-blue-50 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-full border border-blue-100 shrink-0">
+                                    {c.tasks?.length || 0} Nhịp
+                                </span>
+                            </div>
+                            
+                            <div className="space-y-2 mb-8 relative z-0">
+                                {c.tasks?.map((t: any, idx: number) => {
+                                    // Map readable name
+                                    const map: any = {
+                                        'execute_search_add.js': 'Săn Khách Sỉ',
+                                        'group_finder.js': 'Quét Hội Nhóm',
+                                        'invite_friend_page.js': 'Mời Like Page',
+                                        'defense_engine.js': 'Lá Chắn Ảo',
+                                        'manual_login.js': 'Đăng Nhập Tay',
+                                        'execute_post_scan.js': 'Quét Tương Tác',
+                                        'execute_suggestion_scan.js': 'Kết bạn Đề Xuất',
+                                        'execute_rival_scan.js': 'Cướp Đối Thủ'
+                                    };
+                                    return (
+                                        <div key={idx} className="flex flex-col border-l-2 border-slate-200 pl-3 py-1 relative">
+                                            <div className="absolute w-2 h-2 bg-slate-200 rounded-full -left-1.5 top-2.5 ring-4 ring-white"></div>
+                                            <span className="text-sm font-semibold text-slate-700">{idx + 1}. {map[t.script_name] || t.script_name}</span>
+                                            {t.args && <span className="text-xs text-slate-400 font-medium truncate italic break-all">Mục tiêu: {t.args}</span>}
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Modals injection */}
+            {isBuilderOpen && <CampaignBuilderModal isOpen={isBuilderOpen} onClose={() => setIsBuilderOpen(false)} onSaved={() => fetchCampaigns()} />}
+            {isRunOpen && <CampaignRunModal isOpen={isRunOpen} onClose={() => setIsRunOpen(false)} campaignId={selectedCampaignId} campaignName={selectedCampaignName} onTriggered={() => alert("✅ Luồng lệnh đã tràn vào Hàng Đợi thành công! Nhảy sang Tab Hàng Đợi để xem nhé.")} />}
         </div>
     )
 }
