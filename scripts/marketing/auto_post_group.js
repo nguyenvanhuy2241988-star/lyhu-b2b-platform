@@ -125,12 +125,18 @@ function spinText(text) {
             }
         }
 
-        // 7. Nhét Ảnh
+        // 7. Nhét Media
         if (tempImagePath) {
-            const inputUploadHandle = await page.$('input[type=file][accept*="image"]');
+            const inputUploadHandle = await page.$('input[type=file]');
             if (inputUploadHandle) {
                 await inputUploadHandle.uploadFile(tempImagePath);
-                await delay(rdn(3000, 6000)); // Chờ FB load ảnh
+                const isVideo = tempImagePath.match(/\.(mp4|mov|avi|wmv)$/i);
+                if (isVideo) {
+                    console.log("[GROUP_POST] File Video nặng, chờ 20-40s để upload...");
+                    await delay(rdn(20000, 40000));
+                } else {
+                    await delay(rdn(3000, 6000)); // Chờ FB load ảnh
+                }
             }
         }
 

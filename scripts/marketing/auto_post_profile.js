@@ -133,15 +133,23 @@ function spinText(text) {
             }
         }
 
-        // 6. Tải ảnh lên (Móc nối thần tốc)
+        // 6. Tải media lên (Móc nối thần tốc)
         if (tempImagePath) {
-            const inputUploadHandle = await page.$('input[type=file][accept*="image"]');
+            const inputUploadHandle = await page.$('input[type=file]');
             if (inputUploadHandle) {
-                console.log("[POST] Móc file ảnh vào Trình duyệt...");
+                console.log(`[POST] Móc file vào Trình duyệt: ${tempImagePath}`);
                 await inputUploadHandle.uploadFile(tempImagePath);
-                await delay(rdn(4000, 7000)); // Chờ FB load ảnh lên cache
+                
+                // Nếu là Video thì cần thời gian đẩy File to hơn
+                const isVideo = tempImagePath.match(/\.(mp4|mov|avi|wmv)$/i);
+                if (isVideo) {
+                    console.log("[POST] Phát hiện Đính kèm Video! Chờ 20 - 40 giây để upload...");
+                    await delay(rdn(20000, 40000));
+                } else {
+                    await delay(rdn(4000, 7000)); // Chờ FB load ảnh lên cache
+                }
             } else {
-                console.log("[POST] Cảnh báo: Không tìm thấy nút Upload ảnh, Đăng không có ảnh.");
+                console.log("[POST] Cảnh báo: Không tìm thấy nút Upload file.");
             }
         }
 

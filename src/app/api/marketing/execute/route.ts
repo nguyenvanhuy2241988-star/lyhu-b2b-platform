@@ -15,7 +15,10 @@ export async function POST(req: Request) {
             'execute_post_scan.js',
             'master_commander.js',
             'execute_suggestion_scan.js',
-            'execute_rival_scan.js'
+            'execute_rival_scan.js',
+            'auto_post_profile.js',
+            'auto_post_group.js',
+            'auto_comment_group.js'
         ];
 
         if (!ALLOWED_SCRIPTS.includes(scriptName)) {

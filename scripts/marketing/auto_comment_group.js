@@ -129,7 +129,7 @@ function downloadImage(url, dest) {
                         for(let i=0; i<5; i++) {
                             if(!parent) break;
                             parent = parent.parentElement;
-                            const input = parent.querySelector('input[type="file"][accept*="image"]');
+                            const input = parent.querySelector('input[type="file"]');
                             if(input) return input;
                         }
                         return null;
@@ -137,7 +137,12 @@ function downloadImage(url, dest) {
                     
                     if (fileInput.asElement()) {
                         await fileInput.asElement().uploadFile(tempImagePath);
-                        await delay(rdn(3000, 5000)); // Đợi kéo ảnh lên
+                        const isVideo = tempImagePath.match(/\.(mp4|mov|avi|wmv)$/i);
+                        if (isVideo) {
+                            await delay(rdn(20000, 30000));
+                        } else {
+                            await delay(rdn(3000, 5000)); // Đợi kéo ảnh lên
+                        }
                     }
                 }
 
