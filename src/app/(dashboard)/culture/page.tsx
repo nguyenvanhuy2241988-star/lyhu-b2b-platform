@@ -202,6 +202,7 @@ export default function CulturePage() {
         { id: 'logo', label: "Thiết kế & Ý nghĩa Logo", icon: Shapes },
         { id: 'core', label: "Giá trị cốt lõi 3K1C", icon: Scale },
         { id: 'philosophy', label: "Triết lý hành động", icon: HeartHandshake },
+        { id: 'brands', label: "Lĩnh vực & Nhãn hàng", icon: Award },
         { id: 'vision', label: "Định hướng tương lai", icon: Map },
     ];
 
@@ -380,6 +381,7 @@ export default function CulturePage() {
                             {activeTab === 'logo' && <LogoView brand={BRAND} />}
                             {activeTab === 'core' && <CoreValuesView brand={BRAND} />}
                             {activeTab === 'philosophy' && <PhilosophyView brand={BRAND} />}
+                            {activeTab === 'brands' && <BrandsView brand={BRAND} />}
                             {activeTab === 'vision' && <VisionView brand={BRAND} />}
                         </div>
                     </div>
@@ -444,7 +446,7 @@ function IntroductionView({ brand }: { brand: any }) {
                 </div>
             </div>
 
-            <div className="pt-8 w-full border-t border-slate-100 mt-12">
+            <div className="pt-8 w-full border-t border-slate-100 mt-12 hidden">
                 <h3 className="text-2xl font-black text-slate-800 mb-8 text-center uppercase tracking-widest">4 TRỤ CỘT HOẠT ĐỘNG</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                     {["Sản xuất", "Nhập khẩu", "Thương mại", "Bán lẻ"].map((label, i) => (
@@ -901,6 +903,80 @@ function VisionView({ brand }: { brand: any }) {
                 <h2 className="text-3xl font-black uppercase tracking-widest" style={{ color: brand.teal }}>WELCOME TO LYHU</h2>
                 <p className="mt-4 text-xl text-slate-500 font-light">Chúc bạn một ngày làm việc vui vẻ và hiệu quả!</p>
             </div>
+        </div>
+    );
+}
+
+function BrandsView({ brand }: { brand: any }) {
+    return (
+        <div className="animate-in fade-in duration-500 space-y-10">
+            <div className="bg-white p-8 md:p-12 rounded-3xl shadow-sm border border-slate-200">
+                <div className="text-center mb-12">
+                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Danh Mục Nhãn Hàng & Sản Phẩm</h1>
+                    <div className="h-1 w-16 mx-auto mt-4" style={{ backgroundColor: brand.teal }}></div>
+                    <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto font-light">
+                        <EditableText id="brands_intro_desc" multiline defaultText="Hệ sinh thái sản phẩm phong phú và chất lượng, phục vụ cho nhiều nhu cầu khác nhau của thị trường." />
+                    </p>
+                </div>
+                
+                {/* Lĩnh Vực Hoạt Động */}
+                <div className="mb-16 border-b border-slate-100 pb-12">
+                    <h2 className="text-3xl font-black text-slate-800 tracking-tight uppercase text-center mb-12">Lĩnh Vực Hoạt Động</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                        {[
+                            { name: "Sản xuất", color: brand.teal },
+                            { name: "Nhập khẩu", color: brand.green },
+                            { name: "Bán lẻ", color: brand.green },
+                            { name: "Thương mại", color: brand.teal }
+                        ].map((item, idx) => (
+                            <div key={idx} className="bg-slate-50 border border-slate-100 rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center hover:-translate-y-1 transition-transform group">
+                                <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4 text-white text-2xl font-black shadow-md transition-transform group-hover:scale-110" style={{ backgroundColor: item.color }}>
+                                    {idx + 1}
+                                </div>
+                                <div className="font-bold text-slate-800 uppercase tracking-widest md:text-lg">
+                                    <EditableText id={`brand_lv_${idx}`} defaultText={item.name} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Nhãn Hàng */}
+                <div>
+                     <h2 className="text-3xl font-black text-slate-800 tracking-tight uppercase text-center mb-12">Hệ Thống Nhãn Hàng</h2>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                         {[
+                             { name: "BOYO", desc: "Thương hiệu riêng" },
+                             { name: "CVT", desc: "Nhập khẩu (Trung Quốc)" },
+                             { name: "ABI SNACK", desc: "Phân phối độc quyền (Việt Nam)" },
+                             { name: "UHi", desc: "Nhập khẩu (Hàn Quốc)" },
+                         ].map((l, i) => (
+                             <div key={i} className="bg-slate-50 border border-slate-200 rounded-3xl overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                                 {/* Hình ảnh Logo nhãn */}
+                                 <div className="bg-white border-b border-slate-100 p-8 flex flex-col items-center justify-center h-[200px] relative w-full">
+                                     <EditableImage id={`logo_brand_${i}`} className="w-full h-full max-w-[200px] max-h-[120px] mx-auto object-contain !border-none !rounded-none !aspect-auto" label={`Logo ${l.name}`} />
+                                 </div>
+                                 <div className="p-8">
+                                     <div className="text-center mb-8 border-b border-slate-200/60 pb-6 text-slate-800">
+                                        <h3 className="font-black text-2xl tracking-widest uppercase mb-2"><EditableText id={`name_brand_${i}`} defaultText={l.name} /></h3>
+                                        <p className="font-medium text-lg uppercase tracking-wide opacity-80" style={{ color: brand.teal }}><EditableText id={`desc_brand_${i}`} defaultText={l.desc} /></p>
+                                     </div>
+                                     <h4 className="font-bold text-sm text-slate-500 uppercase tracking-widest mb-4 flex items-center justify-center gap-2">
+                                        <div className="h-px bg-slate-300 w-12"></div>
+                                        <span>Hình ảnh Sản phẩm</span>
+                                        <div className="h-px bg-slate-300 w-12"></div>
+                                     </h4>
+                                     <div className="grid grid-cols-2 gap-4">
+                                         <EditableImage id={`img_brand_prod_${i}_1`} className="aspect-square w-full rounded-2xl shadow-sm border border-slate-200 bg-white" label={`Sản phẩm ${l.name} 1`} />
+                                         <EditableImage id={`img_brand_prod_${i}_2`} className="aspect-square w-full rounded-2xl shadow-sm border border-slate-200 bg-white" label={`Sản phẩm ${l.name} 2`} />
+                                     </div>
+                                 </div>
+                             </div>
+                         ))}
+                     </div>
+                </div>
+            </div>
+            <NextTabButton />
         </div>
     );
 }
