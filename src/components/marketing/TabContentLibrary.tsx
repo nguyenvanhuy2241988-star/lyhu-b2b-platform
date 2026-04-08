@@ -11,7 +11,7 @@ export default function TabContentLibrary() {
     const [isAdding, setIsAdding] = useState(false);
     
     // Form state
-    const [category, setCategory] = useState('Đăng FB Cá Nhân');
+    const [category, setCategory] = useState('');
     const [messageText, setMessageText] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -112,12 +112,23 @@ export default function TabContentLibrary() {
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-bold text-indigo-900 mb-1">Loại Nhóm Mồi (Thư mục)</label>
-                                <select value={category} onChange={e=>setCategory(e.target.value)} className="w-full text-sm p-3 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm">
-                                    <option value="Kho Bán Hàng Máy Tính">Kho Bán Hàng Máy Tính</option>
-                                    <option value="Kho Stt Buồn Câu View">Kho Stt Buồn Câu View</option>
-                                    <option value="Comment Tư Vấn">Kho Link Sản Phẩm Khác</option>
-                                    <option value="Mặc định">Kho Mặc Định</option>
-                                </select>
+                                <input
+                                    type="text"
+                                    list="category-suggestions"
+                                    value={category}
+                                    onChange={e => setCategory(e.target.value)}
+                                    placeholder="Gõ tên nhóm mới hoặc chọn nhóm cũ..."
+                                    className="w-full text-sm p-3 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
+                                />
+                                <datalist id="category-suggestions">
+                                    {Array.from(new Set(contents.map(c => c.category))).map(cat => (
+                                        <option key={cat as string} value={cat as string} />
+                                    ))}
+                                    <option value="Kho Bán Hàng" />
+                                    <option value="Kho Thả Thính" />
+                                    <option value="Kho Seeding" />
+                                    <option value="Mặc định" />
+                                </datalist>
                             </div>
                             
                             <div>
