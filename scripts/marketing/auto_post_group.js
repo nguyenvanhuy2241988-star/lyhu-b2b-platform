@@ -39,6 +39,15 @@ function spinText(text) {
     try {
         const args = process.argv.slice(2);
         const rawArg = args.find(a => !a.startsWith('--')) || "";
+        const isTestMode = args.includes('--test');
+        
+        // Tạo thư mục debug
+        const debugDir = path.join(__dirname, '../../debug');
+        if (!fs.existsSync(debugDir)) fs.mkdirSync(debugDir, { recursive: true });
+        
+        if (isTestMode) {
+            console.log("\n🧪 === CHẾ ĐỘ TEST === Chỉ kiểm tra, KHÔNG đăng bài! ===");
+        }
         
         let groupUrl = null;
         let category = "Mặc định";
@@ -107,6 +116,8 @@ function spinText(text) {
             await page.goto(randomTarget, { waitUntil: 'domcontentloaded', timeout: 60000 });
         }
         await delay(rdn(4000, 6000));
+        await page.screenshot({ path: path.join(debugDir, 'group_step1_page.png') });
+        console.log(`[GROUP_POST] Screenshot trang group đã lưu: debug/group_step1_page.png`);
 
         // ============================================================
         // BƯỚC 5: MỞ COMPOSER DIALOG (KHÔNG PHẢI COMMENT BOX!)
@@ -200,7 +211,26 @@ function spinText(text) {
         }
         
         if (!dialogOpened) {
-            throw new Error("Không thể mở Dialog 'Tạo bài viết' trên Group.");
+            await page.screenshot({ path: path.join(debugDir, 'group_step2_failed.png') });
+            throw new Error("Không thể mở Dialog 'Tạo bài viết' trên Group. Xem debug/group_step2_failed.png");
+        }
+        
+        // Screenshot dialog đã mở
+        await page.screenshot({ path: path.join(debugDir, 'group_step2_dialog_opened.png') });
+        console.log(`[GROUP_POST] Screenshot dialog: debug/group_step2_dialog_opened.png`);
+        
+        // *** TEST MODE: Dừng tại đây, không gõ/đăng ***
+        if (isTestMode) {
+            console.log("\n🧪 === KẾT QUẢ TEST ===");
+            console.log("✅ Đã vào group thành công");
+            console.log("✅ Đã tìm thấy nút composer");
+            console.log("✅ Đã mở dialog 'Tạo bài viết'");
+            console.log("✅ Dialog đúng (không phải comment box)");
+            console.log("\n📸 Xem screenshot: debug/group_step2_dialog_opened.png");
+            console.log("\n🟢 MỌI THỨ OK! Bác có thể chạy lại KHÔNG có --test để đăng thật.");
+            await page.keyboard.press('Escape'); // Đóng dialog
+            await delay(1000);
+            return; // Dừng, không đăng
         }
         
         // ============================================================

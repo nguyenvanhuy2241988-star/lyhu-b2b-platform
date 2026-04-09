@@ -1,0 +1,14 @@
+@echo off
+title BotTerminal - LYHU Automation
+chcp 65001 > nul
+cd /d "G:\LYHU\Projects\LYHU-app"
+echo --- DEBUG INFO ---
+echo Script: "%scriptPath%"
+echo Args: %safeArgs%
+echo Profile: "%profileFolder%"
+echo CMD Line: node "%scriptPath%" %safeArgs% --profile="%profileFolder%"
+echo --- END DEBUG ---
+node "G:\LYHU\Projects\LYHU-app\scripts\marketing\manual_login.js"  --profile=".bot_profile_lanlyhu"
+echo.
+echo HOAN THANH - CUA SO SE TU DONG TONG SAU 30 GIAY
+timeout /t 30 >nul
