@@ -44,9 +44,22 @@ function spinText(text) {
         let category = "Mặc định";
         
         if (rawArg.includes("facebook.com/groups/")) {
-            const parts = rawArg.split('|');
-            groupUrl = parts[0].trim();
-            if (parts.length > 1) category = parts[1].trim();
+            // Hỗ trợ cả 2 format:
+            // Format 1: "URL|Category"  
+            // Format 2: "URL  Category" (space)
+            if (rawArg.includes('|')) {
+                const parts = rawArg.split('|');
+                groupUrl = parts[0].trim();
+                if (parts.length > 1) category = parts[1].trim();
+            } else {
+                // Tách URL khỏi category bằng regex: URL kết thúc sau groups/ID
+                const urlMatch = rawArg.match(/(https?:\/\/[^\s]+)/);
+                if (urlMatch) {
+                    groupUrl = urlMatch[1].trim();
+                    const rest = rawArg.replace(groupUrl, '').trim();
+                    if (rest) category = rest;
+                }
+            }
         } else if (rawArg) {
             category = rawArg.trim();
         }
@@ -78,9 +91,9 @@ function spinText(text) {
 
         // 4. Tìm Group để đăng
         if (groupUrl) {
-            await page.goto(groupUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+            await page.goto(groupUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
         } else {
-            await page.goto("https://www.facebook.com/groups/joins", { waitUntil: 'domcontentloaded', timeout: 30000 });
+            await page.goto("https://www.facebook.com/groups/joins", { waitUntil: 'domcontentloaded', timeout: 60000 });
             await delay(rdn(3000, 5000));
             const groupLinks = await page.evaluate(() => {
                 return Array.from(document.querySelectorAll('a[href*="/groups/"]'))
@@ -91,7 +104,7 @@ function spinText(text) {
             const uniqueLinks = [...new Set(groupLinks.map(l => l.split('?')[0]))];
             const randomTarget = uniqueLinks[Math.floor(Math.random() * uniqueLinks.length)];
             console.log(`[GROUP_POST] Chuyển hướng tới Nhóm: ${randomTarget}`);
-            await page.goto(randomTarget, { waitUntil: 'domcontentloaded', timeout: 30000 });
+            await page.goto(randomTarget, { waitUntil: 'domcontentloaded', timeout: 60000 });
         }
         await delay(rdn(4000, 6000));
 
