@@ -108,73 +108,226 @@ function spinText(text) {
         }
         await delay(rdn(4000, 6000));
 
-        // === Chiến lược: Upload file trước → composer tự mở → evaluate+keyboard ===
+        // ============================================================
+        // BƯỚC 5: MỞ COMPOSER DIALOG (KHÔNG PHẢI COMMENT BOX!)
+        // ============================================================
+        console.log("[GROUP_POST] Bước 1: Tìm + click nút 'Viết gì đó' trên Group...");
+        await page.evaluate(() => window.scrollTo(0, 0));
+        await delay(2000);
+        await page.keyboard.press('Escape'); // Đóng popup nếu có
+        await delay(1000);
         
-        if (tempImagePath) {
-            console.log("[GROUP_POST] Chế độ CÓ ẢNH: Upload file trước...");
-            const fileInputs = await page.$$('input[type="file"]');
-            let uploadInput = fileInputs.length > 0 ? fileInputs[0] : null;
+        // Tìm nút composer với retry
+        let composerClicked = false;
+        for (let retry = 0; retry < 5; retry++) {
+            const composerInfo = await page.evaluate(() => {
+                const allElements = Array.from(document.querySelectorAll('div[role="button"], span'));
+                const el = allElements.find(b => {
+                    const txt = (b.innerText || '').trim();
+                    const rect = b.getBoundingClientRect();
+                    return rect.width > 200 && rect.height > 10 && 
+                           txt.length > 3 && txt.length < 50 && (
+                        txt.includes("Viết gì đó") || txt.includes("Write something") ||
+                        txt.includes("Bạn viết gì đi") || txt.includes("Có gì mới") ||
+                        txt.includes("Bạn đang nghĩ gì") || txt.includes("What's on your mind")
+                    );
+                });
+                if (el) {
+                    el.scrollIntoView({ block: 'center', behavior: 'instant' });
+                    const rect = el.getBoundingClientRect();
+                    return { found: true, x: rect.x + rect.width / 2, y: rect.y + rect.height / 2, text: (el.innerText || '').trim().substring(0, 30) };
+                }
+                return { found: false };
+            });
             
-            if (uploadInput) {
-                await uploadInput.uploadFile(tempImagePath);
+            if (composerInfo.found) {
+                console.log(`[GROUP_POST] Tìm thấy composer: "${composerInfo.text}" tại (${Math.round(composerInfo.x)}, ${Math.round(composerInfo.y)})`);
+                await delay(500);
+                await page.mouse.click(composerInfo.x, composerInfo.y);
+                console.log("[GROUP_POST] Đã click vào ô compose.");
+                composerClicked = true;
+                break;
+            }
+            
+            console.log(`[GROUP_POST] Chưa tìm thấy composer, chờ... (${retry + 1}/5)`);
+            await delay(3000);
+            await page.evaluate(() => window.scrollTo(0, 0));
+        }
+        
+        if (!composerClicked) {
+            throw new Error("Không tìm thấy nút 'Viết gì đó' trên trang Group.");
+        }
+        
+        // ============================================================
+        // BƯỚC 6: CHỜ DIALOG "TẠO BÀI VIẾT" MỞ
+        // ============================================================
+        console.log("[GROUP_POST] Bước 2: Chờ dialog 'Tạo bài viết'...");
+        await delay(rdn(2000, 3000));
+        
+        let dialogOpened = false;
+        for (let attempt = 0; attempt < 3; attempt++) {
+            const dialogCheck = await page.evaluate(() => {
+                const allDialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
+                for (const dialog of allDialogs) {
+                    const text = dialog.innerText || '';
+                    const isCreatePost = text.includes('Tạo bài viết') || 
+                                        text.includes('Create post') || 
+                                        text.includes('Create Post');
+                    const hasTextbox = !!dialog.querySelector('div[role="textbox"][contenteditable="true"]');
+                    if (isCreatePost || hasTextbox) {
+                        return { found: true, isCreatePost, hasTextbox, dialogCount: allDialogs.length };
+                    }
+                }
+                return { found: allDialogs.length > 0, isCreatePost: false, dialogCount: allDialogs.length };
+            });
+            
+            console.log(`[GROUP_POST] Dialog check: ${JSON.stringify(dialogCheck)}`);
+            
+            if (dialogCheck.isCreatePost || dialogCheck.hasTextbox) {
+                dialogOpened = true;
+                console.log("[GROUP_POST] ✅ Dialog composer đã mở!");
+                break;
+            }
+            
+            // Đóng dialog sai nếu có
+            if (dialogCheck.found && !dialogCheck.isCreatePost) {
+                await page.keyboard.press('Escape');
+                await delay(1000);
+            }
+            
+            console.log(`[GROUP_POST] Dialog chưa mở, thử lại... (${attempt + 1}/3)`);
+            await delay(2000);
+        }
+        
+        if (!dialogOpened) {
+            throw new Error("Không thể mở Dialog 'Tạo bài viết' trên Group.");
+        }
+        
+        // ============================================================
+        // BƯỚC 7: GÕ NỘI DUNG (TRONG dialog, KHÔNG PHẢI comment box!)
+        // ============================================================
+        console.log("[GROUP_POST] Bước 3: Gõ nội dung...");
+        if (finalMessage) {
+            const textboxInfo = await page.evaluate(() => {
+                const allDialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
+                let targetDialog = null;
+                for (const d of allDialogs) {
+                    const text = d.innerText || '';
+                    if (text.includes('Tạo bài viết') || text.includes('Create post') || 
+                        d.querySelector('div[role="textbox"][contenteditable="true"]')) {
+                        targetDialog = d;
+                        break;
+                    }
+                }
+                
+                let textbox = null;
+                if (targetDialog) {
+                    textbox = targetDialog.querySelector('div[role="textbox"][contenteditable="true"]');
+                }
+                if (textbox) {
+                    textbox.scrollIntoView({ block: 'center' });
+                    const rect = textbox.getBoundingClientRect();
+                    return { found: true, x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+                }
+                return { found: false };
+            });
+            
+            if (textboxInfo.found) {
+                await page.mouse.click(textboxInfo.x, textboxInfo.y);
+                await delay(2000);
+                // Warm up input
+                await page.keyboard.press('Space');
+                await delay(200);
+                await page.keyboard.press('Backspace');
+                await delay(500);
+                // Gõ nội dung
+                await page.keyboard.type(finalMessage, { delay: rdn(30, 60) });
+                console.log("[GROUP_POST] ✅ Đã gõ nội dung bài viết.");
+            } else {
+                console.log("[GROUP_POST] ⚠ Không thể tìm textbox trong dialog.");
+            }
+            await delay(rdn(1000, 2000));
+        }
+
+        // ============================================================
+        // BƯỚC 8: UPLOAD ẢNH (TRONG dialog)
+        // ============================================================
+        if (tempImagePath) {
+            console.log("[GROUP_POST] Bước 4: Upload ảnh...");
+            // Tìm file input TRONG dialog, không phải ở comment box ngoài!
+            const dialogFileInput = await page.evaluate(() => {
+                const allDialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
+                for (const d of allDialogs) {
+                    const text = d.innerText || '';
+                    if (text.includes('Tạo bài viết') || text.includes('Create post') || 
+                        d.querySelector('div[role="textbox"][contenteditable="true"]')) {
+                        const input = d.querySelector('input[type="file"]');
+                        return input ? true : false;
+                    }
+                }
+                return false;
+            });
+            
+            // Upload qua dialog's file input hoặc fallback
+            const fileInput = dialogFileInput 
+                ? await page.$('div[role="dialog"] input[type="file"]')
+                : await page.$('input[type="file"]');
+            
+            if (fileInput) {
+                await fileInput.uploadFile(tempImagePath);
                 const isVideo = tempImagePath.match(/\.(mp4|mov|avi|wmv)$/i);
                 if (isVideo) {
-                    console.log("[GROUP_POST] File Video nặng, chờ upload...");
+                    console.log("[GROUP_POST] Video nặng, chờ upload...");
                     await delay(rdn(20000, 40000));
                 } else {
                     await delay(rdn(5000, 8000));
                 }
-                console.log("[GROUP_POST] Upload hoàn tất.");
+                console.log("[GROUP_POST] ✅ Đã upload ảnh.");
+            } else {
+                console.log("[GROUP_POST] ⚠ Không tìm thấy input file.");
             }
-        } else {
-            console.log("[GROUP_POST] Chế độ CHỈ TEXT...");
-            await page.evaluate(() => {
-                const elements = Array.from(document.querySelectorAll('div[role="button"], span'));
-                const target = elements.find(el => {
-                    const txt = (el.innerText || '').trim();
-                    return txt.length < 50 && (
-                        txt.includes("Viết gì đó") || txt.includes("Write something") ||
-                        txt.includes("Bạn viết gì đi") || txt.includes("Có gì mới") ||
-                        txt.includes("Thảo luận") || txt.includes("Thêm bài viết")
-                    );
-                });
-                if (target) target.click();
-            });
-            await delay(rdn(2000, 3000));
         }
 
-        // Gõ text bằng evaluate + keyboard (KHÔNG dùng .click())
-        if (finalMessage) {
-            await page.evaluate(() => {
-                const textbox = document.querySelector('div[role="textbox"][contenteditable="true"]');
-                if (textbox) {
-                    textbox.focus();
-                    const range = document.createRange();
-                    range.selectNodeContents(textbox);
-                    range.collapse(false);
-                    const sel = window.getSelection();
-                    sel.removeAllRanges();
-                    sel.addRange(range);
-                }
-            });
-            await delay(500);
-            await page.keyboard.type(finalMessage, { delay: rdn(20, 50) });
-            console.log("[GROUP_POST] Đã gõ nội dung bài viết.");
-            await delay(rdn(1000, 2000));
-        }
-
-        // Submit bằng evaluateHandle + mouse coordinate
-        console.log("[GROUP_POST] Sẵn sàng đăng bài...");
+        // ============================================================
+        // BƯỚC 9: CLICK NÚT ĐĂNG (TRONG dialog)
+        // ============================================================
+        console.log("[GROUP_POST] Bước 5: Tìm và click nút Đăng...");
         await delay(rdn(2000, 3000));
         
         const postBtnHandle = await page.evaluateHandle(() => {
-            const buttons = Array.from(document.querySelectorAll('div[role="button"], button'));
-            const postBtn = buttons.find(btn => {
-                const label = btn.getAttribute('aria-label') || '';
-                const txt = (btn.innerText || '').trim();
-                return (label === 'Đăng' || label === 'Post' || txt === 'Đăng' || txt === 'Post');
+            const allDialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
+            let createPostDialog = null;
+            for (const d of allDialogs) {
+                const text = d.innerText || '';
+                if (text.includes('Tạo bài viết') || text.includes('Create post') || 
+                    d.querySelector('div[role="textbox"][contenteditable="true"]')) {
+                    createPostDialog = d;
+                    break;
+                }
+            }
+            
+            if (createPostDialog) {
+                let btn = createPostDialog.querySelector('div[aria-label="Đăng"][role="button"]') ||
+                          createPostDialog.querySelector('div[aria-label="Post"][role="button"]');
+                if (btn) return btn;
+                
+                const allBtns = Array.from(createPostDialog.querySelectorAll('div[role="button"]'));
+                btn = allBtns.find(b => {
+                    const txt = (b.innerText || '').trim();
+                    return txt === 'Đăng' || txt === 'Post';
+                });
+                if (btn) return btn;
+            }
+            
+            // Fallback toàn trang
+            const allButtons = Array.from(document.querySelectorAll('div[role="button"], button'));
+            let btn = allButtons.find(b => {
+                const txt = (b.innerText || '').trim();
+                const label = (b.getAttribute('aria-label') || '').trim();
+                return (txt === 'Đăng' || txt === 'Post' || label === 'Đăng' || label === 'Post') &&
+                       b.offsetParent !== null;
             });
-            return postBtn || null;
+            return btn || null;
         });
         
         const postBtnElement = postBtnHandle.asElement();
@@ -183,14 +336,17 @@ function spinText(text) {
         if (postBtnElement) {
             for (let i = 0; i < 5; i++) {
                 const isDisabled = await page.evaluate(el => el.getAttribute('aria-disabled'), postBtnElement);
-                if (isDisabled !== 'true') break;
+                if (isDisabled !== 'true') {
+                    console.log("[GROUP_POST] Nút Đăng đã active!");
+                    break;
+                }
                 console.log(`[GROUP_POST] Nút Đăng chưa active, chờ thêm... (${i+1}/5)`);
                 await delay(1500);
             }
             
             const box = await postBtnElement.boundingBox();
             if (box && box.width > 0 && box.height > 0) {
-                console.log(`[GROUP_POST] Click nút Đăng tại tọa độ (${Math.round(box.x + box.width/2)}, ${Math.round(box.y + box.height/2)})`);
+                console.log(`[GROUP_POST] Click nút Đăng tại (${Math.round(box.x + box.width/2)}, ${Math.round(box.y + box.height/2)})`);
                 await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
                 posted = true;
             }
