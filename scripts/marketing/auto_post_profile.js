@@ -274,9 +274,8 @@ function spinText(text) {
         // ============================================================
         console.log("[POST] Bước 4: Gõ nội dung...");
         if (finalMessage) {
-            // Focus textbox TRONG dialog "Tạo bài viết" (KHÔNG phải dialog Thông báo!)
-            const focused = await page.evaluate(() => {
-                // Tìm TẤT CẢ dialog, lấy đúng cái "Tạo bài viết"
+            // Tìm textbox TRONG dialog "Tạo bài viết" và CLICK bằng mouse (isTrusted!)
+            const textboxInfo = await page.evaluate(() => {
                 const allDialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
                 let targetDialog = null;
                 for (const d of allDialogs) {
@@ -291,20 +290,30 @@ function spinText(text) {
                 if (targetDialog) {
                     textbox = targetDialog.querySelector('div[role="textbox"][contenteditable="true"]');
                 }
-                // Fallback cuối cùng
                 if (!textbox) {
                     textbox = document.querySelector('div[role="textbox"][contenteditable="true"]');
                 }
                 if (textbox) {
-                    textbox.focus();
-                    return true;
+                    textbox.scrollIntoView({ block: 'center' });
+                    const rect = textbox.getBoundingClientRect();
+                    return { found: true, x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
                 }
-                return false;
+                return { found: false };
             });
             
-            if (focused) {
+            if (textboxInfo.found) {
+                // Click vào textbox bằng mouse (isTrusted: true) → React bắt event đúng
+                await page.mouse.click(textboxInfo.x, textboxInfo.y);
+                await delay(2000); // Chờ React attach event handlers
+                
+                // "Warm up" input: gõ space rồi xóa → kích hoạt React listener
+                await page.keyboard.press('Space');
+                await delay(200);
+                await page.keyboard.press('Backspace');
                 await delay(500);
-                await page.keyboard.type(finalMessage, { delay: rdn(20, 50) });
+                
+                // Gõ nội dung thật
+                await page.keyboard.type(finalMessage, { delay: rdn(30, 60) });
                 console.log("[POST] ✅ Đã gõ nội dung bài viết.");
             } else {
                 console.log("[POST] ⚠ Không thể focus textbox.");
