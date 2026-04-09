@@ -95,9 +95,15 @@ function spinText(text) {
             throw new Error("Chưa đăng nhập Facebook! Chạy manual_login.js trước.");
         }
 
-        // BƯỚC 4a: Scroll lên đầu trang trước (tránh click nhầm vào comment box)
-        console.log("[POST] Bước 2: Scroll lên đầu trang...");
+        // BƯỚC 4a: Đóng mọi popup/notification trước khi click composer
+        console.log("[POST] Bước 2: Scroll lên đầu trang + đóng popup...");
         await page.evaluate(() => window.scrollTo(0, 0));
+        await delay(500);
+        
+        // Đóng bất kỳ dialog/popup nào đang mở (Thông báo, Chat, etc.)
+        await page.keyboard.press('Escape');
+        await delay(500);
+        await page.keyboard.press('Escape');
         await delay(1000);
         
         console.log("[POST] Tìm ô 'Bạn đang nghĩ gì?' (KHÔNG phải comment box)...");
@@ -156,17 +162,12 @@ function spinText(text) {
                 await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
                 console.log("[POST] Đã click vào ô compose.");
             } else {
-                // Size 0: thử Tab + Enter (keyboard navigation)
                 console.log("[POST] Composer size 0, thử keyboard Tab navigation...");
-                // Focus body rồi Tab cho đến khi focus vào composer
-                await page.keyboard.press('Tab');
-                await delay(300);
-                await page.keyboard.press('Tab');
-                await delay(300);
-                await page.keyboard.press('Tab');
-                await delay(300);
+                for (let i = 0; i < 5; i++) {
+                    await page.keyboard.press('Tab');
+                    await delay(200);
+                }
                 await page.keyboard.press('Enter');
-                console.log("[POST] Đã thử mở composer bằng Tab+Enter.");
             }
             await composerHandle.dispose();
         } else {
@@ -174,43 +175,80 @@ function spinText(text) {
             console.log("[POST] Không tìm thấy ô compose trên trang cá nhân.");
         }
         
-        // Chờ composer dialog xuất hiện - PHẢI là dialog "Tạo bài viết"
+        // Chờ composer dialog "Tạo bài viết" xuất hiện
         console.log("[POST] Bước 3: Chờ composer dialog 'Tạo bài viết'...");
         await delay(rdn(2000, 3000));
         
-        // Debug screenshot
         await page.screenshot({ path: path.join(debugDir, 'step2_after_click.png') });
         console.log("[POST] Screenshot step2 saved.");
         
-        // Xác nhận dialog "Tạo bài viết" đã mở (KHÔNG phải comment box)
+        // Xác nhận dialog "Tạo bài viết" - TÌM TẤT CẢ dialog, không chỉ cái đầu tiên
         let dialogOpened = false;
         for (let attempt = 0; attempt < 3; attempt++) {
             const dialogCheck = await page.evaluate(() => {
-                const dialog = document.querySelector('div[role="dialog"]');
-                if (!dialog) return { found: false, reason: 'no dialog element' };
+                // Tìm TẤT CẢ dialog trên trang (có thể có Thông báo + Composer cùng lúc)
+                const allDialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
                 
-                // Kiểm tra title dialog có chứa "Tạo bài viết" / "Create post"
-                const text = dialog.innerText || '';
-                const isCreatePost = text.includes('Tạo bài viết') || text.includes('Create post') || text.includes('Create Post');
+                for (const dialog of allDialogs) {
+                    const text = dialog.innerText || '';
+                    const isCreatePost = text.includes('Tạo bài viết') || 
+                                        text.includes('Create post') || 
+                                        text.includes('Create Post');
+                    const hasTextbox = !!dialog.querySelector('div[role="textbox"][contenteditable="true"]');
+                    
+                    if (isCreatePost) {
+                        return { found: true, isCreatePost: true, hasTextbox, dialogCount: allDialogs.length };
+                    }
+                }
                 
-                // Kiểm tra có textbox trong dialog
-                const hasTextbox = !!dialog.querySelector('div[role="textbox"][contenteditable="true"]');
-                
-                return { found: true, isCreatePost, hasTextbox, titlePreview: text.substring(0, 60) };
+                // Không tìm thấy dialog "Tạo bài viết"
+                return { 
+                    found: allDialogs.length > 0, 
+                    isCreatePost: false, 
+                    dialogCount: allDialogs.length,
+                    titles: allDialogs.map(d => (d.innerText || '').substring(0, 30))
+                };
             });
             
             console.log(`[POST] Dialog check: ${JSON.stringify(dialogCheck)}`);
             
-            if (dialogCheck.found && dialogCheck.isCreatePost) {
+            if (dialogCheck.isCreatePost) {
                 dialogOpened = true;
                 console.log("[POST] ✅ Dialog 'Tạo bài viết' đã mở!");
                 break;
             }
             
-            console.log(`[POST] Dialog chưa đúng, thử lại... (${attempt + 1}/3)`);
-            // Thử click lại
-            await page.mouse.click(683, 384); // Click giữa màn hình
-            await delay(2000);
+            // Nếu tìm thấy dialog SAI (VD: Thông báo) → đóng nó rồi click lại composer
+            if (dialogCheck.found && !dialogCheck.isCreatePost) {
+                console.log("[POST] Phát hiện dialog sai (Thông báo?), đóng bằng Escape...");
+                await page.keyboard.press('Escape');
+                await delay(1000);
+                
+                // Click lại composer
+                const reComposer = await page.evaluateHandle(() => {
+                    const els = Array.from(document.querySelectorAll('div[role="button"], span'));
+                    return els.find(b => {
+                        const txt = (b.innerText || '').trim();
+                        const rect = b.getBoundingClientRect();
+                        return rect.width > 200 && rect.height > 10 && 
+                               txt.includes("Bạn đang nghĩ gì");
+                    }) || null;
+                });
+                const reEl = reComposer.asElement();
+                if (reEl) {
+                    const reBox = await reEl.boundingBox();
+                    if (reBox) {
+                        await page.mouse.click(reBox.x + reBox.width / 2, reBox.y + reBox.height / 2);
+                        console.log("[POST] Đã click lại ô compose.");
+                    }
+                }
+                await reComposer.dispose();
+                await delay(2000);
+            } else {
+                console.log(`[POST] Dialog chưa mở, thử lại... (${attempt + 1}/3)`);
+                await page.mouse.click(683, 384);
+                await delay(2000);
+            }
         }
 
         if (!dialogOpened) {
