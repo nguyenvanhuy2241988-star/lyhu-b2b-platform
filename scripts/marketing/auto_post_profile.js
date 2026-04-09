@@ -95,84 +95,84 @@ function spinText(text) {
             throw new Error("Chưa đăng nhập Facebook! Chạy manual_login.js trước.");
         }
 
-        // BƯỚC 4a: Đóng mọi popup/notification trước khi click composer
-        console.log("[POST] Bước 2: Scroll lên đầu trang + đóng popup...");
+        // BƯỚC 4a: Chờ page load đầy đủ, scroll lên đầu
+        console.log("[POST] Bước 2: Chờ page load xong + scroll lên đầu...");
+        await delay(rdn(5000, 7000)); // Chờ page render đầy đủ
         await page.evaluate(() => window.scrollTo(0, 0));
-        await delay(500);
+        await delay(2000);
         
-        // Đóng bất kỳ dialog/popup nào đang mở (Thông báo, Chat, etc.)
-        await page.keyboard.press('Escape');
-        await delay(500);
+        // Đóng popup nhẹ nhàng (chỉ 1 Escape, tránh đóng mất element)
         await page.keyboard.press('Escape');
         await delay(1000);
         
-        console.log("[POST] Tìm ô 'Bạn đang nghĩ gì?' (KHÔNG phải comment box)...");
+        // TÌM + CLICK COMPOSER VỚI RETRY (tối đa 5 lần)
+        console.log("[POST] Tìm ô 'Bạn đang nghĩ gì?'...");
+        let composerClicked = false;
         
-        // Tìm NÚT BỌC NGOÀI (visible, clickable), KHÔNG phải textbox ẩn bên trong
-        const composerHandle = await page.evaluateHandle(() => {
-            // Chiến lược 1: Tìm SPAN/DIV chứa CHÍNH XÁC text "Bạn đang nghĩ gì?"
-            // KHÔNG tìm "Chia sẻ suy nghĩ" (đó là nút Notes/Ghi chú, không phải composer)
-            const allElements = Array.from(document.querySelectorAll('div[role="button"], span'));
-            let el = allElements.find(b => {
-                const txt = (b.innerText || '').trim();
-                const rect = b.getBoundingClientRect();
-                // Phải visible, kích thước lớn (ô composer rộng ~300px+), và chứa đúng text
-                return rect.width > 200 && rect.height > 10 && 
-                       txt.length > 5 && txt.length < 50 && (
-                    txt.includes("Bạn đang nghĩ gì") || 
-                    txt.includes("What's on your mind")
-                    // KHÔNG bao gồm "Chia sẻ suy nghĩ" - đó là Notes!
-                );
-            });
-            if (el) return el;
-            
-            // Chiến lược 2: Tìm div[aria-placeholder] chứa "nghĩ gì" 
-            // rồi lấy PARENT có kích thước lớn hơn (nút bọc ngoài)
-            const placeholders = Array.from(document.querySelectorAll('div[aria-placeholder]'));
-            let textbox = placeholders.find(p => {
-                const ph = (p.getAttribute('aria-placeholder') || '').toLowerCase();
-                return (ph.includes('nghĩ gì') || ph.includes('on your mind')) &&
-                       !ph.includes('bình luận') && !ph.includes('comment');
-            });
-            if (textbox) {
-                // Walk up đến parent có kích thước lớn - đó là nút click được
-                let parent = textbox.parentElement;
-                for (let i = 0; i < 5 && parent; i++) {
-                    const rect = parent.getBoundingClientRect();
-                    if (rect.width > 100 && rect.height > 20) {
-                        return parent;
+        for (let retry = 0; retry < 5; retry++) {
+            const composerInfo = await page.evaluate(() => {
+                // Chiến lược 1: Tìm SPAN/DIV chứa text "Bạn đang nghĩ gì?"
+                const allElements = Array.from(document.querySelectorAll('div[role="button"], span'));
+                let el = allElements.find(b => {
+                    const txt = (b.innerText || '').trim();
+                    const rect = b.getBoundingClientRect();
+                    return rect.width > 200 && rect.height > 10 && 
+                           txt.length > 5 && txt.length < 50 && (
+                        txt.includes("Bạn đang nghĩ gì") || 
+                        txt.includes("What's on your mind")
+                    );
+                });
+                if (el) {
+                    const rect = el.getBoundingClientRect();
+                    return { found: true, x: rect.x + rect.width / 2, y: rect.y + rect.height / 2, w: rect.width, h: rect.height, strategy: 'text' };
+                }
+                
+                // Chiến lược 2: Tìm div[aria-placeholder] chứa "nghĩ gì"
+                const placeholders = Array.from(document.querySelectorAll('div[aria-placeholder]'));
+                let textbox = placeholders.find(p => {
+                    const ph = (p.getAttribute('aria-placeholder') || '').toLowerCase();
+                    return (ph.includes('nghĩ gì') || ph.includes('on your mind')) &&
+                           !ph.includes('bình luận') && !ph.includes('comment');
+                });
+                if (textbox) {
+                    // Walk up parent để lấy element lớn hơn
+                    let parent = textbox.parentElement;
+                    for (let i = 0; i < 5 && parent; i++) {
+                        const rect = parent.getBoundingClientRect();
+                        if (rect.width > 200 && rect.height > 20) {
+                            return { found: true, x: rect.x + rect.width / 2, y: rect.y + rect.height / 2, w: rect.width, h: rect.height, strategy: 'placeholder-parent' };
+                        }
+                        parent = parent.parentElement;
                     }
-                    parent = parent.parentElement;
+                    const rect = textbox.getBoundingClientRect();
+                    if (rect.width > 0) {
+                        return { found: true, x: rect.x + rect.width / 2, y: rect.y + rect.height / 2, w: rect.width, h: rect.height, strategy: 'placeholder' };
+                    }
                 }
-                return textbox; // Fallback: trả về textbox gốc
-            }
+                
+                return { found: false };
+            });
             
-            return null;
-        });
-        
-        const composerElement = composerHandle.asElement();
-        if (composerElement) {
-            // Scroll vào view trước
-            await composerElement.evaluate(el => el.scrollIntoView({ block: 'center' }));
-            await delay(1000);
-            
-            const box = await composerElement.boundingBox();
-            if (box && box.width > 0 && box.height > 0) {
-                console.log(`[POST] Tìm thấy composer tại (${Math.round(box.x)}, ${Math.round(box.y)}), size ${Math.round(box.width)}x${Math.round(box.height)}`);
-                await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+            if (composerInfo.found) {
+                console.log(`[POST] Tìm thấy composer (${composerInfo.strategy}) tại (${Math.round(composerInfo.x)}, ${Math.round(composerInfo.y)}), size ${Math.round(composerInfo.w)}x${Math.round(composerInfo.h)}`);
+                await page.mouse.click(composerInfo.x, composerInfo.y);
                 console.log("[POST] Đã click vào ô compose.");
-            } else {
-                console.log("[POST] Composer size 0, thử keyboard Tab navigation...");
-                for (let i = 0; i < 5; i++) {
-                    await page.keyboard.press('Tab');
-                    await delay(200);
-                }
-                await page.keyboard.press('Enter');
+                composerClicked = true;
+                break;
             }
-            await composerHandle.dispose();
-        } else {
-            await composerHandle.dispose();
-            console.log("[POST] Không tìm thấy ô compose trên trang cá nhân.");
+            
+            console.log(`[POST] Chưa tìm thấy composer, chờ thêm... (${retry + 1}/5)`);
+            await delay(3000);
+            // Scroll lại lên đầu (phòng trường hợp bị scroll)
+            await page.evaluate(() => window.scrollTo(0, 0));
+        }
+        
+        // FALLBACK: Nếu vẫn không tìm thấy, thử click vào vị trí gần đúng
+        if (!composerClicked) {
+            console.log("[POST] ⚠ Không tìm thấy composer bằng selector, thử click vào vị trí ước lượng...");
+            // Vị trí composer trên profile page thường ở khoảng (650, 260)
+            await page.mouse.click(650, 260);
+            await delay(1000);
         }
         
         // Chờ composer dialog "Tạo bài viết" xuất hiện
