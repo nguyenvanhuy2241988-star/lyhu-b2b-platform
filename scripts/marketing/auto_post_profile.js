@@ -261,15 +261,24 @@ function spinText(text) {
         // ============================================================
         console.log("[POST] Bước 4: Gõ nội dung...");
         if (finalMessage) {
-            // Focus textbox TRONG dialog (không phải comment box ngoài trang)
+            // Focus textbox TRONG dialog "Tạo bài viết" (KHÔNG phải dialog Thông báo!)
             const focused = await page.evaluate(() => {
-                // Ưu tiên: tìm textbox trong dialog
-                const dialog = document.querySelector('div[role="dialog"]');
-                let textbox = null;
-                if (dialog) {
-                    textbox = dialog.querySelector('div[role="textbox"][contenteditable="true"]');
+                // Tìm TẤT CẢ dialog, lấy đúng cái "Tạo bài viết"
+                const allDialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
+                let targetDialog = null;
+                for (const d of allDialogs) {
+                    const text = d.innerText || '';
+                    if (text.includes('Tạo bài viết') || text.includes('Create post') || text.includes('Create Post')) {
+                        targetDialog = d;
+                        break;
+                    }
                 }
-                // Fallback: tìm textbox bất kỳ (nhưng rủi ro nhầm comment box)
+                
+                let textbox = null;
+                if (targetDialog) {
+                    textbox = targetDialog.querySelector('div[role="textbox"][contenteditable="true"]');
+                }
+                // Fallback cuối cùng
                 if (!textbox) {
                     textbox = document.querySelector('div[role="textbox"][contenteditable="true"]');
                 }
@@ -326,19 +335,27 @@ function spinText(text) {
         await page.screenshot({ path: path.join(debugDir, 'step3_before_submit.png') });
         
         
-        // Tìm nút Đăng - thử nhiều cách
+        // Tìm nút Đăng - trong ĐÚNG dialog "Tạo bài viết"
         const postBtnHandle = await page.evaluateHandle(() => {
-            // Chiến lược 1: Tìm theo aria-label
-            let btn = document.querySelector('div[aria-label="Đăng"][role="button"]') ||
-                      document.querySelector('div[aria-label="Post"][role="button"]') ||
-                      document.querySelector('span[aria-label="Đăng"]') ||
-                      document.querySelector('span[aria-label="Post"]');
-            if (btn) return btn;
+            // Tìm đúng dialog "Tạo bài viết" trong tất cả dialog
+            const allDialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
+            let createPostDialog = null;
+            for (const d of allDialogs) {
+                const text = d.innerText || '';
+                if (text.includes('Tạo bài viết') || text.includes('Create post') || text.includes('Create Post')) {
+                    createPostDialog = d;
+                    break;
+                }
+            }
             
-            // Chiến lược 2: Tìm TRONG dialog bằng text content
-            const dialog = document.querySelector('div[role="dialog"]');
-            if (dialog) {
-                const allBtns = Array.from(dialog.querySelectorAll('div[role="button"]'));
+            // Chiến lược 1: Tìm theo aria-label TRONG dialog đúng
+            if (createPostDialog) {
+                let btn = createPostDialog.querySelector('div[aria-label="Đăng"][role="button"]') ||
+                          createPostDialog.querySelector('div[aria-label="Post"][role="button"]');
+                if (btn) return btn;
+                
+                // Chiến lược 2: Tìm theo text content TRONG dialog đúng
+                const allBtns = Array.from(createPostDialog.querySelectorAll('div[role="button"]'));
                 btn = allBtns.find(b => {
                     const txt = (b.innerText || '').trim();
                     return txt === 'Đăng' || txt === 'Post';
@@ -346,26 +363,29 @@ function spinText(text) {
                 if (btn) return btn;
             }
             
-            // Chiến lược 3: Tìm toàn trang bằng text content
+            // Chiến lược 3 (toàn trang): Tìm nút visible có text "Đăng"
             const allButtons = Array.from(document.querySelectorAll('div[role="button"], button'));
-            btn = allButtons.find(b => {
+            let btn = allButtons.find(b => {
                 const txt = (b.innerText || '').trim();
                 const label = (b.getAttribute('aria-label') || '').trim();
                 return (txt === 'Đăng' || txt === 'Post' || label === 'Đăng' || label === 'Post') &&
-                       b.offsetParent !== null; // Phải visible
+                       b.offsetParent !== null;
             });
-            if (btn) return btn;
-            
-            return null;
+            return btn || null;
         });
         
-        // Debug: Log tất cả nút trong dialog
+        // Debug: Log nút trong dialog "Tạo bài viết" (KHÔNG phải Thông báo)
         const dialogBtns = await page.evaluate(() => {
-            const dialog = document.querySelector('div[role="dialog"]');
-            if (!dialog) return { hasDialog: false, buttons: [] };
-            const btns = Array.from(dialog.querySelectorAll('div[role="button"]'));
+            const allDialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
+            let targetDialog = null;
+            for (const d of allDialogs) {
+                if ((d.innerText || '').includes('Tạo bài viết')) { targetDialog = d; break; }
+            }
+            if (!targetDialog) return { hasDialog: false, dialogCount: allDialogs.length };
+            const btns = Array.from(targetDialog.querySelectorAll('div[role="button"]'));
             return {
                 hasDialog: true,
+                dialogCount: allDialogs.length,
                 buttons: btns.map(b => ({
                     text: (b.innerText || '').trim().substring(0, 30),
                     ariaLabel: b.getAttribute('aria-label'),
@@ -374,7 +394,7 @@ function spinText(text) {
                 }))
             };
         });
-        console.log("[POST] Debug buttons trong dialog:", JSON.stringify(dialogBtns, null, 2));
+        console.log("[POST] Debug buttons trong dialog 'Tạo bài viết':", JSON.stringify(dialogBtns, null, 2));
         
         const postBtnElement = postBtnHandle.asElement();
         let posted = false;
