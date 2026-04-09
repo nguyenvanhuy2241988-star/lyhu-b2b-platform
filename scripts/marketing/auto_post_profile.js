@@ -111,50 +111,63 @@ function spinText(text) {
         
         for (let retry = 0; retry < 5; retry++) {
             const composerInfo = await page.evaluate(() => {
-                // Chiến lược 1: Tìm SPAN/DIV chứa text "Bạn đang nghĩ gì?"
-                const allElements = Array.from(document.querySelectorAll('div[role="button"], span'));
-                let el = allElements.find(b => {
-                    const txt = (b.innerText || '').trim();
-                    const rect = b.getBoundingClientRect();
-                    return rect.width > 200 && rect.height > 10 && 
-                           txt.length > 5 && txt.length < 50 && (
-                        txt.includes("Bạn đang nghĩ gì") || 
-                        txt.includes("What's on your mind")
-                    );
-                });
-                if (el) {
-                    const rect = el.getBoundingClientRect();
-                    return { found: true, x: rect.x + rect.width / 2, y: rect.y + rect.height / 2, w: rect.width, h: rect.height, strategy: 'text' };
-                }
-                
-                // Chiến lược 2: Tìm div[aria-placeholder] chứa "nghĩ gì"
-                const placeholders = Array.from(document.querySelectorAll('div[aria-placeholder]'));
-                let textbox = placeholders.find(p => {
-                    const ph = (p.getAttribute('aria-placeholder') || '').toLowerCase();
-                    return (ph.includes('nghĩ gì') || ph.includes('on your mind')) &&
-                           !ph.includes('bình luận') && !ph.includes('comment');
-                });
-                if (textbox) {
-                    // Walk up parent để lấy element lớn hơn
-                    let parent = textbox.parentElement;
-                    for (let i = 0; i < 5 && parent; i++) {
-                        const rect = parent.getBoundingClientRect();
-                        if (rect.width > 200 && rect.height > 20) {
-                            return { found: true, x: rect.x + rect.width / 2, y: rect.y + rect.height / 2, w: rect.width, h: rect.height, strategy: 'placeholder-parent' };
+                // Hàm tìm composer element
+                function findComposer() {
+                    // Chiến lược 1: Tìm SPAN/DIV chứa text "Bạn đang nghĩ gì?"
+                    const allElements = Array.from(document.querySelectorAll('div[role="button"], span'));
+                    let el = allElements.find(b => {
+                        const txt = (b.innerText || '').trim();
+                        const rect = b.getBoundingClientRect();
+                        return rect.width > 200 && rect.height > 10 && 
+                               txt.length > 5 && txt.length < 50 && (
+                            txt.includes("Bạn đang nghĩ gì") || 
+                            txt.includes("What's on your mind")
+                        );
+                    });
+                    if (el) return { el, strategy: 'text' };
+                    
+                    // Chiến lược 2: Tìm div[aria-placeholder] chứa "nghĩ gì"
+                    const placeholders = Array.from(document.querySelectorAll('div[aria-placeholder]'));
+                    let textbox = placeholders.find(p => {
+                        const ph = (p.getAttribute('aria-placeholder') || '').toLowerCase();
+                        return (ph.includes('nghĩ gì') || ph.includes('on your mind')) &&
+                               !ph.includes('bình luận') && !ph.includes('comment');
+                    });
+                    if (textbox) {
+                        let parent = textbox.parentElement;
+                        for (let i = 0; i < 5 && parent; i++) {
+                            const rect = parent.getBoundingClientRect();
+                            if (rect.width > 200 && rect.height > 20) {
+                                return { el: parent, strategy: 'placeholder-parent' };
+                            }
+                            parent = parent.parentElement;
                         }
-                        parent = parent.parentElement;
+                        return { el: textbox, strategy: 'placeholder' };
                     }
-                    const rect = textbox.getBoundingClientRect();
-                    if (rect.width > 0) {
-                        return { found: true, x: rect.x + rect.width / 2, y: rect.y + rect.height / 2, w: rect.width, h: rect.height, strategy: 'placeholder' };
-                    }
+                    return null;
                 }
                 
-                return { found: false };
+                const result = findComposer();
+                if (!result) return { found: false };
+                
+                // QUAN TRỌNG: Scroll element vào giữa viewport TRƯỚC
+                result.el.scrollIntoView({ block: 'center', behavior: 'instant' });
+                
+                // Lấy tọa độ SAU KHI scroll
+                const rect = result.el.getBoundingClientRect();
+                return { 
+                    found: true, 
+                    x: rect.x + rect.width / 2, 
+                    y: rect.y + rect.height / 2, 
+                    w: rect.width, 
+                    h: rect.height, 
+                    strategy: result.strategy 
+                };
             });
             
             if (composerInfo.found) {
                 console.log(`[POST] Tìm thấy composer (${composerInfo.strategy}) tại (${Math.round(composerInfo.x)}, ${Math.round(composerInfo.y)}), size ${Math.round(composerInfo.w)}x${Math.round(composerInfo.h)}`);
+                await delay(500); // Chờ scroll xong
                 await page.mouse.click(composerInfo.x, composerInfo.y);
                 console.log("[POST] Đã click vào ô compose.");
                 composerClicked = true;
