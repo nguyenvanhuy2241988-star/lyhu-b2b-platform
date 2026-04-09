@@ -77,7 +77,7 @@ function spinText(text) {
         // BƯỚC 4: Vào Facebook và MỞ COMPOSER DIALOG
         // ============================================================
         // Vào TRANG CÁ NHÂN (không phải newsfeed!) 
-        await page.goto("https://www.facebook.com/me", { waitUntil: 'networkidle2', timeout: 30000 });
+        await page.goto("https://www.facebook.com/me", { waitUntil: 'domcontentloaded', timeout: 60000 });
         await delay(rdn(3000, 5000));
         
         // Debug: Chụp screenshot xem trang đang hiển thị gì
