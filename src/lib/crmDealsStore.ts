@@ -380,11 +380,11 @@ export async function fetchCustomers(
         const sortParam = filters?.sortBy ? sortMap[filters.sortBy] : 'created_at.desc';
         url += `&order=${sortParam}`;
 
-        // Limit to prevent huge payloads if no filters
+        // Limit increased to 10000 to allow Admin to export all customers at once
         if (!filters?.search && !filters?.province && !filters?.district && !filters?.fromDate) {
-            url += `&limit=1000`;
+            url += `&limit=10000`;
         } else {
-            url += `&limit=500`;
+            url += `&limit=10000`;
         }
 
         const res = await fetch(url, { headers });
