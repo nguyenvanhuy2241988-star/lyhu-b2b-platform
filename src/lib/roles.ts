@@ -26,7 +26,8 @@ export const SHARED_PATHS = [
     "/settings",
     "/crm",       // CRM chung cho Admin, Sales, Telesales...
     "/tasks",     // Todo list chung
-    "/documents"  // Tài liệu chung
+    "/documents", // Tài liệu chung
+    "/shared"     // Shared pages (Media Library read-only, etc.)
 ];
 
 // Danh sách tất cả các prefix cần bảo vệ (Yêu cầu đăng nhập)
