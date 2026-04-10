@@ -7,7 +7,7 @@ import {
     Phone, Mail, MapPin, Loader2, Building2,
     Search, Filter, Pencil, Trash2, X, Save,
     UserCircle, AlertCircle, Users, UserPlus, PhoneCall, ShoppingCart, Snowflake, TrendingUp, Crown,
-    MapPinned, UserCog, Tag, Calendar, ChevronLeft, ChevronRight, Globe
+    MapPinned, UserCog, Tag, Calendar, ChevronLeft, ChevronRight, Globe, Download
 } from "lucide-react";
 import MarketOverview from "@/components/shared/MarketOverview";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -269,6 +269,55 @@ export default function AdminCustomersPage() {
 
     const maxPipelineCount = Math.max(...pipeline.map(p => p.count), 1);
 
+    const handleExportFBAudience = () => {
+        if (filteredCustomers.length === 0) {
+            alert('Không có dữ liệu khách hàng để xuất.');
+            return;
+        }
+
+        const headers = ['phone', 'fn', 'ln', 'country', 'value'];
+        const csvRows = [headers.join(',')];
+
+        filteredCustomers.forEach(c => {
+            let p = c.phone.replace(/[\s\-\.]/g, '');
+            if (p.startsWith('0')) {
+                p = '84' + p.substring(1);
+            } else if (p.startsWith('+84')) {
+                p = p.substring(1);
+            }
+
+            let fn = '';
+            let ln = '';
+            if (c.name) {
+                const parts = c.name.trim().split(/\s+/);
+                fn = parts[0] || '';
+                ln = parts.length > 1 ? parts.slice(1).join(' ') : '';
+            }
+
+            const escapeCSV = (str: string) => `"${str.replace(/"/g, '""')}"`;
+
+            // Default value is 100000 for value-based lookalikes if actual value isn't attached
+            // The top customers list has value but `Customer` doesn't by default here.
+            csvRows.push([
+                escapeCSV(p),
+                escapeCSV(fn),
+                escapeCSV(ln),
+                'VN',
+                '100000'
+            ].join(','));
+        });
+
+        const csvContent = "\uFEFF" + csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `lyhu_fb_audience_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -308,10 +357,16 @@ export default function AdminCustomersPage() {
                         </div>
                     )}
                 </div>
-                <button onClick={() => setShowMarket(!showMarket)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showMarket ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
-                    <Globe className="w-3.5 h-3.5" /> Thị trường
-                </button>
+                <div className="flex items-center gap-2">
+                    <button onClick={handleExportFBAudience}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200">
+                        <Download className="w-3.5 h-3.5" /> Xuất File FB Ads
+                    </button>
+                    <button onClick={() => setShowMarket(!showMarket)}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showMarket ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                        <Globe className="w-3.5 h-3.5" /> Thị trường
+                    </button>
+                </div>
             </div>
 
             {/* ===== DASHBOARD ===== */}
