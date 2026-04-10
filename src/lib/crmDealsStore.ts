@@ -329,6 +329,7 @@ export async function fetchCustomers(
         fromDate?: string;
         toDate?: string;
         sortBy?: 'newest' | 'oldest' | 'name_asc' | 'name_desc';
+        fetchAll?: boolean;
     }
 ): Promise<Customer[]> {
     try {
@@ -380,11 +381,32 @@ export async function fetchCustomers(
         const sortParam = filters?.sortBy ? sortMap[filters.sortBy] : 'created_at.desc';
         url += `&order=${sortParam}`;
 
-        // Limit increased to 10000 to allow Admin to export all customers at once
+        // If fetchAll is true, loop with offset to bypass 1000 max-rows limit
+        if (filters?.fetchAll) {
+            let allData: Customer[] = [];
+            let offset = 0;
+            const limit = 1000;
+            while (true) {
+                const pagedUrl = `${url}&limit=${limit}&offset=${offset}`;
+                const res = await fetch(pagedUrl, { headers });
+                if (!res.ok) {
+                    console.error('fetchCustomers fetchAll error:', await res.text());
+                    break;
+                }
+                const data = await res.json();
+                if (!data || data.length === 0) break;
+                allData = allData.concat(data);
+                if (data.length < limit) break;
+                offset += limit;
+            }
+            return allData;
+        }
+
+        // Normal UI load: limit to prevent huge payloads
         if (!filters?.search && !filters?.province && !filters?.district && !filters?.fromDate) {
-            url += `&limit=10000`;
+            url += `&limit=1000`;
         } else {
-            url += `&limit=10000`;
+            url += `&limit=500`;
         }
 
         const res = await fetch(url, { headers });

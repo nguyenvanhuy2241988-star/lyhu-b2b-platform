@@ -46,6 +46,7 @@ export default function AdminCustomersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
 
     // Filter state
     const [selectedProvince, setSelectedProvince] = useState<string>("");
@@ -269,53 +270,73 @@ export default function AdminCustomersPage() {
 
     const maxPipelineCount = Math.max(...pipeline.map(p => p.count), 1);
 
-    const handleExportFBAudience = () => {
-        if (filteredCustomers.length === 0) {
-            alert('Không có dữ liệu khách hàng để xuất.');
-            return;
+    const handleExportFBAudience = async () => {
+        setIsExporting(true);
+        try {
+            // Lấy toàn bộ data bypass 1000 limit bằng cách gọi API với fetchAll=true
+            const filters = {
+                province: selectedProvince,
+                ward: selectedWard,
+                type: selectedType === "Tất cả" ? "Tất cả" : reverseTypeMap[selectedType] || selectedType,
+                search: searchQuery,
+                fromDate,
+                toDate,
+                sortBy: sortBy as any,
+                fetchAll: true // <-- Đây là cờ đặc biệt để store tự động loop pagination
+            };
+            
+            const exportData = await fetchCustomers(selectedOwner === "Tất cả" ? undefined : selectedOwner, session?.access_token, filters);
+
+            if (!exportData || exportData.length === 0) {
+                alert('Không có dữ liệu khách hàng để xuất.');
+                return;
+            }
+
+            const headers = ['phone', 'fn', 'ln', 'country', 'value'];
+            const csvRows = [headers.join(',')];
+
+            exportData.forEach(c => {
+                let p = c.phone.replace(/[\s\-\.]/g, '');
+                if (p.startsWith('0')) {
+                    p = '84' + p.substring(1);
+                } else if (p.startsWith('+84')) {
+                    p = p.substring(1);
+                }
+
+                let fn = '';
+                let ln = '';
+                if (c.name) {
+                    const parts = c.name.trim().split(/\s+/);
+                    fn = parts[0] || '';
+                    ln = parts.length > 1 ? parts.slice(1).join(' ') : '';
+                }
+
+                const escapeCSV = (str: string) => `"${str.replace(/"/g, '""')}"`;
+
+                csvRows.push([
+                    escapeCSV(p),
+                    escapeCSV(fn),
+                    escapeCSV(ln),
+                    'VN',
+                    '100000'
+                ].join(','));
+            });
+
+            const csvContent = "\uFEFF" + csvRows.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `lyhu_fb_audience_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch(e) {
+            console.error("Export error", e);
+            alert("Đã xảy ra lỗi khi xuất file.");
+        } finally {
+            setIsExporting(false);
         }
-
-        const headers = ['phone', 'fn', 'ln', 'country', 'value'];
-        const csvRows = [headers.join(',')];
-
-        filteredCustomers.forEach(c => {
-            let p = c.phone.replace(/[\s\-\.]/g, '');
-            if (p.startsWith('0')) {
-                p = '84' + p.substring(1);
-            } else if (p.startsWith('+84')) {
-                p = p.substring(1);
-            }
-
-            let fn = '';
-            let ln = '';
-            if (c.name) {
-                const parts = c.name.trim().split(/\s+/);
-                fn = parts[0] || '';
-                ln = parts.length > 1 ? parts.slice(1).join(' ') : '';
-            }
-
-            const escapeCSV = (str: string) => `"${str.replace(/"/g, '""')}"`;
-
-            // Default value is 100000 for value-based lookalikes if actual value isn't attached
-            // The top customers list has value but `Customer` doesn't by default here.
-            csvRows.push([
-                escapeCSV(p),
-                escapeCSV(fn),
-                escapeCSV(ln),
-                'VN',
-                '100000'
-            ].join(','));
-        });
-
-        const csvContent = "\uFEFF" + csvRows.join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', `lyhu_fb_audience_${new Date().toISOString().slice(0, 10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
     };
 
     return (
@@ -358,9 +379,10 @@ export default function AdminCustomersPage() {
                     )}
                 </div>
                 <div className="flex items-center gap-2">
-                    <button onClick={handleExportFBAudience}
-                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200">
-                        <Download className="w-3.5 h-3.5" /> Xuất File FB Ads
+                    <button onClick={handleExportFBAudience} disabled={isExporting}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 disabled:opacity-50">
+                        {isExporting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />} 
+                        {isExporting ? "Đang xuất..." : "Xuất File FB Ads"}
                     </button>
                     <button onClick={() => setShowMarket(!showMarket)}
                         className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${showMarket ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>

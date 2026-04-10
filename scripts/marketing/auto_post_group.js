@@ -75,16 +75,24 @@ function spinText(text) {
 
         console.log(`[GROUP_POST] Mở kho: ${category}. Nhắm mục tiêu: ${groupUrl || 'Ngẫu nhiên nhóm đã tham gia'}`);
 
-        // 1. Kéo Mồi
-        const { data, error } = await supabase.from('bot_contents').select('*').eq('category', category);
-        if (error || !data || data.length === 0) {
-            await logAction('post', 'error', `Lỗi: Kho bài đăng "${category}" trống`);
-            process.exit(1);
-        }
+        let finalMessage = '';
+        let imageUrl = null;
+        
+        // Test mode: không cần nội dung, chỉ test dialog
+        if (!isTestMode) {
+            // 1. Kéo Mồi
+            const { data, error } = await supabase.from('bot_contents').select('*').eq('category', category);
+            if (error || !data || data.length === 0) {
+                await logAction('post', 'error', `Lỗi: Kho bài đăng "${category}" trống`);
+                process.exit(1);
+            }
 
-        const randomContent = data[Math.floor(Math.random() * data.length)];
-        const finalMessage = spinText(randomContent.message_text);
-        const imageUrl = randomContent.image_url;
+            const randomContent = data[Math.floor(Math.random() * data.length)];
+            finalMessage = spinText(randomContent.message_text);
+            imageUrl = randomContent.image_url;
+        } else {
+            console.log("[TEST] Bỏ qua bước lấy nội dung (test mode).");
+        }
 
         // 2. Chuyển vị Ảnh
         if (imageUrl) {
@@ -115,9 +123,22 @@ function spinText(text) {
             console.log(`[GROUP_POST] Chuyển hướng tới Nhóm: ${randomTarget}`);
             await page.goto(randomTarget, { waitUntil: 'domcontentloaded', timeout: 60000 });
         }
-        await delay(rdn(4000, 6000));
+        
+        // Chờ trang GROUP load đầy đủ (Facebook SPA cần thời gian render)
+        console.log("[GROUP_POST] Chờ trang Group render đầy đủ...");
+        await delay(rdn(8000, 12000)); // Chờ lâu hơn - FB group chậm
+        
+        // Chờ cho đến khi có nội dung thực (không phải loading screen)
+        try {
+            await page.waitForSelector('div[role="main"]', { timeout: 15000 });
+            console.log("[GROUP_POST] Trang đã load xong (tìm thấy main content).");
+        } catch (e) {
+            console.log("[GROUP_POST] ⚠ Chưa thấy main content, tiếp tục...");
+        }
+        await delay(3000);
+        
         await page.screenshot({ path: path.join(debugDir, 'group_step1_page.png') });
-        console.log(`[GROUP_POST] Screenshot trang group đã lưu: debug/group_step1_page.png`);
+        console.log(`[GROUP_POST] Screenshot trang group: debug/group_step1_page.png`);
 
         // ============================================================
         // BƯỚC 5: MỞ COMPOSER DIALOG (KHÔNG PHẢI COMMENT BOX!)
