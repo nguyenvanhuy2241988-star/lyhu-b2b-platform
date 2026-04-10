@@ -233,8 +233,8 @@ export default function RetailChainsPage() {
     // CRUD state
     const [formChain, setFormChain] = useState<(ChainFormData & { id?: string }) | null>(null);
     const [saving, setSaving] = useState(false);
-    const [userRole, setUserRole] = useState<string>("");
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+    const [userRole, setUserRole] = useState<string>("");
 
     const isAdmin = userRole === "admin";
 

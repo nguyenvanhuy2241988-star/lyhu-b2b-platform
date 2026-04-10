@@ -167,6 +167,7 @@ export const NAV_ITEMS = {
         { label: "Người dùng", href: "/admin/users", icon: Users },
         { label: "Khách hàng", href: "/admin/customers", icon: UserCheck },
         { label: "Sản phẩm", href: "/admin/products", icon: Package },
+        { label: "Chuỗi Siêu thị", href: "/telesales/retail-chains", icon: Store },
         { label: "Báo cáo Telesales", href: "/admin/telesales/earnings", icon: Phone },
         { label: "Hiệu suất CTV", href: "/admin/ctv", icon: TrendingUp },
         { label: "Báo cáo Sales GT", href: "/admin/gt-reports", icon: MapPin },
