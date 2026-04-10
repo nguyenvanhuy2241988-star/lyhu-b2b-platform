@@ -176,6 +176,7 @@ export const NAV_ITEMS = {
         { label: "Dự án Media", href: "/admin/media-projects", icon: ClipboardList },
         { label: "Thiết bị Media", href: "/admin/media-equipment", icon: Wrench },
         { label: "Thư viện Media", href: "/admin/media-library", icon: FolderOpen },
+        { label: "Setup Xưởng Mới", href: "/admin/factory-setup", icon: Wrench },
         { label: "------------", href: "#", icon: List }, // Separator
         { label: "Ứng viên (Tuyển dụng)", href: "/recruitment/candidates", icon: Users },
         { label: "Hiệu quả Tuyển dụng", href: "/recruitment/performance", icon: Trophy },
