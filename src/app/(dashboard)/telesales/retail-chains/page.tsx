@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import {
     Store, Search, Filter, MapPin, Globe, Phone, Mail, ChevronDown, ChevronUp,
-    Building2, ShoppingBag, Pill, Sparkles, Leaf, Eye, TrendingUp,
-    CheckCircle2, Clock, XCircle, ExternalLink, StickyNote, X, Loader2
+    Building2, ShoppingBag, Leaf, Eye, TrendingUp, Landmark, Plus, Pencil, Trash2,
+    CheckCircle2, Clock, XCircle, ExternalLink, StickyNote, X, Loader2, Save
 } from "lucide-react";
 
 // ── Types ──
@@ -27,14 +27,21 @@ interface RetailChain {
     updated_at: string;
 }
 
+type ChainFormData = Omit<RetailChain, 'id' | 'created_at' | 'updated_at' | 'logo_url'>;
+
+const EMPTY_FORM: ChainFormData = {
+    name: "", category: "supermarket", status: "not_entered", total_outlets: 0,
+    regions: [], provinces: [], website: null, contact_name: null,
+    contact_phone: null, contact_email: null, notes: null,
+};
+
 // ── Constants ──
 const CATEGORIES: Record<string, { label: string; icon: any; color: string; bg: string }> = {
     hypermarket: { label: "Đại siêu thị", icon: Building2, color: "text-blue-600", bg: "bg-blue-50 border-blue-200" },
     supermarket: { label: "Siêu thị", icon: ShoppingBag, color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200" },
     minimart: { label: "Cửa hàng tiện lợi", icon: Store, color: "text-orange-600", bg: "bg-orange-50 border-orange-200" },
-    pharmacy: { label: "Chuỗi dược phẩm", icon: Pill, color: "text-rose-600", bg: "bg-rose-50 border-rose-200" },
-    cosmetics: { label: "Chuỗi mỹ phẩm", icon: Sparkles, color: "text-purple-600", bg: "bg-purple-50 border-purple-200" },
-    specialty: { label: "Đặc biệt / Organic", icon: Leaf, color: "text-teal-600", bg: "bg-teal-50 border-teal-200" },
+    local: { label: "Chuỗi địa phương", icon: Landmark, color: "text-indigo-600", bg: "bg-indigo-50 border-indigo-200" },
+    specialty: { label: "Đặc biệt / Cao cấp", icon: Leaf, color: "text-teal-600", bg: "bg-teal-50 border-teal-200" },
 };
 
 const STATUSES: Record<string, { label: string; icon: any; color: string; bg: string }> = {
@@ -49,6 +56,169 @@ const REGIONS: Record<string, string> = {
     south: "Miền Nam",
 };
 
+// ── Form Modal Component ──
+function ChainFormModal({ chain, onSave, onClose, saving }: {
+    chain: ChainFormData & { id?: string };
+    onSave: (data: ChainFormData & { id?: string }) => void;
+    onClose: () => void;
+    saving: boolean;
+}) {
+    const [form, setForm] = useState<ChainFormData & { id?: string }>(chain);
+    const [provincesText, setProvincesText] = useState((chain.provinces || []).join(", "));
+    const isEdit = !!chain.id;
+
+    const handleSave = () => {
+        if (!form.name.trim()) return alert("Vui lòng nhập tên chuỗi");
+        onSave({
+            ...form,
+            provinces: provincesText.split(",").map(p => p.trim()).filter(Boolean),
+        });
+    };
+
+    const toggleRegion = (r: string) => {
+        setForm(prev => ({
+            ...prev,
+            regions: prev.regions.includes(r) ? prev.regions.filter(x => x !== r) : [...prev.regions, r],
+        }));
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+                {/* Header */}
+                <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+                    <h2 className="text-lg font-bold text-slate-900">
+                        {isEdit ? "Chỉnh sửa chuỗi" : "Thêm chuỗi mới"}
+                    </h2>
+                    <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div className="px-6 py-5 space-y-5">
+                    {/* Tên chuỗi */}
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Tên chuỗi *</label>
+                        <input
+                            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200 focus:border-teal-400"
+                            value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
+                            placeholder="VD: WinMart+ (Masan)"
+                        />
+                    </div>
+
+                    {/* Category + Status */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Loại hình</label>
+                            <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}
+                                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200">
+                                {Object.entries(CATEGORIES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Trạng thái</label>
+                            <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}
+                                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200">
+                                {Object.entries(STATUSES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Outlets + Website */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Số điểm bán</label>
+                            <input type="number" min="0"
+                                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                                value={form.total_outlets} onChange={e => setForm({ ...form, total_outlets: parseInt(e.target.value) || 0 })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Website</label>
+                            <input
+                                className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                                value={form.website || ""} onChange={e => setForm({ ...form, website: e.target.value || null })}
+                                placeholder="https://..."
+                            />
+                        </div>
+                    </div>
+
+                    {/* Regions */}
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Khu vực</label>
+                        <div className="flex gap-3">
+                            {Object.entries(REGIONS).map(([k, v]) => (
+                                <button key={k} type="button" onClick={() => toggleRegion(k)}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${form.regions.includes(k)
+                                            ? 'bg-teal-50 text-teal-700 border-teal-300 ring-1 ring-teal-200'
+                                            : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                                        }`}>
+                                    <MapPin className="w-3.5 h-3.5 inline mr-1" />{v}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Provinces */}
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Tỉnh/TP (phân cách bằng dấu phẩy)</label>
+                        <input
+                            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                            value={provincesText} onChange={e => setProvincesText(e.target.value)}
+                            placeholder="Hà Nội, TP.HCM, Đà Nẵng..."
+                        />
+                    </div>
+
+                    {/* Contact Info */}
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Liên hệ</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <input
+                                className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                                value={form.contact_name || ""} onChange={e => setForm({ ...form, contact_name: e.target.value || null })}
+                                placeholder="Tên liên hệ"
+                            />
+                            <input
+                                className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                                value={form.contact_phone || ""} onChange={e => setForm({ ...form, contact_phone: e.target.value || null })}
+                                placeholder="Số điện thoại"
+                            />
+                            <input
+                                className="px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                                value={form.contact_email || ""} onChange={e => setForm({ ...form, contact_email: e.target.value || null })}
+                                placeholder="Email"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Notes */}
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Ghi chú</label>
+                        <textarea rows={3}
+                            className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200 resize-none"
+                            value={form.notes || ""} onChange={e => setForm({ ...form, notes: e.target.value || null })}
+                            placeholder="Thông tin bổ sung về chuỗi..."
+                        />
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="sticky bottom-0 bg-white border-t border-slate-100 px-6 py-4 flex items-center justify-end gap-3 rounded-b-2xl">
+                    <button onClick={onClose} className="px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg border border-slate-200">
+                        Hủy
+                    </button>
+                    <button onClick={handleSave} disabled={saving}
+                        className="px-5 py-2.5 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg disabled:opacity-50 flex items-center gap-2 shadow-sm">
+                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        {isEdit ? "Lưu thay đổi" : "Thêm chuỗi"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ── Main Page ──
 export default function RetailChainsPage() {
     const [chains, setChains] = useState<RetailChain[]>([]);
     const [loading, setLoading] = useState(true);
@@ -59,6 +229,28 @@ export default function RetailChainsPage() {
     const [showFilters, setShowFilters] = useState(false);
     const [detailChain, setDetailChain] = useState<RetailChain | null>(null);
     const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+
+    // CRUD state
+    const [formChain, setFormChain] = useState<(ChainFormData & { id?: string }) | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [userRole, setUserRole] = useState<string>("");
+    const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+    const isAdmin = userRole === "admin";
+
+    // ── Load user role ──
+    useEffect(() => {
+        (async () => {
+            try {
+                const supabase = createClient();
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    const { data } = await supabase.from("profiles").select("role").eq("id", user.id).single();
+                    setUserRole(data?.role || "");
+                }
+            } catch { }
+        })();
+    }, []);
 
     // ── Load data ──
     const loadChains = useCallback(async () => {
@@ -76,6 +268,55 @@ export default function RetailChainsPage() {
     }, []);
 
     useEffect(() => { loadChains(); }, [loadChains]);
+
+    // ── Save (Create / Update) ──
+    const handleSave = async (data: ChainFormData & { id?: string }) => {
+        setSaving(true);
+        try {
+            const supabase = createClient();
+            const payload = {
+                name: data.name,
+                category: data.category,
+                status: data.status,
+                total_outlets: data.total_outlets,
+                regions: data.regions,
+                provinces: data.provinces,
+                website: data.website,
+                contact_name: data.contact_name,
+                contact_phone: data.contact_phone,
+                contact_email: data.contact_email,
+                notes: data.notes,
+                updated_at: new Date().toISOString(),
+            };
+
+            if (data.id) {
+                const { error } = await supabase.from("retail_chains").update(payload).eq("id", data.id);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase.from("retail_chains").insert(payload);
+                if (error) throw error;
+            }
+            setFormChain(null);
+            await loadChains();
+        } catch (err: any) {
+            alert("Lỗi: " + (err?.message || "Không thể lưu. Chỉ Admin mới có quyền chỉnh sửa."));
+        } finally { setSaving(false); }
+    };
+
+    // ── Delete ──
+    const handleDelete = async (id: string) => {
+        try {
+            const supabase = createClient();
+            const { error } = await supabase.from("retail_chains").delete().eq("id", id);
+            if (error) throw error;
+            setDeleteConfirm(null);
+            setDetailChain(null);
+            await loadChains();
+        } catch (err: any) {
+            alert("Lỗi: " + (err?.message || "Không thể xóa. Chỉ Admin mới có quyền."));
+            setDeleteConfirm(null);
+        }
+    };
 
     // ── Filter ──
     const filtered = chains.filter(c => {
@@ -104,6 +345,16 @@ export default function RetailChainsPage() {
     const resetFilters = () => { setSearch(""); setFilterCategory(""); setFilterStatus(""); setFilterRegion(""); };
     const hasFilters = !!(search || filterCategory || filterStatus || filterRegion);
 
+    const openEdit = (chain: RetailChain) => {
+        setFormChain({
+            id: chain.id, name: chain.name, category: chain.category, status: chain.status,
+            total_outlets: chain.total_outlets, regions: chain.regions || [], provinces: chain.provinces || [],
+            website: chain.website, contact_name: chain.contact_name, contact_phone: chain.contact_phone,
+            contact_email: chain.contact_email, notes: chain.notes,
+        });
+        setDetailChain(null);
+    };
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -111,10 +362,16 @@ export default function RetailChainsPage() {
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
                         <Store className="w-7 h-7 text-teal-600" />
-                        Chuỗi Siêu thị Toàn quốc
+                        Chuỗi bán lẻ FMCG Toàn quốc
                     </h1>
-                    <p className="text-sm text-slate-500 mt-1">Tổng quan hệ thống chuỗi bán lẻ tại Việt Nam</p>
+                    <p className="text-sm text-slate-500 mt-1">Hệ thống chuỗi bán lẻ hàng tiêu dùng nhanh tại Việt Nam</p>
                 </div>
+                {isAdmin && (
+                    <button onClick={() => setFormChain({ ...EMPTY_FORM })}
+                        className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 shadow-sm transition-colors">
+                        <Plus className="w-4 h-4" /> Thêm chuỗi
+                    </button>
+                )}
             </div>
 
             {/* KPI Cards */}
@@ -274,7 +531,7 @@ export default function RetailChainsPage() {
                                                     <th className="px-3 py-2.5 text-right font-medium">Điểm bán</th>
                                                     <th className="px-3 py-2.5 text-left font-medium">Khu vực</th>
                                                     <th className="px-3 py-2.5 text-left font-medium hidden lg:table-cell">Tỉnh/TP</th>
-                                                    <th className="px-3 py-2.5 text-center font-medium w-16"></th>
+                                                    <th className="px-3 py-2.5 text-center font-medium w-24"></th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-50">
@@ -318,13 +575,24 @@ export default function RetailChainsPage() {
                                                                 </p>
                                                             </td>
                                                             <td className="px-3 py-3 text-center">
-                                                                <button
-                                                                    onClick={() => setDetailChain(chain)}
-                                                                    className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
-                                                                    title="Xem chi tiết"
-                                                                >
-                                                                    <Eye className="w-4 h-4" />
-                                                                </button>
+                                                                <div className="flex items-center justify-center gap-1">
+                                                                    <button
+                                                                        onClick={() => setDetailChain(chain)}
+                                                                        className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors"
+                                                                        title="Xem chi tiết"
+                                                                    >
+                                                                        <Eye className="w-4 h-4" />
+                                                                    </button>
+                                                                    {isAdmin && (
+                                                                        <button
+                                                                            onClick={() => openEdit(chain)}
+                                                                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                                            title="Chỉnh sửa"
+                                                                        >
+                                                                            <Pencil className="w-3.5 h-3.5" />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
                                                             </td>
                                                         </tr>
                                                     );
@@ -349,9 +617,23 @@ export default function RetailChainsPage() {
                                 <h2 className="text-lg font-bold text-slate-900">{detailChain.name}</h2>
                                 <p className="text-xs text-slate-400 mt-0.5">{CATEGORIES[detailChain.category]?.label || detailChain.category}</p>
                             </div>
-                            <button onClick={() => setDetailChain(null)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
-                                <X className="w-5 h-5" />
-                            </button>
+                            <div className="flex items-center gap-1">
+                                {isAdmin && (
+                                    <>
+                                        <button onClick={() => openEdit(detailChain)}
+                                            className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg" title="Chỉnh sửa">
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={() => setDeleteConfirm(detailChain.id)}
+                                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg" title="Xóa">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </>
+                                )}
+                                <button onClick={() => setDetailChain(null)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
 
                         <div className="px-6 py-5 space-y-5">
@@ -449,6 +731,36 @@ export default function RetailChainsPage() {
                                     </div>
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Form Modal (Add/Edit) */}
+            {formChain && (
+                <ChainFormModal chain={formChain} onSave={handleSave} onClose={() => setFormChain(null)} saving={saving} />
+            )}
+
+            {/* Delete Confirmation */}
+            {deleteConfirm && (
+                <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4" onClick={() => setDeleteConfirm(null)}>
+                    <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="w-12 h-12 mx-auto mb-4 bg-red-50 rounded-full flex items-center justify-center">
+                            <Trash2 className="w-6 h-6 text-red-500" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 text-center mb-2">Xác nhận xóa</h3>
+                        <p className="text-sm text-slate-500 text-center mb-6">
+                            Bạn có chắc muốn xóa chuỗi <strong>{chains.find(c => c.id === deleteConfirm)?.name}</strong>? Hành động này không thể hoàn tác.
+                        </p>
+                        <div className="flex gap-3">
+                            <button onClick={() => setDeleteConfirm(null)}
+                                className="flex-1 px-4 py-2.5 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50">
+                                Hủy
+                            </button>
+                            <button onClick={() => handleDelete(deleteConfirm)}
+                                className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
+                                Xóa chuỗi
+                            </button>
                         </div>
                     </div>
                 </div>
