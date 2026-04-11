@@ -1,81 +1,211 @@
 /**
- * Level 5: Group Intelligence
- * 1. Searches for Groups based on Keywords.
- * 2. Filters by Activity (e.g. > 10 posts/day).
- * 3. Simulates 'Join Group' and answers questions.
+ * Level 5: Group Intelligence (Dual-Mode)
+ * 1. Mở Facebook và Tham gia vào Nhóm (Nếu có URL List)
+ * 2. Lùng sục Nhóm mới trên Search (Nếu chỉ có Keyword)
  */
 
-const { interpretCommand } = require('./targeting_interpreter');
+const { launchBrowser, delay, rdn } = require('./setup_browser');
+const { logAction } = require('./supabase_logger');
 
-// Mock Answers for Group Questions
-const COMMON_ANSWERS = {
-    'bạn ở đâu': 'Hà Nội',
-    'bạn kinh doanh gì': 'Đồ ăn vặt',
-    'đồng ý': 'Đồng ý',
-    'quy định': 'Đã rõ',
-    'số điện thoại': '0909xxxxxx'
-};
-
-async function executeGroupSearch(command, minPostsPerDay = 5) {
-    console.log(`[GROUP] Received Command: "${command}"`);
-
-    // 1. Interpret Command to get keywords
-    const strategy = interpretCommand(command);
-    console.log(`[GROUP] Keywords extracted:`, strategy.generatedQueries);
-
-    console.log(`[GROUP] ---------------------------------------------------`);
-    console.log(`[GROUP] SIMULATION: Connecting to Facebook Group Search...`);
-
-    for (const query of strategy.generatedQueries) {
-        console.log(`[GROUP] >>> Searching Groups for: "${query}"`);
-        const searchUrl = `https://www.facebook.com/search/groups/?q=${encodeURIComponent(query)}`;
-        console.log(`[GROUP]     Navigating to: ${searchUrl}`);
-
-        // Mock Scanning
-        console.log(`[GROUP]     Scanning results...`);
-
-        // Mock Finding a Group
-        const mockGroups = [
-            { name: `Hội Sỉ ${query} Toàn Quốc`, posts: Math.floor(Math.random() * 50) + 1, members: 5000 },
-            { name: `Chợ ${query} Giá Rẻ`, posts: Math.floor(Math.random() * 5), members: 1200 }, // Low activity
-            { name: `Cộng đồng ${query} Việt Nam`, posts: Math.floor(Math.random() * 100) + 10, members: 15000 }
-        ];
-
-        for (const group of mockGroups) {
-            console.log(`[GROUP]     Found: "${group.name}" | ${group.posts} posts/day | ${group.members} members`);
-
-            // Filter Logic
-            if (group.posts < minPostsPerDay) {
-                console.log(`[GROUP]         ⚠️ Skipped (Low Activity < ${minPostsPerDay} posts/day)`);
-                continue;
+async function answerGroupQuestions(page) {
+    // Nếu có popup xuất hiện, tìm các form hỏi đáp và điền "Đồng ý"
+    const hasDialog = await page.$('div[role="dialog"]');
+    if (hasDialog) {
+        console.log(`[GROUP] Phát hiện Form câu hỏi kiểm duyệt. Bắt đầu trả lời tự động...`);
+        
+        // Tìm các ô nhập liệu dạng textarea hoặc text input
+        const textboxes = await page.$$('div[role="dialog"] textarea, div[role="dialog"] input[type="text"], div[role="dialog"] div[role="textbox"][contenteditable="true"]');
+        for (const box of textboxes) {
+            try {
+                await box.scrollIntoView({ block: 'center' });
+                await delay(500);
+                await box.click();
+                await page.keyboard.press('Space');
+                await page.keyboard.press('Backspace');
+                await delay(200);
+                await page.keyboard.type("Đồng ý", { delay: 50 });
+                await delay(500);
+            } catch (e) {}
+        }
+        
+        // Tìm các checkbox rule
+        const checkboxes = await page.$$('div[role="dialog"] div[role="checkbox"]');
+        for (const chk of checkboxes) {
+            try {
+                const isChecked = await page.evaluate(el => el.getAttribute('aria-checked') === 'true', chk);
+                if (!isChecked) {
+                    await chk.scrollIntoView({ block: 'center' });
+                    await delay(300);
+                    await chk.click();
+                    await delay(500);
+                }
+            } catch(e) {}
+        }
+        
+        // Tìm và nhấn Gửi (Submit)
+        const buttons = await page.$$('div[role="dialog"] div[role="button"]');
+        for (const btn of buttons) {
+            const txt = await page.evaluate(el => el.innerText, btn);
+            if (txt && (txt.toLowerCase().includes('gửi') || txt.toLowerCase().includes('xong') || txt.toLowerCase().includes('tham gia') || txt.toLowerCase().includes('submit'))) {
+                try {
+                    await btn.scrollIntoView({ block: 'center' });
+                    await btn.click();
+                    console.log(`[GROUP] Đã Submit Form tham gia!`);
+                    await delay(2000);
+                    break;
+                } catch(e) {}
             }
-
-            console.log(`[GROUP]         ✅ QUALITY GROUP DETECTED!`);
-            console.log(`[GROUP]         🖱️ CLICKING "Join Group"...`);
-
-            // Mock Question Answering
-            const hasQuestions = Math.random() > 0.5;
-            if (hasQuestions) {
-                console.log(`[GROUP]         ❓ Group asks questions! Auto-answering...`);
-                // Simple logic: Scan question text matches, pick answer
-                console.log(`[GROUP]             Q: "Bạn đang sống ở đâu?" -> A: "${COMMON_ANSWERS['bạn ở đâu']}"`);
-                console.log(`[GROUP]             Q: "Cam kết không spam?" -> A: "${COMMON_ANSWERS['quy định']}"`);
-                console.log(`[GROUP]         📤 Answers User-Submitted.`);
-            }
-
-            console.log(`[GROUP]         ✨ Request Sent! Waiting for Admin approval.`);
-            console.log(`[GROUP]         zzz Sleeping 5s...`);
         }
     }
-
-    console.log(`[GROUP] ---------------------------------------------------`);
-    console.log(`[GROUP] Group Search Complete.`);
 }
 
-// CLI usage
+async function executeGroupSearch() {
+    let browser = null;
+    try {
+        const rawArg = process.argv.slice(2).find(a => !a.startsWith('--')) || "";
+        
+        // Parsing Dual-mode:
+        let mode = 'keyword';
+        let targetLinks = [];
+        let keyword = rawArg;
+        let limit = 5;
+        let internalDelay = 10;
+        
+        if (rawArg.includes('http')) {
+            mode = 'crm';
+            const parts = rawArg.split('|');
+            targetLinks = parts[0].split(',').map(l => l.trim()).filter(Boolean);
+            if (parts[2]) limit = parseInt(parts[2].trim()) || 5;
+            if (parts[3]) internalDelay = parseInt(parts[3].trim()) || 10;
+        } else if (rawArg.includes('|')) {
+            const parts = rawArg.split('|');
+            keyword = parts[0].trim() || parts[1]?.trim() || "Chợ sỉ kinh doanh";
+            if (parts[2]) limit = parseInt(parts[2].trim()) || 5;
+            if (parts[3]) internalDelay = parseInt(parts[3].trim()) || 10;
+        }
+
+        console.log(`[GROUP] 🚀 KHỞI ĐỘNG CHẾ ĐỘ QUÉT: ${mode === 'crm' ? 'VÀO THEO LINK CRM' : 'LÙNG SỤC TỪ KHÓA'}`);
+        await logAction('search', 'info', `🚀 Khởi động Tham gia Nhóm. Chế độ: ${mode.toUpperCase().slice(0, 3)} (${Math.max(limit, targetLinks.length)} nhóm)`);
+
+        browser = await launchBrowser();
+        const pages = await browser.pages();
+        const page = pages.length > 0 ? pages[0] : await browser.newPage();
+
+        let joinedCount = 0;
+
+        if (mode === 'crm') {
+            // ==================== CHẾ ĐỘ 1: CRM MODE ====================
+            console.log(`[GROUP] Kế hoạch: Xin gia nhập ${targetLinks.length} nhóm từ danh sách CRM...`);
+            
+            for (const link of targetLinks) {
+                if (joinedCount >= limit) {
+                    console.log(`[GROUP] 🛑 Đã đạt chỉ tiêu ${limit} nhóm nghỉ ngơi theo cài đặt. Dừng lại an toàn.`);
+                    break;
+                }
+                
+                console.log(`[GROUP] >>> Điều hướng tới Nhóm: ${link}`);
+                await page.goto(link, { waitUntil: 'domcontentloaded', timeout: 60000 });
+                await delay(rdn(6000, 10000));
+                
+                // Mở rộng tìm kiếm nút
+                const joinBtn = await page.evaluateHandle(() => {
+                    const btns = Array.from(document.querySelectorAll('div[role="button"]'));
+                    return btns.find(b => {
+                        const txt = (b.innerText || '').trim();
+                        // Tránh "Đã tham gia" / "Joined"
+                        return (txt === 'Tham gia nhóm' || txt === 'Join group' || txt === 'Tham gia' || txt === 'Join') && !txt.includes('Đã');
+                    });
+                });
+                
+                if (joinBtn && await joinBtn.asElement()) {
+                    console.log(`[GROUP] 🖱️ Phát hiện nút "Tham gia nhóm". Tiến hành bấm...`);
+                    await joinBtn.click();
+                    await delay(rdn(4000, 6000));
+                    
+                    // Khắc phục câu hỏi Form
+                    await answerGroupQuestions(page);
+                    
+                    console.log(`[GROUP] ✅ Đã ấn Tham gia thành công / Đã gửi yêu cầu!`);
+                    await logAction('search', 'success', `Đã xin tham gia nhánh: ${link.split('/').pop()?.slice(0,10)}...`);
+                    joinedCount++;
+                    
+                    // Không chờ nếu là nhóm cuối cùng
+                    if (joinedCount < limit) {
+                        const waitTime = rdn(internalDelay * 1000, (internalDelay + 5) * 1000);
+                        console.log(`[GROUP] ⏳ Nghỉ ngơi ${Math.round(waitTime/1000)}s tránh bị Checkpoint...`);
+                        await delay(waitTime);
+                    }
+                } else {
+                    console.log(`[GROUP] ❌ Bỏ qua: Không tìm thấy nút Xin Tham Gia (Hoặc đã Join từ trước).`);
+                    await logAction('search', 'info', `Bỏ qua 1 nhóm (Đã tham gia hoặc lỗi hiển thị).`);
+                }
+            }
+        } else {
+            // ==================== CHẾ ĐỘ 2: LÙNG SỤC TỪ KHÓA ====================
+            if (!keyword) keyword = "Chợ kinh doanh mua bán sỉ";
+            console.log(`[GROUP] Lùng sục Từ khóa: "${keyword}" - Chỉ tiêu: ${limit} nhóm mới toanh.`);
+            
+            const searchUrl = `https://www.facebook.com/search/groups/?q=${encodeURIComponent(keyword)}`;
+            await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await delay(rdn(6000, 9000));
+
+            // Cuộn trang để lấy thêm thẻ Nhóm
+            console.log(`[GROUP] Cuộn trang thu thập Nhóm...`);
+            for(let i=0; i<3; i++) {
+                await page.evaluate(() => window.scrollBy(0, window.innerHeight));
+                await delay(2000);
+            }
+
+            const joinButtons = await page.$$('div[role="button"]');
+            
+            for (const btn of joinButtons) {
+                if (joinedCount >= limit) {
+                     console.log(`[GROUP] 🛑 Đã đạt mốc an toàn ${limit} nhóm. Tự động thu quân chờ mẻ sau.`);
+                     break;
+                }
+
+                const txt = await page.evaluate(el => el.innerText, btn);
+                // Lọc những thẻ có nút Tham gia (chưa là member)
+                if (txt && (txt === 'Tham gia' || txt === 'Join' || txt === 'Tham gia nhóm' || txt === 'Join group')) {
+                    try {
+                        console.log(`[GROUP] 🖱️ Chộp được 1 Hội Nhóm tiềm năng... Bấm Tham Gia...`);
+                        await btn.scrollIntoView({ block: 'center' });
+                        await delay(1000);
+                        await btn.click();
+                        await delay(rdn(4000, 6000));
+                        
+                        await answerGroupQuestions(page);
+
+                        console.log(`[GROUP] ✅ Đã chốt hạ xin tham gia (Từ khóa: ${keyword})!`);
+                        await logAction('search', 'success', `Đã xin Tham gia 1 nhóm thuộc bộ từ khóa: ${keyword}`);
+                        
+                        joinedCount++;
+                        if (joinedCount < limit) {
+                            const waitTime = rdn(internalDelay * 1000, (internalDelay + 5) * 1000);
+                            console.log(`[GROUP] ⏳ Chờ ${Math.round(waitTime/1000)}s ngụy trang người thật...`);
+                            await delay(waitTime);
+                        }
+                    } catch (e) {
+                         console.log(`[GROUP] ⚠ Group này bị lỗi giao diện, Skip.`);
+                    }
+                }
+            }
+        }
+        
+        console.log(`[GROUP] 🎉 HOÀN TẤT CHIẾN DỊCH KHAI HOANG! Mở rộng được: ${joinedCount} vùng đất mới!`);
+        await logAction('search', 'success', `🏁 KẾT THÚC QUÉT NHÓM. Thu thập thành công: ${joinedCount} nhóm.`);
+
+    } catch (e) {
+        console.error("[GROUP LOGIC ERROR]", e);
+        await logAction('search', 'error', `Lỗi Tới hạn Quét Nhóm: ${e.message}`);
+    } finally {
+        if (browser) await browser.close();
+        process.exit(0);
+    }
+}
+
 if (require.main === module) {
-    const cmd = process.argv[2] || "Tìm nhóm buôn sỉ quần áo";
-    executeGroupSearch(cmd);
+    executeGroupSearch();
 }
 
 module.exports = { executeGroupSearch };
