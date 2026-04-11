@@ -119,7 +119,17 @@ async function executeGroupSearch() {
                 
                 if (joinBtn && await joinBtn.asElement()) {
                     console.log(`[GROUP] 🖱️ Phát hiện nút "Tham gia nhóm". Tiến hành bấm...`);
-                    await joinBtn.click();
+                    try {
+                        // Di chuyển chuột tới và Cố gắng click vật lý
+                        const el = await joinBtn.asElement();
+                        await el.scrollIntoView({ block: 'center' });
+                        await delay(500);
+                        await el.click();
+                    } catch (err) {
+                        // Nếu bị lỗi "not clickable" do bị Banner của FB đè lên, dùng JS Click cưỡng bức
+                        console.log(`[GROUP] ⚠ Nút bị che mờ, kích hoạt Click Cưỡng bức (JS)...`);
+                        await page.evaluate(btn => btn.click(), await joinBtn.asElement());
+                    }
                     await delay(rdn(4000, 6000));
                     
                     // Khắc phục câu hỏi Form
@@ -171,7 +181,12 @@ async function executeGroupSearch() {
                         console.log(`[GROUP] 🖱️ Chộp được 1 Hội Nhóm tiềm năng... Bấm Tham Gia...`);
                         await btn.scrollIntoView({ block: 'center' });
                         await delay(1000);
-                        await btn.click();
+                        try {
+                            await btn.click();
+                        } catch (err) {
+                            console.log(`[GROUP] ⚠ Nút bị che mờ, kích hoạt Click Cưỡng bức (JS)...`);
+                            await page.evaluate(el => el.click(), btn);
+                        }
                         await delay(rdn(4000, 6000));
                         
                         await answerGroupQuestions(page);
