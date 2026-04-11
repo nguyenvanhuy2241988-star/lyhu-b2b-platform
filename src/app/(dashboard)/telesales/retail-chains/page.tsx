@@ -18,6 +18,7 @@ interface RetailChain {
     status: string;
     total_outlets: number;
     entered_outlets: number;
+    entered_brands?: string[];
     regions: string[];
     provinces: string[];
     website: string | null;
@@ -44,6 +45,7 @@ type ChainFormData = Omit<RetailChain, 'id' | 'created_at' | 'updated_at' | 'log
 
 const EMPTY_FORM: ChainFormData = {
     name: "", category: "supermarket", status: "not_entered", total_outlets: 0, entered_outlets: 0,
+    entered_brands: [],
     regions: [], provinces: [], website: null, contact_name: null,
     contact_phone: null, contact_email: null, notes: null,
 };
@@ -165,12 +167,17 @@ function ChainFormModal({ chain, categories, onSave, onClose, saving }: {
     saving: boolean;
 }) {
     const [form, setForm] = useState<ChainFormData & { id?: string }>(chain);
+    const [brandsText, setBrandsText] = useState((chain.entered_brands || []).join(", "));
     const [provincesText, setProvincesText] = useState((chain.provinces || []).join(", "));
     const isEdit = !!chain.id;
 
     const handleSave = () => {
         if (!form.name.trim()) return alert("Vui lòng nhập tên chuỗi");
-        onSave({ ...form, provinces: provincesText.split(",").map(p => p.trim()).filter(Boolean) });
+        onSave({ 
+            ...form, 
+            provinces: provincesText.split(",").map(p => p.trim()).filter(Boolean),
+            entered_brands: brandsText.split(",").map(b => b.trim()).filter(Boolean)
+        });
     };
 
     const toggleRegion = (r: string) => {
@@ -241,6 +248,11 @@ function ChainFormModal({ chain, categories, onSave, onClose, saving }: {
                         <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Tỉnh/TP (phân cách bằng dấu phẩy)</label>
                         <input className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
                             value={provincesText} onChange={e => setProvincesText(e.target.value)} placeholder="Hà Nội, TP.HCM, Đà Nẵng..." />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Nhãn hàng đã vào (phân cách bằng dấu phẩy)</label>
+                        <input className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-teal-200"
+                            value={brandsText} onChange={e => setBrandsText(e.target.value)} placeholder="VD: Trà Olong, Trà Vị đào..." />
                     </div>
                     <div>
                         <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Liên hệ</label>
@@ -346,6 +358,7 @@ export default function RetailChainsPage() {
             const payload = {
                 name: data.name, category: data.category, status: data.status,
                 total_outlets: data.total_outlets, entered_outlets: data.entered_outlets,
+                entered_brands: data.entered_brands,
                 regions: data.regions, provinces: data.provinces, website: data.website,
                 contact_name: data.contact_name, contact_phone: data.contact_phone,
                 contact_email: data.contact_email, notes: data.notes,
@@ -440,6 +453,7 @@ export default function RetailChainsPage() {
         setFormChain({
             id: chain.id, name: chain.name, category: chain.category, status: chain.status,
             total_outlets: chain.total_outlets, entered_outlets: chain.entered_outlets || 0,
+            entered_brands: chain.entered_brands || [],
             regions: chain.regions || [], provinces: chain.provinces || [],
             website: chain.website, contact_name: chain.contact_name, contact_phone: chain.contact_phone,
             contact_email: chain.contact_email, notes: chain.notes,
@@ -677,6 +691,7 @@ export default function RetailChainsPage() {
                                                     <th className="px-3 py-2.5 text-center font-medium">Đã vào / Tổng</th>
                                                     <th className="px-3 py-2.5 text-left font-medium">Khu vực</th>
                                                     <th className="px-3 py-2.5 text-left font-medium hidden lg:table-cell">Tỉnh/TP</th>
+                                                    <th className="px-3 py-2.5 text-left font-medium hidden xl:table-cell">Nhãn hàng</th>
                                                     <th className="px-3 py-2.5 text-center font-medium w-24"></th>
                                                 </tr>
                                             </thead>
@@ -727,6 +742,18 @@ export default function RetailChainsPage() {
                                                                     {(chain.provinces || []).slice(0, 3).join(", ")}
                                                                     {(chain.provinces || []).length > 3 && ` +${chain.provinces.length - 3}`}
                                                                 </p>
+                                                            </td>
+                                                            <td className="px-3 py-3 hidden xl:table-cell">
+                                                                {chain.entered_brands && chain.entered_brands.length > 0 ? (
+                                                                    <div className="flex gap-1 flex-wrap">
+                                                                        {chain.entered_brands.slice(0, 2).map(b => (
+                                                                            <span key={b} className="text-[10px] px-1.5 py-0.5 rounded bg-teal-50 text-teal-700 font-medium whitespace-nowrap">{b}</span>
+                                                                        ))}
+                                                                        {chain.entered_brands.length > 2 && (
+                                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">+{chain.entered_brands.length - 2}</span>
+                                                                        )}
+                                                                    </div>
+                                                                ) : <span className="text-xs text-slate-400">-</span>}
                                                             </td>
                                                             <td className="px-3 py-3 text-center">
                                                                 <div className="flex items-center justify-center gap-1">
@@ -808,6 +835,16 @@ export default function RetailChainsPage() {
                                         <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Tỉnh/TP</h4>
                                         <div className="flex flex-wrap gap-1.5">
                                             {detailChain.provinces.map(p => <span key={p} className="px-2 py-1 rounded bg-slate-100 text-slate-600 text-[11px] font-medium">{p}</span>)}
+                                        </div>
+                                    </div>
+                                )}
+                                {(detailChain.entered_brands || []).length > 0 && (
+                                    <div>
+                                        <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Nhãn hàng đã vào</h4>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {detailChain.entered_brands!.map(b => (
+                                                <span key={b} className="px-2.5 py-1 rounded bg-teal-50 text-teal-700 text-xs font-semibold border border-teal-200">{b}</span>
+                                            ))}
                                         </div>
                                     </div>
                                 )}
