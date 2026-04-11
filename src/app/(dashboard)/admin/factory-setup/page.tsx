@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Sparkles, Loader2, Plus, ClipboardList, DollarSign, PenSquare, Trash2, CheckSquare, Send, Bot, User } from "lucide-react";
+import { Sparkles, Loader2, Plus, ClipboardList, DollarSign, PenSquare, Trash2, CheckSquare, Send, Bot, User, Wrench, FileText, Cpu, Users, Home, Zap, MoreHorizontal, Tag } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { createClient } from "@/lib/supabaseClient";
 import ReactMarkdown from 'react-markdown';
@@ -161,6 +161,18 @@ export default function FactorySetupPage() {
 
     const formatCurrency = (val: number) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
 
+    const getCategoryConfig = (cat: string) => {
+        switch (cat) {
+            case 'hardware': return { label: 'Vật tư & Phần cứng', icon: <Wrench className="w-3.5 h-3.5" />, bg: 'bg-blue-100', text: 'text-blue-700', iconBg: 'bg-blue-200' };
+            case 'legal': return { label: 'Thủ tục & Pháp lý', icon: <FileText className="w-3.5 h-3.5" />, bg: 'bg-purple-100', text: 'text-purple-700', iconBg: 'bg-purple-200' };
+            case 'machines': return { label: 'Máy móc thiết bị', icon: <Cpu className="w-3.5 h-3.5" />, bg: 'bg-orange-100', text: 'text-orange-700', iconBg: 'bg-orange-200' };
+            case 'labor': return { label: 'Nhân công', icon: <Users className="w-3.5 h-3.5" />, bg: 'bg-pink-100', text: 'text-pink-700', iconBg: 'bg-pink-200' };
+            case 'rent': return { label: 'Mặt bằng', icon: <Home className="w-3.5 h-3.5" />, bg: 'bg-emerald-100', text: 'text-emerald-700', iconBg: 'bg-emerald-200' };
+            case 'electricity': return { label: 'Điện nước & Tiện ích', icon: <Zap className="w-3.5 h-3.5" />, bg: 'bg-yellow-100', text: 'text-yellow-700', iconBg: 'bg-yellow-200' };
+            default: return { label: 'Chi phí khác', icon: <MoreHorizontal className="w-3.5 h-3.5" />, bg: 'bg-slate-100', text: 'text-slate-700', iconBg: 'bg-slate-200' };
+        }
+    }
+
     const KANBAN_STAGES = [
         { id: 'todo', title: 'Cần làm / Gợi ý' },
         { id: 'looking_for_vendor', title: 'Đang tìm thợ/báo giá' },
@@ -288,9 +300,23 @@ export default function FactorySetupPage() {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                            {expenses.map((exp) => (
+                                            {expenses.map((exp) => {
+                                                const catConf = getCategoryConfig(exp.category);
+                                                return (
                                                 <tr key={exp.id} className="hover:bg-slate-50 transition-colors">
-                                                    <td className="px-6 py-4 font-bold text-slate-800">{exp.item_name}</td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${catConf.iconBg} ${catConf.text}`}>
+                                                                {catConf.icon}
+                                                            </div>
+                                                            <div>
+                                                                <div className="font-bold text-slate-800">{exp.item_name}</div>
+                                                                <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-bold mt-1 ${catConf.bg} ${catConf.text}`}>
+                                                                    {catConf.label}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
                                                     <td className="px-6 py-4 font-semibold text-slate-600">{formatCurrency(exp.amount_expected)}</td>
                                                     <td className="px-6 py-4 font-bold text-orange-600">{formatCurrency(exp.amount_actual)}</td>
                                                     <td className="px-6 py-4">
@@ -299,7 +325,8 @@ export default function FactorySetupPage() {
                                                         `}>{exp.status === 'paid' ? 'Đã Thanh Toán' : 'Dự kiến'}</span>
                                                     </td>
                                                 </tr>
-                                            ))}
+                                                );
+                                            })}
                                             {expenses.length === 0 && (
                                                 <tr><td colSpan={4} className="text-center py-8 text-slate-400">Chưa có hạng mục chi phí nào</td></tr>
                                             )}
