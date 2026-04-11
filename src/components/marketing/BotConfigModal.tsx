@@ -63,7 +63,7 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
         let finalArg = arg;
 
         // Auto fetch CRM Groups if enabled
-        if (useCrmGroups && (scriptName === 'auto_post_group.js' || scriptName === 'auto_comment_group.js')) {
+        if (useCrmGroups && ['auto_post_group.js', 'auto_comment_group.js', 'group_finder.js'].includes(scriptName)) {
             const { data, error } = await supabase.from('telesales_fb_groups').select('link').eq('status', 'active');
             if (!error && data && data.length > 0) {
                 const linksArray = data.map((g: any) => g.link).filter(Boolean);
@@ -189,17 +189,39 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
                 );
             case 'group_finder.js':
                 return (
-                    <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Chủ đề Hội Nhóm</label>
-                        <input
-                            type="text"
-                            className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                            placeholder="VD: Chợ sỉ quần áo, Tìm việc làm..."
-                            value={arg}
-                            onChange={(e) => setArg(e.target.value)}
-                            autoFocus
-                        />
-                        <p className="text-xs text-slate-500 mt-1">Bot sẽ tìm và lọc nhóm có tương tác tốt.</p>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={useCrmGroups}
+                                    onChange={(e) => setUseCrmGroups(e.target.checked)}
+                                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                />
+                                Thiết lập mục tiêu từ CRM (Tham gia các Nhóm trong kho CRM)
+                            </label>
+                        </div>
+                        {!useCrmGroups && (
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Chủ đề Hội Nhóm để tìm kiếm mới</label>
+                                <input
+                                    type="text"
+                                    className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    placeholder="VD: Chợ sỉ quần áo, Tìm việc làm..."
+                                    value={arg}
+                                    onChange={(e) => setArg(e.target.value)}
+                                    autoFocus
+                                />
+                                <p className="text-xs text-slate-500 mt-1">Bot sẽ tìm kiếm trên Facebook theo từ khóa này và tự động xin vào nhóm.</p>
+                            </div>
+                        )}
+                        {useCrmGroups && (
+                            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl relative">
+                                <p className="text-[12px] text-amber-800 leading-relaxed">
+                                    <strong>Chế độ rải Link CRM:</strong> Hệ thống sẽ tự động quét toàn bộ Nhóm trong kho "Quản lý FB CRM" đã gán và lần lượt cho tài khoản bấm Tham gia.
+                                </p>
+                            </div>
+                        )}
                     </div>
                 );
             case 'invite_friend_page.js':
