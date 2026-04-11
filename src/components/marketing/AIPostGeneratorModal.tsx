@@ -12,6 +12,7 @@ interface AIPostGeneratorModalProps {
 
 export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AIPostGeneratorModalProps) {
     const [topic, setTopic] = useState("");
+    const [postType, setPostType] = useState("distributor"); // 'sales', 'recruitment', 'distributor'
     const [brand, setBrand] = useState("");
     const [benefit, setBenefit] = useState("");
     const [address, setAddress] = useState("");
@@ -31,7 +32,7 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
             const res = await fetch("/api/marketing/ai-post", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ topic, benefit, address, phone, brand })
+                body: JSON.stringify({ postType, topic, benefit, address, phone, brand })
             });
 
             const data = await res.json();
@@ -71,12 +72,30 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
 
                 <div className="p-5 space-y-4">
                     <div>
+                        <label className="block text-sm font-bold text-indigo-900 mb-2">Loại bài đăng</label>
+                        <div className="flex gap-3">
+                            <label className={`flex-1 border rounded-xl p-3 flex flex-col items-center gap-1 cursor-pointer transition-colors ${postType === 'sales' ? 'bg-indigo-50 border-indigo-500' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
+                                <input type="radio" name="postType" value="sales" checked={postType === 'sales'} onChange={() => setPostType('sales')} className="hidden" />
+                                <span className="text-sm font-bold text-slate-700">🛒 Bán Hàng</span>
+                            </label>
+                            <label className={`flex-1 border rounded-xl p-3 flex flex-col items-center gap-1 cursor-pointer transition-colors ${postType === 'distributor' ? 'bg-indigo-50 border-indigo-500' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
+                                <input type="radio" name="postType" value="distributor" checked={postType === 'distributor'} onChange={() => setPostType('distributor')} className="hidden" />
+                                <span className="text-sm font-bold text-slate-700">🤝 Tìm Đại Lý</span>
+                            </label>
+                            <label className={`flex-1 border rounded-xl p-3 flex flex-col items-center gap-1 cursor-pointer transition-colors ${postType === 'recruitment' ? 'bg-indigo-50 border-indigo-500' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
+                                <input type="radio" name="postType" value="recruitment" checked={postType === 'recruitment'} onChange={() => setPostType('recruitment')} className="hidden" />
+                                <span className="text-sm font-bold text-slate-700">💼 Tuyển Dụng</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
                         <label className="block text-sm font-bold text-indigo-900 mb-1">Chủ đề / Mục đích chính <span className="text-red-500">*</span></label>
                         <input
                             type="text"
                             value={topic}
                             onChange={e => setTopic(e.target.value)}
-                            placeholder="VD: Tuyển dụng NVKD, tìm CTV bán hàng, xả kho cuối mùa..."
+                            placeholder={postType === 'distributor' ? "VD: Tìm đại lý phân phối độc quyền..." : postType === 'recruitment' ? "VD: Tuyển gấp NVKD..." : "VD: Xả kho hàng mùa hè..."}
                             className="w-full text-sm p-3 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                         />
                     </div>
@@ -93,12 +112,12 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-bold text-indigo-900 mb-1">Mức Lương / Chiết khấu</label>
+                            <label className="block text-sm font-bold text-indigo-900 mb-1">{postType === 'recruitment' ? 'Mức lương / Đãi ngộ' : 'Chính sách Chiết khấu / Quyền lợi'}</label>
                             <input
                                 type="text"
                                 value={benefit}
                                 onChange={e => setBenefit(e.target.value)}
-                                placeholder="VD: Lương 15tr, Chiết khấu 30%..."
+                                placeholder={postType === 'recruitment' ? "VD: Lương 15-20tr..." : "VD: Chiết khấu 30%..."}
                                 className="w-full text-sm p-3 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                             />
                         </div>

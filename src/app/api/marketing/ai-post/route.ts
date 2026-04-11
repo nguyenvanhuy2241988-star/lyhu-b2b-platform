@@ -9,7 +9,7 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GE
 
 export async function POST(req: NextRequest) {
     try {
-        const { topic, benefit, address, phone, brand } = await req.json();
+        const { postType, topic, benefit, address, phone, brand } = await req.json();
 
         if (!topic) {
             return NextResponse.json({ error: "Missing required topic field" }, { status: 400 });
@@ -19,13 +19,20 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Missing Gemini API Key" }, { status: 500 });
         }
 
+        let typeInstruction = "bán lẻ hàng hóa";
+        if (postType === 'distributor') {
+            typeInstruction = "TÌM KIẾM ĐẠI LÝ, NHÀ PHÂN PHỐI. Giọng điệu hợp tác kinh doanh, đề cao lợi ích đối tác, KHÔNG ĐƯỢC viết giống tin tuyển nhân sự.";
+        } else if (postType === 'recruitment') {
+            typeInstruction = "TUYỂN DỤNG NHÂN SỰ. Chi tiết về công việc, môi trường và lộ trình.";
+        }
+
         const prompt = `Bạn là một Content Creator chuyên nghiệp chạy quảng cáo và spam seeding Facebook tại Việt Nam. 
-Mục tiêu: Viết một bài đăng dựa trên thông tin được cung cấp, sử dụng ĐỊNH DẠNG SPINTEXT CHUẨN XÁC để đăng ngẫu nhiên hàng loạt không bị checkpoint. Cấu trúc Spintext mẫu: "{Xin chào|Chào mọi người|Alo anh em}"
+Mục tiêu: Viết một bài đăng ${typeInstruction} dựa trên thông tin được cung cấp, sử dụng ĐỊNH DẠNG SPINTEXT CHUẨN XÁC để đăng ngẫu nhiên hàng loạt không bị checkpoint. Cấu trúc Spintext mẫu: "{Xin chào|Chào mọi người|Alo anh em}"
 
 Thông tin bài đăng cần có:
 - Chủ đề chính / Kêu gọi: ${topic}
 ${brand ? `- Phục vụ cho Nhãn hàng / Sản phẩm: ${brand}` : ''}
-${benefit ? `- Quyền lợi / Lương / Chiết khấu: ${benefit}` : ''}
+${benefit ? (postType === 'recruitment' ? `- Mức lương / Đãi ngộ: ${benefit}` : `- Quyền lợi / Chiết khấu cho đại lý/khách hàng: ${benefit}`) : ''}
 ${address ? `- Địa chỉ: ${address}` : ''}
 ${phone ? `- SĐT Liên hệ: ${phone}` : ''}
 
