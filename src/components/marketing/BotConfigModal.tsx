@@ -425,7 +425,7 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
                     </button>
                     <button
                         onClick={handleRun}
-                        disabled={isLoading || (scriptName === 'execute_search_add.js' && !arg) || (scriptName === 'group_finder.js' && !arg) || (scriptName === 'invite_friend_page.js' && !arg)}
+                        disabled={isLoading || (scriptName === 'execute_search_add.js' && !arg) || (scriptName === 'group_finder.js' && !useCrmGroups && !arg) || (scriptName === 'invite_friend_page.js' && !arg)}
                         className="px-4 py-2 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                         {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
