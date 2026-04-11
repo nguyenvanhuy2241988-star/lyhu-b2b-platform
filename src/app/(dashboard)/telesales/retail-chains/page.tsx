@@ -25,6 +25,7 @@ interface RetailChain {
     contact_phone: string | null;
     contact_email: string | null;
     notes: string | null;
+    created_by?: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -289,6 +290,7 @@ export default function RetailChainsPage() {
     const [saving, setSaving] = useState(false);
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
     const [userRole, setUserRole] = useState<string>("");
+    const [userId, setUserId] = useState<string>("");
 
     // Category CRUD
     const [catForm, setCatForm] = useState<(Partial<Category> & { key: string; label: string }) | null>(null);
@@ -310,6 +312,7 @@ export default function RetailChainsPage() {
                 const supabase = createClient();
                 const { data: { user } } = await supabase.auth.getUser();
                 if (user) {
+                    setUserId(user.id);
                     const { data } = await supabase.from("profiles").select("role").eq("id", user.id).single();
                     setUserRole(data?.role || "");
                 }
@@ -455,12 +458,14 @@ export default function RetailChainsPage() {
                     </h1>
                     <p className="text-sm text-slate-500 mt-1">Hệ thống chuỗi bán lẻ hàng tiêu dùng nhanh tại Việt Nam</p>
                 </div>
-                {isAdmin && (
+                {(isAdmin || userRole === "telesales") && (
                     <div className="flex items-center gap-2">
-                        <button onClick={() => setShowCatManager(!showCatManager)}
-                            className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium border transition-colors ${showCatManager ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
-                            <Settings2 className="w-4 h-4" /> Loại hình
-                        </button>
+                        {isAdmin && (
+                            <button onClick={() => setShowCatManager(!showCatManager)}
+                                className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium border transition-colors ${showCatManager ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}>
+                                <Settings2 className="w-4 h-4" /> Loại hình
+                            </button>
+                        )}
                         <button onClick={() => setFormChain({ ...EMPTY_FORM, category: categories[0]?.key || 'supermarket' })}
                             className="flex items-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 shadow-sm transition-colors">
                             <Plus className="w-4 h-4" /> Thêm chuỗi
@@ -726,7 +731,7 @@ export default function RetailChainsPage() {
                                                             <td className="px-3 py-3 text-center">
                                                                 <div className="flex items-center justify-center gap-1">
                                                                     <button onClick={() => setDetailChain(chain)} className="p-1.5 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg" title="Xem chi tiết"><Eye className="w-4 h-4" /></button>
-                                                                    {isAdmin && <button onClick={() => openEdit(chain)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg" title="Chỉnh sửa"><Pencil className="w-3.5 h-3.5" /></button>}
+                                                                    {(isAdmin || (userRole === "telesales" && chain.created_by === userId)) && <button onClick={() => openEdit(chain)} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg" title="Chỉnh sửa"><Pencil className="w-3.5 h-3.5" /></button>}
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -756,7 +761,7 @@ export default function RetailChainsPage() {
                                     <p className="text-xs text-slate-400 mt-0.5">{catMap[detailChain.category]?.label || detailChain.category}</p>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                    {isAdmin && (
+                                    {(isAdmin || (userRole === "telesales" && detailChain.created_by === userId)) && (
                                         <>
                                             <button onClick={() => openEdit(detailChain)} className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg" title="Chỉnh sửa"><Pencil className="w-4 h-4" /></button>
                                             <button onClick={() => setDeleteConfirm(detailChain.id)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg" title="Xóa"><Trash2 className="w-4 h-4" /></button>
