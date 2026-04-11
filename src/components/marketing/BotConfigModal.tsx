@@ -66,7 +66,7 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
         if (useCrmGroups && (scriptName === 'auto_post_group.js' || scriptName === 'auto_comment_group.js')) {
             const { data, error } = await supabase.from('telesales_fb_groups').select('link').eq('status', 'active');
             if (!error && data && data.length > 0) {
-                const linksArray = data.map(g => g.link).filter(Boolean);
+                const linksArray = data.map((g: any) => g.link).filter(Boolean);
                 if (linksArray.length === 0) {
                     toast.error("CRM chưa có Nhóm nào chứa Link hợp lệ để gửi Bot.");
                     setIsLoading(false);
