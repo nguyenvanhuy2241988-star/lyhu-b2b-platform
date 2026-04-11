@@ -17,6 +17,9 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
     const [strategy, setStrategy] = useState<'name' | 'post' | 'commander' | 'suggestion' | 'rival'>('commander'); // Default to NLP Commander
     const [isLoading, setIsLoading] = useState(false);
     
+    // Auto-Group Settings
+    const [useCrmGroups, setUseCrmGroups] = useState(false);
+
     // Multi-profile Support
     const [profiles, setProfiles] = useState<any[]>([]);
     const [selectedProfileId, setSelectedProfileId] = useState<string>("");
@@ -57,13 +60,35 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
             if (strategy === 'rival') finalScriptName = 'execute_rival_scan.js';
         }
 
+        let finalArg = arg;
+
+        // Auto fetch CRM Groups if enabled
+        if (useCrmGroups && (scriptName === 'auto_post_group.js' || scriptName === 'auto_comment_group.js')) {
+            const { data, error } = await supabase.from('telesales_fb_groups').select('link').eq('status', 'active');
+            if (!error && data && data.length > 0) {
+                const linksArray = data.map(g => g.link).filter(Boolean);
+                if (linksArray.length === 0) {
+                    toast.error("CRM chưa có Nhóm nào chứa Link hợp lệ để gửi Bot.");
+                    setIsLoading(false);
+                    return;
+                }
+                const parts = arg.split("|");
+                parts[0] = linksArray.join(',');
+                finalArg = parts.join(" | ");
+            } else {
+                toast.error("Không tìm thấy Nhóm FB Đang hoạt động nào trong CRM.");
+                setIsLoading(false);
+                return;
+            }
+        }
+
         try {
             const res = await fetch('/api/marketing/execute', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     scriptName: finalScriptName,
-                    args: arg,
+                    args: finalArg,
                     profileId: selectedProfileId || null // Pass selected profile to API
                 })
             });
@@ -198,19 +223,34 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
                 return (
                     <div className="space-y-4">
                         {scriptName === 'auto_post_group.js' || scriptName === 'auto_comment_group.js' ? (
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Đường dẫn FB Group (Tùy chọn)</label>
-                                <input
-                                    type="text"
-                                    className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                    placeholder="Bỏ trống để tự động rải vào tất cả Group đã tham gia"
-                                    value={arg.split('|')[0]?.trim() || ''}
-                                    onChange={(e) => {
-                                        const parts = arg.split("|");
-                                        parts[0] = e.target.value;
-                                        setArg(parts.join(" | "));
-                                    }}
-                                />
+                            <div className="space-y-3">
+                                <div>
+                                    <label className="flex items-center gap-2 text-sm font-medium text-slate-700 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={useCrmGroups}
+                                            onChange={(e) => setUseCrmGroups(e.target.checked)}
+                                            className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                                        />
+                                        Tự động lấy Nhóm từ CRM (Module Quản lý Nhóm FB)
+                                    </label>
+                                </div>
+                                {!useCrmGroups && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Đường dẫn FB Group (Tùy chọn)</label>
+                                        <input
+                                            type="text"
+                                            className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                            placeholder="Bỏ trống để tự động rải vào tất cả Group đã tham gia"
+                                            value={arg.split('|')[0]?.trim() || ''}
+                                            onChange={(e) => {
+                                                const parts = arg.split("|");
+                                                parts[0] = e.target.value;
+                                                setArg(parts.join(" | "));
+                                            }}
+                                        />
+                                    </div>
+                                )}
                             </div>
                         ) : null}
                         
