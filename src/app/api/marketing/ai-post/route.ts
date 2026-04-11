@@ -9,7 +9,7 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GE
 
 export async function POST(req: NextRequest) {
     try {
-        const { topic, salary, address, phone } = await req.json();
+        const { topic, benefit, address, phone, brand } = await req.json();
 
         if (!topic) {
             return NextResponse.json({ error: "Missing required topic field" }, { status: 400 });
@@ -24,7 +24,8 @@ Mục tiêu: Viết một bài đăng dựa trên thông tin được cung cấp
 
 Thông tin bài đăng cần có:
 - Chủ đề chính / Kêu gọi: ${topic}
-${salary ? `- Mức lương / Đãi ngộ: ${salary}` : ''}
+${brand ? `- Phục vụ cho Nhãn hàng / Sản phẩm: ${brand}` : ''}
+${benefit ? `- Quyền lợi / Lương / Chiết khấu: ${benefit}` : ''}
 ${address ? `- Địa chỉ: ${address}` : ''}
 ${phone ? `- SĐT Liên hệ: ${phone}` : ''}
 

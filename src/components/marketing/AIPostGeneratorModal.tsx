@@ -12,7 +12,8 @@ interface AIPostGeneratorModalProps {
 
 export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AIPostGeneratorModalProps) {
     const [topic, setTopic] = useState("");
-    const [salary, setSalary] = useState("");
+    const [brand, setBrand] = useState("");
+    const [benefit, setBenefit] = useState("");
     const [address, setAddress] = useState("");
     const [phone, setPhone] = useState("");
     const [isGenerating, setIsGenerating] = useState(false);
@@ -30,7 +31,7 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
             const res = await fetch("/api/marketing/ai-post", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ topic, salary, address, phone })
+                body: JSON.stringify({ topic, benefit, address, phone, brand })
             });
 
             const data = await res.json();
@@ -40,7 +41,8 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
                 onClose(); // Đóng modal luôn
                 // Reset form
                 setTopic("");
-                setSalary("");
+                setBrand("");
+                setBenefit("");
                 setAddress("");
                 setPhone("");
             } else {
@@ -80,13 +82,23 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-bold text-indigo-900 mb-1">Đãi ngộ / Mức lương</label>
+                        <div className="col-span-2">
+                            <label className="block text-sm font-bold text-indigo-900 mb-1">Nhãn hàng / Sản phẩm (Nếu có)</label>
                             <input
                                 type="text"
-                                value={salary}
-                                onChange={e => setSalary(e.target.value)}
-                                placeholder="VD: Lương 15-20tr, thưởng %..."
+                                value={brand}
+                                onChange={e => setBrand(e.target.value)}
+                                placeholder="VD: Sữa tắm Gilaa, Dịch vụ FPT..."
+                                className="w-full text-sm p-3 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-indigo-900 mb-1">Mức Lương / Chiết khấu</label>
+                            <input
+                                type="text"
+                                value={benefit}
+                                onChange={e => setBenefit(e.target.value)}
+                                placeholder="VD: Lương 15tr, Chiết khấu 30%..."
                                 className="w-full text-sm p-3 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                             />
                         </div>
