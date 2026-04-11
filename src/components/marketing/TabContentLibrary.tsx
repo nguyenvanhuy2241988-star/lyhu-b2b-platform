@@ -287,8 +287,9 @@ export default function TabContentLibrary() {
                                         <span className="text-xs text-slate-500 mt-1">Dung lượng tối đa 50MB</span>
                                     </label>
                                 </div>
-                                </>
-                            ) : (
+                            )}
+                            </>
+                        ) : (
                                 <div className="border border-indigo-200 bg-white rounded-xl p-5 shadow-sm min-h-[220px] flex flex-col items-center justify-center relative">
                                     {docFolderId ? (
                                         <div className="text-center w-full">
