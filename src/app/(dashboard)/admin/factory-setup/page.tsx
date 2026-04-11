@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Sparkles, Loader2, Plus, ClipboardList, DollarSign, PenSquare, Trash2, CheckSquare, Send, Bot, User } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { createClient } from "@/lib/supabaseClient";
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface SetupTask {
     id: string;
@@ -341,13 +343,33 @@ export default function FactorySetupPage() {
                                 `}>
                                     {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                                 </div>
-                                <div className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap
+                                <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm 
                                     ${msg.role === 'user' 
-                                        ? 'bg-slate-800 text-white rounded-tr-sm' 
+                                        ? 'bg-slate-800 text-white rounded-tr-sm whitespace-pre-wrap' 
                                         : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm shadow-sm'
                                     }
                                 `}>
-                                    {msg.content}
+                                    {msg.role === 'user' ? (
+                                        msg.content
+                                    ) : (
+                                        <div className="markdown-content">
+                                            <ReactMarkdown 
+                                                remarkPlugins={[remarkGfm]}
+                                                components={{
+                                                    p: ({node, ...props}) => <p className="mb-2 last:mb-0 leading-relaxed" {...props} />,
+                                                    ul: ({node, ...props}) => <ul className="list-disc list-inside mb-3 space-y-1" {...props} />,
+                                                    ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-3 space-y-1" {...props} />,
+                                                    li: ({node, ...props}) => <li className="" {...props} />,
+                                                    strong: ({node, ...props}) => <strong className="font-bold text-slate-900" {...props} />,
+                                                    table: ({node, ...props}) => <div className="overflow-x-auto mb-3 mt-1 rounded-lg border border-slate-200"><table className="min-w-full text-xs text-left border-collapse" {...props} /></div>,
+                                                    th: ({node, ...props}) => <th className="border-b border-slate-200 font-bold p-2 bg-slate-50 text-slate-800" {...props} />,
+                                                    td: ({node, ...props}) => <td className="border-b border-slate-100 p-2 text-slate-600" {...props} />
+                                                }}
+                                            >
+                                                {msg.content}
+                                            </ReactMarkdown>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))
