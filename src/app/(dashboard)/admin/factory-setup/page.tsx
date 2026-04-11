@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Sparkles, Loader2, Plus, ClipboardList, DollarSign, PenSquare, Trash2, CheckSquare, Send, Bot, User, Wrench, FileText, Cpu, Users, Home, Zap, MoreHorizontal, Tag } from "lucide-react";
+import { useState, useEffect, useCallback, useRef, Fragment } from "react";
+import { Sparkles, Loader2, Plus, ClipboardList, DollarSign, PenSquare, Trash2, CheckSquare, Send, Bot, User, Wrench, FileText, Cpu, Users, Home, Zap, MoreHorizontal, Pencil, Save, X, ChevronDown, ChevronUp, AlignLeft } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { createClient } from "@/lib/supabaseClient";
 import ReactMarkdown from 'react-markdown';
@@ -23,6 +23,7 @@ interface SetupExpense {
     amount_expected: number;
     amount_actual: number;
     status: string;
+    description?: string;
 }
 
 interface ChatMessage {
@@ -51,6 +52,11 @@ export default function FactorySetupPage() {
     const [tasks, setTasks] = useState<SetupTask[]>([]);
     const [expenses, setExpenses] = useState<SetupExpense[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    // Edit State
+    const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+    const [editForm, setEditForm] = useState<Partial<SetupExpense>>({});
+    const [expandedExpenseId, setExpandedExpenseId] = useState<string | null>(null);
 
     // Chat State
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -173,6 +179,39 @@ export default function FactorySetupPage() {
         }
     }
 
+    const handleEditExpense = (exp: SetupExpense) => {
+        setEditingExpenseId(exp.id);
+        setEditForm(exp);
+        setExpandedExpenseId(exp.id); // Tự động mở rộng để thấy chỗ gõ mô tả
+    };
+
+    const handleSaveExpense = async () => {
+        if (!editingExpenseId) return;
+        
+        // Optimistic UI Update
+        const updatedExpenses = expenses.map(e => e.id === editingExpenseId ? { ...e, ...editForm } as SetupExpense : e);
+        setExpenses(updatedExpenses);
+        
+        // Cập nhật Database
+        const dataToUpdate = { ...editForm };
+        delete dataToUpdate.id; // Xóa ID để tránh ghi đè sai nếu có lỗi
+        
+        setEditingExpenseId(null);
+        
+        const { error } = await supabase.from('factory_setup_expenses').update(dataToUpdate).eq('id', editingExpenseId);
+        if (error) {
+            alert("Lỗi khi lưu bảng dự toán: " + error.message);
+            // Có thể reload lại trang nếu lỗi để reset
+        }
+    };
+
+    const groupedExpenses = expenses.reduce((acc, curr) => {
+        const cat = curr.category || 'other';
+        if (!acc[cat]) acc[cat] = [];
+        acc[cat].push(curr);
+        return acc;
+    }, {} as Record<string, SetupExpense[]>);
+
     const KANBAN_STAGES = [
         { id: 'todo', title: 'Cần làm / Gợi ý' },
         { id: 'looking_for_vendor', title: 'Đang tìm thợ/báo giá' },
@@ -289,48 +328,146 @@ export default function FactorySetupPage() {
                                     </div>
                                 </div>
 
-                                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
                                     <table className="w-full text-left text-sm text-slate-600">
                                         <thead className="bg-slate-50 text-xs uppercase text-slate-500 border-b border-slate-200">
                                             <tr>
                                                 <th className="px-6 py-4 font-bold">Hạng mục chi phí</th>
                                                 <th className="px-6 py-4 font-bold">Dự toán</th>
                                                 <th className="px-6 py-4 font-bold">Số tiền thực chi</th>
-                                                <th className="px-6 py-4 font-bold">Trạng thái</th>
+                                                <th className="px-6 py-4 font-bold w-36">Trạng thái</th>
+                                                <th className="px-4 py-4 font-bold w-12 flex justify-center"><AlignLeft className="w-4 h-4 opacity-50" /></th>
                                             </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-slate-100">
-                                            {expenses.map((exp) => {
-                                                const catConf = getCategoryConfig(exp.category);
-                                                return (
-                                                <tr key={exp.id} className="hover:bg-slate-50 transition-colors">
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${catConf.iconBg} ${catConf.text}`}>
-                                                                {catConf.icon}
-                                                            </div>
-                                                            <div>
-                                                                <div className="font-bold text-slate-800">{exp.item_name}</div>
-                                                                <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] sm:text-xs font-bold mt-1 ${catConf.bg} ${catConf.text}`}>
-                                                                    {catConf.label}
+                                        {Object.entries(groupedExpenses).map(([category, items]) => {
+                                            const catConf = getCategoryConfig(category);
+                                            return (
+                                                <tbody key={category} className="divide-y divide-slate-100">
+                                                    {/* Nhóm Hạng Mục */}
+                                                    <tr className="bg-slate-50/80">
+                                                        <td colSpan={5} className="px-6 py-3 font-semibold text-slate-700">
+                                                            <div className="flex items-center gap-2">
+                                                                <div className={`w-6 h-6 rounded flex items-center justify-center ${catConf.iconBg} ${catConf.text}`}>
+                                                                    {catConf.icon}
                                                                 </div>
+                                                                {catConf.label}
                                                             </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 font-semibold text-slate-600">{formatCurrency(exp.amount_expected)}</td>
-                                                    <td className="px-6 py-4 font-bold text-orange-600">{formatCurrency(exp.amount_actual)}</td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`px-2 py-1 text-xs rounded-full font-bold
-                                                            ${exp.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}
-                                                        `}>{exp.status === 'paid' ? 'Đã Thanh Toán' : 'Dự kiến'}</span>
-                                                    </td>
-                                                </tr>
-                                                );
-                                            })}
-                                            {expenses.length === 0 && (
-                                                <tr><td colSpan={4} className="text-center py-8 text-slate-400">Chưa có hạng mục chi phí nào</td></tr>
-                                            )}
-                                        </tbody>
+                                                        </td>
+                                                    </tr>
+                                                    
+                                                    {/* Các Hạng Mục Trong Nhóm */}
+                                                    {items.map((exp) => {
+                                                        const isEditing = editingExpenseId === exp.id;
+                                                        const isExpanded = expandedExpenseId === exp.id;
+                                                        
+                                                        return (
+                                                        <Fragment key={exp.id}>
+                                                            <tr className={`transition-colors ${isEditing ? 'bg-indigo-50/30' : 'hover:bg-slate-50'}`}>
+                                                                <td className="px-6 py-4">
+                                                                    {isEditing ? (
+                                                                        <input 
+                                                                            type="text" 
+                                                                            className="w-full border-slate-200 rounded-lg p-2 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500"
+                                                                            value={editForm.item_name || ''}
+                                                                            onChange={(e) => setEditForm({...editForm, item_name: e.target.value})}
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="font-bold text-slate-800 cursor-pointer hover:text-indigo-600 transition-colors"
+                                                                             onClick={() => setExpandedExpenseId(isExpanded ? null : exp.id)}>
+                                                                            {exp.item_name}
+                                                                        </div>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    {isEditing ? (
+                                                                        <input 
+                                                                            type="number" 
+                                                                            className="w-full max-w-[120px] border-slate-200 rounded-lg p-2 text-sm font-semibold focus:ring-2 focus:ring-indigo-500"
+                                                                            value={editForm.amount_expected || 0}
+                                                                            onChange={(e) => setEditForm({...editForm, amount_expected: Number(e.target.value)})}
+                                                                        />
+                                                                    ) : (
+                                                                        <span className="font-semibold text-slate-600">{formatCurrency(exp.amount_expected)}</span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    {isEditing ? (
+                                                                        <input 
+                                                                            type="number" 
+                                                                            className="w-full max-w-[120px] border-orange-200 bg-orange-50 rounded-lg p-2 text-sm font-bold text-orange-700 focus:ring-2 focus:ring-orange-500"
+                                                                            value={editForm.amount_actual || 0}
+                                                                            onChange={(e) => setEditForm({...editForm, amount_actual: Number(e.target.value)})}
+                                                                        />
+                                                                    ) : (
+                                                                        <span className="font-bold text-orange-600">{formatCurrency(exp.amount_actual)}</span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    {isEditing ? (
+                                                                        <select 
+                                                                            className="border-slate-200 rounded-lg p-2 text-sm font-bold focus:ring-2 focus:ring-indigo-500"
+                                                                            value={editForm.status || 'pending'}
+                                                                            onChange={(e) => setEditForm({...editForm, status: e.target.value})}
+                                                                        >
+                                                                            <option value="pending">Dự kiến</option>
+                                                                            <option value="paid">Đã Thanh Toán</option>
+                                                                        </select>
+                                                                    ) : (
+                                                                        <span className={`px-2 py-1 text-xs rounded-full font-bold
+                                                                            ${exp.status === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}
+                                                                        `}>{exp.status === 'paid' ? 'Đã Thanh Toán' : 'Dự kiến'}</span>
+                                                                    )}
+                                                                </td>
+                                                                <td className="px-4 py-4 text-center">
+                                                                    {isEditing ? (
+                                                                        <div className="flex gap-1 justify-center">
+                                                                            <button onClick={() => setEditingExpenseId(null)} className="p-1.5 text-slate-400 hover:text-slate-600 bg-white rounded-md border border-slate-200 hover:bg-slate-50"><X className="w-4 h-4" /></button>
+                                                                            <button onClick={handleSaveExpense} className="p-1.5 text-emerald-600 hover:text-white bg-emerald-50 rounded-md border border-emerald-200 hover:bg-emerald-600"><Save className="w-4 h-4" /></button>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="flex gap-1 justify-center">
+                                                                            <button onClick={() => handleEditExpense(exp)} className="p-1.5 text-slate-400 hover:text-indigo-600 rounded-md hover:bg-indigo-50"><Pencil className="w-4 h-4" /></button>
+                                                                            <button onClick={() => setExpandedExpenseId(isExpanded ? null : exp.id)} className="p-1.5 text-slate-400 hover:text-slate-600 rounded-md hover:bg-slate-100">
+                                                                                {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+
+                                                            {/* Hàng Chi tiết mở rộng (Accordion) */}
+                                                            {isExpanded && (
+                                                                <tr className="bg-slate-50/50">
+                                                                    <td colSpan={5} className="px-6 py-4 border-b border-slate-100">
+                                                                        <div className="pl-14">
+                                                                            <div className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider flex items-center gap-1.5"><FileText className="w-3.5 h-3.5" /> Chi tiết & Ghi chú hạng mục</div>
+                                                                            {isEditing ? (
+                                                                                <textarea 
+                                                                                    className="w-full min-h-[100px] border-slate-200 rounded-xl p-3 text-sm text-slate-700 bg-white focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                                                                                    value={editForm.description || ''}
+                                                                                    onChange={(e) => setEditForm({...editForm, description: e.target.value})}
+                                                                                    placeholder="Nhập thông số kĩ thuật, ghi chú, lưu ý về giá cả hoặc hợp đồng..."
+                                                                                />
+                                                                            ) : (
+                                                                                <div className="text-sm text-slate-600 bg-white p-4 rounded-xl border border-slate-200 shadow-sm whitespace-pre-wrap">
+                                                                                    {exp.description ? exp.description : <span className="italic text-slate-400">Chưa có thông tin chi tiết.</span>}
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            )}
+                                                        </Fragment>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            );
+                                        })}
+                                        {expenses.length === 0 && (
+                                            <tbody>
+                                                <tr><td colSpan={5} className="text-center py-8 text-slate-400">Chưa có hạng mục chi phí nào</td></tr>
+                                            </tbody>
+                                        )}
                                     </table>
                                 </div>
                             </div>
