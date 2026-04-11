@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FolderOpen, Plus, Trash2, X, Edit2, PlayCircle, Image as ImageIcon, CheckCircle2 } from "lucide-react";
+import { FolderOpen, Plus, Trash2, X, Edit2, PlayCircle, Image as ImageIcon, CheckCircle2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
 import FolderSelectorModal from "@/components/documents/FolderSelectorModal";
+import AIPostGeneratorModal from "@/components/marketing/AIPostGeneratorModal";
 
 export default function TabContentLibrary() {
     const [contents, setContents] = useState<any[]>([]);
@@ -25,6 +26,7 @@ export default function TabContentLibrary() {
     const [docFolderName, setDocFolderName] = useState<string | null>(null);
     const [mediaCount, setMediaCount] = useState<number>(1);
     const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
+    const [isAIModalOpen, setIsAIModalOpen] = useState(false);
 
     const [isSaving, setIsSaving] = useState(false);
 
@@ -233,9 +235,17 @@ export default function TabContentLibrary() {
                             </div>
                             
                             <div>
-                                <label className="block text-sm font-bold text-indigo-900 mb-1">
-                                    Nội dung Chữ (Hỗ trợ <span className="text-indigo-500 bg-indigo-100 px-1 rounded mx-1">{"{Chào|Hi|Alo}"}</span> quay vòng)
-                                </label>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="block text-sm font-bold text-indigo-900">
+                                        Nội dung Chữ (Hỗ trợ <span className="text-indigo-500 bg-indigo-100 px-1 rounded mx-1">{"{Chào|Hi|Alo}"}</span> quay vòng)
+                                    </label>
+                                    <button 
+                                        onClick={() => setIsAIModalOpen(true)}
+                                        className="flex items-center gap-1.5 px-3 py-1 bg-amber-100 hover:bg-amber-200 text-amber-700 text-xs font-bold rounded-md transition-colors"
+                                    >
+                                        <Sparkles className="w-3 h-3" /> AI Khởi Tạo
+                                    </button>
+                                </div>
                                 <textarea rows={6} value={messageText} onChange={e=>setMessageText(e.target.value)} placeholder="Chào mọi người, sáng nay mình có lô hàng mới... (Kèm Link web/SĐT nếu có)" className="w-full text-sm p-3 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white resize-none shadow-sm"></textarea>
                             </div>
                         </div>
@@ -354,6 +364,14 @@ export default function TabContentLibrary() {
                     setDocFolderName(name);
                     setIsFolderModalOpen(false);
                 }} 
+            />
+            
+            <AIPostGeneratorModal 
+                isOpen={isAIModalOpen}
+                onClose={() => setIsAIModalOpen(false)}
+                onGenerate={(text) => {
+                    setMessageText(text);
+                }}
             />
 
             {/* List */}
