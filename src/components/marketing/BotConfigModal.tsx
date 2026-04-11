@@ -216,10 +216,45 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
                             </div>
                         )}
                         {useCrmGroups && (
-                            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl relative">
-                                <p className="text-[12px] text-amber-800 leading-relaxed">
-                                    <strong>Chế độ rải Link CRM:</strong> Hệ thống sẽ tự động quét toàn bộ Nhóm trong kho "Quản lý FB CRM" đã gán và lần lượt cho tài khoản bấm Tham gia.
-                                </p>
+                            <div className="space-y-4">
+                                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl relative">
+                                    <p className="text-[12px] text-amber-800 leading-relaxed">
+                                        <strong>Chế độ rải Link CRM:</strong> Hệ thống sẽ tự động quét toàn bộ Nhóm trong kho "Quản lý FB CRM" đã gán và lần lượt cho tài khoản bấm Tham gia.
+                                    </p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 border-t pt-3 mt-2 border-slate-100">
+                                    <div>
+                                        <label className="block text-sm font-medium text-amber-700 mb-1">Số lượng Nhóm / Lần</label>
+                                        <input
+                                            type="number"
+                                            className="w-full p-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none bg-amber-50"
+                                            placeholder="VD: 5"
+                                            value={arg.split('|')[2]?.trim() || '5'}
+                                            onChange={(e) => {
+                                                const parts = arg.split("|");
+                                                setArg(`${parts[0] || ' '} | ${parts[1] || ' '} | ${e.target.value} | ${parts[3]?.trim() || '180'}`);
+                                            }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-amber-700 mb-1">Khoảng cách/Delay (Giây)</label>
+                                        <input
+                                            type="number"
+                                            className="w-full p-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none bg-amber-50"
+                                            placeholder="VD: 180"
+                                            value={arg.split('|')[3]?.trim() || '180'}
+                                            onChange={(e) => {
+                                                const parts = arg.split("|");
+                                                setArg(`${parts[0] || ' '} | ${parts[1] || ' '} | ${parts[2]?.trim() || '5'} | ${e.target.value}`);
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="col-span-2 relative">
+                                        <p className="text-[11px] text-amber-800 bg-amber-100 p-2 rounded-lg leading-tight mt-1">
+                                            <strong>Mẹo chống Checkpoint:</strong> Mỗi ngày chỉ nên xin tham gia <strong>5-10 nhóm</strong>. Khoảng cách an toàn nhất là <strong>180 giây</strong> (Nghỉ 3 phút/nhóm). Mọi hành động diễn ra từ từ như người thật.
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>
