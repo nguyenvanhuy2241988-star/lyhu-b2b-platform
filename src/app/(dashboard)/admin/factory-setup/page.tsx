@@ -298,7 +298,7 @@ export default function FactorySetupPage() {
                     <div className="flex gap-2 shrink-0">
                         <button
                             onClick={() => setShowAIDialog(true)}
-                            className="flex items-center gap-2 bg-gradient-to-r from-teal-500 to-emerald-600 text-white px-4 py-2 rounded-xl font-bold shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all"
+                            className="flex items-center gap-2 bg-teal-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-teal-700 transition-colors"
                         >
                             <Sparkles className="w-4 h-4" />
                             Lên Kế Hoạch Bằng AI
@@ -370,20 +370,17 @@ export default function FactorySetupPage() {
                         {activeTab === 'budget' && (
                             <div className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-1 h-full bg-slate-200"></div>
-                                        <div className="text-slate-500 text-sm font-bold mb-1 tracking-wide">TỔNG DỰ TOÁN</div>
-                                        <div className="text-3xl font-black text-slate-900 tracking-tight">{formatCurrency(totalBudget)}</div>
+                                    <div className="bg-white p-5 rounded-lg border border-slate-200">
+                                        <div className="text-slate-500 text-sm font-bold mb-1">TỔNG DỰ TOÁN</div>
+                                        <div className="text-2xl font-bold text-slate-900">{formatCurrency(totalBudget)}</div>
                                     </div>
-                                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-1 h-full bg-orange-400"></div>
-                                        <div className="text-orange-600 text-sm font-bold mb-1 tracking-wide">ĐÃ CHI / ĐẶT CỌC</div>
-                                        <div className="text-3xl font-black text-slate-900 tracking-tight">{formatCurrency(totalSpent)}</div>
+                                    <div className="bg-white p-5 rounded-lg border border-slate-200 border-l-4 border-l-orange-400">
+                                        <div className="text-orange-600 text-sm font-bold mb-1">ĐÃ CHI / ĐẶT CỌC</div>
+                                        <div className="text-2xl font-bold text-slate-900">{formatCurrency(totalSpent)}</div>
                                     </div>
-                                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-1 h-full bg-teal-500"></div>
-                                        <div className="text-teal-600 text-sm font-bold mb-1 tracking-wide">CHÊNH LỆCH</div>
-                                        <div className="text-3xl font-black text-slate-900 tracking-tight">{formatCurrency(totalBudget - totalSpent)}</div>
+                                    <div className="bg-white p-5 rounded-lg border border-slate-200 border-l-4 border-l-teal-500">
+                                        <div className="text-teal-600 text-sm font-bold mb-1">CHÊNH LỆCH</div>
+                                        <div className="text-2xl font-bold text-slate-900">{formatCurrency(totalBudget - totalSpent)}</div>
                                     </div>
                                 </div>
 
@@ -397,9 +394,9 @@ export default function FactorySetupPage() {
                                     </button>
                                 </div>
 
-                                <div className="bg-white rounded-[20px] border border-slate-200 shadow-sm overflow-hidden">
+                                <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
                                     <table className="w-full text-left text-sm text-slate-600">
-                                        <thead className="bg-slate-50/80 text-xs uppercase text-slate-400 border-b border-slate-200 tracking-wider">
+                                        <thead className="bg-slate-50 text-xs uppercase text-slate-500 border-b border-slate-200">
                                             <tr>
                                                 <th className="px-6 py-4 font-bold">Hạng mục chi phí</th>
                                                 <th className="px-6 py-4 font-bold">Dự toán dự kiến</th>
@@ -419,7 +416,7 @@ export default function FactorySetupPage() {
                                                                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${catConf.iconBg}`}>
                                                                     {catConf.icon}
                                                                 </div>
-                                                                <span className="text-sm tracking-tight">{catConf.label}</span>
+                                                                <span className="text-sm font-semibold">{catConf.label}</span>
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -481,7 +478,7 @@ export default function FactorySetupPage() {
                                                                             onChange={(e) => setEditForm({...editForm, amount_actual: Number(e.target.value)})}
                                                                         />
                                                                     ) : (
-                                                                        <span className="font-black text-orange-600">{formatCurrency(exp.amount_actual)}</span>
+                                                                        <span className="font-bold text-orange-600">{formatCurrency(exp.amount_actual)}</span>
                                                                     )}
                                                                 </td>
                                                                 <td className="px-6 py-4">
@@ -496,7 +493,7 @@ export default function FactorySetupPage() {
                                                                             <option value="paid">Đã Thanh Toán</option>
                                                                         </select>
                                                                     ) : (
-                                                                        <span className={`px-2.5 py-1 text-[11px] uppercase tracking-wider rounded font-bold
+                                                                        <span className={`px-2.5 py-1 text-[11px] uppercase rounded font-bold
                                                                             ${exp.status === 'paid' ? 'bg-teal-100/50 text-teal-700 border border-teal-200' : 
                                                                               exp.status === 'deposit' ? 'bg-orange-50 text-orange-600 border border-orange-100' : 'bg-slate-100/80 text-slate-500'}
                                                                         `}>{exp.status === 'paid' ? 'Hoàn Tất' : exp.status === 'deposit' ? 'Đã Cọc' : 'Dự kiến'}</span>
@@ -581,18 +578,15 @@ export default function FactorySetupPage() {
             </div>
 
             {/* RIGHT COLUMN: AI CHAT (30%) */}
-            <div className="w-full lg:w-[420px] shrink-0 bg-white border border-slate-200 rounded-3xl flex flex-col shadow-[0_4px_20px_rgba(0,0,0,0.03)] h-[600px] lg:h-full overflow-hidden">
-                <div className="px-6 py-5 border-b border-slate-100 bg-white flex items-center justify-between shrink-0 relative overflow-hidden">
-                    {/* Minimalist Pattern background */}
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-teal-50 rounded-full blur-3xl -mr-10 -mt-10 opacity-70"></div>
-                    
+            <div className="w-full lg:w-[400px] shrink-0 bg-white border border-slate-200 rounded-lg flex flex-col h-[600px] lg:h-full overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-200 bg-white flex items-center justify-between shrink-0 relative overflow-hidden">
                     <div className="flex items-center gap-3 relative z-10">
-                        <div className="w-11 h-11 rounded-2xl bg-teal-600 flex items-center justify-center shadow-lg shadow-teal-600/20">
+                        <div className="w-10 h-10 rounded-lg bg-teal-600 flex items-center justify-center">
                             <Sparkles className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                            <h3 className="font-bold text-slate-900 leading-tight">Chuyên gia AI</h3>
-                            <p className="text-xs text-teal-600 font-bold mt-0.5 flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span> Sẵn sàng tư vấn</p>
+                            <h3 className="font-bold text-slate-900">Chiến Lược AI</h3>
+                            <p className="text-xs text-teal-600 font-bold mt-0.5 flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-teal-500"></span> Sẵn sàng tư vấn</p>
                         </div>
                     </div>
                 </div>
@@ -633,7 +627,7 @@ export default function FactorySetupPage() {
                                                     li: ({node, ...props}) => <li className="" {...props} />,
                                                     strong: ({node, ...props}) => <strong className="font-bold text-slate-900 bg-teal-50 px-1 rounded-sm" {...props} />,
                                                     table: ({node, ...props}) => <div className="overflow-x-auto mb-4 mt-2 rounded-xl border border-slate-200/80 shadow-sm"><table className="min-w-full text-xs text-left border-collapse bg-white" {...props} /></div>,
-                                                    th: ({node, ...props}) => <th className="border-b border-slate-200 font-bold p-3 bg-slate-50 text-slate-700 uppercase tracking-wider text-[10px]" {...props} />,
+                                                    th: ({node, ...props}) => <th className="border-b border-slate-200 font-bold p-3 bg-slate-50 text-slate-700 uppercase" {...props} />,
                                                     td: ({node, ...props}) => <td className="border-b border-slate-100 p-3 text-slate-600 font-medium" {...props} />
                                                 }}
                                             >
@@ -647,14 +641,14 @@ export default function FactorySetupPage() {
                     )}
                     {isChatting && (
                         <div className="flex gap-3">
-                            <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center bg-teal-600 text-white shadow-sm mt-1">
+                            <div className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center bg-teal-600 text-white mt-1">
                                 <Bot className="w-4 h-4" />
                             </div>
                             <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-sm px-5 py-4 shadow-sm">
                                 <div className="flex gap-1.5 items-center">
-                                    <div className="w-2 h-2 rounded-full bg-teal-400 animate-bounce"></div>
-                                    <div className="w-2 h-2 rounded-full bg-teal-400 animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                                    <div className="w-2 h-2 rounded-full bg-teal-400 animate-bounce" style={{animationDelay: '0.4s'}}></div>
+                                    <div className="w-2 h-2 rounded-full bg-teal-400"></div>
+                                    <div className="w-2 h-2 rounded-full bg-teal-400"></div>
+                                    <div className="w-2 h-2 rounded-full bg-teal-400"></div>
                                 </div>
                             </div>
                         </div>
@@ -664,7 +658,7 @@ export default function FactorySetupPage() {
 
                 {/* Chat Input */}
                 <form onSubmit={handleSendChat} className="p-5 bg-white border-t border-slate-100 shrink-0">
-                    <div className="flex items-end gap-2 bg-slate-50 border border-slate-200 rounded-[20px] p-2 focus-within:bg-white focus-within:ring-2 focus-within:ring-teal-100 focus-within:border-teal-400 transition-all shadow-inner focus-within:shadow-[0_4px_20px_rgba(20,184,166,0.08)]">
+                    <div className="flex items-end gap-2 bg-slate-50 border border-slate-200 rounded-lg p-2 focus-within:bg-white focus-within:ring-2 focus-within:ring-teal-100 focus-within:border-teal-400 transition-colors">
                         <textarea 
                             className="flex-1 max-h-32 min-h-12 bg-transparent border-none focus:ring-0 resize-none px-4 py-3 text-sm text-slate-700 outline-none placeholder:text-slate-400 font-medium"
                             placeholder="Mời bạn nhập câu hỏi thiết kế & giá cả..."
@@ -685,7 +679,7 @@ export default function FactorySetupPage() {
                         <button 
                             type="submit" 
                             disabled={!chatInput.trim() || isChatting}
-                            className="w-12 h-12 shrink-0 rounded-[14px] bg-teal-600 hover:bg-teal-700 hover:-translate-y-0.5 text-white flex items-center justify-center transition-all disabled:opacity-50 disabled:hover:translate-y-0 shadow-sm"
+                            className="w-10 h-10 shrink-0 rounded-lg bg-teal-600 hover:bg-teal-700 text-white flex items-center justify-center transition-colors disabled:opacity-50"
                         >
                             <Send className="w-5 h-5 ml-1" />
                         </button>
@@ -696,7 +690,7 @@ export default function FactorySetupPage() {
             {/* AI DIALOG - MODAL */}
             {showAIDialog && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm shadow-2xl">
-                    <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200 shadow-2xl border border-slate-200/50">
+                    <div className="bg-white rounded-xl w-full max-w-lg overflow-hidden border border-slate-200 shadow-xl">
                         <div className="p-6 border-b border-slate-100 bg-teal-50">
                             <div className="flex items-center justify-between">
                                 <h3 className="text-xl font-bold text-teal-950 flex items-center gap-2">
@@ -709,18 +703,18 @@ export default function FactorySetupPage() {
                         </div>
                         <div className="p-6 space-y-5">
                             <div>
-                                <label className="block text-[13px] font-bold text-slate-700 uppercase tracking-wider mb-2">Ngành nghề/Sản phẩm cốt lõi *</label>
+                                <label className="block text-[13px] font-bold text-slate-700 uppercase mb-2">Ngành nghề/Sản phẩm cốt lõi *</label>
                                 <input type="text" className="w-full border-slate-200 bg-slate-50 rounded-xl p-3.5 focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-teal-500 font-bold text-slate-800 transition-all outline-none" 
                                     value={aiInput.industry} onChange={e => setAiInput({...aiInput, industry: e.target.value})} placeholder="Vd: Chế biến thịt đông lạnh, Trà Olong..." />
                             </div>
                             <div className="flex gap-4">
                                 <div className="flex-1">
-                                    <label className="block text-[13px] font-bold text-slate-700 uppercase tracking-wider mb-2">Diện tích sàn (m2) *</label>
+                                    <label className="block text-[13px] font-bold text-slate-700 uppercase mb-2">Diện tích sàn (m2) *</label>
                                     <input type="number" className="w-full border-slate-200 bg-slate-50 rounded-xl p-3.5 focus:bg-white focus:ring-2 focus:ring-teal-500 font-bold text-slate-800 transition-all outline-none" 
                                         value={aiInput.area} onChange={e => setAiInput({...aiInput, area: e.target.value})} placeholder="60" />
                                 </div>
                                 <div className="flex-1">
-                                    <label className="block text-[13px] font-bold text-slate-700 uppercase tracking-wider mb-2">Trần Ngân Sách (VND) *</label>
+                                    <label className="block text-[13px] font-bold text-slate-700 uppercase mb-2">Trần Ngân Sách (VND) *</label>
                                     <input type="number" className="w-full border-slate-200 bg-slate-50 rounded-xl p-3.5 focus:bg-white focus:ring-2 focus:ring-teal-500 font-bold text-slate-800 transition-all outline-none" 
                                         value={aiInput.budget} onChange={e => setAiInput({...aiInput, budget: e.target.value})} placeholder="50000000" />
                                 </div>
@@ -728,7 +722,7 @@ export default function FactorySetupPage() {
                         </div>
                         <div className="p-5 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 rounded-b-3xl">
                             <button onClick={() => setShowAIDialog(false)} className="px-6 py-3 rounded-xl font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 hover:text-slate-800 transition-colors">Để sau</button>
-                            <button onClick={handleGenerateAI} disabled={isGenerating} className="flex items-center gap-2 bg-teal-600 text-white px-7 py-3 rounded-xl font-bold hover:bg-teal-700 hover:shadow-lg hover:shadow-teal-600/30 transition-all disabled:opacity-50">
+                            <button onClick={handleGenerateAI} disabled={isGenerating} className="flex items-center gap-2 bg-teal-600 text-white px-7 py-3 rounded-lg font-bold hover:bg-teal-700 transition-colors disabled:opacity-50">
                                 {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
                                 {isGenerating ? "Hệ thống AI đang xử lý (~15s)..." : "Bắt đầu sinh dữ liệu"}
                             </button>
