@@ -73,7 +73,15 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
                     return;
                 }
                 const parts = arg.split("|");
-                parts[0] = linksArray.join(',');
+                // Get the quantity the user requested
+                const qtyVal = parseInt(parts[2]?.trim()) || (scriptName === 'group_finder.js' ? 5 : 40);
+                
+                // Only take the exact number of groups requested to avoid crashing the local OS process (E2BIG argument list too long)
+                // and to randomize we can shuffle, but for now just slice. We should shuffle to randomize!
+                const shuffled = linksArray.sort(() => 0.5 - Math.random());
+                const limitedLinks = shuffled.slice(0, qtyVal);
+                
+                parts[0] = limitedLinks.join(',');
                 finalArg = parts.join(" | ");
             } else {
                 toast.error("Không tìm thấy Nhóm FB Đang hoạt động nào trong CRM.");
