@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FolderOpen, Plus, Trash2, X, Edit2, PlayCircle } from "lucide-react";
+import { FolderOpen, Plus, Trash2, X, Edit2, PlayCircle, Image as ImageIcon, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
+import FolderSelectorModal from "@/components/documents/FolderSelectorModal";
 
 export default function TabContentLibrary() {
     const [contents, setContents] = useState<any[]>([]);
@@ -17,6 +18,14 @@ export default function TabContentLibrary() {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null); // Để lưu url khi đang sửa
+    
+    // Nguồn media mới
+    const [mediaSource, setMediaSource] = useState<'upload' | 'folder'>('upload');
+    const [docFolderId, setDocFolderId] = useState<string | null>(null);
+    const [docFolderName, setDocFolderName] = useState<string | null>(null);
+    const [mediaCount, setMediaCount] = useState<number>(1);
+    const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
+
     const [isSaving, setIsSaving] = useState(false);
 
     const fetchContents = async () => {
@@ -51,6 +60,10 @@ export default function TabContentLibrary() {
         setImageFile(null);
         setImagePreview(null);
         setExistingImageUrl(null);
+        setMediaSource('upload');
+        setDocFolderId(null);
+        setDocFolderName(null);
+        setMediaCount(1);
         setIsAdding(true);
     };
 
@@ -61,6 +74,19 @@ export default function TabContentLibrary() {
         setImageFile(null);
         setImagePreview(null);
         setExistingImageUrl(item.image_url);
+        
+        if (item.doc_folder_id) {
+            setMediaSource('folder');
+            setDocFolderId(item.doc_folder_id);
+            setDocFolderName(item.doc_folder_name);
+            setMediaCount(item.media_count || 1);
+        } else {
+            setMediaSource('upload');
+            setDocFolderId(null);
+            setDocFolderName(null);
+            setMediaCount(1);
+        }
+        
         setIsAdding(true);
     };
 
@@ -92,7 +118,10 @@ export default function TabContentLibrary() {
         const payload = {
             category: category || "Mặc định",
             message_text: messageText,
-            image_url: finalMediaUrl
+            image_url: mediaSource === 'upload' ? finalMediaUrl : null,
+            doc_folder_id: mediaSource === 'folder' ? docFolderId : null,
+            doc_folder_name: mediaSource === 'folder' ? docFolderName : null,
+            media_count: mediaSource === 'folder' ? mediaCount : 1
         };
 
         if (editingId) {
@@ -213,9 +242,27 @@ export default function TabContentLibrary() {
 
                         {/* Cột phải: Khung ảnh đính kèm */}
                         <div>
-                            <label className="block text-sm font-bold text-indigo-900 mb-1">Media Đính Kèm (Ảnh / Video MP4)</label>
+                            <div className="flex items-center justify-between mb-3">
+                                <label className="block text-sm font-bold text-indigo-900">Nguồn Media đính kèm</label>
+                                <div className="flex bg-indigo-100/50 p-1 rounded-lg">
+                                    <button 
+                                        onClick={() => setMediaSource('upload')}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${mediaSource === 'upload' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-indigo-600'}`}
+                                    >
+                                        Tải File Lẻ
+                                    </button>
+                                    <button 
+                                        onClick={() => setMediaSource('folder')}
+                                        className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${mediaSource === 'folder' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-indigo-600'}`}
+                                    >
+                                        Link Thư Mục
+                                    </button>
+                                </div>
+                            </div>
                             
-                            {imagePreview ? (
+                            {mediaSource === 'upload' ? (
+                                <>
+                                    {imagePreview ? (
                                 <div className="border border-indigo-200 bg-white rounded-xl overflow-hidden relative shadow-sm">
                                     {renderPreview(imagePreview, true)}
                                     <button onClick={() => {setImagePreview(null); setImageFile(null); setExistingImageUrl(null);}} className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors shadow-lg z-20">
@@ -240,6 +287,51 @@ export default function TabContentLibrary() {
                                         <span className="text-xs text-slate-500 mt-1">Dung lượng tối đa 50MB</span>
                                     </label>
                                 </div>
+                                </>
+                            ) : (
+                                <div className="border border-indigo-200 bg-white rounded-xl p-5 shadow-sm min-h-[220px] flex flex-col items-center justify-center relative">
+                                    {docFolderId ? (
+                                        <div className="text-center w-full">
+                                            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                                                <CheckCircle2 className="w-8 h-8" />
+                                            </div>
+                                            <h4 className="font-bold text-slate-800 text-lg flex items-center justify-center gap-2 mb-1">
+                                                <FolderOpen className="w-5 h-5 text-indigo-500"/> {docFolderName}
+                                            </h4>
+                                            <p className="text-xs text-slate-500 mb-4 px-4 hidden md:block">
+                                                Thư mục này hiện đang được liên kết làm tổng kho Media cho bài đăng này. Trong thẻ nhớ hiện tại mã ID: <span className="font-mono text-indigo-600 bg-indigo-50 px-1 py-0.5 rounded">{docFolderId.substring(0,8)}</span>
+                                            </p>
+                                            
+                                            <div className="bg-indigo-50/50 rounded-lg p-3 mx-4 mb-4 text-left border border-indigo-100">
+                                                <label className="block text-xs font-bold text-indigo-800 mb-1">Số Lượng lấy ra (Mỗi lần BOT chạy ngẫu nhiên)</label>
+                                                <div className="flex items-center">
+                                                    <input 
+                                                        type="number" min="1" max="10" 
+                                                        value={mediaCount} 
+                                                        onChange={e => setMediaCount(parseInt(e.target.value) || 1)}
+                                                        className="w-20 px-3 py-1.5 border border-indigo-200 rounded-md text-sm outline-none focus:ring-2 focus:ring-indigo-400 font-bold text-center"
+                                                    />
+                                                    <span className="text-sm font-medium text-slate-600 ml-3">Media (Ảnh / Video)</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <button onClick={() => setIsFolderModalOpen(true)} className="text-sm font-bold text-indigo-600 hover:text-indigo-800 underline transition-colors">
+                                                Đổi Thư Mục Khác
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center">
+                                            <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <FolderOpen className="w-8 h-8" />
+                                            </div>
+                                            <h4 className="font-bold text-slate-800 mb-2">Chưa chọn thư mục</h4>
+                                            <p className="text-sm text-slate-500 mb-5 max-w-[250px] mx-auto">Kết nối với hệ thống Tài Liệu nội bộ để BOT bốc random ảnh đăng bài.</p>
+                                            <button onClick={() => setIsFolderModalOpen(true)} className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold transition-all shadow-md">
+                                                Duyệt Kho Tài Liệu
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             )}
                         </div>
                     </div>
@@ -252,6 +344,16 @@ export default function TabContentLibrary() {
                     </div>
                 </div>
             )}
+            
+            <FolderSelectorModal 
+                isOpen={isFolderModalOpen} 
+                onClose={() => setIsFolderModalOpen(false)} 
+                onSelect={(id, name) => {
+                    setDocFolderId(id);
+                    setDocFolderName(name);
+                    setIsFolderModalOpen(false);
+                }} 
+            />
 
             {/* List */}
             {isLoading ? (
@@ -265,13 +367,25 @@ export default function TabContentLibrary() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {contents.map((c) => (
-                        <div key={c.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all group hover:-translate-y-1">
+                        <div key={c.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all group hover:-translate-y-1 flex flex-col">
                             {/* Khung chứa Media (Nếu có) */}
-                            {c.image_url ? renderThumbnail(c.image_url) : (
+                            {c.image_url ? renderThumbnail(c.image_url) : c.doc_folder_id ? (
+                                <div className="h-[200px] bg-indigo-50 flex items-center justify-center flex-col p-4 border-b border-indigo-100">
+                                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center flex-wrap gap-1 p-2 shadow-sm mb-3">
+                                        <ImageIcon className="w-5 h-5 text-indigo-400" />
+                                        <ImageIcon className="w-5 h-5 text-indigo-500" />
+                                        <ImageIcon className="w-5 h-5 text-indigo-600" />
+                                    </div>
+                                    <span className="text-center font-bold text-indigo-900 border-b border-indigo-200 pb-1 mb-2 line-clamp-1">{c.doc_folder_name}</span>
+                                    <span className="bg-indigo-100 text-indigo-700 text-xs font-semibold px-2.5 py-0.5 rounded-md flex items-center gap-1">
+                                        Ngẫu nhiên x{c.media_count || 1}
+                                    </span>
+                                </div>
+                            ) : (
                                 <div className="h-4 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
                             )}
 
-                            <div className="p-5 relative bg-white z-10 flex flex-col h-[200px]">
+                            <div className="p-5 relative bg-white z-10 flex flex-col h-full flex-1">
                                 <div className="absolute top-4 right-4 flex items-center gap-1">
                                     <button onClick={() => handleEdit(c)} className="text-slate-400 hover:text-indigo-600 transition-colors bg-slate-50 hover:bg-indigo-50 p-1.5 rounded-md border border-slate-100">
                                         <Edit2 className="w-4 h-4" />
