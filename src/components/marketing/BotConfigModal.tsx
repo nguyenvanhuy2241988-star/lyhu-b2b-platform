@@ -196,19 +196,24 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
             case 'auto_post_group.js':
             case 'auto_comment_group.js':
                 return (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         {scriptName === 'auto_post_group.js' || scriptName === 'auto_comment_group.js' ? (
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Đường dẫn FB Group (Tùy chọn)</label>
                                 <input
                                     type="text"
                                     className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                    placeholder="Bỏ trống để tự chọn Group ngẫu nhiên"
-                                    value={arg}
-                                    onChange={(e) => setArg(e.target.value)}
+                                    placeholder="Bỏ trống để tự động rải vào tất cả Group đã tham gia"
+                                    value={arg.split('|')[0]?.trim() || ''}
+                                    onChange={(e) => {
+                                        const parts = arg.split("|");
+                                        parts[0] = e.target.value;
+                                        setArg(parts.join(" | "));
+                                    }}
                                 />
                             </div>
                         ) : null}
+                        
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Tên Kho Nội Dung (Category)</label>
                             <input
@@ -220,7 +225,9 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
                                 onChange={(e) => {
                                     if (scriptName === 'auto_post_group.js' || scriptName === 'auto_comment_group.js') {
                                         const groupUrl = arg.split('|')[0]?.trim() || '';
-                                        setArg(groupUrl ? `${groupUrl} | ${e.target.value}` : e.target.value);
+                                        const qty = arg.split('|')[2] || '40';
+                                        const delay = arg.split('|')[3] || '360';
+                                        setArg(`${groupUrl} | ${e.target.value} | ${qty} | ${delay}`);
                                     } else {
                                         setArg(e.target.value);
                                     }
@@ -233,7 +240,43 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
                                 <option value="Mặc định" />
                             </datalist>
                         </div>
-                        <p className="text-xs text-slate-500">Mẹo: Cần tạo sẵn mồi trong Tab 5: Kho Nội Dung.</p>
+
+                        {(scriptName === 'auto_post_group.js' || scriptName === 'auto_comment_group.js') && (
+                        <div className="grid grid-cols-2 gap-4 border-t pt-3 mt-2 border-slate-100">
+                            <div>
+                                <label className="block text-sm font-medium text-amber-700 mb-1">Số lượng Nhóm / Lần</label>
+                                <input
+                                    type="number"
+                                    className="w-full p-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none bg-amber-50"
+                                    placeholder="VD: 40"
+                                    value={arg.split('|')[2]?.trim() || '40'}
+                                    onChange={(e) => {
+                                        const parts = arg.split("|");
+                                        setArg(`${parts[0] || ' '} | ${parts[1]?.trim() || ' '} | ${e.target.value} | ${parts[3]?.trim() || '360'}`);
+                                    }}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-amber-700 mb-1">Khoảng cách/Delay (Giây)</label>
+                                <input
+                                    type="number"
+                                    className="w-full p-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none bg-amber-50"
+                                    placeholder="VD: 360"
+                                    value={arg.split('|')[3]?.trim() || '360'}
+                                    onChange={(e) => {
+                                        const parts = arg.split("|");
+                                        setArg(`${parts[0] || ' '} | ${parts[1]?.trim() || ' '} | ${parts[2]?.trim() || '40'} | ${e.target.value}`);
+                                    }}
+                                />
+                            </div>
+                            <div className="col-span-2 relative">
+                                <p className="text-[11px] text-amber-800 bg-amber-100 p-2 rounded-lg leading-tight mt-1">
+                                    <strong>Mẹo chống Spam:</strong> Rải 40 nhóm trong 4 tiếng (240 phút) ➡ Khoảng cách tốt nhất là <span className="font-mono bg-white px-1">240 / 40 * 60 = 360 giây</span> (Nghỉ 6 phút/1 bài)
+                                </p>
+                            </div>
+                        </div>
+                        )}
+                        <p className="text-xs text-slate-500">Mẹo: Cần tạo sẵn mồi trong Tab Kho Nội Dung.</p>
                     </div>
                 );
             default:
