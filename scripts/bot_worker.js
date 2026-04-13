@@ -55,7 +55,7 @@ setInterval(async () => {
                 .eq('id', command.id);
 
             const scriptPath = path.join(__dirname, 'marketing', command.script_name);
-            const safeArgs = command.args ? `"${command.args.replace(/[&|<>^%]/g, '')}"` : '';
+            const safeArgs = command.args ? `"${command.args.replace(/[&<>^%"]/g, '')}"` : '';
             
             console.log(`💻 Đang gọi Terminal cho Bot...`);
             
@@ -66,10 +66,10 @@ title BotTerminal - LYHU Automation
 chcp 65001 > nul
 cd /d "${path.join(__dirname, '..')}"
 echo --- DEBUG INFO ---
-echo Script: "%scriptPath%"
-echo Args: %safeArgs%
-echo Profile: "%profileFolder%"
-echo CMD Line: node "%scriptPath%" %safeArgs% --profile="%profileFolder%"
+echo Script: "${scriptPath}"
+echo Args: ${safeArgs}
+echo Profile: "${profileFolder}"
+echo CMD Line: node "${scriptPath}" ${safeArgs} --profile="${profileFolder}"
 echo --- END DEBUG ---
 node "${scriptPath}" ${safeArgs} --profile="${profileFolder}"
 echo.
