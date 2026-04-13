@@ -51,17 +51,15 @@ function spinText(text) {
         
         let groupUrl = null;
         let category = "Mặc định";
+        let userDelaySec = 360;
         
         if (rawArg.includes("facebook.com/groups/")) {
-            // Hỗ trợ cả 2 format:
-            // Format 1: "URL|Category"  
-            // Format 2: "URL  Category" (space)
             if (rawArg.includes('|')) {
                 const parts = rawArg.split('|');
                 groupUrl = parts[0].trim();
                 if (parts.length > 1) category = parts[1].trim();
+                if (parts.length > 3) userDelaySec = parseInt(parts[3].trim(), 10) || 360;
             } else {
-                // Tách URL khỏi category bằng regex: URL kết thúc sau groups/ID
                 const urlMatch = rawArg.match(/(https?:\/\/[^\s]+)/);
                 if (urlMatch) {
                     groupUrl = urlMatch[1].trim();
@@ -73,14 +71,13 @@ function spinText(text) {
             category = rawArg.trim();
         }
 
-        console.log(`[GROUP_POST] Mở kho: ${category}. Nhắm mục tiêu: ${groupUrl || 'Ngẫu nhiên nhóm đã tham gia'}`);
+        console.log(`[GROUP_POST] Mở kho: ${category}. Mục tiêu: ${groupUrl || 'Ngẫu nhiên'}`);
 
         let finalMessage = '';
         let imageUrl = null;
         
-        // Test mode: không cần nội dung, chỉ test dialog
         if (!isTestMode) {
-            // 1. Kéo Mồi
+            // 1. Kéo Mồi lặp lại ở ngoài
             const { data, error } = await supabase.from('bot_contents').select('*').eq('category', category);
             if (error || !data || data.length === 0) {
                 await logAction('post', 'error', `Lỗi: Kho bài đăng "${category}" trống`);
@@ -94,11 +91,15 @@ function spinText(text) {
             console.log("[TEST] Bỏ qua bước lấy nội dung (test mode).");
         }
 
-        // 2. Chuyển vị Ảnh
         if (imageUrl) {
             const ext = imageUrl.split('.').pop().split('?')[0] || 'jpg';
             tempImagePath = path.join(__dirname, `../../temp_gr_upload_${Date.now()}.${ext}`);
             await downloadImage(imageUrl, tempImagePath);
+        }
+
+        let groupList = [];
+        if (groupUrl) {
+            groupList = groupUrl.split(',').map(s => s.trim()).filter(Boolean);
         }
 
         // 3. Boot Trình duyệt
@@ -106,10 +107,7 @@ function spinText(text) {
         const pages = await browser.pages();
         const page = pages.length > 0 ? pages[0] : await browser.newPage();
 
-        // 4. Tìm Group để đăng
-        if (groupUrl) {
-            await page.goto(groupUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
-        } else {
+        if (groupList.length === 0) {
             await page.goto("https://www.facebook.com/groups/joins", { waitUntil: 'domcontentloaded', timeout: 60000 });
             await delay(rdn(3000, 5000));
             const groupLinks = await page.evaluate(() => {
@@ -119,26 +117,33 @@ function spinText(text) {
             });
             if (groupLinks.length === 0) throw new Error("Nick chưa tham gia Hội nhóm nào!");
             const uniqueLinks = [...new Set(groupLinks.map(l => l.split('?')[0]))];
-            const randomTarget = uniqueLinks[Math.floor(Math.random() * uniqueLinks.length)];
-            console.log(`[GROUP_POST] Chuyển hướng tới Nhóm: ${randomTarget}`);
-            await page.goto(randomTarget, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            groupList.push(uniqueLinks[Math.floor(Math.random() * uniqueLinks.length)]);
         }
+
+        let totalPosted = 0;
         
-        // Chờ trang GROUP load đầy đủ (Facebook SPA cần thời gian render)
-        console.log("[GROUP_POST] Chờ trang Group render đầy đủ...");
-        await delay(rdn(8000, 12000)); // Chờ lâu hơn - FB group chậm
-        
-        // Chờ cho đến khi có nội dung thực (không phải loading screen)
-        try {
-            await page.waitForSelector('div[role="main"]', { timeout: 15000 });
-            console.log("[GROUP_POST] Trang đã load xong (tìm thấy main content).");
-        } catch (e) {
-            console.log("[GROUP_POST] ⚠ Chưa thấy main content, tiếp tục...");
-        }
-        await delay(3000);
-        
-        await page.screenshot({ path: path.join(debugDir, 'group_step1_page.png') });
-        console.log(`[GROUP_POST] Screenshot trang group: debug/group_step1_page.png`);
+        for (let j = 0; j < groupList.length; j++) {
+            const targetUrl = groupList[j];
+            console.log(`\n[GROUP_POST] Đang vào Nhóm ${j+1}/${groupList.length}: ${targetUrl}`);
+            
+            try {
+                await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+                
+                // Chờ trang GROUP load đầy đủ (Facebook SPA cần thời gian render)
+                console.log("[GROUP_POST] Chờ trang Group render đầy đủ...");
+                await delay(rdn(8000, 12000)); // Chờ lâu hơn - FB group chậm
+                
+                // Chờ cho đến khi có nội dung thực (không phải loading screen)
+                try {
+                    await page.waitForSelector('div[role="main"]', { timeout: 15000 });
+                    console.log("[GROUP_POST] Trang đã load xong (tìm thấy main content).");
+                } catch (e) {
+                    console.log("[GROUP_POST] ⚠ Chưa thấy main content, tiếp tục...");
+                }
+                await delay(3000);
+                
+                await page.screenshot({ path: path.join(debugDir, 'group_step1_page.png') });
+                console.log(`[GROUP_POST] Screenshot trang group: debug/group_step1_page.png`);
 
         // ============================================================
         // BƯỚC 5: MỞ COMPOSER DIALOG (KHÔNG PHẢI COMMENT BOX!)
@@ -405,17 +410,29 @@ function spinText(text) {
         }
 
         if (posted) {
-            await delay(rdn(6000, 10000));
-            console.log("[GROUP_POST] 🟢 Hoàn thành đăng bài vào Group!");
-            await logAction('post', 'success', `Đã rải 1 bài seeding vào Group (Kho: ${category})`);
-        } else {
-            console.log("[GROUP_POST] Không tìm thấy nút Đăng.");
-            throw new Error("Nút Đăng Bài bị ẩn hoặc không tìm thấy.");
+                totalPosted++;
+                await delay(rdn(6000, 10000));
+                console.log(`[GROUP_POST] 🟢 Hoàn thành đăng bài vào Group! (Tổng: ${totalPosted})`);
+            } else {
+                console.log("[GROUP_POST] Không tìm thấy nút Đăng.");
+                throw new Error("Nút Đăng Bài bị ẩn hoặc không tìm thấy.");
+            }
+
+            } catch (groupError) {
+                console.error(`[GROUP_POST_ERROR] Lỗi khi xử lý nhóm ${targetUrl}:`, groupError.message);
+            }
+            
+            if (j < groupList.length - 1) {
+                console.log(`[GROUP_POST] Tạm nghỉ ${userDelaySec}s trước khi sang nhóm tiếp theo...`);
+                await delay(userDelaySec * 1000);
+            }
         }
+
+        await logAction('post', 'success', `Đã rải xong ${totalPosted} bài seeding vào ${groupList.length} Group (Kho: ${category})`);
 
     } catch (e) {
         console.error("[GROUP_POST_ERROR]", e);
-        await logAction('post', 'error', `Lỗi đăng Group: ${e.message}`);
+        await logAction('post', 'error', `Lỗi đăng Group tổng quát: ${e.message}`);
     } finally {
         if (browser) await browser.close();
         if (tempImagePath && fs.existsSync(tempImagePath)) {
