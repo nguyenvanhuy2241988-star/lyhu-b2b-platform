@@ -64,27 +64,40 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
 
         // Auto fetch CRM Groups if enabled
         if (useCrmGroups && ['auto_post_group.js', 'auto_comment_group.js', 'group_finder.js'].includes(scriptName)) {
-            const { data, error } = await supabase.from('telesales_fb_groups').select('link').eq('status', 'active');
+            // Chống trùng lặp: Lấy danh sách nhóm ưu tiên Nhóm Mới (Null) hoặc Nhóm đã chạy lâu nhất lên đầu
+            const { data, error } = await supabase.from('telesales_fb_groups')
+                .select('id, link')
+                .eq('status', 'active')
+                .order('last_bot_run_at', { ascending: true, nullsFirst: true });
+                
             if (!error && data && data.length > 0) {
-                const linksArray = data.map((g: any) => g.link).filter(Boolean);
-                if (linksArray.length === 0) {
+                const validGroups = data.filter((g: any) => g.link);
+                if (validGroups.length === 0) {
                     toast.error("CRM chưa có Nhóm nào chứa Link hợp lệ để gửi Bot.");
                     setIsLoading(false);
                     return;
                 }
+                
                 const parts = arg.split("|");
-                // Get the quantity the user requested
                 const qtyVal = parseInt(parts[2]?.trim()) || (scriptName === 'group_finder.js' ? 5 : 40);
                 
-                // Only take the exact number of groups requested to avoid crashing the local OS process (E2BIG argument list too long)
-                // and to randomize we can shuffle, but for now just slice. We should shuffle to randomize!
-                const shuffled = linksArray.sort(() => 0.5 - Math.random());
-                const limitedLinks = shuffled.slice(0, qtyVal);
+                // Cắt lấy đúng số lượng Nhóm đang "Khát bài" nhất
+                const selectedGroups = validGroups.slice(0, qtyVal);
+                const selectedLinks = selectedGroups.map((g: any) => g.link);
+                const selectedIds = selectedGroups.map((g: any) => g.id);
                 
-                parts[0] = limitedLinks.join(',');
+                // Trộn nhẹ để các Nhóm không bị xếp hàng quá cứng nhắc mỗi lần gọi
+                const shuffledLinks = selectedLinks.sort(() => 0.5 - Math.random());
+                
+                parts[0] = shuffledLinks.join(',');
                 finalArg = parts.join(" | ");
+                
+                // Khóa mục tiêu ➡ Cập nhật ngay giờ mồi để các mẻ sau bị đẩy lùi xuống đáy hàng đợi
+                await supabase.from('telesales_fb_groups')
+                    .update({ last_bot_run_at: new Date().toISOString() })
+                    .in('id', selectedIds);
             } else {
-                toast.error("Không tìm thấy Nhóm FB Đang hoạt động nào trong CRM.");
+                toast.error("Không tìm thấy Nhóm FB Đang hoạt động nào trong CRM. (Hoặc cần Cập nhật CSDL)");
                 setIsLoading(false);
                 return;
             }
