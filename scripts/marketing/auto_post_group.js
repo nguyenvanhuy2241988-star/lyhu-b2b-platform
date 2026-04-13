@@ -34,7 +34,7 @@ function spinText(text) {
 
 (async () => {
     let browser = null;
-    let tempImagePath = null;
+    let tempImagePaths = [];
     
     try {
         const args = process.argv.slice(2);
@@ -74,7 +74,6 @@ function spinText(text) {
         console.log(`[GROUP_POST] Mở kho: ${category}. Mục tiêu: ${groupUrl || 'Ngẫu nhiên'}`);
 
         let finalMessage = '';
-        let imageUrl = null;
         
         if (!isTestMode) {
             // 1. Kéo Mồi lặp lại ở ngoài
@@ -86,15 +85,41 @@ function spinText(text) {
 
             const randomContent = data[Math.floor(Math.random() * data.length)];
             finalMessage = spinText(randomContent.message_text);
-            imageUrl = randomContent.image_url;
+            
+            // Xử lý lấy Ảnh đơn hoặc Nhóm Ảnh từ Tài liệu
+            if (randomContent.doc_folder_id) {
+                // Móc vào Media Library
+                const { data: filesData } = await supabase.from('documents_files')
+                    .select('*')
+                    .eq('folder_id', randomContent.doc_folder_id)
+                    .eq('is_deleted', false);
+                
+                if (filesData && filesData.length > 0) {
+                    // Trộn ngẫu nhiên (Shuffle)
+                    const shuffled = filesData.sort(() => 0.5 - Math.random());
+                    // Lấy đúng số lượng
+                    const takeCount = randomContent.media_count || 1;
+                    const selectedFiles = shuffled.slice(0, takeCount);
+                    
+                    for (let f = 0; f < selectedFiles.length; f++) {
+                        const file = selectedFiles[f];
+                        const { data: signedData } = await supabase.storage.from('lyhu-docs').createSignedUrl(file.storage_path, 3600);
+                        if (signedData && signedData.signedUrl) {
+                            const ext = (file.original_name || '').split('.').pop() || 'jpg';
+                            const dest = path.join(__dirname, `../../temp_gr_upload_${Date.now()}_${f}.${ext}`);
+                            await downloadImage(signedData.signedUrl, dest);
+                            tempImagePaths.push(dest);
+                        }
+                    }
+                }
+            } else if (randomContent.image_url) {
+                const ext = randomContent.image_url.split('.').pop().split('?')[0] || 'jpg';
+                const dest = path.join(__dirname, `../../temp_gr_upload_${Date.now()}.${ext}`);
+                await downloadImage(randomContent.image_url, dest);
+                tempImagePaths.push(dest);
+            }
         } else {
             console.log("[TEST] Bỏ qua bước lấy nội dung (test mode).");
-        }
-
-        if (imageUrl) {
-            const ext = imageUrl.split('.').pop().split('?')[0] || 'jpg';
-            tempImagePath = path.join(__dirname, `../../temp_gr_upload_${Date.now()}.${ext}`);
-            await downloadImage(imageUrl, tempImagePath);
         }
 
         let groupList = [];
@@ -308,7 +333,7 @@ function spinText(text) {
         // ============================================================
         // BƯỚC 8: UPLOAD ẢNH (TRONG dialog)
         // ============================================================
-        if (tempImagePath) {
+        if (tempImagePaths.length > 0) {
             console.log("[GROUP_POST] Bước 4: Upload ảnh...");
             
             // 1. Mồi click vào nút "Ảnh/video" trên Dialog để Facebook chịu render thẻ input file
@@ -353,8 +378,8 @@ function spinText(text) {
             });
             
             if (fileInputHandle && fileInputHandle.asElement()) {
-                await fileInputHandle.asElement().uploadFile(tempImagePath);
-                const isVideo = tempImagePath.match(/\.(mp4|mov|avi|wmv)$/i);
+                await fileInputHandle.asElement().uploadFile(...tempImagePaths);
+                const isVideo = tempImagePaths.some(p => p.match(/\.(mp4|mov|avi|wmv)$/i));
                 if (isVideo) {
                     console.log("[GROUP_POST] Video nặng, chờ FB xử lý...");
                     await delay(rdn(20000, 40000));
@@ -458,8 +483,10 @@ function spinText(text) {
         await logAction('post', 'error', `Lỗi đăng Group tổng quát: ${e.message}`);
     } finally {
         if (browser) await browser.close();
-        if (tempImagePath && fs.existsSync(tempImagePath)) {
-            try { fs.unlinkSync(tempImagePath); } catch (err) {}
+        for (const p of tempImagePaths) {
+            if (fs.existsSync(p)) {
+                try { fs.unlinkSync(p); } catch (err) {}
+            }
         }
         process.exit(0);
     }
