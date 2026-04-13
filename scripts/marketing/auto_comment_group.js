@@ -94,10 +94,20 @@ function downloadImage(url, dest) {
                 await delay(rdn(2000, 3000));
 
                 // 4. Tìm kiếm các Ô Bình luận (Comment boxes)
-                const commentBoxes = await page.$$('div[role="textbox"][contenteditable="true"][aria-label*="Bình luận"], div[role="textbox"][contenteditable="true"][aria-label*="comment"]');
+                const allTextBoxes = await page.$$('div[role="textbox"][contenteditable="true"]');
+                const commentBoxes = [];
+                for (const box of allTextBoxes) {
+                    const isValid = await box.evaluate(el => {
+                        // Bỏ qua nếu textbox nằm trong pop-up / dialog nào đó trên FB
+                        if (el.closest('div[role="dialog"]')) return false; 
+                        const label = (el.getAttribute('aria-label') || '').toLowerCase();
+                        return label.includes('bình luận') || label.includes('comment') || label.includes('viết') || label.includes('trả lời');
+                    });
+                    if (isValid) commentBoxes.push(box);
+                }
                 
                 if (commentBoxes.length === 0) {
-                    console.error(`[CMT_DAO] Bỏ qua nhóm: Không tìm thấy ô nhập bình luận (Có thể FB khóa hoặc Group duyệt).`);
+                    console.error(`[CMT_DAO] Bỏ qua nhóm: Không tìm thấy ô nhập bình luận (Có thể FB khóa, Group yêu cầu duyệt, hoặc bạn bị văng hiển thị Đăng Nhập).`);
                     continue;
                 }
 
