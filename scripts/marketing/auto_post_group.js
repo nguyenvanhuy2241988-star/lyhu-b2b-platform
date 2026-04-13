@@ -95,21 +95,41 @@ function spinText(text) {
                     .eq('is_deleted', false);
                 
                 if (filesData && filesData.length > 0) {
-                    // Trộn ngẫu nhiên (Shuffle)
-                    const shuffled = filesData.sort(() => 0.5 - Math.random());
-                    // Lấy đúng số lượng
-                    const takeCount = randomContent.media_count || 1;
-                    const selectedFiles = shuffled.slice(0, takeCount);
+                    // Lọc bỏ các file không phải Ảnh/Video (ví dụ: .pdf, .docx, .zip) FB không hỗ trợ
+                    const validMediaFiles = filesData.filter(f => {
+                        const ext = (f.original_name || '').split('.').pop().toLowerCase();
+                        return ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mov', 'avi', 'wmv'].includes(ext);
+                    });
                     
-                    for (let f = 0; f < selectedFiles.length; f++) {
-                        const file = selectedFiles[f];
-                        const { data: signedData } = await supabase.storage.from('lyhu-docs').createSignedUrl(file.storage_path, 3600);
-                        if (signedData && signedData.signedUrl) {
-                            const ext = (file.original_name || '').split('.').pop() || 'jpg';
-                            const dest = path.join(__dirname, `../../temp_gr_upload_${Date.now()}_${f}.${ext}`);
-                            await downloadImage(signedData.signedUrl, dest);
-                            tempImagePaths.push(dest);
+                    if (validMediaFiles.length > 0) {
+                        // Trộn ngẫu nhiên (Shuffle)
+                        const shuffled = validMediaFiles.sort(() => 0.5 - Math.random());
+                        // Lấy đúng số lượng
+                        const takeCount = randomContent.media_count || 1;
+                        const selectedFiles = shuffled.slice(0, takeCount);
+                        
+                        console.log(`[GROUP_POST] Tiến hành tải ${selectedFiles.length} file Media từ Supabase...`);
+                        for (let f = 0; f < selectedFiles.length; f++) {
+                            const file = selectedFiles[f];
+                            try {
+                                const { data: signedData, error: signErr } = await supabase.storage.from('lyhu-docs').createSignedUrl(file.storage_path, 3600);
+                                if (signErr) {
+                                    console.error(`[GROUP_POST] Lỗi giải mã link Media (${file.original_name}):`, signErr.message);
+                                    continue;
+                                }
+                                if (signedData && signedData.signedUrl) {
+                                    const ext = (file.original_name || '').split('.').pop() || 'jpg';
+                                    const dest = path.join(__dirname, `../../temp_gr_upload_${Date.now()}_${f}.${ext}`);
+                                    await downloadImage(signedData.signedUrl, dest);
+                                    tempImagePaths.push(dest);
+                                }
+                            } catch (downloadErr) {
+                                console.error(`[GROUP_POST] Cập nhật thất bại file số ${f}:`, downloadErr.message);
+                            }
                         }
+                        console.log(`[GROUP_POST] Lấy thành công ${tempImagePaths.length} Media đính kèm!`);
+                    } else {
+                        console.log(`[GROUP_POST] Không tìm thấy file Hình/Video nào hợp lệ trong danh mục này (Toàn file mồ côi hoặc PDF).`);
                     }
                 }
             } else if (randomContent.image_url) {
