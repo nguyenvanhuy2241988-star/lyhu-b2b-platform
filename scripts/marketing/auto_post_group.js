@@ -310,37 +310,60 @@ function spinText(text) {
         // ============================================================
         if (tempImagePath) {
             console.log("[GROUP_POST] Bước 4: Upload ảnh...");
-            // Tìm file input TRONG dialog, không phải ở comment box ngoài!
-            const dialogFileInput = await page.evaluate(() => {
+            
+            // 1. Mồi click vào nút "Ảnh/video" trên Dialog để Facebook chịu render thẻ input file
+            const photoIconClicked = await page.evaluate(() => {
                 const allDialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
-                for (const d of allDialogs) {
-                    const text = d.innerText || '';
-                    if (text.includes('Tạo bài viết') || text.includes('Create post') || 
-                        d.querySelector('div[role="textbox"][contenteditable="true"]')) {
-                        const input = d.querySelector('input[type="file"]');
-                        return input ? true : false;
-                    }
+                let targetDialog = allDialogs.find(d => d.querySelector('div[role="textbox"][contenteditable="true"]'));
+                if (!targetDialog) targetDialog = document.body;
+                
+                const buttons = Array.from(targetDialog.querySelectorAll('div[role="button"], div[aria-label]'));
+                const photoBtn = buttons.find(b => {
+                    const lbl = (b.getAttribute('aria-label') || '').toLowerCase();
+                    // Nhận diện nút Ảnh/Video
+                    return (lbl.includes('ảnh/video') || lbl.includes('photo/video') || lbl === 'ảnh' || lbl === 'photo') && b.offsetParent !== null;
+                });
+                
+                if (photoBtn) {
+                    photoBtn.click();
+                    return true;
                 }
                 return false;
             });
             
-            // Upload qua dialog's file input hoặc fallback
-            const fileInput = dialogFileInput 
-                ? await page.$('div[role="dialog"] input[type="file"]')
-                : await page.$('input[type="file"]');
+            if (photoIconClicked) {
+                console.log("[GROUP_POST] Đã click mở khay ảnh, đang chờ giao diện load...");
+                await delay(2000);
+            } else {
+                console.log("[GROUP_POST] Không tìm thấy icon Ảnh, dò thẳng thẻ input...");
+            }
+
+            // 2. Trích xuất chính xác thẻ input file từ Dialog vừa mở
+            const fileInputHandle = await page.evaluateHandle(() => {
+                const allDialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
+                let targetDialog = allDialogs.find(d => d.querySelector('div[role="textbox"][contenteditable="true"]'));
+                if (!targetDialog) targetDialog = document;
+                
+                let input = targetDialog.querySelector('input[type="file"]');
+                if (!input) {
+                    // Fallback truy quét toàn trang tìm ô input cho ảnh
+                    input = document.querySelector('input[type="file"][accept*="image"]');
+                }
+                return input;
+            });
             
-            if (fileInput) {
-                await fileInput.uploadFile(tempImagePath);
+            if (fileInputHandle && fileInputHandle.asElement()) {
+                await fileInputHandle.asElement().uploadFile(tempImagePath);
                 const isVideo = tempImagePath.match(/\.(mp4|mov|avi|wmv)$/i);
                 if (isVideo) {
-                    console.log("[GROUP_POST] Video nặng, chờ upload...");
+                    console.log("[GROUP_POST] Video nặng, chờ FB xử lý...");
                     await delay(rdn(20000, 40000));
                 } else {
                     await delay(rdn(5000, 8000));
                 }
-                console.log("[GROUP_POST] ✅ Đã upload ảnh.");
+                console.log("[GROUP_POST] ✅ Đã upload ảnh/video.");
             } else {
-                console.log("[GROUP_POST] ⚠ Không tìm thấy input file.");
+                console.log("[GROUP_POST] ⚠ Không thể tìm thấy trạm giao nhận ảnh (input file) của Facebook.");
             }
         }
 
