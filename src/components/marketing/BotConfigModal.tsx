@@ -18,6 +18,12 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title, def
     const [strategy, setStrategy] = useState<'name' | 'post' | 'commander' | 'suggestion' | 'rival'>('commander'); // Default to NLP Commander
     const [isLoading, setIsLoading] = useState(false);
     
+    // Advanced Target Configs
+    const [advancedMode, setAdvancedMode] = useState(false);
+    const [botLimit, setBotLimit] = useState(15);
+    const [botSpeed, setBotSpeed] = useState('normal'); // fast, normal, slow
+    const [botAction, setBotAction] = useState('auto_add'); // auto_add, scrape_only
+
     // Auto-Group Settings
     const [useCrmGroups, setUseCrmGroups] = useState(false);
     const [targetGroupType, setTargetGroupType] = useState<'sales'|'job'>('sales');
@@ -69,6 +75,18 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title, def
             const parts = finalArg.split('|');
             parts[1] = targetGroupType;
             finalArg = parts.join(' | ');
+        }
+
+        // Advanced Mode config packaging (JSON format)
+        if (['execute_profile_add.js', 'execute_search_add.js'].includes(scriptName)) {
+            if (advancedMode) {
+                finalArg = JSON.stringify({
+                    url: arg, // or constraint keywords
+                    limit: Number(botLimit),
+                    speed: botSpeed,
+                    action: botAction
+                });
+            }
         }
 
         if (useCrmGroups && ['auto_post_group.js', 'auto_comment_group.js', 'group_finder.js'].includes(scriptName)) {
@@ -366,9 +384,52 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title, def
                                 onChange={(e) => setArg(e.target.value)}
                                 autoFocus
                             />
-                            <p className="text-xs text-slate-500 mt-2">
-                                <b>Lưu ý: </b>Bot sẽ tự động truy cập vào trang cá nhân này và quét danh sách bạn bè để xin kết bạn. Nếu người này khóa bảo mật danh sách bạn bè, bot sẽ chỉ quét được những "Bạn bè chung" (nếu có).
-                            </p>
+                            
+                            {/* Advanced Toggle */}
+                            <div className="mt-4 border-t pt-4">
+                                <label className="flex items-center gap-2 text-sm font-bold text-slate-700 cursor-pointer">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={advancedMode} 
+                                        onChange={e => setAdvancedMode(e.target.checked)} 
+                                        className="w-4 h-4 text-orange-600 rounded border-gray-300 focus:ring-orange-500"
+                                    />
+                                    Bật Chế Độ Cấu Hình Chuyên Sâu (Tiến trình/Sniper)
+                                </label>
+                            </div>
+
+                            {/* Advanced Sub-panel */}
+                            {advancedMode && (
+                                <div className="mt-3 p-4 bg-orange-50/50 border border-orange-100 rounded-xl space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Mục Đích Nhiệm Vụ:</label>
+                                        <select value={botAction} onChange={e => setBotAction(e.target.value)} className="w-full p-2 border border-slate-200 rounded-md text-sm outline-none">
+                                            <option value="auto_add">🚀 Tự động Add Friend trực tiếp ngay trên hiện trường</option>
+                                            <option value="scrape_only">🕵️ Chỉ Vơ Vét Data (Scrape) về bảng Leads để duyệt thủ công</option>
+                                        </select>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Số Lượng Quét (Người):</label>
+                                            <input type="number" min="1" max="200" value={botLimit} onChange={e => setBotLimit(Number(e.target.value))} className="w-full p-2 border border-slate-200 rounded-md text-sm outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Nhịp Rút Quân (Speed):</label>
+                                            <select value={botSpeed} onChange={e => setBotSpeed(e.target.value)} className="w-full p-2 border border-slate-200 rounded-md text-sm outline-none">
+                                                <option value="normal">Chuẩn (Mặc định - 15s)</option>
+                                                <option value="slow">Siêu Chậm / Safety (30s+)</option>
+                                                <option value="fast">Blitzkrieg / Bão táp (Bỏ qua Delay)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {!advancedMode && (
+                                <p className="text-xs text-slate-500 mt-2">
+                                    <b>Lưu ý mặc định: </b>Giới hạn 15 người. Nếu người này khóa bảo mật danh sách bạn bè, bot sẽ chỉ quét được những "Bạn bè chung". Tích chọn ô bên trên để cấu hình chuyên sâu.
+                                </p>
+                            )}
                         </div>
                     </div>
                 );

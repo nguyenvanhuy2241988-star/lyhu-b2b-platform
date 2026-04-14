@@ -11,7 +11,9 @@ dayjs.locale('vi');
 
 export default function LeadsPage() {
     const [leads, setLeads] = useState<any[]>([]);
+    const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isSniperActive, setIsSniperActive] = useState(false);
     const supabase = createClient();
 
     const fetchLeads = async () => {
@@ -41,8 +43,58 @@ export default function LeadsPage() {
         if (!error) {
             toast.success("Đã xóa thành công");
             setLeads(prev => prev.filter(l => l.id !== id));
+            setSelectedLeads(prev => prev.filter(selectedId => selectedId !== id));
         } else {
             toast.error("Lỗi xóa liên hệ");
+        }
+    };
+
+    const handleExecuteSniper = async () => {
+        if (selectedLeads.length === 0) return;
+        setIsSniperActive(true);
+        const selectedMates = leads.filter(l => selectedLeads.includes(l.id));
+        const urls = selectedMates.map(l => l.profile_url).filter(url => url);
+
+        try {
+            const res = await fetch('/api/marketing/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scriptName: 'execute_sniper_add.js',
+                    args: JSON.stringify(urls),
+                    profileId: null
+                })
+            });
+
+            if (res.ok) {
+                toast.success(`Đã đưa ${urls.length} mục tiêu vào hàng đợi Bắn tỉa!`);
+                
+                // Update local UI
+                setLeads(prev => prev.map(l => selectedLeads.includes(l.id) ? { ...l, status: 'pending' } : l));
+                setSelectedLeads([]);
+                
+                // Cập nhật lên CSDL tránh Bot quét lại
+                await supabase.from('marketing_leads_staging').update({ status: 'pending' }).in('id', selectedLeads);
+            } else {
+                toast.error("Lỗi khởi động Sniper");
+            }
+        } catch (e) {
+            toast.error("Lỗi kết nối Server");
+        } finally {
+            setIsSniperActive(false);
+        }
+    };
+
+    const toggleSelect = (id: string) => {
+        setSelectedLeads(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
+    };
+
+    const toggleSelectAll = () => {
+        const scrapedLeads = leads; // You can filter specifically for 'scraped' if desired, but any lead is fine.
+        if (selectedLeads.length === scrapedLeads.length) {
+            setSelectedLeads([]);
+        } else {
+            setSelectedLeads(scrapedLeads.map(l => l.id));
         }
     };
 
@@ -55,29 +107,56 @@ export default function LeadsPage() {
                     </h1>
                     <p className="text-slate-500 mt-1 text-sm">Quản lý kho dữ liệu Khách hàng mà hệ thống Bot Săn Khách đã gửi lời mời chặn đkết bạn</p>
                 </div>
-                <button
-                    onClick={fetchLeads}
-                    className="flex items-center gap-2 p-2 px-4 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl transition-colors font-medium border border-emerald-200"
-                >
-                    <RefreshCcw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} /> Làm mới
-                </button>
-            </div>
+                <div className="flex items-center gap-3">
+                    {selectedLeads.length > 0 && (
+                        <button
+                            onClick={handleExecuteSniper}
+                            disabled={isSniperActive}
+                            className="flex items-center gap-2 p-2 px-4 bg-orange-500 text-white hover:bg-orange-600 rounded-xl transition-colors font-medium shadow-sm shadow-orange-500/20 disabled:opacity-75"
+                        >
+                            {isSniperActive ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />} 
+                            Duyệt & Bắn Tỉa ({selectedLeads.length})
+                        </button>
+                    )}
+                    <button
+                        onClick={fetchLeads}
+                        className="flex items-center gap-2 p-2 px-4 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl transition-colors font-medium border border-emerald-200"
+                    >
+                        <RefreshCcw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} /> Làm mới
+                    </button>
+                </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <table className="w-full text-sm text-left">
                     <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b">
                         <tr>
+                            <th className="px-6 py-4 w-12 rounded-tl-xl text-center">
+                                <input 
+                                    type="checkbox" 
+                                    className="w-4 h-4 text-emerald-600 bg-slate-100 border-slate-300 rounded focus:ring-emerald-500 cursor-pointer"
+                                    checked={leads.length > 0 && selectedLeads.length === leads.length}
+                                    onChange={toggleSelectAll}
+                                />
+                            </th>
                             <th className="px-6 py-4 font-semibold">Tên Khách Hàng</th>
                             <th className="px-6 py-4 font-semibold">Thời gian thêm</th>
                             <th className="px-6 py-4 font-semibold">Nguồn / Từ khóa</th>
                             <th className="px-6 py-4 font-semibold text-center">Trạng thái Bot</th>
-                            <th className="px-6 py-4 font-semibold text-right">Gỡ bỏ</th>
+                            <th className="px-6 py-4 font-semibold text-right">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {leads.length > 0 ? (
                             leads.map((lead) => (
-                                <tr key={lead.id} className="hover:bg-slate-50/80 transition-colors group">
+                                <tr key={lead.id} className={`hover:bg-slate-50/80 transition-colors group ${selectedLeads.includes(lead.id) ? 'bg-orange-50/30' : ''}`}>
+                                    <td className="px-6 py-4 text-center">
+                                        <input 
+                                            type="checkbox" 
+                                            className="w-4 h-4 text-orange-500 bg-slate-100 border-slate-300 rounded focus:ring-orange-500 cursor-pointer"
+                                            checked={selectedLeads.includes(lead.id)}
+                                            onChange={() => toggleSelect(lead.id)}
+                                        />
+                                    </td>
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
@@ -114,10 +193,22 @@ export default function LeadsPage() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-center">
-                                        <span className="px-2.5 py-1 bg-yellow-50 text-yellow-700 rounded-full text-xs border border-yellow-200 font-medium inline-flex items-center gap-1">
-                                            <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>
-                                            {lead.status === 'pending' ? 'Chờ Khách đồng ý' : lead.status}
-                                        </span>
+                                        {lead.status === 'pending' ? (
+                                            <span className="px-2.5 py-1 bg-yellow-50 text-yellow-700 rounded-full text-xs border border-yellow-200 font-medium inline-flex items-center gap-1">
+                                                <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>
+                                                Bot đang Add
+                                            </span>
+                                        ) : lead.status === 'scraped' || lead.status === 'pending_manual_review' ? (
+                                            <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full text-xs border border-slate-300 font-medium inline-flex items-center gap-1">
+                                                <span className="w-1.5 h-1.5 bg-slate-500 rounded-full"></span>
+                                                Chỉ Vơ Vét Data (Chưa Add)
+                                            </span>
+                                        ) : (
+                                            <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs border border-emerald-200 font-medium inline-flex items-center gap-1">
+                                                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span>
+                                                {lead.status}
+                                            </span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <button
@@ -132,7 +223,7 @@ export default function LeadsPage() {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={5} className="px-6 py-10 text-center text-slate-500 italic">
+                                <td colSpan={6} className="px-6 py-10 text-center text-slate-500 italic">
                                     Chưa có dữ liệu. Hãy chạy Bot để săn khách hàng!
                                 </td>
                             </tr>

@@ -372,6 +372,7 @@ function TabQueue() {
         const map: any = {
             'execute_search_add.js': '🔍 Săn Khách Mới',
             'execute_profile_add.js': '🎯 Cướp Khách Đối Thủ',
+            'execute_sniper_add.js': '🚀 Bắn Tỉa Mục Tiêu',
             'group_finder.js': '👥 Quét Hội Nhóm',
             'invite_friend_page.js': '📩 Mời Bạn Bè',
             'defense_engine.js': '🛡️ Lá Chắn Ảo',

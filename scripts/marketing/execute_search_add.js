@@ -14,11 +14,28 @@ async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function executeSearchAndAdd(rawCommand, maxAddsPerKeyword = 5) {
+async function executeSearchAndAdd(rawCommand) {
     console.log(`[EXEC] Received Command: "${rawCommand}"`);
 
+    let rawString = rawCommand;
+    let maxAddsPerKeyword = 5; // Default is lower for search to distribute across keywords
+    let botAction = 'auto_add';
+    let botSpeed = 'normal';
+
+    try {
+        if (rawString.startsWith('{')) {
+            const config = JSON.parse(rawString);
+            rawString = config.url || ""; // For search, `url` field contains the keywords
+            if (config.limit) maxAddsPerKeyword = config.limit;
+            if (config.action) botAction = config.action;
+            if (config.speed) botSpeed = config.speed;
+        }
+    } catch (e) {
+        console.log(`[EXEC] Parse lỗi, chạy chế độ Mặc Định.`);
+    }
+
     // 1. Split Keywords
-    const keywords = rawCommand.split(',').map(k => k.trim()).filter(k => k.length > 0);
+    const keywords = rawString.split(',').map(k => k.trim()).filter(k => k.length > 0);
     console.log(`[EXEC] Parsed Keywords (${keywords.length}):`, keywords);
 
     await logAction('search', 'info', `Nhận lệnh tìm kiếm: ${keywords.join(', ')}`);
@@ -26,8 +43,9 @@ async function executeSearchAndAdd(rawCommand, maxAddsPerKeyword = 5) {
     const browser = await launchBrowser();
     const page = await browser.newPage();
 
+    let totalAdded = 0; // For global coffee break tracking
+
     try {
-        // Loop through each keyword
         for (const keyword of keywords) {
             console.log(`[EXEC] >>> Processing Keyword: "${keyword}"`);
             await logAction('search', 'info', `🔍 Đang tìm nhóm đối tượng: "${keyword}"`);
@@ -41,10 +59,11 @@ async function executeSearchAndAdd(rawCommand, maxAddsPerKeyword = 5) {
 
             // 3. Scroll to load results
             console.log(`[EXEC] Scrolling...`);
-            await page.evaluate(() => window.scrollBy(0, 1000));
-            await sleep(2000);
-            await page.evaluate(() => window.scrollBy(0, 1000));
-            await sleep(2000);
+            const scrollTimes = Math.max(2, Math.ceil(maxAddsPerKeyword / 5));
+            for(let i=0; i<scrollTimes; i++) {
+                await page.evaluate(() => window.scrollBy(0, 800));
+                await sleep(2000);
+            }
 
             // 4. Scan & Click
             const buttonHandles = await page.$$('div[role="button"]');
@@ -64,24 +83,21 @@ async function executeSearchAndAdd(rawCommand, maxAddsPerKeyword = 5) {
                         let url = 'Unknown';
                         let name = 'Facebook User';
                         
-                        // 1. Lên thử Tên từ aria-label (Thường form là "Thêm [Tên] làm bạn bè" hoặc "Add [Name] as a friend")
+                        // 1. Lên thử Tên từ aria-label
                         const btnAria = btn.getAttribute('aria-label') || '';
                         const nameMatch = btnAria.match(/(?:Thêm|Add) (.+?) (?:làm bạn bè|as a friend)/i);
                         if (nameMatch && nameMatch[1]) {
                             name = nameMatch[1].trim();
                         }
                         
-                        // 2. Thuật toán leo cây DOM tối đa 12 bậc để tìm thẻ <a> chứa Link (và Name nếu Cần)
                         let container = btn.parentElement;
                         let safeGuard = 0;
                         
                         while (container && safeGuard < 12) {
                             const links = container.querySelectorAll('a');
                             for (const link of links) {
-                                // Lọc các link rác
                                 if (link.href && !link.href.includes('/friends/') && !link.href.includes('search') && link.href.includes('facebook.com')) {
-                                    url = link.href.split('?')[0]; // Lấy link gốc bỏ query
-                                    // Backup lấy Tên nếu aria-label thất bại
+                                    url = link.href.split('?')[0]; 
                                     if (name === 'Facebook User' && link.innerText && link.innerText.trim().length > 1) {
                                         name = link.innerText.trim();
                                     }
@@ -100,30 +116,50 @@ async function executeSearchAndAdd(rawCommand, maxAddsPerKeyword = 5) {
                         console.log(`[EXEC] 🎯 Đã khóa rà mục tiêu: ${profileData.name} | ${profileData.url}`);
 
                         try {
-                            // JS Cưỡng bách click để xuyên qua màng bọc/Overlay
-                            await page.evaluate(el => el.click(), btnHandle);
                             addedCount++;
+                            totalAdded++;
 
-                            await logAction('search', 'success', `Đã gửi lời mời: ${profileData.name}`, {
-                                profile_url: profileData.url
-                            });
-
-                            await saveLead({
-                                source: `fb_search: ${keyword}`,
-                                name: profileData.name,
-                                profile_url: profileData.url
-                            });
-
-                            // --- CHỐNG SPAM: COFFEE BREAK ---
-                            if (addedCount % 3 === 0) {
-                                const longWait = 45000 + Math.random() * 30000; // 45-75s
-                                console.log(`[EXEC] ☕ Đã Add ${addedCount} người. Tạm nghỉ giải lao ${Math.round(longWait/1000)}s chống Checkpoint...`);
-                                await sleep(longWait);
+                            if (botAction === 'scrape_only') {
+                                await saveLead({
+                                    source: `fb_search: ${keyword}`,
+                                    name: profileData.name,
+                                    profile_url: profileData.url
+                                });
+                                console.log(`[EXEC] 🕵️ Đã Vơ vét (Không Click): ${profileData.name}`);
                             } else {
-                                const shortWait = 15000 + Math.random() * 10000; // 15-25s
-                                console.log(`[EXEC] ⏳ Chờ ${Math.round(shortWait/1000)}s cho nhịp tay tự nhiên...`);
-                                await sleep(shortWait);
+                                // JS Cưỡng bách click
+                                await page.evaluate(el => el.click(), btnHandle);
+
+                                await logAction('search', 'success', `Đã gửi lời mời: ${profileData.name}`, {
+                                    profile_url: profileData.url
+                                });
+
+                                await saveLead({
+                                    source: `fb_search: ${keyword}`,
+                                    name: profileData.name,
+                                    profile_url: profileData.url
+                                });
+                                
+                                console.log(`[EXEC] 🎯 Đã Click Add: ${profileData.name}`);
+
+                                // Speed Control
+                                if (botSpeed === 'fast') {
+                                    await sleep(3000 + Math.random() * 2000);
+                                } else if (botSpeed === 'slow') {
+                                    const safeWait = 35000 + Math.random() * 20000;
+                                    await sleep(safeWait);
+                                } else {
+                                    if (totalAdded % 3 === 0) {
+                                        const longWait = 45000 + Math.random() * 30000; 
+                                        console.log(`[EXEC] ☕ Tạm nghỉ giải lao ${Math.round(longWait/1000)}s...`);
+                                        await sleep(longWait);
+                                    } else {
+                                        const shortWait = 15000 + Math.random() * 10000; 
+                                        await sleep(shortWait);
+                                    }
+                                }
                             }
+
                         } catch (e) {
                             console.log(`[EXEC] ❌ Click Failed: ${e.message}`);
                         }
@@ -134,6 +170,8 @@ async function executeSearchAndAdd(rawCommand, maxAddsPerKeyword = 5) {
             if (addedCount === 0) {
                 console.log(`[EXEC] No new friends added for "${keyword}".`);
                 await logAction('search', 'warning', `Không tìm thấy người mới cho từ khóa: "${keyword}"`);
+            } else if (botAction === 'scrape_only') {
+                await logAction('search', 'info', `[Thành công] Đã Vơ Vét ${addedCount} khách từ khóa ${keyword}.`);
             }
 
             // Gap between keywords
