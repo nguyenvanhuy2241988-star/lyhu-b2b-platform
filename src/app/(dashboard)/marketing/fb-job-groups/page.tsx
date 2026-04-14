@@ -21,6 +21,7 @@ const EMPTY_FORM: Partial<TelesalesFbGroup> = {
     member_count: 0,
     notes: "",
     group_type: "job",
+    requires_approval: false,
 };
 
 export default function FbJobGroupsPage() {
@@ -182,6 +183,7 @@ export default function FbJobGroupsPage() {
             member_count: group.member_count,
             notes: group.notes || "",
             group_type: 'job',
+            requires_approval: group.requires_approval,
         });
         setShowModal(true);
     };
@@ -449,12 +451,45 @@ export default function FbJobGroupsPage() {
                                             </span>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(group.status)}`}>
-                                                {getStatusLabel(group.status)}
-                                            </span>
+                                            <div className="flex flex-col gap-1.5 items-start">
+                                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(group.status)}`}>
+                                                    {getStatusLabel(group.status)}
+                                                </span>
+                                                {group.status === 'active' && (
+                                                    <button 
+                                                        onClick={async () => {
+                                                            try {
+                                                                const newVal = !group.requires_approval;
+                                                                await updateTelesalesFbGroup(group.id, { requires_approval: newVal });
+                                                                setGroups(groups.map(g => g.id === group.id ? { ...g, requires_approval: newVal } : g));
+                                                            } catch (e) {
+                                                                toast.error("Lỗi cập nhật");
+                                                            }
+                                                        }}
+                                                        title="Click để chuyển đổi chế độ đăng bài"
+                                                        className={`text-[10px] px-1.5 py-0.5 rounded border transition-all ${
+                                                            group.requires_approval 
+                                                            ? 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' 
+                                                            : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                                        }`}
+                                                    >
+                                                        {group.requires_approval ? '🛡️ Kiểm duyệt' : '⚡ Tự do'}
+                                                    </button>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-4 py-3">
-                                            <StarRating value={group.quality_rating || 0} readonly />
+                                            <StarRating 
+                                                value={group.quality_rating || 0} 
+                                                onChange={async (val) => {
+                                                    try {
+                                                        await updateTelesalesFbGroup(group.id, { quality_rating: val });
+                                                        setGroups(groups.map(g => g.id === group.id ? { ...g, quality_rating: val } : g));
+                                                    } catch (e) {
+                                                        toast.error("Lỗi cập nhật đánh giá");
+                                                    }
+                                                }}
+                                            />
                                         </td>
                                         <td className="px-4 py-3 text-right">
                                             {group.member_count > 0 ? (
@@ -596,8 +631,16 @@ export default function FbJobGroupsPage() {
                                             placeholder="Ví dụ: Tuyển dụng Công nhân Hà Nội..."
                                         />
                                     </div>
-
-                            <div>
+                                    <label className="flex items-center gap-2 mt-2 cursor-pointer w-fit">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={formData.requires_approval || false} 
+                                            onChange={e => setFormData({ ...formData, requires_approval: e.target.checked })}
+                                            className="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500"
+                                        />
+                                        <span className="text-sm text-gray-700 font-medium">🛡️ Nhóm yêu cầu Quản trị viên duyệt bài</span>
+                                    </label>
+                                    <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Link nhóm</label>
                                 <input
                                     type="url"

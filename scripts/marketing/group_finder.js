@@ -210,7 +210,33 @@ async function executeGroupSearch() {
                             const cleanUrl = linkEl.href.split('?')[0];
                             const name = linkEl.innerText.trim();
                             
-                            return { url: cleanUrl, name: name };
+                            // Phân tích Text chung của khung thẻ để bắt ra Số Lượng Thành Viên
+                            // FB Việt chuộng ghi: "1,4K thành viên", "14K member", "25 Tr thành viên"...
+                            let member_count = 0;
+                            try {
+                                const fullText = curr.innerText || '';
+                                // Tìm mẫu: số có thể kèm phẩy/chấm theo sau là K, Tr, M, T và chữ thành viên / member
+                                const memberMatch = fullText.match(/([\d\.,\s]+)(K|M|Tr|T|k|m)?\s*(thành viên|members?)/i);
+                                if (memberMatch) {
+                                    let numStr = memberMatch[1].replace(/,/g, '.').replace(/\s/g, ''); // VD: '1,4' -> '1.4'
+                                    let rawNum = parseFloat(numStr);
+                                    let multiplierStr = (memberMatch[2] || '').toLowerCase();
+                                    
+                                    if (multiplierStr === 'k') rawNum *= 1000;
+                                    else if (multiplierStr === 'm' || multiplierStr === 'tr') rawNum *= 1000000;
+                                    else if (multiplierStr === 't') rawNum *= 1000000000;
+                                    // Nếu không có K/M/Tr thì là con số mộc, do JS parseFloat đã bỏ dấu phẩy ngăn hàng ngàn, ta xài replace dấu . trước đó
+                                    else {
+                                        rawNum = parseInt(memberMatch[1].replace(/[\.,\s]/g, ''));
+                                    }
+                                    
+                                    member_count = Math.floor(rawNum);
+                                }
+                            } catch (e) {
+                                // Ignore parse error
+                            }
+                            
+                            return { url: cleanUrl, name: name, member_count: member_count };
                         }, btn);
 
                         if (!groupMeta || !groupMeta.url) {
@@ -265,6 +291,7 @@ async function executeGroupSearch() {
                                 category: targetGroupType === 'job' ? 'general_job' : 'other',
                                 status: 'active',
                                 group_type: targetGroupType,
+                                member_count: Math.max(0, groupMeta.member_count || 0),
                                 notes: `Auto Mined (Keyword: ${keyword})`
                             });
                             

@@ -627,6 +627,7 @@ export interface TelesalesFbGroup {
     created_at?: string;
     updated_at?: string;
     group_type: 'sales' | 'job';
+    requires_approval?: boolean;
     // Joined fields
     added_by_name?: string;
     post_count?: number;
