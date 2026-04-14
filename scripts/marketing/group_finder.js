@@ -141,11 +141,18 @@ async function executeGroupSearch() {
                     await logAction('search', 'success', `Đã xin tham gia nhánh: ${link.split('/').pop()?.slice(0,10)}...`);
                     joinedCount++;
                     
-                    // Không chờ nếu là nhóm cuối cùng
+                    // Trạm nghỉ ngơi chống Spam
                     if (joinedCount < limit) {
-                        const waitTime = rdn(internalDelay * 1000, (internalDelay + 5) * 1000);
-                        console.log(`[GROUP] ⏳ Nghỉ ngơi ${Math.round(waitTime/1000)}s tránh bị Checkpoint...`);
-                        await delay(waitTime);
+                        if (joinedCount % 3 === 0) {
+                            const longWait = rdn(45000, 75000); // 45-75s break
+                            console.log(`[GROUP] ☕ Đã join 3 nhóm liên tục. Giải lao ${Math.round(longWait/1000)}s để qua mặt bộ lọc Spam...`);
+                            await delay(longWait);
+                        } else {
+                            // Tăng delay ngẫu nhiên lên cao hơn chút
+                            const waitTime = rdn(internalDelay * 1000, (internalDelay + 15) * 1000);
+                            console.log(`[GROUP] ⏳ Giãn cách an toàn ${Math.round(waitTime/1000)}s trước khi xin tiếp...`);
+                            await delay(waitTime);
+                        }
                     }
                 } else {
                     console.log(`[GROUP] ❌ Bỏ qua: Không tìm thấy nút Xin Tham Gia (Hoặc đã Join từ trước).`);
@@ -182,22 +189,35 @@ async function executeGroupSearch() {
                     try {
                         console.log(`[GROUP] 🖱️ Chộp được 1 Hội Nhóm tiềm năng...`);
                         
-                        // Bước 1: Trích xuất Tên và Link nhóm
+                        // Bước 1: Trích xuất Tên và Link nhóm bằng thuật toán leo cây DOM
                         const groupMeta = await page.evaluate((elBtn) => {
-                            // Tìm thẻ cha chứa nút bấm
-                            const card = elBtn.closest('div.x1yztbdb') || elBtn.parentElement?.parentElement?.parentElement;
-                            if (!card) return null;
+                            let curr = elBtn;
+                            let linkEl = null;
+                            // Leo lên tối đa 12 bậc (các lớp áo của FB rất dày)
+                            for (let i = 0; i < 12; i++) {
+                                if (!curr) break;
+                                // Tìm tất cả các thẻ <a> bên trong scope hiện tại
+                                const links = Array.from(curr.querySelectorAll('a[href*="/groups/"]'));
+                                // Lọc lấy Link chứa Tên Nhóm (Thường có text dài hơn 3 ký tự)
+                                linkEl = links.find(a => a.innerText && a.innerText.trim().length > 3);
+                                if (linkEl) break;
+                                curr = curr.parentElement;
+                            }
                             
-                            // Tìm thẻ A link tới nhóm
-                            const linkEl = card.querySelector('a[href*="/groups/"]');
                             if (!linkEl) return null;
                             
                             // Lọc lấy URL sạch: https://www.facebook.com/groups/12345/
                             const cleanUrl = linkEl.href.split('?')[0];
-                            const name = linkEl.innerText || `Nhóm Tự Động ${Math.floor(Math.random()*10000)}`;
+                            const name = linkEl.innerText.trim();
                             
                             return { url: cleanUrl, name: name };
                         }, btn);
+
+                        if (!groupMeta || !groupMeta.url) {
+                            console.log(`[GROUP] ⚠ Không thể bóc tách Tên/Link nhóm này vì cấu trúc dị biệt. Vẫn tiến hành tham gia mù...`);
+                        } else {
+                            console.log(`[GROUP] 🏷️ Đã quét được Data: ${groupMeta.name} | ${groupMeta.url}`);
+                        }
 
                         // Bước 2: Chống trùng (Check Database)
                         let skipJoin = false;
@@ -252,10 +272,18 @@ async function executeGroupSearch() {
                         }
 
                         joinedCount++;
+                        // Trạm nghỉ ngơi chống Spam
                         if (joinedCount < limit) {
-                            const waitTime = rdn(internalDelay * 1000, (internalDelay + 5) * 1000);
-                            console.log(`[GROUP] ⏳ Chờ ${Math.round(waitTime/1000)}s ngụy trang người thật...`);
-                            await delay(waitTime);
+                            if (joinedCount % 3 === 0) {
+                                const longWait = rdn(45000, 75000); // 45-75s break
+                                console.log(`[GROUP] ☕ Đã join 3 nhóm liên tục. Giải lao ${Math.round(longWait/1000)}s để qua mặt bộ lọc Spam...`);
+                                await delay(longWait);
+                            } else {
+                                // Tăng delay ngẫu nhiên lên cao hơn chút
+                                const waitTime = rdn(internalDelay * 1000, (internalDelay + 15) * 1000);
+                                console.log(`[GROUP] ⏳ Giãn cách an toàn ${Math.round(waitTime/1000)}s trước khi xin tiếp...`);
+                                await delay(waitTime);
+                            }
                         }
                     } catch (e) {
                          console.log(`[GROUP] ⚠ Group này bị lỗi giao diện, Skip.`);
