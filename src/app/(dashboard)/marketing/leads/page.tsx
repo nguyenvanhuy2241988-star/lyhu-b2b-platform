@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabaseClient";
-import { Trash2, ExternalLink, RefreshCcw, User, Loader2, UserPlus } from "lucide-react";
+import { Trash2, ExternalLink, RefreshCcw, User, Loader2, UserPlus, Radar } from "lucide-react";
 import dayjs from "dayjs";
 import 'dayjs/locale/vi';
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ export default function LeadsPage() {
     const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSniperActive, setIsSniperActive] = useState(false);
+    const [isRadarActive, setIsRadarActive] = useState(false);
     const supabase = createClient();
 
     const fetchLeads = async () => {
@@ -85,6 +86,36 @@ export default function LeadsPage() {
         }
     };
 
+    const handleExecuteRadar = async () => {
+        if (selectedLeads.length === 0) return;
+        setIsRadarActive(true);
+        const selectedMates = leads.filter(l => selectedLeads.includes(l.id));
+        const urls = selectedMates.map(l => l.profile_url).filter(url => url);
+
+        try {
+            const res = await fetch('/api/marketing/execute', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    scriptName: 'execute_radar_check.js',
+                    args: JSON.stringify(urls),
+                    profileId: null
+                })
+            });
+
+            if (res.ok) {
+                toast.success(`Đã phái Bot Radar đi dò sóng ${urls.length} đối tượng!`);
+                setSelectedLeads([]);
+            } else {
+                toast.error("Lỗi khởi động Radar");
+            }
+        } catch (e) {
+            toast.error("Lỗi kết nối Server");
+        } finally {
+            setIsRadarActive(false);
+        }
+    };
+
     const toggleSelect = (id: string) => {
         setSelectedLeads(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
     };
@@ -109,14 +140,24 @@ export default function LeadsPage() {
                 </div>
                 <div className="flex items-center gap-3">
                     {selectedLeads.length > 0 && (
-                        <button
-                            onClick={handleExecuteSniper}
-                            disabled={isSniperActive}
-                            className="flex items-center gap-2 p-2 px-4 bg-orange-500 text-white hover:bg-orange-600 rounded-xl transition-colors font-medium shadow-sm shadow-orange-500/20 disabled:opacity-75"
-                        >
-                            {isSniperActive ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />} 
-                            Duyệt & Bắn Tỉa ({selectedLeads.length})
-                        </button>
+                        <>
+                            <button
+                                onClick={handleExecuteSniper}
+                                disabled={isSniperActive || isRadarActive}
+                                className="flex items-center gap-2 p-2 px-4 bg-orange-500 text-white hover:bg-orange-600 rounded-xl transition-colors font-medium shadow-sm shadow-orange-500/20 disabled:opacity-75"
+                            >
+                                {isSniperActive ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />} 
+                                Duyệt & Bắn Tỉa ({selectedLeads.length})
+                            </button>
+                            <button
+                                onClick={handleExecuteRadar}
+                                disabled={isRadarActive || isSniperActive}
+                                className="flex items-center gap-2 p-2 px-4 bg-blue-500 text-white hover:bg-blue-600 rounded-xl transition-colors font-medium shadow-sm shadow-blue-500/20 disabled:opacity-75"
+                            >
+                                {isRadarActive ? <Loader2 className="w-4 h-4 animate-spin" /> : <Radar className="w-4 h-4" />} 
+                                Tự Dò Radar ({selectedLeads.length})
+                            </button>
+                        </>
                     )}
                     <button
                         onClick={fetchLeads}
@@ -194,15 +235,24 @@ export default function LeadsPage() {
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-center">
-                                        {lead.status === 'pending' ? (
+                                        {lead.status === 'friend' ? (
+                                            <span className="px-2.5 py-1 bg-green-500 text-white rounded-full text-xs font-semibold shadow-sm shadow-green-500/30 inline-flex items-center gap-1">
+                                                ✅ Khách Đã Đồng Ý
+                                            </span>
+                                        ) : lead.status === 'rejected' ? (
+                                            <span className="px-2.5 py-1 bg-red-50 text-red-700 rounded-full text-xs border border-red-200 font-medium inline-flex items-center gap-1">
+                                                <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
+                                                Bị Từ Chối
+                                            </span>
+                                        ) : lead.status === 'pending' ? (
                                             <span className="px-2.5 py-1 bg-yellow-50 text-yellow-700 rounded-full text-xs border border-yellow-200 font-medium inline-flex items-center gap-1">
                                                 <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>
-                                                Bot đang Add
+                                                Đã Add (Chờ đồng ý)
                                             </span>
                                         ) : lead.status === 'scraped' || lead.status === 'pending_manual_review' ? (
                                             <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full text-xs border border-slate-300 font-medium inline-flex items-center gap-1">
                                                 <span className="w-1.5 h-1.5 bg-slate-500 rounded-full"></span>
-                                                Chỉ Vơ Vét Data (Chưa Add)
+                                                Chỉ Vơ Vét Data
                                             </span>
                                         ) : (
                                             <span className="px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full text-xs border border-emerald-200 font-medium inline-flex items-center gap-1">

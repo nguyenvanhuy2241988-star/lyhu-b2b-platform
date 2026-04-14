@@ -67,9 +67,29 @@ async function saveLead(leadData) {
             created_at: new Date().toISOString()
         };
 
-        const { error } = await supabase
+        // Anti-Duplicate Check on CRM Database Layer
+        const { data: existing } = await supabase
             .from('marketing_leads_staging')
-            .insert(payload);
+            .select('id')
+            .eq('profile_url', leadData.profile_url)
+            .limit(1);
+
+        let error;
+        if (existing && existing.length > 0) {
+            // Update instead of insert if they scrape an existing person
+            const res = await supabase
+                .from('marketing_leads_staging')
+                .update({ 
+                    name: leadData.name !== 'Facebook User' ? leadData.name : undefined // Only update name if it's not generic
+                })
+                .eq('id', existing[0].id);
+            error = res.error;
+        } else {
+            const res = await supabase
+                .from('marketing_leads_staging')
+                .insert(payload);
+            error = res.error;
+        }
 
         if (error) {
             console.error("⚠️ [LOGGER] Save Lead Error:", error.message);

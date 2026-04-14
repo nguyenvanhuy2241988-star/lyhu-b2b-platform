@@ -10,6 +10,7 @@ export async function POST(req: Request) {
             'execute_search_add.js',
             'execute_profile_add.js',
             'execute_sniper_add.js',
+            'execute_radar_check.js',
             'group_finder.js',
             'invite_friend_page.js',
             'defense_engine.js',
