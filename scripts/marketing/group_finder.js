@@ -5,7 +5,7 @@
  */
 
 const { launchBrowser, delay, rdn } = require('./setup_browser');
-const { logAction } = require('./supabase_logger');
+const { logAction, supabase } = require('./supabase_logger');
 
 async function answerGroupQuestions(page) {
     // Nếu có popup xuất hiện, tìm các form hỏi đáp và điền "Đồng ý"
@@ -68,6 +68,7 @@ async function executeGroupSearch() {
         let mode = 'keyword';
         let targetLinks = [];
         let keyword = rawArg;
+        let targetGroupType = 'sales';
         let limit = 5;
         let internalDelay = 10;
         
@@ -79,7 +80,8 @@ async function executeGroupSearch() {
             if (parts[3]) internalDelay = parseInt(parts[3].trim()) || 10;
         } else if (rawArg.includes('|')) {
             const parts = rawArg.split('|');
-            keyword = parts[0].trim() || parts[1]?.trim() || "Chợ sỉ kinh doanh";
+            keyword = parts[0].trim() || "Chợ sỉ kinh doanh";
+            targetGroupType = parts[1]?.trim() || "sales"; // Extract targetGroupType
             if (parts[2]) limit = parseInt(parts[2].trim()) || 5;
             if (parts[3]) internalDelay = parseInt(parts[3].trim()) || 10;
         }
@@ -178,7 +180,45 @@ async function executeGroupSearch() {
                 // Lọc những thẻ có nút Tham gia (chưa là member)
                 if (txt && (txt === 'Tham gia' || txt === 'Join' || txt === 'Tham gia nhóm' || txt === 'Join group')) {
                     try {
-                        console.log(`[GROUP] 🖱️ Chộp được 1 Hội Nhóm tiềm năng... Bấm Tham Gia...`);
+                        console.log(`[GROUP] 🖱️ Chộp được 1 Hội Nhóm tiềm năng...`);
+                        
+                        // Bước 1: Trích xuất Tên và Link nhóm
+                        const groupMeta = await page.evaluate((elBtn) => {
+                            // Tìm thẻ cha chứa nút bấm
+                            const card = elBtn.closest('div.x1yztbdb') || elBtn.parentElement?.parentElement?.parentElement;
+                            if (!card) return null;
+                            
+                            // Tìm thẻ A link tới nhóm
+                            const linkEl = card.querySelector('a[href*="/groups/"]');
+                            if (!linkEl) return null;
+                            
+                            // Lọc lấy URL sạch: https://www.facebook.com/groups/12345/
+                            const cleanUrl = linkEl.href.split('?')[0];
+                            const name = linkEl.innerText || `Nhóm Tự Động ${Math.floor(Math.random()*10000)}`;
+                            
+                            return { url: cleanUrl, name: name };
+                        }, btn);
+
+                        // Bước 2: Chống trùng (Check Database)
+                        let skipJoin = false;
+                        if (groupMeta && groupMeta.url && supabase) {
+                            try {
+                                const { data: existingGroup } = await supabase
+                                    .from('telesales_fb_groups')
+                                    .select('id')
+                                    .eq('link', groupMeta.url)
+                                    .single();
+                                
+                                if (existingGroup) {
+                                    console.log(`[GROUP] ℹ️ Bỏ qua Group: ${groupMeta.name} (Đã có sẵn trên CRM)`);
+                                    skipJoin = true;
+                                }
+                            } catch (e) { } // Ignore read error, proceed anyway
+                        }
+                        
+                        if (skipJoin) continue; // Bỏ qua nhóm trùng, không tăng biến đếm, chạy tiếp vòng lặp
+
+                        console.log(`[GROUP] 🖱️ Bắt đầu xin tham gia: ${groupMeta?.name || 'Nhóm mới'}...`);
                         await btn.scrollIntoView({ block: 'center' });
                         await delay(1000);
                         try {
@@ -191,9 +231,26 @@ async function executeGroupSearch() {
                         
                         await answerGroupQuestions(page);
 
-                        console.log(`[GROUP] ✅ Đã chốt hạ xin tham gia (Từ khóa: ${keyword})!`);
-                        await logAction('search', 'success', `Đã xin Tham gia 1 nhóm thuộc bộ từ khóa: ${keyword}`);
+                        console.log(`[GROUP] ✅ Đã xin tham gia: ${groupMeta?.name || keyword}!`);
+                        await logAction('search', 'success', `Đã xin tham gia Nhóm: ${groupMeta?.name || 'Nhóm ẩn danh'} `);
                         
+                        // Bước 3: Đẩy thẳng lên CRM nếu trích xuất thành công
+                        if (groupMeta && groupMeta.url && supabase) {
+                            console.log(`[GROUP] ☁️ Đang đồng bộ Nhóm lên kho CRM (${targetGroupType.toUpperCase()}) ...`);
+                            // Bỏ 'www' hoặc domain locale để quy chuẩn (Tùy chọn)
+                            await supabase.from('telesales_fb_groups').insert({
+                                name: groupMeta.name,
+                                link: groupMeta.url,
+                                platform: 'facebook_group',
+                                category: targetGroupType === 'job' ? 'general_job' : 'other',
+                                status: 'active',
+                                group_type: targetGroupType,
+                                notes: `Auto Mined (Keyword: ${keyword})`
+                            }).catch(err => console.log('Lưu CRM lỗi (Duplicate?):', err.message));
+                            
+                            console.log(`[GROUP] ☁️ Đồng bộ CRM Thành công!`);
+                        }
+
                         joinedCount++;
                         if (joinedCount < limit) {
                             const waitTime = rdn(internalDelay * 1000, (internalDelay + 5) * 1000);

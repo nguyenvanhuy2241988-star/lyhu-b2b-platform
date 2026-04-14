@@ -65,6 +65,12 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title, def
         let finalArg = arg;
 
         // Auto fetch CRM Groups if enabled
+        if (!useCrmGroups && scriptName === 'group_finder.js') {
+            const parts = finalArg.split('|');
+            parts[1] = targetGroupType;
+            finalArg = parts.join(' | ');
+        }
+
         if (useCrmGroups && ['auto_post_group.js', 'auto_comment_group.js', 'group_finder.js'].includes(scriptName)) {
             // Chống trùng lặp: Lấy danh sách nhóm ưu tiên Nhóm Mới (Null) hoặc Nhóm đã chạy lâu nhất lên đầu
             const { data, error } = await supabase.from('telesales_fb_groups')
@@ -226,17 +232,35 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title, def
                             </label>
                         </div>
                         {!useCrmGroups && (
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Chủ đề Hội Nhóm để tìm kiếm mới</label>
-                                <input
-                                    type="text"
-                                    className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
-                                    placeholder="VD: Chợ sỉ quần áo, Tìm việc làm..."
-                                    value={arg}
-                                    onChange={(e) => setArg(e.target.value)}
-                                    autoFocus
-                                />
-                                <p className="text-xs text-slate-500 mt-1">Bot sẽ tìm kiếm trên Facebook theo từ khóa này và tự động xin vào nhóm.</p>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Chủ đề Hội Nhóm để tìm kiếm mới</label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        placeholder="VD: Chợ sỉ quần áo, Tìm việc làm..."
+                                        value={arg.split('|')[0] ? arg.split('|')[0].trim() : arg}
+                                        onChange={(e) => {
+                                            const parts = arg.split('|');
+                                            parts[0] = e.target.value;
+                                            setArg(parts.join(' | '));
+                                        }}
+                                        autoFocus
+                                    />
+                                    <p className="text-xs text-slate-500 mt-1">Bot sẽ tìm kiếm trên Facebook theo từ khóa này và tự động xin vào nhóm.</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-slate-700">Lưu vào Tệp Nhóm Mục Tiêu</label>
+                                    <select
+                                        value={targetGroupType}
+                                        onChange={(e) => setTargetGroupType(e.target.value as 'sales' | 'job')}
+                                        className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-blue-50/30"
+                                    >
+                                        <option value="sales">🛒 Nhóm Bán Hàng & Kinh Doanh</option>
+                                        <option value="job">💼 Nhóm Việc Làm & Tuyển Dụng</option>
+                                    </select>
+                                    <p className="text-xs text-slate-500 mt-1">Khi Bot xin vào thành công, nó sẽ tự động đồng bộ lên CRM vào danh mục này.</p>
+                                </div>
                             </div>
                         )}
                         {useCrmGroups && (

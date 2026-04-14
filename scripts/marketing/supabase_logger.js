@@ -79,4 +79,4 @@ async function saveLead(leadData) {
     }
 }
 
-module.exports = { logAction, saveLead };
+module.exports = { logAction, saveLead, supabase };
