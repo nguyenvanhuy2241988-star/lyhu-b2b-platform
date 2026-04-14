@@ -685,6 +685,7 @@ export default function FbJobGroupsPage() {
                                     placeholder="Quy tắc nhóm, admin liên hệ, loại tin tuyển dụng phù hợp..."
                                 />
                             </div>
+                                </div>
                             )}
 
                             <div className="pt-4 flex justify-end gap-3">
