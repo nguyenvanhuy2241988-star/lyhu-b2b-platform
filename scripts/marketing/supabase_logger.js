@@ -4,9 +4,8 @@ const { createClient } = require('@supabase/supabase-js');
 
 // Init Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-// Note: In a real backend script we should use SERVICE_ROLE_KEY to bypass RLS, 
-// but for this local tool usage, ANON key with the public RLS policy we created is fine/safer.
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Using SERVICE_ROLE_KEY to bypass RLS because this is a server-side bot worker
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
     console.warn("⚠️ [LOGGER] Missing Supabase Env Vars. Logging disabled.");
