@@ -125,6 +125,7 @@ export default function LeadsPage() {
                         <RefreshCcw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} /> Làm mới
                     </button>
                 </div>
+            </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <table className="w-full text-sm text-left">
