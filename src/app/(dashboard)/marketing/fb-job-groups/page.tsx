@@ -33,6 +33,10 @@ export default function FbJobGroupsPage() {
     const [saving, setSaving] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
+    // Bulk Import
+    const [importMode, setImportMode] = useState<'single' | 'bulk'>('single');
+    const [bulkText, setBulkText] = useState("");
+
     // Filters
     const [filterCategory, setFilterCategory] = useState("all");
     const [filterStatus, setFilterStatus] = useState("all");
@@ -80,6 +84,51 @@ export default function FbJobGroupsPage() {
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (importMode === 'bulk') {
+            const lines = bulkText.split('\n').map(l => l.trim()).filter(Boolean);
+            if (lines.length === 0) {
+                toast.error("Vui lòng dán danh sách link");
+                return;
+            }
+            
+            setSaving(true);
+            try {
+                let successCount = 0;
+                for (const line of lines) {
+                    // Try to extract a URL
+                    const urlMatch = line.match(/(https?:\/\/[^\s]+)/);
+                    if (!urlMatch) continue;
+                    
+                    const url = urlMatch[1];
+                    // Clean URL to base
+                    const cleanUrl = url.split('?')[0];
+                    // Try to get group ID or name from URL for default naming
+                    const pathParts = cleanUrl.split('/').filter(Boolean);
+                    const groupId = pathParts[pathParts.length - 1];
+                    
+                    await createTelesalesFbGroup({ 
+                        name: `[Link] Tự động thêm ${groupId || Math.floor(Math.random()*1000)}`,
+                        link: cleanUrl,
+                        platform: 'facebook_group',
+                        category: formData.category || 'general_job',
+                        status: 'active',
+                        added_by: currentUserId || undefined,
+                        group_type: 'job' 
+                    }).catch(e => console.log('Duplicate or error:', e.message)); // ignore duplicates silently
+                    
+                    successCount++;
+                }
+                toast.success(`Đã thêm hàng loạt ${successCount} nhóm!`);
+                setShowModal(false);
+                resetForm();
+                loadData();
+            } finally {
+                setSaving(false);
+            }
+            return;
+        }
+
         if (!formData.name?.trim()) {
             toast.error("Vui lòng nhập tên nhóm");
             return;
@@ -140,6 +189,8 @@ export default function FbJobGroupsPage() {
     const resetForm = () => {
         setSelectedId(null);
         setFormData(EMPTY_FORM);
+        setBulkText("");
+        setImportMode('single');
     };
 
     const toggleSelect = (id: string) => {
@@ -468,27 +519,83 @@ export default function FbJobGroupsPage() {
             {showModal && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
                     <div className="bg-white animate-in zoom-in-95 duration-200 rounded-2xl shadow-xl w-full max-w-lg overflow-hidden max-h-[90vh] overflow-y-auto">
-                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-emerald-50/50 sticky top-0 z-10">
-                            <h2 className="text-lg font-semibold text-gray-900">
-                                {selectedId ? "Cập nhật Nhóm Việc Làm" : "Thêm Nhóm Việc Làm Mới"}
-                            </h2>
-                            <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
-                                <XCircle className="w-6 h-6" />
-                            </button>
+                        <div className="px-6 py-4 border-b border-gray-100 flex flex-col gap-3 bg-emerald-50/50 sticky top-0 z-10">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-lg font-semibold text-gray-900">
+                                    {selectedId ? "Cập nhật Nhóm Việc Làm" : "Thêm Nhóm Việc Làm Mới"}
+                                </h2>
+                                <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                                    <XCircle className="w-6 h-6" />
+                                </button>
+                            </div>
+                            
+                            {!selectedId && (
+                                <div className="flex bg-white rounded-lg p-1 w-fit border border-emerald-200">
+                                    <button 
+                                        type="button"
+                                        onClick={() => setImportMode('single')}
+                                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${importMode === 'single' ? 'bg-emerald-100 text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-emerald-600'}`}
+                                    >
+                                        Thêm thủ công
+                                    </button>
+                                    <button 
+                                        type="button"
+                                        onClick={() => setImportMode('bulk')}
+                                        className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${importMode === 'bulk' ? 'bg-emerald-100 text-emerald-700 shadow-sm' : 'text-gray-500 hover:text-emerald-600'}`}
+                                    >
+                                        Thêm hàng loạt (Link)
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         <form onSubmit={handleSave} className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Tên nhóm *</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all"
-                                    placeholder="Ví dụ: Tuyển dụng Công nhân Hà Nội..."
-                                />
-                            </div>
+                            {importMode === 'bulk' && !selectedId ? (
+                                <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
+                                    <div className="bg-emerald-50 text-emerald-800 p-3 rounded-xl text-sm border border-emerald-200">
+                                        <h4 className="font-bold flex items-center gap-1 mb-1">💡 Chế độ 1 cú dán - Auto nhập liệu</h4>
+                                        Sếp chỉ việc copy 1 loạt <strong>Đường link (URL) Nhóm Facebook</strong> và dán vào đây. 
+                                        Hệ thống sẽ tự nhận diện Link, loại bỏ chữ thừa và Tự động sinh tên tạm. Sếp có thể tha hồ nhét cho Bot chạy!
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Dán danh sách (Mỗi nhóm 1 dòng) *</label>
+                                        <textarea
+                                            required
+                                            rows={8}
+                                            value={bulkText}
+                                            onChange={(e) => setBulkText(e.target.value)}
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all font-mono text-sm whitespace-pre"
+                                            placeholder={`https://facebook.com/groups/job1\nhttps://facebook.com/groups/job2\n...`}
+                                        />
+                                    </div>
+                                    
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Chọn phân loại chung cho toàn bộ</label>
+                                        <select
+                                            value={formData.category}
+                                            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all bg-white"
+                                        >
+                                            {FB_JOB_GROUP_CATEGORIES.map(c => (
+                                                <option key={c.key} value={c.key}>{c.label}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-4 animate-in slide-in-from-left-4 duration-300">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">Tên nhóm *</label>
+                                        <input
+                                            type="text"
+                                            required={importMode === 'single'}
+                                            value={formData.name}
+                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                            className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 outline-none transition-all"
+                                            placeholder="Ví dụ: Tuyển dụng Công nhân Hà Nội..."
+                                        />
+                                    </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Link nhóm</label>
@@ -578,6 +685,7 @@ export default function FbJobGroupsPage() {
                                     placeholder="Quy tắc nhóm, admin liên hệ, loại tin tuyển dụng phù hợp..."
                                 />
                             </div>
+                            )}
 
                             <div className="pt-4 flex justify-end gap-3">
                                 <button
