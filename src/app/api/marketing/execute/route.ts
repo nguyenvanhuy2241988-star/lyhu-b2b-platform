@@ -8,6 +8,8 @@ export async function POST(req: Request) {
         // Whitelist allowed scripts for security
         const ALLOWED_SCRIPTS = [
             'execute_search_add.js',
+            'execute_profile_add.js',
+            'execute_sniper_add.js',
             'group_finder.js',
             'invite_friend_page.js',
             'defense_engine.js',
