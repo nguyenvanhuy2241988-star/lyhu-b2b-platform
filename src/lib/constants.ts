@@ -291,6 +291,7 @@ export const NAV_ITEMS = {
         { label: "Content & Lịch", href: "/marketing/content", icon: Calendar },
         { label: "Quét Data", href: "/marketing/scraper", icon: Globe },
         { label: "Nhóm FB đăng bài", href: "/marketing/fb-groups", icon: Globe },
+        { label: "Nhóm FB Việc Làm", href: "/marketing/fb-job-groups", icon: Briefcase },
         { label: "Tự động hóa", href: "/marketing/automation", icon: Zap },
         { label: "AI Poster Studio", href: "/marketing/poster-studio", icon: Sparkles },
         { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },

@@ -1,0 +1,14 @@
+@echo off
+title BotTerminal - LYHU Automation
+chcp 65001 > nul
+cd /d "G:\LYHU\Projects\LYHU-app"
+echo --- DEBUG INFO ---
+echo Script: "%scriptPath%"
+echo Args: %safeArgs%
+echo Profile: "%profileFolder%"
+echo CMD Line: node "%scriptPath%" %safeArgs% --profile="%profileFolder%"
+echo --- END DEBUG ---
+node "G:\LYHU\Projects\LYHU-app\scripts\marketing\auto_post_group.js" "https://www.facebook.com/share/g/16zA9QyWdT/,https://www.facebook.com/groups/1044959646705193/,https://www.facebook.com/groups/1207403015963612?locale=vi_VN,https://www.facebook.com/groups/1903871609629493/,https://www.facebook.com/groups/1056507228147057/?__cft__[0]=AZZxhetKebKaQpwOiBGl1oC5KALBvwI9N2LKg4azoQoBGYj8vXxAouy2WghLekZz5sdJlwEM2vxY5a-NZ1oPqrHRydI44_MKx7zLCRRe8qMiPOekM4NGpzCoTsxayHNlTSkrLZhNgCC4M9MpJlAYrZRnIoukcOB5ZBbe-ixjkiT1LQ__tn__=-UC2CP-R,https://www.facebook.com/groups/3668789126769297,https://www.facebook.com/groups/hoitaphoa,https://www.facebook.com/share/g/1DVMTLaGHM/,https://www.facebook.com/groups/299553693980573/?__cft__[0]=AZag_7Nd_isGKLcfbbL0Y2jmbBQsU7kBP-DlvL2hjzbsDiNXlK5zS22ObmqzIyg-GNquuxLjMYr-FiyxzfK4PO1rrUZ722egOLEy7hXkFDykatSNoD394B1gSJRwvtrByFInTIsNkpqNaquj-JyrhPYB7_ASfYnOKTDTTZ8P1EmiCQ__tn__=-UC2CP-R,https://www.facebook.com/groups/1145921666838207/?__cft__[0]=AZZ9GIjxRzRqPNpQZcB8qnjCo9X-RLCeosqrfWbZn8NiNyXdrC86vH3_VVtRdf54rEQMWgQrub_xUJ50bLXv_nKKgTeky-lgzWqUnyMb9m-IeX0tJ5-qbc63E2IpU1ovLsxuME0DRVfD1crPzYk4lPi0EruB3VJjPv5Uz6XKGQ0UXA__tn__=-UC2CP-R,https://www.facebook.com/groups/122699751475735/?__cft__[0]=AZYXRQsFBOx0QPbMyUIquUZ9p_b7JLrMvVaGrXkmzDkWWNlIFcwnn40wNyAPqbBnGNeAehmPlylbiH3rtfVpyNNO7AoWlaC0hOcIU0e_VjzYr_GJ6nkXArf_Uk0db-HBVodV3KGUCPKY6bT240_5Nlup9JzcctVzVYPnMPI9FDYAPcehFW1SrgJEhRkfjtS-tXE__tn__=-UC2CP-R,https://www.facebook.com/groups/494011019734560/?__cft__[0]=AZYo7w8IS34q3kCNTl6QSNrVkNAS_mFNdDVg4xRpS0oJ99OtgCS1ydOB7kk6G0YiC8qZYDbz__PZk-2jqLMSikM6x-j7vcH-ebhcp5nOzzCwvkRqOfLiIXyaSQSYJpPRfjAz_rl4GKQxE0qzdPoTNYQxFpH4gGNGajZXYUExKl7yiQ__tn__=-UC2CP-R,https://www.facebook.com/groups/saleskhanhhoa?locale=vi_VN,https://www.facebook.com/groups/3894432254164147,http://facebook.com/groups/829399272479157/,https://www.facebook.com/groups/1014792898568889/,https://www.facebook.com/share/g/18EjXUE8C1/,https://www.facebook.com/groups/862480625882144,https://www.facebook.com/groups/521022622872638/?__cft__[0]=AZZqTN6XIMXM9FYtGor68jtJUl5x7e4b1KVjtsQ138pzk_x5eusyLYPXy3svRELGGRzoqn0redPRR3GA3Frg8AU-Qo8pnQzf5gBD0_8ePwgDr9PpGot6Iue9_VEx_KgfInouJOnPc9-CRjboHa5oCdB65BBrYQ4f1vnzdoTL-bIzuw__tn__=-UC2CP-R,https://www.facebook.com/groups/1054573446059422/?__cft__[0]=AZZbik_86rWnkTfjYAfDrjpC158YMuw8HPKVGkRj1mqv6Y5QiyBTzbvN0aWhgyhhwGmXnjw-aEr4OXPBKrTPhNpR_bH9AScGy1WXMucRWXoYoC-dvM_3a_3V9O8P9n4v63EJUcs0xdoopr63xX9KIsFBSk-35IwvY4Skc1gF2L0bqw__tn__=-UC2CP-R   CVT    20    360" --profile=".bot_profile_lanlyhu"
+echo.
+echo HOAN THANH - CUA SO SE TU DONG TONG SAU 30 GIAY
+timeout /t 30 >nul

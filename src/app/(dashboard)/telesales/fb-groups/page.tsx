@@ -63,6 +63,7 @@ export default function FbGroupsPage() {
                 getTelesalesFbGroups({
                     category: filterCategory,
                     status: filterStatus,
+                    group_type: 'sales',
                 }),
                 getGroupPostCounts(),
             ]);

@@ -626,6 +626,7 @@ export interface TelesalesFbGroup {
     added_by?: string;
     created_at?: string;
     updated_at?: string;
+    group_type: 'sales' | 'job';
     // Joined fields
     added_by_name?: string;
     post_count?: number;
@@ -642,18 +643,33 @@ export const FB_GROUP_CATEGORIES = [
     { key: 'other', label: 'Khác', color: 'bg-gray-100 text-gray-700' },
 ];
 
+export const FB_JOB_GROUP_CATEGORIES = [
+    { key: 'general_job', label: 'Việc làm chung', color: 'bg-blue-100 text-blue-700' },
+    { key: 'factory_worker', label: 'Công nhân / Nhà máy', color: 'bg-amber-100 text-amber-700' },
+    { key: 'sales_job', label: 'Sales / Kinh doanh', color: 'bg-green-100 text-green-700' },
+    { key: 'driver_shipper', label: 'Tài xế / Shipper', color: 'bg-orange-100 text-orange-700' },
+    { key: 'food_service', label: 'F&B / Nhà hàng / Quán ăn', color: 'bg-purple-100 text-purple-700' },
+    { key: 'office_job', label: 'Văn phòng / Hành chính', color: 'bg-cyan-100 text-cyan-700' },
+    { key: 'local_job', label: 'Việc làm theo Tỉnh/TP', color: 'bg-indigo-100 text-indigo-700' },
+    { key: 'part_time', label: 'Part-time / Thời vụ', color: 'bg-pink-100 text-pink-700' },
+    { key: 'other', label: 'Khác', color: 'bg-gray-100 text-gray-700' },
+];
+
 export const FB_GROUP_STATUSES = [
     { key: 'active', label: 'Đang hoạt động', color: 'bg-green-100 text-green-700' },
     { key: 'archived', label: 'Đã lưu trữ', color: 'bg-gray-100 text-gray-600' },
     { key: 'banned', label: 'Bị cấm đăng', color: 'bg-red-100 text-red-700' },
 ];
 
-export const getTelesalesFbGroups = async (filters?: { category?: string; status?: string; search?: string }) => {
+export const getTelesalesFbGroups = async (filters?: { category?: string; status?: string; search?: string; group_type?: string }) => {
     let query = supabase
         .from('telesales_fb_groups')
         .select('*')
         .order('updated_at', { ascending: false });
 
+    if (filters?.group_type) {
+        query = query.eq('group_type', filters.group_type);
+    }
     if (filters?.category && filters.category !== 'all') {
         query = query.eq('category', filters.category);
     }
@@ -703,6 +719,7 @@ export const createTelesalesFbGroup = async (groupData: Partial<TelesalesFbGroup
             member_count: groupData.member_count || 0,
             notes: groupData.notes || null,
             added_by: groupData.added_by || null,
+            group_type: groupData.group_type || 'sales',
         }]);
 
     if (error) throw error;

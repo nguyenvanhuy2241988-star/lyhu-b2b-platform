@@ -10,15 +10,17 @@ interface BotConfigModalProps {
     onClose: () => void;
     scriptName: string;
     title: string;
+    defaultArg?: string;
 }
 
-export default function BotConfigModal({ isOpen, onClose, scriptName, title }: BotConfigModalProps) {
-    const [arg, setArg] = useState("");
+export default function BotConfigModal({ isOpen, onClose, scriptName, title, defaultArg = "" }: BotConfigModalProps) {
+    const [arg, setArg] = useState(defaultArg);
     const [strategy, setStrategy] = useState<'name' | 'post' | 'commander' | 'suggestion' | 'rival'>('commander'); // Default to NLP Commander
     const [isLoading, setIsLoading] = useState(false);
     
     // Auto-Group Settings
     const [useCrmGroups, setUseCrmGroups] = useState(false);
+    const [targetGroupType, setTargetGroupType] = useState<'sales'|'job'>('sales');
 
     // Multi-profile Support
     const [profiles, setProfiles] = useState<any[]>([]);
@@ -68,6 +70,7 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
             const { data, error } = await supabase.from('telesales_fb_groups')
                 .select('id, link')
                 .eq('status', 'active')
+                .eq('group_type', targetGroupType)
                 .order('last_bot_run_at', { ascending: true, nullsFirst: true });
                 
             if (!error && data && data.length > 0) {
@@ -238,6 +241,17 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
                         )}
                         {useCrmGroups && (
                             <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-slate-700">Tệp Nhóm Mục Tiêu</label>
+                                    <select
+                                        value={targetGroupType}
+                                        onChange={(e) => setTargetGroupType(e.target.value as 'sales' | 'job')}
+                                        className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                    >
+                                        <option value="sales">🛒 Nhóm Bán Hàng & Kinh Doanh</option>
+                                        <option value="job">💼 Nhóm Việc Làm & Tuyển Dụng</option>
+                                    </select>
+                                </div>
                                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl relative">
                                     <p className="text-[12px] text-amber-800 leading-relaxed">
                                         <strong>Chế độ rải Link CRM:</strong> Hệ thống sẽ tự động quét toàn bộ Nhóm trong kho "Quản lý FB CRM" đã gán và lần lượt cho tài khoản bấm Tham gia.
@@ -313,6 +327,19 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title }: B
                                         Tự động lấy Nhóm từ CRM (Module Quản lý Nhóm FB)
                                     </label>
                                 </div>
+                                {useCrmGroups && (
+                                    <div className="space-y-2 pl-6">
+                                        <label className="block text-sm font-medium text-slate-700">Tệp Nhóm Mục Tiêu</label>
+                                        <select
+                                            value={targetGroupType}
+                                            onChange={(e) => setTargetGroupType(e.target.value as 'sales' | 'job')}
+                                            className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-blue-50/30"
+                                        >
+                                            <option value="sales">🛒 Nhóm Bán Hàng & Kinh Doanh</option>
+                                            <option value="job">💼 Nhóm Việc Làm & Tuyển Dụng</option>
+                                        </select>
+                                    </div>
+                                )}
                                 {!useCrmGroups && (
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-1">Đường dẫn FB Group (Tùy chọn)</label>
