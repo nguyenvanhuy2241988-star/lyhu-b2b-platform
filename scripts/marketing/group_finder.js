@@ -258,7 +258,7 @@ async function executeGroupSearch() {
                         if (groupMeta && groupMeta.url && supabase) {
                             console.log(`[GROUP] ☁️ Đang đồng bộ Nhóm lên kho CRM (${targetGroupType.toUpperCase()}) ...`);
                             // Bỏ 'www' hoặc domain locale để quy chuẩn (Tùy chọn)
-                            await supabase.from('telesales_fb_groups').insert({
+                            const { error } = await supabase.from('telesales_fb_groups').insert({
                                 name: groupMeta.name,
                                 link: groupMeta.url,
                                 platform: 'facebook_group',
@@ -266,9 +266,13 @@ async function executeGroupSearch() {
                                 status: 'active',
                                 group_type: targetGroupType,
                                 notes: `Auto Mined (Keyword: ${keyword})`
-                            }).catch(err => console.log('Lưu CRM lỗi (Duplicate?):', err.message));
+                            });
                             
-                            console.log(`[GROUP] ☁️ Đồng bộ CRM Thành công!`);
+                            if (error) {
+                                console.log(`[GROUP] ❌ Lưu CRM lỗi: ${error.message}`);
+                            } else {
+                                console.log(`[GROUP] ☁️ Đồng bộ CRM Thành công!`);
+                            }
                         }
 
                         joinedCount++;
