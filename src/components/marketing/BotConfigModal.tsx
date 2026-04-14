@@ -351,6 +351,27 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title, def
                         <p className="text-xs text-slate-500 mt-1">Nên để dưới 50 người/lần để tránh Checkpoint.</p>
                     </div>
                 );
+            case 'execute_profile_add.js':
+                return (
+                    <div className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">
+                                Đường link Facebook cá nhân của Khách hàng/Đối thủ
+                            </label>
+                            <input
+                                type="text"
+                                className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none"
+                                placeholder="VD: https://www.facebook.com/zuck"
+                                value={arg}
+                                onChange={(e) => setArg(e.target.value)}
+                                autoFocus
+                            />
+                            <p className="text-xs text-slate-500 mt-2">
+                                <b>Lưu ý: </b>Bot sẽ tự động truy cập vào trang cá nhân này và quét danh sách bạn bè để xin kết bạn. Nếu người này khóa bảo mật danh sách bạn bè, bot sẽ chỉ quét được những "Bạn bè chung" (nếu có).
+                            </p>
+                        </div>
+                    </div>
+                );
             case 'auto_post_profile.js':
             case 'auto_post_group.js':
             case 'auto_comment_group.js':

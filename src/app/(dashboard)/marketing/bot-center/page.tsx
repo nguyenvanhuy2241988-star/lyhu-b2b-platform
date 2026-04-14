@@ -96,11 +96,18 @@ function TabCommands({ onRunScript }: { onRunScript: (s: any) => void }) {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <CommandCard
-                        title="Săn Khách Hàng"
+                        title="Săn Khách Mới"
                         desc="Tìm & Kết bạn theo từ khóa"
                         icon={<Search className="w-5 h-5" />}
                         color="blue"
-                        onClick={() => onRunScript({ name: 'execute_search_add.js', title: 'Săn Khách Hàng' })}
+                        onClick={() => onRunScript({ name: 'execute_search_add.js', title: 'Săn Khách Mới' })}
+                    />
+                    <CommandCard
+                        title="Cướp Khách Đối Thủ"
+                        desc="Kết bạn từ tệp Profile mục tiêu"
+                        icon={<UserPlus className="w-5 h-5" />}
+                        color="orange"
+                        onClick={() => onRunScript({ name: 'execute_profile_add.js', title: 'Cướp Khách Đối Thủ' })}
                     />
                     <CommandCard
                         title="Quét Hội Nhóm"
@@ -363,7 +370,8 @@ function TabQueue() {
 
     const formatScript = (script: string) => {
         const map: any = {
-            'execute_search_add.js': '🔍 Săn Khách Hàng',
+            'execute_search_add.js': '🔍 Săn Khách Mới',
+            'execute_profile_add.js': '🎯 Cướp Khách Đối Thủ',
             'group_finder.js': '👥 Quét Hội Nhóm',
             'invite_friend_page.js': '📩 Mời Bạn Bè',
             'defense_engine.js': '🛡️ Lá Chắn Ảo',
