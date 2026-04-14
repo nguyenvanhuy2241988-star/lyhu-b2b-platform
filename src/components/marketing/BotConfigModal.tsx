@@ -261,6 +261,24 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title, def
                                     </select>
                                     <p className="text-xs text-slate-500 mt-1">Khi Bot xin vào thành công, nó sẽ tự động đồng bộ lên CRM vào danh mục này.</p>
                                 </div>
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-slate-700">Chỉ tiêu số lượng muốn tham gia</label>
+                                    <input
+                                        type="number"
+                                        min={1}
+                                        max={30}
+                                        className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        value={arg.split('|')[2] ? parseInt(arg.split('|')[2]) : 5}
+                                        onChange={(e) => {
+                                            const parts = arg.split('|');
+                                            parts[0] = parts[0] || '';
+                                            parts[1] = parts[1] || targetGroupType;
+                                            parts[2] = e.target.value;
+                                            setArg(parts.join(' | '));
+                                        }}
+                                    />
+                                    <p className="text-xs text-slate-500 mt-1">Bot sẽ tự động dừng lại khi đạt được con số này. (Khuyên dùng: 5 - 10 / lần)</p>
+                                </div>
                             </div>
                         )}
                         {useCrmGroups && (
