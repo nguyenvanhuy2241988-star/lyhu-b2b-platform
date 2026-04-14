@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabaseClient";
-import { Trash2, ExternalLink, RefreshCcw } from "lucide-react";
+import { Trash2, ExternalLink, RefreshCcw, User } from "lucide-react";
 import dayjs from "dayjs";
 import 'dayjs/locale/vi';
 import { toast } from "sonner";
@@ -47,66 +47,82 @@ export default function LeadsPage() {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between">
+        <div className="p-6 max-w-[1600px] mx-auto">
+            <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h2 className="text-xl font-bold text-slate-800">Danh Sách Đã Mời</h2>
-                    <p className="text-slate-500">Quản lý những người Bot đã gửi lời mời kết bạn</p>
+                    <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-700 to-teal-600 bg-clip-text text-transparent">
+                        Danh Sách Đã Mời (Leads)
+                    </h1>
+                    <p className="text-slate-500 mt-1 text-sm">Quản lý kho dữ liệu Khách hàng mà hệ thống Bot Săn Khách đã gửi lời mời chặn đkết bạn</p>
                 </div>
                 <button
                     onClick={fetchLeads}
-                    className="p-2 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                    className="flex items-center gap-2 p-2 px-4 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl transition-colors font-medium border border-emerald-200"
                 >
-                    <RefreshCcw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+                    <RefreshCcw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} /> Làm mới
                 </button>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b">
+                    <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b">
                         <tr>
-                            <th className="px-6 py-3">Thời gian</th>
-                            <th className="px-6 py-3">Nguồn</th>
-                            <th className="px-6 py-3">Profile Link</th>
-                            <th className="px-6 py-3">Trạng thái</th>
-                            <th className="px-6 py-3 text-right">Hành động</th>
+                            <th className="px-6 py-4 font-semibold">Tên Khách Hàng</th>
+                            <th className="px-6 py-4 font-semibold">Thời gian thêm</th>
+                            <th className="px-6 py-4 font-semibold">Nguồn / Từ khóa</th>
+                            <th className="px-6 py-4 font-semibold text-center">Trạng thái Bot</th>
+                            <th className="px-6 py-4 font-semibold text-right">Gỡ bỏ</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {leads.length > 0 ? (
                             leads.map((lead) => (
-                                <tr key={lead.id} className="hover:bg-slate-50">
-                                    <td className="px-6 py-4 font-mono text-slate-600">
-                                        {dayjs(lead.created_at).format('DD/MM/YYYY HH:mm')}
+                                <tr key={lead.id} className="hover:bg-slate-50/80 transition-colors group">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                                                <User className="w-5 h-5" />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="font-semibold text-slate-800">
+                                                    {lead.name && lead.name !== 'Facebook User' ? lead.name : 'Khách hàng Ẩn danh'}
+                                                </span>
+                                                {lead.profile_url && (
+                                                    <a
+                                                        href={lead.profile_url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center gap-1 text-[11px] text-emerald-600 hover:text-emerald-700 hover:underline mt-0.5 w-fit"
+                                                    >
+                                                        <ExternalLink className="w-3 h-3" /> Xem trang Facebook
+                                                    </a>
+                                                )}
+                                            </div>
+                                        </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-semibold">
-                                            {lead.source === 'fb_search' ? 'Săn tìm' : lead.source}
+                                        <div className="text-sm text-slate-600 font-medium">
+                                            {dayjs(lead.created_at).format('HH:mm')}
+                                        </div>
+                                        <div className="text-xs text-slate-400">
+                                            {dayjs(lead.created_at).format('DD/MM/YYYY')}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <span className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-xs font-medium border border-slate-200">
+                                            {lead.source === 'fb_search' ? 'Săn theo từ khóa' : lead.source}
                                         </span>
                                     </td>
-                                    <td className="px-6 py-4">
-                                        {lead.profile_url ? (
-                                            <a
-                                                href={lead.profile_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex items-center gap-1 text-blue-600 hover:underline"
-                                            >
-                                                Xem Facebook <ExternalLink className="w-3 h-3" />
-                                            </a>
-                                        ) : (
-                                            <span className="text-slate-400">Không có link</span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className="px-2 py-1 bg-yellow-50 text-yellow-700 rounded text-xs">
-                                            {lead.status === 'pending' ? 'Chờ xác nhận' : lead.status}
+                                    <td className="px-6 py-4 text-center">
+                                        <span className="px-2.5 py-1 bg-yellow-50 text-yellow-700 rounded-full text-xs border border-yellow-200 font-medium inline-flex items-center gap-1">
+                                            <span className="w-1.5 h-1.5 bg-yellow-500 rounded-full"></span>
+                                            {lead.status === 'pending' ? 'Chờ Khách đồng ý' : lead.status}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <button
                                             onClick={() => handleDelete(lead.id)}
-                                            className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50"
+                                            className="text-slate-300 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
                                             title="Xóa khỏi danh sách"
                                         >
                                             <Trash2 className="w-4 h-4" />

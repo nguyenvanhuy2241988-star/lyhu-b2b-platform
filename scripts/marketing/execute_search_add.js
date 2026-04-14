@@ -59,16 +59,32 @@ async function executeSearchAndAdd(rawCommand, maxAddsPerKeyword = 5) {
 
                 if (text.includes('Add friend') || text.includes('Thêm bạn bè')) {
 
-                    // Extract URL
-                    const profileUrl = await page.evaluate(btn => {
-                        let container = btn.parentElement;
+                    // Nâng cấp: Tách Tên Khách Hàng và Link với thuật toán leo cây 12 bậc
+                    const profileData = await page.evaluate(btn => {
                         let url = 'Unknown';
+                        let name = 'Facebook User';
+                        
+                        // 1. Lên thử Tên từ aria-label (Thường form là "Thêm [Tên] làm bạn bè" hoặc "Add [Name] as a friend")
+                        const btnAria = btn.getAttribute('aria-label') || '';
+                        const nameMatch = btnAria.match(/(?:Thêm|Add) (.+?) (?:làm bạn bè|as a friend)/i);
+                        if (nameMatch && nameMatch[1]) {
+                            name = nameMatch[1].trim();
+                        }
+                        
+                        // 2. Thuật toán leo cây DOM tối đa 12 bậc để tìm thẻ <a> chứa Link (và Name nếu Cần)
+                        let container = btn.parentElement;
                         let safeGuard = 0;
-                        while (container && safeGuard < 5) {
+                        
+                        while (container && safeGuard < 12) {
                             const links = container.querySelectorAll('a');
                             for (const link of links) {
+                                // Lọc các link rác
                                 if (link.href && !link.href.includes('/friends/') && !link.href.includes('search') && link.href.includes('facebook.com')) {
-                                    url = link.href;
+                                    url = link.href.split('?')[0]; // Lấy link gốc bỏ query
+                                    // Backup lấy Tên nếu aria-label thất bại
+                                    if (name === 'Facebook User' && link.innerText && link.innerText.trim().length > 1) {
+                                        name = link.innerText.trim();
+                                    }
                                     break;
                                 }
                             }
@@ -76,34 +92,40 @@ async function executeSearchAndAdd(rawCommand, maxAddsPerKeyword = 5) {
                             container = container.parentElement;
                             safeGuard++;
                         }
-                        return url;
+                        
+                        return { url, name };
                     }, btnHandle);
 
-                    if (profileUrl !== 'Unknown') {
-                        console.log(`[EXEC] Found Target: ${profileUrl}`);
-
-                        // --- IMPLICIT DEEP SCAN PLACEHOLDER ---
-                        // (We keep this simplified to ensure the Loop works first, 
-                        // but normally we would insert the verification logic here)
-                        // -------------------------------------
+                    if (profileData.url !== 'Unknown') {
+                        console.log(`[EXEC] 🎯 Đã khóa rà mục tiêu: ${profileData.name} | ${profileData.url}`);
 
                         try {
-                            await btnHandle.click();
+                            // JS Cưỡng bách click để xuyên qua màng bọc/Overlay
+                            await page.evaluate(el => el.click(), btnHandle);
                             addedCount++;
 
-                            await logAction('search', 'success', `Đã kết bạn với: ${keyword}`, {
-                                profile_url: profileUrl
+                            await logAction('search', 'success', `Đã gửi lời mời: ${profileData.name}`, {
+                                profile_url: profileData.url
                             });
 
                             await saveLead({
                                 source: `fb_search: ${keyword}`,
-                                name: 'Facebook User',
-                                profile_url: profileUrl
+                                name: profileData.name,
+                                profile_url: profileData.url
                             });
 
-                            await sleep(3000 + Math.random() * 2000);
+                            // --- CHỐNG SPAM: COFFEE BREAK ---
+                            if (addedCount % 3 === 0) {
+                                const longWait = 45000 + Math.random() * 30000; // 45-75s
+                                console.log(`[EXEC] ☕ Đã Add ${addedCount} người. Tạm nghỉ giải lao ${Math.round(longWait/1000)}s chống Checkpoint...`);
+                                await sleep(longWait);
+                            } else {
+                                const shortWait = 15000 + Math.random() * 10000; // 15-25s
+                                console.log(`[EXEC] ⏳ Chờ ${Math.round(shortWait/1000)}s cho nhịp tay tự nhiên...`);
+                                await sleep(shortWait);
+                            }
                         } catch (e) {
-                            console.log(`[EXEC] Click Failed: ${e.message}`);
+                            console.log(`[EXEC] ❌ Click Failed: ${e.message}`);
                         }
                     }
                 }
