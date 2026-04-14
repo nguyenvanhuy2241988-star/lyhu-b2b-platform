@@ -95,16 +95,30 @@ async function executeSearchAndAdd(rawCommand) {
                         
                         while (container && safeGuard < 12) {
                             const links = container.querySelectorAll('a');
-                            for (const link of links) {
-                                if (link.href && !link.href.includes('/friends/') && !link.href.includes('search') && link.href.includes('facebook.com')) {
-                                    url = link.href.split('?')[0]; 
-                                    if (name === 'Facebook User' && link.innerText && link.innerText.trim().length > 1) {
-                                        name = link.innerText.trim();
+                            
+                            // Pass 1: Grab the URL
+                            if (url === 'Unknown') {
+                                for (const link of links) {
+                                    if (link.href && !link.href.includes('/friends/') && !link.href.includes('search') && link.href.includes('facebook.com')) {
+                                        url = link.href.split('?')[0]; 
+                                        break;
                                     }
-                                    break;
                                 }
                             }
-                            if (url !== 'Unknown') break;
+
+                            // Pass 2: Grab the Name
+                            if (name === 'Facebook User') {
+                                for (const link of links) {
+                                    if (link.innerText && link.innerText.trim().length > 1) {
+                                        if (!link.innerText.includes('friend') && !link.innerText.includes('bạn bè')) {
+                                            name = link.innerText.trim().split('\n')[0];
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            if (url !== 'Unknown' && name !== 'Facebook User') break;
                             container = container.parentElement;
                             safeGuard++;
                         }

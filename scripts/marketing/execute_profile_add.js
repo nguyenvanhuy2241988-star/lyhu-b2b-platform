@@ -105,16 +105,31 @@ async function executeProfileAdd(rawCommand) {
                     
                     while (container && safeGuard < 12) {
                         const links = container.querySelectorAll('a');
-                        for (const link of links) {
-                            if (link.href && !link.href.includes('/friends/') && !link.href.includes('search') && link.href.includes('facebook.com')) {
-                                url = link.href.split('?')[0]; 
-                                if (name === 'Facebook User' && link.innerText && link.innerText.trim().length > 1) {
-                                    name = link.innerText.trim();
+                        
+                        // Pass 1: Grab the URL from any valid link
+                        if (url === 'Unknown') {
+                            for (const link of links) {
+                                if (link.href && !link.href.includes('/friends/') && !link.href.includes('search') && link.href.includes('facebook.com')) {
+                                    url = link.href.split('?')[0];
+                                    break;
                                 }
-                                break;
                             }
                         }
-                        if (url !== 'Unknown') break;
+
+                        // Pass 2: Grab the Name from any valid link that actually has Text (e.g. the Name instead of the Avatar image)
+                        if (name === 'Facebook User') {
+                            for (const link of links) {
+                                if (link.innerText && link.innerText.trim().length > 1) {
+                                    // Make sure it's not some random 'Add friend' text link, though FB rarely uses A tags for buttons
+                                    if (!link.innerText.includes('friend') && !link.innerText.includes('bạn bè')) {
+                                        name = link.innerText.trim().split('\n')[0]; // Sometimes FB packs subtext inside the same a tag
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (url !== 'Unknown' && name !== 'Facebook User') break;
                         container = container.parentElement;
                         safeGuard++;
                     }
