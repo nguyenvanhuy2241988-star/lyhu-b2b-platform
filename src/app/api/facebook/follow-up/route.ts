@@ -71,8 +71,9 @@ export async function GET(request: Request) {
             .select(`
                 id, external_id, customer_name, customer_phone,
                 page_id, last_message_at, followup_count,
-                facebook_pages!inner(page_id, access_token, chatbot_config)
+                facebook_pages!inner(page_id, access_token, chatbot_config, is_connected)
             `)
+            .eq('facebook_pages.is_connected', true)
             .eq('needs_followup', true)
             .is('customer_phone', null)
             .lt('followup_count', 3)
@@ -99,7 +100,7 @@ export async function GET(request: Request) {
             }
 
             const page = (conv as any).facebook_pages;
-            if (!page?.access_token) { skipped.no_token++; continue; }
+            if (!page?.access_token || !page.is_connected) { skipped.no_token++; continue; }
 
             // Check if AI is enabled
             const config = (page.chatbot_config as any) || {};
