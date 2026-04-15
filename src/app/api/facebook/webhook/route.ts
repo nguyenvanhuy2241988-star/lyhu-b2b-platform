@@ -166,11 +166,11 @@ export async function POST(request: Request) {
 
                     console.log(`[Comment Webhook] New comment from ${commenterName}: "${commentMessage}" on post ${postId}`);
 
-                    // Get page data
                     const { data: pageDataComment } = await supabase
                         .from('facebook_pages')
                         .select('id, access_token, chatbot_config')
                         .eq('page_id', pageId)
+                        .eq('is_connected', true) // <-- FIX: Do not reply for disconnected pages
                         .single();
 
                     if (!pageDataComment?.access_token) continue;
@@ -295,6 +295,7 @@ export async function POST(request: Request) {
                         .from('facebook_pages')
                         .select('id, access_token, name')
                         .eq('page_id', pageId)
+                        .eq('is_connected', true)
                         .single();
 
                     if (!pageData) continue;
@@ -437,10 +438,11 @@ export async function POST(request: Request) {
                         .from('facebook_pages')
                         .select('id, access_token, name')
                         .eq('page_id', pageId)
+                        .eq('is_connected', true) // <-- FIX: Skip if disconnected by user
                         .single();
 
                     if (!pageData) {
-                        console.error("Page not found:", pageId);
+                        console.log(`[Webhook] Page ${pageId} not found or disconnected. Skipping.`);
                         continue;
                     }
 
