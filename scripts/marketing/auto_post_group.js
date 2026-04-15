@@ -244,31 +244,48 @@ function spinText(text) {
         // BƯỚC 6: CHỜ DIALOG "TẠO BÀI VIẾT" MỞ
         // ============================================================
         console.log("[GROUP_POST] Bước 2: Chờ dialog 'Tạo bài viết'...");
-        await delay(rdn(2000, 3000));
+        await delay(rdn(3000, 5000)); // Chờ lâu hơn tí để FB render xong dialog
         
         let dialogOpened = false;
-        for (let attempt = 0; attempt < 3; attempt++) {
+        for (let attempt = 0; attempt < 6; attempt++) {
             const dialogCheck = await page.evaluate(() => {
                 const allDialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
+                
+                // Ưu tiên 1: Tìm dialog nào CÓ TEXTBOX (đúng nhất)
+                for (const dialog of allDialogs) {
+                    const hasTextbox = !!dialog.querySelector('div[role="textbox"][contenteditable="true"]');
+                    if (hasTextbox) {
+                        return { found: true, isCreatePost: true, hasTextbox: true, dialogCount: allDialogs.length };
+                    }
+                }
+                
+                // Ưu tiên 2: Tìm dialog có chữ "Tạo bài viết" nhưng chưa có textbox (FB đang render)
                 for (const dialog of allDialogs) {
                     const text = dialog.innerText || '';
                     const isCreatePost = text.includes('Tạo bài viết') || 
                                         text.includes('Create post') || 
                                         text.includes('Create Post');
-                    const hasTextbox = !!dialog.querySelector('div[role="textbox"][contenteditable="true"]');
-                    if (isCreatePost || hasTextbox) {
-                        return { found: true, isCreatePost, hasTextbox, dialogCount: allDialogs.length };
+                    if (isCreatePost) {
+                        return { found: true, isCreatePost: true, hasTextbox: false, dialogCount: allDialogs.length };
                     }
                 }
-                return { found: allDialogs.length > 0, isCreatePost: false, dialogCount: allDialogs.length };
+                
+                return { found: allDialogs.length > 0, isCreatePost: false, hasTextbox: false, dialogCount: allDialogs.length };
             });
             
             console.log(`[GROUP_POST] Dialog check: ${JSON.stringify(dialogCheck)}`);
             
-            if (dialogCheck.isCreatePost || dialogCheck.hasTextbox) {
+            if (dialogCheck.hasTextbox) {
                 dialogOpened = true;
-                console.log("[GROUP_POST] ✅ Dialog composer đã mở!");
+                console.log("[GROUP_POST] ✅ Dialog composer đã mở VÀ có textbox!");
                 break;
+            }
+            
+            if (dialogCheck.isCreatePost && !dialogCheck.hasTextbox) {
+                // Dialog đúng nhưng textbox chưa render xong, chờ thêm
+                console.log(`[GROUP_POST] Dialog "Tạo bài viết" đã mở nhưng textbox chưa render, chờ thêm... (${attempt + 1}/6)`);
+                await delay(2000);
+                continue;
             }
             
             // Đóng dialog sai nếu có
@@ -277,13 +294,13 @@ function spinText(text) {
                 await delay(1000);
             }
             
-            console.log(`[GROUP_POST] Dialog chưa mở, thử lại... (${attempt + 1}/3)`);
+            console.log(`[GROUP_POST] Dialog chưa mở, thử lại... (${attempt + 1}/6)`);
             await delay(2000);
         }
         
         if (!dialogOpened) {
             await page.screenshot({ path: path.join(debugDir, 'group_step2_failed.png') });
-            throw new Error("Không thể mở Dialog 'Tạo bài viết' trên Group. Xem debug/group_step2_failed.png");
+            throw new Error("Không thể mở Dialog 'Tạo bài viết' hoặc textbox không render. Xem debug/group_step2_failed.png");
         }
         
         // Screenshot dialog đã mở
@@ -309,44 +326,58 @@ function spinText(text) {
         // ============================================================
         console.log("[GROUP_POST] Bước 3: Gõ nội dung...");
         if (finalMessage) {
-            const textboxInfo = await page.evaluate(() => {
-                const allDialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
-                let targetDialog = null;
-                for (const d of allDialogs) {
-                    const text = d.innerText || '';
-                    if (text.includes('Tạo bài viết') || text.includes('Create post') || 
-                        d.querySelector('div[role="textbox"][contenteditable="true"]')) {
-                        targetDialog = d;
-                        break;
-                    }
-                }
-                
-                let textbox = null;
-                if (targetDialog) {
-                    textbox = targetDialog.querySelector('div[role="textbox"][contenteditable="true"]');
-                }
-                if (textbox) {
-                    textbox.scrollIntoView({ block: 'center' });
-                    const rect = textbox.getBoundingClientRect();
-                    return { found: true, x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
-                }
-                return { found: false };
-            });
+            let textboxFound = false;
             
-            if (textboxInfo.found) {
-                await page.mouse.click(textboxInfo.x, textboxInfo.y);
-                await delay(2000);
-                // Warm up input
-                await page.keyboard.press('Space');
-                await delay(200);
-                await page.keyboard.press('Backspace');
-                await delay(500);
-                // Gõ nội dung
-                await page.keyboard.type(finalMessage, { delay: rdn(30, 60) });
-                console.log("[GROUP_POST] ✅ Đã gõ nội dung bài viết.");
-            } else {
-                console.log("[GROUP_POST] ⚠ Không thể tìm textbox trong dialog.");
+            for (let tbRetry = 0; tbRetry < 5; tbRetry++) {
+                const textboxInfo = await page.evaluate(() => {
+                    // Quét TẤT CẢ dialog để tìm bất kỳ textbox nào
+                    const allDialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
+                    
+                    for (const dialog of allDialogs) {
+                        const textbox = dialog.querySelector('div[role="textbox"][contenteditable="true"]');
+                        if (textbox) {
+                            textbox.scrollIntoView({ block: 'center' });
+                            const rect = textbox.getBoundingClientRect();
+                            return { found: true, x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+                        }
+                    }
+                    
+                    // Fallback: Tìm NGOÀI dialog (trường hợp FB layout mới)
+                    const anyTextbox = document.querySelector('div[role="textbox"][contenteditable="true"]');
+                    if (anyTextbox) {
+                        anyTextbox.scrollIntoView({ block: 'center' });
+                        const rect = anyTextbox.getBoundingClientRect();
+                        return { found: true, x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+                    }
+                    
+                    return { found: false };
+                });
+                
+                if (textboxInfo.found) {
+                    await page.mouse.click(textboxInfo.x, textboxInfo.y);
+                    await delay(2000);
+                    // Warm up input
+                    await page.keyboard.press('Space');
+                    await delay(200);
+                    await page.keyboard.press('Backspace');
+                    await delay(500);
+                    // Gõ nội dung
+                    await page.keyboard.type(finalMessage, { delay: rdn(30, 60) });
+                    console.log("[GROUP_POST] ✅ Đã gõ nội dung bài viết.");
+                    textboxFound = true;
+                    break;
+                } else {
+                    console.log(`[GROUP_POST] ⚠ Textbox chưa thấy, chờ thêm... (${tbRetry + 1}/5)`);
+                    await delay(2000);
+                }
             }
+            
+            if (!textboxFound) {
+                console.log("[GROUP_POST] ❌ KHÔNG THỂ tìm textbox sau 5 lần thử. Bỏ qua nhóm này.");
+                await page.screenshot({ path: path.join(debugDir, 'group_textbox_failed.png') });
+                throw new Error("Textbox không render được. Xem debug/group_textbox_failed.png");
+            }
+            
             await delay(rdn(1000, 2000));
         }
 
