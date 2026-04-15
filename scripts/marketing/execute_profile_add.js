@@ -32,10 +32,12 @@ async function executeProfileAdd(rawCommand) {
         console.log(`[EXEC] Sử dụng cấu hình Mặc Định.`);
     }
 
-    if (!targetUrl.includes('facebook.com')) {
-        console.error("[EXEC] Lỗi: Đường dẫn không trỏ tới Facebook.");
-        await logAction('search', 'error', `Đường dẫn FB không hợp lệ: ${targetUrl}`);
-        return;
+    if (!targetUrl.startsWith('http')) {
+        if (targetUrl.includes('facebook.com')) {
+            targetUrl = 'https://' + targetUrl;
+        } else {
+            targetUrl = 'https://www.facebook.com/' + targetUrl;
+        }
     }
 
     if (!targetUrl.includes('sk=friends') && !/\/friends\/?$/.test(targetUrl)) {

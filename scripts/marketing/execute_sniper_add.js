@@ -38,7 +38,17 @@ async function executeSniperAdd(rawCommand) {
 
     try {
         for (let i = 0; i < targetUrls.length; i++) {
-            const url = targetUrls[i];
+            let url = targetUrls[i].trim();
+            
+            // Auto prefix facebook URL if user just types a username/ID
+            if (!url.startsWith('http')) {
+                if (url.includes('facebook.com')) {
+                    url = 'https://' + url;
+                } else {
+                    url = 'https://www.facebook.com/' + url;
+                }
+            }
+
             console.log(`[EXEC] 🎯 Đang ngắm bắn mục tiêu ${i+1}/${targetUrls.length}: ${url}`);
 
             await page.goto(url, { waitUntil: 'networkidle2' });
