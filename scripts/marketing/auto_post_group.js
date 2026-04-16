@@ -168,11 +168,25 @@ function spinText(text) {
         let totalPosted = 0;
         
         for (let j = 0; j < groupList.length; j++) {
-            const targetUrl = groupList[j];
+            let targetUrl = groupList[j];
+            
+            // Xóa query tracking (__cft__) của Facebook (nếu có) để url ngắn gọn và không bị lỗi load
+            if (targetUrl.includes('?')) {
+                const urlObj = new URL(targetUrl.startsWith('http') ? targetUrl : `https://${targetUrl}`);
+                urlObj.searchParams.delete('__cft__[0]');
+                urlObj.searchParams.delete('__tn__');
+                targetUrl = urlObj.toString();
+            }
+
             console.log(`\n[GROUP_POST] Đang vào Nhóm ${j+1}/${groupList.length}: ${targetUrl}`);
             
             try {
-                await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+                try {
+                    // Timeout 30s là đủ, nếu lỗi timeout thì cứ đi tiếp vì waitForSelector sẽ kiểm tra DOM sau đó
+                    await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+                } catch (navErr) {
+                    console.log(`[GROUP_POST] Bỏ qua lỗi Navigation Timeout (vẫn có thể DOM đã load): ${navErr.message}`);
+                }
                 
                 // Chờ trang GROUP load đầy đủ (Facebook SPA cần thời gian render)
                 console.log("[GROUP_POST] Chờ trang Group render đầy đủ...");
