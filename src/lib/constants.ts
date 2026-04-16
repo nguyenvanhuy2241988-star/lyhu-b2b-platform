@@ -173,6 +173,7 @@ export const NAV_ITEMS = {
         { label: "Báo cáo Sales GT", href: "/admin/gt-reports", icon: MapPin },
         { label: "Báo cáo Media", href: "/admin/media-reports", icon: Camera },
         { label: "Lịch quay & Brief", href: "/admin/media-briefs", icon: FileInput },
+        { label: "Kịch bản Media", href: "/media/scripts", icon: FileInput },
         { label: "Dự án Media", href: "/admin/media-projects", icon: ClipboardList },
         { label: "Thiết bị Media", href: "/admin/media-equipment", icon: Wrench },
         { label: "Thư viện Media", href: "/admin/media-library", icon: FolderOpen },
@@ -289,6 +290,7 @@ export const NAV_ITEMS = {
         { label: "Chiến dịch", href: "/marketing/campaigns", icon: Megaphone },
         { label: "Leads", href: "/marketing/leads", icon: Users },
         { label: "Content & Lịch", href: "/marketing/content", icon: Calendar },
+        { label: "Kịch bản Media", href: "/media/scripts", icon: FileInput },
         { label: "Quét Data", href: "/marketing/scraper", icon: Globe },
         { label: "Nhóm FB đăng bài", href: "/marketing/fb-groups", icon: Globe },
         { label: "Nhóm FB Việc Làm", href: "/marketing/fb-job-groups", icon: Briefcase },
@@ -325,6 +327,7 @@ export const NAV_ITEMS = {
     [ROLES.MEDIA_CREATOR]: [
         { label: "Tổng quan", href: "/media", icon: LayoutDashboard },
         { label: "Brief / Yêu cầu", href: "/media/briefs", icon: FileInput },
+        { label: "Kịch bản Media", href: "/media/scripts", icon: FileInput },
         { label: "Thư viện Media", href: "/media/library", icon: FolderOpen },
         { label: "Dự án", href: "/media/projects", icon: ClipboardList },
         { label: "Thiết bị", href: "/media/equipment", icon: Wrench },
