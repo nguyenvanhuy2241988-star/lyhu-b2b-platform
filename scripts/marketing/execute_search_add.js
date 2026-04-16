@@ -141,8 +141,35 @@ async function executeSearchAndAdd(rawCommand) {
                                 });
                                 console.log(`[EXEC] 🕵️ Đã Vơ vét (Không Click): ${profileData.name}`);
                             } else {
-                                // JS Cưỡng bách click
-                                await page.evaluate(el => el.click(), btnHandle);
+                                // Human-like Click
+                                try {
+                                    await btnHandle.scrollIntoView();
+                                    await sleep(500 + Math.random() * 500); 
+                                    await btnHandle.hover();
+                                    await sleep(200 + Math.random() * 400);
+                                    await btnHandle.click({ delay: 50 + Math.random() * 100 });
+                                } catch (clickErr) {
+                                    console.log(`[EXEC] Lỗi Click thật, xài Fallback JS Click: ${clickErr.message}`);
+                                    await page.evaluate(el => el.click(), btnHandle);
+                                }
+
+                                // Chờ xíu để xem FB có ném Popup lỗi không
+                                await sleep(2500);
+                                
+                                // Kiểm tra Popup Trừng phạt của FB
+                                const isRestricted = await page.evaluate(() => {
+                                    const bodyText = document.body.innerText || "";
+                                    return bodyText.includes('Bạn đã bị hạn chế') || 
+                                           bodyText.includes('temporarily restricted') || 
+                                           bodyText.includes('You can\'t use this feature right now') ||
+                                           bodyText.includes('Tính năng này hiện không khả dụng');
+                                });
+                                
+                                if (isRestricted) {
+                                    console.log(`[EXEC] 🛑 PHÁT HIỆN FACEBOOK BÁO HẠN CHẾ TÍNH NĂNG! Kích hoạt quy trình Rút Quân khẩn cấp...`);
+                                    await logAction('search', 'error', `Tài khoản đã bị Facebook khoá tính năng/Hạn chế. Đã Dừng Auto ngay lập tức!`);
+                                    return;
+                                }
 
                                 await logAction('search', 'success', `Đã gửi lời mời: ${profileData.name}`, {
                                     profile_url: profileData.url

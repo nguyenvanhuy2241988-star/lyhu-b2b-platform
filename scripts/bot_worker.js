@@ -55,7 +55,12 @@ setInterval(async () => {
                 .eq('id', command.id);
 
             const scriptPath = path.join(__dirname, 'marketing', command.script_name);
-            const safeArgs = command.args ? `"${command.args.replace(/[&<>^%"]/g, '')}"` : '';
+            // Kỹ thuật gài Argument chuẩn cho Windows Batch: 
+            // 1. Double backslash cho ngoặc kép (\") để Node parse giữ nguyên
+            // 2. Chuyển % thành %% (Vì % biến môi trường dính lỗi CMD)
+            // 3. Không xóa các ký hiệu & hay = vì Url FB cần tụi nó. Cặp Ngoặc kép bên ngoài sẽ bảo vệ & và < >.
+            const safeArgsRaw = command.args ? command.args.replace(/"/g, '\\"').replace(/%/g, '%%') : '';
+            const safeArgs = command.args ? `"${safeArgsRaw}"` : '';
             
             console.log(`💻 Đang gọi Terminal cho Bot...`);
             

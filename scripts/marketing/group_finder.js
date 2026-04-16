@@ -280,6 +280,21 @@ async function executeGroupSearch() {
                         console.log(`[GROUP] ✅ Đã xin tham gia: ${groupMeta?.name || keyword}!`);
                         await logAction('search', 'success', `Đã xin tham gia Nhóm: ${groupMeta?.name || 'Nhóm ẩn danh'} `);
                         
+                        // Kiểm tra Popup Trừng phạt của FB (Hạn chế tham gia nhóm)
+                        const isRestricted = await page.evaluate(() => {
+                            const bodyText = document.body.innerText || "";
+                            return bodyText.includes('Bạn đã bị hạn chế') || 
+                                   bodyText.includes('temporarily restricted') || 
+                                   bodyText.includes('You can\'t use this feature right now') ||
+                                   bodyText.includes('Bạn không thể dùng tính năng này ngay lúc này');
+                        });
+                        
+                        if (isRestricted) {
+                            console.log(`[GROUP] 🛑 PHÁT HIỆN FACEBOOK BÁO HẠN CHẾ TÍNH NĂNG! Kích hoạt quy trình Rút Quân khẩn cấp...`);
+                            await logAction('search', 'error', `Tài khoản đã bị Facebook khoá tính năng Tham gia Nhóm. Đã Dừng Auto ngay lập tức!`);
+                            return;
+                        }
+
                         // Bước 3: Đẩy thẳng lên CRM nếu trích xuất thành công
                         if (groupMeta && groupMeta.url && supabase) {
                             console.log(`[GROUP] ☁️ Đang đồng bộ Nhóm lên kho CRM (${targetGroupType.toUpperCase()}) ...`);
