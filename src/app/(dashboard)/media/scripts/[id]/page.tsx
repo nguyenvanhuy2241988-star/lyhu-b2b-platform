@@ -1,15 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { supabase } from '@/lib/supabaseClient';
 import { useParams, useRouter } from 'next/navigation';
 import { ChevronLeft, Save, Sparkles, Loader2 } from 'lucide-react';
 import RichTextEditor from '@/components/ui/RichTextEditor';
-import { toast } from 'react-hot-toast';
+import { useToast } from '@/components/ui/toast';
 
 export default function ScriptEditor() {
     const params = useParams();
     const router = useRouter();
+    const { showToast } = useToast();
     const isNew = params.id === 'new';
 
     const [form, setForm] = useState({
@@ -54,7 +55,7 @@ export default function ScriptEditor() {
             const userId = userRes.data.user?.id;
 
             if (!form.title) {
-                toast.error("Vui lòng nhập tên kịch bản");
+                showToast("Vui lòng nhập tên kịch bản", 'error');
                 setSaving(false);
                 return;
             }
@@ -70,7 +71,7 @@ export default function ScriptEditor() {
                     .single();
 
                 if (error) throw error;
-                toast.success('Đã lưu kịch bản mới!');
+                showToast('Đã lưu kịch bản mới!', 'success');
                 router.replace(`/media/scripts/${data.id}`);
             } else {
                 const { error } = await supabase
@@ -87,22 +88,22 @@ export default function ScriptEditor() {
                     .eq('id', params.id);
 
                 if (error) throw error;
-                toast.success('Đã cập nhật kịch bản thành công!');
+                showToast('Đã cập nhật kịch bản thành công!', 'success');
             }
         } catch (error: any) {
-            toast.error(error.message || 'Lỗi khi lưu');
+            showToast(error.message || 'Lỗi khi lưu', 'error');
         }
         setSaving(false);
     };
 
     const handleAIGenerate = async () => {
         if (!aiTopic) {
-            toast.error("Hãy nhập một ý tưởng để AI làm việc nhé!");
+            showToast("Hãy nhập một ý tưởng để AI làm việc nhé!", 'error');
             return;
         }
 
         setGenerating(true);
-        toast.success("AI đang lên ý tưởng, vui lòng đợi xíu...");
+        showToast("AI đang lên ý tưởng, vui lòng đợi xíu...", 'info');
         try {
             const res = await fetch('/api/ai/generate-script', {
                 method: 'POST',
@@ -120,12 +121,12 @@ export default function ScriptEditor() {
                     title: data.title || prev.title || 'Untitled AI Script',
                     content: data.html // Inject HTML 2-column format into the editor
                 }));
-                toast.success("AI đã hoàn thành Form kịch bản 2 cột!");
+                showToast("AI đã hoàn thành Form kịch bản 2 cột!", 'success');
             } else {
-                toast.error(data.error || "Lỗi khi gọi AI");
+                showToast(data.error || "Lỗi khi gọi AI", 'error');
             }
         } catch (e) {
-            toast.error("Lỗi kết nối máy chủ AI");
+            showToast("Lỗi kết nối máy chủ AI", 'error');
         }
         setGenerating(false);
     };
