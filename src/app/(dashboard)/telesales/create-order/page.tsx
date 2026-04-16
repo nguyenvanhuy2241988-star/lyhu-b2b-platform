@@ -72,7 +72,7 @@ function TelesalesCreateOrderContent() {
                     const invMap: Record<string, number> = {};
                     await Promise.all(prods.map(async (p) => {
                         const level = await getInventoryLevel(p.id, warehouseId, session.access_token);
-                        invMap[p.id] = level?.quantity_available ?? 0;
+                        invMap[p.id] = level?.quantity_on_hand ?? 0;
                     }));
                     setInventory(invMap);
                 }
