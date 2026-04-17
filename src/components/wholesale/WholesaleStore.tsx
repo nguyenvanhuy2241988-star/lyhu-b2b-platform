@@ -16,6 +16,7 @@ interface Product {
     // We will inject mock data for these if they don't exist
     soldCount?: number;
     rating?: number;
+    price?: number;
 }
 
 interface PromotionCondition {
