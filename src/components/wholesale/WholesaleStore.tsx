@@ -325,31 +325,38 @@ export default function WholesaleStore({
         try {
             const { data: { session } } = await supabase.auth.getSession();
             
-            const payload = {
-                payload: {
-                    total_amount: cartAnalysis.finalTotal,
-                    status: 'pending',
-                    note: `B2B Wholesale / Đơn tự tạo trên Web. Đ/c: ${address}. Phương thức: ${shippingMethod}.`,
-                    source: 'B2B_WEB'
-                },
-                items: cartAnalysis.items.map(item => ({
-                    product_id: item.product.id,
-                    quantity: item.quantity,
-                    price: item.flashSalePrice ?? item.product.basePricePerUnit ?? item.product.basePrice ?? 0,
-                    discount: 0
-                }))
+            const payload: any = {
+                total_amount: cartAnalysis.finalTotal,
+                status: 'pending',
+                note: `B2B Wholesale / Đơn tự tạo trên Web. Đ/c: ${address}. Phương thức: ${shippingMethod}.`,
+                source: 'B2B_WEB'
             };
 
-            const response = await fetch('/api/wholesale/order', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+            if (session?.user?.id) {
+                payload.telesales_user_id = session.user.id;
+            }
 
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.error);
+            // 1. Tạo order gốc (Sử dụng RLS policy mới để cho phép anon)
+            const { data: orderData, error: orderError } = await supabase
+                .from('orders')
+                .insert(payload)
+                .select()
+                .single();
 
-            const itemsError = null; // API route handled this
+            if (orderError) throw orderError;
+
+            // 2. Tạo danh sách items
+            const orderItems = cartAnalysis.items.map(item => ({
+                order_id: orderData.id,
+                product_id: item.product.id,
+                quantity: item.quantity,
+                price: item.flashSalePrice ?? item.product.basePricePerUnit ?? item.product.basePrice ?? 0,
+                discount: 0
+            }));
+
+            const { error: itemsError } = await supabase
+                .from('order_items')
+                .insert(orderItems);
                 
             if (itemsError) throw itemsError;
 
