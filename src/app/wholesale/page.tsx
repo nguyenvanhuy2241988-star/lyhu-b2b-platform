@@ -1,11 +1,36 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
+import { createServerClient } from "@supabase/ssr";
 import WholesaleStore from '@/components/wholesale/WholesaleStore';
 
 export const dynamic = 'force-dynamic';
 
+function getSupabase() {
+    const cookieStore = cookies();
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+    const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+
+    return createServerClient(supabaseUrl, supabaseAnon, {
+        cookies: {
+            getAll() {
+                return cookieStore.getAll();
+            },
+            setAll(cookiesToSet) {
+                try {
+                    for (const { name, value, options } of cookiesToSet) {
+                        cookieStore.set(name, value, options);
+                    }
+                } catch (error) {
+                    // The `setAll` method was called from a Server Component.
+                    // This can be ignored if you have middleware refreshing
+                    // user sessions.
+                }
+            },
+        },
+    });
+}
+
 export default async function WholesalePage() {
-    const supabase = createServerComponentClient({ cookies });
+    const supabase = getSupabase();
 
     // Fetch user profile to check if they are logged in and their role
     const { data: { session } } = await supabase.auth.getSession();
