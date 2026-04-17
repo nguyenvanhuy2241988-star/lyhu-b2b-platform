@@ -73,11 +73,25 @@ export default async function WholesalePage() {
         .eq('is_active', true)
         .order('priority', { ascending: false });
 
+    // Lấy chiến dịch Flash Sale đang active
+    const { data: flashSalesData } = await supabase
+        .from('wholesale_flash_sales')
+        .select(`
+            *,
+            items:wholesale_flash_sale_items(*)
+        `)
+        .eq('is_active', true)
+        .gte('end_time', new Date().toISOString())
+        .lte('start_time', new Date().toISOString())
+        .limit(1)
+        .single();
+
     return (
         <div className="min-h-screen bg-gray-50">
             <WholesaleStore 
                 initialProducts={productsData || []} 
                 promotions={promotionsData || []}
+                flashSale={flashSalesData || null}
                 isWholesaleCustomer={isWholesaleCustomer}
             />
         </div>

@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, ShoppingCart, Info, CheckCircle2, ChevronRight, Minus, Plus, Star, X } from 'lucide-react';
+import { Search, ShoppingCart, Info, CheckCircle2, ChevronRight, Minus, Plus, Star, X, Clock, Flame, Ticket, Loader2 } from 'lucide-react';
+import { getSupabase } from '@/lib/supabaseClient';
 
 interface Product {
     id: string;
@@ -13,7 +14,6 @@ interface Product {
     basePrice: number;
     packSize?: number;
     image_url?: string;
-    // We will inject mock data for these if they don't exist
     soldCount?: number;
     rating?: number;
     price?: number;
@@ -42,44 +42,67 @@ interface Promotion {
     actions: PromotionAction[];
 }
 
+interface FlashSaleItem {
+    id: string;
+    product_id: string;
+    discount_price: number;
+    quantity_limit: number;
+    quantity_sold: number;
+}
+
+interface FlashSale {
+    id: string;
+    name: string;
+    end_time: string;
+    items?: FlashSaleItem[];
+}
+
 interface CartItem {
     product: Product;
     quantity: number;
+    flashSalePrice?: number; // If bought via flash sale
 }
 
-// Hàm giả lập (Mock) số lượng đã bán dựa vào ID để luôn nhất quán khi reload
 const getMockSocialProof = (id: string) => {
     let hash = 0;
     for (let i = 0; i < id.length; i++) {
         hash = id.charCodeAt(i) + ((hash << 5) - hash);
     }
     const positiveHash = Math.abs(hash);
-    
-    // Rating từ 4.5 tới 5.0
     const rating = 4.5 + (positiveHash % 6) / 10;
-    
-    // Đã bán từ 50 tới 3500
     const sold = 50 + (positiveHash % 3450);
-    
     return { rating, sold };
 };
 
 export default function WholesaleStore({ 
     initialProducts, 
     promotions, 
+    flashSale,
     isWholesaleCustomer 
 }: { 
     initialProducts: Product[], 
     promotions: Promotion[], 
+    flashSale?: FlashSale | null,
     isWholesaleCustomer: boolean 
 }) {
+    const supabase = getSupabase();
     const [cart, setCart] = useState<Record<string, CartItem>>({});
     const [activeTab, setActiveTab] = useState<string>('All');
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState<'popular' | 'latest' | 'topsale' | 'price_asc' | 'price_desc'>('popular');
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-    // Gắn dữa liệu ảo (social proof) vào sản phẩm lúc đầu
+    // V3 Features States
+    const [savedVouchers, setSavedVouchers] = useState<string[]>([]);
+    const [countdown, setCountdown] = useState<string>('00:00:00');
+    
+    // Checkout States
+    const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [checkoutSuccess, setCheckoutSuccess] = useState(false);
+    const [address, setAddress] = useState('');
+    const [shippingMethod, setShippingMethod] = useState<'lyhu_ship'|'self'>('lyhu_ship');
+
     const productsWithSocialProof = useMemo(() => {
         return initialProducts.map(p => ({
             ...p,
@@ -92,7 +115,6 @@ export default function WholesaleStore({
         return ['All', ...Array.from(brandSet)];
     }, [initialProducts]);
 
-    // Các bộ lọc & Sắp xếp hợp nhất
     const filteredProducts = useMemo(() => {
         let result = productsWithSocialProof.filter(p => {
             const matchesBrand = activeTab === 'All' || p.brand === activeTab;
@@ -101,39 +123,51 @@ export default function WholesaleStore({
             return matchesBrand && matchesSearch;
         });
 
-        // Sắp xếp
         switch (sortBy) {
-            case 'topsale':
-                result.sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0));
-                break;
-            case 'price_asc':
-                result.sort((a, b) => {
-                    const priceA = isWholesaleCustomer ? (a.basePricePerUnit || a.basePrice || 0) : (a.retailPrice || a.basePrice || 0);
-                    const priceB = isWholesaleCustomer ? (b.basePricePerUnit || b.basePrice || 0) : (b.retailPrice || b.basePrice || 0);
-                    return priceA - priceB;
-                });
-                break;
-            case 'price_desc':
-                result.sort((a, b) => {
-                    const priceA = isWholesaleCustomer ? (a.basePricePerUnit || a.basePrice || 0) : (a.retailPrice || a.basePrice || 0);
-                    const priceB = isWholesaleCustomer ? (b.basePricePerUnit || b.basePrice || 0) : (b.retailPrice || b.basePrice || 0);
-                    return priceB - priceA;
-                });
-                break;
-            case 'latest':
-                // Đảo ngược mảng giả làm "mới nhất" cho sinh động
-                result.reverse();
-                break;
-            case 'popular':
-            default:
-                // Mặc định giữ nguyên theo DB (Order by Name)
-                break;
+            case 'topsale': result.sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0)); break;
+            case 'price_asc': result.sort((a, b) => ((a.basePricePerUnit || a.basePrice || 0) - (b.basePricePerUnit || b.basePrice || 0))); break;
+            case 'price_desc': result.sort((a, b) => ((b.basePricePerUnit || b.basePrice || 0) - (a.basePricePerUnit || a.basePrice || 0))); break;
+            case 'latest': result.reverse(); break;
         }
 
         return result;
-    }, [productsWithSocialProof, activeTab, searchQuery, sortBy, isWholesaleCustomer]);
+    }, [productsWithSocialProof, activeTab, searchQuery, sortBy]);
 
-    const updateQuantity = (product: Product, delta: number) => {
+    // Flash Sale Logic
+    const flashSaleProducts = useMemo(() => {
+        if (!flashSale || !flashSale.items) return [];
+        return flashSale.items.map(fsItem => {
+            const p = productsWithSocialProof.find(prod => prod.id === fsItem.product_id);
+            if (!p) return null;
+            return {
+                ...p,
+                flashSalePrice: fsItem.discount_price,
+                stockRatio: Math.min(100, Math.floor((fsItem.quantity_sold / fsItem.quantity_limit) * 100))
+            };
+        }).filter(Boolean) as (Product & { flashSalePrice: number, stockRatio: number })[];
+    }, [flashSale, productsWithSocialProof]);
+
+    useEffect(() => {
+        if (flashSale && flashSale.end_time) {
+            const timerId = setInterval(() => {
+                const now = new Date().getTime();
+                const end = new Date(flashSale.end_time).getTime();
+                const diff = end - now;
+                if (diff <= 0) {
+                    setCountdown("00:00:00");
+                    clearInterval(timerId);
+                } else {
+                    const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const s = Math.floor((diff % (1000 * 60)) / 1000);
+                    setCountdown(`${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`);
+                }
+            }, 1000);
+            return () => clearInterval(timerId);
+        }
+    }, [flashSale]);
+
+    const updateQuantity = (product: Product, delta: number, overrideFlashSalePrice?: number) => {
         setCart(prev => {
             const currentQty = prev[product.id]?.quantity || 0;
             const newQty = Math.max(0, currentQty + delta);
@@ -142,7 +176,7 @@ export default function WholesaleStore({
             if (newQty === 0) {
                 delete newCart[product.id];
             } else {
-                newCart[product.id] = { product, quantity: newQty };
+                newCart[product.id] = { product, quantity: newQty, flashSalePrice: overrideFlashSalePrice };
             }
             return newCart;
         });
@@ -154,9 +188,13 @@ export default function WholesaleStore({
         const uniqueItemsCount = items.length;
         
         let baseTotal = 0;
+        let originalTotalForDisplay = 0; // The non-discounted value for crossing out
+
         items.forEach(item => {
-            const priceToUse = isWholesaleCustomer ? (item.product.basePricePerUnit || item.product.basePrice || 0) : (item.product.retailPrice || 0);
-            baseTotal += priceToUse * item.quantity;
+            const normalPrice = isWholesaleCustomer ? (item.product.basePricePerUnit || item.product.basePrice || 0) : (item.product.retailPrice || 0);
+            const activePrice = item.flashSalePrice ?? normalPrice;
+            originalTotalForDisplay += normalPrice * item.quantity;
+            baseTotal += activePrice * item.quantity;
         });
 
         let finalTotal = baseTotal;
@@ -175,12 +213,8 @@ export default function WholesaleStore({
                             isEligible = false;
                             const diff = cond.required_value - totalItems;
                             if (diff < closestMiss.diff) {
-                                closestMiss = { diff, msg: `Thêm ${diff} sản phẩm bất kỳ để kích hoạt: ${promo.name}` };
+                                closestMiss = { diff, msg: `Thêm ${diff} sản phẩm để kích hoạt: ${promo.name}` };
                             }
-                        }
-                    } else if (cond.condition_type === 'min_unique_items') {
-                        if (uniqueItemsCount < cond.required_value) {
-                            isEligible = false;
                         }
                     }
                 }
@@ -199,11 +233,18 @@ export default function WholesaleStore({
                 }
             }
         }
+        
+        // Mock Voucher System (if user saved "VOUCHER_50K")
+        if (savedVouchers.includes('VOUCHER_50K') && finalTotal > 500000) {
+            discountAmount += 50000;
+            appliedPromoName = appliedPromoName ? `${appliedPromoName} + Voucher Giảm 50K` : "Voucher Giảm 50K";
+        }
 
         finalTotal = Math.max(0, baseTotal - discountAmount);
 
         return {
             totalItems,
+            originalTotalForDisplay,
             baseTotal,
             finalTotal,
             discountAmount,
@@ -211,15 +252,68 @@ export default function WholesaleStore({
             pendingUpsellMsg,
             items
         };
-    }, [cart, promotions, isWholesaleCustomer]);
+    }, [cart, promotions, isWholesaleCustomer, savedVouchers]);
+
+    // Handle Order Submission
+    const submitOrder = async () => {
+        setIsSubmitting(true);
+        try {
+            // Lấy ID khách hàng hiện tại
+            const { data: { session } } = await supabase.auth.getSession();
+            const customerId = session?.user?.id || null;
+
+            // Tạo order gốc
+            const { data: orderData, error: orderError } = await supabase
+                .from('orders')
+                .insert({
+                    customer_id: customerId,
+                    total_amount: cartAnalysis.finalTotal,
+                    status: 'pending',
+                    note: `B2B Wholesale / Đơn tự tạo trên Web. Đ/c: ${address}. Phương thức: ${shippingMethod}.`,
+                    source: 'B2B_WEB'
+                })
+                .select()
+                .single();
+
+            if (orderError) throw orderError;
+
+            // Tạo danh sách items
+            const orderItems = cartAnalysis.items.map(item => ({
+                order_id: orderData.id,
+                product_id: item.product.id,
+                quantity: item.quantity,
+                price: item.flashSalePrice ?? item.product.basePricePerUnit ?? item.product.basePrice ?? 0,
+                discount: 0 // Overall discount was applied directly on order side or can be divided
+            }));
+
+            const { error: itemsError } = await supabase
+                .from('order_items')
+                .insert(orderItems);
+                
+            if (itemsError) throw itemsError;
+
+            // Success
+            setCheckoutSuccess(true);
+            setCart({});
+            setIsCheckoutOpen(false);
+            
+            // Tắt popup sau 4 giây
+            setTimeout(() => setCheckoutSuccess(false), 4000);
+            
+        } catch (error) {
+            console.error("Order submission failed:", error);
+            alert("Rất tiếc! Đã xảy ra lỗi khi tạo đơn hàng. Vui lòng thử lại.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
 
     return (
-        <div className="pb-32 bg-[#f5f5f5] min-h-screen">
+        <div className="pb-32 bg-[#f5f5f5] min-h-screen font-sans">
             {/* Header LYHU Style */}
             <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-4 sticky top-0 z-40 shadow-md">
                 <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-                    {/* Logo Area */}
                     <div className="flex items-center w-full md:w-auto">
                         <ShoppingCart className="w-8 h-8 text-white mr-2" />
                         <h1 className="text-2xl font-bold text-white tracking-wide cursor-pointer">LYHU <span className="font-light">Sỉ</span></h1>
@@ -228,7 +322,6 @@ export default function WholesaleStore({
                         )}
                     </div>
                     
-                    {/* Search */}
                     <div className="relative w-full md:w-1/2">
                         <input 
                             type="text" 
@@ -242,7 +335,6 @@ export default function WholesaleStore({
                         </button>
                     </div>
 
-                    {/* Desktop Cart Hover Area */}
                     <div className="hidden md:flex items-center justify-end w-[150px] group relative">
                         <div className="relative py-2 px-2 cursor-pointer">
                             <ShoppingCart className="w-8 h-8 text-white hover:text-white/80 transition-colors" />
@@ -253,7 +345,7 @@ export default function WholesaleStore({
                             )}
                         </div>
 
-                        {/* Hover Popup */}
+                        {/* Hover Popup Mini Cart */}
                         <div className="absolute top-12 right-0 w-[400px] bg-white shadow-xl border border-gray-200 rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top mt-2">
                             {cartAnalysis.items.length === 0 ? (
                                 <div className="p-8 flex flex-col items-center justify-center text-gray-400">
@@ -265,8 +357,7 @@ export default function WholesaleStore({
                                     <div className="p-3 text-sm text-gray-400">Sản phẩm mới thêm</div>
                                     <div className="max-h-[300px] overflow-y-auto">
                                         {cartAnalysis.items.slice().reverse().map(item => {
-                                            const price = isWholesaleCustomer ? (item.product.basePricePerUnit || item.product.basePrice || 0) : (item.product.retailPrice || item.product.basePrice || 0);
-
+                                            const price = item.flashSalePrice ?? (isWholesaleCustomer ? (item.product.basePricePerUnit || item.product.basePrice || 0) : (item.product.retailPrice || item.product.basePrice || 0));
                                             return (
                                                 <div key={item.product.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-50 last:border-b-0">
                                                     <div className="w-10 h-10 border border-gray-200 bg-white">
@@ -274,6 +365,7 @@ export default function WholesaleStore({
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <p className="text-sm text-gray-800 truncate">{item.product.name}</p>
+                                                        {item.flashSalePrice && <span className="text-[10px] bg-primary-100 text-primary-700 px-1 py-0.5 rounded-sm font-bold">Flash Sale</span>}
                                                     </div>
                                                     <div className="text-right">
                                                         <p className="text-sm text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(price)}</p>
@@ -285,7 +377,7 @@ export default function WholesaleStore({
                                     </div>
                                     <div className="p-3 bg-gray-50 flex justify-between items-center">
                                         <p className="text-xs text-gray-500">{cartAnalysis.items.length} Thêm hàng vào giỏ</p>
-                                        <button className="bg-primary-600 text-white px-4 py-2 text-sm hover:bg-primary-700">Xem Giỏ Hàng</button>
+                                        <button onClick={() => setIsCheckoutOpen(true)} className="bg-primary-600 text-white px-4 py-2 text-sm hover:bg-primary-700">Xem Giỏ Hàng</button>
                                     </div>
                                 </div>
                             )}
@@ -297,7 +389,7 @@ export default function WholesaleStore({
             <div className="max-w-6xl mx-auto px-4 mt-6">
                 
                 {/* Banner / Promotional Space */}
-                <div className="mb-6 rounded-sm overflow-hidden bg-white shadow-sm flex flex-col md:flex-row border border-gray-100">
+                <div className="mb-4 rounded-sm overflow-hidden bg-white shadow-sm flex flex-col md:flex-row border border-gray-100">
                     <div className="p-6 md:w-2/3 bg-gradient-to-r from-primary-50 to-primary-100">
                         <h2 className="text-2xl font-bold text-primary-700 mb-2 uppercase tracking-wide">Siêu Hội Bán Sỉ</h2>
                         <p className="text-gray-700 font-medium">Nhập càng nhiều - Chiết khấu càng sâu. Áp dụng bảng giá NPP mới từ tháng này.</p>
@@ -307,6 +399,96 @@ export default function WholesaleStore({
                         </div>
                     </div>
                 </div>
+
+                {/* V3: Voucher Wallet Row (Giả lậP Voucher xé tay) */}
+                <div className="mb-6 flex gap-3 overflow-x-auto hide-scrollbar pb-2">
+                    <div className="min-w-[280px] bg-white border border-secondary-500 rounded-sm shadow-sm flex overflow-hidden">
+                        <div className="bg-gradient-to-br from-secondary-400 to-secondary-500 w-[80px] flex flex-col items-center justify-center text-white p-2 border-r border-dashed border-white">
+                            <Ticket className="w-8 h-8 opacity-80 mb-1" />
+                            <span className="text-[10px] font-bold text-center leading-tight">MÃ<br/>LYHU</span>
+                        </div>
+                        <div className="flex-1 p-3 flex flex-col justify-center bg-secondary-50/30">
+                            <h4 className="text-sm font-bold text-gray-800">Giảm 50K</h4>
+                            <p className="text-[10px] text-gray-500 mb-2">Đơn tối thiểu đ500k</p>
+                            <button 
+                                onClick={() => setSavedVouchers(prev => Array.from(new Set([...prev, 'VOUCHER_50K'])))}
+                                className={`self-start text-[11px] font-bold px-4 py-1 rounded-sm transition-colors ${savedVouchers.includes('VOUCHER_50K') ? 'bg-gray-200 text-gray-500 cursor-default' : 'bg-primary-600 text-white hover:bg-primary-700'}`}>
+                                {savedVouchers.includes('VOUCHER_50K') ? 'Đã Lưu Vĩ' : 'Lưu'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="min-w-[280px] bg-white border border-primary-200 rounded-sm shadow-sm flex overflow-hidden">
+                        <div className="bg-gradient-to-br from-primary-500 to-primary-600 w-[80px] flex flex-col items-center justify-center text-white p-2 border-r border-dashed border-white">
+                            <div className="w-6 h-6 border-2 border-white rounded-full flex items-center justify-center mb-1"><span className="text-xs font-bold font-serif">%</span></div>
+                            <span className="text-[10px] font-bold text-center leading-tight">MÃ<br/>ĐỐI TÁC</span>
+                        </div>
+                        <div className="flex-1 p-3 flex flex-col justify-center bg-primary-50/10">
+                            <h4 className="text-sm font-bold text-gray-800">Freeship Extra</h4>
+                            <p className="text-[10px] text-gray-500 mb-2">Tối đa 100K chi phí VC</p>
+                            <button 
+                                onClick={() => setSavedVouchers(prev => Array.from(new Set([...prev, 'FREESHIP'])))}
+                                className={`self-start text-[11px] font-bold px-4 py-1 rounded-sm transition-colors ${savedVouchers.includes('FREESHIP') ? 'bg-gray-200 text-gray-500 cursor-default' : 'bg-primary-600 text-white hover:bg-primary-700'}`}>
+                                {savedVouchers.includes('FREESHIP') ? 'Đã Lưu Vĩ' : 'Lưu'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* V3: Flash Sale Area */}
+                {flashSaleProducts.length > 0 && (
+                    <div className="bg-white rounded-sm shadow-sm mb-6 border border-primary-100 overflow-hidden">
+                        <div className="bg-primary-50 border-b border-primary-100 p-4 flex items-center justify-between">
+                            <div className="flex items-center">
+                                <Flame className="w-6 h-6 text-primary-600 fill-primary-600 mr-2" />
+                                <h2 className="text-xl italic font-black text-primary-700 tracking-wider hidden md:block">FLASH SALE CHỚP NHÁNG</h2>
+                                
+                                <div className="ml-4 flex items-center gap-1">
+                                    <Clock className="w-4 h-4 text-gray-600 mr-1" />
+                                    {countdown.split(':').map((num, i) => (
+                                        <React.Fragment key={i}>
+                                            <span className="bg-black text-white text-xs font-bold px-1.5 py-1 rounded-sm">{num}</span>
+                                            {i < 2 && <span className="font-bold text-black">:</span>}
+                                        </React.Fragment>
+                                    ))}
+                                </div>
+                            </div>
+                            <button className="text-primary-600 text-sm font-medium hover:underline flex items-center">Xem tất cả <ChevronRight className="w-4 h-4"/></button>
+                        </div>
+                        
+                        <div className="flex gap-4 overflow-x-auto p-4 hide-scrollbar">
+                            {flashSaleProducts.map(product => {
+                                const qtyInCart = cart[product.id]?.quantity || 0;
+                                return (
+                                    <div key={product.id} className="min-w-[150px] md:min-w-[180px] group flex flex-col cursor-pointer" onClick={() => setSelectedProduct(product)}>
+                                        <div className="aspect-square bg-gray-50 border border-gray-100 mb-2 relative overflow-hidden flex items-center justify-center">
+                                            {qtyInCart > 0 && <span className="absolute top-0 right-0 bg-secondary-500 text-white text-[10px] font-bold px-1.5 py-0.5 z-10 rounded-bl-sm">Đã chọn {qtyInCart}</span>}
+                                            <div className="absolute top-0 left-0 bg-[#ffd839] text-[#ee4d2d] text-[10px] font-bold px-1 py-0.5 z-10 flex flex-col items-center shadow-sm">
+                                                <span>GIẢM</span>
+                                                <span>{Math.round(100 - (product.flashSalePrice/(product.basePricePerUnit||1))*100)}%</span>
+                                            </div>
+                                            {product.image_url ? (
+                                                <img src={product.image_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                            ) : (
+                                                <ShoppingCart className="w-8 h-8 text-gray-300" />
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col items-center flex-1">
+                                            <span className="text-primary-600 font-bold text-lg mb-1">
+                                                <span className="text-[10px] align-top mr-0.5">₫</span>
+                                                {new Intl.NumberFormat('vi-VN').format(product.flashSalePrice)}
+                                            </span>
+                                            <div className="w-full bg-primary-100 rounded-full h-3 mb-2 relative overflow-hidden flex items-center justify-center">
+                                                <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary-400 to-primary-600 rounded-full" style={{ width: `${product.stockRatio}%` }}></div>
+                                                <span className="relative text-[9px] font-bold text-white uppercase drop-shadow-md z-1">Đã bán {product.stockRatio}%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                )}
 
                 {/* Brands Tabs */}
                 <div className="bg-white rounded-sm shadow-sm mb-4 px-2 py-3 border border-gray-100">
@@ -347,29 +529,32 @@ export default function WholesaleStore({
                             <option value="price_desc" className="text-gray-900 bg-white">Giá: Cao đến Thấp</option>
                         </select>
                     </div>
-
-                    <div className="text-sm font-medium">
-                        <span className="text-primary-600">{filteredProducts.length}</span> Sản phẩm
-                    </div>
+                    <div className="text-sm font-medium"><span className="text-primary-600">{filteredProducts.length}</span> Sản phẩm</div>
                 </div>
 
                 {/* Product Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-3">
                     {filteredProducts.map(product => {
                         const qty = cart[product.id]?.quantity || 0;
-                        const price = isWholesaleCustomer ? (product.basePricePerUnit || product.basePrice || 0) : (product.retailPrice || product.basePrice || 0);
+                        const fsProd = flashSaleProducts.find(f => f.id === product.id);
+                        const isFlashSaleActive = !!fsProd;
+                        const price = fsProd?.flashSalePrice ?? (isWholesaleCustomer ? (product.basePricePerUnit || product.basePrice || 0) : (product.retailPrice || product.basePrice || 0));
 
                         return (
                             <div key={product.id} className="group bg-white rounded-sm shadow-sm hover:shadow-md border border-transparent hover:border-primary-500 overflow-hidden flex flex-col transition-all duration-200 relative">
                                 
-                                {/* Badge */}
                                 {qty > 0 && (
-                                    <div className="absolute top-0 right-0 bg-secondary-500 text-white text-xs font-bold px-2 py-1 z-10 rounded-bl-sm shadow-sm pointer-events-none">
+                                    <div className="absolute top-0 right-0 bg-secondary-500 text-white text-[10px] leading-tight font-bold px-1.5 py-1 z-10 rounded-bl-sm shadow-sm pointer-events-none">
                                         Đã chọn {qty}
                                     </div>
                                 )}
+                                
+                                {isFlashSaleActive && (
+                                     <div className="absolute top-0 left-0 bg-[#ffd839] text-[#ee4d2d] text-[10px] leading-tight font-bold px-1 py-0.5 z-10 shadow-sm pointer-events-none border border-[#ffd839]/80">
+                                        FLASH SALE
+                                    </div>
+                                )}
 
-                                {/* Product Image - Can click to open modal */}
                                 <div 
                                     className="aspect-square bg-gray-50 w-full relative flex items-center justify-center overflow-hidden cursor-pointer"
                                     onClick={() => setSelectedProduct(product)}
@@ -379,7 +564,7 @@ export default function WholesaleStore({
                                     ) : (
                                         <ShoppingCart className="w-10 h-10 text-primary-200" />
                                     )}
-                                    {price === 0 && <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs text-center py-1 font-medium">Liên hệ lấy giá</div>}
+                                    {price === 0 && <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs text-center py-1 font-medium z-10">Liên hệ lấy giá</div>}
                                 </div>
                                 
                                 <div className="p-2.5 flex-1 flex flex-col">
@@ -390,7 +575,6 @@ export default function WholesaleStore({
                                         {product.name}
                                     </h3>
 
-                                    {/* Mock Social Proof & Rating Area */}
                                     <div className="flex items-center justify-between mb-2 mt-auto">
                                         <div className="flex bg-primary-50 px-1 py-0.5 rounded-sm items-center border border-primary-100">
                                             <span className="text-[10px] text-primary-600 font-bold mr-0.5">{product.rating}</span>
@@ -403,13 +587,18 @@ export default function WholesaleStore({
                                     
                                     <div className="flex flex-col pt-1 border-t border-gray-100 border-dashed">
                                         <div className="flex items-center gap-1 min-h-[22px]">
-                                            {!isWholesaleCustomer && price > 0 && (
+                                            {!isWholesaleCustomer && price > 0 && !isFlashSaleActive && (
                                                 <span className="text-[10px] text-gray-400 line-through">
-                                                    ₫{new Intl.NumberFormat('vi-VN').format(price * 1.5)}
+                                                    ₫{new Intl.NumberFormat('vi-VN').format((product.basePricePerUnit || 0) * 1.5)}
+                                                </span>
+                                            )}
+                                            {isFlashSaleActive && (
+                                                <span className="text-[10px] text-gray-400 line-through">
+                                                    ₫{new Intl.NumberFormat('vi-VN').format(product.basePricePerUnit || 0)}
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="text-primary-600 flex items-baseline">
+                                        <div className={`flex items-baseline ${isFlashSaleActive ? 'text-[#ee4d2d]' : 'text-primary-600'}`}>
                                             <span className="text-xs font-bold mr-[2px]">₫</span>
                                             <span className="text-base font-medium">
                                                 {price > 0 ? new Intl.NumberFormat('vi-VN').format(price) : 'Liên hệ'}
@@ -417,30 +606,19 @@ export default function WholesaleStore({
                                         </div>
                                     </div>
 
-                                    {/* Inline Add to Cart Controls */}
                                     <div className="mt-3">
                                         {qty === 0 ? (
                                             <button 
-                                                onClick={() => updateQuantity(product, 1)}
-                                                className="w-full py-1.5 border border-primary-500 text-primary-600 rounded-sm text-sm font-medium hover:bg-primary-500 hover:text-white transition-colors"
+                                                onClick={() => updateQuantity(product, 1, isFlashSaleActive ? price : undefined)}
+                                                className={`w-full py-1.5 border rounded-sm text-sm font-medium transition-colors ${isFlashSaleActive ? 'border-[#ee4d2d] text-[#ee4d2d] hover:bg-[#ee4d2d] hover:text-white' : 'border-primary-500 text-primary-600 hover:bg-primary-500 hover:text-white'}`}
                                             >
                                                 Thêm vào giỏ
                                             </button>
                                         ) : (
-                                            <div className="flex items-center justify-between border border-primary-500 rounded-sm bg-primary-50 h-8">
-                                                <button 
-                                                    onClick={() => updateQuantity(product, -1)}
-                                                    className="w-8 h-full flex items-center justify-center text-primary-600 hover:bg-primary-100"
-                                                >
-                                                    <Minus className="w-4 h-4" />
-                                                </button>
-                                                <span className="font-bold text-sm text-primary-600 flex-1 text-center select-none bg-transparent">{qty}</span>
-                                                <button 
-                                                    onClick={() => updateQuantity(product, 1)}
-                                                    className="w-8 h-full flex items-center justify-center text-primary-600 hover:bg-primary-100"
-                                                >
-                                                    <Plus className="w-4 h-4" />
-                                                </button>
+                                            <div className={`flex items-center justify-between border rounded-sm h-8 ${isFlashSaleActive ? 'border-[#ee4d2d] bg-[#ee4d2d]/10 text-[#ee4d2d]' : 'border-primary-500 bg-primary-50 text-primary-600'}`}>
+                                                <button onClick={() => updateQuantity(product, -1)} className="w-8 h-full flex items-center justify-center hover:bg-black/5"><Minus className="w-4 h-4" /></button>
+                                                <span className="font-bold text-sm flex-1 text-center select-none bg-transparent">{qty}</span>
+                                                <button onClick={() => updateQuantity(product, 1)} className="w-8 h-full flex items-center justify-center hover:bg-black/5"><Plus className="w-4 h-4" /></button>
                                             </div>
                                         )}
                                     </div>
@@ -454,23 +632,13 @@ export default function WholesaleStore({
             {/* Quick View Modal */}
             {selectedProduct && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setSelectedProduct(null)}>
-                    <div 
-                        className="bg-white rounded-md shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col md:flex-row relative"
-                        onClick={e => e.stopPropagation()} // Prevent closing on content click
-                    >
-                        <button 
-                            className="absolute top-3 right-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full p-2 z-10 transition-colors"
-                            onClick={() => setSelectedProduct(null)}
-                        >
+                    <div className="bg-white rounded-md shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col md:flex-row relative" onClick={e => e.stopPropagation()}>
+                        <button className="absolute top-3 right-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full p-2 z-20 transition-colors" onClick={() => setSelectedProduct(null)}>
                             <X className="w-5 h-5" />
                         </button>
                         
-                        <div className="w-full md:w-1/2 bg-gray-50 flex flex-col items-center justify-center p-8 border-r border-gray-100 shrink-0">
-                            {selectedProduct.image_url ? (
-                                <img src={selectedProduct.image_url} alt="" className="w-full h-auto object-contain max-h-[300px]" />
-                            ) : (
-                                <ShoppingCart className="w-24 h-24 text-gray-300" />
-                            )}
+                        <div className="w-full md:w-1/2 bg-gray-50 flex flex-col items-center justify-center p-8 border-r border-gray-100 shrink-0 relative">
+                            {selectedProduct.image_url ? <img src={selectedProduct.image_url} alt="" className="w-full h-auto object-contain max-h-[300px]" /> : <ShoppingCart className="w-24 h-24 text-gray-300" />}
                         </div>
 
                         <div className="w-full md:w-1/2 p-6 flex flex-col overflow-y-auto">
@@ -479,8 +647,7 @@ export default function WholesaleStore({
                             
                             <div className="flex items-center gap-4 text-sm mb-4">
                                 <div className="flex items-center gap-1 text-primary-600 font-bold">
-                                    <span className="border-b border-primary-600 pb-[1px]">{selectedProduct.rating}</span>
-                                    <Star className="w-4 h-4 fill-primary-500" />
+                                    <span className="border-b border-primary-600 pb-[1px]">{selectedProduct.rating}</span><Star className="w-4 h-4 fill-primary-500" />
                                 </div>
                                 <div className="w-px h-4 bg-gray-300"></div>
                                 <div className="text-gray-600">Đã bán <span className="font-semibold text-gray-900">{selectedProduct.soldCount}</span></div>
@@ -488,50 +655,26 @@ export default function WholesaleStore({
 
                             <div className="bg-gray-50 p-4 rounded-sm border border-gray-100 flex flex-col gap-1 mb-6 mt-2">
                                 <span className="text-gray-500 text-sm">Giá gốc: 
-                                    <span className="line-through ml-2">₫{new Intl.NumberFormat('vi-VN').format((selectedProduct.price || selectedProduct.basePricePerUnit || 0) * 1.5)}</span>
+                                    <span className="line-through ml-2">₫{new Intl.NumberFormat('vi-VN').format((selectedProduct.basePricePerUnit || 0) * 1.5)}</span>
                                 </span>
                                 <div className="flex items-baseline gap-2">
                                     <span className="text-3xl text-primary-600 font-medium">
-                                        ₫{new Intl.NumberFormat('vi-VN').format(selectedProduct.price || selectedProduct.basePricePerUnit || 0)}
+                                        ₫{new Intl.NumberFormat('vi-VN').format(selectedProduct.basePricePerUnit || 0)}
                                     </span>
                                 </div>
                             </div>
 
-                            <div className="flex flex-col gap-3 text-sm text-gray-600 mb-6 flex-1">
-                                <div className="flex"><span className="w-1/3 min-w-[100px] text-gray-400">Cam kết</span><span>Sản phẩm chính hãng 100%</span></div>
-                                <div className="flex"><span className="w-1/3 min-w-[100px] text-gray-400">Vận chuyển</span><span>Xử lý đơn bởi kho LYHU B2B</span></div>
-                                <div className="flex"><span className="w-1/3 min-w-[100px] text-gray-400">Mã SKU</span><span className="font-mono bg-gray-100 px-1 py-0.5 rounded text-gray-800">{selectedProduct.sku}</span></div>
-                            </div>
-
                             <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
                                 <span className="text-gray-500 text-sm">Số lượng thêm</span>
-                                
                                 {(() => {
                                     const qty = cart[selectedProduct.id]?.quantity || 0;
                                     return qty === 0 ? (
-                                        <button 
-                                            onClick={() => updateQuantity(selectedProduct, 1)}
-                                            className="px-6 py-2.5 bg-primary-600 text-white rounded-sm font-medium hover:bg-primary-700 transition-colors shadow-sm"
-                                        >
-                                            Thêm vào giỏ
-                                        </button>
+                                        <button onClick={() => updateQuantity(selectedProduct, 1)} className="px-6 py-2.5 bg-primary-600 text-white rounded-sm font-medium hover:bg-primary-700">Thêm vào giỏ</button>
                                     ) : (
-                                        <div className="flex items-center justify-between border border-primary-500 rounded-sm bg-white h-10 w-32 shadow-sm">
-                                            <button 
-                                                onClick={() => updateQuantity(selectedProduct, -1)}
-                                                className="w-10 h-full flex items-center justify-center text-primary-600 hover:bg-primary-50"
-                                            >
-                                                <Minus className="w-4 h-4" />
-                                            </button>
-                                            <span className="font-bold text-sm text-gray-800 border-x border-gray-200 flex-1 text-center h-full flex items-center justify-center">
-                                                {qty}
-                                            </span>
-                                            <button 
-                                                onClick={() => updateQuantity(selectedProduct, 1)}
-                                                className="w-10 h-full flex items-center justify-center text-primary-600 hover:bg-primary-50"
-                                            >
-                                                <Plus className="w-4 h-4" />
-                                            </button>
+                                        <div className="flex items-center justify-between border border-primary-500 rounded-sm h-10 w-32 shadow-sm text-primary-600">
+                                            <button onClick={() => updateQuantity(selectedProduct, -1)} className="w-10 h-full flex items-center justify-center hover:bg-primary-50"><Minus className="w-4 h-4" /></button>
+                                            <span className="font-bold text-sm text-gray-800 border-x border-gray-200 flex-1 text-center h-full flex items-center justify-center">{qty}</span>
+                                            <button onClick={() => updateQuantity(selectedProduct, 1)} className="w-10 h-full flex items-center justify-center hover:bg-primary-50"><Plus className="w-4 h-4" /></button>
                                         </div>
                                     )
                                 })()}
@@ -541,24 +684,133 @@ export default function WholesaleStore({
                 </div>
             )}
 
+            {/* V3: Checkout Sliding Drawer */}
+            {isCheckoutOpen && (
+                <>
+                    <div className="fixed inset-0 bg-black/50 z-50 transition-opacity" onClick={() => setIsCheckoutOpen(false)}></div>
+                    <div className="fixed inset-y-0 right-0 w-full md:w-[450px] bg-white shadow-2xl z-50 flex flex-col transform transition-transform duration-300">
+                        <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-primary-500 text-white">
+                            <h2 className="text-lg font-bold">Thanh Toán Đơn Sỉ</h2>
+                            <button onClick={() => setIsCheckoutOpen(false)} className="hover:bg-primary-600 p-1 rounded-full text-white"><X className="w-5 h-5"/></button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto p-5 bg-gray-50">
+                            {/* Danh sách hàng */}
+                            <div className="bg-white rounded-sm shadow-sm border border-gray-100 p-4 mb-4">
+                                <h3 className="font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2">Danh sách sản phẩm</h3>
+                                <div className="flex flex-col gap-3">
+                                    {cartAnalysis.items.map(item => {
+                                        const price = item.flashSalePrice ?? item.product.basePricePerUnit ?? 0;
+                                        return (
+                                            <div key={item.product.id} className="flex gap-3">
+                                                <img src={item.product.image_url || ''} className="w-12 h-12 border border-gray-200 object-cover rounded-sm bg-gray-50" />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-sm text-gray-800 truncate">{item.product.name}</p>
+                                                    <p className="text-xs text-gray-500 font-mono">SKU: {item.product.sku}</p>
+                                                    <div className="flex justify-between items-center mt-1">
+                                                        <span className="text-sm font-bold text-primary-600">₫{new Intl.NumberFormat('vi-VN').format(price)}</span>
+                                                        <span className="text-xs font-bold bg-gray-100 px-2 py-0.5 rounded-sm">x{item.quantity}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Form Giao hàng */}
+                            <div className="bg-white rounded-sm shadow-sm border border-gray-100 p-4 mb-4">
+                                <h3 className="font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2">Thông tin giao hàng</h3>
+                                <div className="flex flex-col gap-3">
+                                    <div>
+                                        <label className="text-xs font-semibold text-gray-500 mb-1 block">Địa chỉ nhận hàng (Kho)</label>
+                                        <textarea 
+                                            value={address}
+                                            onChange={e => setAddress(e.target.value)}
+                                            rows={2} 
+                                            className="w-full border border-gray-200 rounded-sm p-2 text-sm focus:outline-primary-500 bg-gray-50" 
+                                            placeholder="Nhập địa chỉ cụ thể..."
+                                        ></textarea>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-semibold text-gray-500 mb-1 block">Phương thức</label>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => setShippingMethod('lyhu_ship')} className={`flex-1 py-2 text-sm rounded-sm border font-medium ${shippingMethod === 'lyhu_ship' ? 'border-primary-500 bg-primary-50 text-primary-600' : 'border-gray-200 bg-white text-gray-600'}`}>LYHU Giao</button>
+                                            <button onClick={() => setShippingMethod('self')} className={`flex-1 py-2 text-sm rounded-sm border font-medium ${shippingMethod === 'self' ? 'border-primary-500 bg-primary-50 text-primary-600' : 'border-gray-200 bg-white text-gray-600'}`}>Tự tới lấy</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Tổng kết */}
+                            <div className="bg-white rounded-sm shadow-sm border border-gray-100 p-4">
+                                <h3 className="font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2">Chi tiết thanh toán</h3>
+                                <div className="space-y-2 text-sm text-gray-600">
+                                    <div className="flex justify-between">
+                                        <span>Tổng tiền hàng</span>
+                                        <span>₫{new Intl.NumberFormat('vi-VN').format(cartAnalysis.baseTotal)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Tổng giảm giá/Voucher</span>
+                                        <span className="text-secondary-600">-₫{new Intl.NumberFormat('vi-VN').format(cartAnalysis.discountAmount)}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Phí vận chuyển</span>
+                                        <span>{shippingMethod === 'lyhu_ship' ? (savedVouchers.includes('FREESHIP') ? 'Miễn phí' : 'Thoả thuận') : '₫0'}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center border-t border-gray-100 mt-2 pt-2">
+                                        <span className="font-bold text-gray-800">Tổng thanh toán</span>
+                                        <span className="text-2xl font-bold text-primary-600">₫{new Intl.NumberFormat('vi-VN').format(cartAnalysis.finalTotal)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-white border-t border-gray-200">
+                            <button 
+                                onClick={submitOrder}
+                                disabled={isSubmitting || cartAnalysis.items.length === 0 || address.trim() === ''}
+                                className="w-full bg-primary-600 text-white py-3.5 rounded-sm font-bold text-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
+                            >
+                                {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Đặt Hàng Sỉ Ngay'}
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Popup Thông báo Thành công Mock */}
+            {checkoutSuccess && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 animate-in fade-in">
+                    <div className="bg-white p-8 rounded-md flex flex-col items-center max-w-sm w-full shadow-2xl text-center transform scale-100 animate-in zoom-in-95">
+                        <div className="w-16 h-16 bg-secondary-100 text-secondary-500 rounded-full flex items-center justify-center mb-4">
+                            <CheckCircle2 className="w-10 h-10" />
+                        </div>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Đặt Hàng Thành Công!</h2>
+                        <p className="text-gray-500 text-sm mb-6">Đơn sỉ của bạn đã được ghi nhận vào hệ thống LYHU. Bộ phận Sales sẽ liên hệ với bạn trong thời gian sớm nhất.</p>
+                        <button onClick={() => setCheckoutSuccess(false)} className="bg-primary-600 text-white w-full py-2 rounded-sm font-medium">Tiếp tục mua hàng</button>
+                    </div>
+                </div>
+            )}
+
             {/* Sticky Bottom Bar (Mobile/Desktop friendly) */}
-            {cartAnalysis.totalItems > 0 && (
+            {cartAnalysis.totalItems > 0 && !isCheckoutOpen && (
                 <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30">
                     
                     {/* Upsell / Promo Banner */}
                     {(cartAnalysis.appliedPromoName || cartAnalysis.pendingUpsellMsg) && (
-                        <div className={`text-xs px-4 py-1.5 font-medium flex items-center justify-center transition-colors shadow-[0_-2px_10px_rgba(0,0,0,0.05)] ${cartAnalysis.appliedPromoName ? 'bg-secondary-500 text-white' : 'bg-primary-50 text-primary-700 border-b border-primary-100'}`}>
+                        <div className={`text-xs px-4 py-1.5 font-medium flex items-center justify-center transition-colors shadow-[0_-2px_10px_rgba(0,0,0,0.05)] flex-wrap gap-2 ${cartAnalysis.appliedPromoName ? 'bg-secondary-500 text-white' : 'bg-primary-50 text-primary-700 border-b border-primary-100'}`}>
                             {cartAnalysis.appliedPromoName ? (
-                                <><CheckCircle2 className="w-3.5 h-3.5 mr-1 inline" /> {cartAnalysis.appliedPromoName}</>
+                                <><CheckCircle2 className="w-3.5 h-3.5 mr-1 inline shrink-0" /> {cartAnalysis.appliedPromoName}</>
                             ) : (
-                                <><Info className="w-3.5 h-3.5 mr-1 inline" /> {cartAnalysis.pendingUpsellMsg}</>
+                                <><Info className="w-3.5 h-3.5 mr-1 inline shrink-0" /> {cartAnalysis.pendingUpsellMsg}</>
                             )}
                         </div>
                     )}
 
                     <div className="flex items-center justify-between h-[60px] max-w-6xl mx-auto">
-                        <div className="flex items-center pl-4 relative h-full flex-1 group">
-                            {/* Icon Cart Floating partially out */}
+                        <div className="flex items-center pl-4 relative h-full flex-1 group" onClick={() => setIsCheckoutOpen(true)}>
+                            {/* Icon Cart Floating */}
                             <div className="relative -top-3 w-12 h-12 bg-white border border-primary-500 text-primary-600 rounded-full flex items-center justify-center shadow-lg group-hover:-translate-y-1 transition-transform cursor-pointer">
                                 <ShoppingCart className="w-5 h-5" />
                                 <span className="absolute -top-1 -right-1 bg-secondary-500 text-white text-[10px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-1 shadow-sm border border-white">
@@ -566,7 +818,7 @@ export default function WholesaleStore({
                                 </span>
                             </div>
                             
-                            <div className="ml-4 h-full flex flex-col justify-center">
+                            <div className="ml-4 h-full flex flex-col justify-center cursor-pointer">
                                 <div className="text-gray-500 text-[10px] uppercase tracking-wide font-semibold">Tổng thanh toán</div>
                                 <div className="flex items-baseline gap-2">
                                     <p className="font-bold text-xl text-primary-600 leading-none tracking-tight">
@@ -581,7 +833,7 @@ export default function WholesaleStore({
                             </div>
                         </div>
 
-                        <button className="bg-primary-600 text-white px-8 h-full font-bold text-[15px] hover:bg-primary-700 transition-colors flex items-center justify-center min-w-[140px] shadow-inner shadow-white/20">
+                        <button onClick={() => setIsCheckoutOpen(true)} className="bg-primary-600 text-white px-8 h-full font-bold text-[15px] hover:bg-primary-700 transition-colors flex items-center justify-center min-w-[140px] shadow-inner shadow-white/20">
                             Mua Hàng
                         </button>
                     </div>
