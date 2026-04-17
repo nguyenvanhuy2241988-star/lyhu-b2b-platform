@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, ShoppingCart, Info, CheckCircle2, ChevronRight, Minus, Plus, Star, X, Clock, Flame, Ticket, Loader2 } from 'lucide-react';
+import { Search, ShoppingCart, Info, CheckCircle2, ChevronRight, Minus, Plus, Star, X, Clock, Flame, Ticket, Loader2, History } from 'lucide-react';
 import { getSupabase } from '@/lib/supabaseClient';
 
 interface Product {
@@ -87,10 +87,15 @@ export default function WholesaleStore({
 }) {
     const supabase = getSupabase();
     const [cart, setCart] = useState<Record<string, CartItem>>({});
+    const [isCartLoaded, setIsCartLoaded] = useState(false);
     const [activeTab, setActiveTab] = useState<string>('All');
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState<'popular' | 'latest' | 'topsale' | 'price_asc' | 'price_desc'>('popular');
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+    // V4 Features States
+    const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+    const [pastOrders, setPastOrders] = useState<any[]>([]);
 
     // V3 Features States
     const [savedVouchers, setSavedVouchers] = useState<string[]>([]);
@@ -102,6 +107,58 @@ export default function WholesaleStore({
     const [checkoutSuccess, setCheckoutSuccess] = useState(false);
     const [address, setAddress] = useState('');
     const [shippingMethod, setShippingMethod] = useState<'lyhu_ship'|'self'>('lyhu_ship');
+
+    // V4: Load from local storage
+    useEffect(() => {
+        const saved = localStorage.getItem('lyhu_b2b_cart');
+        if (saved) {
+            try { setCart(JSON.parse(saved)); } catch (e) {}
+        }
+        setIsCartLoaded(true);
+    }, []);
+
+    // V4: Save to local storage
+    useEffect(() => {
+        if (isCartLoaded) {
+            localStorage.setItem('lyhu_b2b_cart', JSON.stringify(cart));
+        }
+    }, [cart, isCartLoaded]);
+
+    // V4: Fetch history
+    useEffect(() => {
+        const fetchHistory = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                const { data } = await supabase
+                    .from('orders')
+                    .select('*, order_items(*)')
+                    .eq('customer_id', session.user.id)
+                    .order('created_at', { ascending: false });
+                if (data) setPastOrders(data);
+            }
+        };
+        fetchHistory();
+    }, []);
+
+    // V4: Handle Reorder
+    const handleReorder = (order: any) => {
+        const newCart = { ...cart };
+        
+        order.order_items.forEach((item: any) => {
+            const product = initialProducts.find(p => p.id === item.product_id);
+            if (product) {
+                const existingQty = newCart[product.id]?.quantity || 0;
+                newCart[product.id] = {
+                    product,
+                    quantity: existingQty + item.quantity,
+                };
+            }
+        });
+        
+        setCart(newCart);
+        setIsHistoryOpen(false);
+        setIsCheckoutOpen(true);
+    };
 
     const productsWithSocialProof = useMemo(() => {
         return initialProducts.map(p => ({
@@ -336,6 +393,12 @@ export default function WholesaleStore({
                     </div>
 
                     <div className="hidden md:flex items-center justify-end w-[150px] group relative">
+                        {/* V4: History Icon */}
+                        {isWholesaleCustomer && (
+                            <div className="relative py-2 px-3 cursor-pointer group/history mr-2" onClick={() => setIsHistoryOpen(true)}>
+                                <History className="w-8 h-8 text-white hover:text-white/80 transition-colors" />
+                            </div>
+                        )}
                         <div className="relative py-2 px-2 cursor-pointer">
                             <ShoppingCart className="w-8 h-8 text-white hover:text-white/80 transition-colors" />
                             {cartAnalysis.totalItems > 0 && (
@@ -682,6 +745,65 @@ export default function WholesaleStore({
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* V4: Order History Sliding Drawer */}
+            {isHistoryOpen && (
+                <>
+                    <div className="fixed inset-0 bg-black/50 z-50 transition-opacity" onClick={() => setIsHistoryOpen(false)}></div>
+                    <div className="fixed inset-y-0 right-0 w-full md:w-[400px] bg-white shadow-2xl z-50 flex flex-col transform transition-transform duration-300">
+                        <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-primary-500 text-white">
+                            <h2 className="text-lg font-bold">Lịch Sử Mua Sỉ</h2>
+                            <button onClick={() => setIsHistoryOpen(false)} className="hover:bg-primary-600 p-1 rounded-full text-white"><X className="w-5 h-5"/></button>
+                        </div>
+                        
+                        <div className="flex-1 overflow-y-auto p-4 bg-gray-50 flex flex-col gap-4">
+                            {pastOrders.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+                                    <History className="w-16 h-16 opacity-30 mb-4" />
+                                    <p className="text-sm">Bạn chưa có đơn sỉ nào.</p>
+                                </div>
+                            ) : (
+                                pastOrders.map(order => (
+                                    <div key={order.id} className="bg-white border border-gray-200 rounded-sm shadow-sm overflow-hidden">
+                                        <div className="p-3 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                                            <div>
+                                                <p className="text-xs text-gray-500">Mã đơn: <span className="font-mono text-gray-800">{order.id.slice(0,8)}</span></p>
+                                                <p className="text-[10px] text-gray-400">{new Date(order.created_at).toLocaleDateString('vi-VN')} {new Date(order.created_at).toLocaleTimeString('vi-VN')}</p>
+                                            </div>
+                                            <span className={`text-[10px] font-bold px-2 py-1 uppercase rounded-sm ${order.status === 'pending' ? 'bg-orange-100 text-orange-600' : 'bg-green-100 text-green-600'}`}>
+                                                {order.status}
+                                            </span>
+                                        </div>
+                                        <div className="p-3 space-y-2">
+                                            {order.order_items?.slice(0,2).map((item: any, idx: number) => {
+                                                const product = initialProducts.find(p => p.id === item.product_id);
+                                                return (
+                                                    <div key={idx} className="flex justify-between items-center text-sm">
+                                                        <span className="text-gray-700 truncate max-w-[200px]">{product?.name || 'Sản phẩm không xác định'}</span>
+                                                        <span className="text-gray-500 text-xs">x{item.quantity}</span>
+                                                    </div>
+                                                )
+                                            })}
+                                            {(order.order_items?.length || 0) > 2 && (
+                                                <p className="text-xs text-gray-400 italic">...và {(order.order_items?.length || 0) - 2} mặt hàng khác</p>
+                                            )}
+                                        </div>
+                                        <div className="p-3 border-t border-gray-100 flex justify-between items-center">
+                                            <span className="font-bold text-primary-600">₫{new Intl.NumberFormat('vi-VN').format(order.total_amount)}</span>
+                                            <button 
+                                                onClick={() => handleReorder(order)} 
+                                                className="bg-primary-50 text-primary-600 border border-primary-200 hover:bg-primary-100 px-4 py-1.5 rounded-sm text-sm font-medium transition-colors"
+                                            >
+                                                Mua lại đơn này
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                </>
             )}
 
             {/* V3: Checkout Sliding Drawer */}
