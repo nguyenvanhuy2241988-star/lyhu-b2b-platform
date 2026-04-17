@@ -325,40 +325,31 @@ export default function WholesaleStore({
         try {
             const { data: { session } } = await supabase.auth.getSession();
             
-            const payload: any = {
-                total_amount: cartAnalysis.finalTotal,
-                status: 'pending',
-                note: `B2B Wholesale / Đơn tự tạo trên Web. Đ/c: ${address}. Phương thức: ${shippingMethod}.`,
-                source: 'B2B_WEB'
+            const payload = {
+                payload: {
+                    total_amount: cartAnalysis.finalTotal,
+                    status: 'pending',
+                    note: `B2B Wholesale / Đơn tự tạo trên Web. Đ/c: ${address}. Phương thức: ${shippingMethod}.`,
+                    source: 'B2B_WEB'
+                },
+                items: cartAnalysis.items.map(item => ({
+                    product_id: item.product.id,
+                    quantity: item.quantity,
+                    price: item.flashSalePrice ?? item.product.basePricePerUnit ?? item.product.basePrice ?? 0,
+                    discount: 0
+                }))
             };
 
-            // To avoid foreign key errors on 'customer_id' if logged-in user is an admin/telesales, 
-            // assign the ID to 'telesales_user_id' instead.
-            if (session?.user?.id) {
-                payload.telesales_user_id = session.user.id;
-            }
+            const response = await fetch('/api/wholesale/order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
 
-            // Tạo order gốc
-            const { data: orderData, error: orderError } = await supabase
-                .from('orders')
-                .insert(payload)
-                .select()
-                .single();
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error);
 
-            if (orderError) throw orderError;
-
-            // Tạo danh sách items
-            const orderItems = cartAnalysis.items.map(item => ({
-                order_id: orderData.id,
-                product_id: item.product.id,
-                quantity: item.quantity,
-                price: item.flashSalePrice ?? item.product.basePricePerUnit ?? item.product.basePrice ?? 0,
-                discount: 0 // Overall discount was applied directly on order side or can be divided
-            }));
-
-            const { error: itemsError } = await supabase
-                .from('order_items')
-                .insert(orderItems);
+            const itemsError = null; // API route handled this
                 
             if (itemsError) throw itemsError;
 
@@ -398,9 +389,17 @@ export default function WholesaleStore({
                             placeholder="Tìm kiếm sản phẩm, thương hiệu sỉ..." 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }
+                            }}
                             className="w-full bg-white rounded-sm pl-4 pr-12 py-2.5 text-sm text-gray-800 focus:outline-none shadow-sm placeholder-gray-400"
                         />
-                        <button className="absolute right-1 top-1 bottom-1 bg-primary-600 hover:bg-primary-700 text-white px-4 rounded-sm flex items-center justify-center transition-colors">
+                        <button 
+                            onClick={() => document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                            className="absolute right-1 top-1 bottom-1 bg-primary-600 hover:bg-primary-700 text-white px-4 rounded-sm flex items-center justify-center transition-colors"
+                        >
                             <Search className="w-4 h-4" />
                         </button>
                     </div>
@@ -609,7 +608,7 @@ export default function WholesaleStore({
                 </div>
 
                 {/* Product Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-3">
+                <div id="product-grid" className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-3">
                     {filteredProducts.map(product => {
                         const qty = cart[product.id]?.quantity || 0;
                         const fsProd = flashSaleProducts.find(f => f.id === product.id);
@@ -705,52 +704,130 @@ export default function WholesaleStore({
                 </div>
             </div>
 
-            {/* Quick View Modal */}
+            {/* Quick View Modal (Shopee style) */}
             {selectedProduct && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setSelectedProduct(null)}>
-                    <div className="bg-white rounded-md shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col md:flex-row relative" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white rounded-md shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col md:flex-row relative" onClick={e => e.stopPropagation()}>
                         <button className="absolute top-3 right-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full p-2 z-20 transition-colors" onClick={() => setSelectedProduct(null)}>
                             <X className="w-5 h-5" />
                         </button>
                         
-                        <div className="w-full md:w-1/2 bg-gray-50 flex flex-col items-center justify-center p-8 border-r border-gray-100 shrink-0 relative">
-                            {selectedProduct.image_url ? <img src={selectedProduct.image_url} alt="" className="w-full h-auto object-contain max-h-[300px]" /> : <ShoppingCart className="w-24 h-24 text-gray-300" />}
+                        <div className="w-full md:w-1/2 bg-gray-50 flex flex-col p-6 border-r border-gray-100 shrink-0 relative overflow-y-auto">
+                            {/* Product Main Image */}
+                            <div className="w-full aspect-square bg-white border border-gray-200 mb-2 relative flex items-center justify-center overflow-hidden">
+                                {selectedProduct.image_url ? (
+                                    <img src={selectedProduct.image_url} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                    <ShoppingCart className="w-24 h-24 text-gray-300" />
+                                )}
+                            </div>
+                            
+                            {/* Thumbnail Row Mock */}
+                            {selectedProduct.image_url && (
+                                <div className="flex gap-2 w-full overflow-x-auto hide-scrollbar py-1">
+                                    <div className="w-16 h-16 border-2 border-primary-500 rounded-sm flex-shrink-0 cursor-pointer">
+                                        <img src={selectedProduct.image_url} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="w-16 h-16 border border-gray-200 rounded-sm flex-shrink-0 cursor-pointer opacity-70 hover:opacity-100">
+                                        <img src={selectedProduct.image_url} className="w-full h-full object-cover grayscale-[30%]" />
+                                    </div>
+                                    <div className="w-16 h-16 border border-gray-200 rounded-sm flex-shrink-0 cursor-pointer opacity-70 hover:opacity-100 bg-gray-900 flex items-center justify-center relative">
+                                        <img src={selectedProduct.image_url} className="w-full h-full object-cover opacity-50" />
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center"><ChevronRight className="w-3 h-3 text-white ml-0.5" /></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Share & Like Mock */}
+                            <div className="flex items-center gap-4 mt-4 text-gray-600 text-sm px-2">
+                                <div className="flex gap-2 items-center cursor-pointer hover:text-primary-600">
+                                    <span className="font-medium">Chia sẻ:</span>
+                                    <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.04c-5.5 0-10 4.49-10 10.02 0 5 3.66 9.15 8.44 9.9v-7H7.9v-2.9h2.54v-2.2c0-2.5 1.5-3.89 3.77-3.89 1.09 0 2.23.19 2.23.19v2.45h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.9h-2.33v7a10 10 0 008.44-9.9c0-5.53-4.5-10.02-10-10.02z"/></svg>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="w-full md:w-1/2 p-6 flex flex-col overflow-y-auto">
-                            <span className="bg-primary-500 text-white text-xs font-bold px-2 py-1 rounded-sm w-fit mb-3">{selectedProduct.brand}</span>
+                            <span className="bg-primary-500 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-sm w-fit mb-2">{selectedProduct.brand}</span>
                             <h2 className="text-xl font-medium text-gray-800 leading-tight mb-2">{selectedProduct.name}</h2>
                             
                             <div className="flex items-center gap-4 text-sm mb-4">
                                 <div className="flex items-center gap-1 text-primary-600 font-bold">
                                     <span className="border-b border-primary-600 pb-[1px]">{selectedProduct.rating}</span><Star className="w-4 h-4 fill-primary-500" />
                                 </div>
-                                <div className="w-px h-4 bg-gray-300"></div>
-                                <div className="text-gray-600">Đã bán <span className="font-semibold text-gray-900">{selectedProduct.soldCount}</span></div>
+                                <div className="w-px h-3 bg-gray-300"></div>
+                                <div className="text-gray-600">Đã bán <span className="font-bold text-gray-900">{selectedProduct.soldCount}</span></div>
                             </div>
 
-                            <div className="bg-gray-50 p-4 rounded-sm border border-gray-100 flex flex-col gap-1 mb-6 mt-2">
-                                <span className="text-gray-500 text-sm">Giá gốc: 
-                                    <span className="line-through ml-2">₫{new Intl.NumberFormat('vi-VN').format((selectedProduct.basePricePerUnit || 0) * 1.5)}</span>
-                                </span>
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-3xl text-primary-600 font-medium">
-                                        ₫{new Intl.NumberFormat('vi-VN').format(selectedProduct.basePricePerUnit || 0)}
-                                    </span>
+                            <div className="bg-gray-50/80 p-4 rounded-sm border border-gray-100 flex flex-col gap-1 mb-6">
+                                {(() => {
+                                    const fsProd = flashSaleProducts.find(f => f.id === selectedProduct.id);
+                                    if (fsProd) {
+                                        return (
+                                            <>
+                                                <span className="text-gray-500 text-sm">Giá gốc: <span className="line-through ml-2">₫{new Intl.NumberFormat('vi-VN').format(selectedProduct.basePricePerUnit || 0)}</span></span>
+                                                <div className="flex items-baseline gap-2">
+                                                    <span className="text-3xl text-[#ee4d2d] font-medium">₫{new Intl.NumberFormat('vi-VN').format(fsProd.flashSalePrice)}</span>
+                                                    <span className="text-xs bg-[#ee4d2d] text-white font-bold px-1.5 py-0.5 rounded-sm uppercase">Flash Sale</span>
+                                                </div>
+                                            </>
+                                        );
+                                    }
+                                    if (!isWholesaleCustomer) {
+                                        return (
+                                            <>
+                                                <span className="text-gray-500 text-sm">Giá lẻ đê xuất: </span>
+                                                <span className="text-3xl text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(selectedProduct.retailPrice || (selectedProduct.basePricePerUnit || 0) * 1.5)}</span>
+                                            </>
+                                        );
+                                    }
+                                    return (
+                                        <>
+                                            <span className="text-gray-500 text-sm">Giá NPP: <span className="line-through ml-2">₫{new Intl.NumberFormat('vi-VN').format((selectedProduct.basePricePerUnit || 0) * 1.5)}</span></span>
+                                            <div className="flex items-baseline gap-2">
+                                                <span className="text-3xl text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(selectedProduct.basePricePerUnit || 0)}</span>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
+                            </div>
+
+                            <div className="mb-6 flex-1">
+                                <h4 className="font-bold text-gray-800 text-sm mb-2 uppercase">Thông tin sản phẩm</h4>
+                                <div className="text-sm text-gray-600 space-y-1 bg-white p-3 border border-gray-100 shadow-sm rounded-sm">
+                                    <p className="flex"><span className="w-24 text-gray-400">Mã SKU</span> <span className="font-medium text-gray-800">{selectedProduct.sku}</span></p>
+                                    <p className="flex"><span className="w-24 text-gray-400">Kho hàng</span> <span className="font-medium text-gray-800">Sẵn sàng giao</span></p>
+                                    <p className="flex"><span className="w-24 text-gray-400">Thương hiệu</span> <span className="text-primary-600">{selectedProduct.brand}</span></p>
+                                    <div className="my-2 border-t border-gray-100 pt-2">
+                                        <p className="text-gray-700 leading-relaxed max-w-prose">
+                                            {selectedProduct.name} chính hãng phân phối bởi LYHU. Sản phẩm phù hợp để nhập sỉ số lượng lớn cho cửa hàng bán lẻ, siêu thị mini, hoặc đẩy mảng TikTok Shop/Shopee.
+                                            Đầy đủ hình ảnh, video chất lượng cao hỗ trợ đăng bài mượt mà.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="mt-auto pt-4 border-t border-gray-100 flex items-center justify-between">
-                                <span className="text-gray-500 text-sm">Số lượng thêm</span>
+                            <div className="mt-auto pt-4 border-t border-gray-100 flex items-center gap-4 bg-white sticky bottom-0">
                                 {(() => {
                                     const qty = cart[selectedProduct.id]?.quantity || 0;
+                                    const fsProd = flashSaleProducts.find(f => f.id === selectedProduct.id);
                                     return qty === 0 ? (
-                                        <button onClick={() => updateQuantity(selectedProduct, 1)} className="px-6 py-2.5 bg-primary-600 text-white rounded-sm font-medium hover:bg-primary-700">Thêm vào giỏ</button>
+                                        <>
+                                            <button 
+                                                onClick={() => updateQuantity(selectedProduct, 1, fsProd?.flashSalePrice)} 
+                                                className="px-6 py-3 bg-primary-50 text-primary-600 border border-primary-500 rounded-sm font-medium hover:bg-primary-100 flex gap-2 items-center justify-center flex-1"
+                                            >
+                                                <ShoppingCart className="w-5 h-5" />
+                                                Thêm vào Giỏ hàng
+                                            </button>
+                                        </>
                                     ) : (
-                                        <div className="flex items-center justify-between border border-primary-500 rounded-sm h-10 w-32 shadow-sm text-primary-600">
-                                            <button onClick={() => updateQuantity(selectedProduct, -1)} className="w-10 h-full flex items-center justify-center hover:bg-primary-50"><Minus className="w-4 h-4" /></button>
-                                            <span className="font-bold text-sm text-gray-800 border-x border-gray-200 flex-1 text-center h-full flex items-center justify-center">{qty}</span>
-                                            <button onClick={() => updateQuantity(selectedProduct, 1)} className="w-10 h-full flex items-center justify-center hover:bg-primary-50"><Plus className="w-4 h-4" /></button>
+                                        <div className="flex items-center border border-primary-500 rounded-sm h-12 w-40 text-primary-600">
+                                            <button onClick={() => updateQuantity(selectedProduct, -1)} className="w-12 h-full flex items-center justify-center hover:bg-primary-50 bg-gray-50"><Minus className="w-5 h-5" /></button>
+                                            <span className="font-bold text-lg text-gray-800 border-x border-gray-200 flex-1 text-center h-full flex items-center justify-center">{qty}</span>
+                                            <button onClick={() => updateQuantity(selectedProduct, 1)} className="w-12 h-full flex items-center justify-center hover:bg-primary-50 bg-gray-50"><Plus className="w-5 h-5" /></button>
                                         </div>
                                     )
                                 })()}
