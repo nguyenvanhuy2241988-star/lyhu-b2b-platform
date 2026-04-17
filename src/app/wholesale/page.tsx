@@ -48,11 +48,19 @@ export default async function WholesalePage() {
 
     // Lấy danh sách sản phẩm
     // Giả định bảng products có trường brand_id hoặc brand_name và is_active
-    const { data: productsData, error: productError } = await supabase
+    const { data: rawProductsData, error: productError } = await supabase
         .from('products')
         .select('*')
-        .eq('status', 'active')
+        .eq('is_active', true)
         .order('name', { ascending: true });
+
+    const productsData = (rawProductsData || []).map((p: any) => ({
+        ...p,
+        basePricePerUnit: p.basePricePerUnit ?? p.price ?? 0,
+        basePrice: p.basePrice ?? p.price ?? 0,
+        retailPrice: p.retailPrice ?? (p.price ? p.price * 1.2 : 0),
+        brand: p.brand ?? 'LYHU'
+    }));
 
     // Lấy các chương trình khuyến mãi đang active
     const { data: promotionsData } = await supabase
