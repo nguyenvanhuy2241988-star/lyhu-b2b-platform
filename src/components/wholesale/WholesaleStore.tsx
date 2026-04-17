@@ -172,11 +172,19 @@ export default function WholesaleStore({
         return ['All', ...Array.from(brandSet)];
     }, [initialProducts]);
 
+    // Helper function to ignore accents
+    const normalizeSearch = (str: string) => {
+        if (!str) return '';
+        return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    };
+
     const filteredProducts = useMemo(() => {
         let result = productsWithSocialProof.filter(p => {
             const matchesBrand = activeTab === 'All' || p.brand === activeTab;
-            const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                                  p.sku?.toLowerCase().includes(searchQuery.toLowerCase());
+            const searchNormalized = normalizeSearch(searchQuery);
+            const matchesSearch = !searchNormalized || 
+                                  normalizeSearch(p.name).includes(searchNormalized) || 
+                                  normalizeSearch(p.sku).includes(searchNormalized);
             return matchesBrand && matchesSearch;
         });
 
@@ -315,20 +323,25 @@ export default function WholesaleStore({
     const submitOrder = async () => {
         setIsSubmitting(true);
         try {
-            // Lấy ID khách hàng hiện tại
             const { data: { session } } = await supabase.auth.getSession();
-            const customerId = session?.user?.id || null;
+            
+            const payload: any = {
+                total_amount: cartAnalysis.finalTotal,
+                status: 'pending',
+                note: `B2B Wholesale / Đơn tự tạo trên Web. Đ/c: ${address}. Phương thức: ${shippingMethod}.`,
+                source: 'B2B_WEB'
+            };
+
+            // To avoid foreign key errors on 'customer_id' if logged-in user is an admin/telesales, 
+            // assign the ID to 'telesales_user_id' instead.
+            if (session?.user?.id) {
+                payload.telesales_user_id = session.user.id;
+            }
 
             // Tạo order gốc
             const { data: orderData, error: orderError } = await supabase
                 .from('orders')
-                .insert({
-                    customer_id: customerId,
-                    total_amount: cartAnalysis.finalTotal,
-                    status: 'pending',
-                    note: `B2B Wholesale / Đơn tự tạo trên Web. Đ/c: ${address}. Phương thức: ${shippingMethod}.`,
-                    source: 'B2B_WEB'
-                })
+                .insert(payload)
                 .select()
                 .single();
 
@@ -820,18 +833,34 @@ export default function WholesaleStore({
                             {/* Danh sách hàng */}
                             <div className="bg-white rounded-sm shadow-sm border border-gray-100 p-4 mb-4">
                                 <h3 className="font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2">Danh sách sản phẩm</h3>
-                                <div className="flex flex-col gap-3">
+                                <div className="flex flex-col gap-4">
                                     {cartAnalysis.items.map(item => {
                                         const price = item.flashSalePrice ?? item.product.basePricePerUnit ?? 0;
                                         return (
-                                            <div key={item.product.id} className="flex gap-3">
-                                                <img src={item.product.image_url || ''} className="w-12 h-12 border border-gray-200 object-cover rounded-sm bg-gray-50" />
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm text-gray-800 truncate">{item.product.name}</p>
-                                                    <p className="text-xs text-gray-500 font-mono">SKU: {item.product.sku}</p>
-                                                    <div className="flex justify-between items-center mt-1">
+                                            <div key={item.product.id} className="flex gap-3 relative border-b border-gray-50 pb-4 last:border-0 last:pb-0">
+                                                <button 
+                                                    onClick={() => updateQuantity(item.product, -item.quantity)} 
+                                                    className="absolute top-0 right-0 text-gray-300 hover:text-red-500 transition-colors p-1"
+                                                >
+                                                    <X className="w-4 h-4"/>
+                                                </button>
+                                                <img src={item.product.image_url || ''} className="w-16 h-16 border border-gray-200 object-cover rounded-sm bg-gray-50 flex-shrink-0" />
+                                                <div className="flex-1 min-w-0 pr-6">
+                                                    <p className="text-sm text-gray-800 break-words mb-1" title={item.product.name}>{item.product.name}</p>
+                                                    <p className="text-xs text-gray-500 font-mono mb-2">SKU: {item.product.sku}</p>
+                                                    <div className="flex justify-between items-center bg-gray-50/50 p-1.5 rounded-sm">
                                                         <span className="text-sm font-bold text-primary-600">₫{new Intl.NumberFormat('vi-VN').format(price)}</span>
-                                                        <span className="text-xs font-bold bg-gray-100 px-2 py-0.5 rounded-sm">x{item.quantity}</span>
+                                                        <div className="flex items-center border border-gray-200 rounded-sm bg-white overflow-hidden shadow-sm">
+                                                            <button 
+                                                                onClick={() => updateQuantity(item.product, -1)} 
+                                                                className="px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-primary-600 transition-colors flex items-center justify-center"
+                                                            ><Minus className="w-3 h-3"/></button>
+                                                            <span className="text-xs font-bold px-3 py-1 select-none border-x border-gray-100 text-center min-w-[30px]">{item.quantity}</span>
+                                                            <button 
+                                                                onClick={() => updateQuantity(item.product, 1)} 
+                                                                className="px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-primary-600 transition-colors flex items-center justify-center"
+                                                            ><Plus className="w-3 h-3"/></button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
