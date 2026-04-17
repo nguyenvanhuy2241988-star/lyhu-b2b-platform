@@ -63,6 +63,14 @@ interface CartItem {
     flashSalePrice?: number; // If bought via flash sale
 }
 
+interface WholesaleBanner {
+    id: string;
+    image_url: string;
+    link_url?: string;
+    position: 'main_slider' | 'side_top' | 'side_bottom';
+    sort_order: number;
+}
+
 const getMockSocialProof = (id: string) => {
     let hash = 0;
     for (let i = 0; i < id.length; i++) {
@@ -78,11 +86,13 @@ export default function WholesaleStore({
     initialProducts, 
     promotions, 
     flashSale,
+    banners = [],
     isWholesaleCustomer 
 }: { 
     initialProducts: Product[], 
     promotions: Promotion[], 
     flashSale?: FlashSale | null,
+    banners?: WholesaleBanner[],
     isWholesaleCustomer: boolean 
 }) {
     const supabase = getSupabase();
@@ -101,6 +111,9 @@ export default function WholesaleStore({
     const [savedVouchers, setSavedVouchers] = useState<string[]>([]);
     const [countdown, setCountdown] = useState<string>('00:00:00');
     
+    // Banner Carousel State
+    const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
     // Checkout States
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -139,6 +152,20 @@ export default function WholesaleStore({
         };
         fetchHistory();
     }, []);
+
+    // Banner Data Processing
+    const mainSliders = useMemo(() => banners.filter(b => b.position === 'main_slider').sort((a,b) => a.sort_order - b.sort_order), [banners]);
+    const sideTop = useMemo(() => banners.find(b => b.position === 'side_top'), [banners]);
+    const sideBottom = useMemo(() => banners.find(b => b.position === 'side_bottom'), [banners]);
+
+    // Slider Auto-play
+    useEffect(() => {
+        if (mainSliders.length <= 1) return;
+        const interval = setInterval(() => {
+            setCurrentSlideIndex(prev => (prev + 1) % mainSliders.length);
+        }, 4000);
+        return () => clearInterval(interval);
+    }, [mainSliders.length]);
 
     // V4: Handle Reorder
     const handleReorder = (order: any) => {
@@ -470,17 +497,71 @@ export default function WholesaleStore({
 
             <div className="max-w-6xl mx-auto px-4 mt-6">
                 
-                {/* Banner / Promotional Space */}
-                <div className="mb-4 rounded-sm overflow-hidden bg-white shadow-sm flex flex-col md:flex-row border border-gray-100">
-                    <div className="p-6 md:w-2/3 bg-gradient-to-r from-primary-50 to-primary-100">
-                        <h2 className="text-2xl font-bold text-primary-700 mb-2 uppercase tracking-wide">Siêu Hội Bán Sỉ</h2>
-                        <p className="text-gray-700 font-medium">Nhập càng nhiều - Chiết khấu càng sâu. Áp dụng bảng giá NPP mới từ tháng này.</p>
-                        <div className="mt-4 flex gap-2">
-                             <span className="bg-secondary-500 text-white text-xs px-2 py-1 rounded-sm font-bold shadow-sm">-15% ĐƠN TỪ 4 THÙNG</span>
-                             <span className="bg-white border border-secondary-500 text-secondary-600 text-xs px-2 py-1 rounded-sm font-bold shadow-sm">GIAO HÀNG TẬN NƠI</span>
+                {/* Dynamic Banners (Shopee Style) */}
+                {banners.length > 0 ? (
+                    <div className="mb-4 flex flex-col md:flex-row gap-2 h-auto md:h-[300px]">
+                        {/* Main Carousel (2/3 width) */}
+                        <div className="w-full md:w-2/3 h-[200px] md:h-full relative overflow-hidden rounded-sm bg-gray-100 group">
+                            {mainSliders.length > 0 ? (
+                                <>
+                                    <div className="w-full h-full flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${currentSlideIndex * 100}%)` }}>
+                                        {mainSliders.map(slide => (
+                                            <a key={slide.id} href={slide.link_url || '#'} className="min-w-full h-full relative cursor-pointer block">
+                                                <img src={slide.image_url} alt="Carousel Banner" className="w-full h-full object-cover" />
+                                            </a>
+                                        ))}
+                                    </div>
+                                    {mainSliders.length > 1 && (
+                                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                                            {mainSliders.map((_, idx) => (
+                                                <button key={idx} onClick={() => setCurrentSlideIndex(idx)} className={`w-2 h-2 rounded-full transition-all ${idx === currentSlideIndex ? 'bg-white w-4' : 'bg-white/50 hover:bg-white/80'}`} />
+                                            ))}
+                                        </div>
+                                    )}
+                                    {/* Navigation Arrows */}
+                                    {mainSliders.length > 1 && (
+                                        <>
+                                            <button onClick={() => setCurrentSlideIndex(p => (p - 1 + mainSliders.length) % mainSliders.length)} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-black/20 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/40"><ChevronRight className="w-5 h-5 rotate-180" /></button>
+                                            <button onClick={() => setCurrentSlideIndex(p => (p + 1) % mainSliders.length)} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-black/20 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/40"><ChevronRight className="w-5 h-5" /></button>
+                                        </>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="w-full h-full bg-gradient-to-r from-primary-50 to-primary-100 p-6 flex flex-col justify-center">
+                                    <h2 className="text-2xl md:text-3xl font-bold text-primary-700 mb-2 uppercase tracking-wide">Siêu Hội Bán Sỉ</h2>
+                                    <p className="text-gray-700 font-medium">Nhập càng nhiều - Chiết khấu càng sâu. Áp dụng bảng giá NPP mới từ tháng này.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Side Banners (1/3 width, hidden on mobile) */}
+                        <div className="hidden md:flex w-1/3 flex-col gap-2 h-full">
+                            {sideTop && (
+                                <a href={sideTop.link_url || '#'} className="h-1/2 rounded-sm overflow-hidden block relative group">
+                                    <img src={sideTop.image_url} alt="Side Top Banner" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                    <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
+                                </a>
+                            )}
+                            {sideBottom && (
+                                <a href={sideBottom.link_url || '#'} className="h-1/2 rounded-sm overflow-hidden block relative group">
+                                    <img src={sideBottom.image_url} alt="Side Bottom Banner" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                    <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
+                                </a>
+                            )}
                         </div>
                     </div>
-                </div>
+                ) : (
+                    <div className="mb-4 rounded-sm overflow-hidden bg-white shadow-sm flex flex-col md:flex-row border border-gray-100">
+                        <div className="p-6 md:w-2/3 bg-gradient-to-r from-primary-50 to-primary-100">
+                            <h2 className="text-2xl font-bold text-primary-700 mb-2 uppercase tracking-wide">Siêu Hội Bán Sỉ</h2>
+                            <p className="text-gray-700 font-medium">Nhập càng nhiều - Chiết khấu càng sâu. Áp dụng bảng giá NPP mới từ tháng này.</p>
+                            <div className="mt-4 flex gap-2">
+                                <span className="bg-secondary-500 text-white text-xs px-2 py-1 rounded-sm font-bold shadow-sm">-15% ĐƠN TỪ 4 THÙNG</span>
+                                <span className="bg-white border border-secondary-500 text-secondary-600 text-xs px-2 py-1 rounded-sm font-bold shadow-sm">GIAO HÀNG TẬN NƠI</span>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* V3: Voucher Wallet Row (Giả lậP Voucher xé tay) */}
                 <div className="mb-6 flex gap-3 overflow-x-auto hide-scrollbar pb-2">

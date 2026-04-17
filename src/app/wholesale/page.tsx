@@ -86,12 +86,20 @@ export default async function WholesalePage() {
         .limit(1)
         .single();
 
+    // Lấy danh sách Banners
+    const { data: bannersData } = await supabase
+        .from('wholesale_banners')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+
     return (
         <div className="min-h-screen bg-gray-50">
             <WholesaleStore 
                 initialProducts={productsData || []} 
                 promotions={promotionsData || []}
                 flashSale={flashSalesData || null}
+                banners={bannersData || []}
                 isWholesaleCustomer={isWholesaleCustomer}
             />
         </div>
