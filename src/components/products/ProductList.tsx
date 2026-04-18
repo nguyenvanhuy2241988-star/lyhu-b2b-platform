@@ -70,7 +70,7 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
 
     // Bulk Edit State
     const [bulkConfig, setBulkConfig] = useState<{
-        field: 'price' | 'stock' | 'brand' | 'is_active';
+        field: 'price' | 'stock' | 'brand' | 'is_active' | 'items_per_carton' | 'weight' | 'packaging_spec';
         value: string | number | boolean;
     }>({ field: 'stock', value: 0 });
 
