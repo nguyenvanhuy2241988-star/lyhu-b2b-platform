@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, ShoppingCart, Info, CheckCircle2, ChevronRight, Minus, Plus, Star, X, Clock, Flame, Ticket, Loader2, History, Bell, User, LogIn, Eye, EyeOff } from 'lucide-react';
+import { Search, ShoppingCart, Info, CheckCircle2, ChevronRight, Minus, Plus, Star, X, Clock, Flame, Ticket, Loader2, History, Bell, User, LogIn, Eye, EyeOff, Package } from 'lucide-react';
 import { getSupabase } from '@/lib/supabaseClient';
 
 interface Product {
