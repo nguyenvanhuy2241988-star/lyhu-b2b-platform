@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { MessageCircle, X, Send, Loader2, Phone, User } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { MessageCircle, X, Send, Loader2, Phone, User, Image as ImageIcon, Paperclip, Smile, ShoppingBag, HelpCircle, Truck, CreditCard, RotateCcw } from 'lucide-react';
 import { getSupabase } from '@/lib/supabaseClient';
 
 interface SupportMessage {
@@ -10,12 +10,26 @@ interface SupportMessage {
     sender_type: 'customer' | 'admin';
     sender_name: string;
     content: string;
+    attachment_url?: string;
+    attachment_type?: string;
     created_at: string;
 }
 
 interface B2BSupportChatProps {
-    user: any; // Supabase auth user (null if guest)
+    user: any;
 }
+
+// Quick reply suggestions
+const QUICK_REPLIES = [
+    { icon: ShoppingBag, text: 'Tôi muốn báo giá sỉ', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+    { icon: Truck, text: 'Chính sách giao hàng', color: 'bg-green-50 text-green-700 border-green-200' },
+    { icon: CreditCard, text: 'Phương thức thanh toán', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+    { icon: RotateCcw, text: 'Chính sách đổi trả', color: 'bg-orange-50 text-orange-700 border-orange-200' },
+    { icon: HelpCircle, text: 'Tôi cần tư vấn sản phẩm', color: 'bg-teal-50 text-teal-700 border-teal-200' },
+];
+
+// Simple emoji picker
+const EMOJI_LIST = ['😊', '👍', '🙏', '❤️', '😍', '🤔', '😅', '🎉', '✅', '📦', '💰', '🔥', '⭐', '💪', '🤝', '👋'];
 
 export default function B2BSupportChat({ user }: B2BSupportChatProps) {
     const supabase = getSupabase();
@@ -33,8 +47,14 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
     const [guestPhone, setGuestPhone] = useState('');
     const [guestSessionId, setGuestSessionId] = useState<string | null>(null);
 
+    // Enhanced features
+    const [showEmoji, setShowEmoji] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const [showQuickReplies, setShowQuickReplies] = useState(true);
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const channelRef = useRef<any>(null);
 
     // Generate or retrieve guest session ID
@@ -71,7 +91,6 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
             } else if (guestSessionId) {
                 const savedRoomId = localStorage.getItem('b2b_support_room');
                 if (savedRoomId) {
-                    // Verify room still exists
                     const { data } = await supabase
                         .from('b2b_support_rooms')
                         .select('id')
@@ -95,7 +114,10 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
                 .select('*')
                 .eq('room_id', roomId)
                 .order('created_at', { ascending: true });
-            if (data) setMessages(data);
+            if (data) {
+                setMessages(data);
+                if (data.length > 0) setShowQuickReplies(false);
+            }
             setIsLoading(false);
         };
         loadMessages();
@@ -118,18 +140,20 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
                     if (prev.some(m => m.id === newMsg.id)) return prev;
                     return [...prev, newMsg];
                 });
-                // If admin message and chat is closed, increment unread
                 if (newMsg.sender_type === 'admin' && !isOpen) {
                     setUnreadCount(prev => prev + 1);
+                    // Play notification sound
+                    try {
+                        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH+LkZeYl5KNiIaBfXx8fn+Bg4SGh4eGhYOBf317eXh4eXp7fX+BgoODg4KBf316eHZ1dXV2d3l7fX+Ag4OEhIOCgH57eXd2dnZ3eHp7fX9/gIGBgYB/fnx7enl5eXl6ent8fX5/f4B/f39+fXx7enp5');
+                        audio.volume = 0.3;
+                        audio.play().catch(() => {});
+                    } catch {}
                 }
             })
             .subscribe();
 
         channelRef.current = channel;
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
+        return () => { supabase.removeChannel(channel); };
     }, [roomId, supabase, isOpen]);
 
     // Auto-scroll to bottom
@@ -176,30 +200,31 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
         return data.id;
     };
 
-    const handleSend = async () => {
-        const text = input.trim();
-        if (!text || isSending) return;
+    const ensureRoomExists = async (): Promise<string | null> => {
+        if (roomId) return roomId;
+
+        let newRoomId: string | null = null;
+        if (user) {
+            const name = user.user_metadata?.full_name || user.email || 'Khách hàng';
+            newRoomId = await createRoom(name);
+        } else {
+            newRoomId = await createRoom(guestName, guestPhone);
+        }
+        if (newRoomId) setRoomId(newRoomId);
+        return newRoomId;
+    };
+
+    const handleSend = async (text?: string) => {
+        const content = (text || input).trim();
+        if (!content || isSending) return;
 
         setIsSending(true);
+        setShowQuickReplies(false);
+        setShowEmoji(false);
 
         try {
-            let currentRoomId = roomId;
-
-            // Create room if doesn't exist
-            if (!currentRoomId) {
-                if (user) {
-                    const name = user.user_metadata?.full_name || user.email || 'Khách hàng';
-                    currentRoomId = await createRoom(name);
-                } else {
-                    // Should have guest info already (from form)
-                    currentRoomId = await createRoom(guestName, guestPhone);
-                }
-                if (!currentRoomId) {
-                    setIsSending(false);
-                    return;
-                }
-                setRoomId(currentRoomId);
-            }
+            const currentRoomId = await ensureRoomExists();
+            if (!currentRoomId) { setIsSending(false); return; }
 
             const senderName = user
                 ? (user.user_metadata?.full_name || user.email || 'Khách hàng')
@@ -208,43 +233,86 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
             // Optimistic update
             const tempId = crypto.randomUUID();
             const tempMsg: SupportMessage = {
-                id: tempId,
-                room_id: currentRoomId,
-                sender_type: 'customer',
-                sender_name: senderName,
-                content: text,
-                created_at: new Date().toISOString()
+                id: tempId, room_id: currentRoomId, sender_type: 'customer',
+                sender_name: senderName, content, created_at: new Date().toISOString()
             };
             setMessages(prev => [...prev, tempMsg]);
             setInput('');
 
             const { error } = await supabase
                 .from('b2b_support_messages')
-                .insert({
-                    room_id: currentRoomId,
-                    sender_type: 'customer',
-                    sender_name: senderName,
-                    content: text
-                });
+                .insert({ room_id: currentRoomId, sender_type: 'customer', sender_name: senderName, content });
 
             if (error) {
-                console.error('Send message failed:', error);
                 setMessages(prev => prev.filter(m => m.id !== tempId));
-                setInput(text);
+                setInput(content);
             }
 
-            // Update room last_message
-            await supabase
-                .from('b2b_support_rooms')
-                .update({
-                    last_message: text,
-                    last_message_at: new Date().toISOString(),
-                    unread_admin: 1
-                })
-                .eq('id', currentRoomId);
-
+            await supabase.from('b2b_support_rooms').update({
+                last_message: content, last_message_at: new Date().toISOString(), unread_admin: 1
+            }).eq('id', currentRoomId);
         } finally {
             setIsSending(false);
+        }
+    };
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || isSending) return;
+
+        // Validate file
+        if (!file.type.startsWith('image/')) {
+            alert('Chỉ hỗ trợ gửi hình ảnh (jpg, png, gif)');
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Hình ảnh tối đa 5MB');
+            return;
+        }
+
+        setIsUploading(true);
+        setShowQuickReplies(false);
+
+        try {
+            const currentRoomId = await ensureRoomExists();
+            if (!currentRoomId) { setIsUploading(false); return; }
+
+            // Upload to Supabase Storage
+            const path = `b2b-support/${currentRoomId}/${crypto.randomUUID()}.${file.name.split('.').pop()}`;
+            const { error: uploadError } = await supabase.storage.from('chat-attachments').upload(path, file);
+            if (uploadError) throw uploadError;
+
+            const { data: urlData } = supabase.storage.from('chat-attachments').getPublicUrl(path);
+            const imageUrl = urlData.publicUrl;
+
+            const senderName = user
+                ? (user.user_metadata?.full_name || user.email || 'Khách hàng')
+                : (guestName || 'Khách hàng');
+
+            // Optimistic
+            const tempId = crypto.randomUUID();
+            setMessages(prev => [...prev, {
+                id: tempId, room_id: currentRoomId, sender_type: 'customer',
+                sender_name: senderName, content: '📷 Hình ảnh',
+                attachment_url: imageUrl, attachment_type: 'image',
+                created_at: new Date().toISOString()
+            }]);
+
+            await supabase.from('b2b_support_messages').insert({
+                room_id: currentRoomId, sender_type: 'customer', sender_name: senderName,
+                content: '📷 Hình ảnh', attachment_url: imageUrl, attachment_type: 'image'
+            });
+
+            await supabase.from('b2b_support_rooms').update({
+                last_message: '📷 Hình ảnh', last_message_at: new Date().toISOString(), unread_admin: 1
+            }).eq('id', currentRoomId);
+
+        } catch (err) {
+            console.error('Upload failed:', err);
+            alert('Gửi ảnh thất bại, vui lòng thử lại');
+        } finally {
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
 
@@ -269,8 +337,35 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
         return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
     };
 
+    const formatDateSeparator = (dateStr: string) => {
+        const d = new Date(dateStr);
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        if (d.toDateString() === today.toDateString()) return 'Hôm nay';
+        if (d.toDateString() === yesterday.toDateString()) return 'Hôm qua';
+        return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    };
+
+    const shouldShowDateSeparator = (msg: SupportMessage, idx: number) => {
+        if (idx === 0) return true;
+        const prevDate = new Date(messages[idx - 1].created_at).toDateString();
+        const currDate = new Date(msg.created_at).toDateString();
+        return prevDate !== currDate;
+    };
+
     return (
         <>
+            {/* Hidden file input */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageUpload}
+            />
+
             {/* Floating Chat Button */}
             {!isOpen && (
                 <button
@@ -284,14 +379,13 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
                             {unreadCount}
                         </span>
                     )}
-                    {/* Pulse animation */}
                     <span className="absolute inset-0 rounded-full bg-teal-400 animate-ping opacity-20"></span>
                 </button>
             )}
 
             {/* Chat Panel */}
             {isOpen && (
-                <div className="fixed bottom-24 right-5 z-[70] w-[340px] h-[480px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
+                <div className="fixed bottom-24 right-5 z-[70] w-[360px] h-[520px] bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
                     {/* Header */}
                     <div className="bg-gradient-to-r from-teal-500 to-teal-600 text-white px-4 py-3 flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-3">
@@ -301,15 +395,12 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
                             <div>
                                 <h3 className="font-bold text-sm">Chat với LYHU</h3>
                                 <p className="text-[10px] text-teal-100 flex items-center gap-1">
-                                    <span className="w-1.5 h-1.5 bg-green-300 rounded-full inline-block"></span>
-                                    Trực tuyến
+                                    <span className="w-1.5 h-1.5 bg-green-300 rounded-full inline-block animate-pulse"></span>
+                                    Trực tuyến • Phản hồi nhanh
                                 </p>
                             </div>
                         </div>
-                        <button
-                            onClick={() => setIsOpen(false)}
-                            className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
-                        >
+                        <button onClick={() => { setIsOpen(false); setShowEmoji(false); }} className="p-1.5 hover:bg-white/20 rounded-full transition-colors">
                             <X className="w-4 h-4" />
                         </button>
                     </div>
@@ -353,69 +444,191 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
                         </div>
                     ) : (
                         <>
-                            {/* Messages */}
-                            <div className="flex-1 overflow-y-auto p-3 space-y-2 bg-gray-50/50" style={{ scrollbarWidth: 'thin' }}>
+                            {/* Messages Area */}
+                            <div className="flex-1 overflow-y-auto p-3 space-y-1 bg-gray-50/50" style={{ scrollbarWidth: 'thin' }}>
                                 {isLoading ? (
                                     <div className="flex items-center justify-center h-full">
                                         <Loader2 className="w-6 h-6 text-teal-500 animate-spin" />
                                     </div>
                                 ) : messages.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                                        {/* Welcome Message */}
                                         <div className="w-14 h-14 bg-teal-50 rounded-full flex items-center justify-center mb-3">
                                             <MessageCircle className="w-7 h-7 text-teal-300" />
                                         </div>
-                                        <p className="text-xs font-medium">Chào bạn! 👋</p>
-                                        <p className="text-[11px] text-center mt-1 max-w-[200px]">LYHU luôn sẵn sàng hỗ trợ. Hãy gửi tin nhắn để bắt đầu!</p>
+                                        <p className="text-sm font-bold text-gray-700">Xin chào! 👋</p>
+                                        <p className="text-[11px] text-center mt-1 max-w-[240px] text-gray-500">
+                                            LYHU luôn sẵn sàng hỗ trợ bạn về đơn hàng sỉ, báo giá, chính sách giao hàng và nhiều hơn nữa.
+                                        </p>
+
+                                        {/* Quick Reply Buttons - First Time */}
+                                        {showQuickReplies && (
+                                            <div className="mt-4 w-full space-y-1.5 px-2">
+                                                <p className="text-[10px] text-gray-400 text-center font-medium mb-2">Chọn chủ đề hoặc nhập tin nhắn</p>
+                                                {QUICK_REPLIES.map((qr, i) => (
+                                                    <button
+                                                        key={i}
+                                                        onClick={() => handleSend(qr.text)}
+                                                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl border text-xs font-medium hover:shadow-sm transition-all ${qr.color}`}
+                                                    >
+                                                        <qr.icon className="w-3.5 h-3.5 shrink-0" />
+                                                        {qr.text}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 ) : (
-                                    messages.map((msg) => (
-                                        <div
-                                            key={msg.id}
-                                            className={`flex ${msg.sender_type === 'customer' ? 'justify-end' : 'justify-start'}`}
-                                        >
-                                            <div
-                                                className={`max-w-[80%] px-3.5 py-2 rounded-2xl text-[13px] leading-relaxed ${
-                                                    msg.sender_type === 'customer'
-                                                        ? 'bg-teal-500 text-white rounded-br-md'
-                                                        : 'bg-white text-gray-800 border border-gray-100 shadow-sm rounded-bl-md'
-                                                }`}
-                                            >
-                                                {msg.sender_type === 'admin' && (
-                                                    <p className="text-[10px] font-bold text-teal-600 mb-0.5">{msg.sender_name}</p>
+                                    <>
+                                        {messages.map((msg, idx) => (
+                                            <React.Fragment key={msg.id}>
+                                                {/* Date Separator */}
+                                                {shouldShowDateSeparator(msg, idx) && (
+                                                    <div className="flex items-center gap-2 py-2">
+                                                        <div className="flex-1 h-px bg-gray-200"></div>
+                                                        <span className="text-[10px] text-gray-400 font-medium px-2 bg-gray-50 rounded-full">
+                                                            {formatDateSeparator(msg.created_at)}
+                                                        </span>
+                                                        <div className="flex-1 h-px bg-gray-200"></div>
+                                                    </div>
                                                 )}
-                                                <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                                                <p className={`text-[9px] mt-1 ${msg.sender_type === 'customer' ? 'text-teal-200' : 'text-gray-400'} text-right`}>
-                                                    {formatTime(msg.created_at)}
-                                                </p>
+
+                                                <div className={`flex ${msg.sender_type === 'customer' ? 'justify-end' : 'justify-start'} mb-1`}>
+                                                    {/* Admin Avatar */}
+                                                    {msg.sender_type === 'admin' && (
+                                                        <div className="w-7 h-7 bg-teal-100 rounded-full flex items-center justify-center mr-1.5 mt-1 shrink-0">
+                                                            <span className="text-[10px] font-bold text-teal-700">L</span>
+                                                        </div>
+                                                    )}
+
+                                                    <div
+                                                        className={`max-w-[78%] px-3.5 py-2 rounded-2xl text-[13px] leading-relaxed ${
+                                                            msg.sender_type === 'customer'
+                                                                ? 'bg-teal-500 text-white rounded-br-md'
+                                                                : 'bg-white text-gray-800 border border-gray-100 shadow-sm rounded-bl-md'
+                                                        }`}
+                                                    >
+                                                        {msg.sender_type === 'admin' && (
+                                                            <p className="text-[10px] font-bold text-teal-600 mb-0.5">{msg.sender_name}</p>
+                                                        )}
+
+                                                        {/* Image Attachment */}
+                                                        {msg.attachment_url && msg.attachment_type === 'image' && (
+                                                            <img
+                                                                src={msg.attachment_url}
+                                                                alt="Hình đính kèm"
+                                                                className="rounded-lg mb-1.5 max-w-full cursor-pointer hover:opacity-90 transition-opacity"
+                                                                style={{ maxHeight: '180px' }}
+                                                                onClick={() => window.open(msg.attachment_url, '_blank')}
+                                                            />
+                                                        )}
+
+                                                        {/* Hide text-only content if just image placeholder */}
+                                                        {!(msg.attachment_url && msg.content === '📷 Hình ảnh') && (
+                                                            <p className="whitespace-pre-wrap break-words">{msg.content}</p>
+                                                        )}
+
+                                                        <p className={`text-[9px] mt-1 ${msg.sender_type === 'customer' ? 'text-teal-200' : 'text-gray-400'} text-right`}>
+                                                            {formatTime(msg.created_at)}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </React.Fragment>
+                                        ))}
+
+                                        {/* Quick Replies After Messages (show if last message was from admin) */}
+                                        {messages.length > 0 && messages[messages.length - 1].sender_type === 'admin' && (
+                                            <div className="flex flex-wrap gap-1.5 mt-2 pl-9">
+                                                {QUICK_REPLIES.slice(0, 3).map((qr, i) => (
+                                                    <button
+                                                        key={i}
+                                                        onClick={() => handleSend(qr.text)}
+                                                        className="px-2.5 py-1 rounded-full border border-teal-200 text-[10px] font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 transition-colors"
+                                                    >
+                                                        {qr.text}
+                                                    </button>
+                                                ))}
                                             </div>
-                                        </div>
-                                    ))
+                                        )}
+                                    </>
                                 )}
                                 <div ref={messagesEndRef} />
                             </div>
 
-                            {/* Input */}
+                            {/* Emoji Picker */}
+                            {showEmoji && (
+                                <div className="border-t border-gray-100 bg-white px-3 py-2 shrink-0">
+                                    <div className="grid grid-cols-8 gap-1">
+                                        {EMOJI_LIST.map((emoji, i) => (
+                                            <button
+                                                key={i}
+                                                onClick={() => {
+                                                    setInput(prev => prev + emoji);
+                                                    inputRef.current?.focus();
+                                                }}
+                                                className="w-8 h-8 flex items-center justify-center text-lg hover:bg-gray-100 rounded-lg transition-colors"
+                                            >
+                                                {emoji}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Input Area */}
                             <div className="p-3 border-t border-gray-100 bg-white shrink-0">
-                                <div className="flex items-center gap-2">
+                                {/* Upload Progress */}
+                                {isUploading && (
+                                    <div className="flex items-center gap-2 mb-2 px-1">
+                                        <Loader2 className="w-3.5 h-3.5 text-teal-500 animate-spin" />
+                                        <span className="text-[11px] text-gray-500">Đang tải ảnh lên...</span>
+                                    </div>
+                                )}
+
+                                <div className="flex items-center gap-1.5">
+                                    {/* Attachment Button */}
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        disabled={isUploading || isSending}
+                                        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-colors disabled:opacity-40 shrink-0"
+                                        title="Gửi hình ảnh"
+                                    >
+                                        <ImageIcon className="w-4.5 h-4.5" />
+                                    </button>
+
+                                    {/* Emoji Button */}
+                                    <button
+                                        onClick={() => setShowEmoji(!showEmoji)}
+                                        className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors shrink-0 ${showEmoji ? 'text-teal-600 bg-teal-50' : 'text-gray-400 hover:text-teal-600 hover:bg-teal-50'}`}
+                                        title="Emoji"
+                                    >
+                                        <Smile className="w-4.5 h-4.5" />
+                                    </button>
+
+                                    {/* Input */}
                                     <input
                                         ref={inputRef}
                                         value={input}
                                         onChange={(e) => setInput(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault();
+                                                handleSend();
+                                            }
+                                        }}
+                                        onFocus={() => setShowEmoji(false)}
                                         placeholder="Nhập tin nhắn..."
-                                        className="flex-1 px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-teal-500 focus:bg-white transition-colors"
-                                        disabled={isSending}
+                                        className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-teal-500 focus:bg-white transition-colors min-w-0"
+                                        disabled={isSending || isUploading}
                                     />
+
+                                    {/* Send Button */}
                                     <button
-                                        onClick={handleSend}
-                                        disabled={!input.trim() || isSending}
-                                        className="w-10 h-10 bg-teal-500 text-white rounded-xl flex items-center justify-center hover:bg-teal-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0"
+                                        onClick={() => handleSend()}
+                                        disabled={!input.trim() || isSending || isUploading}
+                                        className="w-9 h-9 bg-teal-500 text-white rounded-xl flex items-center justify-center hover:bg-teal-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0"
                                     >
-                                        {isSending ? (
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                        ) : (
-                                            <Send className="w-4 h-4" />
-                                        )}
+                                        {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                                     </button>
                                 </div>
                             </div>

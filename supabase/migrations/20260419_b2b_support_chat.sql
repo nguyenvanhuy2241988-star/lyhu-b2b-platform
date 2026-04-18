@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS b2b_support_messages (
     sender_type TEXT NOT NULL CHECK (sender_type IN ('customer', 'admin')),
     sender_name TEXT NOT NULL DEFAULT 'Khách hàng',
     content TEXT NOT NULL,
+    attachment_url TEXT,
+    attachment_type TEXT, -- 'image' or 'file'
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
