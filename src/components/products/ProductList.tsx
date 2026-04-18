@@ -884,17 +884,25 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
                                     <option value="stock">Cập nhật Tồn kho</option>
                                     <option value="price">Cập nhật Giá bán</option>
                                     <option value="brand">Cập nhật Thương hiệu</option>
+                                    <option value="items_per_carton">Cập nhật Quy cách (Số SP/Thùng)</option>
+                                    <option value="weight">Cập nhật Trọng lượng</option>
+                                    <option value="packaging_spec">Cập nhật Đóng gói</option>
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1">Giá trị mới</label>
-                                <input
-                                    type={bulkConfig.field === 'brand' ? 'text' : 'number'}
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                    placeholder="Nhập giá trị..."
-                                    value={bulkConfig.value.toString()}
-                                    onChange={e => setBulkConfig({ ...bulkConfig, value: bulkConfig.field === 'brand' ? e.target.value : Number(e.target.value) })}
-                                />
+                                {(() => {
+                                    const isTextInput = ['brand', 'weight', 'packaging_spec'].includes(bulkConfig.field);
+                                    return (
+                                        <input
+                                            type={isTextInput ? 'text' : 'number'}
+                                            className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder="Nhập giá trị..."
+                                            value={bulkConfig.value.toString()}
+                                            onChange={e => setBulkConfig({ ...bulkConfig, value: isTextInput ? e.target.value : Number(e.target.value) })}
+                                        />
+                                    );
+                                })()}
                             </div>
                             <div className="pt-2">
                                 <button
