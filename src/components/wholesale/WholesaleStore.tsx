@@ -118,6 +118,8 @@ export default function WholesaleStore({
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [checkoutSuccess, setCheckoutSuccess] = useState(false);
+    const [customerName, setCustomerName] = useState('');
+    const [customerPhone, setCustomerPhone] = useState('');
     const [address, setAddress] = useState('');
     const [shippingMethod, setShippingMethod] = useState<'lyhu_ship'|'self'>('lyhu_ship');
 
@@ -355,7 +357,7 @@ export default function WholesaleStore({
             const payload: any = {
                 total_amount: cartAnalysis.finalTotal,
                 status: 'pending',
-                note: `B2B Wholesale / Đơn tự tạo trên Web. Đ/c: ${address}. Phương thức: ${shippingMethod}.`,
+                note: `[B2B Web] ${customerName} - ${customerPhone}. Đ/c: ${address}. Ship: ${shippingMethod === 'lyhu_ship' ? 'LYHU Giao' : 'Tự tới lấy'}.`,
                 source: 'B2B_WEB'
             };
 
@@ -1027,18 +1029,38 @@ export default function WholesaleStore({
                                 </div>
                             </div>
 
-                            {/* Form Giao hàng */}
+                            {/* Form Thông tin khách hàng */}
                             <div className="bg-white rounded-sm shadow-sm border border-gray-100 p-4 mb-4">
                                 <h3 className="font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2">Thông tin giao hàng</h3>
                                 <div className="flex flex-col gap-3">
                                     <div>
-                                        <label className="text-xs font-semibold text-gray-500 mb-1 block">Địa chỉ nhận hàng (Kho)</label>
+                                        <label className="text-xs font-semibold text-gray-500 mb-1 block">Họ tên người nhận <span className="text-red-500">*</span></label>
+                                        <input 
+                                            type="text"
+                                            value={customerName}
+                                            onChange={e => setCustomerName(e.target.value)}
+                                            className="w-full border border-gray-200 rounded-sm p-2.5 text-sm focus:outline-primary-500 bg-gray-50" 
+                                            placeholder="Nhập họ tên..."
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-semibold text-gray-500 mb-1 block">Số điện thoại <span className="text-red-500">*</span></label>
+                                        <input 
+                                            type="tel"
+                                            value={customerPhone}
+                                            onChange={e => setCustomerPhone(e.target.value)}
+                                            className="w-full border border-gray-200 rounded-sm p-2.5 text-sm focus:outline-primary-500 bg-gray-50" 
+                                            placeholder="VD: 0901234567"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-semibold text-gray-500 mb-1 block">Địa chỉ nhận hàng <span className="text-red-500">*</span></label>
                                         <textarea 
                                             value={address}
                                             onChange={e => setAddress(e.target.value)}
                                             rows={2} 
-                                            className="w-full border border-gray-200 rounded-sm p-2 text-sm focus:outline-primary-500 bg-gray-50" 
-                                            placeholder="Nhập địa chỉ cụ thể..."
+                                            className="w-full border border-gray-200 rounded-sm p-2.5 text-sm focus:outline-primary-500 bg-gray-50" 
+                                            placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành..."
                                         ></textarea>
                                     </div>
                                     <div>
@@ -1078,7 +1100,7 @@ export default function WholesaleStore({
                         <div className="p-4 bg-white border-t border-gray-200">
                             <button 
                                 onClick={submitOrder}
-                                disabled={isSubmitting || cartAnalysis.items.length === 0 || address.trim() === ''}
+                                disabled={isSubmitting || cartAnalysis.items.length === 0 || customerName.trim() === '' || customerPhone.trim() === '' || address.trim() === ''}
                                 className="w-full bg-primary-600 text-white py-3.5 rounded-sm font-bold text-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg"
                             >
                                 {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Đặt Hàng Sỉ Ngay'}
