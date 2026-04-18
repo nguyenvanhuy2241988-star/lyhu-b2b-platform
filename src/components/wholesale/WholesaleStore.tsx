@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Search, ShoppingCart, Info, CheckCircle2, ChevronRight, Minus, Plus, Star, X, Clock, Flame, Ticket, Loader2, History, Bell, User, LogIn, Eye, EyeOff, Package } from 'lucide-react';
 import { getSupabase } from '@/lib/supabaseClient';
+import B2BSupportChat from '@/components/wholesale/B2BSupportChat';
 
 interface Product {
     id: string;
@@ -148,6 +149,18 @@ export default function WholesaleStore({
         { id: '3', text: 'Voucher FREESHIP đã sẵn sàng trong ví của bạn.', time: 'Hôm qua', read: true },
     ]);
     const [isNotifOpen, setIsNotifOpen] = useState(false);
+
+    // B2B Support Chat: track auth user
+    const [wholesaleUser, setWholesaleUser] = useState<any>(null);
+    useEffect(() => {
+        supabase.auth.getSession().then(({ data }: any) => {
+            setWholesaleUser(data?.session?.user || null);
+        });
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_e: any, session: any) => {
+            setWholesaleUser(session?.user || null);
+        });
+        return () => subscription.unsubscribe();
+    }, []);
 
     // Checkout States
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -1598,6 +1611,9 @@ export default function WholesaleStore({
                     </div>
                 </div>
             )}
+
+            {/* B2B Support Chat Widget */}
+            <B2BSupportChat user={wholesaleUser} />
         </div>
     );
 }

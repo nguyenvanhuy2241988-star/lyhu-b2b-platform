@@ -3,9 +3,10 @@
 import { useEffect, useState, useCallback } from "react";
 import { useChatStore } from "@/lib/chatStore";
 import { supabase } from "@/lib/supabaseClient";
-import { X, Check } from "lucide-react";
+import { X, Check, ShoppingBag, MessageSquare } from "lucide-react";
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { ChatWindow } from "@/components/chat/ChatWindow";
+import { B2BSupportInbox } from "@/components/chat/B2BSupportInbox";
 
 import { useAuth } from "@/components/auth/AuthProvider";
 
@@ -36,6 +37,9 @@ export default function ChatPage() {
     const [showCreateGroup, setShowCreateGroup] = useState(false);
     const [groupName, setGroupName] = useState("");
     const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+
+    // Tab state: internal chat vs B2B support
+    const [chatMode, setChatMode] = useState<'internal' | 'b2b'>('internal');
 
     useEffect(() => {
         setMounted(true);
@@ -179,7 +183,41 @@ export default function ChatPage() {
     }
 
     return (
-        <div className="h-[calc(100vh-8rem)] bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden flex font-sans">
+        <div className="h-[calc(100vh-8rem)] flex flex-col">
+            {/* Tab Switcher */}
+            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-t-lg px-2 py-1.5 shrink-0">
+                <button
+                    onClick={() => setChatMode('internal')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        chatMode === 'internal'
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                >
+                    <MessageSquare className="w-4 h-4" />
+                    Chat nội bộ
+                </button>
+                <button
+                    onClick={() => setChatMode('b2b')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        chatMode === 'b2b'
+                            ? 'bg-teal-600 text-white shadow-sm'
+                            : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                >
+                    <ShoppingBag className="w-4 h-4" />
+                    Hỗ trợ B2B
+                </button>
+            </div>
+
+            {/* B2B Support Mode */}
+            {chatMode === 'b2b' ? (
+                <div className="flex-1 border border-t-0 border-slate-200 rounded-b-lg overflow-hidden">
+                    <B2BSupportInbox currentUser={currentUser} />
+                </div>
+            ) : (
+            /* Internal Chat Mode */
+        <div className="flex-1 bg-white rounded-b-lg shadow-sm border border-t-0 border-slate-200 overflow-hidden flex font-sans">
             {/* Sidebar: Hidden on mobile if chat is open */}
             <ChatSidebar
                 currentUser={currentUser}
@@ -274,6 +312,8 @@ export default function ChatPage() {
                     }}
                 />
             </div>
+        </div>
+        )}
         </div>
     );
 }
