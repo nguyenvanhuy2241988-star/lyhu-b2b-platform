@@ -68,11 +68,15 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
         extra_images: [] as string[]
     });
 
-    // Bulk Edit State
-    const [bulkConfig, setBulkConfig] = useState<{
-        field: 'price' | 'stock' | 'brand' | 'is_active' | 'items_per_carton' | 'weight' | 'packaging_spec';
-        value: string | number | boolean;
-    }>({ field: 'stock', value: 0 });
+    // Bulk Edit State — multi-field
+    const [bulkFields, setBulkFields] = useState<Record<string, { enabled: boolean; value: string }>>({
+        stock: { enabled: false, value: '' },
+        price: { enabled: false, value: '' },
+        brand: { enabled: false, value: '' },
+        items_per_carton: { enabled: false, value: '' },
+        weight: { enabled: false, value: '' },
+        packaging_spec: { enabled: false, value: '' },
+    });
 
     const { session } = useAuth();
 
@@ -401,8 +405,9 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
 
     const handleBulkEditSubmit = async () => {
         if (readOnly) return;
-        if (!bulkConfig.value && bulkConfig.value !== 0) {
-            toast.error("Vui lòng nhập giá trị");
+        const enabledFields = Object.entries(bulkFields).filter(([, v]) => v.enabled && v.value !== '');
+        if (enabledFields.length === 0) {
+            toast.error("Vui lòng chọn và nhập ít nhất 1 trường");
             return;
         }
         const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -410,30 +415,32 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
 
         try {
             const headers = getHeaders();
-            // Use RPC for safe updates (especially stock)
-            const payload = {
-                p_product_ids: Array.from(selectedIds),
-                p_field: bulkConfig.field,
-                p_value: bulkConfig.value.toString()
-            };
-
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/fn_quick_update_products`, {
-                method: "POST",
-                headers: headers,
-                body: JSON.stringify(payload)
-            });
-
-            if (!res.ok) {
-                const error = await res.json();
-                throw new Error(error.message || "Lỗi cập nhật hàng loạt");
+            let lastMessage = '';
+            for (const [field, config] of enabledFields) {
+                const payload = {
+                    p_product_ids: Array.from(selectedIds),
+                    p_field: field,
+                    p_value: config.value
+                };
+                const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/fn_quick_update_products`, {
+                    method: "POST",
+                    headers: headers,
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.message || `Lỗi cập nhật ${field}`);
+                }
+                const result = await res.json();
+                if (!result.success) throw new Error(result.message);
+                lastMessage = result.message;
             }
 
-            const result = await res.json();
-            if (!result.success) throw new Error(result.message);
-
-            toast.success(result.message || `Đã cập nhật ${selectedIds.size} sản phẩm!`);
+            toast.success(`Đã cập nhật ${enabledFields.length} trường cho ${selectedIds.size} SP!`);
             setIsBulkEditOpen(false);
             setSelectedIds(new Set());
+            // Reset bulk fields
+            setBulkFields(prev => Object.fromEntries(Object.keys(prev).map(k => [k, { enabled: false, value: '' }])));
             fetchProducts(true);
         } catch (error: any) {
             console.error(error);
@@ -865,54 +872,69 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
                 </div>
             )}
 
-            {/* Bulk Edit Modal */}
+            {/* Bulk Edit Modal — Multi-field Grid */}
             {isBulkEditOpen && !readOnly && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95">
                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <h3 className="font-bold text-lg text-slate-800">Cập nhật nhanh {selectedIds.size} SP</h3>
                             <button onClick={() => setIsBulkEditOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
                         </div>
-                        <div className="p-6 space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Chọn trường cần sửa</label>
-                                <select
-                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                                    value={bulkConfig.field}
-                                    onChange={e => setBulkConfig({ ...bulkConfig, field: e.target.value as any, value: '' })}
+                        <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
+                            <p className="text-xs text-slate-500 mb-1">Tích chọn trường cần cập nhật, nhập giá trị rồi bấm Áp dụng.</p>
+                            {[
+                                { key: 'stock', label: '📦 Tồn kho', type: 'number', placeholder: 'VD: 100' },
+                                { key: 'price', label: '💰 Giá bán (₫)', type: 'number', placeholder: 'VD: 22000' },
+                                { key: 'brand', label: '🏷️ Thương hiệu', type: 'text', placeholder: 'VD: LYHU' },
+                                { key: 'items_per_carton', label: '📐 Số SP / Thùng', type: 'number', placeholder: 'VD: 50' },
+                                { key: 'weight', label: '⚖️ Trọng lượng', type: 'text', placeholder: 'VD: 35g, 180g' },
+                                { key: 'packaging_spec', label: '📋 Quy cách đóng gói', type: 'text', placeholder: 'VD: 50 gói/thùng' },
+                            ].map(item => (
+                                <div
+                                    key={item.key}
+                                    className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+                                        bulkFields[item.key]?.enabled
+                                            ? 'border-blue-400 bg-blue-50/50 shadow-sm'
+                                            : 'border-slate-200 bg-white hover:border-slate-300'
+                                    }`}
                                 >
-                                    <option value="stock">Cập nhật Tồn kho</option>
-                                    <option value="price">Cập nhật Giá bán</option>
-                                    <option value="brand">Cập nhật Thương hiệu</option>
-                                    <option value="items_per_carton">Cập nhật Quy cách (Số SP/Thùng)</option>
-                                    <option value="weight">Cập nhật Trọng lượng</option>
-                                    <option value="packaging_spec">Cập nhật Đóng gói</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Giá trị mới</label>
-                                {(() => {
-                                    const isTextInput = ['brand', 'weight', 'packaging_spec'].includes(bulkConfig.field);
-                                    return (
-                                        <input
-                                            type={isTextInput ? 'text' : 'number'}
-                                            className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                            placeholder="Nhập giá trị..."
-                                            value={bulkConfig.value.toString()}
-                                            onChange={e => setBulkConfig({ ...bulkConfig, value: isTextInput ? e.target.value : Number(e.target.value) })}
-                                        />
-                                    );
-                                })()}
-                            </div>
-                            <div className="pt-2">
-                                <button
-                                    onClick={handleBulkEditSubmit}
-                                    disabled={isSubmitting}
-                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-medium flex items-center justify-center gap-2"
-                                >
-                                    {isSubmitting ? <Loader2 className="animate-spin w-4 h-4" /> : "Áp dụng thay đổi"}
-                                </button>
-                            </div>
+                                    <input
+                                        type="checkbox"
+                                        checked={bulkFields[item.key]?.enabled || false}
+                                        onChange={e => setBulkFields(prev => ({
+                                            ...prev,
+                                            [item.key]: { ...prev[item.key], enabled: e.target.checked }
+                                        }))}
+                                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 shrink-0"
+                                    />
+                                    <label className="text-sm font-medium text-slate-700 w-36 shrink-0">{item.label}</label>
+                                    <input
+                                        type={item.type}
+                                        disabled={!bulkFields[item.key]?.enabled}
+                                        className={`flex-1 border rounded-lg px-3 py-1.5 text-sm outline-none transition-colors ${
+                                            bulkFields[item.key]?.enabled
+                                                ? 'border-blue-300 bg-white focus:ring-2 focus:ring-blue-500'
+                                                : 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed'
+                                        }`}
+                                        placeholder={item.placeholder}
+                                        value={bulkFields[item.key]?.value || ''}
+                                        onChange={e => setBulkFields(prev => ({
+                                            ...prev,
+                                            [item.key]: { ...prev[item.key], value: e.target.value }
+                                        }))}
+                                    />
+                                </div>
+                            ))}
+                        </div>
+                        <div className="px-5 py-4 border-t border-slate-100 bg-slate-50/50">
+                            <button
+                                onClick={handleBulkEditSubmit}
+                                disabled={isSubmitting || !Object.values(bulkFields).some(f => f.enabled && f.value !== '')}
+                                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white py-2.5 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors"
+                            >
+                                {isSubmitting ? <Loader2 className="animate-spin w-4 h-4" /> : <Check className="w-4 h-4" />}
+                                {isSubmitting ? 'Đang cập nhật...' : `Áp dụng cho ${selectedIds.size} sản phẩm`}
+                            </button>
                         </div>
                     </div>
                 </div>
