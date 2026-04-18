@@ -1239,21 +1239,33 @@ export default function WholesaleStore({
                             <div className="bg-gray-50/80 p-4 rounded-sm border border-gray-100 flex flex-col gap-1 mb-6">
                                 {(() => {
                                     const fsProd = flashSaleProducts.find(f => f.id === selectedProduct.id);
-                                    if (fsProd) {
-                                        return (
-                                            <>
-                                                <span className="text-gray-500 text-sm">Giá gốc: <span className="line-through ml-2">₫{new Intl.NumberFormat('vi-VN').format(selectedProduct.basePricePerUnit || 0)}</span></span>
-                                                <div className="flex items-baseline gap-2">
-                                                    <span className="text-3xl text-[#ee4d2d] font-medium">₫{new Intl.NumberFormat('vi-VN').format(fsProd.flashSalePrice)}</span>
-                                                    <span className="text-xs bg-[#ee4d2d] text-white font-bold px-1.5 py-0.5 rounded-sm uppercase">Flash Sale</span>
-                                                </div>
-                                            </>
-                                        );
-                                    }
+                                    const baseOrNormal = selectedProduct.price || selectedProduct.basePricePerUnit || selectedProduct.basePrice || 0;
+                                    const activePrice = fsProd ? fsProd.flashSalePrice : baseOrNormal;
+                                    const hasCarton = (selectedProduct.items_per_carton || 0) > 0;
+                                    
                                     return (
                                         <>
-                                            <span className="text-gray-500 text-sm">Giá nhập sỉ: </span>
-                                            <span className="text-3xl text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(selectedProduct.price || selectedProduct.basePricePerUnit || selectedProduct.basePrice || 0)}</span>
+                                            {fsProd ? (
+                                                <>
+                                                    <span className="text-gray-500 text-sm">Giá gốc: <span className="line-through ml-2">₫{new Intl.NumberFormat('vi-VN').format(baseOrNormal)}</span></span>
+                                                    <div className="flex items-baseline gap-2">
+                                                        <span className="text-3xl text-[#ee4d2d] font-medium">₫{new Intl.NumberFormat('vi-VN').format(activePrice)}</span>
+                                                        <span className="text-xs bg-[#ee4d2d] text-white font-bold px-1.5 py-0.5 rounded-sm uppercase">Flash Sale</span>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span className="text-gray-500 text-sm">Giá nhập sỉ ({selectedProduct.unit || 'sản phẩm'}): </span>
+                                                    <span className="text-3xl text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(activePrice)}</span>
+                                                </>
+                                            )}
+                                            
+                                            {hasCarton && (
+                                                <div className="border-t border-gray-200/60 mt-2 pt-2">
+                                                    <span className="text-gray-500 text-sm">Mua nguyên thùng ({selectedProduct.items_per_carton} {selectedProduct.unit || 'sản phẩm'}): </span>
+                                                    <div className="text-xl text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(activePrice * (selectedProduct.items_per_carton || 1))}</div>
+                                                </div>
+                                            )}
                                         </>
                                     );
                                 })()}
@@ -1278,26 +1290,45 @@ export default function WholesaleStore({
                                 </div>
                             </div>
 
-                            <div className="mt-auto pt-4 border-t border-gray-100 flex items-center gap-4 bg-white sticky bottom-0">
+                            <div className="mt-auto pt-4 border-t border-gray-100 flex gap-3 bg-white sticky bottom-0">
                                 {(() => {
                                     const qty = cart[selectedProduct.id]?.quantity || 0;
                                     const fsProd = flashSaleProducts.find(f => f.id === selectedProduct.id);
+                                    const cartonSize = selectedProduct.items_per_carton || 0;
                                     return qty === 0 ? (
                                         <>
                                             <button 
                                                 onClick={() => updateQuantity(selectedProduct, 1, fsProd?.flashSalePrice)} 
-                                                className="px-6 py-3 bg-primary-50 text-primary-600 border border-primary-500 rounded-sm font-medium hover:bg-primary-100 flex gap-2 items-center justify-center flex-1"
+                                                className="h-12 flex-1 bg-primary-50 text-primary-600 border border-primary-500 rounded-sm font-medium hover:bg-primary-100 flex gap-2 items-center justify-center transition-colors"
                                             >
                                                 <ShoppingCart className="w-5 h-5" />
-                                                Thêm vào Giỏ hàng
+                                                Thêm vào Giỏ
                                             </button>
+                                            {cartonSize > 0 && (
+                                                <button 
+                                                    onClick={() => updateQuantity(selectedProduct, cartonSize, fsProd?.flashSalePrice)} 
+                                                    className="h-12 flex-1 bg-primary-600 text-white rounded-sm font-medium hover:bg-primary-700 flex gap-2 items-center justify-center transition-colors shadow-sm"
+                                                >
+                                                    + Mua 1 Thùng
+                                                </button>
+                                            )}
                                         </>
                                     ) : (
-                                        <div className="flex items-center border border-primary-500 rounded-sm h-12 w-40 text-primary-600">
-                                            <button onClick={() => updateQuantity(selectedProduct, -1)} className="w-12 h-full flex items-center justify-center hover:bg-primary-50 bg-gray-50"><Minus className="w-5 h-5" /></button>
-                                            <span className="font-bold text-lg text-gray-800 border-x border-gray-200 flex-1 text-center h-full flex items-center justify-center">{qty}</span>
-                                            <button onClick={() => updateQuantity(selectedProduct, 1)} className="w-12 h-full flex items-center justify-center hover:bg-primary-50 bg-gray-50"><Plus className="w-5 h-5" /></button>
-                                        </div>
+                                        <>
+                                            <div className="flex items-center border border-primary-500 rounded-sm h-12 w-32 text-primary-600 bg-white shrink-0">
+                                                <button onClick={() => updateQuantity(selectedProduct, -1)} className="w-10 h-full flex items-center justify-center hover:bg-primary-50 active:bg-primary-100 transition-colors"><Minus className="w-5 h-5" /></button>
+                                                <span className="font-bold text-lg text-gray-800 border-x border-gray-200 flex-1 text-center h-full flex items-center justify-center bg-gray-50">{qty}</span>
+                                                <button onClick={() => updateQuantity(selectedProduct, 1)} className="w-10 h-full flex items-center justify-center hover:bg-primary-50 active:bg-primary-100 transition-colors"><Plus className="w-5 h-5" /></button>
+                                            </div>
+                                            {cartonSize > 0 && (
+                                                <button 
+                                                    onClick={() => updateQuantity(selectedProduct, cartonSize, fsProd?.flashSalePrice)} 
+                                                    className="h-12 flex-1 bg-primary-50 border border-primary-500 text-primary-700 rounded-sm font-medium hover:bg-primary-100 flex gap-2 items-center justify-center transition-colors"
+                                                >
+                                                    <Plus className="w-4 h-4" /> 1 Thùng ({cartonSize})
+                                                </button>
+                                            )}
+                                        </>
                                     )
                                 })()}
                             </div>
