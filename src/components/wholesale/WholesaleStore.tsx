@@ -1427,16 +1427,27 @@ export default function WholesaleStore({
                                                     <p className="text-xs text-gray-500 font-mono mb-2">SKU: {item.product.sku}</p>
                                                     <div className="flex justify-between items-center bg-gray-50/50 p-1.5 rounded-sm">
                                                         <span className="text-sm font-bold text-primary-600">₫{new Intl.NumberFormat('vi-VN').format(price)}</span>
-                                                        <div className="flex items-center border border-gray-200 rounded-sm bg-white overflow-hidden shadow-sm">
-                                                            <button 
-                                                                onClick={() => updateQuantity(item.product, -1)} 
-                                                                className="px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-primary-600 transition-colors flex items-center justify-center"
-                                                            ><Minus className="w-3 h-3"/></button>
-                                                            <span className="text-xs font-bold px-3 py-1 select-none border-x border-gray-100 text-center min-w-[30px]">{item.quantity}</span>
-                                                            <button 
-                                                                onClick={() => updateQuantity(item.product, 1)} 
-                                                                className="px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-primary-600 transition-colors flex items-center justify-center"
-                                                            ><Plus className="w-3 h-3"/></button>
+                                                        <div className="flex items-center gap-1.5">
+                                                            <div className="flex items-center border border-gray-200 rounded-sm bg-white overflow-hidden shadow-sm">
+                                                                <button 
+                                                                    onClick={() => updateQuantity(item.product, -1)} 
+                                                                    className="px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-primary-600 transition-colors flex items-center justify-center"
+                                                                ><Minus className="w-3 h-3"/></button>
+                                                                <span className="text-xs font-bold px-3 py-1 select-none border-x border-gray-100 text-center min-w-[30px]">{item.quantity}</span>
+                                                                <button 
+                                                                    onClick={() => updateQuantity(item.product, 1)} 
+                                                                    className="px-2 py-1 text-gray-500 hover:bg-gray-100 hover:text-primary-600 transition-colors flex items-center justify-center"
+                                                                ><Plus className="w-3 h-3"/></button>
+                                                            </div>
+                                                            {(item.product.items_per_carton || 0) > 0 && (
+                                                                <button 
+                                                                    onClick={() => updateQuantity(item.product, item.product.items_per_carton!)} 
+                                                                    title={`Thêm 1 Thùng (${item.product.items_per_carton})`}
+                                                                    className="px-2 py-1 text-white bg-primary-600 border border-primary-600 hover:bg-primary-700 transition-colors rounded-sm flex items-center justify-center shadow-sm"
+                                                                >
+                                                                    <Package className="w-3 h-3"/>
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
