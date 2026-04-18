@@ -497,7 +497,7 @@ export default function WholesaleStore({
                             <img 
                                 src="/logo-full.png" 
                                 alt="LYHU" 
-                                className="h-[44px] object-contain cursor-pointer brightness-0" 
+                                className="h-[44px] object-contain cursor-pointer" 
                                 onClick={() => { setIsLoginOpen(false); setIsRegisterOpen(false); }}
                             />
                             <div className="text-xl md:text-2xl font-medium text-gray-800 ml-2 pt-1">
@@ -514,9 +514,9 @@ export default function WholesaleStore({
                 <div className="flex-1 bg-primary-500 py-10 md:py-20 relative px-4">
                     <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between z-10 relative h-full">
                         {/* Branding Left */}
-                        <div className="hidden md:flex flex-col items-start gap-6 text-white max-w-md">
-                            <img src="/logo-full.png" alt="LYHU" className="w-[300px] object-contain brightness-0 invert drop-shadow-sm" />
-                            <h1 className="text-[28px] font-medium leading-relaxed drop-shadow-sm pb-10">
+                        <div className="hidden md:flex flex-col items-center justify-center flex-1 pr-10 md:pr-16 text-white text-center">
+                            <img src="/logo-full.png" alt="LYHU" className="w-[450px] object-contain brightness-0 invert drop-shadow-sm mb-6" />
+                            <h1 className="text-3xl font-medium leading-relaxed drop-shadow-sm pb-10">
                                 Nền tảng bán sỉ ưu đãi hàng đầu <br/>dành cho Đại lý toàn quốc
                             </h1>
                         </div>
