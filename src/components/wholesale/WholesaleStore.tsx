@@ -1123,7 +1123,7 @@ export default function WholesaleStore({
                                             <Star className="w-[10px] h-[10px] fill-primary-500 text-primary-500" />
                                         </div>
                                         <div className="text-[11px] text-gray-500">
-                                            Đã bán {(product.soldCount || 0) >= 1000 ? ((product.soldCount || 0)/1000).toFixed(1) + 'k' : product.soldCount}
+                                            Đã bán {(product.soldCount || 0) >= 1000 ? ((product.soldCount || 0)/1000).toFixed(1) + 'k' : (product.soldCount || 0)}
                                         </div>
                                     </div>
                                     
@@ -1230,10 +1230,10 @@ export default function WholesaleStore({
                             
                             <div className="flex items-center gap-4 text-sm mb-4">
                                 <div className="flex items-center gap-1 text-primary-600 font-bold">
-                                    <span className="border-b border-primary-600 pb-[1px]">{selectedProduct.rating}</span><Star className="w-4 h-4 fill-primary-500" />
+                                    <span className="border-b border-primary-600 pb-[1px]">{selectedProduct.rating || '5.0'}</span><Star className="w-4 h-4 fill-primary-500" />
                                 </div>
                                 <div className="w-px h-3 bg-gray-300"></div>
-                                <div className="text-gray-600">Đã bán <span className="font-bold text-gray-900">{selectedProduct.soldCount}</span></div>
+                                <div className="text-gray-600">Đã bán <span className="font-bold text-gray-900">{selectedProduct.soldCount || 0}</span></div>
                             </div>
 
                             <div className="bg-gray-50/80 p-4 rounded-sm border border-gray-100 flex flex-col gap-1 mb-6">
