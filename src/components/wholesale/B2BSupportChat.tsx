@@ -51,6 +51,7 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
     const [showEmoji, setShowEmoji] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [showQuickReplies, setShowQuickReplies] = useState(true);
+    const [pendingProductShare, setPendingProductShare] = useState<string | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -199,6 +200,38 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
         }
         return data.id;
     };
+
+    // Listen for product share events from WholesaleStore
+    useEffect(() => {
+        const handleShareProduct = (e: any) => {
+            const { name, price, image_url, brand } = e.detail;
+            const productMsg = `📦 Tôi quan tâm sản phẩm này:\n\n🏷️ ${name}\n💰 Giá: ₫${new Intl.NumberFormat('vi-VN').format(price)}\n🏢 Thương hiệu: ${brand || 'LYHU'}\n\nVui lòng tư vấn thêm cho tôi!`;
+
+            // If guest hasn't provided info yet, save message and show form
+            if (!user && !guestName) {
+                setPendingProductShare(productMsg);
+                setShowGuestForm(true);
+                setIsOpen(true);
+                return;
+            }
+
+            setIsOpen(true);
+            setShowQuickReplies(false);
+            // Small delay to ensure room subscription is ready
+            setTimeout(() => handleSend(productMsg), 300);
+        };
+
+        window.addEventListener('b2b-share-product', handleShareProduct);
+        return () => window.removeEventListener('b2b-share-product', handleShareProduct);
+    }, [user, guestName, roomId]);
+
+    // Send pending product share after guest form is completed
+    useEffect(() => {
+        if (pendingProductShare && !showGuestForm && guestName) {
+            setTimeout(() => handleSend(pendingProductShare), 300);
+            setPendingProductShare(null);
+        }
+    }, [pendingProductShare, showGuestForm, guestName]);
 
     const ensureRoomExists = async (): Promise<string | null> => {
         if (roomId) return roomId;

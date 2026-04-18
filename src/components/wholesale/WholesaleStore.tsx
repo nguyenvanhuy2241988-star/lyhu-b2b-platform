@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, ShoppingCart, Info, CheckCircle2, ChevronRight, Minus, Plus, Star, X, Clock, Flame, Ticket, Loader2, History, Bell, User, LogIn, Eye, EyeOff, Package } from 'lucide-react';
+import { Search, ShoppingCart, Info, CheckCircle2, ChevronRight, Minus, Plus, Star, X, Clock, Flame, Ticket, Loader2, History, Bell, User, LogIn, Eye, EyeOff, Package, MessageCircle } from 'lucide-react';
 import { getSupabase } from '@/lib/supabaseClient';
 import B2BSupportChat from '@/components/wholesale/B2BSupportChat';
 
@@ -1228,9 +1228,27 @@ export default function WholesaleStore({
                                 return null;
                             })()}
 
-                            {/* Share & Like Mock */}
-                            <div className="flex items-center gap-4 mt-4 text-gray-600 text-sm px-2">
-                                <div className="flex gap-2 items-center cursor-pointer hover:text-primary-600">
+                            {/* Share to Chat */}
+                            <div className="flex items-center gap-3 mt-4 px-2">
+                                <button
+                                    onClick={() => {
+                                        const price = selectedProduct.price || selectedProduct.basePricePerUnit || selectedProduct.basePrice || 0;
+                                        window.dispatchEvent(new CustomEvent('b2b-share-product', {
+                                            detail: {
+                                                name: selectedProduct.name,
+                                                price,
+                                                image_url: selectedProduct.image_url,
+                                                brand: selectedProduct.brand
+                                            }
+                                        }));
+                                        setSelectedProduct(null);
+                                    }}
+                                    className="flex items-center gap-2 px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors text-sm font-medium shadow-sm"
+                                >
+                                    <MessageCircle className="w-4 h-4" />
+                                    Hỏi qua Chat LYHU
+                                </button>
+                                <div className="flex gap-2 items-center cursor-pointer text-gray-500 hover:text-blue-600 text-sm">
                                     <span className="font-medium">Chia sẻ:</span>
                                     <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.04c-5.5 0-10 4.49-10 10.02 0 5 3.66 9.15 8.44 9.9v-7H7.9v-2.9h2.54v-2.2c0-2.5 1.5-3.89 3.77-3.89 1.09 0 2.23.19 2.23.19v2.45h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.9h-2.33v7a10 10 0 008.44-9.9c0-5.53-4.5-10.02-10-10.02z"/></svg>
                                 </div>
