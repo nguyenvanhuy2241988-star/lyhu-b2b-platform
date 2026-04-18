@@ -3,6 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import { getAIResponse, extractPhoneNumber } from '@/lib/geminiService';
 import { createAndAssignLead } from '@/lib/leadDistributionService';
 
+export const dynamic = 'force-dynamic';
+
 const VERIFY_TOKEN = process.env.FB_VERIFY_TOKEN || 'lyhu_verify_token_123';
 
 // Helper: send multiple messages with delays (mimics human typing)
