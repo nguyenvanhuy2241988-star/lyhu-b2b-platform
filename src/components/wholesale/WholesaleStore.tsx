@@ -1267,7 +1267,7 @@ export default function WholesaleStore({
                                     <p className="flex"><span className="w-24 text-gray-400 shrink-0">Thương hiệu</span> <span className="text-primary-600">{selectedProduct.brand}</span></p>
                                     <p className="flex"><span className="w-24 text-gray-400 shrink-0">Đóng gói</span> <span className="font-medium text-gray-800">{selectedProduct.packaging_spec || selectedProduct.unit}</span></p>
                                     {selectedProduct.weight && <p className="flex"><span className="w-24 text-gray-400 shrink-0">Trọng lượng</span> <span className="font-medium text-gray-800">{selectedProduct.weight}</span></p>}
-                                    {(selectedProduct.items_per_carton > 0) && <p className="flex"><span className="w-24 text-gray-400 shrink-0">Quy cách</span> <span className="font-medium text-gray-800">{selectedProduct.items_per_carton} sản phẩm / thùng</span></p>}
+                                    {((selectedProduct.items_per_carton || 0) > 0) && <p className="flex"><span className="w-24 text-gray-400 shrink-0">Quy cách</span> <span className="font-medium text-gray-800">{selectedProduct.items_per_carton} sản phẩm / thùng</span></p>}
                                     <div className="my-2 border-t border-gray-100 pt-2">
                                         <p className="text-gray-700 leading-relaxed max-w-prose whitespace-pre-wrap">
                                             {selectedProduct.description || (
