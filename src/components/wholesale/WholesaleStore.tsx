@@ -521,134 +521,127 @@ export default function WholesaleStore({
 
             {/* Header LYHU Style - Shopee layout */}
             <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 sticky top-0 z-40 shadow-md">
-                <div className="max-w-6xl mx-auto hidden md:flex flex-col gap-1.5 pt-3 pb-2">
-                    {/* Row 1: Logo + Search + Actions */}
-                    <div className="flex items-center gap-6">
-                        {/* Col 1: Logo */}
-                        <div className="w-[180px] shrink-0 flex items-center">
-                            <img 
-                                src="/logo-full.png" 
-                                alt="LYHU" 
-                                className="w-[180px] object-contain cursor-pointer brightness-0 invert drop-shadow-sm" 
-                                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                            />
-                        </div>
-                        
-                        {/* Col 2: Search Input */}
-                        <div className="flex-1 relative">
-                            <input 
-                                type="text" 
-                                placeholder="Tìm kiếm sản phẩm, thương hiệu sỉ..." 
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onFocus={() => setIsSearchFocused(true)}
-                                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && searchQuery.trim()) {
-                                        saveSearchTerm(searchQuery);
-                                        setIsSearchFocused(false);
-                                        document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                    }
-                                }}
-                                className="w-full bg-white rounded-sm pl-4 pr-12 py-2 text-sm text-gray-800 focus:outline-none shadow-sm placeholder-gray-400"
-                            />
-                            <button 
-                                onClick={() => {
-                                    if (searchQuery.trim()) saveSearchTerm(searchQuery);
+                <div className="max-w-6xl mx-auto hidden md:grid items-center gap-x-6 gap-y-1.5 pt-3 pb-2" style={{ gridTemplateColumns: '180px 1fr auto' }}>
+                    {/* Row 1, Col 1: Logo */}
+                    <div className="flex items-center">
+                        <img 
+                            src="/logo-full.png" 
+                            alt="LYHU" 
+                            className="w-[180px] object-contain cursor-pointer brightness-0 invert drop-shadow-sm" 
+                            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                        />
+                    </div>
+                    
+                    {/* Row 1, Col 2: Search Input */}
+                    <div className="relative">
+                        <input 
+                            type="text" 
+                            placeholder="Tìm kiếm sản phẩm, thương hiệu sỉ..." 
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onFocus={() => setIsSearchFocused(true)}
+                            onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && searchQuery.trim()) {
+                                    saveSearchTerm(searchQuery);
+                                    setIsSearchFocused(false);
                                     document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }}
-                                className="absolute right-1 top-1 bottom-1 bg-primary-600 hover:bg-primary-700 text-white px-4 rounded-sm flex items-center justify-center transition-colors"
-                            >
-                                <Search className="w-4 h-4" />
+                                }
+                            }}
+                            className="w-full bg-white rounded-sm pl-4 pr-12 py-2 text-sm text-gray-800 focus:outline-none shadow-sm placeholder-gray-400"
+                        />
+                        <button 
+                            onClick={() => {
+                                if (searchQuery.trim()) saveSearchTerm(searchQuery);
+                                document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }}
+                            className="absolute right-1 top-1 bottom-1 bg-primary-600 hover:bg-primary-700 text-white px-4 rounded-sm flex items-center justify-center transition-colors"
+                        >
+                            <Search className="w-4 h-4" />
+                        </button>
+
+                        {/* Search History Dropdown */}
+                        {isSearchFocused && searchHistory.length > 0 && !searchQuery && (
+                            <div className="absolute top-full left-0 right-0 bg-white shadow-xl border border-gray-200 rounded-b-sm z-50 mt-0.5">
+                                <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
+                                    <span className="text-xs font-semibold text-gray-500">Lịch sử tìm kiếm</span>
+                                    <button onClick={clearSearchHistory} className="text-[11px] text-primary-600 hover:text-primary-700 font-medium">Xoá tất cả</button>
+                                </div>
+                                {searchHistory.map((term, i) => (
+                                    <button 
+                                        key={i}
+                                        onMouseDown={() => { setSearchQuery(term); setIsSearchFocused(false); }}
+                                        className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-primary-50 flex items-center gap-2 transition-colors"
+                                    >
+                                        <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                        <span className="truncate">{term}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Row 1, Col 3: Actions */}
+                    <div className="flex items-center justify-end">
+                        <div className="relative group">
+                            <button className="p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors flex items-center justify-center">
+                                <ShoppingCart className="w-[28px] h-[28px] text-white" strokeWidth={1.5} />
+                                {cartAnalysis.totalItems > 0 && (
+                                    <span className="absolute top-0 -right-1 bg-white text-primary-600 outline outline-2 outline-primary-500 text-[10px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-0.5 shadow-sm">
+                                        {cartAnalysis.totalItems}
+                                    </span>
+                                )}
                             </button>
-
-                            {/* Search History Dropdown */}
-                            {isSearchFocused && searchHistory.length > 0 && !searchQuery && (
-                                <div className="absolute top-full left-0 right-0 bg-white shadow-xl border border-gray-200 rounded-b-sm z-50 mt-0.5">
-                                    <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
-                                        <span className="text-xs font-semibold text-gray-500">Lịch sử tìm kiếm</span>
-                                        <button onClick={clearSearchHistory} className="text-[11px] text-primary-600 hover:text-primary-700 font-medium">Xoá tất cả</button>
+                            <div className="absolute top-full right-0 w-[400px] bg-white shadow-xl border border-gray-200 rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top mt-1 z-50">
+                                {cartAnalysis.items.length === 0 ? (
+                                    <div className="p-8 flex flex-col items-center justify-center text-gray-400">
+                                        <ShoppingCart className="w-16 h-16 opacity-30 mb-2" />
+                                        <p className="text-sm">Chưa có sản phẩm</p>
                                     </div>
-                                    {searchHistory.map((term, i) => (
-                                        <button 
-                                            key={i}
-                                            onMouseDown={() => { setSearchQuery(term); setIsSearchFocused(false); }}
-                                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-primary-50 flex items-center gap-2 transition-colors"
-                                        >
-                                            <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                            <span className="truncate">{term}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Col 3: Actions */}
-                        <div className="flex items-center shrink-0">
-                            <div className="relative group">
-                                <button className="p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors flex items-center justify-center">
-                                    <ShoppingCart className="w-[28px] h-[28px] text-white" strokeWidth={1.5} />
-                                    {cartAnalysis.totalItems > 0 && (
-                                        <span className="absolute top-0 -right-1 bg-white text-primary-600 outline outline-2 outline-primary-500 text-[10px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-0.5 shadow-sm">
-                                            {cartAnalysis.totalItems}
-                                        </span>
-                                    )}
-                                </button>
-                                <div className="absolute top-full right-0 w-[400px] bg-white shadow-xl border border-gray-200 rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top mt-1 z-50">
-                                    {cartAnalysis.items.length === 0 ? (
-                                        <div className="p-8 flex flex-col items-center justify-center text-gray-400">
-                                            <ShoppingCart className="w-16 h-16 opacity-30 mb-2" />
-                                            <p className="text-sm">Chưa có sản phẩm</p>
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col">
-                                            <div className="p-3 text-sm text-gray-400">Sản phẩm mới thêm</div>
-                                            <div className="max-h-[300px] overflow-y-auto">
-                                                {cartAnalysis.items.slice().reverse().map(item => {
-                                                    const price = item.flashSalePrice ?? (item.product.retailPrice || ((item.product.basePricePerUnit || item.product.basePrice || 0) * 1.5) || 0);
-                                                    return (
-                                                        <div key={item.product.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-50 last:border-b-0">
-                                                            <div className="w-10 h-10 border border-gray-200 bg-white">
-                                                                {item.product.image_url && <img src={item.product.image_url} alt="" className="w-full h-full object-cover" />}
-                                                            </div>
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="text-sm text-gray-800 truncate">{item.product.name}</p>
-                                                                {item.flashSalePrice && <span className="text-[10px] bg-primary-100 text-primary-700 px-1 py-0.5 rounded-sm font-bold">Flash Sale</span>}
-                                                            </div>
-                                                            <div className="text-right">
-                                                                <p className="text-sm text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(price)}</p>
-                                                                <p className="text-xs text-gray-500">x {item.quantity}</p>
-                                                            </div>
+                                ) : (
+                                    <div className="flex flex-col">
+                                        <div className="p-3 text-sm text-gray-400">Sản phẩm mới thêm</div>
+                                        <div className="max-h-[300px] overflow-y-auto">
+                                            {cartAnalysis.items.slice().reverse().map(item => {
+                                                const price = item.flashSalePrice ?? (item.product.retailPrice || ((item.product.basePricePerUnit || item.product.basePrice || 0) * 1.5) || 0);
+                                                return (
+                                                    <div key={item.product.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-50 last:border-b-0">
+                                                        <div className="w-10 h-10 border border-gray-200 bg-white">
+                                                            {item.product.image_url && <img src={item.product.image_url} alt="" className="w-full h-full object-cover" />}
                                                         </div>
-                                                    )
-                                                })}
-                                            </div>
-                                            <div className="p-3 bg-gray-50 flex justify-between items-center">
-                                                <p className="text-xs text-gray-500">{cartAnalysis.items.length} Thêm hàng vào giỏ</p>
-                                                <button onClick={() => setIsCheckoutOpen(true)} className="bg-primary-600 text-white px-4 py-2 text-sm hover:bg-primary-700">Xem Giỏ Hàng</button>
-                                            </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm text-gray-800 truncate">{item.product.name}</p>
+                                                            {item.flashSalePrice && <span className="text-[10px] bg-primary-100 text-primary-700 px-1 py-0.5 rounded-sm font-bold">Flash Sale</span>}
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-sm text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(price)}</p>
+                                                            <p className="text-xs text-gray-500">x {item.quantity}</p>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
                                         </div>
-                                    )}
-                                </div>
+                                        <div className="p-3 bg-gray-50 flex justify-between items-center">
+                                            <p className="text-xs text-gray-500">{cartAnalysis.items.length} Thêm hàng vào giỏ</p>
+                                            <button onClick={() => setIsCheckoutOpen(true)} className="bg-primary-600 text-white px-4 py-2 text-sm hover:bg-primary-700">Xem Giỏ Hàng</button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Row 2: Keywords */}
-                    <div className="flex items-center gap-6">
-                        <div className="w-[180px] shrink-0"></div> {/* Spacer for Logo area */}
-                        <div className="flex-1 flex items-center gap-3 overflow-x-auto">
-                            {(searchHistory.length > 0 ? searchHistory.slice(0, 7) : ['Bánh tráng Abi', 'Khoai môn sấy', 'Snack BOYO', 'Đặc sản miền Tây', 'Bánh tráng phô mai', 'Gia vị', 'Flash Sale']).map((kw, i) => (
-                                <button 
-                                    key={i}
-                                    onClick={() => { setSearchQuery(kw); document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
-                                    className="text-white/80 hover:text-white text-[11px] whitespace-nowrap transition-colors"
-                                >
-                                    {kw}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="shrink-0 w-[44px]"></div> {/* Spacer for Cart area */}
+                    {/* Row 2, Col 2: Keywords */}
+                    <div className="col-start-2 flex items-center gap-3 overflow-x-auto">
+                        {(searchHistory.length > 0 ? searchHistory.slice(0, 7) : ['Bánh tráng Abi', 'Khoai môn sấy', 'Snack BOYO', 'Đặc sản miền Tây', 'Bánh tráng phô mai', 'Gia vị', 'Flash Sale']).map((kw, i) => (
+                            <button 
+                                key={i}
+                                onClick={() => { setSearchQuery(kw); document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+                                className="text-white/80 hover:text-white text-[11px] whitespace-nowrap transition-colors"
+                            >
+                                {kw}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
