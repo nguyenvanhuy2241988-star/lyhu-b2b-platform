@@ -521,21 +521,21 @@ export default function WholesaleStore({
 
             {/* Header LYHU Style - Shopee layout */}
             <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 sticky top-0 z-40 shadow-md">
-                <div className="max-w-6xl mx-auto hidden md:flex items-start gap-4 pt-3 pb-2">
-                    {/* Col 1: Logo */}
-                    <div className="w-[180px] shrink-0 mt-1">
-                        <img 
-                            src="/logo-full.png" 
-                            alt="LYHU" 
-                            className="w-[180px] object-contain cursor-pointer brightness-0 invert drop-shadow-sm" 
-                            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                        />
-                    </div>
-                    
-                    {/* Col 2: Search + Keywords */}
-                    <div className="flex-1 flex flex-col gap-1.5">
-                        {/* Search */}
-                        <div className="relative">
+                <div className="max-w-6xl mx-auto hidden md:flex flex-col gap-1.5 pt-3 pb-2">
+                    {/* Row 1: Logo + Search + Actions */}
+                    <div className="flex items-center gap-6">
+                        {/* Col 1: Logo */}
+                        <div className="w-[180px] shrink-0 flex items-center">
+                            <img 
+                                src="/logo-full.png" 
+                                alt="LYHU" 
+                                className="w-[180px] object-contain cursor-pointer brightness-0 invert drop-shadow-sm" 
+                                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                            />
+                        </div>
+                        
+                        {/* Col 2: Search Input */}
+                        <div className="flex-1 relative">
                             <input 
                                 type="text" 
                                 placeholder="Tìm kiếm sản phẩm, thương hiệu sỉ..." 
@@ -582,8 +582,62 @@ export default function WholesaleStore({
                                 </div>
                             )}
                         </div>
-                        {/* Keywords under search */}
-                        <div className="flex items-center gap-3 overflow-x-auto">
+
+                        {/* Col 3: Actions */}
+                        <div className="flex items-center shrink-0">
+                            <div className="relative group">
+                                <button className="p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors flex items-center justify-center">
+                                    <ShoppingCart className="w-[28px] h-[28px] text-white" strokeWidth={1.5} />
+                                    {cartAnalysis.totalItems > 0 && (
+                                        <span className="absolute top-0 -right-1 bg-white text-primary-600 outline outline-2 outline-primary-500 text-[10px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-0.5 shadow-sm">
+                                            {cartAnalysis.totalItems}
+                                        </span>
+                                    )}
+                                </button>
+                                <div className="absolute top-full right-0 w-[400px] bg-white shadow-xl border border-gray-200 rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top mt-1 z-50">
+                                    {cartAnalysis.items.length === 0 ? (
+                                        <div className="p-8 flex flex-col items-center justify-center text-gray-400">
+                                            <ShoppingCart className="w-16 h-16 opacity-30 mb-2" />
+                                            <p className="text-sm">Chưa có sản phẩm</p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col">
+                                            <div className="p-3 text-sm text-gray-400">Sản phẩm mới thêm</div>
+                                            <div className="max-h-[300px] overflow-y-auto">
+                                                {cartAnalysis.items.slice().reverse().map(item => {
+                                                    const price = item.flashSalePrice ?? (item.product.retailPrice || ((item.product.basePricePerUnit || item.product.basePrice || 0) * 1.5) || 0);
+                                                    return (
+                                                        <div key={item.product.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-50 last:border-b-0">
+                                                            <div className="w-10 h-10 border border-gray-200 bg-white">
+                                                                {item.product.image_url && <img src={item.product.image_url} alt="" className="w-full h-full object-cover" />}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm text-gray-800 truncate">{item.product.name}</p>
+                                                                {item.flashSalePrice && <span className="text-[10px] bg-primary-100 text-primary-700 px-1 py-0.5 rounded-sm font-bold">Flash Sale</span>}
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="text-sm text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(price)}</p>
+                                                                <p className="text-xs text-gray-500">x {item.quantity}</p>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                            <div className="p-3 bg-gray-50 flex justify-between items-center">
+                                                <p className="text-xs text-gray-500">{cartAnalysis.items.length} Thêm hàng vào giỏ</p>
+                                                <button onClick={() => setIsCheckoutOpen(true)} className="bg-primary-600 text-white px-4 py-2 text-sm hover:bg-primary-700">Xem Giỏ Hàng</button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Row 2: Keywords */}
+                    <div className="flex items-center gap-6">
+                        <div className="w-[180px] shrink-0"></div> {/* Spacer for Logo area */}
+                        <div className="flex-1 flex items-center gap-3 overflow-x-auto">
                             {(searchHistory.length > 0 ? searchHistory.slice(0, 7) : ['Bánh tráng Abi', 'Khoai môn sấy', 'Snack BOYO', 'Đặc sản miền Tây', 'Bánh tráng phô mai', 'Gia vị', 'Flash Sale']).map((kw, i) => (
                                 <button 
                                     key={i}
@@ -594,56 +648,7 @@ export default function WholesaleStore({
                                 </button>
                             ))}
                         </div>
-                    </div>
-
-                    {/* Col 3: Actions */}
-                    <div className="flex items-center mt-1 ml-4 shrink-0">
-                        <div className="relative group">
-                            <button className="p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors flex items-center justify-center">
-                                <ShoppingCart className="w-[28px] h-[28px] text-white" strokeWidth={1.5} />
-                                {cartAnalysis.totalItems > 0 && (
-                                    <span className="absolute top-0 -right-1 bg-white text-primary-600 outline outline-2 outline-primary-500 text-[10px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-0.5 shadow-sm">
-                                        {cartAnalysis.totalItems}
-                                    </span>
-                                )}
-                            </button>
-                            <div className="absolute top-full right-0 w-[400px] bg-white shadow-xl border border-gray-200 rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top mt-1">
-                                {cartAnalysis.items.length === 0 ? (
-                                    <div className="p-8 flex flex-col items-center justify-center text-gray-400">
-                                        <ShoppingCart className="w-16 h-16 opacity-30 mb-2" />
-                                        <p className="text-sm">Chưa có sản phẩm</p>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col">
-                                        <div className="p-3 text-sm text-gray-400">Sản phẩm mới thêm</div>
-                                        <div className="max-h-[300px] overflow-y-auto">
-                                            {cartAnalysis.items.slice().reverse().map(item => {
-                                                const price = item.flashSalePrice ?? (item.product.retailPrice || ((item.product.basePricePerUnit || item.product.basePrice || 0) * 1.5) || 0);
-                                                return (
-                                                    <div key={item.product.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-50 last:border-b-0">
-                                                        <div className="w-10 h-10 border border-gray-200 bg-white">
-                                                            {item.product.image_url && <img src={item.product.image_url} alt="" className="w-full h-full object-cover" />}
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-sm text-gray-800 truncate">{item.product.name}</p>
-                                                            {item.flashSalePrice && <span className="text-[10px] bg-primary-100 text-primary-700 px-1 py-0.5 rounded-sm font-bold">Flash Sale</span>}
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <p className="text-sm text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(price)}</p>
-                                                            <p className="text-xs text-gray-500">x {item.quantity}</p>
-                                                        </div>
-                                                    </div>
-                                                )
-                                            })}
-                                        </div>
-                                        <div className="p-3 bg-gray-50 flex justify-between items-center">
-                                            <p className="text-xs text-gray-500">{cartAnalysis.items.length} Thêm hàng vào giỏ</p>
-                                            <button onClick={() => setIsCheckoutOpen(true)} className="bg-primary-600 text-white px-4 py-2 text-sm hover:bg-primary-700">Xem Giỏ Hàng</button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                        <div className="shrink-0 w-[44px]"></div> {/* Spacer for Cart area */}
                     </div>
                 </div>
 
