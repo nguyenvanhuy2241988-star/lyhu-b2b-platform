@@ -523,19 +523,13 @@ export default function WholesaleStore({
             <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-3 sticky top-0 z-40 shadow-md">
                 <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
                     {/* Logo */}
-                    <div className="flex items-center w-full md:w-auto gap-3 shrink-0">
+                    <div className="flex items-center w-full md:w-auto shrink-0">
                         <img 
-                            src="/logo-icon.png" 
+                            src="/logo-full.png" 
                             alt="LYHU" 
-                            className="h-9 w-9 object-contain cursor-pointer brightness-0 invert" 
+                            className="h-10 object-contain cursor-pointer brightness-0 invert drop-shadow-sm" 
                             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                         />
-                        <h1 className="text-2xl font-bold text-white tracking-wide cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                            LYHU <span className="font-light text-lg">Sỉ</span>
-                        </h1>
-                        {!isWholesaleCustomer && (
-                            <span className="text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-sm uppercase tracking-wider border border-white/30">Khách lẻ</span>
-                        )}
                     </div>
                     
                     {/* Search Bar with History */}
