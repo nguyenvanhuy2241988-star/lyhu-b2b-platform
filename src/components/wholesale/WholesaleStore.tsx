@@ -305,7 +305,7 @@ export default function WholesaleStore({
         let originalTotalForDisplay = 0; // The non-discounted value for crossing out
 
         items.forEach(item => {
-            const normalPrice = isWholesaleCustomer ? (item.product.basePricePerUnit || item.product.basePrice || 0) : (item.product.retailPrice || 0);
+            const normalPrice = item.product.basePricePerUnit || item.product.basePrice || 0;
             const activePrice = item.flashSalePrice ?? normalPrice;
             originalTotalForDisplay += normalPrice * item.quantity;
             baseTotal += activePrice * item.quantity;
@@ -633,7 +633,7 @@ export default function WholesaleStore({
                                         <div className="p-3 text-sm text-gray-400">Sản phẩm mới thêm</div>
                                         <div className="max-h-[300px] overflow-y-auto">
                                             {cartAnalysis.items.slice().reverse().map(item => {
-                                                const price = item.flashSalePrice ?? (isWholesaleCustomer ? (item.product.basePricePerUnit || item.product.basePrice || 0) : (item.product.retailPrice || item.product.basePrice || 0));
+                                                const price = item.flashSalePrice ?? (item.product.basePricePerUnit || item.product.basePrice || 0);
                                                 return (
                                                     <div key={item.product.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-50 last:border-b-0">
                                                         <div className="w-10 h-10 border border-gray-200 bg-white">
@@ -966,7 +966,7 @@ export default function WholesaleStore({
                         const qty = cart[product.id]?.quantity || 0;
                         const fsProd = flashSaleProducts.find(f => f.id === product.id);
                         const isFlashSaleActive = !!fsProd;
-                        const price = fsProd?.flashSalePrice ?? (isWholesaleCustomer ? (product.basePricePerUnit || product.basePrice || 0) : (product.retailPrice || product.basePrice || 0));
+                        const price = fsProd?.flashSalePrice ?? (product.basePricePerUnit || product.basePrice || 0);
 
                         return (
                             <div key={product.id} className="group bg-white rounded-sm shadow-sm hover:shadow-md border border-transparent hover:border-primary-500 overflow-hidden flex flex-col transition-all duration-200 relative">
@@ -1131,8 +1131,8 @@ export default function WholesaleStore({
                                     if (!isWholesaleCustomer) {
                                         return (
                                             <>
-                                                <span className="text-gray-500 text-sm">Giá lẻ đê xuất: </span>
-                                                <span className="text-3xl text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(selectedProduct.retailPrice || (selectedProduct.basePricePerUnit || 0) * 1.5)}</span>
+                                                <span className="text-gray-500 text-sm">Giá sỉ tham khảo: </span>
+                                                <span className="text-3xl text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(selectedProduct.basePricePerUnit || selectedProduct.basePrice || 0)}</span>
                                             </>
                                         );
                                     }
