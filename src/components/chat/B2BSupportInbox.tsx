@@ -97,7 +97,25 @@ export function B2BSupportInbox({ currentUser }: B2BSupportInboxProps) {
         const channel = supabase.channel(`b2b-admin-room-${activeRoomId}`)
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'b2b_support_messages', filter: `room_id=eq.${activeRoomId}` }, (payload: any) => {
                 const newMsg = payload.new as SupportMessage;
-                setMessages(prev => prev.some(m => m.id === newMsg.id) ? prev : [...prev, newMsg]);
+                setMessages(prev => {
+                    if (prev.some(m => m.id === newMsg.id)) return prev;
+                    
+                    // Check for optimistic duplicate (same content + sender within 10s)
+                    const optimisticIdx = prev.findIndex(m =>
+                        m.sender_type === newMsg.sender_type &&
+                        m.content === newMsg.content &&
+                        Math.abs(new Date(m.created_at).getTime() - new Date(newMsg.created_at).getTime()) < 10000
+                    );
+                    
+                    if (optimisticIdx >= 0) {
+                        // Replace temp with real message
+                        const updated = [...prev];
+                        updated[optimisticIdx] = newMsg;
+                        return updated;
+                    }
+                    
+                    return [...prev, newMsg];
+                });
             }).subscribe();
         return () => { supabase.removeChannel(channel); };
     }, [activeRoomId]);

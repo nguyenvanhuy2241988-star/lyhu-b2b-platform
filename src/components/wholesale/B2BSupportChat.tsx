@@ -139,6 +139,18 @@ export default function B2BSupportChat({ user }: B2BSupportChatProps) {
                 const newMsg = payload.new as SupportMessage;
                 setMessages(prev => {
                     if (prev.some(m => m.id === newMsg.id)) return prev;
+                    // Check for optimistic duplicate (same content + sender within 10s)
+                    const optimisticIdx = prev.findIndex(m =>
+                        m.sender_type === newMsg.sender_type &&
+                        m.content === newMsg.content &&
+                        Math.abs(new Date(m.created_at).getTime() - new Date(newMsg.created_at).getTime()) < 10000
+                    );
+                    if (optimisticIdx >= 0) {
+                        // Replace temp with real message
+                        const updated = [...prev];
+                        updated[optimisticIdx] = newMsg;
+                        return updated;
+                    }
                     return [...prev, newMsg];
                 });
                 if (newMsg.sender_type === 'admin' && !isOpen) {
