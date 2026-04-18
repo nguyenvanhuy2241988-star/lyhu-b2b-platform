@@ -527,7 +527,7 @@ export default function WholesaleStore({
                         <img 
                             src="/logo-full.png" 
                             alt="LYHU" 
-                            className="h-[42px] object-contain cursor-pointer brightness-0 invert drop-shadow-sm" 
+                            className="w-[150px] object-contain cursor-pointer brightness-0 invert drop-shadow-sm" 
                             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                         />
                     </div>
