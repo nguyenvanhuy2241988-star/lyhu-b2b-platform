@@ -519,147 +519,157 @@ export default function WholesaleStore({
                 </div>
             </div>
 
-            {/* Header LYHU Style */}
+            {/* Header LYHU Style - 2 rows like Shopee */}
             <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 sticky top-0 z-40 shadow-md">
-                <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3 h-[52px]">
-                    {/* Logo */}
-                    <div className="flex items-center w-full md:w-auto shrink-0">
-                        <img 
-                            src="/logo-full.png" 
-                            alt="LYHU" 
-                            className="w-[200px] object-contain cursor-pointer brightness-0 invert drop-shadow-sm -my-4" 
-                            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                        />
-                    </div>
-                    
-                    {/* Search Bar with History */}
-                    <div className="relative w-full md:flex-1 md:max-w-xl">
-                        <input 
-                            type="text" 
-                            placeholder="Tìm kiếm sản phẩm, thương hiệu sỉ..." 
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onFocus={() => setIsSearchFocused(true)}
-                            onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && searchQuery.trim()) {
-                                    saveSearchTerm(searchQuery);
-                                    setIsSearchFocused(false);
+                <div className="max-w-6xl mx-auto">
+                    {/* Row 1: Logo + Search + Actions */}
+                    <div className="flex items-center gap-4 pt-3 pb-1">
+                        {/* Logo */}
+                        <div className="shrink-0">
+                            <img 
+                                src="/logo-full.png" 
+                                alt="LYHU" 
+                                className="w-[180px] object-contain cursor-pointer brightness-0 invert drop-shadow-sm" 
+                                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                            />
+                        </div>
+                        
+                        {/* Search Bar with History */}
+                        <div className="relative flex-1 max-w-xl">
+                            <input 
+                                type="text" 
+                                placeholder="Tìm kiếm sản phẩm, thương hiệu sỉ..." 
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => setIsSearchFocused(true)}
+                                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && searchQuery.trim()) {
+                                        saveSearchTerm(searchQuery);
+                                        setIsSearchFocused(false);
+                                        document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    }
+                                }}
+                                className="w-full bg-white rounded-sm pl-4 pr-12 py-2.5 text-sm text-gray-800 focus:outline-none shadow-sm placeholder-gray-400"
+                            />
+                            <button 
+                                onClick={() => {
+                                    if (searchQuery.trim()) saveSearchTerm(searchQuery);
                                     document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }
-                            }}
-                            className="w-full bg-white rounded-sm pl-4 pr-12 py-2.5 text-sm text-gray-800 focus:outline-none shadow-sm placeholder-gray-400"
-                        />
-                        <button 
-                            onClick={() => {
-                                if (searchQuery.trim()) saveSearchTerm(searchQuery);
-                                document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            }}
-                            className="absolute right-1 top-1 bottom-1 bg-primary-600 hover:bg-primary-700 text-white px-4 rounded-sm flex items-center justify-center transition-colors"
-                        >
-                            <Search className="w-4 h-4" />
-                        </button>
-
-                        {/* Search History Dropdown */}
-                        {isSearchFocused && searchHistory.length > 0 && !searchQuery && (
-                            <div className="absolute top-full left-0 right-0 bg-white shadow-xl border border-gray-200 rounded-b-sm z-50 mt-0.5">
-                                <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
-                                    <span className="text-xs font-semibold text-gray-500">Lịch sử tìm kiếm</span>
-                                    <button onClick={clearSearchHistory} className="text-[11px] text-primary-600 hover:text-primary-700 font-medium">Xoá tất cả</button>
-                                </div>
-                                {searchHistory.map((term, i) => (
-                                    <button 
-                                        key={i}
-                                        onMouseDown={() => { setSearchQuery(term); setIsSearchFocused(false); }}
-                                        className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-primary-50 flex items-center gap-2 transition-colors"
-                                    >
-                                        <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                        <span className="truncate">{term}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Right Actions */}
-                    <div className="hidden md:flex items-center justify-end gap-1 shrink-0">
-                        {/* Notifications (mobile) */}
-                        <button onClick={() => setIsNotifOpen(!isNotifOpen)} className="relative p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors">
-                            <Bell className="w-6 h-6 text-white" />
-                            {notifications.filter(n => !n.read).length > 0 && (
-                                <span className="absolute top-0.5 right-0.5 bg-secondary-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white">
-                                    {notifications.filter(n => !n.read).length}
-                                </span>
-                            )}
-                        </button>
-
-                        {/* History */}
-                        {isWholesaleCustomer && (
-                            <button className="p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors" onClick={() => setIsHistoryOpen(true)}>
-                                <History className="w-6 h-6 text-white" />
+                                }}
+                                className="absolute right-1 top-1 bottom-1 bg-primary-600 hover:bg-primary-700 text-white px-4 rounded-sm flex items-center justify-center transition-colors"
+                            >
+                                <Search className="w-4 h-4" />
                             </button>
-                        )}
 
-                        {/* Cart */}
-                        <div className="relative group">
-                            <button className="p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors">
-                                <ShoppingCart className="w-6 h-6 text-white" />
-                                {cartAnalysis.totalItems > 0 && (
-                                    <span className="absolute -top-0.5 -right-0.5 bg-secondary-500 text-white text-[9px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-0.5 border border-white shadow-sm">
-                                        {cartAnalysis.totalItems}
+                            {/* Search History Dropdown */}
+                            {isSearchFocused && searchHistory.length > 0 && !searchQuery && (
+                                <div className="absolute top-full left-0 right-0 bg-white shadow-xl border border-gray-200 rounded-b-sm z-50 mt-0.5">
+                                    <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
+                                        <span className="text-xs font-semibold text-gray-500">Lịch sử tìm kiếm</span>
+                                        <button onClick={clearSearchHistory} className="text-[11px] text-primary-600 hover:text-primary-700 font-medium">Xoá tất cả</button>
+                                    </div>
+                                    {searchHistory.map((term, i) => (
+                                        <button 
+                                            key={i}
+                                            onMouseDown={() => { setSearchQuery(term); setIsSearchFocused(false); }}
+                                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-primary-50 flex items-center gap-2 transition-colors"
+                                        >
+                                            <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                            <span className="truncate">{term}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Right Actions */}
+                        <div className="hidden md:flex items-center gap-1 shrink-0">
+                            <button onClick={() => setIsNotifOpen(!isNotifOpen)} className="relative p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors">
+                                <Bell className="w-6 h-6 text-white" />
+                                {notifications.filter(n => !n.read).length > 0 && (
+                                    <span className="absolute top-0.5 right-0.5 bg-secondary-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white">
+                                        {notifications.filter(n => !n.read).length}
                                     </span>
                                 )}
                             </button>
 
-                            {/* Hover Popup Mini Cart */}
-                            <div className="absolute top-full right-0 w-[400px] bg-white shadow-xl border border-gray-200 rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top mt-1">
-                                {cartAnalysis.items.length === 0 ? (
-                                    <div className="p-8 flex flex-col items-center justify-center text-gray-400">
-                                        <ShoppingCart className="w-16 h-16 opacity-30 mb-2" />
-                                        <p className="text-sm">Chưa có sản phẩm</p>
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col">
-                                        <div className="p-3 text-sm text-gray-400">Sản phẩm mới thêm</div>
-                                        <div className="max-h-[300px] overflow-y-auto">
-                                            {cartAnalysis.items.slice().reverse().map(item => {
-                                                const price = item.flashSalePrice ?? (isWholesaleCustomer ? (item.product.basePricePerUnit || item.product.basePrice || 0) : (item.product.retailPrice || item.product.basePrice || 0));
-                                                return (
-                                                    <div key={item.product.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-50 last:border-b-0">
-                                                        <div className="w-10 h-10 border border-gray-200 bg-white">
-                                                            {item.product.image_url && <img src={item.product.image_url} alt="" className="w-full h-full object-cover" />}
-                                                        </div>
-                                                        <div className="flex-1 min-w-0">
-                                                            <p className="text-sm text-gray-800 truncate">{item.product.name}</p>
-                                                            {item.flashSalePrice && <span className="text-[10px] bg-primary-100 text-primary-700 px-1 py-0.5 rounded-sm font-bold">Flash Sale</span>}
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <p className="text-sm text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(price)}</p>
-                                                            <p className="text-xs text-gray-500">x {item.quantity}</p>
-                                                        </div>
-                                                    </div>
-                                                )
-                                            })}
-                                        </div>
-                                        <div className="p-3 bg-gray-50 flex justify-between items-center">
-                                            <p className="text-xs text-gray-500">{cartAnalysis.items.length} Thêm hàng vào giỏ</p>
-                                            <button onClick={() => setIsCheckoutOpen(true)} className="bg-primary-600 text-white px-4 py-2 text-sm hover:bg-primary-700">Xem Giỏ Hàng</button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                            {isWholesaleCustomer && (
+                                <button className="p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors" onClick={() => setIsHistoryOpen(true)}>
+                                    <History className="w-6 h-6 text-white" />
+                                </button>
+                            )}
 
-                        {/* Login (mobile) */}
-                        {!isWholesaleCustomer && (
+                            <div className="relative group">
+                                <button className="p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors">
+                                    <ShoppingCart className="w-6 h-6 text-white" />
+                                    {cartAnalysis.totalItems > 0 && (
+                                        <span className="absolute -top-0.5 -right-0.5 bg-secondary-500 text-white text-[9px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-0.5 border border-white shadow-sm">
+                                            {cartAnalysis.totalItems}
+                                        </span>
+                                    )}
+                                </button>
+                                <div className="absolute top-full right-0 w-[400px] bg-white shadow-xl border border-gray-200 rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top mt-1">
+                                    {cartAnalysis.items.length === 0 ? (
+                                        <div className="p-8 flex flex-col items-center justify-center text-gray-400">
+                                            <ShoppingCart className="w-16 h-16 opacity-30 mb-2" />
+                                            <p className="text-sm">Chưa có sản phẩm</p>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col">
+                                            <div className="p-3 text-sm text-gray-400">Sản phẩm mới thêm</div>
+                                            <div className="max-h-[300px] overflow-y-auto">
+                                                {cartAnalysis.items.slice().reverse().map(item => {
+                                                    const price = item.flashSalePrice ?? (isWholesaleCustomer ? (item.product.basePricePerUnit || item.product.basePrice || 0) : (item.product.retailPrice || item.product.basePrice || 0));
+                                                    return (
+                                                        <div key={item.product.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-50 last:border-b-0">
+                                                            <div className="w-10 h-10 border border-gray-200 bg-white">
+                                                                {item.product.image_url && <img src={item.product.image_url} alt="" className="w-full h-full object-cover" />}
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm text-gray-800 truncate">{item.product.name}</p>
+                                                                {item.flashSalePrice && <span className="text-[10px] bg-primary-100 text-primary-700 px-1 py-0.5 rounded-sm font-bold">Flash Sale</span>}
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <p className="text-sm text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(price)}</p>
+                                                                <p className="text-xs text-gray-500">x {item.quantity}</p>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                            <div className="p-3 bg-gray-50 flex justify-between items-center">
+                                                <p className="text-xs text-gray-500">{cartAnalysis.items.length} Thêm hàng vào giỏ</p>
+                                                <button onClick={() => setIsCheckoutOpen(true)} className="bg-primary-600 text-white px-4 py-2 text-sm hover:bg-primary-700">Xem Giỏ Hàng</button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {!isWholesaleCustomer && (
+                                <button 
+                                    onClick={() => setIsLoginOpen(true)}
+                                    className="ml-1 flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white text-sm px-3 py-1.5 rounded-sm transition-colors border border-white/20"
+                                >
+                                    <User className="w-4 h-4" />
+                                    <span className="hidden lg:inline">Đăng Nhập</span>
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Row 2: Keyword tags (like Shopee) */}
+                    <div className="hidden md:flex items-center gap-4 pb-2.5 overflow-x-auto">
+                        {(searchHistory.length > 0 ? searchHistory.slice(0, 7) : ['Bánh tráng Abi', 'Khoai môn sấy', 'Snack BOYO', 'Đặc sản miền Tây', 'Bánh tráng phô mai', 'Gia vị', 'Flash Sale']).map((kw, i) => (
                             <button 
-                                onClick={() => setIsLoginOpen(true)}
-                                className="ml-1 flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white text-sm px-3 py-1.5 rounded-sm transition-colors border border-white/20"
+                                key={i}
+                                onClick={() => { setSearchQuery(kw); document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+                                className="text-white/80 hover:text-white text-xs whitespace-nowrap transition-colors"
                             >
-                                <User className="w-4 h-4" />
-                                <span className="hidden lg:inline">Đăng Nhập</span>
+                                {kw}
                             </button>
-                        )}
+                        ))}
                     </div>
                 </div>
             </div>
