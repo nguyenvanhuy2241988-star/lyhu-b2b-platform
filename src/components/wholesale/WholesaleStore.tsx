@@ -357,6 +357,9 @@ export default function WholesaleStore({
             const payload: any = {
                 total_amount: cartAnalysis.finalTotal,
                 status: 'pending',
+                customer_name: customerName.trim(),
+                receiver_phone: customerPhone.trim(),
+                receiver_address: address.trim(),
                 note: `[B2B Web] ${customerName} - ${customerPhone}. Đ/c: ${address}. Ship: ${shippingMethod === 'lyhu_ship' ? 'LYHU Giao' : 'Tự tới lấy'}.`,
                 source: 'B2B_WEB'
             };
