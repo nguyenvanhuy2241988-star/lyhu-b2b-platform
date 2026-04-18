@@ -65,7 +65,7 @@ export async function GET(request: Request) {
 
     // ưu tiên next nếu hợp lệ + đúng quyền
     if (nextParam && nextParam.startsWith("/")) {
-        if (isRoleAllowedPath(targetRole, nextParam as any)) {
+        if (nextParam.startsWith("/wholesale") || isRoleAllowedPath(targetRole, nextParam as any)) {
             redirectTo = nextParam;
         }
     }
