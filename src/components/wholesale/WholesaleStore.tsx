@@ -597,27 +597,12 @@ export default function WholesaleStore({
                     </div>
 
                     {/* Col 3: Actions */}
-                    <div className="flex items-center gap-1 mt-0.5">
-                        <button onClick={() => setIsNotifOpen(!isNotifOpen)} className="relative p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors">
-                            <Bell className="w-6 h-6 text-white" />
-                            {notifications.filter(n => !n.read).length > 0 && (
-                                <span className="absolute top-0.5 right-0.5 bg-secondary-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white">
-                                    {notifications.filter(n => !n.read).length}
-                                </span>
-                            )}
-                        </button>
-
-                        {isWholesaleCustomer && (
-                            <button className="p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors" onClick={() => setIsHistoryOpen(true)}>
-                                <History className="w-6 h-6 text-white" />
-                            </button>
-                        )}
-
+                    <div className="flex items-center mt-1 ml-4 shrink-0">
                         <div className="relative group">
-                            <button className="p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors">
-                                <ShoppingCart className="w-6 h-6 text-white" />
+                            <button className="p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors flex items-center justify-center">
+                                <ShoppingCart className="w-[28px] h-[28px] text-white" strokeWidth={1.5} />
                                 {cartAnalysis.totalItems > 0 && (
-                                    <span className="absolute -top-0.5 -right-0.5 bg-secondary-500 text-white text-[9px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-0.5 border border-white shadow-sm">
+                                    <span className="absolute top-0 -right-1 bg-white text-primary-600 outline outline-2 outline-primary-500 text-[10px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-0.5 shadow-sm">
                                         {cartAnalysis.totalItems}
                                     </span>
                                 )}
@@ -659,16 +644,6 @@ export default function WholesaleStore({
                                 )}
                             </div>
                         </div>
-
-                        {!isWholesaleCustomer && (
-                            <button 
-                                onClick={() => setIsLoginOpen(true)}
-                                className="ml-1 flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white text-sm px-3 py-1.5 rounded-sm transition-colors border border-white/20"
-                            >
-                                <User className="w-4 h-4" />
-                                <span className="hidden lg:inline">Đăng Nhập</span>
-                            </button>
-                        )}
                     </div>
                 </div>
 
