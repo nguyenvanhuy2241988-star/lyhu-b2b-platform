@@ -17,6 +17,13 @@ interface Product {
     soldCount?: number;
     rating?: number;
     price?: number;
+    weight?: string;
+    packaging_spec?: string;
+    items_per_carton?: number;
+    description?: string;
+    video_url?: string;
+    extra_images?: string[];
+    unit?: string;
 }
 
 interface PromotionCondition {
