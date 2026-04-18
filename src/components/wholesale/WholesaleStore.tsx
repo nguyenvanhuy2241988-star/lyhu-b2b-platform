@@ -520,14 +520,14 @@ export default function WholesaleStore({
             </div>
 
             {/* Header LYHU Style */}
-            <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-3 sticky top-0 z-40 shadow-md">
-                <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
+            <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 sticky top-0 z-40 shadow-md">
+                <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3 h-[52px]">
                     {/* Logo */}
                     <div className="flex items-center w-full md:w-auto shrink-0">
                         <img 
                             src="/logo-full.png" 
                             alt="LYHU" 
-                            className="w-[150px] object-contain cursor-pointer brightness-0 invert drop-shadow-sm" 
+                            className="w-[200px] object-contain cursor-pointer brightness-0 invert drop-shadow-sm -my-4" 
                             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                         />
                     </div>
