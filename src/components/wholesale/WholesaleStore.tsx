@@ -521,68 +521,84 @@ export default function WholesaleStore({
 
             {/* Header LYHU Style - Shopee layout */}
             <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 sticky top-0 z-40 shadow-md">
-                <div className="max-w-6xl mx-auto hidden md:grid items-center gap-x-6 gap-y-1.5 pt-3 pb-2" style={{ gridTemplateColumns: '180px 1fr auto' }}>
-                    {/* Row 1, Col 1: Logo */}
-                    <div className="flex items-center">
+                <div className="max-w-6xl mx-auto hidden md:flex items-start gap-6 pt-3 pb-2">
+                    {/* Col 1: Logo */}
+                    <div className="w-[180px] shrink-0 h-[40px] flex items-center">
                         <img 
                             src="/logo-full.png" 
                             alt="LYHU" 
-                            className="w-[180px] object-contain cursor-pointer brightness-0 invert drop-shadow-sm" 
+                            className="max-h-full w-auto object-contain cursor-pointer brightness-0 invert drop-shadow-sm" 
                             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                         />
                     </div>
                     
-                    {/* Row 1, Col 2: Search Input */}
-                    <div className="relative">
-                        <input 
-                            type="text" 
-                            placeholder="Tìm kiếm sản phẩm, thương hiệu sỉ..." 
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            onFocus={() => setIsSearchFocused(true)}
-                            onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && searchQuery.trim()) {
-                                    saveSearchTerm(searchQuery);
-                                    setIsSearchFocused(false);
+                    {/* Col 2: Search Input + Keywords */}
+                    <div className="flex-1 flex flex-col gap-1.5">
+                        {/* Search Bar constrained to 40px */}
+                        <div className="relative h-[40px]">
+                            <input 
+                                type="text" 
+                                placeholder="Tìm kiếm sản phẩm, thương hiệu sỉ..." 
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onFocus={() => setIsSearchFocused(true)}
+                                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && searchQuery.trim()) {
+                                        saveSearchTerm(searchQuery);
+                                        setIsSearchFocused(false);
+                                        document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    }
+                                }}
+                                className="w-full h-full bg-white rounded-sm pl-4 pr-12 text-sm text-gray-800 focus:outline-none shadow-sm placeholder-gray-400"
+                            />
+                            <button 
+                                onClick={() => {
+                                    if (searchQuery.trim()) saveSearchTerm(searchQuery);
                                     document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                }
-                            }}
-                            className="w-full bg-white rounded-sm pl-4 pr-12 py-2 text-sm text-gray-800 focus:outline-none shadow-sm placeholder-gray-400"
-                        />
-                        <button 
-                            onClick={() => {
-                                if (searchQuery.trim()) saveSearchTerm(searchQuery);
-                                document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                            }}
-                            className="absolute right-1 top-1 bottom-1 bg-primary-600 hover:bg-primary-700 text-white px-4 rounded-sm flex items-center justify-center transition-colors"
-                        >
-                            <Search className="w-4 h-4" />
-                        </button>
+                                }}
+                                className="absolute right-1 top-1 bottom-1 bg-primary-600 hover:bg-primary-700 text-white px-4 rounded-sm flex items-center justify-center transition-colors"
+                            >
+                                <Search className="w-4 h-4" />
+                            </button>
 
-                        {/* Search History Dropdown */}
-                        {isSearchFocused && searchHistory.length > 0 && !searchQuery && (
-                            <div className="absolute top-full left-0 right-0 bg-white shadow-xl border border-gray-200 rounded-b-sm z-50 mt-0.5">
-                                <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
-                                    <span className="text-xs font-semibold text-gray-500">Lịch sử tìm kiếm</span>
-                                    <button onClick={clearSearchHistory} className="text-[11px] text-primary-600 hover:text-primary-700 font-medium">Xoá tất cả</button>
+                            {/* Search History Dropdown */}
+                            {isSearchFocused && searchHistory.length > 0 && !searchQuery && (
+                                <div className="absolute top-full left-0 right-0 bg-white shadow-xl border border-gray-200 rounded-b-sm z-50 mt-0.5">
+                                    <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
+                                        <span className="text-xs font-semibold text-gray-500">Lịch sử tìm kiếm</span>
+                                        <button onClick={clearSearchHistory} className="text-[11px] text-primary-600 hover:text-primary-700 font-medium">Xoá tất cả</button>
+                                    </div>
+                                    {searchHistory.map((term, i) => (
+                                        <button 
+                                            key={i}
+                                            onMouseDown={() => { setSearchQuery(term); setIsSearchFocused(false); }}
+                                            className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-primary-50 flex items-center gap-2 transition-colors"
+                                        >
+                                            <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                            <span className="truncate">{term}</span>
+                                        </button>
+                                    ))}
                                 </div>
-                                {searchHistory.map((term, i) => (
-                                    <button 
-                                        key={i}
-                                        onMouseDown={() => { setSearchQuery(term); setIsSearchFocused(false); }}
-                                        className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-primary-50 flex items-center gap-2 transition-colors"
-                                    >
-                                        <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                                        <span className="truncate">{term}</span>
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                            )}
+                        </div>
+
+                        {/* Keywords perfectly flush with search bar left edge */}
+                        <div className="flex items-center gap-3 overflow-x-auto h-[20px]">
+                            {(searchHistory.length > 0 ? searchHistory.slice(0, 7) : ['Bánh tráng Abi', 'Khoai môn sấy', 'Snack BOYO', 'Đặc sản miền Tây', 'Bánh tráng phô mai', 'Gia vị', 'Flash Sale']).map((kw, i) => (
+                                <button 
+                                    key={i}
+                                    onClick={() => { setSearchQuery(kw); document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+                                    className="text-white/80 hover:text-white text-[11px] whitespace-nowrap transition-colors"
+                                >
+                                    {kw}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
-                    {/* Row 1, Col 3: Actions */}
-                    <div className="flex items-center justify-end">
+                    {/* Col 3: Actions constraints */}
+                    <div className="shrink-0 h-[40px] flex items-center justify-end">
                         <div className="relative group">
                             <button className="p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors flex items-center justify-center">
                                 <ShoppingCart className="w-[28px] h-[28px] text-white" strokeWidth={1.5} />
@@ -629,19 +645,6 @@ export default function WholesaleStore({
                                 )}
                             </div>
                         </div>
-                    </div>
-
-                    {/* Row 2, Col 2: Keywords */}
-                    <div className="col-start-2 flex items-center gap-3 overflow-x-auto">
-                        {(searchHistory.length > 0 ? searchHistory.slice(0, 7) : ['Bánh tráng Abi', 'Khoai môn sấy', 'Snack BOYO', 'Đặc sản miền Tây', 'Bánh tráng phô mai', 'Gia vị', 'Flash Sale']).map((kw, i) => (
-                            <button 
-                                key={i}
-                                onClick={() => { setSearchQuery(kw); document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
-                                className="text-white/80 hover:text-white text-[11px] whitespace-nowrap transition-colors"
-                            >
-                                {kw}
-                            </button>
-                        ))}
                     </div>
                 </div>
 
