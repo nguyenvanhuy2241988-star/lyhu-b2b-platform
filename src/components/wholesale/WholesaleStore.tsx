@@ -102,6 +102,7 @@ export default function WholesaleStore({
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState<'popular' | 'latest' | 'topsale' | 'price_asc' | 'price_desc'>('popular');
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [activeImageIdx, setActiveImageIdx] = useState(0);
 
     // V4 Features States
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -1104,7 +1105,7 @@ export default function WholesaleStore({
                                 <div className="p-2.5 flex-1 flex flex-col">
                                     <h3 
                                         className="text-sm text-gray-800 line-clamp-2 leading-[1.2rem] h-[2.4rem] break-words mb-1 cursor-pointer hover:text-primary-600 transition-colors"
-                                        onClick={() => setSelectedProduct(product)}
+                                        onClick={() => { setSelectedProduct(product); setActiveImageIdx(0); }}
                                     >
                                         {product.name}
                                     </h3>
@@ -1169,30 +1170,43 @@ export default function WholesaleStore({
                         <div className="w-full md:w-1/2 bg-gray-50 flex flex-col p-6 border-r border-gray-100 shrink-0 relative overflow-y-auto">
                             {/* Product Main Image */}
                             <div className="w-full aspect-square bg-white border border-gray-200 mb-2 relative flex items-center justify-center overflow-hidden">
-                                {selectedProduct.image_url ? (
-                                    <img src={selectedProduct.image_url} alt="" className="w-full h-full object-cover" />
-                                ) : (
-                                    <ShoppingCart className="w-24 h-24 text-gray-300" />
-                                )}
+                                {(() => {
+                                    const allImages = [selectedProduct.image_url, ...(selectedProduct.extra_images || [])].filter(Boolean);
+                                    const currentImg = allImages[activeImageIdx] || selectedProduct.image_url;
+                                    if (currentImg) {
+                                        return <img src={currentImg} alt="" className="w-full h-full object-contain" />;
+                                    }
+                                    return <ShoppingCart className="w-24 h-24 text-gray-300" />;
+                                })()}
                             </div>
                             
-                            {/* Thumbnail Row Mock */}
-                            {selectedProduct.image_url && (
-                                <div className="flex gap-2 w-full overflow-x-auto hide-scrollbar py-1">
-                                    <div className="w-16 h-16 border-2 border-primary-500 rounded-sm flex-shrink-0 cursor-pointer">
-                                        <img src={selectedProduct.image_url} className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="w-16 h-16 border border-gray-200 rounded-sm flex-shrink-0 cursor-pointer opacity-70 hover:opacity-100">
-                                        <img src={selectedProduct.image_url} className="w-full h-full object-cover grayscale-[30%]" />
-                                    </div>
-                                    <div className="w-16 h-16 border border-gray-200 rounded-sm flex-shrink-0 cursor-pointer opacity-70 hover:opacity-100 bg-gray-900 flex items-center justify-center relative">
-                                        <img src={selectedProduct.image_url} className="w-full h-full object-cover opacity-50" />
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center"><ChevronRight className="w-3 h-3 text-white ml-0.5" /></div>
+                            {/* Thumbnail Row */}
+                            {(() => {
+                                const allImages = [selectedProduct.image_url, ...(selectedProduct.extra_images || [])].filter(Boolean);
+                                if (allImages.length > 0) {
+                                    return (
+                                        <div className="flex gap-2 w-full overflow-x-auto hide-scrollbar py-1">
+                                            {allImages.map((imgUrl, idx) => (
+                                                <div 
+                                                    key={idx} 
+                                                    onClick={() => setActiveImageIdx(idx)}
+                                                    className={`w-16 h-16 border-2 rounded-sm flex-shrink-0 cursor-pointer transition-all ${idx === activeImageIdx ? 'border-primary-500' : 'border-transparent hover:border-gray-300 opacity-70 hover:opacity-100'}`}
+                                                >
+                                                    <img src={imgUrl} className="w-full h-full object-cover" />
+                                                </div>
+                                            ))}
+                                            {selectedProduct.video_url && (
+                                                <a href={selectedProduct.video_url} target="_blank" rel="noreferrer" className="w-16 h-16 border border-gray-200 rounded-sm flex-shrink-0 cursor-pointer opacity-80 hover:opacity-100 bg-gray-900 flex items-center justify-center relative">
+                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-colors">
+                                                        <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center"><ChevronRight className="w-3 h-3 text-white ml-0.5" /></div>
+                                                    </div>
+                                                </a>
+                                            )}
                                         </div>
-                                    </div>
-                                </div>
-                            )}
+                                    );
+                                }
+                                return null;
+                            })()}
 
                             {/* Share & Like Mock */}
                             <div className="flex items-center gap-4 mt-4 text-gray-600 text-sm px-2">
@@ -1241,13 +1255,17 @@ export default function WholesaleStore({
                             <div className="mb-6 flex-1">
                                 <h4 className="font-bold text-gray-800 text-sm mb-2 uppercase">Thông tin sản phẩm</h4>
                                 <div className="text-sm text-gray-600 space-y-1 bg-white p-3 border border-gray-100 shadow-sm rounded-sm">
-                                    <p className="flex"><span className="w-24 text-gray-400">Mã SKU</span> <span className="font-medium text-gray-800">{selectedProduct.sku}</span></p>
-                                    <p className="flex"><span className="w-24 text-gray-400">Kho hàng</span> <span className="font-medium text-gray-800">Sẵn sàng giao</span></p>
-                                    <p className="flex"><span className="w-24 text-gray-400">Thương hiệu</span> <span className="text-primary-600">{selectedProduct.brand}</span></p>
+                                    <p className="flex"><span className="w-24 text-gray-400 shrink-0">Mã SKU</span> <span className="font-medium text-gray-800 break-words">{selectedProduct.sku}</span></p>
+                                    <p className="flex"><span className="w-24 text-gray-400 shrink-0">Kho hàng</span> <span className="font-medium text-gray-800">Sẵn sàng giao</span></p>
+                                    <p className="flex"><span className="w-24 text-gray-400 shrink-0">Thương hiệu</span> <span className="text-primary-600">{selectedProduct.brand}</span></p>
+                                    <p className="flex"><span className="w-24 text-gray-400 shrink-0">Đóng gói</span> <span className="font-medium text-gray-800">{selectedProduct.packaging_spec || selectedProduct.unit}</span></p>
+                                    {selectedProduct.weight && <p className="flex"><span className="w-24 text-gray-400 shrink-0">Trọng lượng</span> <span className="font-medium text-gray-800">{selectedProduct.weight}</span></p>}
+                                    {(selectedProduct.items_per_carton > 0) && <p className="flex"><span className="w-24 text-gray-400 shrink-0">Quy cách</span> <span className="font-medium text-gray-800">{selectedProduct.items_per_carton} sản phẩm / thùng</span></p>}
                                     <div className="my-2 border-t border-gray-100 pt-2">
-                                        <p className="text-gray-700 leading-relaxed max-w-prose">
-                                            {selectedProduct.name} chính hãng phân phối bởi LYHU. Sản phẩm phù hợp để nhập sỉ số lượng lớn cho cửa hàng bán lẻ, siêu thị mini, hoặc đẩy mảng TikTok Shop/Shopee.
-                                            Đầy đủ hình ảnh, video chất lượng cao hỗ trợ đăng bài mượt mà.
+                                        <p className="text-gray-700 leading-relaxed max-w-prose whitespace-pre-wrap">
+                                            {selectedProduct.description || (
+                                                `${selectedProduct.name} chính hãng phân phối bởi LYHU. Sản phẩm phù hợp để nhập sỉ số lượng lớn cho cửa hàng bán lẻ, siêu thị mini, hoặc đẩy mảng TikTok Shop/Shopee. Đầy đủ hình ảnh, video chất lượng cao hỗ trợ đăng bài mượt mà.`
+                                            )}
                                         </p>
                                     </div>
                                 </div>

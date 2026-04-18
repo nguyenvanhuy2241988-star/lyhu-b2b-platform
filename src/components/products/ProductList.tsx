@@ -18,6 +18,12 @@ export interface AppProduct extends Product {
     image_url?: string;
     is_active?: boolean;
     created_at?: string;
+    weight?: string;
+    packaging_spec?: string;
+    items_per_carton?: number;
+    description?: string;
+    video_url?: string;
+    extra_images?: string[];
 }
 
 interface ProductListProps {
@@ -53,7 +59,13 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
         unit: "Cái",
         price: 0,
         stock: 0,
-        image_url: ""
+        image_url: "",
+        weight: "",
+        packaging_spec: "",
+        items_per_carton: 0,
+        description: "",
+        video_url: "",
+        extra_images: [] as string[]
     });
 
     // Bulk Edit State
@@ -82,6 +94,31 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
 
             setFormData(prev => ({ ...prev, image_url: data.publicUrl }));
             toast.success("Tải ảnh lên thành công");
+        } catch (error: any) {
+            toast.error('Lỗi upload ảnh: ' + error.message);
+        } finally {
+            setIsUploadingImage(false);
+        }
+    };
+
+    const uploadExtraImage = async (file: File) => {
+        try {
+            setIsUploadingImage(true);
+            const fileExt = file.name?.split('.').pop() || 'png';
+            const fileName = `product_extra_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+            
+            const { error: uploadError } = await supabase.storage
+                .from('report-images')
+                .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data } = supabase.storage
+                .from('report-images')
+                .getPublicUrl(fileName);
+
+            setFormData(prev => ({ ...prev, extra_images: [...(prev.extra_images || []), data.publicUrl] }));
+            toast.success("Tải ảnh bổ sung thành công");
         } catch (error: any) {
             toast.error('Lỗi upload ảnh: ' + error.message);
         } finally {
@@ -209,7 +246,10 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
     const handleOpenCreate = () => {
         if (readOnly) return;
         setEditingProduct(null);
-        setFormData({ sku: "", name: "", brand: "LYHU", unit: "Gói", price: 0, stock: 100, image_url: "" });
+        setFormData({ 
+            sku: "", name: "", brand: "LYHU", unit: "Gói", price: 0, stock: 100, image_url: "",
+            weight: "", packaging_spec: "", items_per_carton: 0, description: "", video_url: "", extra_images: []
+        });
         setIsModalOpen(true);
     };
 
@@ -223,7 +263,13 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
             unit: product.unit || "Gói",
             price: product.price || 0,
             stock: product.stock || 0,
-            image_url: product.image_url || ""
+            image_url: product.image_url || "",
+            weight: product.weight || "",
+            packaging_spec: product.packaging_spec || "",
+            items_per_carton: product.items_per_carton || 0,
+            description: product.description || "",
+            video_url: product.video_url || "",
+            extra_images: product.extra_images || []
         });
         setIsModalOpen(true);
     };
@@ -644,14 +690,15 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
             {/* Create/Edit Modal */}
             {isModalOpen && !readOnly && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95">
-                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 max-h-[90vh] flex flex-col">
+                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
                             <h3 className="font-bold text-lg text-slate-800">
                                 {editingProduct ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
                             </h3>
                             <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
                         </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                        <div className="overflow-y-auto p-6 flex-1">
+                            <form id="product-form" onSubmit={handleSubmit} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">SKU</label>
@@ -741,13 +788,79 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
                                     </div>
                                 )}
                             </div>
-                            <div className="pt-4 flex justify-end gap-3">
-                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg">Hủy bỏ</button>
-                                <button type="submit" disabled={isSubmitting} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2">
+
+                            {/* Extra Info */}
+                            <div className="pt-4 border-t border-slate-100 grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Trọng lượng (ví dụ: 500g)</label>
+                                    <input className="w-full border rounded-lg px-3 py-2" value={formData.weight} onChange={e => setFormData({ ...formData, weight: e.target.value })} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Quy cách (ví dụ: Thùng carton)</label>
+                                    <input className="w-full border rounded-lg px-3 py-2" value={formData.packaging_spec} onChange={e => setFormData({ ...formData, packaging_spec: e.target.value })} />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Số SP / Thùng</label>
+                                    <input type="number" min="0" className="w-full border rounded-lg px-3 py-2" value={formData.items_per_carton} onChange={e => setFormData({ ...formData, items_per_carton: Number(e.target.value) })} />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Video URL (YouTube/TikTok)</label>
+                                    <input type="url" placeholder="https://" className="w-full border rounded-lg px-3 py-2" value={formData.video_url} onChange={e => setFormData({ ...formData, video_url: e.target.value })} />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Mô tả sản phẩm</label>
+                                <textarea rows={4} className="w-full border rounded-lg px-3 py-2" placeholder="Ghi chú thêm về thành phần, cách dùng..." value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
+                            </div>
+
+                            {/* Extra Images */}
+                            <div className="pt-2">
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Ảnh bổ sung (Nhiều ảnh)</label>
+                                <div className="mt-2 flex items-center justify-start gap-3">
+                                    <label className={`cursor-pointer ${isUploadingImage ? 'bg-slate-100 text-slate-400 pointer-events-none' : 'bg-slate-100 hover:bg-slate-200 text-slate-700'} px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 font-medium border border-slate-200 shadow-sm text-sm`}>
+                                        {isUploadingImage ? <Loader2 className="w-4 h-4 animate-spin text-blue-500"/> : <UploadCloud className="w-4 h-4 text-blue-600" />}
+                                        Tải ảnh thêm
+                                        <input type="file" multiple className="hidden" accept="image/*" onChange={(e) => {
+                                            if (e.target.files) {
+                                                Array.from(e.target.files).forEach(file => uploadExtraImage(file));
+                                            }
+                                        }} />
+                                    </label>
+                                </div>
+                                {formData.extra_images && formData.extra_images.length > 0 && (
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {formData.extra_images.map((url, idx) => (
+                                            <div key={idx} className="h-20 w-20 border border-slate-200 rounded-lg overflow-hidden relative group/img cursor-pointer">
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img src={url} alt="" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} onClick={() => window.open(url, '_blank')} />
+                                                <button
+                                                    type="button"
+                                                    title="Xoá ảnh này"
+                                                    className="absolute inset-0 bg-black/50 hidden group-hover/img:flex items-center justify-center text-white transition-opacity"
+                                                    onClick={(e) => { 
+                                                        e.stopPropagation(); 
+                                                        setFormData(prev => ({ ...prev, extra_images: prev.extra_images.filter((_, index) => index !== idx) })); 
+                                                    }}
+                                                >
+                                                    <Trash2 className="w-4 h-4 text-red-200" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                        </form>
+                        </div>
+                        <div className="px-6 py-4 border-t border-slate-100 flex justify-end gap-3 bg-slate-50 shrink-0">
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-200 bg-slate-100 rounded-lg">Hủy bỏ</button>
+                                <button type="submit" form="product-form" disabled={isSubmitting} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center gap-2">
                                     {isSubmitting ? <Loader2 className="animate-spin w-4 h-4" /> : <Check className="w-4 h-4" />} {editingProduct ? "Cập nhật" : "Tạo mới"}
                                 </button>
                             </div>
-                        </form>
                     </div>
                 </div>
             )}
