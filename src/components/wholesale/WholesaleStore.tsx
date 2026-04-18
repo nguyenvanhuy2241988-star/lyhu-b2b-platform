@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, ShoppingCart, Info, CheckCircle2, ChevronRight, Minus, Plus, Star, X, Clock, Flame, Ticket, Loader2, History } from 'lucide-react';
+import { Search, ShoppingCart, Info, CheckCircle2, ChevronRight, Minus, Plus, Star, X, Clock, Flame, Ticket, Loader2, History, Bell, User, LogIn, Eye, EyeOff } from 'lucide-react';
 import { getSupabase } from '@/lib/supabaseClient';
 
 interface Product {
@@ -113,6 +113,26 @@ export default function WholesaleStore({
     
     // Banner Carousel State
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+
+    // V5: Search History
+    const [searchHistory, setSearchHistory] = useState<string[]>([]);
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+    // V5: Login Modal
+    const [isLoginOpen, setIsLoginOpen] = useState(false);
+    const [loginEmail, setLoginEmail] = useState('');
+    const [loginPassword, setLoginPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const [loginError, setLoginError] = useState('');
+
+    // V5: Notifications
+    const [notifications] = useState([
+        { id: '1', text: 'Chào mừng bạn đến với LYHU Sỉ! Đặt hàng sỉ dễ dàng hơn bao giờ hết.', time: 'Hôm nay', read: false },
+        { id: '2', text: 'Flash Sale đang diễn ra, nhanh tay săn deal!', time: 'Hôm nay', read: false },
+        { id: '3', text: 'Voucher FREESHIP đã sẵn sàng trong ví của bạn.', time: 'Hôm qua', read: true },
+    ]);
+    const [isNotifOpen, setIsNotifOpen] = useState(false);
 
     // Checkout States
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -401,97 +421,320 @@ export default function WholesaleStore({
         }
     };
 
+    // V5: Search history helpers
+    useEffect(() => {
+        try {
+            const h = localStorage.getItem('lyhu_search_history');
+            if (h) setSearchHistory(JSON.parse(h));
+        } catch {}
+    }, []);
+
+    const saveSearchTerm = (term: string) => {
+        if (!term.trim()) return;
+        const updated = [term.trim(), ...searchHistory.filter(t => t !== term.trim())].slice(0, 8);
+        setSearchHistory(updated);
+        localStorage.setItem('lyhu_search_history', JSON.stringify(updated));
+    };
+
+    const clearSearchHistory = () => {
+        setSearchHistory([]);
+        localStorage.removeItem('lyhu_search_history');
+    };
+
+    // V5: Login handler
+    const handleLogin = async () => {
+        setIsLoggingIn(true);
+        setLoginError('');
+        try {
+            const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword });
+            if (error) throw error;
+            setIsLoginOpen(false);
+            window.location.reload();
+        } catch (err: any) {
+            setLoginError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
+        } finally {
+            setIsLoggingIn(false);
+        }
+    };
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        window.location.reload();
+    };
 
     return (
         <div className="pb-32 bg-[#f5f5f5] min-h-screen font-sans">
+            {/* V5: Top Utility Bar */}
+            <div className="bg-primary-700 text-white/80 text-xs hidden md:block">
+                <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-8">
+                    <div className="flex items-center gap-4">
+                        <span className="hover:text-white cursor-pointer">Kênh NPP</span>
+                        <span className="hover:text-white cursor-pointer">Tải ứng dụng</span>
+                        <span>Kết nối</span>
+                    </div>
+                    <div className="flex items-center gap-4">
+                        <div className="relative">
+                            <button onClick={() => setIsNotifOpen(!isNotifOpen)} className="flex items-center gap-1 hover:text-white cursor-pointer">
+                                <Bell className="w-3.5 h-3.5" />
+                                Thông Báo
+                                {notifications.filter(n => !n.read).length > 0 && (
+                                    <span className="bg-secondary-500 text-white text-[9px] font-bold min-w-[14px] h-[14px] rounded-full flex items-center justify-center px-0.5">
+                                        {notifications.filter(n => !n.read).length}
+                                    </span>
+                                )}
+                            </button>
+                            {/* Notification Dropdown */}
+                            {isNotifOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)}></div>
+                                    <div className="absolute right-0 top-full mt-1 w-[360px] bg-white shadow-xl border border-gray-200 rounded-sm z-50 animate-in fade-in slide-in-from-top-2">
+                                        <div className="p-3 border-b border-gray-100 flex items-center justify-between">
+                                            <h4 className="text-sm font-bold text-gray-800">Thông Báo Mới</h4>
+                                        </div>
+                                        <div className="max-h-[300px] overflow-y-auto">
+                                            {notifications.map(n => (
+                                                <div key={n.id} className={`p-3 border-b border-gray-50 hover:bg-primary-50/30 cursor-pointer text-left ${!n.read ? 'bg-primary-50/50' : ''}`}>
+                                                    <p className="text-sm text-gray-700 leading-relaxed">{n.text}</p>
+                                                    <p className="text-[11px] text-gray-400 mt-1">{n.time}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="p-2 text-center border-t border-gray-100">
+                                            <button className="text-xs text-primary-600 hover:text-primary-700 font-medium">Xem tất cả thông báo</button>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                        {isWholesaleCustomer ? (
+                            <button onClick={handleLogout} className="hover:text-white cursor-pointer">Đăng Xuất</button>
+                        ) : (
+                            <>
+                                <button onClick={() => setIsLoginOpen(true)} className="hover:text-white cursor-pointer">Đăng Nhập</button>
+                                <span className="text-white/40">|</span>
+                                <button className="hover:text-white cursor-pointer">Đăng Ký</button>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
+
             {/* Header LYHU Style */}
-            <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-4 sticky top-0 z-40 shadow-md">
-                <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="flex items-center w-full md:w-auto">
-                        <ShoppingCart className="w-8 h-8 text-white mr-2" />
-                        <h1 className="text-2xl font-bold text-white tracking-wide cursor-pointer">LYHU <span className="font-light">Sỉ</span></h1>
+            <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-3 sticky top-0 z-40 shadow-md">
+                <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-3">
+                    {/* Logo */}
+                    <div className="flex items-center w-full md:w-auto gap-3 shrink-0">
+                        <img 
+                            src="/logo-icon.png" 
+                            alt="LYHU" 
+                            className="h-9 w-9 object-contain cursor-pointer brightness-0 invert" 
+                            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                        />
+                        <h1 className="text-2xl font-bold text-white tracking-wide cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                            LYHU <span className="font-light text-lg">Sỉ</span>
+                        </h1>
                         {!isWholesaleCustomer && (
-                            <span className="ml-3 text-[10px] font-bold bg-white text-primary-600 px-2 py-0.5 rounded-sm uppercase tracking-wider">Khách lẻ</span>
+                            <span className="text-[10px] font-bold bg-white/20 text-white px-2 py-0.5 rounded-sm uppercase tracking-wider border border-white/30">Khách lẻ</span>
                         )}
                     </div>
                     
-                    <div className="relative w-full md:w-1/2">
+                    {/* Search Bar with History */}
+                    <div className="relative w-full md:flex-1 md:max-w-xl">
                         <input 
                             type="text" 
                             placeholder="Tìm kiếm sản phẩm, thương hiệu sỉ..." 
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
+                            onFocus={() => setIsSearchFocused(true)}
+                            onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
                             onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
+                                if (e.key === 'Enter' && searchQuery.trim()) {
+                                    saveSearchTerm(searchQuery);
+                                    setIsSearchFocused(false);
                                     document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                                 }
                             }}
                             className="w-full bg-white rounded-sm pl-4 pr-12 py-2.5 text-sm text-gray-800 focus:outline-none shadow-sm placeholder-gray-400"
                         />
                         <button 
-                            onClick={() => document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                            onClick={() => {
+                                if (searchQuery.trim()) saveSearchTerm(searchQuery);
+                                document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }}
                             className="absolute right-1 top-1 bottom-1 bg-primary-600 hover:bg-primary-700 text-white px-4 rounded-sm flex items-center justify-center transition-colors"
                         >
                             <Search className="w-4 h-4" />
                         </button>
-                    </div>
 
-                    <div className="hidden md:flex items-center justify-end w-[150px] group relative">
-                        {/* V4: History Icon */}
-                        {isWholesaleCustomer && (
-                            <div className="relative py-2 px-3 cursor-pointer group/history mr-2" onClick={() => setIsHistoryOpen(true)}>
-                                <History className="w-8 h-8 text-white hover:text-white/80 transition-colors" />
+                        {/* Search History Dropdown */}
+                        {isSearchFocused && searchHistory.length > 0 && !searchQuery && (
+                            <div className="absolute top-full left-0 right-0 bg-white shadow-xl border border-gray-200 rounded-b-sm z-50 mt-0.5">
+                                <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100">
+                                    <span className="text-xs font-semibold text-gray-500">Lịch sử tìm kiếm</span>
+                                    <button onClick={clearSearchHistory} className="text-[11px] text-primary-600 hover:text-primary-700 font-medium">Xoá tất cả</button>
+                                </div>
+                                {searchHistory.map((term, i) => (
+                                    <button 
+                                        key={i}
+                                        onMouseDown={() => { setSearchQuery(term); setIsSearchFocused(false); }}
+                                        className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-primary-50 flex items-center gap-2 transition-colors"
+                                    >
+                                        <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                        <span className="truncate">{term}</span>
+                                    </button>
+                                ))}
                             </div>
                         )}
-                        <div className="relative py-2 px-2 cursor-pointer">
-                            <ShoppingCart className="w-8 h-8 text-white hover:text-white/80 transition-colors" />
-                            {cartAnalysis.totalItems > 0 && (
-                                <span className="absolute top-0 right-0 bg-secondary-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border border-white shadow-sm">
-                                    {cartAnalysis.totalItems}
+                    </div>
+
+                    {/* Right Actions */}
+                    <div className="hidden md:flex items-center justify-end gap-1 shrink-0">
+                        {/* Notifications (mobile) */}
+                        <button onClick={() => setIsNotifOpen(!isNotifOpen)} className="relative p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors">
+                            <Bell className="w-6 h-6 text-white" />
+                            {notifications.filter(n => !n.read).length > 0 && (
+                                <span className="absolute top-0.5 right-0.5 bg-secondary-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white">
+                                    {notifications.filter(n => !n.read).length}
                                 </span>
                             )}
+                        </button>
+
+                        {/* History */}
+                        {isWholesaleCustomer && (
+                            <button className="p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors" onClick={() => setIsHistoryOpen(true)}>
+                                <History className="w-6 h-6 text-white" />
+                            </button>
+                        )}
+
+                        {/* Cart */}
+                        <div className="relative group">
+                            <button className="p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors">
+                                <ShoppingCart className="w-6 h-6 text-white" />
+                                {cartAnalysis.totalItems > 0 && (
+                                    <span className="absolute -top-0.5 -right-0.5 bg-secondary-500 text-white text-[9px] font-bold min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-0.5 border border-white shadow-sm">
+                                        {cartAnalysis.totalItems}
+                                    </span>
+                                )}
+                            </button>
+
+                            {/* Hover Popup Mini Cart */}
+                            <div className="absolute top-full right-0 w-[400px] bg-white shadow-xl border border-gray-200 rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top mt-1">
+                                {cartAnalysis.items.length === 0 ? (
+                                    <div className="p-8 flex flex-col items-center justify-center text-gray-400">
+                                        <ShoppingCart className="w-16 h-16 opacity-30 mb-2" />
+                                        <p className="text-sm">Chưa có sản phẩm</p>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col">
+                                        <div className="p-3 text-sm text-gray-400">Sản phẩm mới thêm</div>
+                                        <div className="max-h-[300px] overflow-y-auto">
+                                            {cartAnalysis.items.slice().reverse().map(item => {
+                                                const price = item.flashSalePrice ?? (isWholesaleCustomer ? (item.product.basePricePerUnit || item.product.basePrice || 0) : (item.product.retailPrice || item.product.basePrice || 0));
+                                                return (
+                                                    <div key={item.product.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-50 last:border-b-0">
+                                                        <div className="w-10 h-10 border border-gray-200 bg-white">
+                                                            {item.product.image_url && <img src={item.product.image_url} alt="" className="w-full h-full object-cover" />}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm text-gray-800 truncate">{item.product.name}</p>
+                                                            {item.flashSalePrice && <span className="text-[10px] bg-primary-100 text-primary-700 px-1 py-0.5 rounded-sm font-bold">Flash Sale</span>}
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="text-sm text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(price)}</p>
+                                                            <p className="text-xs text-gray-500">x {item.quantity}</p>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                        <div className="p-3 bg-gray-50 flex justify-between items-center">
+                                            <p className="text-xs text-gray-500">{cartAnalysis.items.length} Thêm hàng vào giỏ</p>
+                                            <button onClick={() => setIsCheckoutOpen(true)} className="bg-primary-600 text-white px-4 py-2 text-sm hover:bg-primary-700">Xem Giỏ Hàng</button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
-                        {/* Hover Popup Mini Cart */}
-                        <div className="absolute top-12 right-0 w-[400px] bg-white shadow-xl border border-gray-200 rounded-sm opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top mt-2">
-                            {cartAnalysis.items.length === 0 ? (
-                                <div className="p-8 flex flex-col items-center justify-center text-gray-400">
-                                    <ShoppingCart className="w-16 h-16 opacity-30 mb-2" />
-                                    <p className="text-sm">Chưa có sản phẩm</p>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col">
-                                    <div className="p-3 text-sm text-gray-400">Sản phẩm mới thêm</div>
-                                    <div className="max-h-[300px] overflow-y-auto">
-                                        {cartAnalysis.items.slice().reverse().map(item => {
-                                            const price = item.flashSalePrice ?? (isWholesaleCustomer ? (item.product.basePricePerUnit || item.product.basePrice || 0) : (item.product.retailPrice || item.product.basePrice || 0));
-                                            return (
-                                                <div key={item.product.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-50 last:border-b-0">
-                                                    <div className="w-10 h-10 border border-gray-200 bg-white">
-                                                        {item.product.image_url && <img src={item.product.image_url} alt="" className="w-full h-full object-cover" />}
-                                                    </div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="text-sm text-gray-800 truncate">{item.product.name}</p>
-                                                        {item.flashSalePrice && <span className="text-[10px] bg-primary-100 text-primary-700 px-1 py-0.5 rounded-sm font-bold">Flash Sale</span>}
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="text-sm text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(price)}</p>
-                                                        <p className="text-xs text-gray-500">x {item.quantity}</p>
-                                                    </div>
-                                                </div>
-                                            )
-                                        })}
-                                    </div>
-                                    <div className="p-3 bg-gray-50 flex justify-between items-center">
-                                        <p className="text-xs text-gray-500">{cartAnalysis.items.length} Thêm hàng vào giỏ</p>
-                                        <button onClick={() => setIsCheckoutOpen(true)} className="bg-primary-600 text-white px-4 py-2 text-sm hover:bg-primary-700">Xem Giỏ Hàng</button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                        {/* Login (mobile) */}
+                        {!isWholesaleCustomer && (
+                            <button 
+                                onClick={() => setIsLoginOpen(true)}
+                                className="ml-1 flex items-center gap-1.5 bg-white/15 hover:bg-white/25 text-white text-sm px-3 py-1.5 rounded-sm transition-colors border border-white/20"
+                            >
+                                <User className="w-4 h-4" />
+                                <span className="hidden lg:inline">Đăng Nhập</span>
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
+
+            {/* V5: Login Modal */}
+            {isLoginOpen && (
+                <>
+                    <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setIsLoginOpen(false)}></div>
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95">
+                            {/* Login Header */}
+                            <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 text-center relative">
+                                <button onClick={() => setIsLoginOpen(false)} className="absolute top-3 right-3 text-white/70 hover:text-white">
+                                    <X className="w-5 h-5" />
+                                </button>
+                                <img src="/logo-icon.png" alt="LYHU" className="w-12 h-12 mx-auto mb-2 brightness-0 invert" />
+                                <h2 className="text-xl font-bold text-white">Đăng Nhập LYHU Sỉ</h2>
+                                <p className="text-white/70 text-sm mt-1">Đăng nhập để xem giá sỉ ưu đãi</p>
+                            </div>
+
+                            {/* Login Form */}
+                            <div className="p-6 space-y-4">
+                                {loginError && (
+                                    <div className="bg-red-50 text-red-600 text-sm p-3 rounded-sm border border-red-200">
+                                        {loginError}
+                                    </div>
+                                )}
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-500 mb-1 block">Email</label>
+                                    <input
+                                        type="email"
+                                        value={loginEmail}
+                                        onChange={e => setLoginEmail(e.target.value)}
+                                        className="w-full border border-gray-200 rounded-sm p-2.5 text-sm focus:outline-primary-500 bg-gray-50"
+                                        placeholder="your@email.com"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-semibold text-gray-500 mb-1 block">Mật khẩu</label>
+                                    <div className="relative">
+                                        <input
+                                            type={showPassword ? 'text' : 'password'}
+                                            value={loginPassword}
+                                            onChange={e => setLoginPassword(e.target.value)}
+                                            onKeyDown={e => { if (e.key === 'Enter') handleLogin(); }}
+                                            className="w-full border border-gray-200 rounded-sm p-2.5 text-sm focus:outline-primary-500 bg-gray-50 pr-10"
+                                            placeholder="Nhập mật khẩu"
+                                        />
+                                        <button onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        </button>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={handleLogin}
+                                    disabled={isLoggingIn || !loginEmail || !loginPassword}
+                                    className="w-full bg-primary-600 text-white py-2.5 rounded-sm font-bold text-sm hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    {isLoggingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
+                                    {isLoggingIn ? 'Đang đăng nhập...' : 'Đăng Nhập'}
+                                </button>
+                                <p className="text-center text-xs text-gray-400 mt-2">
+                                    Chưa có tài khoản? <span className="text-primary-600 cursor-pointer hover:underline">Liên hệ để đăng ký NPP</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
 
             <div className="max-w-6xl mx-auto px-4 mt-6">
                 
