@@ -305,7 +305,7 @@ export default function WholesaleStore({
         let originalTotalForDisplay = 0; // The non-discounted value for crossing out
 
         items.forEach(item => {
-            const normalPrice = item.product.basePricePerUnit || item.product.basePrice || 0;
+            const normalPrice = item.product.retailPrice || ((item.product.basePricePerUnit || item.product.basePrice || 0) * 1.5) || 0;
             const activePrice = item.flashSalePrice ?? normalPrice;
             originalTotalForDisplay += normalPrice * item.quantity;
             baseTotal += activePrice * item.quantity;
@@ -521,9 +521,9 @@ export default function WholesaleStore({
 
             {/* Header LYHU Style - Shopee layout */}
             <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 sticky top-0 z-40 shadow-md">
-                <div className="max-w-6xl mx-auto hidden md:grid" style={{ gridTemplateColumns: '180px 1fr auto', gap: '16px', alignItems: 'center', padding: '8px 0' }}>
+                <div className="max-w-6xl mx-auto hidden md:flex items-start gap-4 pt-3 pb-2">
                     {/* Col 1: Logo */}
-                    <div className="flex items-center">
+                    <div className="w-[180px] shrink-0 mt-1">
                         <img 
                             src="/logo-full.png" 
                             alt="LYHU" 
@@ -533,7 +533,7 @@ export default function WholesaleStore({
                     </div>
                     
                     {/* Col 2: Search + Keywords */}
-                    <div className="flex flex-col gap-1.5">
+                    <div className="flex-1 flex flex-col gap-1.5">
                         {/* Search */}
                         <div className="relative">
                             <input 
@@ -597,7 +597,7 @@ export default function WholesaleStore({
                     </div>
 
                     {/* Col 3: Actions */}
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 mt-0.5">
                         <button onClick={() => setIsNotifOpen(!isNotifOpen)} className="relative p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors">
                             <Bell className="w-6 h-6 text-white" />
                             {notifications.filter(n => !n.read).length > 0 && (
@@ -633,7 +633,7 @@ export default function WholesaleStore({
                                         <div className="p-3 text-sm text-gray-400">Sản phẩm mới thêm</div>
                                         <div className="max-h-[300px] overflow-y-auto">
                                             {cartAnalysis.items.slice().reverse().map(item => {
-                                                const price = item.flashSalePrice ?? (item.product.basePricePerUnit || item.product.basePrice || 0);
+                                                const price = item.flashSalePrice ?? (item.product.retailPrice || ((item.product.basePricePerUnit || item.product.basePrice || 0) * 1.5) || 0);
                                                 return (
                                                     <div key={item.product.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-50 last:border-b-0">
                                                         <div className="w-10 h-10 border border-gray-200 bg-white">
@@ -966,7 +966,7 @@ export default function WholesaleStore({
                         const qty = cart[product.id]?.quantity || 0;
                         const fsProd = flashSaleProducts.find(f => f.id === product.id);
                         const isFlashSaleActive = !!fsProd;
-                        const price = fsProd?.flashSalePrice ?? (product.basePricePerUnit || product.basePrice || 0);
+                        const price = fsProd?.flashSalePrice ?? (product.retailPrice || ((product.basePricePerUnit || product.basePrice || 0) * 1.5) || 0);
 
                         return (
                             <div key={product.id} className="group bg-white rounded-sm shadow-sm hover:shadow-md border border-transparent hover:border-primary-500 overflow-hidden flex flex-col transition-all duration-200 relative">
@@ -1015,14 +1015,9 @@ export default function WholesaleStore({
                                     
                                     <div className="flex flex-col pt-1 border-t border-gray-100 border-dashed">
                                         <div className="flex items-center gap-1 min-h-[22px]">
-                                            {!isWholesaleCustomer && price > 0 && !isFlashSaleActive && (
-                                                <span className="text-[10px] text-gray-400 line-through">
-                                                    ₫{new Intl.NumberFormat('vi-VN').format((product.basePricePerUnit || 0) * 1.5)}
-                                                </span>
-                                            )}
                                             {isFlashSaleActive && (
                                                 <span className="text-[10px] text-gray-400 line-through">
-                                                    ₫{new Intl.NumberFormat('vi-VN').format(product.basePricePerUnit || 0)}
+                                                    ₫{new Intl.NumberFormat('vi-VN').format(product.retailPrice || ((product.basePricePerUnit || product.basePrice || 0) * 1.5) || 0)}
                                                 </span>
                                             )}
                                         </div>
@@ -1128,20 +1123,10 @@ export default function WholesaleStore({
                                             </>
                                         );
                                     }
-                                    if (!isWholesaleCustomer) {
-                                        return (
-                                            <>
-                                                <span className="text-gray-500 text-sm">Giá sỉ tham khảo: </span>
-                                                <span className="text-3xl text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(selectedProduct.basePricePerUnit || selectedProduct.basePrice || 0)}</span>
-                                            </>
-                                        );
-                                    }
                                     return (
                                         <>
-                                            <span className="text-gray-500 text-sm">Giá NPP: <span className="line-through ml-2">₫{new Intl.NumberFormat('vi-VN').format((selectedProduct.basePricePerUnit || 0) * 1.5)}</span></span>
-                                            <div className="flex items-baseline gap-2">
-                                                <span className="text-3xl text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(selectedProduct.basePricePerUnit || 0)}</span>
-                                            </div>
+                                            <span className="text-gray-500 text-sm">Giá lẻ đê xuất: </span>
+                                            <span className="text-3xl text-primary-600 font-medium">₫{new Intl.NumberFormat('vi-VN').format(selectedProduct.retailPrice || ((selectedProduct.basePricePerUnit || selectedProduct.basePrice || 0) * 1.5) || 0)}</span>
                                         </>
                                     );
                                 })()}
