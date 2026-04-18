@@ -352,7 +352,11 @@ export default function WholesaleStore({
         try {
             const { data: { session } } = await supabase.auth.getSession();
             
+            // Generate UUID on frontend to bypass the need for .select() which requires SELECT permissions
+            const orderId = crypto.randomUUID();
+            
             const payload: any = {
+                id: orderId,
                 total_amount: cartAnalysis.finalTotal,
                 status: 'pending',
                 note: `B2B Wholesale / Đơn tự tạo trên Web. Đ/c: ${address}. Phương thức: ${shippingMethod}.`,
@@ -364,17 +368,15 @@ export default function WholesaleStore({
             }
 
             // 1. Tạo order gốc (Sử dụng RLS policy mới để cho phép anon)
-            const { data: orderData, error: orderError } = await supabase
+            const { error: orderError } = await supabase
                 .from('orders')
-                .insert(payload)
-                .select()
-                .single();
+                .insert(payload);
 
             if (orderError) throw orderError;
 
             // 2. Tạo danh sách items
             const orderItems = cartAnalysis.items.map(item => ({
-                order_id: orderData.id,
+                order_id: orderId,
                 product_id: item.product.id,
                 quantity: item.quantity,
                 price: item.flashSalePrice ?? item.product.basePricePerUnit ?? item.product.basePrice ?? 0,
