@@ -20,10 +20,10 @@ BEGIN
     IF p_warehouse_id IS NOT NULL THEN
         v_wh_id := p_warehouse_id;
     ELSE
-        SELECT id INTO v_wh_id FROM warehouses WHERE code = 'MAIN-HN' LIMIT 1;
+        v_wh_id := (SELECT id FROM warehouses WHERE code = 'MAIN-HN' LIMIT 1);
         IF v_wh_id IS NULL THEN
             -- Fallback to any active warehouse
-             SELECT id INTO v_wh_id FROM warehouses WHERE status = 'active' LIMIT 1;
+             v_wh_id := (SELECT id FROM warehouses WHERE status = 'active' LIMIT 1);
         END IF;
     END IF;
 
