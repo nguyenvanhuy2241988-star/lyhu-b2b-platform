@@ -493,14 +493,14 @@ export default function WholesaleStore({
                 {/* Auth Header */}
                 <div className="bg-white px-4 z-10 w-full relative">
                     <div className="max-w-6xl mx-auto h-[84px] flex items-center justify-between">
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4 md:gap-6">
                             <img 
                                 src="/logo-full.png" 
                                 alt="LYHU" 
-                                className="h-[44px] object-contain cursor-pointer" 
+                                className="w-[160px] md:w-[190px] h-auto object-contain cursor-pointer" 
                                 onClick={() => { setIsLoginOpen(false); setIsRegisterOpen(false); }}
                             />
-                            <div className="text-xl md:text-2xl font-medium text-gray-800 ml-2 pt-1">
+                            <div className="text-xl md:text-2xl font-medium text-gray-800 pt-1">
                                 {isLoginOpen ? 'Đăng nhập' : 'Đăng ký'}
                             </div>
                         </div>
