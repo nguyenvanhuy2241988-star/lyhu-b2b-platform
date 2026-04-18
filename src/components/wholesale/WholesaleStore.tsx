@@ -346,17 +346,13 @@ export default function WholesaleStore({
         };
     }, [cart, promotions, isWholesaleCustomer, savedVouchers]);
 
-    // Handle Order Submission
+    // Handle Order Submission - Uses server-side API route to bypass RLS
     const submitOrder = async () => {
         setIsSubmitting(true);
         try {
             const { data: { session } } = await supabase.auth.getSession();
             
-            // Generate UUID on frontend to bypass the need for .select() which requires SELECT permissions
-            const orderId = crypto.randomUUID();
-            
             const payload: any = {
-                id: orderId,
                 total_amount: cartAnalysis.finalTotal,
                 status: 'pending',
                 note: `B2B Wholesale / Đơn tự tạo trên Web. Đ/c: ${address}. Phương thức: ${shippingMethod}.`,
@@ -367,27 +363,22 @@ export default function WholesaleStore({
                 payload.telesales_user_id = session.user.id;
             }
 
-            // 1. Tạo order gốc (Sử dụng RLS policy mới để cho phép anon)
-            const { error: orderError } = await supabase
-                .from('orders')
-                .insert(payload);
-
-            if (orderError) throw orderError;
-
-            // 2. Tạo danh sách items
-            const orderItems = cartAnalysis.items.map(item => ({
-                order_id: orderId,
+            const items = cartAnalysis.items.map(item => ({
                 product_id: item.product.id,
                 quantity: item.quantity,
                 price: item.flashSalePrice ?? item.product.basePricePerUnit ?? item.product.basePrice ?? 0,
                 discount: 0
             }));
 
-            const { error: itemsError } = await supabase
-                .from('order_items')
-                .insert(orderItems);
-                
-            if (itemsError) throw itemsError;
+            // Call server-side API route which uses Service Role Key to bypass RLS
+            const res = await fetch('/api/wholesale/order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ payload, items })
+            });
+
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.error || 'Lỗi tạo đơn hàng');
 
             // Success
             setCheckoutSuccess(true);
@@ -397,9 +388,9 @@ export default function WholesaleStore({
             // Tắt popup sau 4 giây
             setTimeout(() => setCheckoutSuccess(false), 4000);
             
-        } catch (error) {
+        } catch (error: any) {
             console.error("Order submission failed:", error);
-            alert("Rất tiếc! Đã xảy ra lỗi khi tạo đơn hàng. Vui lòng thử lại.");
+            alert(`Rất tiếc! ${error.message || 'Đã xảy ra lỗi khi tạo đơn hàng. Vui lòng thử lại.'}`);
         } finally {
             setIsSubmitting(false);
         }
