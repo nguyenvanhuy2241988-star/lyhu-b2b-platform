@@ -104,7 +104,7 @@ export default function B2bCampaignsPage() {
     // ==========================================
     // --- ADVANCED PROMOTIONS & FLASH SALES ---
     // ==========================================
-    const [promoTab, setPromoTab] = useState<'promos' | 'flash'>('promos');
+    const [promoTab, setPromoTab] = useState<'promos' | 'flash' | 'vouchers'>('promos');
 
     // --- Promotions State ---
     const [promotions, setPromotions] = useState<any[]>([]);
