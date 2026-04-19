@@ -75,7 +75,7 @@ interface WholesaleBanner {
     id: string;
     image_url: string;
     link_url?: string;
-    position: 'main_slider' | 'side_top' | 'side_bottom';
+    position: 'main_slider' | 'side_top' | 'side_bottom' | 'popup';
     sort_order: number;
 }
 
@@ -142,6 +142,10 @@ export default function WholesaleStore({
     const [isRegistering, setIsRegistering] = useState(false);
     const [registerError, setRegisterError] = useState('');
 
+    // Popup Banner State
+    const [isPopupVisible, setIsPopupVisible] = useState(false);
+    const popupBanner = useMemo(() => banners.find(b => b.position === 'popup'), [banners]);
+
     // V5: Notifications
     const [notifications] = useState([
         { id: '1', text: 'Chào mừng bạn đến với LYHU Sỉ! Đặt hàng sỉ dễ dàng hơn bao giờ hết.', time: 'Hôm nay', read: false },
@@ -186,6 +190,24 @@ export default function WholesaleStore({
             localStorage.setItem('lyhu_b2b_cart', JSON.stringify(cart));
         }
     }, [cart, isCartLoaded]);
+
+    // Popup logic
+    useEffect(() => {
+        if (popupBanner) {
+            // Check if this specific popup has been closed in this session
+            const popupClosed = sessionStorage.getItem(`lyhu_popup_closed_${popupBanner.id}`);
+            if (!popupClosed) {
+                setIsPopupVisible(true);
+            }
+        }
+    }, [popupBanner]);
+
+    const handleClosePopup = () => {
+        if (popupBanner) {
+            sessionStorage.setItem(`lyhu_popup_closed_${popupBanner.id}`, 'true');
+        }
+        setIsPopupVisible(false);
+    };
 
     // V4: Fetch history
     useEffect(() => {
@@ -679,6 +701,31 @@ export default function WholesaleStore({
 
     return (
         <div className="pb-32 bg-[#f5f5f5] min-h-screen font-sans">
+            {/* Shopee-style Entry Popup */}
+            {isPopupVisible && popupBanner && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4" onClick={handleClosePopup}>
+                    <div className="relative max-w-[500px] w-full animate-in zoom-in duration-300" onClick={e => e.stopPropagation()}>
+                        <button 
+                            className="absolute -top-10 right-0 md:-right-10 text-white hover:text-gray-200 transition-colors bg-white/20 hover:bg-white/40 rounded-full p-2 backdrop-blur-sm"
+                            onClick={handleClosePopup}
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                        <a 
+                            href={popupBanner.link_url || '#'} 
+                            onClick={(e) => {
+                                handleClosePopup();
+                                if (!popupBanner.link_url) e.preventDefault();
+                            }}
+                            className="block rounded-lg overflow-hidden shadow-2xl relative group bg-white"
+                        >
+                            <img src={popupBanner.image_url} alt="Khuyến mãi đặc biệt" className="w-full h-auto max-h-[70vh] object-contain" />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>
+                        </a>
+                    </div>
+                </div>
+            )}
+
             {/* V5: Top Utility Bar */}
             <div className="bg-primary-700 text-white/80 text-xs hidden md:block">
                 <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-8">
