@@ -37,7 +37,7 @@ export default function B2bCampaignsPage() {
     // --- PRODUCTS FOR PROMOTIONS/FLASH SALES ---
     const [products, setProducts] = useState<any[]>([]);
     const fetchProducts = async () => {
-        const { data } = await supabase.from('products').select('id, name, sku, wholesalePrice').order('name');
+        const { data } = await supabase.from('products').select('id, name, sku, price').order('name');
         if (data) setProducts(data);
     };
 
@@ -446,7 +446,7 @@ export default function B2bCampaignsPage() {
                                                 <div className="flex gap-2">
                                                     <select value={newFsItem.productId} onChange={e=>setNewFsItem({...newFsItem, productId: e.target.value})} className="flex-1 border rounded py-2 px-3 text-sm">
                                                         <option value="">-- Chọn sản phẩm tham gia Flash Sale --</option>
-                                                        {products.map(p => <option key={p.id} value={p.id}>{p.name} (Gốc: {p.wholesalePrice?.toLocaleString()}đ)</option>)}
+                                                        {products.map(p => <option key={p.id} value={p.id}>{p.name} (Gốc: {p.price?.toLocaleString()}đ)</option>)}
                                                     </select>
                                                     <input type="number" placeholder="Giá Flash Sale (đ)" value={newFsItem.discountPrice || ''} onChange={e=>setNewFsItem({...newFsItem, discountPrice: Number(e.target.value)})} className="w-40 border rounded py-2 px-3 text-sm"/>
                                                     <input type="number" placeholder="SL Tối đa" value={newFsItem.qtyLimit || ''} onChange={e=>setNewFsItem({...newFsItem, qtyLimit: Number(e.target.value)})} className="w-28 border rounded py-2 px-3 text-sm"/>
