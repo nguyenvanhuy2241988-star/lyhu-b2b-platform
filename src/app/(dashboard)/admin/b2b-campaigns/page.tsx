@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getSupabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { Image as ImageIcon, Layout, Tag, Link, Trash2, Edit2, Upload, Loader2, Save, Zap, Gift, Clock, AlertCircle } from 'lucide-react';
+import { Image as ImageIcon, Layout, Tag, Link, Trash2, Edit2, Upload, Loader2, Save, Zap, Gift, Clock, AlertCircle, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface WholesaleBanner {
