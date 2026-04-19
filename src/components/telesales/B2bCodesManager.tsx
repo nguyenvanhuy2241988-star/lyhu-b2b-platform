@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabaseClient";
 import { Copy, Plus, Trash2, KeyRound, CheckCircle2, User, Loader2 } from "lucide-react";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function B2bCodesManager() {
