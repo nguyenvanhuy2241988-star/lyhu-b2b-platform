@@ -176,7 +176,7 @@ export default function B2bCampaignsPage() {
     // Items management inside Flash Sale
     const [activeFS, setActiveFS] = useState<any>(null); // expanded flash sale to manage items
     const [fsItems, setFsItems] = useState<any[]>([]);
-    const [newFsItem, setNewFsItem] = useState({ productId: '', discountPrice: 0, qtyLimit: 100 });
+    const [newFsItem, setNewFsItem] = useState({ productIds: [] as string[], discountPrice: 0, qtyLimit: 100 });
 
     const fetchFlashSales = async () => {
         setIsLoadingFlash(true);
@@ -191,7 +191,7 @@ export default function B2bCampaignsPage() {
     const handleSaveFlashSale = async () => {
         if (!newFlashSale.name || !newFlashSale.startTime || !newFlashSale.endTime) return toast.warning("Điền đủ thông tin FS");
         const { error } = await supabase.from('wholesale_flash_sales').insert({
-            name: newFlashSale.name, start_time: newFlashSale.startTime, end_time: newFlashSale.endTime, is_active: true
+            name: newFlashSale.name, start_time: new Date(newFlashSale.startTime).toISOString(), end_time: new Date(newFlashSale.endTime).toISOString(), is_active: true
         });
         if (error) return toast.error(error.message);
         toast.success("Tạo Flash Sale thành công");
@@ -216,13 +216,19 @@ export default function B2bCampaignsPage() {
         setFsItems(data || []);
     };
     const handleAddFsItem = async () => {
-        if (!newFsItem.productId || !newFsItem.discountPrice) return toast.warning("Chọn SP và nhập giá Flash Sale!");
-        const { error } = await supabase.from('wholesale_flash_sale_items').insert({
-            flash_sale_id: activeFS.id, product_id: newFsItem.productId, discount_price: newFsItem.discountPrice, quantity_limit: newFsItem.qtyLimit
-        });
+        if (newFsItem.productIds.length === 0 || !newFsItem.discountPrice) return toast.warning("Chọn SP và nhập giá Flash Sale!");
+        
+        const itemsToInsert = newFsItem.productIds.map(pid => ({
+            flash_sale_id: activeFS.id,
+            product_id: pid,
+            discount_price: newFsItem.discountPrice,
+            quantity_limit: newFsItem.qtyLimit
+        }));
+
+        const { error } = await supabase.from('wholesale_flash_sale_items').insert(itemsToInsert);
         if (error) return toast.error("Lỗi: " + error.message);
-        toast.success("Đã thêm SP vào FS");
-        setNewFsItem({ productId: '', discountPrice: 0, qtyLimit: 100 });
+        toast.success("Đã thêm danh sách SP vào FS");
+        setNewFsItem({ productIds: [], discountPrice: 0, qtyLimit: 100 });
         openFsItems(activeFS); // refresh
     };
     const handleDeleteFsItem = async (id: string) => {
@@ -444,10 +450,33 @@ export default function B2bCampaignsPage() {
                                         {activeFS?.id === fs.id && (
                                             <div className="bg-slate-50 p-4 border-t border-slate-200 space-y-4">
                                                 <div className="flex gap-2">
-                                                    <select value={newFsItem.productId} onChange={e=>setNewFsItem({...newFsItem, productId: e.target.value})} className="flex-1 border rounded py-2 px-3 text-sm">
-                                                        <option value="">-- Chọn sản phẩm tham gia Flash Sale --</option>
-                                                        {products.map(p => <option key={p.id} value={p.id}>{p.name} (Gốc: {p.price?.toLocaleString()}đ)</option>)}
-                                                    </select>
+                                                    <div className="flex-1 border rounded bg-white relative group">
+                                                        <div className="py-2 px-3 text-sm text-slate-500 cursor-pointer flex justify-between items-center">
+                                                            {newFsItem.productIds.length === 0 ? '-- Chọn nhiều SP --' : `Đã chọn ${newFsItem.productIds.length} SP`}
+                                                            <span>▼</span>
+                                                        </div>
+                                                        <div className="absolute top-full left-0 w-full bg-white border shadow-lg rounded-b z-20 hidden group-hover:block max-h-48 overflow-y-auto">
+                                                            {products.map(p => (
+                                                                <label key={p.id} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm">
+                                                                    <input 
+                                                                        type="checkbox" 
+                                                                        checked={newFsItem.productIds.includes(p.id)}
+                                                                        onChange={(e) => {
+                                                                            const checked = e.target.checked;
+                                                                            setNewFsItem(prev => ({
+                                                                                ...prev, 
+                                                                                productIds: checked 
+                                                                                    ? [...prev.productIds, p.id] 
+                                                                                    : prev.productIds.filter(id => id !== p.id)
+                                                                            }));
+                                                                        }}
+                                                                        className="w-4 h-4 accent-orange-500"
+                                                                    />
+                                                                    <span className="truncate">{p.name} (Gốc: {p.price?.toLocaleString()}đ)</span>
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    </div>
                                                     <input type="number" placeholder="Giá Flash Sale (đ)" value={newFsItem.discountPrice || ''} onChange={e=>setNewFsItem({...newFsItem, discountPrice: Number(e.target.value)})} className="w-40 border rounded py-2 px-3 text-sm"/>
                                                     <input type="number" placeholder="SL Tối đa" value={newFsItem.qtyLimit || ''} onChange={e=>setNewFsItem({...newFsItem, qtyLimit: Number(e.target.value)})} className="w-28 border rounded py-2 px-3 text-sm"/>
                                                     <button onClick={handleAddFsItem} className="bg-slate-800 text-white font-bold px-4 rounded hover:bg-slate-900"><Plus className="w-5 h-5"/></button>
