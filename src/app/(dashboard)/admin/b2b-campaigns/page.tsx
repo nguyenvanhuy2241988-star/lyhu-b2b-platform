@@ -209,6 +209,45 @@ export default function B2bCampaignsPage() {
         fetchFlashSales();
     };
 
+    // --- Vouchers State ---
+    const [vouchers, setVouchers] = useState<any[]>([]);
+    const [isLoadingVouchers, setIsLoadingVouchers] = useState(false);
+    const [newVoucher, setNewVoucher] = useState({
+        code: '', name: '', description: '', discount_type: 'fixed_amount', discount_value: 0, min_order_value: 0
+    });
+
+    const fetchVouchers = async () => {
+        setIsLoadingVouchers(true);
+        const { data, error } = await supabase.from('wholesale_vouchers').select('*').order('created_at', { ascending: false });
+        if (error) toast.error("Lỗi tải Vouchers: " + error.message);
+        else setVouchers(data || []);
+        setIsLoadingVouchers(false);
+    };
+
+    useEffect(() => { if (activeTab === 'promotions' && promoTab === 'vouchers') fetchVouchers(); }, [activeTab, promoTab]);
+
+    const handleSaveVoucher = async () => {
+        if (!newVoucher.code || !newVoucher.name || newVoucher.discount_value <= 0) return toast.warning("Điền đủ Thông tin và Giá trị giảm!");
+        const { error } = await supabase.from('wholesale_vouchers').insert({
+            code: newVoucher.code.toUpperCase(), name: newVoucher.name, description: newVoucher.description,
+            discount_type: newVoucher.discount_type, discount_value: newVoucher.discount_value, min_order_value: newVoucher.min_order_value, is_active: true
+        });
+        if (error) return toast.error(error.message);
+        toast.success("Tạo Voucher thành công");
+        setNewVoucher({ code: '', name: '', description: '', discount_type: 'fixed_amount', discount_value: 0, min_order_value: 0 });
+        fetchVouchers();
+    };
+
+    const handleToggleVoucher = async (id: string, status: boolean) => {
+        await supabase.from('wholesale_vouchers').update({ is_active: !status }).eq('id', id);
+        fetchVouchers();
+    };
+    const handleDeleteVoucher = async (id: string) => {
+        if (!confirm("Xóa Voucher này?")) return;
+        await supabase.from('wholesale_vouchers').delete().eq('id', id);
+        fetchVouchers();
+    };
+
     // Manage FS Items
     const openFsItems = async (fs: any) => {
         setActiveFS(fs);
@@ -312,6 +351,7 @@ export default function B2bCampaignsPage() {
                     <div className="flex border-b border-slate-200">
                         <button onClick={() => setPromoTab('promos')} className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${promoTab === 'promos' ? 'border-primary-600 text-primary-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}><Gift className="inline w-4 h-4 mr-2" /> Chương trình Khuyến Mãi</button>
                         <button onClick={() => setPromoTab('flash')} className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${promoTab === 'flash' ? 'border-orange-500 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}><Zap className="inline w-4 h-4 mr-2" /> Flash Sale Giờ Vàng</button>
+                        <button onClick={() => setPromoTab('vouchers')} className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${promoTab === 'vouchers' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}><Tag className="inline w-4 h-4 mr-2" /> Phiếu Giảm Giá</button>
                     </div>
 
                     {/* === PROMOTIONS (CHIẾT KHẤU / TẶNG PHẨM) === */}
@@ -508,6 +548,67 @@ export default function B2bCampaignsPage() {
                                         )}
                                     </div>
                                 ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* === VOUCHERS === */}
+                    {promoTab === 'vouchers' as any && (
+                        <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6">
+                            {/* VOUCHER CREATE FORM */}
+                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm h-fit space-y-4">
+                                <h3 className="font-bold text-slate-800 flex items-center gap-2 text-emerald-600"><Tag className="w-5 h-5" /> Tạo Phiếu Giảm Giá</h3>
+                                <div><label className="text-xs uppercase text-slate-500 font-bold">Mã Phiếu (Code)</label><input type="text" value={newVoucher.code} onChange={e=>setNewVoucher({...newVoucher, code: e.target.value.toUpperCase()})} placeholder="Vd: FREESHIP50" className="w-full border border-slate-300 rounded px-3 py-2 text-sm mt-1 uppercase" /></div>
+                                <div><label className="text-xs uppercase text-slate-500 font-bold">Tên Hiển Thị</label><input type="text" value={newVoucher.name} onChange={e=>setNewVoucher({...newVoucher, name: e.target.value})} placeholder="Vd: Miễn phí vận chuyển" className="w-full border border-slate-300 rounded px-3 py-2 text-sm mt-1" /></div>
+                                <div><label className="text-xs uppercase text-slate-500 font-bold">Mô tả ngắn</label><textarea value={newVoucher.description} onChange={e=>setNewVoucher({...newVoucher, description: e.target.value})} placeholder="Vd: Tối đa 50K..." className="w-full border border-slate-300 rounded px-3 py-2 text-sm mt-1" rows={2} /></div>
+                                
+                                <div>
+                                    <label className="text-xs uppercase text-slate-500 font-bold">Loại Giảm</label>
+                                    <select value={newVoucher.discount_type} onChange={e=>setNewVoucher({...newVoucher, discount_type: e.target.value as any})} className="w-full border border-slate-300 rounded px-3 py-2 text-sm mt-1 outline-none">
+                                        <option value="fixed_amount">Giảm Số Tiền Cố Định (VNĐ)</option>
+                                        <option value="percent">Giảm Theo Phần Trăm (%)</option>
+                                        <option value="freeship">Freeship (Trừ phí VC)</option>
+                                    </select>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div><label className="text-xs uppercase text-slate-500 font-bold">Mức Giảm</label><input type="number" value={newVoucher.discount_value || ''} onChange={e=>setNewVoucher({...newVoucher, discount_value: Number(e.target.value)})} placeholder="Giá trị" className="w-full border border-slate-300 rounded px-3 py-2 text-sm mt-1" /></div>
+                                    <div><label className="text-xs uppercase text-slate-500 font-bold">Đơn tối thiểu</label><input type="number" value={newVoucher.min_order_value || ''} onChange={e=>setNewVoucher({...newVoucher, min_order_value: Number(e.target.value)})} placeholder="Vd: 500000" className="w-full border border-slate-300 rounded px-3 py-2 text-sm mt-1" /></div>
+                                </div>
+                                
+                                <button onClick={handleSaveVoucher} className="w-full bg-emerald-500 text-white font-bold py-2.5 rounded-lg hover:bg-emerald-600">Lưu Voucher Mới</button>
+                            </div>
+
+                            {/* VOUCHER LIST */}
+                            <div className="space-y-4">
+                                {isLoadingVouchers ? <Loader2 className="animate-spin text-slate-400 mx-auto" /> : (
+                                    vouchers.length === 0 ? <div className="text-center p-8 bg-white rounded border border-slate-200 text-slate-500">Chưa có voucher nào.</div> :
+                                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                                        {vouchers.map(v => (
+                                            <div key={v.id} className={`bg-white rounded-xl border shadow-sm flex overflow-hidden ${!v.is_active ? 'opacity-60' : ''}`}>
+                                                <div className={`w-24 ${v.discount_type === 'freeship' ? 'bg-emerald-500' : 'bg-primary-500'} flex flex-col items-center justify-center text-white p-2 border-r border-dashed border-white shrink-0`}>
+                                                    <Tag className="w-6 h-6 mb-1 opacity-80"/>
+                                                    <span className="text-[10px] font-bold text-center uppercase break-all w-full leading-tight">{v.code}</span>
+                                                </div>
+                                                <div className="p-4 flex-1 flex flex-col justify-center">
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <h4 className="font-bold text-slate-800 line-clamp-1">{v.name}</h4>
+                                                        <div className="flex items-center gap-2">
+                                                            <button onClick={() => handleToggleVoucher(v.id, v.is_active)} className={`relative flex items-center rounded-full h-5 w-9 transition-colors ${v.is_active ? 'bg-primary-600' : 'bg-slate-300'}`}><div className={`w-3.5 h-3.5 bg-white rounded-full shadow transition-transform ${v.is_active ? 'translate-x-[18px]' : 'translate-x-1'}`}/></button>
+                                                            <button onClick={() => handleDeleteVoucher(v.id)} className="text-slate-400 hover:text-red-500"><Trash2 className="w-4 h-4"/></button>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-xs text-slate-500 mb-2">{v.description || 'Không có mô tả'}</p>
+                                                    <div className="flex gap-2 text-[10px] font-bold text-slate-600">
+                                                        <span className="bg-slate-100 px-2 py-1 rounded">Đơn {'>'} {v.min_order_value.toLocaleString()}đ</span>
+                                                        <span className="bg-slate-100 px-2 py-1 rounded">
+                                                            {v.discount_type === 'percent' ? `Giảm ${v.discount_value}%` : `Giảm ${v.discount_value.toLocaleString()}đ`}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}

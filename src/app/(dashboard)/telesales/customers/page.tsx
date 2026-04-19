@@ -23,6 +23,7 @@ const CUSTOMER_TYPES = [
 ];
 
 import AddCustomerModal from "@/components/telesales/AddCustomerModal";
+import B2bCodesManager from "@/components/telesales/B2bCodesManager";
 
 export default function TelesalesCustomersPage() {
     const { user, session, isLoading: authIsLoading } = useAuth();
@@ -577,8 +578,11 @@ export default function TelesalesCustomersPage() {
             {/* Market Overview Section */}
             {showMarket && <MarketOverview readOnly={true} />}
 
+            {/* B2B Codes Manager */}
+            <B2bCodesManager />
+
             {/* Customers Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 mt-6">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">

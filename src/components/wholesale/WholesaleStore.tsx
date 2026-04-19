@@ -95,15 +95,25 @@ export default function WholesaleStore({
     promotions, 
     flashSale,
     banners = [],
-    isWholesaleCustomer 
+    vouchers = [],
+    isWholesaleCustomer: serverIsWholesaleCustomer,
+    b2bCodeData: serverB2bCodeData
 }: { 
     initialProducts: Product[], 
     promotions: Promotion[], 
     flashSale?: FlashSale | null,
     banners?: WholesaleBanner[],
-    isWholesaleCustomer: boolean 
+    vouchers?: any[],
+    isWholesaleCustomer: boolean,
+    b2bCodeData?: any
 }) {
     const supabase = getSupabase();
+    // B2B Active Code State
+    const [b2bCodeData, setB2bCodeData] = useState<any>(serverB2bCodeData);
+    const [inputB2bCode, setInputB2bCode] = useState('');
+    const [isVerifyingCode, setIsVerifyingCode] = useState(false);
+    
+    const isWholesaleCustomer = serverIsWholesaleCustomer || !!b2bCodeData;
     const [cart, setCart] = useState<Record<string, CartItem>>({});
     const [isCartLoaded, setIsCartLoaded] = useState(false);
     const [activeTab, setActiveTab] = useState<string>('All');
@@ -116,7 +126,7 @@ export default function WholesaleStore({
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [pastOrders, setPastOrders] = useState<any[]>([]);
 
-    // V3 Features States
+    // V3 Vouchers & Real Data
     const [savedVouchers, setSavedVouchers] = useState<string[]>([]);
     const [countdown, setCountdown] = useState<string>('00:00:00');
     
@@ -398,10 +408,22 @@ export default function WholesaleStore({
             }
         }
         
-        // Mock Voucher System (if user saved "VOUCHER_50K")
-        if (savedVouchers.includes('VOUCHER_50K') && finalTotal > 500000) {
-            discountAmount += 50000;
-            appliedPromoName = appliedPromoName ? `${appliedPromoName} + Voucher Giảm 50K` : "Voucher Giảm 50K";
+        // Real Voucher System
+        if (savedVouchers.length > 0 && vouchers && vouchers.length > 0) {
+            for (const vId of savedVouchers) {
+                const voucher = vouchers.find(v => v.id === vId);
+                if (voucher && baseTotal >= voucher.min_order_value) {
+                    if (voucher.discount_type === 'fixed_amount') {
+                        discountAmount += voucher.discount_value;
+                    } else if (voucher.discount_type === 'percent') {
+                        discountAmount += (baseTotal * voucher.discount_value) / 100;
+                    } else if (voucher.discount_type === 'freeship') {
+                        // We will just discount the total by at most shipping cost (mock it as 100k limit)
+                        discountAmount += Math.min(voucher.discount_value, 100000); 
+                    }
+                    appliedPromoName = appliedPromoName ? `${appliedPromoName} + ${voucher.name}` : voucher.name;
+                }
+            }
         }
 
         finalTotal = Math.max(0, baseTotal - discountAmount);
@@ -416,7 +438,31 @@ export default function WholesaleStore({
             pendingUpsellMsg,
             items
         };
-    }, [cart, promotions, isWholesaleCustomer, savedVouchers]);
+    }, [cart, promotions, isWholesaleCustomer, savedVouchers, vouchers]);
+
+    // Handle B2B Code Verification
+    const handleVerifyB2bCode = async () => {
+        setIsVerifyingCode(true);
+        const { data, error } = await supabase
+            .from('b2b_customer_codes')
+            .select('*')
+            .eq('code', inputB2bCode.toUpperCase())
+            .eq('is_active', true)
+            .single();
+
+        if (data) {
+            setB2bCodeData(data);
+            alert('Đã kích hoạt Bảng giá Sỉ thành công!');
+            // If logged in and code is unbound, bind it
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session && !data.customer_id) {
+                await supabase.from('b2b_customer_codes').update({ customer_id: session.user.id }).eq('id', data.id);
+            }
+        } else {
+            alert('Mã không hợp lệ hoặc đã hết hạn!');
+        }
+        setIsVerifyingCode(false);
+    };
 
     // Handle Order Submission - Uses server-side API route to bypass RLS
     const submitOrder = async () => {
@@ -430,11 +476,13 @@ export default function WholesaleStore({
                 customer_name: customerName.trim(),
                 receiver_phone: customerPhone.trim(),
                 receiver_address: address.trim(),
-                note: `[B2B Web] ${customerName} - ${customerPhone}. Đ/c: ${address}. Ship: ${shippingMethod === 'lyhu_ship' ? 'LYHU Giao' : 'Tự tới lấy'}.`,
+                note: `[B2B Web] ${customerName} - ${customerPhone}. Đ/c: ${address}. Ship: ${shippingMethod === 'lyhu_ship' ? 'LYHU Giao' : 'Tự tới lấy'}. ${cartAnalysis.appliedPromoName ? 'KM: ' + cartAnalysis.appliedPromoName : ''}`,
                 source: 'B2B_WEB'
             };
 
-            if (session?.user?.id) {
+            if (b2bCodeData && b2bCodeData.telesales_id) {
+                payload.telesales_user_id = b2bCodeData.telesales_id;
+            } else if (session?.user?.id) {
                 payload.telesales_user_id = session.user.id;
             }
 
@@ -768,7 +816,7 @@ export default function WholesaleStore({
                                 </>
                             )}
                         </div>
-                        {isWholesaleCustomer ? (
+                        {wholesaleUser ? (
                             <button onClick={handleLogout} className="hover:text-white cursor-pointer">Đăng Xuất</button>
                         ) : (
                             <>
@@ -776,6 +824,19 @@ export default function WholesaleStore({
                                 <span className="text-white/40">|</span>
                                 <button onClick={() => setIsRegisterOpen(true)} className="hover:text-white cursor-pointer">Đăng Ký</button>
                             </>
+                        )}
+                        {!isWholesaleCustomer && (
+                            <div className="flex items-center gap-2 border-l border-white/20 pl-4">
+                                <input type="text" value={inputB2bCode} onChange={e=>setInputB2bCode(e.target.value)} placeholder="Nhập Mã Sỉ" className="px-2 py-1 text-black text-xs rounded-sm outline-none w-24" />
+                                <button onClick={handleVerifyB2bCode} disabled={isVerifyingCode} className="bg-secondary-500 hover:bg-secondary-600 text-white px-2 py-1 rounded-sm text-xs font-bold transition-colors">
+                                    {isVerifyingCode ? 'Đang KT' : 'KÍCH HOẠT'}
+                                </button>
+                            </div>
+                        )}
+                        {b2bCodeData && (
+                            <div className="flex items-center gap-1 border-l border-white/20 pl-4 text-secondary-300 font-bold">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Khách Sỉ ({b2bCodeData.code})
+                            </div>
                         )}
                     </div>
                 </div>
@@ -1002,40 +1063,32 @@ export default function WholesaleStore({
                     </div>
                 )}
 
-                {/* V3: Voucher Wallet Row (Giả lậP Voucher xé tay) */}
-                <div className="mb-6 flex gap-3 overflow-x-auto hide-scrollbar pb-2">
-                    <div className="min-w-[280px] bg-white border border-secondary-500 rounded-sm shadow-sm flex overflow-hidden">
-                        <div className="bg-gradient-to-br from-secondary-400 to-secondary-500 w-[80px] flex flex-col items-center justify-center text-white p-2 border-r border-dashed border-white">
-                            <Ticket className="w-8 h-8 opacity-80 mb-1" />
-                            <span className="text-[10px] font-bold text-center leading-tight">MÃ<br/>LYHU</span>
-                        </div>
-                        <div className="flex-1 p-3 flex flex-col justify-center bg-secondary-50/30">
-                            <h4 className="text-sm font-bold text-gray-800">Giảm 50K</h4>
-                            <p className="text-[10px] text-gray-500 mb-2">Đơn tối thiểu đ500k</p>
-                            <button 
-                                onClick={() => setSavedVouchers(prev => Array.from(new Set([...prev, 'VOUCHER_50K'])))}
-                                className={`self-start text-[11px] font-bold px-4 py-1 rounded-sm transition-colors ${savedVouchers.includes('VOUCHER_50K') ? 'bg-gray-200 text-gray-500 cursor-default' : 'bg-primary-600 text-white hover:bg-primary-700'}`}>
-                                {savedVouchers.includes('VOUCHER_50K') ? 'Đã Lưu Vĩ' : 'Lưu'}
-                            </button>
-                        </div>
+                {/* Dynamic Voucher Wallet Row */}
+                {vouchers && vouchers.length > 0 && (
+                    <div className="mb-6 flex gap-3 overflow-x-auto hide-scrollbar pb-2">
+                        {vouchers.map(v => (
+                            <div key={v.id} className={`min-w-[280px] bg-white border rounded-sm shadow-sm flex overflow-hidden ${v.discount_type === 'freeship' ? 'border-primary-200' : 'border-secondary-500'}`}>
+                                <div className={`w-[80px] flex flex-col items-center justify-center text-white p-2 border-r border-dashed border-white ${v.discount_type === 'freeship' ? 'bg-gradient-to-br from-primary-500 to-primary-600' : 'bg-gradient-to-br from-secondary-400 to-secondary-500'}`}>
+                                    {v.discount_type === 'freeship' ? (
+                                        <div className="w-6 h-6 border-2 border-white rounded-full flex items-center justify-center mb-1"><span className="text-xs font-bold font-serif">%</span></div>
+                                    ) : (
+                                        <Ticket className="w-8 h-8 opacity-80 mb-1" />
+                                    )}
+                                    <span className="text-[10px] font-bold text-center leading-tight uppercase max-w-full break-all">{v.code}</span>
+                                </div>
+                                <div className={`flex-1 p-3 flex flex-col justify-center ${v.discount_type === 'freeship' ? 'bg-primary-50/10' : 'bg-secondary-50/30'}`}>
+                                    <h4 className="text-sm font-bold text-gray-800">{v.name}</h4>
+                                    <p className="text-[10px] text-gray-500 mb-2">{v.description}</p>
+                                    <button 
+                                        onClick={() => setSavedVouchers(prev => Array.from(new Set([...prev, v.id])))}
+                                        className={`self-start text-[11px] font-bold px-4 py-1 rounded-sm transition-colors ${savedVouchers.includes(v.id) ? 'bg-gray-200 text-gray-500 cursor-default' : 'bg-primary-600 text-white hover:bg-primary-700'}`}>
+                                        {savedVouchers.includes(v.id) ? 'Đã Lưu Ví' : 'Lưu'}
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
                     </div>
-
-                    <div className="min-w-[280px] bg-white border border-primary-200 rounded-sm shadow-sm flex overflow-hidden">
-                        <div className="bg-gradient-to-br from-primary-500 to-primary-600 w-[80px] flex flex-col items-center justify-center text-white p-2 border-r border-dashed border-white">
-                            <div className="w-6 h-6 border-2 border-white rounded-full flex items-center justify-center mb-1"><span className="text-xs font-bold font-serif">%</span></div>
-                            <span className="text-[10px] font-bold text-center leading-tight">MÃ<br/>ĐỐI TÁC</span>
-                        </div>
-                        <div className="flex-1 p-3 flex flex-col justify-center bg-primary-50/10">
-                            <h4 className="text-sm font-bold text-gray-800">Freeship Extra</h4>
-                            <p className="text-[10px] text-gray-500 mb-2">Tối đa 100K chi phí VC</p>
-                            <button 
-                                onClick={() => setSavedVouchers(prev => Array.from(new Set([...prev, 'FREESHIP'])))}
-                                className={`self-start text-[11px] font-bold px-4 py-1 rounded-sm transition-colors ${savedVouchers.includes('FREESHIP') ? 'bg-gray-200 text-gray-500 cursor-default' : 'bg-primary-600 text-white hover:bg-primary-700'}`}>
-                                {savedVouchers.includes('FREESHIP') ? 'Đã Lưu Vĩ' : 'Lưu'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                )}
 
                 {/* V3: Flash Sale Area */}
                 {flashSaleProducts.length > 0 && (

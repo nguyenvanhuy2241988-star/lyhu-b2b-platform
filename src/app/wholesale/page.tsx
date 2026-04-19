@@ -37,13 +37,23 @@ export default async function WholesalePage() {
     
     let isWholesaleCustomer = false;
     let customerCode = null;
+    let b2bCodeData = null;
 
     if (session) {
-        // Here we could check their specific profile role, but for now we assume 
-        // logged in means they get access to the dynamic pricing engine.
-        // Or we check if their profile has a specific 'wholesale' / 'retail_chain' tag
-        isWholesaleCustomer = true;
-        customerCode = session.user.id; // Or a specific ref_code
+        // Only grant wholesale access if they have claimed an active B2B code
+        const { data: codeData } = await supabase
+            .from('b2b_customer_codes')
+            .select('*')
+            .eq('customer_id', session.user.id)
+            .eq('is_active', true)
+            .single();
+
+        if (codeData) {
+            isWholesaleCustomer = true;
+            b2bCodeData = codeData;
+        }
+        
+        customerCode = session.user.id;
     }
 
     // Lấy danh sách sản phẩm
@@ -93,6 +103,13 @@ export default async function WholesalePage() {
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
 
+    // Lấy danh sách Vouchers
+    const { data: vouchersData } = await supabase
+        .from('wholesale_vouchers')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
     return (
         <div className="min-h-screen bg-gray-50">
             <WholesaleStore 
@@ -100,7 +117,9 @@ export default async function WholesalePage() {
                 promotions={promotionsData || []}
                 flashSale={flashSalesData || null}
                 banners={bannersData || []}
+                vouchers={vouchersData || []}
                 isWholesaleCustomer={isWholesaleCustomer}
+                b2bCodeData={b2bCodeData}
             />
         </div>
     );
