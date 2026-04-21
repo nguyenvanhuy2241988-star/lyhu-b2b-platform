@@ -81,6 +81,12 @@ YÊU CẦU QUAN TRỌNG:
                     temperature: 0.8,
                     maxOutputTokens: 2048
                 },
+                safetySettings: [
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                ]
             }),
         });
 
@@ -94,7 +100,8 @@ YÊU CẦU QUAN TRỌNG:
         const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
         
         if (!text) {
-             return NextResponse.json({ error: "AI No Output" }, { status: 500 });
+            console.error("[Marketing AI] Empty text. Result was:", JSON.stringify(result, null, 2));
+            return NextResponse.json({ error: `AI No Output. Result: ${JSON.stringify(result)}` }, { status: 500 });
         }
 
         return NextResponse.json({
