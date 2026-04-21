@@ -18,9 +18,23 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
     const [address, setAddress] = useState("");
     const [phone, setPhone] = useState("");
     const [extraInfo, setExtraInfo] = useState("");
+    const [imageBase64, setImageBase64] = useState("");
+    const [imageFileName, setImageFileName] = useState("");
     const [isGenerating, setIsGenerating] = useState(false);
 
     if (!isOpen) return null;
+
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setImageFileName(file.name);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImageBase64(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     const handleGenerate = async () => {
         if (!topic.trim()) {
@@ -33,7 +47,7 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
             const res = await fetch("/api/marketing/ai-post", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ postType, topic, benefit, address, phone, brand, extraInfo })
+                body: JSON.stringify({ postType, topic, benefit, address, phone, brand, extraInfo, imageBase64 })
             });
 
             const data = await res.json();
@@ -48,6 +62,8 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
                 setAddress("");
                 setPhone("");
                 setExtraInfo("");
+                setImageBase64("");
+                setImageFileName("");
             } else {
                 throw new Error(data.error || "Không thể sinh nội dung");
             }
@@ -155,6 +171,23 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
                             placeholder="VD: Hàng tự sản xuất không qua trung gian, bao đổi trả hàng cận date, vốn nhập chỉ từ 2 triệu..."
                             className="w-full text-sm p-3 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white resize-none"
                         ></textarea>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-bold text-indigo-900 mb-1">Upload Ảnh Sản phẩm (Để AI đọc & chém gió)</label>
+                        <div className="flex items-center gap-3">
+                            <label className="cursor-pointer bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 px-4 py-2.5 rounded-xl font-medium text-sm transition-colors flex items-center gap-2 w-full justify-center">
+                                <Sparkles className="w-4 h-4" />
+                                {imageFileName ? "Đã Chọn Ảnh (Bấm để đổi)" : "Tải Ảnh Lên Để AI Trích Xuất"}
+                                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                            </label>
+                            {imageFileName && (
+                                <button onClick={() => {setImageBase64(""); setImageFileName("");}} className="p-2.5 text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-colors shrink-0" title="Xóa ảnh">
+                                    <X className="w-4 h-4" />
+                                </button>
+                            )}
+                        </div>
+                        {imageFileName && <p className="text-xs text-indigo-600 mt-2 font-medium truncate">Đang đính kèm: {imageFileName}</p>}
                     </div>
                     
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800 flex items-start gap-2">

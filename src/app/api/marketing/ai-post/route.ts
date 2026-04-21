@@ -9,7 +9,7 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GE
 
 export async function POST(req: NextRequest) {
     try {
-        const { postType, topic, benefit, address, phone, brand, extraInfo } = await req.json();
+        const { postType, topic, benefit, address, phone, brand, extraInfo, imageBase64 } = await req.json();
 
         if (!topic) {
             return NextResponse.json({ error: "Missing required topic field" }, { status: 400 });
@@ -49,14 +49,30 @@ YÊU CẦU QUAN TRỌNG:
 3. Đan xen Spintex ở nhiều vị trí (Cảm thán, Xưng hô, Động từ). Hạn chế tạo các cụm Spintex quá dài làm mất ngữ nghĩa.
 4. VĂN PHONG "NGƯỜI THẬT": Viết có nhịp điệu, ngắt đoạn rõ ràng, dùng bullet point (gạch đầu dòng dạng dấu - hoặc icon) để làm nổi bật quyền lợi.
 5. Tích hợp từ khóa: Giữ nguyên các thông tin cứng (SĐT, Địa chỉ, Tên thương hiệu, Tỉ lệ chiết khấu, Mức lương).
-6. Độ dài: Tối đa 150-250 chữ. CHỈ TRẢ VỀ KẾT QUẢ VĂN BẢN DUY NHẤT. Phải có thể Copy paste dùng luôn!`;
+6. NẾU CÓ ẢNH ĐÍNH KÈM: Hãy quan sát kỹ hình ảnh, trích xuất điểm nổi bật (màu sắc, thiết kế, chất liệu, tính năng) và đưa vào nội dung một cách tự nhiên. Dùng nó làm nguyên liệu chém gió.
+7. Độ dài: Tối đa 150-250 chữ. CHỈ TRẢ VỀ KẾT QUẢ VĂN BẢN DUY NHẤT. Phải có thể Copy paste dùng luôn!`;
+
+        const parts: any[] = [{ text: prompt }];
+
+        if (imageBase64) {
+            const match = imageBase64.match(/^data:(image\/[a-zA-Z0-9]+);base64,([^\"]*)$/);
+            if (match) {
+                parts.push({
+                    inlineData: {
+                        mimeType: match[1],
+                        data: match[2]
+                    }
+                });
+                console.log("[Marketing AI] Added image analysis to prompt.");
+            }
+        }
 
         console.log("[Marketing AI] Calling Gemini...");
         const res = await fetch(GEMINI_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
+                contents: [{ parts }],
                 generationConfig: {
                     temperature: 0.8,
                     maxOutputTokens: 2048
