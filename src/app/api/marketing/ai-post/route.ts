@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60; // AI can take a while
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_MODEL = "gemini-1.5-pro";
+const GEMINI_MODEL = "gemini-1.5-flash";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 export async function POST(req: NextRequest) {
@@ -87,7 +87,7 @@ YÊU CẦU QUAN TRỌNG:
         if (!res.ok) {
             const errorText = await res.text();
             console.error("[Marketing AI] Gemini Error:", errorText);
-            return NextResponse.json({ error: "AI Error" }, { status: 500 });
+            return NextResponse.json({ error: `AI Error: ${errorText}` }, { status: 500 });
         }
 
         const result = await res.json();
