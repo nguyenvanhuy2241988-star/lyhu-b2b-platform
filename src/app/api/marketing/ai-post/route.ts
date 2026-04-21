@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
             Giọng điệu: Hấp dẫn, kích thích mua hàng, tập trung vào ưu đãi và chất lượng sản phẩm.`;
         }
 
-        const prompt = `Bạn là một Giám Đốc Kinh Doanh (Sale Manager) chuyên đi thị trường và đăng bài vào các group Facebook buôn bán tại Việt Nam. 
+        const prompt = `Bạn đóng vai là một người chuyên đi đổ sỉ (bán buôn) hàng hóa, đang đăng bài vào các group Facebook cộng đồng tại Việt Nam. 
 Mục tiêu: Viết một bài đăng ${typeInstruction} dựa trên thông tin cung cấp, sử dụng ĐỊNH DẠNG SPINTEX CHUẨN XÁC để đăng ngẫu nhiên hàng loạt. Cấu trúc Spintex mẫu: "{Xin chào|Chào anh em|Hi các bác}"
 
 Thông tin bài đăng:
@@ -44,11 +44,12 @@ ${address ? `- Địa chỉ: ${address}` : ''}
 ${phone ? `- SĐT Liên hệ: ${phone}` : ''}
 
 YÊU CẦU QUAN TRỌNG:
-1. Đan xen Spintex ở nhiều vị trí (Cảm thán, Xưng hô, Động từ). Hạn chế tạo các cụm Spintex quá dài làm mất ngữ nghĩa.
-2. VĂN PHONG "NGƯỜI THẬT": Viết có nhịp điệu, ngắt đoạn rõ ràng, dùng bullet point (gạch đầu dòng có icon) để làm nổi bật quyền lợi. Không viết như một bài văn xuôi dài dòng.
-3. Tích hợp từ khóa: Giữ nguyên các thông tin cứng (SĐT, Địa chỉ, Tên thương hiệu, Tỉ lệ chiết khấu, Mức lương).
-4. Độ dài: Tối đa 150-250 chữ, sử dụng Emoji hợp lý (không lạm dụng).
-5. CHỈ TRẢ VỀ KẾT QUẢ VĂN BẢN DUY NHẤT. Bắt đầu ngay vào nội dung, không có lời dạo đầu "Dưới đây là...". Phải có thể Copy paste dùng luôn!`;
+1. KHÔNG TỰ XƯNG CHỨC DANH: Tuyệt đối không xưng "Mình là Giám đốc kinh doanh" hay "Mình là Sale" trong bài viết. Hãy xưng hô tự nhiên (Em/Mình/Shop/Kho).
+2. KHÔNG DÙNG MARKDOWN: Tuyệt đối không dùng ký tự ** để in đậm, vì nó sẽ bị lỗi hiển thị gốc trên Facebook cá nhân. Chỉ dùng định dạng văn bản thuần túy và emoji (đủ dùng, không lạm dụng).
+3. Đan xen Spintex ở nhiều vị trí (Cảm thán, Xưng hô, Động từ). Hạn chế tạo các cụm Spintex quá dài làm mất ngữ nghĩa.
+4. VĂN PHONG "NGƯỜI THẬT": Viết có nhịp điệu, ngắt đoạn rõ ràng, dùng bullet point (gạch đầu dòng dạng dấu - hoặc icon) để làm nổi bật quyền lợi.
+5. Tích hợp từ khóa: Giữ nguyên các thông tin cứng (SĐT, Địa chỉ, Tên thương hiệu, Tỉ lệ chiết khấu, Mức lương).
+6. Độ dài: Tối đa 150-250 chữ. CHỈ TRẢ VỀ KẾT QUẢ VĂN BẢN DUY NHẤT. Phải có thể Copy paste dùng luôn!`;
 
         console.log("[Marketing AI] Calling Gemini...");
         const res = await fetch(GEMINI_URL, {
