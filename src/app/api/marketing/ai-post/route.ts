@@ -9,7 +9,7 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GE
 
 export async function POST(req: NextRequest) {
     try {
-        const { postType, topic, benefit, address, phone, brand, extraInfo, imageBase64 } = await req.json();
+        const { postType, topic, benefit, address, phone, brand, extraInfo, imagesBase64 } = await req.json();
 
         if (!topic) {
             return NextResponse.json({ error: "Missing required topic field" }, { status: 400 });
@@ -54,16 +54,20 @@ YÊU CẦU QUAN TRỌNG:
 
         const parts: any[] = [{ text: prompt }];
 
-        if (imageBase64) {
-            const match = imageBase64.match(/^data:(image\/[a-zA-Z0-9]+);base64,([^\"]*)$/);
-            if (match) {
-                parts.push({
-                    inlineData: {
-                        mimeType: match[1],
-                        data: match[2]
-                    }
-                });
-                console.log("[Marketing AI] Added image analysis to prompt.");
+        if (imagesBase64 && Array.isArray(imagesBase64)) {
+            for (const base64Str of imagesBase64) {
+                const match = base64Str.match(/^data:(image\/[a-zA-Z0-9]+);base64,([^\"]*)$/);
+                if (match) {
+                    parts.push({
+                        inlineData: {
+                            mimeType: match[1],
+                            data: match[2]
+                        }
+                    });
+                }
+            }
+            if (imagesBase64.length > 0) {
+                console.log(`[Marketing AI] Added ${imagesBase64.length} image(s) analysis to prompt.`);
             }
         }
 

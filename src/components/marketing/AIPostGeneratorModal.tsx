@@ -18,22 +18,30 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
     const [address, setAddress] = useState("");
     const [phone, setPhone] = useState("");
     const [extraInfo, setExtraInfo] = useState("");
-    const [imageBase64, setImageBase64] = useState("");
-    const [imageFileName, setImageFileName] = useState("");
+    const [imagesBase64, setImagesBase64] = useState<string[]>([]);
+    const [imageFileNames, setImageFileNames] = useState<string[]>([]);
     const [isGenerating, setIsGenerating] = useState(false);
 
     if (!isOpen) return null;
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            setImageFileName(file.name);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImageBase64(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (!files.length) return;
+
+        // Giới hạn 3 ảnh để tránh quá tải
+        const filesToProcess = files.slice(0, 3);
+        setImageFileNames(filesToProcess.map(f => f.name));
+
+        const base64Promises = filesToProcess.map(file => {
+            return new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(file);
+            });
+        });
+
+        const newBase64s = await Promise.all(base64Promises);
+        setImagesBase64(newBase64s);
     };
 
     const handleGenerate = async () => {
@@ -47,7 +55,7 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
             const res = await fetch("/api/marketing/ai-post", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ postType, topic, benefit, address, phone, brand, extraInfo, imageBase64 })
+                body: JSON.stringify({ postType, topic, benefit, address, phone, brand, extraInfo, imagesBase64 })
             });
 
             const data = await res.json();
@@ -62,8 +70,8 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
                 setAddress("");
                 setPhone("");
                 setExtraInfo("");
-                setImageBase64("");
-                setImageFileName("");
+                setImagesBase64([]);
+                setImageFileNames([]);
             } else {
                 throw new Error(data.error || "Không thể sinh nội dung");
             }
@@ -174,20 +182,20 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-indigo-900 mb-1">Upload Ảnh Sản phẩm (Để AI đọc & chém gió)</label>
+                        <label className="block text-sm font-bold text-indigo-900 mb-1">Upload Ảnh Sản phẩm (Tối đa 3 ảnh)</label>
                         <div className="flex items-center gap-3">
                             <label className="cursor-pointer bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 px-4 py-2.5 rounded-xl font-medium text-sm transition-colors flex items-center gap-2 w-full justify-center">
                                 <Sparkles className="w-4 h-4" />
-                                {imageFileName ? "Đã Chọn Ảnh (Bấm để đổi)" : "Tải Ảnh Lên Để AI Trích Xuất"}
-                                <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                                {imageFileNames.length > 0 ? `Đã Chọn ${imageFileNames.length} Ảnh (Bấm đổi)` : "Tải Ảnh Lên Để AI Trích Xuất (Hỗ trợ chọn nhiều)"}
+                                <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageChange} />
                             </label>
-                            {imageFileName && (
-                                <button onClick={() => {setImageBase64(""); setImageFileName("");}} className="p-2.5 text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-colors shrink-0" title="Xóa ảnh">
+                            {imageFileNames.length > 0 && (
+                                <button onClick={() => {setImagesBase64([]); setImageFileNames([]);}} className="p-2.5 text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-colors shrink-0" title="Xóa ảnh">
                                     <X className="w-4 h-4" />
                                 </button>
                             )}
                         </div>
-                        {imageFileName && <p className="text-xs text-indigo-600 mt-2 font-medium truncate">Đang đính kèm: {imageFileName}</p>}
+                        {imageFileNames.length > 0 && <p className="text-xs text-indigo-600 mt-2 font-medium truncate">Đang đính kèm: {imageFileNames.join(", ")}</p>}
                     </div>
                     
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800 flex items-start gap-2">
