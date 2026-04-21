@@ -9,7 +9,7 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GE
 
 export async function POST(req: NextRequest) {
     try {
-        const { postType, topic, benefit, address, phone, brand } = await req.json();
+        const { postType, topic, benefit, address, phone, brand, extraInfo } = await req.json();
 
         if (!topic) {
             return NextResponse.json({ error: "Missing required topic field" }, { status: 400 });
@@ -39,6 +39,7 @@ Thông tin bài đăng:
 - Chủ đề chính / Kêu gọi: ${topic}
 ${brand ? `- Phục vụ cho Nhãn hàng / Sản phẩm: ${brand}` : ''}
 ${benefit ? (postType === 'recruitment' ? `- Mức lương / Đãi ngộ: ${benefit}` : `- Quyền lợi / Chiết khấu cho đại lý/khách hàng: ${benefit}`) : ''}
+${extraInfo ? `- Thông tin nổi bật / Yêu cầu thêm (Bắt buộc chèn vào tự nhiên): ${extraInfo}` : ''}
 ${address ? `- Địa chỉ: ${address}` : ''}
 ${phone ? `- SĐT Liên hệ: ${phone}` : ''}
 

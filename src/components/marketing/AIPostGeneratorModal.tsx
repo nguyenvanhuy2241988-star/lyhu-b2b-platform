@@ -17,6 +17,7 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
     const [benefit, setBenefit] = useState("");
     const [address, setAddress] = useState("");
     const [phone, setPhone] = useState("");
+    const [extraInfo, setExtraInfo] = useState("");
     const [isGenerating, setIsGenerating] = useState(false);
 
     if (!isOpen) return null;
@@ -32,7 +33,7 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
             const res = await fetch("/api/marketing/ai-post", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ postType, topic, benefit, address, phone, brand })
+                body: JSON.stringify({ postType, topic, benefit, address, phone, brand, extraInfo })
             });
 
             const data = await res.json();
@@ -46,6 +47,7 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
                 setBenefit("");
                 setAddress("");
                 setPhone("");
+                setExtraInfo("");
             } else {
                 throw new Error(data.error || "Không thể sinh nội dung");
             }
@@ -142,6 +144,17 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
                             placeholder="VD: 153 Đường ABC, Quận X"
                             className="w-full text-sm p-3 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-bold text-indigo-900 mb-1">Thông tin bổ sung / Yêu cầu chi tiết (Tùy chọn)</label>
+                        <textarea
+                            rows={3}
+                            value={extraInfo}
+                            onChange={e => setExtraInfo(e.target.value)}
+                            placeholder="VD: Hàng tự sản xuất không qua trung gian, bao đổi trả hàng cận date, vốn nhập chỉ từ 2 triệu..."
+                            className="w-full text-sm p-3 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white resize-none"
+                        ></textarea>
                     </div>
                     
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800 flex items-start gap-2">
