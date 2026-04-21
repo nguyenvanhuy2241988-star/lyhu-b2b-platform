@@ -164,13 +164,16 @@ function spinText(text) {
                                     console.error(`[GROUP_POST] Cập nhật thất bại file số ${f}:`, downloadErr.message);
                                 }
                             }
+                            console.log(`[GROUP_POST] Lấy thành công ${tempImagePaths.length} Media đính kèm! Đã sẵn sàng đăng bài...`);
                         }
                     }
                 } else if (randomContent.image_url) {
                     const ext = randomContent.image_url.split('.').pop().split('?')[0] || 'jpg';
                     const dest = path.join(__dirname, `../../temp_gr_upload_${Date.now()}.${ext}`);
+                    console.log(`[GROUP_POST] Đang tải 1 Media đính kèm...`);
                     await downloadImage(randomContent.image_url, dest);
                     tempImagePaths.push(dest);
+                    console.log(`[GROUP_POST] Lấy thành công 1 Media đính kèm! Đã sẵn sàng đăng bài...`);
                 }
             }
 
