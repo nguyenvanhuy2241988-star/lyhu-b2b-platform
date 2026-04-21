@@ -11,69 +11,20 @@ interface AIPostGeneratorModalProps {
 }
 
 export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AIPostGeneratorModalProps) {
-    const [topic, setTopic] = useState("");
-    const [postType, setPostType] = useState("distributor"); // 'sales', 'recruitment', 'distributor'
-    const [brand, setBrand] = useState("");
-    const [benefit, setBenefit] = useState("");
-    const [address, setAddress] = useState("");
-    const [phone, setPhone] = useState("");
-    const [extraInfo, setExtraInfo] = useState("");
-    const [imagesBase64, setImagesBase64] = useState<string[]>([]);
-    const [imageFileNames, setImageFileNames] = useState<string[]>([]);
+    const [templateText, setTemplateText] = useState("");
     const [isGenerating, setIsGenerating] = useState(false);
 
     if (!isOpen) return null;
 
-    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = Array.from(e.target.files || []);
-        if (!files.length) return;
-
-        // Giới hạn 3 ảnh để tránh quá tải
-        const filesToProcess = files.slice(0, 3);
-        setImageFileNames(filesToProcess.map(f => f.name));
-
-        const base64Promises = filesToProcess.map(file => {
-            return new Promise<string>((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const canvas = document.createElement("canvas");
-                        const MAX_WIDTH = 1024;
-                        const MAX_HEIGHT = 1024;
-                        let width = img.width;
-                        let height = img.height;
-
-                        if (width > height) {
-                            if (width > MAX_WIDTH) {
-                                height *= MAX_WIDTH / width;
-                                width = MAX_WIDTH;
-                            }
-                        } else {
-                            if (height > MAX_HEIGHT) {
-                                width *= MAX_HEIGHT / height;
-                                height = MAX_HEIGHT;
-                            }
-                        }
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext("2d");
-                        ctx?.drawImage(img, 0, 0, width, height);
-                        resolve(canvas.toDataURL("image/jpeg", 0.7));
-                    };
-                    img.src = event.target?.result as string;
-                };
-                reader.readAsDataURL(file);
-            });
-        });
-
-        const newBase64s = await Promise.all(base64Promises);
-        setImagesBase64(newBase64s);
-    };
 
     const handleGenerate = async () => {
-        if (!topic.trim()) {
-            toast.error("Vui lòng nhập Chủ đề / Kêu gọi chính!");
+        if (!templateText.trim() || templateText.length < 50) {
+            toast.error("Vui lòng nhập văn bản gốc đủ dài (ít nhất 50 ký tự)!");
+            return;
+        }
+
+        if (templateText.length > 5000) {
+            toast.error("Văn bản gốc quá dài, tối đa khoảng 5000 ký tự!");
             return;
         }
 
@@ -82,32 +33,19 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
             const res = await fetch("/api/marketing/ai-post", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ postType, topic, benefit, address, phone, brand, extraInfo, imagesBase64 })
+                body: JSON.stringify({ templateText })
             });
 
-            let data;
-            try {
-                data = await res.json();
-            } catch (jsonErr) {
-                if (res.status === 413) {
-                    throw new Error("Dung lượng ảnh quá lớn (Vượt giới hạn máy chủ). Hãy chọn ảnh khác hoặc ít ảnh hơn.");
-                }
-                throw new Error(`Máy chủ không phản hồi đúng định dạng (HTTP ${res.status})`);
+            const data = await res.json();
+            if (res.status === 413) {
+                 throw new Error("Dung lượng tải lên vượt giới hạn máy chủ.");
             }
 
             if (data.success && data.post_content) {
-                toast.success("AI đã sinh nội dung thành công!");
+                toast.success("AI đã tạo Spintax thành công!");
                 onGenerate(data.post_content);
-                onClose(); // Đóng modal luôn
-                // Reset form
-                setTopic("");
-                setBrand("");
-                setBenefit("");
-                setAddress("");
-                setPhone("");
-                setExtraInfo("");
-                setImagesBase64([]);
-                setImageFileNames([]);
+                onClose();
+                setTemplateText("");
             } else {
                 throw new Error(data.error || "Không thể sinh nội dung");
             }
@@ -125,118 +63,33 @@ export default function AIPostGeneratorModal({ isOpen, onClose, onGenerate }: AI
                 <div className="flex items-center justify-between p-5 border-b border-indigo-100 bg-indigo-50/50">
                     <h3 className="font-bold text-lg text-indigo-900 flex items-center gap-2">
                         <Sparkles className="w-5 h-5 text-amber-500" />
-                        AI Soạn Bài Tự Động (Spintext)
+                        AI Tạo Spintext Từ Bài Mẫu
                     </h3>
                     <button onClick={onClose} className="p-2 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100 rounded-full transition-colors">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                <div className="p-5 space-y-4">
-                    <div>
-                        <label className="block text-sm font-bold text-indigo-900 mb-2">Loại bài đăng</label>
-                        <div className="flex gap-3">
-                            <label className={`flex-1 border rounded-xl p-3 flex flex-col items-center gap-1 cursor-pointer transition-colors ${postType === 'sales' ? 'bg-indigo-50 border-indigo-500' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
-                                <input type="radio" name="postType" value="sales" checked={postType === 'sales'} onChange={() => setPostType('sales')} className="hidden" />
-                                <span className="text-sm font-bold text-slate-700">🛒 Bán Hàng</span>
-                            </label>
-                            <label className={`flex-1 border rounded-xl p-3 flex flex-col items-center gap-1 cursor-pointer transition-colors ${postType === 'distributor' ? 'bg-indigo-50 border-indigo-500' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
-                                <input type="radio" name="postType" value="distributor" checked={postType === 'distributor'} onChange={() => setPostType('distributor')} className="hidden" />
-                                <span className="text-sm font-bold text-slate-700">🤝 Tìm Đại Lý</span>
-                            </label>
-                            <label className={`flex-1 border rounded-xl p-3 flex flex-col items-center gap-1 cursor-pointer transition-colors ${postType === 'recruitment' ? 'bg-indigo-50 border-indigo-500' : 'bg-white border-slate-200 hover:bg-slate-50'}`}>
-                                <input type="radio" name="postType" value="recruitment" checked={postType === 'recruitment'} onChange={() => setPostType('recruitment')} className="hidden" />
-                                <span className="text-sm font-bold text-slate-700">💼 Tuyển Dụng</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-bold text-indigo-900 mb-1">Chủ đề / Mục đích chính <span className="text-red-500">*</span></label>
-                        <input
-                            type="text"
-                            value={topic}
-                            onChange={e => setTopic(e.target.value)}
-                            placeholder={postType === 'distributor' ? "VD: Tìm đại lý phân phối độc quyền..." : postType === 'recruitment' ? "VD: Tuyển gấp NVKD..." : "VD: Xả kho hàng mùa hè..."}
-                            className="w-full text-sm p-3 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="col-span-2">
-                            <label className="block text-sm font-bold text-indigo-900 mb-1">Nhãn hàng / Sản phẩm (Nếu có)</label>
-                            <input
-                                type="text"
-                                value={brand}
-                                onChange={e => setBrand(e.target.value)}
-                                placeholder="VD: Sữa tắm Gilaa, Dịch vụ FPT..."
-                                className="w-full text-sm p-3 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-indigo-900 mb-1">{postType === 'recruitment' ? 'Mức lương / Đãi ngộ' : 'Chính sách Chiết khấu / Quyền lợi'}</label>
-                            <input
-                                type="text"
-                                value={benefit}
-                                onChange={e => setBenefit(e.target.value)}
-                                placeholder={postType === 'recruitment' ? "VD: Lương 15-20tr..." : "VD: Chiết khấu 30%..."}
-                                className="w-full text-sm p-3 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-bold text-indigo-900 mb-1">SĐT Liên hệ</label>
-                            <input
-                                type="text"
-                                value={phone}
-                                onChange={e => setPhone(e.target.value)}
-                                placeholder="VD: 0987.654.321 (Zalo)"
-                                className="w-full text-sm p-3 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-bold text-indigo-900 mb-1">Địa chỉ làm việc / Mua hàng</label>
-                        <input
-                            type="text"
-                            value={address}
-                            onChange={e => setAddress(e.target.value)}
-                            placeholder="VD: 153 Đường ABC, Quận X"
-                            className="w-full text-sm p-3 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-bold text-indigo-900 mb-1">Thông tin bổ sung / Yêu cầu chi tiết (Tùy chọn)</label>
-                        <textarea
-                            rows={3}
-                            value={extraInfo}
-                            onChange={e => setExtraInfo(e.target.value)}
-                            placeholder="VD: Hàng tự sản xuất không qua trung gian, bao đổi trả hàng cận date, vốn nhập chỉ từ 2 triệu..."
-                            className="w-full text-sm p-3 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white resize-none"
-                        ></textarea>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-bold text-indigo-900 mb-1">Upload Ảnh Sản phẩm (Tối đa 3 ảnh)</label>
-                        <div className="flex items-center gap-3">
-                            <label className="cursor-pointer bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 px-4 py-2.5 rounded-xl font-medium text-sm transition-colors flex items-center gap-2 w-full justify-center">
-                                <Sparkles className="w-4 h-4" />
-                                {imageFileNames.length > 0 ? `Đã Chọn ${imageFileNames.length} Ảnh (Bấm đổi)` : "Tải Ảnh Lên Để AI Trích Xuất (Hỗ trợ chọn nhiều)"}
-                                <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageChange} />
-                            </label>
-                            {imageFileNames.length > 0 && (
-                                <button onClick={() => {setImagesBase64([]); setImageFileNames([]);}} className="p-2.5 text-red-500 bg-red-50 hover:bg-red-100 rounded-xl transition-colors shrink-0" title="Xóa ảnh">
-                                    <X className="w-4 h-4" />
-                                </button>
-                            )}
-                        </div>
-                        {imageFileNames.length > 0 && <p className="text-xs text-indigo-600 mt-2 font-medium truncate">Đang đính kèm: {imageFileNames.join(", ")}</p>}
-                    </div>
-                    
+                <div className="p-5 space-y-4 flex-1 flex flex-col min-h-[300px]">
                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800 flex items-start gap-2">
                         <Sparkles className="w-4 h-4 mt-0.5 shrink-0" />
-                        <p>AI sẽ trộn ngẫu nhiên các cấu trúc ngữ pháp có thể thay thế được như <code className="bg-amber-100 px-1 rounded">{"{Tuyệt|Hay|Tốt}"}</code> để bài viết của bạn mang ra đăng BOT 100 lần vẫn như 100 bài mới nhằm chống SPAM từ Facebook.</p>
+                        <p>Dán 1 hoặc NHIỀU bài viết mẫu của bạn vào bên dưới (cách nhau bởi vạch ngang hoặc xuống dòng). AI sẽ tự tìm từ đồng nghĩa biến chúng thành dạng Spintax <code className="bg-amber-100 px-1 rounded">{"{Tuyệt|Hay|Tốt}"}</code> và trộn ngẫu nhiên để lách Bot Facebook.</p>
+                    </div>
+
+                    <div className="flex-1 flex flex-col">
+                        <label className="block text-sm font-bold text-indigo-900 mb-2">Nhập các bài viết mẫu (Tối đa ~5000 ký tự) <span className="text-red-500">*</span></label>
+                        <textarea
+                            value={templateText}
+                            onChange={e => setTemplateText(e.target.value)}
+                            placeholder={"Ví dụ:\nKhoai môn nhúng vị CVT ăn là nghiền, đang tuyển nhà phân phối toàn quốc chiết khấu 45%\n---\nKèo thơm cho anh em sỉ, Khoai môn CVT 4 vị ngon bá cháy..."}
+                            className="w-full flex-1 text-sm p-4 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white resize-none"
+                            maxLength={5000}
+                        ></textarea>
+                        <div className="text-right mt-1">
+                            <span className={`text-xs font-medium ${templateText.length > 4800 ? 'text-red-500' : 'text-slate-400'}`}>
+                                {templateText.length} / 5000
+                            </span>
+                        </div>
                     </div>
                 </div>
 
