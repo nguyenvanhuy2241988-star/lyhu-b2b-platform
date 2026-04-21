@@ -73,71 +73,14 @@ function spinText(text) {
 
         console.log(`[GROUP_POST] Mở kho: ${category}. Mục tiêu: ${groupUrl || 'Ngẫu nhiên'}`);
 
-        let finalMessage = '';
-        
+        let contentData = null;
         if (!isTestMode) {
-            // 1. Kéo Mồi lặp lại ở ngoài
             const { data, error } = await supabase.from('bot_contents').select('*').eq('category', category);
             if (error || !data || data.length === 0) {
                 await logAction('post', 'error', `Lỗi: Kho bài đăng "${category}" trống`);
                 process.exit(1);
             }
-
-            const randomContent = data[Math.floor(Math.random() * data.length)];
-            finalMessage = spinText(randomContent.message_text);
-            
-            // Xử lý lấy Ảnh đơn hoặc Nhóm Ảnh từ Tài liệu
-            if (randomContent.doc_folder_id) {
-                // Móc vào Media Library
-                const { data: filesData } = await supabase.from('documents_files')
-                    .select('*')
-                    .eq('folder_id', randomContent.doc_folder_id)
-                    .eq('is_deleted', false);
-                
-                if (filesData && filesData.length > 0) {
-                    // Lọc bỏ các file không phải Ảnh/Video (ví dụ: .pdf, .docx, .zip) FB không hỗ trợ
-                    const validMediaFiles = filesData.filter(f => {
-                        const ext = (f.original_name || '').split('.').pop().toLowerCase();
-                        return ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mov', 'avi', 'wmv'].includes(ext);
-                    });
-                    
-                    if (validMediaFiles.length > 0) {
-                        // Trộn ngẫu nhiên (Shuffle)
-                        const shuffled = validMediaFiles.sort(() => 0.5 - Math.random());
-                        // Lấy đúng số lượng
-                        const takeCount = randomContent.media_count || 1;
-                        const selectedFiles = shuffled.slice(0, takeCount);
-                        
-                        console.log(`[GROUP_POST] Tiến hành tải ${selectedFiles.length} file Media từ Supabase...`);
-                        for (let f = 0; f < selectedFiles.length; f++) {
-                            const file = selectedFiles[f];
-                            try {
-                                const { data: signedData, error: signErr } = await supabase.storage.from('lyhu-docs').createSignedUrl(file.storage_path, 3600);
-                                if (signErr) {
-                                    console.error(`[GROUP_POST] Lỗi giải mã link Media (${file.original_name}):`, signErr.message);
-                                    continue;
-                                }
-                                if (signedData && signedData.signedUrl) {
-                                    const ext = (file.original_name || '').split('.').pop() || 'jpg';
-                                    const dest = path.join(__dirname, `../../temp_gr_upload_${Date.now()}_${f}.${ext}`);
-                                    await downloadImage(signedData.signedUrl, dest);
-                                    tempImagePaths.push(dest);
-                                }
-                            } catch (downloadErr) {
-                                console.error(`[GROUP_POST] Cập nhật thất bại file số ${f}:`, downloadErr.message);
-                            }
-                        }
-                        console.log(`[GROUP_POST] Lấy thành công ${tempImagePaths.length} Media đính kèm!`);
-                    } else {
-                        console.log(`[GROUP_POST] Không tìm thấy file Hình/Video nào hợp lệ trong danh mục này (Toàn file mồ côi hoặc PDF).`);
-                    }
-                }
-            } else if (randomContent.image_url) {
-                const ext = randomContent.image_url.split('.').pop().split('?')[0] || 'jpg';
-                const dest = path.join(__dirname, `../../temp_gr_upload_${Date.now()}.${ext}`);
-                await downloadImage(randomContent.image_url, dest);
-                tempImagePaths.push(dest);
-            }
+            contentData = data;
         } else {
             console.log("[TEST] Bỏ qua bước lấy nội dung (test mode).");
         }
@@ -170,6 +113,67 @@ function spinText(text) {
         for (let j = 0; j < groupList.length; j++) {
             let targetUrl = groupList[j];
             
+            // Xóa file cũ của vòng lặp trước nếu có
+            for (const p of tempImagePaths) {
+                if (fs.existsSync(p)) {
+                    try { fs.unlinkSync(p); } catch (err) {}
+                }
+            }
+            tempImagePaths = [];
+            
+            let finalMessage = '';
+            
+            if (!isTestMode && contentData) {
+                const randomContent = contentData[Math.floor(Math.random() * contentData.length)];
+                finalMessage = spinText(randomContent.message_text);
+                
+                // Xử lý lấy Ảnh đơn hoặc Nhóm Ảnh từ Tài liệu
+                if (randomContent.doc_folder_id) {
+                    const { data: filesData } = await supabase.from('documents_files')
+                        .select('*')
+                        .eq('folder_id', randomContent.doc_folder_id)
+                        .eq('is_deleted', false);
+                    
+                    if (filesData && filesData.length > 0) {
+                        const validMediaFiles = filesData.filter(f => {
+                            const ext = (f.original_name || '').split('.').pop().toLowerCase();
+                            return ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mov', 'avi', 'wmv'].includes(ext);
+                        });
+                        
+                        if (validMediaFiles.length > 0) {
+                            const shuffled = validMediaFiles.sort(() => 0.5 - Math.random());
+                            const takeCount = randomContent.media_count || 1;
+                            const selectedFiles = shuffled.slice(0, takeCount);
+                            
+                            console.log(`[GROUP_POST] Tiến hành tải ${selectedFiles.length} file Media từ Supabase...`);
+                            for (let f = 0; f < selectedFiles.length; f++) {
+                                const file = selectedFiles[f];
+                                try {
+                                    const { data: signedData, error: signErr } = await supabase.storage.from('lyhu-docs').createSignedUrl(file.storage_path, 3600);
+                                    if (signErr) {
+                                        console.error(`[GROUP_POST] Lỗi giải mã link Media (${file.original_name}):`, signErr.message);
+                                        continue;
+                                    }
+                                    if (signedData && signedData.signedUrl) {
+                                        const ext = (file.original_name || '').split('.').pop() || 'jpg';
+                                        const dest = path.join(__dirname, `../../temp_gr_upload_${Date.now()}_${f}.${ext}`);
+                                        await downloadImage(signedData.signedUrl, dest);
+                                        tempImagePaths.push(dest);
+                                    }
+                                } catch (downloadErr) {
+                                    console.error(`[GROUP_POST] Cập nhật thất bại file số ${f}:`, downloadErr.message);
+                                }
+                            }
+                        }
+                    }
+                } else if (randomContent.image_url) {
+                    const ext = randomContent.image_url.split('.').pop().split('?')[0] || 'jpg';
+                    const dest = path.join(__dirname, `../../temp_gr_upload_${Date.now()}.${ext}`);
+                    await downloadImage(randomContent.image_url, dest);
+                    tempImagePaths.push(dest);
+                }
+            }
+
             // Xóa query tracking (__cft__) của Facebook (nếu có) để url ngắn gọn và không bị lỗi load
             if (targetUrl.includes('?')) {
                 const urlObj = new URL(targetUrl.startsWith('http') ? targetUrl : `https://${targetUrl}`);
