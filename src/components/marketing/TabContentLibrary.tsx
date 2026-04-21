@@ -15,7 +15,8 @@ export default function TabContentLibrary() {
     // Form state
     const [editingId, setEditingId] = useState<string | null>(null);
     const [category, setCategory] = useState('');
-    const [messageText, setMessageText] = useState('');
+    const [messageTexts, setMessageTexts] = useState<string[]>(['']);
+    const [activeTab, setActiveTab] = useState(0);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null); // Để lưu url khi đang sửa
@@ -58,7 +59,8 @@ export default function TabContentLibrary() {
     const handleOpenAdd = () => {
         setEditingId(null);
         setCategory('');
-        setMessageText('');
+        setMessageTexts(['']);
+        setActiveTab(0);
         setImageFile(null);
         setImagePreview(null);
         setExistingImageUrl(null);
@@ -72,7 +74,8 @@ export default function TabContentLibrary() {
     const handleEdit = (item: any) => {
         setEditingId(item.id);
         setCategory(item.category);
-        setMessageText(item.message_text || '');
+        setMessageTexts([item.message_text || '']);
+        setActiveTab(0);
         setImageFile(null);
         setImagePreview(null);
         setExistingImageUrl(item.image_url);
@@ -93,8 +96,9 @@ export default function TabContentLibrary() {
     };
 
     const handleSave = async () => {
-        if (!messageText.trim() && !imageFile && !existingImageUrl) {
-            return toast.error("Vui lòng nhập nội dung đăng bài hoặc tải file đính kèm!");
+        const hasText = messageTexts.some(t => t.trim().length > 0);
+        if (!hasText && !imageFile && !existingImageUrl) {
+            return toast.error("Vui lòng nhập nội dung đăng bài cho ít nhất 1 tab hoặc tải file đính kèm!");
         }
         
         setIsSaving(true);
@@ -117,9 +121,8 @@ export default function TabContentLibrary() {
             finalMediaUrl = linkData.publicUrl;
         }
 
-        const payload = {
+        const basePayload = {
             category: category || "Mặc định",
-            message_text: messageText,
             image_url: mediaSource === 'upload' ? finalMediaUrl : null,
             doc_folder_id: mediaSource === 'folder' ? docFolderId : null,
             doc_folder_name: mediaSource === 'folder' ? docFolderName : null,
@@ -128,7 +131,7 @@ export default function TabContentLibrary() {
 
         if (editingId) {
             // Update
-            const { error } = await supabase.from('bot_contents').update(payload).eq('id', editingId);
+            const { error } = await supabase.from('bot_contents').update({ ...basePayload, message_text: messageTexts[0] }).eq('id', editingId);
             if (error) {
                 toast.error("Lỗi cập nhật: " + error.message);
             } else {
@@ -137,12 +140,17 @@ export default function TabContentLibrary() {
                 fetchContents();
             }
         } else {
-            // Insert
-            const { error } = await supabase.from('bot_contents').insert(payload);
+            // Bulk Insert
+            const validTexts = messageTexts.filter(t => t.trim() !== '');
+            const payloads = validTexts.length > 0 
+                ? validTexts.map(text => ({ ...basePayload, message_text: text }))
+                : [basePayload]; // Chỉ có ảnh
+
+            const { error } = await supabase.from('bot_contents').insert(payloads);
             if (error) {
                 toast.error("Lỗi lưu Kho: " + error.message);
             } else {
-                toast.success("✅ Đã thêm Nội dung mồi vào Kho!");
+                toast.success(`✅ Đã thêm ${payloads.length} Nội dung vào Kho!`);
                 setIsAdding(false);
                 fetchContents();
             }
@@ -234,20 +242,63 @@ export default function TabContentLibrary() {
                                 </datalist>
                             </div>
                             
-                            <div>
-                                <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center justify-between mb-2">
                                     <label className="block text-sm font-bold text-indigo-900">
-                                        Nội dung Chữ (Hỗ trợ <span className="text-indigo-500 bg-indigo-100 px-1 rounded mx-1">{"{Chào|Hi|Alo}"}</span> quay vòng)
+                                        Nội dung Chữ ({editingId ? '1 Bài' : `Tối đa 10 Bài ngẫu nhiên`})
                                     </label>
-                                    <button 
-                                        onClick={() => setIsAIModalOpen(true)}
-                                        className="flex items-center gap-1.5 px-3 py-1 bg-amber-100 hover:bg-amber-200 text-amber-700 text-xs font-bold rounded-md transition-colors"
-                                    >
-                                        <Sparkles className="w-3 h-3" /> AI Khởi Tạo
-                                    </button>
                                 </div>
-                                <textarea rows={6} value={messageText} onChange={e=>setMessageText(e.target.value)} placeholder="Chào mọi người, sáng nay mình có lô hàng mới... (Kèm Link web/SĐT nếu có)" className="w-full text-sm p-3 border border-indigo-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 bg-white resize-none shadow-sm"></textarea>
-                            </div>
+                                
+                                {!editingId && (
+                                    <div className="flex flex-wrap gap-1 mb-2">
+                                        {messageTexts.map((_, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => setActiveTab(idx)}
+                                                className={`px-3 py-1.5 text-xs font-bold rounded-t-lg border-t border-x transition-colors ${
+                                                    activeTab === idx 
+                                                    ? 'bg-white border-indigo-200 text-indigo-700 shadow-sm z-10 scale-105' 
+                                                    : 'bg-indigo-50 border-transparent text-slate-500 hover:bg-indigo-100 hover:text-indigo-600'
+                                                }`}
+                                            >
+                                                Bài {idx + 1}
+                                                {messageTexts.length > 1 && (
+                                                    <span 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const newTexts = messageTexts.filter((_, i) => i !== idx);
+                                                            setMessageTexts(newTexts);
+                                                            if (activeTab >= newTexts.length) setActiveTab(newTexts.length - 1);
+                                                        }}
+                                                        className="ml-2 hover:text-red-500 inline-block"
+                                                    >×</span >
+                                                )}
+                                            </button>
+                                        ))}
+                                        {messageTexts.length < 10 && (
+                                            <button 
+                                                onClick={() => {
+                                                    setMessageTexts([...messageTexts, '']);
+                                                    setActiveTab(messageTexts.length);
+                                                }}
+                                                className="px-3 py-1 text-xs font-bold text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 rounded-t-lg transition-colors flex items-center"
+                                            >
+                                                <Plus className="w-3 h-3 mr-1" /> Thêm Bài
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                                
+                                <textarea 
+                                    rows={6} 
+                                    value={messageTexts[activeTab]} 
+                                    onChange={e => {
+                                        const newTexts = [...messageTexts];
+                                        newTexts[activeTab] = e.target.value;
+                                        setMessageTexts(newTexts);
+                                    }} 
+                                    placeholder={!editingId ? `Gõ nội dung bài số ${activeTab + 1}... Khi BOT đăng ngẫu nhiên, nó sẽ bốc ngẫu nhiên 1 trong các Tab này để đăng và tải kèm Media chung.` : 'Nội dung bài viết...'}
+                                    className="w-full text-sm p-3 border border-indigo-200 rounded-xl rounded-tl-none outline-none focus:ring-2 focus:ring-indigo-500 bg-white resize-none shadow-sm -mt-[3px] relative z-0"
+                                ></textarea>
                         </div>
 
                         {/* Cột phải: Khung ảnh đính kèm */}
@@ -366,13 +417,7 @@ export default function TabContentLibrary() {
                 }} 
             />
             
-            <AIPostGeneratorModal 
-                isOpen={isAIModalOpen}
-                onClose={() => setIsAIModalOpen(false)}
-                onGenerate={(text) => {
-                    setMessageText(text);
-                }}
-            />
+
 
             {/* List */}
             {isLoading ? (
