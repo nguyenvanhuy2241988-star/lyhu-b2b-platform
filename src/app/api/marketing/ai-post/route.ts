@@ -21,15 +21,21 @@ export async function POST(req: NextRequest) {
 
         let typeInstruction = "bán lẻ hàng hóa";
         if (postType === 'distributor') {
-            typeInstruction = "TÌM KIẾM ĐẠI LÝ, NHÀ PHÂN PHỐI. Giọng điệu hợp tác kinh doanh, đề cao lợi ích đối tác, KHÔNG ĐƯỢC viết giống tin tuyển nhân sự.";
+            typeInstruction = `TÌM KIẾM ĐẠI LÝ, NHÀ PHÂN PHỐI (Bán sỉ / Bán buôn). 
+            Giọng điệu: Tự nhiên, gần gũi, mang đậm phong cách dân buôn/sale thực chiến (sử dụng các từ lóng: nhập sỉ, cắt lô, kèo thơm, bao nét, sát ván, chốt đơn, vít số, bao ship...). 
+            CẤM TUYỆT ĐỐI các từ ngữ sáo rỗng, đa cấp như: "Cơ hội vàng", "đối tác chiến lược", "phát triển thịnh vượng", "rộng mở vòng tay". Hãy viết ngắn gọn, đi thẳng vào biên độ lợi nhuận và chính sách mồi. KHÔNG ĐƯỢC viết giống tin tuyển nhân sự.`;
         } else if (postType === 'recruitment') {
-            typeInstruction = "TUYỂN DỤNG NHÂN SỰ. Chi tiết về công việc, môi trường và lộ trình.";
+            typeInstruction = `TUYỂN DỤNG NHÂN SỰ. 
+            Giọng điệu: Rõ ràng, thân thiện. Liệt kê rõ công việc, môi trường và lộ trình lương/thưởng. Viết tự nhiên như một HR đang tìm đồng đội. CẤM dùng từ sáo rỗng.`;
+        } else {
+            typeInstruction = `BÁN HÀNG LẺ. 
+            Giọng điệu: Hấp dẫn, kích thích mua hàng, tập trung vào ưu đãi và chất lượng sản phẩm.`;
         }
 
-        const prompt = `Bạn là một Content Creator chuyên nghiệp chạy quảng cáo và spam seeding Facebook tại Việt Nam. 
-Mục tiêu: Viết một bài đăng ${typeInstruction} dựa trên thông tin được cung cấp, sử dụng ĐỊNH DẠNG SPINTEXT CHUẨN XÁC để đăng ngẫu nhiên hàng loạt không bị checkpoint. Cấu trúc Spintext mẫu: "{Xin chào|Chào mọi người|Alo anh em}"
+        const prompt = `Bạn là một Giám Đốc Kinh Doanh (Sale Manager) chuyên đi thị trường và đăng bài vào các group Facebook buôn bán tại Việt Nam. 
+Mục tiêu: Viết một bài đăng ${typeInstruction} dựa trên thông tin cung cấp, sử dụng ĐỊNH DẠNG SPINTEX CHUẨN XÁC để đăng ngẫu nhiên hàng loạt. Cấu trúc Spintex mẫu: "{Xin chào|Chào anh em|Hi các bác}"
 
-Thông tin bài đăng cần có:
+Thông tin bài đăng:
 - Chủ đề chính / Kêu gọi: ${topic}
 ${brand ? `- Phục vụ cho Nhãn hàng / Sản phẩm: ${brand}` : ''}
 ${benefit ? (postType === 'recruitment' ? `- Mức lương / Đãi ngộ: ${benefit}` : `- Quyền lợi / Chiết khấu cho đại lý/khách hàng: ${benefit}`) : ''}
@@ -37,10 +43,11 @@ ${address ? `- Địa chỉ: ${address}` : ''}
 ${phone ? `- SĐT Liên hệ: ${phone}` : ''}
 
 YÊU CẦU QUAN TRỌNG:
-1. Đan xen Spintext ở nhiều vị trí: Lời chào, Đại từ xưng hô, Cảm thán, Câu chốt gọi hành động. VD: "{Nhanh tay|Đừng bỏ lỡ|Ứng tuyển ngay}"
-2. Tích hợp từ khóa: Đảm bảo giữ nguyên các từ khóa quan trọng cứng (như SĐT, Lương, Địa chỉ) để không bị sai lệch thông tin khi sinh ngẫu nhiên.
-3. Độ dài: Quanh mốc 100-200 chữ, có sử dụng Emoji tự nhiên.
-4. CHỈ XUẤT RA KẾT QUẢ VĂN BẢN DUY NHẤT. KHÔNG TRẢ LỜI "DƯỚI ĐÂY LÀ..." HOẶC GIẢI THÍCH! Phải có thể Copy paste dùng luôn!`;
+1. Đan xen Spintex ở nhiều vị trí (Cảm thán, Xưng hô, Động từ). Hạn chế tạo các cụm Spintex quá dài làm mất ngữ nghĩa.
+2. VĂN PHONG "NGƯỜI THẬT": Viết có nhịp điệu, ngắt đoạn rõ ràng, dùng bullet point (gạch đầu dòng có icon) để làm nổi bật quyền lợi. Không viết như một bài văn xuôi dài dòng.
+3. Tích hợp từ khóa: Giữ nguyên các thông tin cứng (SĐT, Địa chỉ, Tên thương hiệu, Tỉ lệ chiết khấu, Mức lương).
+4. Độ dài: Tối đa 150-250 chữ, sử dụng Emoji hợp lý (không lạm dụng).
+5. CHỈ TRẢ VỀ KẾT QUẢ VĂN BẢN DUY NHẤT. Bắt đầu ngay vào nội dung, không có lời dạo đầu "Dưới đây là...". Phải có thể Copy paste dùng luôn!`;
 
         console.log("[Marketing AI] Calling Gemini...");
         const res = await fetch(GEMINI_URL, {
