@@ -43,7 +43,7 @@ ${templateText}`;
                 contents: [{ parts }],
                 generationConfig: {
                     temperature: 0.8,
-                    maxOutputTokens: 2048
+                    maxOutputTokens: 8192
                 },
                 safetySettings: [
                     { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
