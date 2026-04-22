@@ -96,10 +96,10 @@ function spinText(text) {
         }
 
         // BƯỚC 4a: Chờ page load đầy đủ, scroll lên đầu
-        console.log("[POST] Bước 2: Chờ page load xong + scroll lên đầu...");
-        await delay(rdn(5000, 7000)); // Chờ page render đầy đủ
+        console.log("[POST] Bước 2: Chờ page load xong + scroll lên đầu (mạng chậm chờ lâu hơn)...");
+        await delay(rdn(8000, 12000)); // Tăng từ 5-7s lên 8-12s
         await page.evaluate(() => window.scrollTo(0, 0));
-        await delay(2000);
+        await delay(3000);
         
         // Đóng popup nhẹ nhàng (chỉ 1 Escape, tránh đóng mất element)
         await page.keyboard.press('Escape');
@@ -189,15 +189,15 @@ function spinText(text) {
         }
         
         // Chờ composer dialog "Tạo bài viết" xuất hiện
-        console.log("[POST] Bước 3: Chờ composer dialog 'Tạo bài viết'...");
-        await delay(rdn(2000, 3000));
+        console.log("[POST] Bước 3: Chờ composer dialog 'Tạo bài viết' tải lên (mạng chậm)...");
+        await delay(rdn(4000, 6000)); // Tăng từ 2-3s lên 4-6s
         
         await page.screenshot({ path: path.join(debugDir, 'step2_after_click.png') });
         console.log("[POST] Screenshot step2 saved.");
         
-        // Xác nhận dialog "Tạo bài viết" - TÌM TẤT CẢ dialog, không chỉ cái đầu tiên
+        // Xác nhận dialog "Tạo bài viết" - TÌM TẤT CẢ dialog, thử tối đa 5 lần (khoảng 15-20s)
         let dialogOpened = false;
-        for (let attempt = 0; attempt < 3; attempt++) {
+        for (let attempt = 0; attempt < 5; attempt++) {
             const dialogCheck = await page.evaluate(() => {
                 // Tìm TẤT CẢ dialog trên trang (có thể có Thông báo + Composer cùng lúc)
                 const allDialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
@@ -235,7 +235,7 @@ function spinText(text) {
             if (dialogCheck.found && !dialogCheck.isCreatePost) {
                 console.log("[POST] Phát hiện dialog sai (Thông báo?), đóng bằng Escape...");
                 await page.keyboard.press('Escape');
-                await delay(1000);
+                await delay(2000);
                 
                 // Click lại composer
                 const reComposer = await page.evaluateHandle(() => {
@@ -256,11 +256,11 @@ function spinText(text) {
                     }
                 }
                 await reComposer.dispose();
-                await delay(2000);
+                await delay(3000);
             } else {
-                console.log(`[POST] Dialog chưa mở, thử lại... (${attempt + 1}/3)`);
-                await page.mouse.click(683, 384);
-                await delay(2000);
+                console.log(`[POST] Dialog chưa mở, thử lại... (${attempt + 1}/5)`);
+                await page.mouse.click(683, 384); // Click mù vào khu vực giữa
+                await delay(3000); // Tăng thời gian chờ lên 3s mỗi lần thử
             }
         }
 
@@ -304,21 +304,21 @@ function spinText(text) {
             if (textboxInfo.found) {
                 // Click vào textbox bằng mouse (isTrusted: true) → React bắt event đúng
                 await page.mouse.click(textboxInfo.x, textboxInfo.y);
-                await delay(2000); // Chờ React attach event handlers
+                await delay(3000); // TĂNG DELAY CHỜ REACT RENDER XONG COMPOSER MỚI ĐƯỢC GÕ
                 
                 // "Warm up" input: gõ space rồi xóa → kích hoạt React listener
                 await page.keyboard.press('Space');
-                await delay(200);
-                await page.keyboard.press('Backspace');
                 await delay(500);
+                await page.keyboard.press('Backspace');
+                await delay(1000);
                 
-                // Gõ nội dung thật
-                await page.keyboard.type(finalMessage, { delay: rdn(30, 60) });
+                // Gõ nội dung thật (gõ chậm một chút để tránh rớt chữ)
+                await page.keyboard.type(finalMessage, { delay: rdn(20, 50) });
                 console.log("[POST] ✅ Đã gõ nội dung bài viết.");
             } else {
                 console.log("[POST] ⚠ Không thể focus textbox.");
             }
-            await delay(rdn(1000, 2000));
+            await delay(rdn(2000, 3000));
         }
 
         // ============================================================
@@ -326,24 +326,49 @@ function spinText(text) {
         // ============================================================
         if (tempImagePath) {
             console.log("[POST] Bước 5: Upload ảnh...");
-            // Tìm input file TRONG dialog (không phải ngoài trang)
+            
+            // 1. CLICK NÚT "Thêm Ảnh/Video" ĐỂ FACEBOOK TẠO THẺ <INPUT TYPE="FILE">
+            const addPhotoBtn = await page.evaluateHandle(() => {
+                const dialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
+                let targetDialog = dialogs.find(d => (d.innerText || '').includes('Tạo bài viết')) || document.body;
+                
+                const btns = Array.from(targetDialog.querySelectorAll('div[role="button"]'));
+                return btns.find(b => {
+                    const label = (b.getAttribute('aria-label') || '').toLowerCase();
+                    return label.includes('ảnh') || label.includes('photo') || label.includes('video');
+                }) || null;
+            });
+            
+            const photoEl = addPhotoBtn.asElement();
+            if (photoEl) {
+                console.log("[POST] Đang click nút Ảnh/Video để gọi khung upload...");
+                const box = await photoEl.boundingBox();
+                if (box) {
+                    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+                    await delay(3000); // Chờ khung upload hiện ra
+                }
+            }
+            await addPhotoBtn.dispose();
+
+            // 2. TÌM INPUT FILE VÀ UPLOAD
             const dialogFileInput = await page.$('div[role="dialog"] input[type="file"]');
             const anyFileInput = await page.$('input[type="file"]');
             const fileInput = dialogFileInput || anyFileInput;
             
             if (fileInput) {
                 await fileInput.uploadFile(tempImagePath);
-                console.log("[POST] ✅ Đã upload ảnh.");
+                console.log("[POST] ✅ Đã đẩy file ảnh/video vào trình duyệt.");
                 
                 const isVideo = tempImagePath.match(/\.(mp4|mov|avi|wmv)$/i);
                 if (isVideo) {
-                    console.log("[POST] Phát hiện Video! Chờ upload...");
-                    await delay(rdn(20000, 40000));
+                    console.log("[POST] Phát hiện Video! Chờ upload (30-60s)...");
+                    await delay(rdn(30000, 60000));
                 } else {
-                    await delay(rdn(4000, 7000));
+                    console.log("[POST] Chờ ảnh tải lên (7-10s)...");
+                    await delay(rdn(7000, 10000));
                 }
             } else {
-                console.log("[POST] ⚠ Không tìm thấy input file trong dialog.");
+                console.log("[POST] ⚠ KHÔNG tìm thấy input file. Bỏ qua upload ảnh.");
             }
         }
 
@@ -351,11 +376,10 @@ function spinText(text) {
         // BƯỚC 7: CLICK NÚT ĐĂNG
         // ============================================================
         console.log("[POST] Bước 6: Tìm và click nút Đăng...");
-        await delay(rdn(1000, 2000));
+        await delay(rdn(2000, 4000));
         
         // Debug screenshot trước khi submit
         await page.screenshot({ path: path.join(debugDir, 'step3_before_submit.png') });
-        
         
         // Tìm nút Đăng - trong ĐÚNG dialog "Tạo bài viết"
         const postBtnHandle = await page.evaluateHandle(() => {
@@ -396,40 +420,18 @@ function spinText(text) {
             return btn || null;
         });
         
-        // Debug: Log nút trong dialog "Tạo bài viết" (KHÔNG phải Thông báo)
-        const dialogBtns = await page.evaluate(() => {
-            const allDialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
-            let targetDialog = null;
-            for (const d of allDialogs) {
-                if ((d.innerText || '').includes('Tạo bài viết')) { targetDialog = d; break; }
-            }
-            if (!targetDialog) return { hasDialog: false, dialogCount: allDialogs.length };
-            const btns = Array.from(targetDialog.querySelectorAll('div[role="button"]'));
-            return {
-                hasDialog: true,
-                dialogCount: allDialogs.length,
-                buttons: btns.map(b => ({
-                    text: (b.innerText || '').trim().substring(0, 30),
-                    ariaLabel: b.getAttribute('aria-label'),
-                    ariaDisabled: b.getAttribute('aria-disabled'),
-                    visible: b.offsetParent !== null
-                }))
-            };
-        });
-        console.log("[POST] Debug buttons trong dialog 'Tạo bài viết':", JSON.stringify(dialogBtns, null, 2));
-        
         const postBtnElement = postBtnHandle.asElement();
         let posted = false;
         
         if (postBtnElement) {
-            // Chờ nút enable
-            for (let i = 0; i < 5; i++) {
+            // Chờ nút enable (Chờ tối đa 30 giây để xử lý ảnh nặng)
+            for (let i = 0; i < 20; i++) {
                 const isDisabled = await page.evaluate(el => el.getAttribute('aria-disabled'), postBtnElement);
                 if (isDisabled !== 'true') {
                     console.log("[POST] Nút Đăng đã active!");
                     break;
                 }
-                console.log(`[POST] Nút Đăng chưa active, chờ... (${i+1}/5)`);
+                console.log(`[POST] Đợi tải ảnh/xử lý, Nút Đăng chưa active... (${i+1}/20)`);
                 await delay(1500);
             }
             
@@ -445,13 +447,27 @@ function spinText(text) {
             await postBtnHandle.dispose();
         } else {
             await postBtnHandle.dispose();
-            console.log("[POST] ⚠ Không tìm thấy nút Đăng. Xem debug buttons ở trên.");
+            console.log("[POST] ⚠ Không tìm thấy nút Đăng.");
         }
 
         if (posted) {
-            await delay(rdn(6000, 10000));
+            console.log("[POST] ⏳ Đang chờ Facebook xử lý đăng bài (đợi cửa sổ đóng)...");
+            // Chờ tối đa 30 giây cho Dialog Tạo bài viết biến mất
+            for (let i = 0; i < 30; i++) {
+                const isDialogClosed = await page.evaluate(() => {
+                    const dialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
+                    return !dialogs.some(d => (d.innerText || '').includes('Tạo bài viết') || (d.innerText || '').includes('Create post'));
+                });
+                if (isDialogClosed) {
+                    console.log("[POST] 🟢 Cửa sổ đăng bài đã đóng! Bài viết đã lên sóng.");
+                    break;
+                }
+                await delay(1000);
+            }
+            
+            await delay(3000); // Nghỉ 3s cuối cùng cho chắc
             await page.screenshot({ path: path.join(debugDir, 'step4_after_submit.png') });
-            console.log("[POST] 🟢 Hoàn thành đăng bài!");
+            console.log("[POST] 🟢 Hoàn thành toàn bộ quy trình!");
             await logAction('post', 'success', `Thành công: Đã đăng 1 Status Cá Nhân (Kho: ${category})`);
         } else {
             await page.screenshot({ path: path.join(debugDir, 'step3_submit_failed.png') });
