@@ -12,7 +12,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { toast } from 'sonner';
 
 export default function BotCenterPage() {
-    const [activeTab, setActiveTab] = useState<'commands' | 'profiles' | 'queue' | 'campaigns' | 'contents'>('commands');
+    const [activeTab, setActiveTab] = useState<'commands' | 'profiles' | 'queue' | 'campaigns' | 'contents' | 'competitors'>('commands');
     const [activeScript, setActiveScript] = useState<{ name: string, title: string } | null>(null);
 
     const tabs = [
@@ -21,6 +21,7 @@ export default function BotCenterPage() {
         { id: 'queue', label: 'Hàng Đợi & Lịch Sử', icon: History },
         { id: 'campaigns', label: 'Chiến Dịch Liên Hoàn', icon: FolderOpen },
         { id: 'contents', label: 'Kho Nội Dung', icon: FolderOpen },
+        { id: 'competitors', label: 'Kho Đối Thủ', icon: Shield },
     ];
 
     return (
@@ -65,6 +66,7 @@ export default function BotCenterPage() {
                 { activeTab === 'queue' && <TabQueue /> }
                 { activeTab === 'campaigns' && <TabCampaigns /> }
                 { activeTab === 'contents' && <TabContentLibrary /> }
+                { activeTab === 'competitors' && <TabCompetitors onRunScript={(script) => setActiveScript(script)} /> }
             </div>
 
             {/* CONFIG MODAL */}
@@ -157,6 +159,13 @@ function TabCommands({ onRunScript }: { onRunScript: (s: any) => void }) {
                         icon={<Search className="w-5 h-5" />}
                         color="blue"
                         onClick={() => onRunScript({ name: 'auto_comment_group.js', title: 'Đi Comment Dạo' })}
+                    />
+                    <CommandCard
+                        title="Dọn Dẹp Lời Mời"
+                        desc="Hủy lời mời kết bạn đã cũ"
+                        icon={<Trash2 className="w-5 h-5" />}
+                        color="red"
+                        onClick={() => onRunScript({ name: 'auto_cancel_requests.js', title: 'Dọn Dẹp Lời Mời' })}
                     />
                 </div>
             </div>
@@ -597,7 +606,8 @@ function CommandCard({ title, desc, icon, color, onClick }: { title: string, des
         indigo: "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border-indigo-200",
         green: "bg-green-50 text-green-600 hover:bg-green-100 border-green-200",
         slate: "bg-slate-50 text-slate-600 hover:bg-slate-100 border-slate-200",
-        orange: "bg-orange-50 text-orange-600 hover:bg-orange-100 border-orange-200"
+        orange: "bg-orange-50 text-orange-600 hover:bg-orange-100 border-orange-200",
+        red: "bg-red-50 text-red-600 hover:bg-red-100 border-red-200"
     };
 
     return (
@@ -615,4 +625,144 @@ function CommandCard({ title, desc, icon, color, onClick }: { title: string, des
         </button>
     );
 }
+
+function TabCompetitors({ onRunScript }: { onRunScript: (s: any) => void }) {
+    const [competitors, setCompetitors] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isAdding, setIsAdding] = useState(false);
+    
+    const [name, setName] = useState('');
+    const [url, setUrl] = useState('');
+    const [notes, setNotes] = useState('');
+
+    const fetchCompetitors = async () => {
+        setIsLoading(true);
+        const { data, error } = await supabase.from('marketing_competitors').select('*').order('created_at', { ascending: false });
+        if (!error && data) {
+            setCompetitors(data);
+        }
+        setIsLoading(false);
+    };
+
+    useEffect(() => {
+        fetchCompetitors();
+    }, []);
+
+    const handleAdd = async () => {
+        if (!name || !url) return toast.error("Vui lòng nhập Tên và Link Facebook Đối Thủ");
+        
+        const { error } = await supabase.from('marketing_competitors').insert({
+            name: name,
+            profile_url: url,
+            notes: notes || null,
+        });
+
+        if (error) {
+            toast.error("Lỗi khi thêm: " + error.message);
+        } else {
+            toast.success("Đã lưu Đối thủ vào Kho!");
+            setName('');
+            setUrl('');
+            setNotes('');
+            setIsAdding(false);
+            fetchCompetitors();
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm("Bạn có chắc muốn xóa Đối thủ này khỏi kho?")) return;
+        const { error } = await supabase.from('marketing_competitors').delete().eq('id', id);
+        if (!error) {
+            toast.success("Đã xóa khỏi Kho lưu trữ!");
+            fetchCompetitors();
+        }
+    };
+
+    return (
+        <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <h2 className="text-lg font-bold text-slate-800">Kho Lưu Trữ Đối Thủ</h2>
+                    <p className="text-sm text-slate-500">Lưu trữ Link Facebook của các đối thủ lớn để Bot dễ dàng "Cướp Khách" hàng ngày.</p>
+                </div>
+                {!isAdding && (
+                    <button onClick={() => setIsAdding(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">
+                        <Plus className="w-4 h-4" />
+                        Thêm Đối Thủ
+                    </button>
+                )}
+            </div>
+
+            {isAdding && (
+                <div className="mb-6 p-4 bg-orange-50 border border-orange-100 rounded-lg">
+                    <h3 className="font-semibold text-orange-800 mb-3">Thêm Mục Tiêu Mới</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Tên Đối Thủ / Kho Sỉ</label>
+                            <input value={name} onChange={e=>setName(e.target.value)} type="text" placeholder="VD: Kho sỉ Túi xách ABC" className="w-full px-3 py-2 border rounded-md" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Link Facebook (Profile / Group)</label>
+                            <input value={url} onChange={e=>setUrl(e.target.value)} type="text" placeholder="https://www.facebook.com/..." className="w-full px-3 py-2 border rounded-md" />
+                        </div>
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Ghi chú (Tuỳ chọn)</label>
+                            <input value={notes} onChange={e=>setNotes(e.target.value)} type="text" placeholder="VD: Chuyên sỉ hàng Quảng Châu..." className="w-full px-3 py-2 border rounded-md" />
+                        </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <button onClick={handleAdd} className="px-4 py-2 bg-orange-600 text-white rounded-md text-sm font-medium hover:bg-orange-700">Lưu Mục Tiêu</button>
+                        <button onClick={() => setIsAdding(false)} className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-md text-sm font-medium hover:bg-slate-50">Hủy</button>
+                    </div>
+                </div>
+            )}
+            
+            {isLoading ? (
+                <div className="text-center py-10 text-slate-500">Đang tải Kho vũ khí...</div>
+            ) : competitors.length === 0 ? (
+                <div className="border border-slate-200 rounded-lg bg-slate-50 p-12 text-center">
+                    <Shield className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                    <h3 className="font-semibold text-slate-700">Kho Đối Thủ Trống</h3>
+                    <p className="text-sm text-slate-500 mt-1">Chưa có mục tiêu nào. Hãy thêm Link Facebook của đối thủ để Bot có thể tự động đi cướp khách.</p>
+                </div>
+            ) : (
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                        <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b">
+                            <tr>
+                                <th className="px-6 py-3 font-medium">Tên Đối Thủ</th>
+                                <th className="px-6 py-3 font-medium">Đường Link Đích</th>
+                                <th className="px-6 py-3 font-medium">Ghi Chú</th>
+                                <th className="px-6 py-3 font-medium text-right">Chiến Dịch</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {competitors.map(c => (
+                                <tr key={c.id} className="hover:bg-slate-50">
+                                    <td className="px-6 py-4 font-bold text-slate-800">{c.name}</td>
+                                    <td className="px-6 py-4 text-blue-600 truncate max-w-xs">
+                                        <a href={c.profile_url} target="_blank" rel="noreferrer" className="hover:underline">{c.profile_url}</a>
+                                    </td>
+                                    <td className="px-6 py-4 text-slate-500">{c.notes}</td>
+                                    <td className="px-6 py-4 text-right flex justify-end gap-2">
+                                        <button 
+                                            onClick={() => onRunScript({ name: 'execute_profile_add.js', title: 'Cướp Khách (Đối thủ)' })} 
+                                            className="px-3 py-1.5 bg-orange-100 text-orange-700 font-bold rounded hover:bg-orange-200 transition-colors text-xs"
+                                        >
+                                            🔫 Cướp Ngay
+                                        </button>
+                                        <button onClick={() => handleDelete(c.id)} className="text-slate-400 hover:text-red-600 p-1.5">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </div>
+    )
+}
+
 
