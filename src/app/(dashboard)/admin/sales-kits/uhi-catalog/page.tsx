@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Printer, ArrowLeft, Loader2, Package } from 'lucide-react';
+import { Printer, ArrowLeft, Loader2, Package, Check, MapPin, Award, FileText, BarChart3, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -47,67 +47,63 @@ export default function UHiCatalogGenerator() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        <span className="ml-3 text-lg text-gray-600">Đang tải dữ liệu sản phẩm UHi...</span>
+        <span className="ml-3 text-sm text-slate-600 font-medium">Đang tải dữ liệu sản phẩm UHi...</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 print:py-0 print:bg-white font-sans text-gray-900">
+    <div className="min-h-screen bg-slate-100 py-8 print:py-0 print:bg-white font-sans text-slate-900">
       {/* Nút bấm không hiển thị khi in */}
       <div className="max-w-[210mm] mx-auto mb-6 flex justify-between items-center print:hidden">
-        <Link href="/admin/sales-kits" className="flex items-center gap-2 text-gray-600 hover:text-gray-900 font-medium">
-          <ArrowLeft className="w-5 h-5" />
+        <Link href="/admin/sales-kits" className="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium text-sm">
+          <ArrowLeft className="w-4 h-4" />
           <span>Quay lại</span>
         </Link>
         <button 
           onClick={handlePrint}
-          className="bg-primary text-white px-6 py-2.5 rounded-lg flex items-center gap-2 hover:bg-primary/90 font-medium shadow-md transition-all"
+          className="bg-primary text-white px-5 py-2 rounded flex items-center gap-2 hover:bg-primary/90 font-medium text-sm transition-colors"
         >
-          <Printer className="w-5 h-5" />
+          <Printer className="w-4 h-4" />
           Xuất file PDF (Ctrl + P)
         </button>
       </div>
 
-      <div className="print:hidden max-w-[210mm] mx-auto mb-6 bg-secondary/10 text-secondary-900 p-4 rounded-xl border border-secondary-200">
-        <p><strong>💡 Mẹo in ấn:</strong> Chọn <strong>Destination: Save as PDF</strong>. Nhớ bật <strong>Background graphics</strong> (Đồ họa nền) và đặt Margins là <strong>None</strong> để bản in tràn viền đẹp nhất.</p>
+      <div className="print:hidden max-w-[210mm] mx-auto mb-6 bg-blue-50 text-blue-800 p-4 rounded text-sm border border-blue-100">
+        <p><strong>💡 Hướng dẫn in PDF:</strong> Chọn <strong>Destination: Save as PDF</strong>. Bật <strong>Background graphics</strong> và đặt Margins là <strong>None</strong> để bản in chuẩn khổ A4.</p>
       </div>
 
       {/* --- TRANG 1: BÌA CATALOG --- */}
-      <div className="a4-page bg-gradient-to-br from-primary via-primary-400 to-secondary text-white flex flex-col justify-between p-12 relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute top-[-100px] right-[-100px] w-[400px] h-[400px] bg-white rounded-full mix-blend-overlay filter blur-3xl opacity-20"></div>
-        <div className="absolute bottom-[-50px] left-[-50px] w-[300px] h-[300px] bg-secondary rounded-full mix-blend-multiply filter blur-2xl opacity-60"></div>
-        
-        <div className="relative z-10 flex justify-between items-start">
-          <div className="bg-white text-primary px-8 py-3 font-black text-3xl tracking-widest rounded-br-3xl uppercase shadow-xl flex items-center gap-2">
-            LYHU
+      <div className="a4-page bg-white p-12 flex flex-col justify-between relative border border-slate-200 print:border-none">
+        <div className="flex justify-between items-start">
+          <div className="text-primary font-bold text-xl tracking-wide uppercase flex flex-col">
+            <span>LYHU</span>
+            <div className="w-6 h-1 bg-primary mt-1"></div>
           </div>
           <div className="text-right">
-            <p className="font-bold text-xl uppercase tracking-wider">Hồ Sơ Năng Lực</p>
-            <p className="text-sm font-medium opacity-90 border-b-2 border-white/50 pb-1 inline-block">Năm 2026</p>
+            <p className="text-slate-500 text-sm font-medium tracking-widest uppercase">Hồ Sơ Sản Phẩm</p>
+            <p className="text-slate-400 text-xs mt-1">Năm 2026</p>
           </div>
         </div>
 
-        <div className="relative z-10 text-center my-auto">
-          <p className="text-2xl font-bold mb-4 tracking-[0.3em] uppercase text-secondary-100">Bộ Sưu Tập</p>
-          <h1 className="text-8xl font-black uppercase tracking-tighter drop-shadow-2xl mb-4 leading-none text-white">
-            KẸO CHUA <br/><span className="text-secondary text-9xl">UHi</span>
+        <div className="my-auto">
+          <p className="text-primary font-semibold text-lg tracking-[0.2em] uppercase mb-6 border-l-4 border-primary pl-4">Nhập Khẩu Độc Quyền</p>
+          <h1 className="text-6xl font-bold uppercase tracking-tight text-slate-900 leading-tight mb-4">
+            Kẹo Chua <br/><span className="text-primary">UHi Hàn Quốc</span>
           </h1>
-          <div className="w-32 h-2 bg-secondary mx-auto my-8 rounded-full"></div>
-          <p className="text-2xl font-bold bg-white text-primary inline-block px-10 py-4 rounded-full shadow-2xl">
-            BÙNG NỔ VỊ GIÁC - ĐÁNH THỨC MỌI GIÁC QUAN
+          <p className="text-slate-500 text-lg max-w-md">
+            Sản phẩm kẹo dẻo siêu chua nhập khẩu chính ngạch 100% từ Hàn Quốc. Dành riêng cho hệ thống chuỗi siêu thị và đại lý phân phối toàn quốc.
           </p>
         </div>
 
-        <div className="relative z-10 border-t-2 border-white/30 pt-6 flex justify-between items-end">
+        <div className="border-t border-slate-200 pt-8 flex justify-between items-end">
           <div>
-            <h3 className="font-black text-2xl uppercase tracking-wider">Kênh Siêu Thị (MT)</h3>
-            <p className="font-medium text-lg opacity-90">Tài liệu dành cho đối tác phân phối</p>
+            <p className="font-semibold text-slate-900 text-sm">Đơn vị nhập khẩu & phân phối độc quyền:</p>
+            <p className="text-slate-500 text-sm mt-1">CÔNG TY TNHH LYHU GROUP</p>
           </div>
-          <div className="text-right font-bold text-xl bg-primary-800/50 backdrop-blur-sm px-6 py-3 rounded-2xl border border-white/20">
+          <div className="text-right font-medium text-sm text-primary">
             www.lyhu.vn
           </div>
         </div>
@@ -115,128 +111,157 @@ export default function UHiCatalogGenerator() {
 
       <div className="page-break"></div>
 
-      {/* --- TRANG 2: HỒ SƠ NĂNG LỰC --- */}
-      <div className="a4-page bg-white p-12 relative">
-        <div className="border-b-4 border-primary pb-4 mb-10 flex justify-between items-end">
+      {/* --- TRANG 2: VỀ LYHU GROUP --- */}
+      <div className="a4-page bg-white p-12 relative border border-slate-200 print:border-none">
+        <div className="border-b border-slate-200 pb-6 mb-10 flex justify-between items-end">
           <div>
-            <h2 className="text-4xl font-black uppercase text-gray-900 tracking-tight">Về LYHU Group</h2>
-            <p className="text-xl text-primary font-bold mt-1">Đối tác chiến lược ngành hàng FMCG</p>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Về LYHU Group</h2>
+            <p className="text-slate-500 text-sm mt-2 uppercase tracking-wider">Nhà Nhập Khẩu & Phân Phối</p>
           </div>
-          <div className="text-gray-300">
-            <span className="text-5xl font-black">01</span>
-          </div>
+          <div className="text-slate-300 font-light text-5xl">01</div>
         </div>
 
-        <div className="grid grid-cols-2 gap-12">
-          <div className="space-y-10">
+        <div className="space-y-12">
+          <div className="grid grid-cols-2 gap-12">
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4 border-l-4 border-primary pl-4">Câu Chuyện Thương Hiệu</h3>
-              <p className="text-gray-700 leading-relaxed text-lg text-justify">
-                LYHU Group định vị là đơn vị tiên phong trong việc phát triển các dòng sản phẩm bánh kẹo "bắt trend" dành riêng cho giới trẻ. Với hệ thống xưởng sản xuất chuẩn hóa và đội ngũ R&D nhạy bén, chúng tôi liên tục cho ra mắt những sản phẩm tạo cơn sốt trên thị trường, đặc biệt là dòng Kẹo Chua UHi.
+              <p className="text-slate-700 leading-relaxed text-sm text-justify">
+                LYHU Group tự hào là doanh nghiệp uy tín trong lĩnh vực nhập khẩu và phân phối các sản phẩm tiêu dùng nhanh (FMCG) chất lượng cao tại thị trường Việt Nam. 
+                <br/><br/>
+                Chúng tôi chuyên tìm kiếm và mang về những sản phẩm mang xu hướng toàn cầu, đáp ứng nhu cầu thưởng thức đa dạng của người tiêu dùng trong nước, đặc biệt là phân khúc giới trẻ và gia đình.
               </p>
             </div>
-
-            <div className="bg-primary/5 p-6 rounded-2xl border border-primary/10">
-              <h3 className="text-xl font-bold text-primary mb-4 flex items-center gap-3">
-                Năng Lực Sản Xuất
+            <div className="bg-slate-50 p-6 border border-slate-100">
+              <h3 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-primary" /> Mạng Lưới Phân Phối
               </h3>
-              <ul className="space-y-4 text-gray-700">
-                <li className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-secondary"></div>
-                  <span><strong>Diện tích xưởng:</strong> 60m² (Mô hình tối ưu hóa tinh gọn)</span>
+              <ul className="space-y-3 text-sm text-slate-600">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary font-bold mt-0.5">•</span>
+                  <span><strong>Kênh Hiện Đại (MT):</strong> Có mặt tại các chuỗi siêu thị tiện lợi, đại siêu thị trên toàn quốc.</span>
                 </li>
-                <li className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-secondary"></div>
-                  <span><strong>Công suất:</strong> Lên đến 15 tấn/tháng</span>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary font-bold mt-0.5">•</span>
+                  <span><strong>Kênh Truyền Thống (GT):</strong> Phủ sóng hệ thống đại lý, cửa hàng tạp hóa tại 63 tỉnh thành.</span>
                 </li>
-                <li className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-secondary"></div>
-                  <span><strong>Quy trình:</strong> Khép kín, tự động hóa khâu đóng gói</span>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary font-bold mt-0.5">•</span>
+                  <span><strong>Năng lực Logistics:</strong> Hệ thống kho bãi tiêu chuẩn, đảm bảo giao hàng trong 24h-48h.</span>
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="space-y-8">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4 border-l-4 border-secondary pl-4">Chứng Nhận Chất Lượng</h3>
-            <div className="space-y-4">
-              <div className="flex items-start gap-5 bg-white p-5 rounded-2xl shadow-lg border border-gray-100 hover:border-primary transition-colors">
-                <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-black text-2xl shrink-0">1</div>
-                <div>
-                  <h4 className="font-bold text-gray-900 text-lg mb-1">Giấy chứng nhận VSATTP</h4>
-                  <p className="text-gray-600 text-sm leading-relaxed">Cơ sở đủ điều kiện An toàn thực phẩm được cấp phép bởi Chi cục QLCL Nông lâm sản và Thủy sản.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-5 bg-white p-5 rounded-2xl shadow-lg border border-gray-100 hover:border-secondary transition-colors">
-                <div className="w-14 h-14 bg-secondary/20 rounded-xl flex items-center justify-center text-secondary-700 font-black text-2xl shrink-0">2</div>
-                <div>
-                  <h4 className="font-bold text-gray-900 text-lg mb-1">Kiểm Nghiệm (Test Report)</h4>
-                  <p className="text-gray-600 text-sm leading-relaxed">Đạt chuẩn 100% các chỉ tiêu vi sinh, kim loại nặng và hóa chất độc hại theo quy định của Bộ Y Tế.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-5 bg-white p-5 rounded-2xl shadow-lg border border-gray-100">
-                <div className="w-14 h-14 bg-gray-100 rounded-xl flex items-center justify-center text-gray-700 font-black text-2xl shrink-0">3</div>
-                <div>
-                  <h4 className="font-bold text-gray-900 text-lg mb-1">Bản Tự Công Bố</h4>
-                  <p className="text-gray-600 text-sm leading-relaxed">Hồ sơ công bố hợp quy minh bạch, đã đăng ký mã số mã vạch chuẩn quốc tế GS1, sẵn sàng lưu hành toàn quốc.</p>
-                </div>
-              </div>
-            </div>
+          <div>
+             <h3 className="font-bold text-slate-900 mb-6 text-lg border-l-4 border-primary pl-4">Cam Kết Từ Nhà Nhập Khẩu</h3>
+             <div className="grid grid-cols-3 gap-6">
+               <div className="border border-slate-200 p-5">
+                 <ShieldCheck className="w-8 h-8 text-primary mb-4" />
+                 <h4 className="font-bold text-slate-900 text-sm mb-2">Pháp Lý Minh Bạch</h4>
+                 <p className="text-slate-500 text-xs leading-relaxed">Đầy đủ tờ khai hải quan, chứng nhận xuất xứ (C/O) và công bố chất lượng theo quy định của Bộ Y Tế.</p>
+               </div>
+               <div className="border border-slate-200 p-5">
+                 <Award className="w-8 h-8 text-primary mb-4" />
+                 <h4 className="font-bold text-slate-900 text-sm mb-2">Độc Quyền Phân Phối</h4>
+                 <p className="text-slate-500 text-xs leading-relaxed">LYHU Group là đối tác độc quyền duy nhất của UHi tại VN, đảm bảo nguồn hàng ổn định, không đứt gãy.</p>
+               </div>
+               <div className="border border-slate-200 p-5">
+                 <BarChart3 className="w-8 h-8 text-primary mb-4" />
+                 <h4 className="font-bold text-slate-900 text-sm mb-2">Chính Sách Chống Phá Giá</h4>
+                 <p className="text-slate-500 text-xs leading-relaxed">Kiểm soát chặt chẽ giá bán lẻ, bảo vệ biên độ lợi nhuận tối đa cho các hệ thống siêu thị đối tác.</p>
+               </div>
+             </div>
           </div>
         </div>
       </div>
 
       <div className="page-break"></div>
 
-      {/* --- TRANG 3: THÔNG SỐ SẢN PHẨM --- */}
-      <div className="a4-page bg-gray-50 p-12 relative overflow-hidden">
-        {/* Background graphic */}
-        <div className="absolute top-0 right-0 w-[600px] h-full bg-gradient-to-l from-primary/5 to-transparent z-0 pointer-events-none"></div>
-
-        <div className="relative z-10 border-b-4 border-primary pb-4 mb-10 flex justify-between items-end">
+      {/* --- TRANG 3: VỀ THƯƠNG HIỆU UHi HÀN QUỐC --- */}
+      <div className="a4-page bg-white p-12 relative border border-slate-200 print:border-none flex flex-col">
+        <div className="border-b border-slate-200 pb-6 mb-10 flex justify-between items-end">
           <div>
-            <h2 className="text-4xl font-black uppercase text-gray-900 tracking-tight">Danh Mục Sản Phẩm</h2>
-            <p className="text-xl text-primary font-bold mt-1">Các dòng kẹo chua UHi hiện có</p>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Thương Hiệu UHi</h2>
+            <p className="text-slate-500 text-sm mt-2 uppercase tracking-wider">Xuất xứ: Hàn Quốc (Made in Korea)</p>
           </div>
-          <div className="text-gray-300">
-            <span className="text-5xl font-black">02</span>
-          </div>
+          <div className="text-slate-300 font-light text-5xl">02</div>
         </div>
 
-        <div className="relative z-10 grid grid-cols-2 gap-8">
-          {products.map((product, index) => (
-            <div key={product.id} className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 flex flex-col h-full">
-              <div className="h-48 bg-gray-100 relative flex items-center justify-center p-4">
+        <div className="flex-1 flex flex-col justify-center gap-12">
+          <div className="text-center max-w-2xl mx-auto">
+             <h3 className="text-2xl font-bold text-slate-900 mb-4">Cơn Sốt Kẹo Chua Bùng Nổ Tại Châu Á</h3>
+             <p className="text-slate-600 text-sm leading-relaxed">
+               UHi là thương hiệu kẹo dẻo và kẹo cứng nổi tiếng được sản xuất trực tiếp tại các nhà máy đạt chuẩn quốc tế ở Hàn Quốc. Bắt kịp xu hướng thưởng thức kẹo cảm giác mạnh của giới trẻ (Gen Z, Gen Alpha), UHi mang đến sự kết hợp hoàn hảo giữa vị chua bùng nổ ngay đầu lưỡi và hậu vị trái cây ngọt thanh tươi mát.
+             </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-8">
+             <div className="bg-primary text-white p-8">
+                <h4 className="font-bold text-lg mb-4">Điểm Nổi Bật Của UHi</h4>
+                <ul className="space-y-4 text-sm opacity-90">
+                  <li className="flex gap-3"><Check className="w-5 h-5 shrink-0" /> Sản xuất trên dây chuyền công nghệ cao của Hàn Quốc, đảm bảo chất lượng đồng đều.</li>
+                  <li className="flex gap-3"><Check className="w-5 h-5 shrink-0" /> Thành phần an toàn, không sử dụng chất tạo màu hóa học độc hại.</li>
+                  <li className="flex gap-3"><Check className="w-5 h-5 shrink-0" /> Thiết kế bao bì hiện đại, màu sắc bắt mắt, tối ưu không gian trưng bày trên kệ siêu thị.</li>
+                </ul>
+             </div>
+             <div className="bg-slate-900 text-white p-8">
+                <h4 className="font-bold text-lg mb-4">Chứng Nhận Quốc Tế</h4>
+                <ul className="space-y-4 text-sm opacity-90">
+                  <li className="flex gap-3"><FileText className="w-5 h-5 shrink-0 text-primary" /> ISO 22000: Hệ thống quản lý an toàn thực phẩm.</li>
+                  <li className="flex gap-3"><FileText className="w-5 h-5 shrink-0 text-primary" /> HACCP: Hệ thống phân tích mối nguy và kiểm soát điểm tới hạn (Hàn Quốc).</li>
+                  <li className="flex gap-3"><FileText className="w-5 h-5 shrink-0 text-primary" /> Tiêu chuẩn FDA (Sẵn sàng xuất khẩu toàn cầu).</li>
+                </ul>
+             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="page-break"></div>
+
+      {/* --- TRANG 4: THÔNG SỐ SẢN PHẨM --- */}
+      <div className="a4-page bg-white p-12 relative border border-slate-200 print:border-none">
+        <div className="border-b border-slate-200 pb-6 mb-10 flex justify-between items-end">
+          <div>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Danh Mục Sản Phẩm</h2>
+            <p className="text-slate-500 text-sm mt-2 uppercase tracking-wider">SKU Data & Quy Cách</p>
+          </div>
+          <div className="text-slate-300 font-light text-5xl">03</div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-8">
+          {products.map((product) => (
+            <div key={product.id} className="border border-slate-200 flex flex-col h-full bg-white">
+              <div className="h-48 border-b border-slate-100 flex items-center justify-center p-6">
                 {product.image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={product.image_url} alt={product.name} className="h-full object-contain mix-blend-multiply drop-shadow-lg" />
+                  <img src={product.image_url} alt={product.name} className="h-full object-contain" />
                 ) : (
-                  <Package className="w-20 h-20 text-gray-300" />
+                  <Package className="w-12 h-12 text-slate-200" />
                 )}
-                <div className="absolute top-4 right-4 bg-primary text-white font-bold px-3 py-1 rounded-full text-sm">
-                  Mới
-                </div>
               </div>
-              <div className="p-6 flex-1 flex flex-col border-t-4 border-secondary">
-                <h3 className="font-bold text-xl text-gray-900 mb-1">{product.name}</h3>
-                <p className="text-sm font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded inline-block w-max mb-4">SKU: {product.sku}</p>
+              <div className="p-6 flex-1 flex flex-col">
+                <h3 className="font-bold text-slate-900 text-lg mb-1">{product.name}</h3>
+                <p className="text-xs font-mono text-slate-500 mb-4">SKU: {product.sku}</p>
                 
-                <div className="space-y-2 mt-auto">
-                  <div className="flex justify-between items-center border-b border-gray-100 pb-2">
-                    <span className="text-gray-500 text-sm">Giá niêm yết (MSRP)</span>
-                    <span className="font-bold text-primary text-lg">{formatPrice(product.price)}</span>
+                <div className="space-y-3 mt-auto text-sm">
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <span className="text-slate-500">Giá bán lẻ (MSRP)</span>
+                    <span className="font-bold text-primary">{formatPrice(product.price)}</span>
                   </div>
-                  <div className="flex justify-between items-center border-b border-gray-100 pb-2">
-                    <span className="text-gray-500 text-sm">Quy cách đóng gói</span>
-                    <span className="font-medium text-gray-900 text-sm text-right max-w-[150px]">{product.packaging_spec || '12 gói / lốc'}</span>
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <span className="text-slate-500">Mã vạch (EAN-13)</span>
+                    <span className="font-mono text-slate-900">880... (Korea Barcode)</span>
                   </div>
-                  <div className="flex justify-between items-center border-b border-gray-100 pb-2">
-                    <span className="text-gray-500 text-sm">Khối lượng tịnh</span>
-                    <span className="font-medium text-gray-900 text-sm">{product.weight || '40g'}</span>
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <span className="text-slate-500">Quy cách</span>
+                    <span className="text-slate-900 text-right max-w-[150px]">{product.packaging_spec || '12 gói/dây - 120 gói/thùng'}</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                    <span className="text-slate-500">Trọng lượng</span>
+                    <span className="text-slate-900">{product.weight || '40g'}</span>
                   </div>
                   <div className="flex justify-between items-center pb-1">
-                    <span className="text-gray-500 text-sm">Hạn sử dụng</span>
-                    <span className="font-medium text-gray-900 text-sm">12 Tháng</span>
+                    <span className="text-slate-500">Hạn sử dụng</span>
+                    <span className="text-slate-900">12 Tháng</span>
                   </div>
                 </div>
               </div>
@@ -244,109 +269,153 @@ export default function UHiCatalogGenerator() {
           ))}
           
           {products.length === 0 && (
-            <div className="col-span-2 text-center py-20 bg-white rounded-2xl border-2 border-dashed border-gray-200">
-              <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 font-medium">Chưa có sản phẩm nào thuộc thương hiệu UHi đang hoạt động.</p>
+            <div className="col-span-2 text-center py-20 border border-dashed border-slate-300 bg-slate-50">
+              <Package className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+              <p className="text-slate-500 text-sm">Hệ thống chưa có sản phẩm UHi nào.</p>
             </div>
           )}
         </div>
+      </div>
 
-        <div className="relative z-10 mt-8 bg-gray-900 text-white p-6 rounded-2xl flex items-center justify-between shadow-2xl">
-           <div>
-             <h4 className="font-bold text-secondary text-lg mb-1">Giải pháp trưng bày (Shelf-Ready)</h4>
-             <p className="text-sm text-gray-300">Sản phẩm đi kèm dây treo (hanger) chuyên dụng dành cho khu vực thu ngân.</p>
+      <div className="page-break"></div>
+
+      {/* --- TRANG 5: HỒ SƠ PHÁP LÝ TẠI VN --- */}
+      <div className="a4-page bg-white p-12 relative border border-slate-200 print:border-none">
+        <div className="border-b border-slate-200 pb-6 mb-10 flex justify-between items-end">
+          <div>
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Hồ Sơ Pháp Lý</h2>
+            <p className="text-slate-500 text-sm mt-2 uppercase tracking-wider">Tiêu Chuẩn Nhập Khẩu Tại Việt Nam</p>
+          </div>
+          <div className="text-slate-300 font-light text-5xl">04</div>
+        </div>
+
+        <div className="space-y-8">
+           <p className="text-sm text-slate-700">Tất cả sản phẩm thương hiệu UHi do LYHU Group nhập khẩu đều tuân thủ nghiêm ngặt các quy định về An toàn vệ sinh thực phẩm và pháp luật hải quan Việt Nam. Hồ sơ bản cứng sẽ được đính kèm khi ký hợp đồng phân phối.</p>
+
+           <div className="grid grid-cols-2 gap-6">
+              <div className="border border-slate-200 p-6 flex items-start gap-4">
+                 <div className="w-10 h-10 rounded bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0">
+                    <FileText className="w-5 h-5 text-slate-600" />
+                 </div>
+                 <div>
+                    <h3 className="font-bold text-slate-900 text-sm mb-1">Tờ Khai Hải Quan</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">Chứng minh nguồn gốc xuất xứ hàng hóa nhập khẩu chính ngạch 100%.</p>
+                 </div>
+              </div>
+              <div className="border border-slate-200 p-6 flex items-start gap-4">
+                 <div className="w-10 h-10 rounded bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0">
+                    <FileText className="w-5 h-5 text-slate-600" />
+                 </div>
+                 <div>
+                    <h3 className="font-bold text-slate-900 text-sm mb-1">Giấy Chứng Nhận C/O</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">Certificate of Origin (Form AK/VK) xác nhận xuất xứ Hàn Quốc.</p>
+                 </div>
+              </div>
+              <div className="border border-slate-200 p-6 flex items-start gap-4">
+                 <div className="w-10 h-10 rounded bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0">
+                    <FileText className="w-5 h-5 text-slate-600" />
+                 </div>
+                 <div>
+                    <h3 className="font-bold text-slate-900 text-sm mb-1">Bản Tự Công Bố Sản Phẩm</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">Đã đăng ký công bố chất lượng tại Chi cục ATVSTP địa phương theo nghị định 15/2018/NĐ-CP.</p>
+                 </div>
+              </div>
+              <div className="border border-slate-200 p-6 flex items-start gap-4">
+                 <div className="w-10 h-10 rounded bg-slate-50 border border-slate-200 flex items-center justify-center shrink-0">
+                    <FileText className="w-5 h-5 text-slate-600" />
+                 </div>
+                 <div>
+                    <h3 className="font-bold text-slate-900 text-sm mb-1">Kết Quả Kiểm Nghiệm</h3>
+                    <p className="text-xs text-slate-500 leading-relaxed">Phiếu kiểm nghiệm (Test Report) định kỳ từ trung tâm kiểm định độc lập được nhà nước cấp phép.</p>
+                 </div>
+              </div>
            </div>
-           <div className="text-right">
-              <p className="text-xs text-gray-400 mb-1">Mã vạch chuẩn quốc tế</p>
-              <div className="font-mono bg-white text-black px-3 py-1 rounded text-sm font-bold tracking-[0.2em]">EAN-13 / ITF-14</div>
+
+           <div className="bg-slate-50 border border-slate-200 p-6 mt-8">
+              <h3 className="font-bold text-slate-900 text-sm mb-2">Nhãn Phụ Tiếng Việt</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Tất cả sản phẩm khi xuất kho lên kệ siêu thị đều đã được dán nhãn phụ Tiếng Việt theo đúng quy định của pháp luật về nhãn hàng hóa nhập khẩu, bao gồm đầy đủ thông tin: Thành phần, NSX, HSD, Thông tin nhà sản xuất tại Hàn Quốc, Thông tin đơn vị nhập khẩu LYHU Group.
+              </p>
            </div>
         </div>
       </div>
 
       <div className="page-break"></div>
 
-      {/* --- TRANG 4: TRADE MARKETING & LIÊN HỆ --- */}
-      <div className="a4-page bg-primary text-white p-12 flex flex-col relative overflow-hidden">
-        {/* Background elements */}
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-primary-400 rounded-full mix-blend-overlay filter blur-3xl opacity-50"></div>
-
-        <div className="relative z-10 border-b-4 border-secondary pb-4 mb-10 flex justify-between items-end">
+      {/* --- TRANG 6: TRADE MARKETING & LIÊN HỆ --- */}
+      <div className="a4-page bg-slate-900 text-white p-12 flex flex-col relative border border-slate-900 print:border-none">
+        <div className="border-b border-slate-700 pb-6 mb-10 flex justify-between items-end">
           <div>
-            <h2 className="text-4xl font-black uppercase text-white tracking-tight">Hỗ Trợ Thương Mại</h2>
-            <p className="text-xl text-primary-100 font-medium mt-1">Cam kết đồng hành cùng chuỗi siêu thị</p>
+            <h2 className="text-3xl font-bold text-white tracking-tight">Hỗ Trợ & Hợp Tác</h2>
+            <p className="text-slate-400 text-sm mt-2 uppercase tracking-wider">Cam Kết Dành Cho Đối Tác</p>
           </div>
-          <div className="text-primary-300">
-            <span className="text-5xl font-black">03</span>
-          </div>
+          <div className="text-slate-700 font-light text-5xl">05</div>
         </div>
 
-        <div className="relative z-10 grid grid-cols-2 gap-12 mb-auto">
-          <div>
-            <div className="bg-white/10 p-8 rounded-3xl border border-white/20 backdrop-blur-sm h-full">
-              <h3 className="text-2xl font-bold mb-8 text-secondary border-b-2 border-secondary/30 pb-4 inline-block">Đề Xuất Hợp Tác</h3>
-              <ul className="space-y-6 text-lg">
-                <li className="flex items-start gap-4">
-                  <div className="w-8 h-8 rounded-full bg-secondary text-primary flex items-center justify-center shrink-0 mt-1 font-bold">✓</div>
-                  <div>
-                    <strong className="block text-white mb-1">Chiết khấu (Margin) cực tốt</strong>
-                    <span className="text-primary-100 text-sm">Biên độ lợi nhuận hấp dẫn nhất trong ngành hàng kẹo dẻo.</span>
-                  </div>
+        <div className="flex-1 flex flex-col justify-between">
+          <div className="grid grid-cols-2 gap-12">
+            <div>
+              <h3 className="text-lg font-bold mb-6 text-primary uppercase">Trade Marketing</h3>
+              <ul className="space-y-6">
+                <li className="border-l-2 border-primary pl-4">
+                  <h4 className="font-bold text-white text-sm mb-1">Chương Trình Khuyến Mãi (Promotion)</h4>
+                  <p className="text-slate-400 text-xs leading-relaxed">Ngân sách hỗ trợ chạy CTKM định kỳ như Mua 2 Tặng 1, chiết khấu sâu vào cuối tuần để đẩy mạnh Sell-out.</p>
                 </li>
-                <li className="flex items-start gap-4">
-                  <div className="w-8 h-8 rounded-full bg-secondary text-primary flex items-center justify-center shrink-0 mt-1 font-bold">✓</div>
-                  <div>
-                    <strong className="block text-white mb-1">Hỗ trợ Listing Fee</strong>
-                    <span className="text-primary-100 text-sm">Thỏa thuận phí lên kệ linh hoạt và hỗ trợ chi phí mở mã.</span>
-                  </div>
+                <li className="border-l-2 border-primary pl-4">
+                  <h4 className="font-bold text-white text-sm mb-1">Vật Phẩm Trưng Bày (POSM)</h4>
+                  <p className="text-slate-400 text-xs leading-relaxed">Cung cấp miễn phí Hanger, Wobbler, Shelf-talker, Standee mini phù hợp với không gian quầy kệ siêu thị.</p>
                 </li>
-                <li className="flex items-start gap-4">
-                  <div className="w-8 h-8 rounded-full bg-secondary text-primary flex items-center justify-center shrink-0 mt-1 font-bold">✓</div>
-                  <div>
-                    <strong className="block text-white mb-1">Công nợ linh hoạt</strong>
-                    <span className="text-primary-100 text-sm">Thanh toán công nợ 15 - 30 ngày, tối ưu dòng tiền cho chuỗi.</span>
-                  </div>
+                <li className="border-l-2 border-primary pl-4">
+                  <h4 className="font-bold text-white text-sm mb-1">Hỗ Trợ Hàng Cận Date</h4>
+                  <p className="text-slate-400 text-xs leading-relaxed">Cam kết tỷ lệ đổi trả hàng cận date linh hoạt theo quy định, giảm thiểu tối đa rủi ro tồn kho cho siêu thị.</p>
+                </li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-bold mb-6 text-primary uppercase">Chính Sách Bán Hàng</h3>
+              <ul className="space-y-6">
+                <li className="border-l-2 border-primary pl-4">
+                  <h4 className="font-bold text-white text-sm mb-1">Biên Độ Lợi Nhuận (Margin)</h4>
+                  <p className="text-slate-400 text-xs leading-relaxed">Mức chiết khấu cạnh tranh cao nhất trong ngành hàng kẹo dẻo nhập khẩu. Có thưởng doanh số quý/năm (Rebate).</p>
+                </li>
+                <li className="border-l-2 border-primary pl-4">
+                  <h4 className="font-bold text-white text-sm mb-1">Chi Phí Lên Kệ (Listing Fee)</h4>
+                  <p className="text-slate-400 text-xs leading-relaxed">Ngân sách hỗ trợ phí mở mã hàng, phí ụ khuyến mãi (Gondola end) tùy theo quy mô chuỗi.</p>
+                </li>
+                <li className="border-l-2 border-primary pl-4">
+                  <h4 className="font-bold text-white text-sm mb-1">Thanh Toán & Công Nợ</h4>
+                  <p className="text-slate-400 text-xs leading-relaxed">Quy định công nợ linh hoạt 15 ngày, 30 ngày hoặc 45 ngày tùy theo hợp đồng nguyên tắc.</p>
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="space-y-6">
-            <h3 className="text-2xl font-bold mb-6 text-white">Ngân Sách Marketing</h3>
-            <div className="bg-primary-800 p-6 rounded-2xl border border-primary-600 shadow-xl">
-              <h4 className="font-bold text-lg text-secondary mb-2 flex items-center gap-2">
-                <span className="text-2xl">🔥</span> Khuyến mãi kích cầu
-              </h4>
-              <p className="text-primary-100 text-sm leading-relaxed">Ngân sách chạy chương trình định kỳ (Mua 2 Tặng 1, Mua hóa đơn giảm giá) nhằm thu hút Traffic tối đa cho siêu thị.</p>
+          <div className="mt-12 bg-white text-slate-900 p-8 flex justify-between items-center">
+            <div>
+              <h3 className="font-black text-xl mb-1 uppercase tracking-tight text-slate-900">Liên Hệ Phòng Kinh Doanh (B2B)</h3>
+              <p className="text-sm text-slate-500 mb-6">Sẵn sàng hợp tác và đồng hành cùng sự phát triển của hệ thống bán lẻ.</p>
+              
+              <div className="space-y-2 text-sm">
+                <p className="flex items-center gap-3 font-medium">
+                  <span className="text-slate-400">Hotline:</span> 
+                  <span className="font-bold text-lg text-primary">090.xxxx.xxx</span>
+                </p>
+                <p className="flex items-center gap-3 font-medium">
+                  <span className="text-slate-400">Email:</span> 
+                  <span>b2b@lyhu.vn</span>
+                </p>
+                <p className="flex items-center gap-3 font-medium">
+                  <span className="text-slate-400">Trụ sở:</span> 
+                  <span>Văn phòng CÔNG TY TNHH LYHU GROUP</span>
+                </p>
+              </div>
             </div>
-            <div className="bg-primary-800 p-6 rounded-2xl border border-primary-600 shadow-xl">
-              <h4 className="font-bold text-lg text-white mb-2 flex items-center gap-2">
-                <span className="text-2xl">📱</span> Truyền thông Digital
-              </h4>
-              <p className="text-primary-100 text-sm leading-relaxed">Phủ sóng review TikTok Reels. Cam kết chạy Ads quét vị trí (Geo-targeting) bán kính 3km quanh điểm bán.</p>
+            <div className="border border-slate-200 p-2">
+              <div className="w-24 h-24 bg-slate-50 border border-slate-200 flex items-center justify-center text-center">
+                <p className="text-xs font-bold text-slate-400">QR Code<br/>Zalo OA</p>
+              </div>
             </div>
-            <div className="bg-primary-800 p-6 rounded-2xl border border-primary-600 shadow-xl">
-              <h4 className="font-bold text-lg text-white mb-2 flex items-center gap-2">
-                <span className="text-2xl">♻️</span> Xử lý tồn kho linh hoạt
-              </h4>
-              <p className="text-primary-100 text-sm leading-relaxed">Hỗ trợ đổi trả hàng cận date, siêu thị KHÔNG chịu rủi ro hàng tồn đọng.</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative z-10 mt-12 bg-white text-gray-900 p-10 rounded-3xl shadow-2xl flex justify-between items-center border-b-8 border-secondary">
-          <div>
-            <h3 className="font-black text-3xl mb-3 uppercase tracking-tight text-primary">Liên Hệ Đặt Hàng</h3>
-            <p className="font-bold text-xl text-gray-600 mb-6 border-b-2 border-gray-100 pb-4 inline-block">Bộ phận Khách Hàng B2B</p>
-            <div className="space-y-3 text-lg">
-              <p className="flex items-center gap-3"><span className="text-2xl">📞</span> Hotline: <span className="font-black text-2xl text-primary">090.xxxx.xxx</span></p>
-              <p className="flex items-center gap-3"><span className="text-2xl">✉️</span> Email: <strong className="text-gray-700">b2b@lyhu.vn</strong></p>
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="w-40 h-40 bg-gray-50 border-2 border-dashed border-gray-300 rounded-2xl flex flex-col items-center justify-center p-4 mb-3">
-              <p className="font-bold text-gray-400">QR Code<br/>Zalo OA</p>
-            </div>
-            <p className="font-bold text-sm text-primary uppercase tracking-widest">Quét Để Chat</p>
           </div>
         </div>
       </div>
@@ -356,7 +425,7 @@ export default function UHiCatalogGenerator() {
           width: 210mm;
           min-height: 297mm;
           margin: 0 auto 20px auto;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
         @media print {
           @page { size: A4 portrait; margin: 0; }
