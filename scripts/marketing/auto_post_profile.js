@@ -337,17 +337,25 @@ function spinText(text) {
             if (textboxInfo.found) {
                 // Click vào textbox bằng mouse (isTrusted: true) → React bắt event đúng
                 await page.mouse.click(textboxInfo.x, textboxInfo.y);
-                await delay(3000); // TĂNG DELAY CHỜ REACT RENDER XONG COMPOSER MỚI ĐƯỢC GÕ
+                
+                // FB load bộ gõ rất chậm trên mạng yếu. Chờ hẳn 8-10 giây cho chắc ăn.
+                console.log("[POST] Đang chờ ô nhập liệu load xong hoàn toàn...");
+                await delay(rdn(8000, 10000));
+                
+                // Click lại lần nữa để đảm bảo focus không bị mất trong lúc FB load
+                await page.mouse.click(textboxInfo.x, textboxInfo.y);
+                await delay(1000);
                 
                 // "Warm up" input: gõ space rồi xóa → kích hoạt React listener
                 await page.keyboard.press('Space');
-                await delay(500);
+                await delay(1000);
                 await page.keyboard.press('Backspace');
                 await delay(1000);
                 
-                // Gõ nội dung thật (gõ chậm một chút để tránh rớt chữ)
-                await page.keyboard.type(finalMessage, { delay: rdn(20, 50) });
-                console.log("[POST] ✅ Đã gõ nội dung bài viết.");
+                // Gõ nội dung thật chậm như người để tránh Checkpoint
+                console.log("[POST] Bắt đầu gõ chữ như người thật...");
+                await page.keyboard.type(finalMessage, { delay: rdn(30, 60) });
+                console.log("[POST] ✅ Đã gõ xong nội dung bài viết.");
             } else {
                 console.log("[POST] ⚠ Không thể focus textbox.");
             }
