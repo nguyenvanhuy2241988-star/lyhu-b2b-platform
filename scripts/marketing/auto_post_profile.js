@@ -370,8 +370,28 @@ function spinText(text) {
                 await delay(1000);
                 
                 // Gõ nội dung thật chậm như người để tránh Checkpoint
+                // CHÚ Ý: Gõ từng dòng để chặn lỗi Facebook tự động nhận diện tag Nhóm/Người khi gõ Enter
                 console.log("[POST] Bắt đầu gõ chữ như người thật...");
-                await page.keyboard.type(finalMessage, { delay: rdn(30, 60) });
+                const lines = finalMessage.split('\n');
+                for (let i = 0; i < lines.length; i++) {
+                    // Gõ nội dung của dòng hiện tại
+                    if (lines[i].length > 0) {
+                        await page.keyboard.type(lines[i], { delay: rdn(30, 50) });
+                    }
+                    
+                    // Nếu chưa phải dòng cuối cùng, ta cần gõ Enter để xuống dòng
+                    if (i < lines.length - 1) {
+                        // 1. Bấm Escape để tắt triệt để mọi popup gợi ý tag của Facebook
+                        await page.keyboard.press('Escape');
+                        await delay(100);
+                        
+                        // 2. Bấm Shift + Enter để xuống dòng an toàn (bảo vệ kép không cho dính tag)
+                        await page.keyboard.down('Shift');
+                        await page.keyboard.press('Enter');
+                        await page.keyboard.up('Shift');
+                        await delay(200);
+                    }
+                }
                 console.log("[POST] ✅ Đã gõ xong nội dung bài viết.");
             } else {
                 console.log("[POST] ⚠ Không thể focus textbox.");
