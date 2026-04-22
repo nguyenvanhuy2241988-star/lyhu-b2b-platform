@@ -73,12 +73,16 @@ async function executeProfileAdd(rawCommand) {
             return;
         }
 
-        console.log(`[EXEC] Scrolling để kích mồi hiển thị danh sách...`);
+        console.log(`[EXEC] Lăn chuột mượt mà để kích mồi hiển thị danh sách...`);
         // Cuộn nhiều hơn tí để bù trường hợp số lượng vượt 15
         const scrollTimes = Math.max(4, Math.ceil(maxAdds / 5));
         for (let i = 0; i < scrollTimes; i++) {
-            await page.evaluate(() => window.scrollBy(0, 800));
-            await sleep(2000);
+            // Lăn chuột nhiều step nhỏ để tạo cảm giác mượt như người thật
+            for (let j = 0; j < 8; j++) {
+                await page.mouse.wheel({ deltaY: 100 + Math.random() * 50 });
+                await sleep(100 + Math.random() * 100);
+            }
+            await sleep(1500 + Math.random() * 1500);
         }
 
         const buttonHandles = await page.$$('div[role="button"]');
@@ -155,17 +159,39 @@ async function executeProfileAdd(rawCommand) {
                             // Cho trạng thái ở UI báo là Scraped / Pending Action
                             console.log(`[EXEC] 🕵️ Đã Vơ vét (Không Click): ${profileData.name}`);
                         } else {
-                            // Chế độ Tự Động Kết Bạn: Đổi sang Click thật (Human-like)
+                            // Chế độ Tự Động Kết Bạn: Đổi sang Click thật (Human-like Ultra)
                             try {
                                 await btnHandle.scrollIntoView();
-                                await sleep(500 + Math.random() * 500); 
-                                // Di chuột vào nút ngẫu nhiên như người thật
-                                await btnHandle.hover();
-                                await sleep(200 + Math.random() * 400);
-                                // Click thật bằng chuột của Puppeteer với độ trễ tay
-                                await btnHandle.click({ delay: 50 + Math.random() * 100 });
+                                
+                                // 1. Cognitive Delay: Dừng lại "ngắm" avatar và tên 2-4 giây
+                                console.log(`[EXEC] 🧠 Đang suy nghĩ/xem ảnh đại diện của ${profileData.name}...`);
+                                await sleep(2000 + Math.random() * 2000); 
+                                
+                                const box = await btnHandle.boundingBox();
+                                if (box) {
+                                    // 2. Mouse move mượt: Vẩy chuột ra khu vực gần đó trước
+                                    const startX = box.x - (100 + Math.random() * 100);
+                                    const startY = box.y - (50 + Math.random() * 50);
+                                    if (startX > 0 && startY > 0) {
+                                        await page.mouse.move(startX, startY, { steps: 5 + Math.floor(Math.random() * 5) });
+                                        await sleep(200 + Math.random() * 300);
+                                    }
+                                    
+                                    // 3. Hover vào nút mục tiêu
+                                    const targetX = box.x + box.width / 2 + (Math.random() * 10 - 5);
+                                    const targetY = box.y + box.height / 2 + (Math.random() * 10 - 5);
+                                    await page.mouse.move(targetX, targetY, { steps: 10 + Math.floor(Math.random() * 10) });
+                                    await sleep(300 + Math.random() * 500); // Ngập ngừng trước khi bấm
+                                    
+                                    // 4. Bấm chuột với độ trễ nẩy (button press down/up delay)
+                                    await page.mouse.down();
+                                    await sleep(80 + Math.random() * 150);
+                                    await page.mouse.up();
+                                } else {
+                                    throw new Error("Không lấy được toạ độ của nút");
+                                }
                             } catch (clickErr) {
-                                console.log(`[EXEC] Lỗi Click thật, xài Fallback JS Click: ${clickErr.message}`);
+                                console.log(`[EXEC] Lỗi Click vật lý, xài Fallback JS Click: ${clickErr.message}`);
                                 await page.evaluate(el => el.click(), btnHandle);
                             }
 
@@ -201,20 +227,20 @@ async function executeProfileAdd(rawCommand) {
 
                             // Phân bổ thời gian (Speed Control)
                             if (botSpeed === 'fast') {
-                                await sleep(3000 + Math.random() * 2000); // 3-5s siêu tốc
+                                await sleep(5000 + Math.random() * 5000); // Tăng fast lên xíu cho an toàn (5-10s)
                             } else if (botSpeed === 'slow') {
-                                const safeWait = 35000 + Math.random() * 20000;
-                                console.log(`[EXEC] ⏳ Tốc độ CỰC Rùa: Đứng chờ ${Math.round(safeWait/1000)}s...`);
+                                const safeWait = 45000 + Math.random() * 30000; // 45-75s
+                                console.log(`[EXEC] ⏳ Tốc độ CỰC Rùa: Nghỉ ngơi ${Math.round(safeWait/1000)}s...`);
                                 await sleep(safeWait);
                             } else {
                                 // Mặc định: Coffee Break chống Spam sau mỗi 3 cú Add
                                 if (addedCount % 3 === 0) {
-                                    const longWait = 45000 + Math.random() * 30000; 
-                                    console.log(`[EXEC] ☕ Đã cướp ${addedCount} người. Tạm nghỉ giải lao ${Math.round(longWait/1000)}s chống Spam...`);
+                                    const longWait = 60000 + Math.random() * 40000; // 60s - 100s
+                                    console.log(`[EXEC] ☕ Đã cướp ${addedCount} người. Lượn lờ uống cafe ${Math.round(longWait/1000)}s để FB đỡ nghi...`);
                                     await sleep(longWait);
                                 } else {
-                                    const shortWait = 15000 + Math.random() * 10000; 
-                                    console.log(`[EXEC] ⏳ Chờ ${Math.round(shortWait/1000)}s ngụy trang hành vi người dùng...`);
+                                    const shortWait = 18000 + Math.random() * 15000; // 18s - 33s
+                                    console.log(`[EXEC] ⏳ Đứng chơi ${Math.round(shortWait/1000)}s ngụy trang hành vi...`);
                                     await sleep(shortWait);
                                 }
                             }
