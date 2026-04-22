@@ -34,7 +34,7 @@ function spinText(text) {
 
 (async () => {
     let browser = null;
-    let tempImagePath = null;
+    let tempImagePaths = [];
     const debugDir = path.join(__dirname, '../../debug');
     if (!fs.existsSync(debugDir)) fs.mkdirSync(debugDir, { recursive: true });
     
@@ -55,15 +55,48 @@ function spinText(text) {
 
         const randomContent = data[Math.floor(Math.random() * data.length)];
         const finalMessage = spinText(randomContent.message_text);
-        const imageUrl = randomContent.image_url;
         console.log(`[POST] Đã bốc thăm bài: "${finalMessage.substring(0, 30)}..."`);
 
-        // 2. Tải ảnh nếu có
-        if (imageUrl) {
-            const ext = imageUrl.split('.').pop().split('?')[0] || 'jpg';
-            tempImagePath = path.join(__dirname, `../../temp_upload_${Date.now()}.${ext}`);
-            console.log(`[POST] Đang tải ảnh xuống: ${tempImagePath}`);
-            await downloadImage(imageUrl, tempImagePath);
+        // 2. Tải ảnh/video đính kèm
+        if (randomContent.doc_folder_id) {
+            const { data: filesData } = await supabase.from('documents_files')
+                .select('*')
+                .eq('folder_id', randomContent.doc_folder_id)
+                .eq('is_deleted', false);
+            
+            if (filesData && filesData.length > 0) {
+                const validMediaFiles = filesData.filter(f => {
+                    const ext = (f.original_name || '').split('.').pop().toLowerCase();
+                    return ['jpg', 'jpeg', 'png', 'gif', 'mp4', 'mov', 'avi', 'wmv'].includes(ext);
+                });
+                
+                if (validMediaFiles.length > 0) {
+                    const shuffled = validMediaFiles.sort(() => 0.5 - Math.random());
+                    const takeCount = randomContent.media_count || 1;
+                    const selectedFiles = shuffled.slice(0, takeCount);
+                    
+                    console.log(`[POST] Tiến hành tải ${selectedFiles.length} file Media từ Supabase...`);
+                    for (let f = 0; f < selectedFiles.length; f++) {
+                        const file = selectedFiles[f];
+                        try {
+                            const { data: signedData, error: signErr } = await supabase.storage.from('lyhu-docs').createSignedUrl(file.storage_path, 3600);
+                            if (!signErr && signedData && signedData.signedUrl) {
+                                const ext = (file.original_name || '').split('.').pop() || 'jpg';
+                                const dest = path.join(__dirname, `../../temp_upload_${Date.now()}_${f}.${ext}`);
+                                await downloadImage(signedData.signedUrl, dest);
+                                tempImagePaths.push(dest);
+                            }
+                        } catch (downloadErr) {}
+                    }
+                    console.log(`[POST] Tải thành công ${tempImagePaths.length} file Media!`);
+                }
+            }
+        } else if (randomContent.image_url) {
+            const ext = randomContent.image_url.split('.').pop().split('?')[0] || 'jpg';
+            const dest = path.join(__dirname, `../../temp_upload_${Date.now()}.${ext}`);
+            console.log(`[POST] Đang tải 1 ảnh đính kèm...`);
+            await downloadImage(randomContent.image_url, dest);
+            tempImagePaths.push(dest);
             console.log(`[POST] Tải ảnh hoàn tất!`);
         }
 
@@ -324,7 +357,7 @@ function spinText(text) {
         // ============================================================
         // BƯỚC 6: UPLOAD ẢNH (trong dialog đã mở)
         // ============================================================
-        if (tempImagePath) {
+        if (tempImagePaths.length > 0) {
             console.log("[POST] Bước 5: Upload ảnh...");
             
             // 1. CLICK NÚT "Thêm Ảnh/Video" ĐỂ FACEBOOK TẠO THẺ <INPUT TYPE="FILE">
@@ -356,10 +389,10 @@ function spinText(text) {
             const fileInput = dialogFileInput || anyFileInput;
             
             if (fileInput) {
-                await fileInput.uploadFile(tempImagePath);
+                await fileInput.uploadFile(...tempImagePaths);
                 console.log("[POST] ✅ Đã đẩy file ảnh/video vào trình duyệt.");
                 
-                const isVideo = tempImagePath.match(/\.(mp4|mov|avi|wmv)$/i);
+                const isVideo = tempImagePaths.some(p => p.match(/\.(mp4|mov|avi|wmv)$/i));
                 if (isVideo) {
                     console.log("[POST] Phát hiện Video! Chờ upload (30-60s)...");
                     await delay(rdn(30000, 60000));
@@ -439,10 +472,16 @@ function spinText(text) {
             if (box && box.width > 0 && box.height > 0) {
                 console.log(`[POST] Click nút Đăng tại (${Math.round(box.x + box.width/2)}, ${Math.round(box.y + box.height/2)})`);
                 await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+                await delay(1000);
+                // Fallback: Ép click bằng Javascript phòng trường hợp tọa độ bị lệch
+                await page.evaluate(el => el.click(), postBtnElement);
                 posted = true;
             } else {
-                console.log("[POST] Nút Đăng có size 0, thử .click()...");
-                try { await postBtnElement.click(); posted = true; } catch(e) {}
+                console.log("[POST] Nút Đăng có size 0, thử click bằng JS...");
+                try { 
+                    await page.evaluate(el => el.click(), postBtnElement); 
+                    posted = true; 
+                } catch(e) {}
             }
             await postBtnHandle.dispose();
         } else {
@@ -452,14 +491,23 @@ function spinText(text) {
 
         if (posted) {
             console.log("[POST] ⏳ Đang chờ Facebook xử lý đăng bài (đợi cửa sổ đóng)...");
-            // Chờ tối đa 30 giây cho Dialog Tạo bài viết biến mất
+            // Chờ tối đa 30 giây cho Nút Đăng biến mất (tức là hộp thoại đã đóng)
+            let actuallyPosted = false;
             for (let i = 0; i < 30; i++) {
-                const isDialogClosed = await page.evaluate(() => {
-                    const dialogs = Array.from(document.querySelectorAll('div[role="dialog"]'));
-                    return !dialogs.some(d => (d.innerText || '').includes('Tạo bài viết') || (d.innerText || '').includes('Create post'));
+                const isBtnGone = await page.evaluate(() => {
+                    // Nếu không còn tìm thấy nút Đăng nào trên màn hình -> đã đóng
+                    const btns = Array.from(document.querySelectorAll('div[role="button"]'));
+                    const postBtn = btns.find(b => {
+                        const txt = (b.innerText || '').trim();
+                        const label = (b.getAttribute('aria-label') || '').trim();
+                        return txt === 'Đăng' || txt === 'Post' || label === 'Đăng' || label === 'Post';
+                    });
+                    return !postBtn;
                 });
-                if (isDialogClosed) {
+                
+                if (isBtnGone) {
                     console.log("[POST] 🟢 Cửa sổ đăng bài đã đóng! Bài viết đã lên sóng.");
+                    actuallyPosted = true;
                     break;
                 }
                 await delay(1000);
@@ -467,8 +515,14 @@ function spinText(text) {
             
             await delay(3000); // Nghỉ 3s cuối cùng cho chắc
             await page.screenshot({ path: path.join(debugDir, 'step4_after_submit.png') });
-            console.log("[POST] 🟢 Hoàn thành toàn bộ quy trình!");
-            await logAction('post', 'success', `Thành công: Đã đăng 1 Status Cá Nhân (Kho: ${category})`);
+            
+            if (actuallyPosted) {
+                console.log("[POST] 🟢 Hoàn thành toàn bộ quy trình!");
+                await logAction('post', 'success', `Thành công: Đã đăng 1 Status Cá Nhân (Kho: ${category})`);
+            } else {
+                console.log("[POST] ❌ Nút Đăng vẫn còn trên màn hình, Facebook từ chối bài viết hoặc click trượt!");
+                throw new Error("Lỗi: Không thể đăng bài (Nút đăng không phản hồi).");
+            }
         } else {
             await page.screenshot({ path: path.join(debugDir, 'step3_submit_failed.png') });
             throw new Error("Không thể bấm nút Đăng. Xem debug/ để biết chi tiết.");
@@ -479,8 +533,10 @@ function spinText(text) {
         await logAction('post', 'error', `Lỗi đăng bài: ${e.message}`);
     } finally {
         if (browser) await browser.close();
-        if (tempImagePath && fs.existsSync(tempImagePath)) {
-            try { fs.unlinkSync(tempImagePath); console.log("[POST] Đã dọn dẹp file nháp."); } catch (err) {}
+        for (const p of tempImagePaths) {
+            if (fs.existsSync(p)) {
+                try { fs.unlinkSync(p); } catch (err) {}
+            }
         }
         process.exit(0);
     }
