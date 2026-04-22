@@ -141,9 +141,10 @@ function spinText(text) {
         // TÌM + CLICK COMPOSER VỚI RETRY (tối đa 5 lần)
         console.log("[POST] Tìm ô 'Bạn đang nghĩ gì?'...");
         let composerClicked = false;
+        let composerInfo = { found: false };
         
         for (let retry = 0; retry < 5; retry++) {
-            const composerInfo = await page.evaluate(() => {
+            const currentInfo = await page.evaluate(() => {
                 // Hàm tìm composer element
                 function findComposer() {
                     // Chiến lược 1: Tìm SPAN/DIV chứa text "Bạn đang nghĩ gì?"
@@ -198,7 +199,8 @@ function spinText(text) {
                 };
             });
             
-            if (composerInfo.found) {
+            if (currentInfo.found) {
+                composerInfo = currentInfo;
                 console.log(`[POST] Tìm thấy composer (${composerInfo.strategy}) tại (${Math.round(composerInfo.x)}, ${Math.round(composerInfo.y)}), size ${Math.round(composerInfo.w)}x${Math.round(composerInfo.h)}`);
                 await delay(500); // Chờ scroll xong
                 await page.mouse.click(composerInfo.x, composerInfo.y);
@@ -292,7 +294,22 @@ function spinText(text) {
                 await delay(3000);
             } else {
                 console.log(`[POST] Dialog chưa mở, thử lại... (${attempt + 1}/5)`);
-                await page.mouse.click(683, 384); // Click mù vào khu vực giữa
+                
+                // Nếu tọa độ lần trước tìm được thì dùng lại
+                if (composerInfo && composerInfo.found) {
+                     await page.mouse.click(composerInfo.x, composerInfo.y);
+                }
+                
+                // Thêm một cú hích click ẩn bằng Javascript cho chắc chắn
+                await page.evaluate(() => {
+                    const allElements = Array.from(document.querySelectorAll('div[role="button"], span'));
+                    const el = allElements.find(b => {
+                        const txt = (b.innerText || '').trim();
+                        return (txt.includes("Bạn đang nghĩ gì") || txt.includes("What's on your mind")) && txt.length < 50;
+                    });
+                    if (el) el.click();
+                });
+                
                 await delay(3000); // Tăng thời gian chờ lên 3s mỗi lần thử
             }
         }
