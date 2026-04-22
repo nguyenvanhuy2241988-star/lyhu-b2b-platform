@@ -369,30 +369,29 @@ function spinText(text) {
                 await page.keyboard.press('Backspace');
                 await delay(1000);
                 
-                // Gõ nội dung thật chậm như người để tránh Checkpoint
-                // CHÚ Ý: Gõ từng dòng để chặn lỗi Facebook tự động nhận diện tag Nhóm/Người khi gõ Enter
-                console.log("[POST] Bắt đầu gõ chữ như người thật...");
-                const lines = finalMessage.split('\n');
-                for (let i = 0; i < lines.length; i++) {
-                    // Gõ nội dung của dòng hiện tại
-                    if (lines[i].length > 0) {
-                        await page.keyboard.type(lines[i], { delay: rdn(30, 50) });
+                // Sử dụng Copy - Paste (Ctrl+V) để đảm bảo không rớt chữ và không bị dính Autocomplete Tag của Facebook
+                console.log("[POST] Bắt đầu dán (paste) nội dung bài viết...");
+                await page.evaluate(async (text) => {
+                    try {
+                        await navigator.clipboard.writeText(text);
+                    } catch (e) {
+                        const textArea = document.createElement("textarea");
+                        textArea.value = text;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand("Copy");
+                        textArea.remove();
                     }
-                    
-                    // Nếu chưa phải dòng cuối cùng, ta cần gõ Enter để xuống dòng
-                    if (i < lines.length - 1) {
-                        // 1. Bấm Escape để tắt triệt để mọi popup gợi ý tag của Facebook
-                        await page.keyboard.press('Escape');
-                        await delay(100);
-                        
-                        // 2. Bấm Shift + Enter để xuống dòng an toàn (bảo vệ kép không cho dính tag)
-                        await page.keyboard.down('Shift');
-                        await page.keyboard.press('Enter');
-                        await page.keyboard.up('Shift');
-                        await delay(200);
-                    }
-                }
-                console.log("[POST] ✅ Đã gõ xong nội dung bài viết.");
+                }, finalMessage);
+                
+                await delay(1000);
+                
+                // Bấm tổ hợp phím Ctrl + V để dán
+                await page.keyboard.down('Control');
+                await page.keyboard.press('v');
+                await page.keyboard.up('Control');
+                
+                console.log("[POST] ✅ Đã dán xong nội dung bài viết.");
             } else {
                 console.log("[POST] ⚠ Không thể focus textbox.");
             }
