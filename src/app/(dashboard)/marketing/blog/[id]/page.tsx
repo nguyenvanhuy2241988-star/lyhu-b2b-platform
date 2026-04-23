@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BlogPost, BlogCategory, getBlogPosts, getBlogPostById, saveBlogPost, getBlogCategories, generateSlug } from '@/lib/blogStore';
+import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/components/auth/AuthProvider';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 import { ArrowLeft, Save, Loader2, Sparkles, AlertCircle, Info } from 'lucide-react';
