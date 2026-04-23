@@ -105,6 +105,7 @@ export default function KpiDashboard({ date, userId }: KpiDashboardProps) {
     const [logs, setLogs] = useState<PostLog[]>([]);
     const [loading, setLoading] = useState(true);
     const [userTargets, setUserTargets] = useState<Record<string, number>>({});
+    const [userWeights, setUserWeights] = useState<Record<string, number>>({});
 
     const isAdmin = role === 'admin' || role === 'manager' || role === 'recruiter_manager';
 
@@ -118,12 +119,14 @@ export default function KpiDashboard({ date, userId }: KpiDashboardProps) {
             const { data: kpiSettings } = await supabase
                 .rpc('get_user_kpi_settings', { p_user_id: userId });
             const targets = (kpiSettings as any)?.kpi_targets || {};
+            const weights = (kpiSettings as any)?.kpi_weights || {};
 
             // 3. Fetch post logs for this specific date
             const postLogs = await getPostLogs(userId, date);
 
             setMetrics(kpiMetrics);
             setUserTargets(targets);
+            setUserWeights(weights);
             setLogs(postLogs);
         } catch (error) {
             console.error("Error loading KPI data:", error);
@@ -164,11 +167,25 @@ export default function KpiDashboard({ date, userId }: KpiDashboardProps) {
 
     // Build display items from kpi_metric_definitions
     const items = metrics
-        .filter(m => m.salary_percent > 0)
+        .filter(m => {
+            const userTarget = userTargets[m.key];
+            const userWeight = userWeights[m.key];
+            const finalWeight = userWeight !== undefined ? userWeight : m.salary_percent;
+            const finalTarget = userTarget !== undefined ? userTarget : m.monthly_target;
+            
+            // Show if it has any weight OR if a target is explicitly set > 0
+            return finalWeight > 0 || finalTarget > 0;
+        })
         .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
         .map((metric, idx) => {
-            const monthlyTarget = userTargets[metric.key] || metric.monthly_target || 0;
-            const dailyTarget = Math.round(monthlyTarget / WORKING_DAYS);
+            const monthlyTarget = userTargets[metric.key] !== undefined ? userTargets[metric.key] : (metric.monthly_target || 0);
+            let dailyTarget = Math.round(monthlyTarget / WORKING_DAYS);
+            
+            // Prevent "0/0" for small monthly targets. If they have a target, make it at least 1/day
+            if (monthlyTarget > 0 && dailyTarget === 0) {
+                dailyTarget = 1;
+            }
+            
             const count = countLogsForMetric(metric.key, metric.label, logs);
             const color = COLORS[idx % COLORS.length];
 
