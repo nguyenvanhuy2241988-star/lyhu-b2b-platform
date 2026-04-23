@@ -31,7 +31,7 @@ async function getPost(slug: string) {
         
     if (error || !data) return null;
 
-    // Fetch related posts (same category)
+    // Fetch related posts
     let relatedPosts: any[] = [];
     if (data.category_id) {
         const { data: related } = await supabase
@@ -53,10 +53,7 @@ export async function generateMetadata(
     parent: ResolvingMetadata
 ): Promise<Metadata> {
     const data = await getPost(params.slug);
-    
-    if (!data) {
-        return { title: 'Không tìm thấy bài viết' };
-    }
+    if (!data) return { title: 'Không tìm thấy bài viết' };
 
     const { post } = data;
     const title = post.meta_title || post.title;
@@ -66,18 +63,12 @@ export async function generateMetadata(
     const imageUrl = post.thumbnail_url || `${siteUrl}/logo-full.png`;
 
     return {
-        title,
-        description,
-        keywords: post.keywords || '',
+        title, description, keywords: post.keywords || '',
         alternates: { canonical: postUrl },
         openGraph: {
-            title,
-            description,
-            url: postUrl,
-            siteName: 'LYHU B2B',
+            title, description, url: postUrl, siteName: 'LYHU B2B',
             images: [{ url: imageUrl, width: 1200, height: 630, alt: title }],
-            locale: 'vi_VN',
-            type: 'article',
+            locale: 'vi_VN', type: 'article',
             publishedTime: post.published_at || post.created_at,
         },
     };
@@ -85,14 +76,10 @@ export async function generateMetadata(
 
 export default async function BlogPostPage({ params }: Props) {
     const data = await getPost(params.slug);
-    
     if (!data) notFound();
     const { post, relatedPosts } = data;
-
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lyhu.com.vn';
-    const postUrl = `${siteUrl}/tin-tuc/${post.slug}`;
 
-    // Schema Logic
     const articleSchema = {
         '@context': 'https://schema.org',
         '@type': 'Article',
@@ -101,16 +88,8 @@ export default async function BlogPostPage({ params }: Props) {
         image: post.thumbnail_url ? [post.thumbnail_url] : [],
         datePublished: post.published_at || post.created_at,
         dateModified: post.updated_at,
-        author: [{
-            '@type': 'Person',
-            name: post.author?.full_name || 'LYHU Team',
-            url: siteUrl
-        }],
-        publisher: {
-            '@type': 'Organization',
-            name: 'LYHU',
-            logo: { '@type': 'ImageObject', url: `${siteUrl}/logo-full.png` }
-        }
+        author: [{ '@type': 'Person', name: post.author?.full_name || 'LYHU Team', url: siteUrl }],
+        publisher: { '@type': 'Organization', name: 'LYHU', logo: { '@type': 'ImageObject', url: `${siteUrl}/logo-full.png` } }
     };
 
     let faqSchema = null;
@@ -120,85 +99,78 @@ export default async function BlogPostPage({ params }: Props) {
             '@context': 'https://schema.org',
             '@type': 'FAQPage',
             mainEntity: faqs.map((faq: any) => ({
-                '@type': 'Question',
-                name: faq.question,
+                '@type': 'Question', name: faq.question,
                 acceptedAnswer: { '@type': 'Answer', text: faq.answer }
             }))
         };
     }
 
     return (
-        <article className="min-h-screen bg-white">
+        <article className="min-h-screen bg-white pb-20">
             <ReadingProgressBar />
-
-            {/* SEO Scripts */}
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
             {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
 
-            {/* Immersive Hero Header */}
-            <div className="relative w-full h-[60vh] min-h-[500px] flex items-end">
-                {post.thumbnail_url ? (
-                    <div className="absolute inset-0 z-0">
+            {/* Breadcrumb / Back Navigation */}
+            <div className="max-w-4xl mx-auto px-6 lg:px-8 pt-8 pb-6 border-b border-gray-100 flex items-center justify-between">
+                <Link href="/tin-tuc" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-primary-600 font-medium transition-colors">
+                    <ArrowLeft className="w-4 h-4" /> Về Góc Kiến Thức
+                </Link>
+                {post.category && (
+                    <span className="text-sm font-bold text-primary-600 uppercase tracking-widest">
+                        {post.category.name}
+                    </span>
+                )}
+            </div>
+
+            {/* Clean Header Area */}
+            <header className="max-w-4xl mx-auto px-6 lg:px-8 py-10">
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-8">
+                    {post.title}
+                </h1>
+                
+                <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 font-medium">
+                    <div className="flex items-center gap-2">
+                        {post.author?.avatar_url ? (
+                            <img src={post.author.avatar_url} className="w-8 h-8 rounded-full border border-gray-200" alt="Avatar" />
+                        ) : (
+                            <UserCircle2 className="w-8 h-8 text-gray-400" />
+                        )}
+                        <span className="text-gray-800 font-bold">{post.author?.full_name || 'LYHU Team'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-gray-400" />
+                        <time dateTime={post.published_at || post.created_at}>
+                            {new Date(post.published_at || post.created_at).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' })}
+                        </time>
+                    </div>
+                </div>
+            </header>
+
+            {/* Featured Image */}
+            {post.thumbnail_url && (
+                <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 mb-12">
+                    <div className="aspect-[21/9] w-full rounded-2xl overflow-hidden bg-gray-100 shadow-sm border border-gray-100">
                         <img 
                             src={post.thumbnail_url} 
                             alt={post.title} 
                             className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/10"></div>
-                    </div>
-                ) : (
-                    <div className="absolute inset-0 z-0 bg-primary-900">
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
-                    </div>
-                )}
-                
-                {/* Back Button */}
-                <Link href="/tin-tuc" className="absolute top-6 left-6 z-20 flex items-center gap-2 text-white/80 hover:text-white transition-colors bg-black/20 px-4 py-2 rounded-full backdrop-blur-md text-sm font-medium">
-                    <ArrowLeft className="w-4 h-4" /> Trở về Trang chủ
-                </Link>
-
-                <div className="relative z-10 w-full max-w-4xl mx-auto px-6 lg:px-8 pb-16">
-                    {post.category && (
-                        <span className="inline-block bg-primary-600/90 backdrop-blur-md text-white px-4 py-1.5 text-sm font-bold uppercase tracking-widest rounded-full mb-6">
-                            {post.category.name}
-                        </span>
-                    )}
-                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white leading-[1.15] mb-6 drop-shadow-lg">
-                        {post.title}
-                    </h1>
-                    
-                    <div className="flex flex-wrap items-center gap-6 text-gray-300 font-medium">
-                        <div className="flex items-center gap-2">
-                            {post.author?.avatar_url ? (
-                                <img src={post.author.avatar_url} className="w-8 h-8 rounded-full border-2 border-white/20" alt="Avatar" />
-                            ) : (
-                                <UserCircle2 className="w-8 h-8 opacity-80" />
-                            )}
-                            <span className="text-white">{post.author?.full_name || 'LYHU Team'}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4" />
-                            <time dateTime={post.published_at || post.created_at}>
-                                {new Date(post.published_at || post.created_at).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' })}
-                            </time>
-                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* Main Content Area */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 flex flex-col lg:flex-row gap-16">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-16">
                 
                 {/* Left Content */}
                 <div className="flex-1 w-full max-w-3xl mx-auto lg:mx-0">
                     
-                    {/* AEO Summary Block */}
+                    {/* AEO Summary Block (Clean style) */}
                     {post.ai_summary && (
-                        <div className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-2xl border border-indigo-100/50 mb-10 relative">
-                            <div className="absolute -top-3 left-6 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">
-                                Nội dung chính
-                            </div>
-                            <p className="text-indigo-900/80 text-lg leading-relaxed font-medium mt-2">
+                        <div className="bg-primary-50 p-6 rounded-xl border border-primary-100 mb-10">
+                            <p className="text-primary-900 font-medium leading-relaxed">
+                                <strong className="text-primary-700 mr-2">Tóm tắt:</strong>
                                 {post.ai_summary}
                             </p>
                         </div>
@@ -206,23 +178,23 @@ export default async function BlogPostPage({ params }: Props) {
 
                     {/* Prose Content */}
                     <div 
-                        className="prose prose-lg lg:prose-xl prose-slate max-w-none 
-                        prose-headings:font-bold prose-headings:tracking-tight prose-headings:text-gray-900 
-                        prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-6 prose-h2:pb-2 prose-h2:border-b prose-h2:border-gray-100
-                        prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-4
+                        className="prose prose-lg prose-slate max-w-none 
+                        prose-headings:font-bold prose-headings:text-gray-900 
+                        prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4
+                        prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-4
                         prose-p:text-gray-600 prose-p:leading-relaxed prose-p:mb-6
-                        prose-a:text-primary-600 prose-a:no-underline hover:prose-a:text-primary-700 hover:prose-a:underline
-                        prose-img:rounded-2xl prose-img:shadow-lg prose-img:my-10
-                        prose-blockquote:border-l-4 prose-blockquote:border-primary-500 prose-blockquote:bg-gray-50 prose-blockquote:py-2 prose-blockquote:px-6 prose-blockquote:rounded-r-2xl prose-blockquote:text-gray-700 prose-blockquote:not-italic"
+                        prose-a:text-primary-600 prose-a:no-underline hover:prose-a:underline
+                        prose-img:rounded-xl prose-img:border prose-img:border-gray-100
+                        prose-blockquote:border-l-4 prose-blockquote:border-gray-300 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-500"
                         dangerouslySetInnerHTML={{ __html: post.content }}
                     />
 
                     {/* Tags */}
                     {post.keywords && (
-                        <div className="mt-16 pt-8 border-t border-gray-100 flex items-center gap-3 flex-wrap">
-                            <Tag className="w-5 h-5 text-gray-400" />
+                        <div className="mt-12 pt-6 border-t border-gray-100 flex items-center gap-2 flex-wrap">
+                            <Tag className="w-4 h-4 text-gray-400" />
                             {post.keywords.split(',').map((kw, i) => (
-                                <span key={i} className="bg-gray-100 text-gray-700 px-4 py-1.5 rounded-full text-sm font-medium hover:bg-gray-200 cursor-default transition-colors">
+                                <span key={i} className="bg-gray-50 border border-gray-200 text-gray-600 px-3 py-1 rounded text-sm font-medium">
                                     {kw.trim()}
                                 </span>
                             ))}
@@ -230,48 +202,47 @@ export default async function BlogPostPage({ params }: Props) {
                     )}
                 </div>
 
-                {/* Right Sidebar - Sticky Call to Action */}
-                <aside className="w-full lg:w-[340px] shrink-0">
+                {/* Right Sidebar - Minimalist Call to Action */}
+                <aside className="w-full lg:w-[320px] shrink-0">
                     <div className="sticky top-24 space-y-8">
                         {/* B2B Promo Widget */}
-                        <div className="bg-gradient-to-b from-primary-50 to-white rounded-3xl p-8 border border-primary-100/50 shadow-xl shadow-primary-900/5 text-center relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary-200/50 rounded-full blur-3xl -mr-16 -mt-16"></div>
-                            
-                            <div className="w-20 h-20 bg-white rounded-2xl shadow-sm border border-primary-50 flex items-center justify-center mx-auto mb-6 text-primary-600 relative z-10">
-                                <ShoppingCart className="w-10 h-10" />
+                        <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm text-center">
+                            <div className="w-12 h-12 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-4 text-primary-600">
+                                <ShoppingCart className="w-6 h-6" />
                             </div>
-                            <h3 className="text-2xl font-black text-gray-900 mb-3 relative z-10">Bạn là Chủ Tạp Hóa?</h3>
-                            <p className="text-gray-600 text-base mb-8 relative z-10 leading-relaxed">
-                                Đăng ký trở thành Đại lý phân phối của LYHU ngay hôm nay để nhận mức chiết khấu tận xưởng lên tới <strong className="text-primary-600">45%</strong>.
+                            <h3 className="text-xl font-bold text-gray-900 mb-2">Đăng ký Đại lý</h3>
+                            <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                                Trở thành đối tác phân phối của LYHU để nhận bảng giá sỉ và các chính sách chiết khấu tốt nhất.
                             </p>
                             <Link 
                                 href="/wholesale"
-                                className="block w-full bg-primary-600 text-white font-bold text-lg py-4 rounded-xl shadow-lg shadow-primary-600/30 hover:bg-primary-700 hover:-translate-y-1 transition-all duration-300 relative z-10"
+                                className="block w-full bg-primary-600 text-white font-bold text-sm py-3 rounded-lg hover:bg-primary-700 transition-colors"
                             >
-                                Đăng Ký Lấy Sỉ
+                                Liên hệ Báo Giá
                             </Link>
                         </div>
                         
                         {/* Related Posts Widget */}
                         {relatedPosts.length > 0 && (
-                            <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
-                                <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">
                                     Bài viết cùng chuyên mục
                                 </h3>
-                                <div className="space-y-6">
+                                <div className="space-y-5">
                                     {relatedPosts.map(rp => (
-                                        <Link key={rp.id} href={`/tin-tuc/${rp.slug}`} className="group flex gap-4">
-                                            <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 shrink-0">
-                                                {rp.thumbnail_url ? (
-                                                    <img src={rp.thumbnail_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={rp.title} />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center bg-primary-50 text-primary-200 text-xs font-bold">LYHU</div>
+                                        <Link key={rp.id} href={`/tin-tuc/${rp.slug}`} className="group flex gap-3">
+                                            <div className="w-20 h-20 rounded bg-gray-100 shrink-0 border border-gray-100 overflow-hidden">
+                                                {rp.thumbnail_url && (
+                                                    <img src={rp.thumbnail_url} className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" alt={rp.title} />
                                                 )}
                                             </div>
                                             <div className="flex-1">
-                                                <h4 className="font-bold text-gray-900 text-sm group-hover:text-primary-600 transition-colors line-clamp-3 leading-tight mb-2">
+                                                <h4 className="font-semibold text-gray-800 text-sm group-hover:text-primary-600 transition-colors line-clamp-2 leading-tight mb-1">
                                                     {rp.title}
                                                 </h4>
+                                                <div className="text-xs text-gray-400">
+                                                    {new Date(rp.published_at || rp.created_at).toLocaleDateString('vi-VN')}
+                                                </div>
                                             </div>
                                         </Link>
                                     ))}
