@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCallback } from 'react';
+import { compressImage } from '@/lib/imageCompression';
 
 interface RichTextEditorProps {
     content: string;
@@ -60,12 +61,13 @@ export default function RichTextEditor({
         input.onchange = async () => {
             if (input.files?.length) {
                 const file = input.files[0];
-                const fileName = `${Date.now()}-${file.name}`;
+                const fileToUpload = await compressImage(file);
+                const fileName = `${Date.now()}-${fileToUpload.name || file.name}`;
 
                 // Upload to Supabase
                 const { data, error } = await supabase.storage
                     .from('event-images')
-                    .upload(fileName, file);
+                    .upload(fileName, fileToUpload);
 
                 if (error) {
                     alert('Lỗi upload ảnh: ' + error.message);

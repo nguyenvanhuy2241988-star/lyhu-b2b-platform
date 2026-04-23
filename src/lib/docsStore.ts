@@ -2,6 +2,7 @@
 
 import { supabase } from './supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
+import { compressImage } from './imageCompression';
 
 export const DOCS_TABLE = 'documents';
 export const FILES_TABLE = 'document_files';
@@ -252,6 +253,7 @@ export async function uploadDocumentFiles(documentId: string, files: File[]): Pr
     const results: DocumentFileItem[] = [];
 
     for (const file of files) {
+        const fileToUpload = await compressImage(file);
         const ext = file.name.split('.').pop();
         // unique path: documents/{docId}/{date}_{random}.ext
         const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
@@ -260,7 +262,7 @@ export async function uploadDocumentFiles(documentId: string, files: File[]): Pr
         // 1. Upload to Storage
         const { error: uploadError } = await supabase.storage
             .from(BUCKET_NAME)
-            .upload(storagePath, file);
+            .upload(storagePath, fileToUpload);
 
         if (uploadError) {
             console.error('Upload failed:', file.name, uploadError);
@@ -274,8 +276,8 @@ export async function uploadDocumentFiles(documentId: string, files: File[]): Pr
                 document_id: documentId,
                 storage_path: storagePath,
                 file_name: file.name,
-                mime_type: file.type,
-                size: file.size,
+                mime_type: fileToUpload.type,
+                size: fileToUpload.size,
                 uploaded_by: userId
             })
             .select('*')

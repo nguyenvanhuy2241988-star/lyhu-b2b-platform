@@ -2,6 +2,7 @@
 
 import { supabase } from './supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
+import { compressImage } from './imageCompression';
 
 export const FOLDERS_TABLE = 'documents_folders';
 export const FILES_TABLE = 'documents_files';
@@ -286,10 +287,11 @@ export async function uploadDirectory(parentFolderId: string, files: File[]): Pr
             }
         }
 
+        const fileToUpload = await compressImage(file);
         const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
         const storagePath = `global/${fileFolderId}/${Date.now()}-${uuidv4()}-${safeName}`;
 
-        const { error: storageError } = await supabase.storage.from(BUCKET_NAME).upload(storagePath, file);
+        const { error: storageError } = await supabase.storage.from(BUCKET_NAME).upload(storagePath, fileToUpload);
         if (storageError) continue;
 
         const { data, error: dbError } = await supabase
@@ -298,8 +300,8 @@ export async function uploadDirectory(parentFolderId: string, files: File[]): Pr
                 folder_id: fileFolderId,
                 title: file.name,
                 original_name: file.name,
-                mime_type: file.type,
-                size_bytes: file.size,
+                mime_type: fileToUpload.type,
+                size_bytes: fileToUpload.size,
                 storage_bucket: BUCKET_NAME,
                 storage_path: storagePath,
                 created_by: uid
@@ -323,6 +325,7 @@ export async function uploadFiles(folderId: string, files: File[]): Promise<Docu
     const results: DocumentFile[] = [];
 
     for (const file of files) {
+        const fileToUpload = await compressImage(file);
         const ext = file.name.split('.').pop();
         const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
         // Structure: global/folderId/timestamp-uuid-name
@@ -331,7 +334,7 @@ export async function uploadFiles(folderId: string, files: File[]): Promise<Docu
         // 1. Storage Upload
         const { error: storageError } = await supabase.storage
             .from(BUCKET_NAME)
-            .upload(storagePath, file);
+            .upload(storagePath, fileToUpload);
 
         if (storageError) {
             console.error(`Upload failed for ${file.name}`, storageError);
@@ -345,8 +348,8 @@ export async function uploadFiles(folderId: string, files: File[]): Promise<Docu
                 folder_id: folderId,
                 title: file.name,
                 original_name: file.name,
-                mime_type: file.type,
-                size_bytes: file.size,
+                mime_type: fileToUpload.type,
+                size_bytes: fileToUpload.size,
                 storage_bucket: BUCKET_NAME,
                 storage_path: storagePath,
                 created_by: uid
