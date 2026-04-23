@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { createServerClient } from "@supabase/ssr";
 import WholesaleStore from '@/components/wholesale/WholesaleStore';
+import WholesaleFooter from '@/components/wholesale/WholesaleFooter';
 
 export const dynamic = 'force-dynamic';
 
@@ -121,6 +122,7 @@ export default async function WholesalePage() {
                 isWholesaleCustomer={isWholesaleCustomer}
                 b2bCodeData={b2bCodeData}
             />
+            <WholesaleFooter />
         </div>
     );
 }
