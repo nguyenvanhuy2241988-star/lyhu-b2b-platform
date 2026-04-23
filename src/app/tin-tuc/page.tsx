@@ -46,7 +46,7 @@ export default async function BlogIndexPage({
 
     // Split posts
     const featuredPost = filteredPosts[0];
-    const gridPosts = featuredPosts ? filteredPosts.slice(1) : [];
+    const gridPosts = featuredPost ? filteredPosts.slice(1) : [];
     
     // Most viewed (placeholder random logic)
     const trendingPosts = [...posts].sort(() => 0.5 - Math.random()).slice(0, 5);
