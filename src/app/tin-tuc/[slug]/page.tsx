@@ -201,7 +201,6 @@ export default async function BlogPostPage({ params }: Props) {
                             ))}
                         </div>
                     )}
-                </div>
 
                     {/* Related text links (Có thể bạn quan tâm) */}
                     {relatedPosts.length > 0 && (
@@ -288,6 +287,8 @@ export default async function BlogPostPage({ params }: Props) {
                                 Xem tất cả sản phẩm
                             </Link>
                         </div>
+                    </div>
+                </aside>
             </div>
         </article>
     );
