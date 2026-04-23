@@ -99,7 +99,7 @@ export async function generateMetadata(
 export default async function BlogPostPage({ params }: Props) {
     const data = await getPost(params.slug);
     if (!data) notFound();
-    const { post, relatedPosts } = data;
+    const { post, relatedPosts, promotions, products } = data;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lyhu.com.vn';
 
     const articleSchema = {
