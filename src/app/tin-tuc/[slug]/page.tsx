@@ -2,7 +2,7 @@ import React from 'react';
 import { Metadata, ResolvingMetadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
 import { Clock, Tag, ChevronRight, ShoppingCart } from 'lucide-react';
 import { BlogPost } from '@/lib/blogStore';
 
@@ -14,6 +14,10 @@ type Props = {
 };
 
 async function getPost(slug: string) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     const { data, error } = await supabase
         .from('blog_posts')
         .select(`

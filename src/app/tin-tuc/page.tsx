@@ -1,12 +1,16 @@
 import React from 'react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
 import { Clock, ChevronRight } from 'lucide-react';
-import { BlogCategory, BlogPost } from '@/lib/blogStore';
+import { BlogPost } from '@/lib/blogStore';
 
 export const revalidate = 3600; // Revalidate every hour
 
 async function getPublishedPosts() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
     const { data, error } = await supabase
         .from('blog_posts')
         .select(`
