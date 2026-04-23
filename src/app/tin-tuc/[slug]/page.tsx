@@ -6,6 +6,10 @@ import { createClient } from '@supabase/supabase-js';
 import { Clock, Tag, ChevronRight, ShoppingCart, UserCircle2, ArrowLeft } from 'lucide-react';
 import { BlogPost } from '@/lib/blogStore';
 import ReadingProgressBar from '@/components/blog/ReadingProgressBar';
+import BlogVoucherList from '@/components/blog/BlogVoucherList';
+import BlogProductGrid from '@/components/blog/BlogProductGrid';
+import BlogSidebarPromo from '@/components/blog/BlogSidebarPromo';
+import BlogSidebarArticles from '@/components/blog/BlogSidebarArticles';
 
 export const revalidate = 3600;
 
@@ -31,7 +35,7 @@ async function getPost(slug: string) {
         
     if (error || !data) return null;
 
-    // Fetch related posts
+    // Fetch related posts (increase limit to 8 to split between sidebar and bottom)
     let relatedPosts: any[] = [];
     if (data.category_id) {
         const { data: related } = await supabase
@@ -41,11 +45,29 @@ async function getPost(slug: string) {
             .eq('status', 'published')
             .neq('id', data.id)
             .order('published_at', { ascending: false })
-            .limit(3);
+            .limit(8);
         relatedPosts = related || [];
     }
 
-    return { post: data as BlogPost, relatedPosts };
+    // Fetch active promotions
+    const { data: promotions } = await supabase
+        .from('wholesale_promotions')
+        .select('*')
+        .eq('is_active', true);
+
+    // Fetch some active products
+    const { data: products } = await supabase
+        .from('master_products')
+        .select('id, name, retailPrice:retail_price, basePricePerUnit:base_price_per_unit, basePrice:base_price, images')
+        .eq('is_active', true)
+        .limit(4);
+
+    return { 
+        post: data as BlogPost, 
+        relatedPosts, 
+        promotions: promotions || [], 
+        products: products || [] 
+    };
 }
 
 export async function generateMetadata(
@@ -145,6 +167,9 @@ export default async function BlogPostPage({ params }: Props) {
                         </time>
                     </div>
                 </div>
+
+                {/* Top Vouchers Slider */}
+                <BlogVoucherList vouchers={promotions.filter(p => p.type === 'voucher' || p.discount_type)} />
             </header>
 
             {/* Main Content Area */}
@@ -203,11 +228,11 @@ export default async function BlogPostPage({ params }: Props) {
                     )}
 
                     {/* Related text links (Có thể bạn quan tâm) */}
-                    {relatedPosts.length > 0 && (
+                    {relatedPosts.slice(0, 3).length > 0 && (
                         <div className="mt-10 bg-primary-50/50 p-6 rounded-lg border border-primary-100">
                             <h3 className="text-lg font-bold text-gray-900 mb-4">Có thể bạn quan tâm:</h3>
                             <ul className="space-y-3">
-                                {relatedPosts.map(rp => (
+                                {relatedPosts.slice(0, 3).map(rp => (
                                     <li key={rp.id} className="flex items-start gap-2">
                                         <span className="text-primary-500 mt-1">•</span>
                                         <Link href={`/tin-tuc/${rp.slug}`} className="text-blue-700 hover:text-blue-800 hover:underline font-medium">
@@ -216,6 +241,30 @@ export default async function BlogPostPage({ params }: Props) {
                                     </li>
                                 ))}
                             </ul>
+                        </div>
+                    )}
+
+                    {/* Products Grid */}
+                    <BlogProductGrid products={products} />
+
+                    {/* Bottom Related Posts Grid (Tham khảo thêm) */}
+                    {relatedPosts.slice(3).length > 0 && (
+                        <div className="mt-12 pt-8 border-t border-gray-100">
+                            <h3 className="text-xl font-bold text-gray-900 mb-6">Tham khảo thêm</h3>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {relatedPosts.slice(3).map(rp => (
+                                    <Link key={rp.id} href={`/tin-tuc/${rp.slug}`} className="group flex flex-col">
+                                        <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden mb-3">
+                                            {rp.thumbnail_url ? (
+                                                <img src={rp.thumbnail_url} alt={rp.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-gray-400">LYHU</div>
+                                            )}
+                                        </div>
+                                        <h4 className="text-sm font-bold text-gray-800 line-clamp-2 group-hover:text-primary-600 transition-colors">{rp.title}</h4>
+                                    </Link>
+                                ))}
+                            </div>
                         </div>
                     )}
 
@@ -239,62 +288,8 @@ export default async function BlogPostPage({ params }: Props) {
                 {/* Right Sidebar - eCommerce Practical Style */}
                 <aside className="w-full lg:w-[320px] shrink-0">
                     <div className="sticky top-24 space-y-6">
-                        {/* B2B Promo Widget (Minimalist Style) */}
-                        <div className="bg-white rounded-xl p-6 border border-primary-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-primary-50 rounded-bl-[100px] -z-10"></div>
-                            <div className="relative z-10">
-                                <span className="inline-block bg-primary-50 text-primary-700 text-xs font-bold px-2.5 py-1 rounded-md mb-4 border border-primary-100">KHUYẾN MÃI SỈ</span>
-                                <h3 className="text-xl font-bold text-gray-900 mb-3 leading-snug">Đại Hội Nhập Sỉ<br/>Lớn Nhất Năm</h3>
-                                <ul className="text-sm space-y-2.5 mb-6 text-gray-600">
-                                    <li className="flex items-start gap-2"><span className="text-primary-500 mt-0.5">•</span> Đơn từ 500K: Tặng 1 lốc bia</li>
-                                    <li className="flex items-start gap-2"><span className="text-primary-500 mt-0.5">•</span> Đơn từ 1 Triệu: Chiết khấu 5%</li>
-                                    <li className="flex items-start gap-2"><span className="text-primary-500 mt-0.5">•</span> Giảm 15.000đ phí vận chuyển</li>
-                                </ul>
-                                <Link 
-                                    href="/wholesale"
-                                    className="block w-full bg-primary-600 text-white text-center font-bold text-sm py-3 rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
-                                >
-                                    ĐẶT HÀNG NGAY
-                                </Link>
-                            </div>
-                        </div>
-                        
-                        {/* Related Products Widget (Minimalist) */}
-                        <div className="border border-gray-100 rounded-xl bg-white overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)]">
-                            <h3 className="text-base font-bold text-gray-900 p-5 border-b border-gray-100 flex items-center justify-between">
-                                Sản phẩm gợi ý
-                                <span className="text-xs font-normal text-primary-600 hover:underline cursor-pointer">Xem thêm</span>
-                            </h3>
-                            <div className="divide-y divide-gray-50">
-                                <Link href="/wholesale" className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors group">
-                                    <div className="w-16 h-16 bg-gray-50 rounded-lg object-cover overflow-hidden border border-gray-100 shrink-0">
-                                        <img src="https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?q=80&w=200&auto=format&fit=crop" alt="Kẹo Dẻo UHi" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
-                                    </div>
-                                    <div>
-                                        <span className="font-semibold text-sm text-gray-800 line-clamp-2 mb-1 group-hover:text-primary-600 transition-colors">Kẹo Dẻo Chupachups Hộp 60 Cây</span>
-                                        <span className="text-primary-600 font-bold text-sm">65.000đ</span>
-                                    </div>
-                                </Link>
-                                <Link href="/wholesale" className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors group">
-                                    <div className="w-16 h-16 bg-gray-50 rounded-lg object-cover overflow-hidden border border-gray-100 shrink-0">
-                                        <img src="https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=200&auto=format&fit=crop" alt="Nước Ngọt" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
-                                    </div>
-                                    <div>
-                                        <span className="font-semibold text-sm text-gray-800 line-clamp-2 mb-1 group-hover:text-primary-600 transition-colors">Thùng 24 Lon Coca Cola 320ml</span>
-                                        <span className="text-primary-600 font-bold text-sm">215.000đ</span>
-                                    </div>
-                                </Link>
-                                <Link href="/wholesale" className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors group">
-                                    <div className="w-16 h-16 bg-gray-50 rounded-lg object-cover overflow-hidden border border-gray-100 shrink-0">
-                                        <img src="https://images.unsplash.com/photo-1596647414995-17e929b9514e?q=80&w=200&auto=format&fit=crop" alt="Đồ Khô" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
-                                    </div>
-                                    <div>
-                                        <span className="font-semibold text-sm text-gray-800 line-clamp-2 mb-1 group-hover:text-primary-600 transition-colors">Mì Hảo Hảo Tôm Chua Cay (Thùng 30 gói)</span>
-                                        <span className="text-primary-600 font-bold text-sm">110.000đ</span>
-                                    </div>
-                                </Link>
-                            </div>
-                        </div>
+                        <BlogSidebarPromo promo={promotions.find(p => p.type !== 'voucher' && !p.discount_type) || promotions[0]} />
+                        <BlogSidebarArticles articles={relatedPosts.slice(0, 3)} />
                     </div>
                 </aside>
             </div>
