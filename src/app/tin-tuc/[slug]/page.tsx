@@ -239,53 +239,61 @@ export default async function BlogPostPage({ params }: Props) {
                 {/* Right Sidebar - eCommerce Practical Style */}
                 <aside className="w-full lg:w-[320px] shrink-0">
                     <div className="sticky top-24 space-y-6">
-                        {/* B2B Promo Widget (Replacing generic banner) */}
-                        <div className="bg-gradient-to-br from-primary-600 to-primary-800 rounded-lg p-5 text-white shadow-md relative overflow-hidden">
+                        {/* B2B Promo Widget (Minimalist Style) */}
+                        <div className="bg-white rounded-xl p-6 border border-primary-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-primary-50 rounded-bl-[100px] -z-10"></div>
                             <div className="relative z-10">
-                                <span className="inline-block bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded mb-3">KHUYẾN MÃI SỈ</span>
-                                <h3 className="text-xl font-bold mb-2">Đại Hội Nhập Sỉ Lớn Nhất Năm</h3>
-                                <ul className="text-sm space-y-2 mb-5 text-primary-100">
-                                    <li>• Đơn từ 500K: Tặng 1 lốc bia</li>
-                                    <li>• Đơn từ 1 Triệu: Chiết khấu 5%</li>
-                                    <li>• Giảm 15.000đ phí vận chuyển</li>
+                                <span className="inline-block bg-primary-50 text-primary-700 text-xs font-bold px-2.5 py-1 rounded-md mb-4 border border-primary-100">KHUYẾN MÃI SỈ</span>
+                                <h3 className="text-xl font-bold text-gray-900 mb-3 leading-snug">Đại Hội Nhập Sỉ<br/>Lớn Nhất Năm</h3>
+                                <ul className="text-sm space-y-2.5 mb-6 text-gray-600">
+                                    <li className="flex items-start gap-2"><span className="text-primary-500 mt-0.5">•</span> Đơn từ 500K: Tặng 1 lốc bia</li>
+                                    <li className="flex items-start gap-2"><span className="text-primary-500 mt-0.5">•</span> Đơn từ 1 Triệu: Chiết khấu 5%</li>
+                                    <li className="flex items-start gap-2"><span className="text-primary-500 mt-0.5">•</span> Giảm 15.000đ phí vận chuyển</li>
                                 </ul>
                                 <Link 
                                     href="/wholesale"
-                                    className="block w-full bg-white text-primary-700 text-center font-bold text-sm py-2.5 rounded hover:bg-gray-50 transition-colors"
+                                    className="block w-full bg-primary-600 text-white text-center font-bold text-sm py-3 rounded-lg hover:bg-primary-700 transition-colors shadow-sm"
                                 >
                                     ĐẶT HÀNG NGAY
                                 </Link>
                             </div>
                         </div>
                         
-                        {/* Related Products / Categories Widget */}
-                        <div className="border border-gray-200 rounded-lg bg-white overflow-hidden">
-                            <h3 className="text-base font-bold text-gray-900 p-4 border-b border-gray-100 bg-gray-50 uppercase">
-                                Danh mục bán chạy
+                        {/* Related Products Widget (Minimalist) */}
+                        <div className="border border-gray-100 rounded-xl bg-white overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)]">
+                            <h3 className="text-base font-bold text-gray-900 p-5 border-b border-gray-100 flex items-center justify-between">
+                                Sản phẩm gợi ý
+                                <span className="text-xs font-normal text-primary-600 hover:underline cursor-pointer">Xem thêm</span>
                             </h3>
-                            <div className="divide-y divide-gray-100">
-                                <Link href="/wholesale?category=banh-keo" className="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors">
-                                    <div className="w-12 h-12 bg-gray-100 rounded object-cover overflow-hidden">
-                                        <img src="https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?q=80&w=200&auto=format&fit=crop" alt="Kẹo" />
+                            <div className="divide-y divide-gray-50">
+                                <Link href="/wholesale" className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors group">
+                                    <div className="w-16 h-16 bg-gray-50 rounded-lg object-cover overflow-hidden border border-gray-100 shrink-0">
+                                        <img src="https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?q=80&w=200&auto=format&fit=crop" alt="Kẹo Dẻo UHi" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
                                     </div>
-                                    <span className="font-semibold text-sm text-gray-700">Bánh kẹo các loại</span>
+                                    <div>
+                                        <span className="font-semibold text-sm text-gray-800 line-clamp-2 mb-1 group-hover:text-primary-600 transition-colors">Kẹo Dẻo Chupachups Hộp 60 Cây</span>
+                                        <span className="text-primary-600 font-bold text-sm">65.000đ</span>
+                                    </div>
                                 </Link>
-                                <Link href="/wholesale?category=nuoc-giai-khat" className="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors">
-                                    <div className="w-12 h-12 bg-gray-100 rounded object-cover overflow-hidden">
-                                        <img src="https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=200&auto=format&fit=crop" alt="Nước ngọt" />
+                                <Link href="/wholesale" className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors group">
+                                    <div className="w-16 h-16 bg-gray-50 rounded-lg object-cover overflow-hidden border border-gray-100 shrink-0">
+                                        <img src="https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=200&auto=format&fit=crop" alt="Nước Ngọt" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
                                     </div>
-                                    <span className="font-semibold text-sm text-gray-700">Nước giải khát</span>
+                                    <div>
+                                        <span className="font-semibold text-sm text-gray-800 line-clamp-2 mb-1 group-hover:text-primary-600 transition-colors">Thùng 24 Lon Coca Cola 320ml</span>
+                                        <span className="text-primary-600 font-bold text-sm">215.000đ</span>
+                                    </div>
                                 </Link>
-                                <Link href="/wholesale?category=do-kho" className="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors">
-                                    <div className="w-12 h-12 bg-gray-100 rounded object-cover overflow-hidden">
-                                        <img src="https://images.unsplash.com/photo-1596647414995-17e929b9514e?q=80&w=200&auto=format&fit=crop" alt="Đồ khô" />
+                                <Link href="/wholesale" className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors group">
+                                    <div className="w-16 h-16 bg-gray-50 rounded-lg object-cover overflow-hidden border border-gray-100 shrink-0">
+                                        <img src="https://images.unsplash.com/photo-1596647414995-17e929b9514e?q=80&w=200&auto=format&fit=crop" alt="Đồ Khô" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
                                     </div>
-                                    <span className="font-semibold text-sm text-gray-700">Gạo, mì, đồ khô</span>
+                                    <div>
+                                        <span className="font-semibold text-sm text-gray-800 line-clamp-2 mb-1 group-hover:text-primary-600 transition-colors">Mì Hảo Hảo Tôm Chua Cay (Thùng 30 gói)</span>
+                                        <span className="text-primary-600 font-bold text-sm">110.000đ</span>
+                                    </div>
                                 </Link>
                             </div>
-                            <Link href="/wholesale" className="block text-center text-sm font-medium text-primary-600 p-3 bg-gray-50 hover:bg-gray-100">
-                                Xem tất cả sản phẩm
-                            </Link>
                         </div>
                     </div>
                 </aside>
