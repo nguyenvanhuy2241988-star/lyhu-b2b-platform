@@ -9,38 +9,49 @@ export default function WholesaleFooter() {
                     {/* Về LYHU */}
                     <div>
                         <h3 className="text-sm font-bold text-gray-800 uppercase mb-4">Về Công ty TNHH LYHU</h3>
-                        <p className="text-sm text-gray-600 mb-2">LYHU - Kết nối chân thành, hợp tác bền vững. Phân phối chính hãng các dòng sản phẩm bánh kẹo ăn vặt chất lượng cao, chiết khấu hấp dẫn cho đại lý.</p>
-                        <p className="text-sm text-gray-600 mb-2"><strong>Địa chỉ:</strong> Số 123 Đường B2B, Quận Cầu Giấy, Hà Nội</p>
-                        <p className="text-sm text-gray-600 mb-2"><strong>Hotline sỉ:</strong> 1900 xxxx</p>
-                        <p className="text-sm text-gray-600"><strong>Email:</strong> b2b@lyhu.vn</p>
+                        <p className="text-sm text-gray-600 mb-2">LYHU – Công ty phân phối FMCG giúp bạn có nguồn hàng snack & gia vị độc – lạ – dễ bán trên toàn quốc.</p>
+                        <p className="text-sm text-gray-600 mb-2"><strong>Mã số thuế:</strong> 0110560692</p>
+                        <p className="text-sm text-gray-600 mb-2"><strong>Địa chỉ:</strong> Tầng 6, V11-B09, KĐT mới An Hưng, Phường Dương Nội, TP Hà Nội, Việt Nam</p>
+                        <div className="flex gap-3 text-xs text-primary-600 mt-3 flex-wrap">
+                            <a href="https://lyhu.vn" target="_blank" rel="noreferrer" className="hover:underline">lyhu.vn</a>
+                            <a href="https://lyhu.com.vn" target="_blank" rel="noreferrer" className="hover:underline">lyhu.com.vn</a>
+                            <a href="https://fb.com/lyhu.vn" target="_blank" rel="noreferrer" className="hover:underline">Fanpage</a>
+                            <a href="https://tiktok.com/@lyhu2026" target="_blank" rel="noreferrer" className="hover:underline">TikTok</a>
+                        </div>
                     </div>
 
                     {/* Các nhãn hàng */}
                     <div>
                         <h3 className="text-sm font-bold text-gray-800 uppercase mb-4">Nhãn hàng trực thuộc</h3>
-                        <ul className="space-y-3">
+                        <ul className="space-y-4">
                             <li>
-                                <div className="text-sm font-semibold text-gray-700">CVT - Chuối vắt tay</div>
+                                <div className="text-sm font-semibold text-gray-700">CVT - Khoai môn tẩm vị</div>
                                 <div className="flex gap-3 text-xs text-primary-600 mt-1">
-                                    <a href="#" className="hover:underline">Website</a>
-                                    <a href="#" className="hover:underline">Fanpage</a>
-                                    <a href="#" className="hover:underline">TikTok</a>
+                                    <a href="https://cvt.com.vn" target="_blank" rel="noreferrer" className="hover:underline">Website</a>
+                                    <a href="https://fb.com/khoaimontamvi.vn" target="_blank" rel="noreferrer" className="hover:underline">Fanpage</a>
                                 </div>
                             </li>
                             <li>
-                                <div className="text-sm font-semibold text-gray-700">ABI Snack</div>
+                                <div className="text-sm font-semibold text-gray-700">UHi - Kẹo dẻo siêu chua</div>
                                 <div className="flex gap-3 text-xs text-primary-600 mt-1">
-                                    <a href="#" className="hover:underline">Website</a>
-                                    <a href="#" className="hover:underline">Fanpage</a>
-                                    <a href="#" className="hover:underline">TikTok</a>
+                                    <a href="https://uhi.vn" target="_blank" rel="noreferrer" className="hover:underline">Website</a>
+                                    <a href="https://fb.com/uhi.vn" target="_blank" rel="noreferrer" className="hover:underline">Fanpage</a>
+                                    <a href="https://tiktok.com/@uhi.vn" target="_blank" rel="noreferrer" className="hover:underline">TikTok</a>
                                 </div>
                             </li>
                             <li>
-                                <div className="text-sm font-semibold text-gray-700">BOYO - Đặc sản miền Tây</div>
+                                <div className="text-sm font-semibold text-gray-700">Abi Snack - Bánh tráng</div>
                                 <div className="flex gap-3 text-xs text-primary-600 mt-1">
-                                    <a href="#" className="hover:underline">Website</a>
-                                    <a href="#" className="hover:underline">Fanpage</a>
-                                    <a href="#" className="hover:underline">TikTok</a>
+                                    <a href="https://abisnack.com" target="_blank" rel="noreferrer" className="hover:underline">Website</a>
+                                    <a href="https://fb.com/banhtrangabichinhchu" target="_blank" rel="noreferrer" className="hover:underline">Fanpage</a>
+                                </div>
+                            </li>
+                            <li>
+                                <div className="text-sm font-semibold text-gray-700">BOYO - Bột phô mai</div>
+                                <div className="flex gap-3 text-xs text-primary-600 mt-1">
+                                    <a href="https://boyo.vn" target="_blank" rel="noreferrer" className="hover:underline">Website</a>
+                                    <a href="https://fb.com/boyo.vn" target="_blank" rel="noreferrer" className="hover:underline">Fanpage</a>
+                                    <a href="https://tiktok.com/@boyo.vn_official" target="_blank" rel="noreferrer" className="hover:underline">TikTok</a>
                                 </div>
                             </li>
                         </ul>
