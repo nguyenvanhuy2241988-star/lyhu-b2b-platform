@@ -32,7 +32,7 @@ async function getPost(slug: string) {
     if (error || !data) return null;
 
     // Fetch related posts (same category)
-    let relatedPosts = [];
+    let relatedPosts: any[] = [];
     if (data.category_id) {
         const { data: related } = await supabase
             .from('blog_posts')
