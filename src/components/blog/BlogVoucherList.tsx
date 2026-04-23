@@ -25,11 +25,16 @@ export default function BlogVoucherList({ vouchers }: { vouchers: any[] }) {
         alert('Đã lưu mã vào ví thành công!');
     };
 
-    if (!vouchers || vouchers.length === 0) return null;
+    // Fallback if no active vouchers in DB
+    const displayVouchers = vouchers && vouchers.length > 0 ? vouchers : [
+        { id: 'mock-1', name: 'Giảm 15K', description: 'Đơn từ 500K' },
+        { id: 'mock-2', name: 'Freeship', description: 'Đơn từ 1 Triệu' },
+        { id: 'mock-3', name: 'Tặng Quà', description: 'Mua lốc Coca Cola' }
+    ];
 
     return (
         <div className="mb-6 flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x">
-            {vouchers.map(v => (
+            {displayVouchers.map(v => (
                 <div key={v.id} className="min-w-[160px] md:min-w-[200px] shrink-0 bg-primary-50 rounded-lg p-3 border border-primary-200 border-dashed flex flex-col justify-between snap-start">
                     <div className="flex items-start gap-2 mb-3">
                         <Tag className="w-5 h-5 text-primary-600 shrink-0" />

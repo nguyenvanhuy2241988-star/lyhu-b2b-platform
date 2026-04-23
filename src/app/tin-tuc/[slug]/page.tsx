@@ -57,8 +57,8 @@ async function getPost(slug: string) {
 
     // Fetch some active products
     const { data: products } = await supabase
-        .from('master_products')
-        .select('id, name, retailPrice:retail_price, basePricePerUnit:base_price_per_unit, basePrice:base_price, images')
+        .from('products')
+        .select('id, name, price, image_url')
         .eq('is_active', true)
         .limit(4);
 

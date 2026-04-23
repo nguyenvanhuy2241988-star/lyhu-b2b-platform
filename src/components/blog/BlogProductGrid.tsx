@@ -14,21 +14,8 @@ export default function BlogProductGrid({ products }: { products: any[] }) {
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {products.map(product => {
-                    // Extract first image
-                    let imageUrl = '/placeholder-image.jpg';
-                    if (Array.isArray(product.images) && product.images.length > 0) {
-                        imageUrl = product.images[0];
-                    } else if (typeof product.images === 'string' && product.images.trim() !== '') {
-                        try {
-                            const parsed = JSON.parse(product.images);
-                            imageUrl = Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : product.images;
-                        } catch {
-                            imageUrl = product.images;
-                        }
-                    }
-
-                    // Calculate display price (using base price or unit price)
-                    const price = product.retailPrice || ((product.basePricePerUnit || product.basePrice || 0) * 1.5) || 0;
+                    const imageUrl = product.image_url || '/placeholder-image.jpg';
+                    const price = product.price || 0;
                     
                     return (
                         <Link key={product.id} href={`/wholesale`} className="group flex flex-col bg-white border border-gray-100 rounded-xl overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300">

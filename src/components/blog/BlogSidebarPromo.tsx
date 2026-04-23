@@ -1,10 +1,8 @@
 import Link from 'next/link';
 
 export default function BlogSidebarPromo({ promo }: { promo: any }) {
-    if (!promo) return null;
-
     // Use dynamic promo data if available, fallback to default UI
-    const title = promo.name || 'Đại Hội Nhập Sỉ\nLớn Nhất Năm';
+    const title = promo?.name || 'Đại Hội Nhập Sỉ\nLớn Nhất Năm';
     
     return (
         <div className="bg-white rounded-xl p-6 border border-primary-100 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] relative overflow-hidden">
@@ -17,7 +15,7 @@ export default function BlogSidebarPromo({ promo }: { promo: any }) {
                     {title}
                 </h3>
                 
-                {promo.description ? (
+                {promo?.description ? (
                     <p className="text-sm text-gray-600 mb-6">{promo.description}</p>
                 ) : (
                     <ul className="text-sm space-y-2.5 mb-6 text-gray-600">
