@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Search, ShoppingCart, Info, CheckCircle2, ChevronRight, Minus, Plus, Star, X, Clock, Flame, Ticket, Loader2, History, Bell, User, LogIn, Eye, EyeOff, Package, MessageCircle } from 'lucide-react';
 import { getSupabase } from '@/lib/supabaseClient';
 import B2BSupportChat from '@/components/wholesale/B2BSupportChat';
+import Link from 'next/link';
 
 interface Product {
     id: string;
@@ -779,6 +780,7 @@ export default function WholesaleStore({
                 <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-8">
                     <div className="flex items-center gap-4">
                         <span className="hover:text-white cursor-pointer">Kênh NPP</span>
+                        <Link href="/tin-tuc" className="hover:text-white transition-colors font-medium text-secondary-300">Góc Kiến Thức (Tin tức)</Link>
                         <span className="hover:text-white cursor-pointer">Tải ứng dụng</span>
                         <span>Kết nối</span>
                     </div>
