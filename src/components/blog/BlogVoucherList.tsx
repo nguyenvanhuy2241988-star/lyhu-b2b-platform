@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Tag } from 'lucide-react';
-import toast from 'react-hot-toast';
 
 export default function BlogVoucherList({ vouchers }: { vouchers: any[] }) {
     const [savedVouchers, setSavedVouchers] = useState<string[]>([]);
@@ -23,7 +22,7 @@ export default function BlogVoucherList({ vouchers }: { vouchers: any[] }) {
         const newSaved = [...savedVouchers, id];
         setSavedVouchers(newSaved);
         localStorage.setItem('lyhu_saved_vouchers', JSON.stringify(newSaved));
-        toast.success('Đã lưu mã vào ví thành công!');
+        alert('Đã lưu mã vào ví thành công!');
     };
 
     if (!vouchers || vouchers.length === 0) return null;
