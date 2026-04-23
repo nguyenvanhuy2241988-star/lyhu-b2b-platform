@@ -15,6 +15,7 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
     
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [uploadingImage, setUploadingImage] = useState(false);
     const [categories, setCategories] = useState<BlogCategory[]>([]);
     
     const [post, setPost] = useState<Partial<BlogPost>>({
@@ -77,6 +78,11 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
             if (!postDataToSave.slug) {
                 postDataToSave.slug = generateSlug(postDataToSave.title || '');
             }
+            
+            // Fix UUID error: empty string must be converted to null
+            if (!postDataToSave.category_id) {
+                postDataToSave.category_id = null;
+            }
 
             await saveBlogPost(postDataToSave);
             alert(`Đã lưu bài viết (${status === 'published' ? 'Đã xuất bản' : 'Bản nháp'})`);
@@ -96,6 +102,36 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
             title,
             slug: isNew ? generateSlug(title) : prev.slug // auto-update slug only for new posts
         }));
+    };
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setUploadingImage(true);
+        try {
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${Math.random()}.${fileExt}`;
+            const filePath = `blog-thumbnails/${fileName}`;
+
+            // Assuming we have a 'public' storage bucket. Change if different.
+            const { error: uploadError, data } = await supabase.storage
+                .from('public')
+                .upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: publicUrlData } = supabase.storage
+                .from('public')
+                .getPublicUrl(filePath);
+
+            setPost(prev => ({ ...prev, thumbnail_url: publicUrlData.publicUrl }));
+        } catch (error: any) {
+            console.error('Error uploading image:', error);
+            alert('Lỗi tải ảnh lên: ' + error.message);
+        } finally {
+            setUploadingImage(false);
+        }
     };
 
     const addFaq = () => {
@@ -260,15 +296,35 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
                     {/* Thumbnail */}
                     <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
                         <h3 className="font-semibold text-gray-900 mb-3">Ảnh đại diện (Thumbnail URL)</h3>
-                        <input
-                            type="text"
-                            value={post.thumbnail_url || ''}
-                            onChange={(e) => setPost(prev => ({ ...prev, thumbnail_url: e.target.value }))}
-                            className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm"
-                            placeholder="https://lyhu.vn/images/..."
-                        />
+                        
+                        <div className="flex gap-2 mb-3">
+                            <input
+                                type="text"
+                                value={post.thumbnail_url || ''}
+                                onChange={(e) => setPost(prev => ({ ...prev, thumbnail_url: e.target.value }))}
+                                className="flex-1 px-3 py-2 rounded-lg border border-gray-300 text-sm"
+                                placeholder="Nhập link ảnh hoặc..."
+                            />
+                            <div className="relative shrink-0">
+                                <input 
+                                    type="file" 
+                                    accept="image/*" 
+                                    onChange={handleImageUpload} 
+                                    disabled={uploadingImage}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed" 
+                                />
+                                <button 
+                                    type="button" 
+                                    disabled={uploadingImage}
+                                    className="px-3 py-2 bg-gray-100 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50 flex items-center gap-2"
+                                >
+                                    {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Tải lên'}
+                                </button>
+                            </div>
+                        </div>
+
                         {post.thumbnail_url && (
-                            <div className="mt-3 aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
+                            <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden border border-gray-200">
                                 <img src={post.thumbnail_url} alt="Thumbnail preview" className="w-full h-full object-cover" />
                             </div>
                         )}
