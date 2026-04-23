@@ -124,68 +124,69 @@ export default async function BlogPostPage({ params }: Props) {
             </div>
 
             {/* Clean Header Area */}
-            <header className="max-w-4xl mx-auto px-6 lg:px-8 py-10">
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight mb-8">
+            <header className="max-w-4xl mx-auto px-6 lg:px-8 py-8">
+                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-primary-800 leading-snug mb-6">
                     {post.title}
                 </h1>
                 
-                <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500 font-medium">
+                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-8 pb-6 border-b border-gray-100">
                     <div className="flex items-center gap-2">
                         {post.author?.avatar_url ? (
-                            <img src={post.author.avatar_url} className="w-8 h-8 rounded-full border border-gray-200" alt="Avatar" />
+                            <img src={post.author.avatar_url} className="w-6 h-6 rounded-full border border-gray-200" alt="Avatar" />
                         ) : (
-                            <UserCircle2 className="w-8 h-8 text-gray-400" />
+                            <UserCircle2 className="w-6 h-6 text-gray-400" />
                         )}
-                        <span className="text-gray-800 font-bold">{post.author?.full_name || 'LYHU Team'}</span>
+                        <span className="text-gray-700 font-medium">{post.author?.full_name || 'LYHU Team'}</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                         <Clock className="w-4 h-4 text-gray-400" />
                         <time dateTime={post.published_at || post.created_at}>
-                            {new Date(post.published_at || post.created_at).toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' })}
+                            {new Date(post.published_at || post.created_at).toLocaleDateString('vi-VN')}
                         </time>
                     </div>
                 </div>
             </header>
 
-            {/* Featured Image */}
-            {post.thumbnail_url && (
-                <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 mb-12">
-                    <div className="aspect-[21/9] w-full rounded-2xl overflow-hidden bg-gray-100 shadow-sm border border-gray-100">
-                        <img 
-                            src={post.thumbnail_url} 
-                            alt={post.title} 
-                            className="w-full h-full object-cover"
-                        />
-                    </div>
-                </div>
-            )}
-
             {/* Main Content Area */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-16">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-10">
                 
                 {/* Left Content */}
                 <div className="flex-1 w-full max-w-3xl mx-auto lg:mx-0">
                     
-                    {/* AEO Summary Block (Clean style) */}
+                    {/* AEO Summary Block */}
                     {post.ai_summary && (
-                        <div className="bg-primary-50 p-6 rounded-xl border border-primary-100 mb-10">
-                            <p className="text-primary-900 font-medium leading-relaxed">
-                                <strong className="text-primary-700 mr-2">Tóm tắt:</strong>
+                        <div className="bg-gray-50 p-5 rounded border-l-4 border-primary-500 mb-8">
+                            <p className="text-gray-800 font-medium text-sm leading-relaxed">
+                                <strong>Tóm tắt: </strong>
                                 {post.ai_summary}
                             </p>
                         </div>
                     )}
 
+                    {/* Featured Image (Mobile Friendly 16:9) */}
+                    {post.thumbnail_url && (
+                        <div className="w-full mb-10">
+                            <div className="aspect-video w-full rounded-lg overflow-hidden bg-gray-100">
+                                <img 
+                                    src={post.thumbnail_url} 
+                                    alt={post.title} 
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                            <p className="text-center text-xs text-gray-400 mt-2 italic">{post.title}</p>
+                        </div>
+                    )}
+
                     {/* Prose Content */}
                     <div 
-                        className="prose prose-lg prose-slate max-w-none 
-                        prose-headings:font-bold prose-headings:text-gray-900 
+                        className="prose prose-base sm:prose-lg prose-slate max-w-none 
+                        prose-headings:font-bold prose-headings:text-primary-800 
                         prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4
                         prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-4
-                        prose-p:text-gray-600 prose-p:leading-relaxed prose-p:mb-6
-                        prose-a:text-primary-600 prose-a:no-underline hover:prose-a:underline
-                        prose-img:rounded-xl prose-img:border prose-img:border-gray-100
-                        prose-blockquote:border-l-4 prose-blockquote:border-gray-300 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-500"
+                        prose-p:text-gray-800 prose-p:leading-relaxed prose-p:mb-5
+                        prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
+                        prose-img:rounded-lg prose-img:border prose-img:border-gray-200 prose-img:mx-auto
+                        prose-blockquote:border-l-4 prose-blockquote:border-primary-400 prose-blockquote:bg-primary-50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:italic prose-blockquote:text-gray-700"
                         dangerouslySetInnerHTML={{ __html: post.content }}
                     />
 
@@ -202,55 +203,91 @@ export default async function BlogPostPage({ params }: Props) {
                     )}
                 </div>
 
-                {/* Right Sidebar - Minimalist Call to Action */}
-                <aside className="w-full lg:w-[320px] shrink-0">
-                    <div className="sticky top-24 space-y-8">
-                        {/* B2B Promo Widget */}
-                        <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm text-center">
-                            <div className="w-12 h-12 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-4 text-primary-600">
-                                <ShoppingCart className="w-6 h-6" />
+                    {/* Related text links (Có thể bạn quan tâm) */}
+                    {relatedPosts.length > 0 && (
+                        <div className="mt-10 bg-primary-50/50 p-6 rounded-lg border border-primary-100">
+                            <h3 className="text-lg font-bold text-gray-900 mb-4">Có thể bạn quan tâm:</h3>
+                            <ul className="space-y-3">
+                                {relatedPosts.map(rp => (
+                                    <li key={rp.id} className="flex items-start gap-2">
+                                        <span className="text-primary-500 mt-1">•</span>
+                                        <Link href={`/tin-tuc/${rp.slug}`} className="text-blue-700 hover:text-blue-800 hover:underline font-medium">
+                                            {rp.title}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* Comments Placeholder */}
+                    <div className="mt-12 pt-8 border-t border-gray-200">
+                        <h3 className="text-xl font-bold text-gray-900 mb-6">Bình luận</h3>
+                        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                            <textarea 
+                                className="w-full bg-white border border-gray-300 rounded p-3 text-sm focus:outline-none focus:border-primary-500 resize-none h-24"
+                                placeholder="Mời bạn bình luận hoặc đặt câu hỏi..."
+                            ></textarea>
+                            <div className="mt-3 flex justify-end">
+                                <button className="bg-primary-600 text-white px-6 py-2 rounded text-sm font-semibold hover:bg-primary-700">
+                                    Gửi bình luận
+                                </button>
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 mb-2">Đăng ký Đại lý</h3>
-                            <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-                                Trở thành đối tác phân phối của LYHU để nhận bảng giá sỉ và các chính sách chiết khấu tốt nhất.
-                            </p>
-                            <Link 
-                                href="/wholesale"
-                                className="block w-full bg-primary-600 text-white font-bold text-sm py-3 rounded-lg hover:bg-primary-700 transition-colors"
-                            >
-                                Liên hệ Báo Giá
-                            </Link>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Right Sidebar - eCommerce Practical Style */}
+                <aside className="w-full lg:w-[320px] shrink-0">
+                    <div className="sticky top-24 space-y-6">
+                        {/* B2B Promo Widget (Replacing generic banner) */}
+                        <div className="bg-gradient-to-br from-primary-600 to-primary-800 rounded-lg p-5 text-white shadow-md relative overflow-hidden">
+                            <div className="relative z-10">
+                                <span className="inline-block bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded mb-3">KHUYẾN MÃI SỈ</span>
+                                <h3 className="text-xl font-bold mb-2">Đại Hội Nhập Sỉ Lớn Nhất Năm</h3>
+                                <ul className="text-sm space-y-2 mb-5 text-primary-100">
+                                    <li>• Đơn từ 500K: Tặng 1 lốc bia</li>
+                                    <li>• Đơn từ 1 Triệu: Chiết khấu 5%</li>
+                                    <li>• Giảm 15.000đ phí vận chuyển</li>
+                                </ul>
+                                <Link 
+                                    href="/wholesale"
+                                    className="block w-full bg-white text-primary-700 text-center font-bold text-sm py-2.5 rounded hover:bg-gray-50 transition-colors"
+                                >
+                                    ĐẶT HÀNG NGAY
+                                </Link>
+                            </div>
                         </div>
                         
-                        {/* Related Posts Widget */}
-                        {relatedPosts.length > 0 && (
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">
-                                    Bài viết cùng chuyên mục
-                                </h3>
-                                <div className="space-y-5">
-                                    {relatedPosts.map(rp => (
-                                        <Link key={rp.id} href={`/tin-tuc/${rp.slug}`} className="group flex gap-3">
-                                            <div className="w-20 h-20 rounded bg-gray-100 shrink-0 border border-gray-100 overflow-hidden">
-                                                {rp.thumbnail_url && (
-                                                    <img src={rp.thumbnail_url} className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" alt={rp.title} />
-                                                )}
-                                            </div>
-                                            <div className="flex-1">
-                                                <h4 className="font-semibold text-gray-800 text-sm group-hover:text-primary-600 transition-colors line-clamp-2 leading-tight mb-1">
-                                                    {rp.title}
-                                                </h4>
-                                                <div className="text-xs text-gray-400">
-                                                    {new Date(rp.published_at || rp.created_at).toLocaleDateString('vi-VN')}
-                                                </div>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
+                        {/* Related Products / Categories Widget */}
+                        <div className="border border-gray-200 rounded-lg bg-white overflow-hidden">
+                            <h3 className="text-base font-bold text-gray-900 p-4 border-b border-gray-100 bg-gray-50 uppercase">
+                                Danh mục bán chạy
+                            </h3>
+                            <div className="divide-y divide-gray-100">
+                                <Link href="/wholesale?category=banh-keo" className="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors">
+                                    <div className="w-12 h-12 bg-gray-100 rounded object-cover overflow-hidden">
+                                        <img src="https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?q=80&w=200&auto=format&fit=crop" alt="Kẹo" />
+                                    </div>
+                                    <span className="font-semibold text-sm text-gray-700">Bánh kẹo các loại</span>
+                                </Link>
+                                <Link href="/wholesale?category=nuoc-giai-khat" className="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors">
+                                    <div className="w-12 h-12 bg-gray-100 rounded object-cover overflow-hidden">
+                                        <img src="https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=200&auto=format&fit=crop" alt="Nước ngọt" />
+                                    </div>
+                                    <span className="font-semibold text-sm text-gray-700">Nước giải khát</span>
+                                </Link>
+                                <Link href="/wholesale?category=do-kho" className="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors">
+                                    <div className="w-12 h-12 bg-gray-100 rounded object-cover overflow-hidden">
+                                        <img src="https://images.unsplash.com/photo-1596647414995-17e929b9514e?q=80&w=200&auto=format&fit=crop" alt="Đồ khô" />
+                                    </div>
+                                    <span className="font-semibold text-sm text-gray-700">Gạo, mì, đồ khô</span>
+                                </Link>
                             </div>
-                        )}
-                    </div>
-                </aside>
+                            <Link href="/wholesale" className="block text-center text-sm font-medium text-primary-600 p-3 bg-gray-50 hover:bg-gray-100">
+                                Xem tất cả sản phẩm
+                            </Link>
+                        </div>
             </div>
         </article>
     );
