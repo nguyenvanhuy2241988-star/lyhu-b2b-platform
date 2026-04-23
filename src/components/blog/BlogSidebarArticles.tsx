@@ -6,7 +6,7 @@ export default function BlogSidebarArticles({ articles }: { articles: any[] }) {
     return (
         <div className="border border-gray-100 rounded-xl bg-white overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)]">
             <h3 className="text-base font-bold text-gray-900 p-5 border-b border-gray-100 flex items-center justify-between">
-                Bài viết cùng chuyên mục
+                Khám phá thêm
                 <span className="text-xs font-normal text-primary-600 hover:underline cursor-pointer">Xem thêm</span>
             </h3>
             <div className="divide-y divide-gray-50">

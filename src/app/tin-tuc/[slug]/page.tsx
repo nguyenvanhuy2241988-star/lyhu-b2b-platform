@@ -41,7 +41,6 @@ async function getPost(slug: string) {
         const { data: related } = await supabase
             .from('blog_posts')
             .select('id, title, slug, thumbnail_url, published_at, created_at')
-            .eq('category_id', data.category_id)
             .eq('status', 'published')
             .neq('id', data.id)
             .order('published_at', { ascending: false })
