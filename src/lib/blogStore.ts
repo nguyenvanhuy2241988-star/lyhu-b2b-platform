@@ -33,7 +33,7 @@ export interface BlogPost {
     
     // Joined fields
     category?: Partial<BlogCategory>;
-    author?: { full_name: string, email: string };
+    author?: { full_name: string, email: string, avatar_url?: string };
 }
 
 // ----------------------------------------------------------------------
