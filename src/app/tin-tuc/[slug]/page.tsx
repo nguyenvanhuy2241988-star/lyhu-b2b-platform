@@ -10,6 +10,7 @@ import BlogVoucherList from '@/components/blog/BlogVoucherList';
 import BlogProductGrid from '@/components/blog/BlogProductGrid';
 import BlogSidebarPromo from '@/components/blog/BlogSidebarPromo';
 import BlogSidebarArticles from '@/components/blog/BlogSidebarArticles';
+import BlogSidebarNewCustomerPromo from '@/components/blog/BlogSidebarNewCustomerPromo';
 
 export const revalidate = 3600;
 
@@ -61,11 +62,23 @@ async function getPost(slug: string) {
         .eq('is_active', true)
         .limit(4);
 
+    // Fetch active new customer offer
+    const { data: newCustomerOffer } = await supabase
+        .from('wholesale_new_customer_offers')
+        .select(`
+            id, title, discount_price, is_active,
+            product:products(id, name, price, image_url)
+        `)
+        .eq('is_active', true)
+        .limit(1)
+        .single();
+
     return { 
         post: data as BlogPost, 
         relatedPosts, 
         promotions: promotions || [], 
-        products: products || [] 
+        products: products || [],
+        newCustomerOffer
     };
 }
 
@@ -98,7 +111,7 @@ export async function generateMetadata(
 export default async function BlogPostPage({ params }: Props) {
     const data = await getPost(params.slug);
     if (!data) notFound();
-    const { post, relatedPosts, promotions, products } = data;
+    const { post, relatedPosts, promotions, products, newCustomerOffer } = data;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lyhu.com.vn';
 
     const articleSchema = {
@@ -287,6 +300,7 @@ export default async function BlogPostPage({ params }: Props) {
                 {/* Right Sidebar - eCommerce Practical Style */}
                 <aside className="w-full lg:w-[320px] shrink-0">
                     <div className="sticky top-24 space-y-6">
+                        <BlogSidebarNewCustomerPromo offer={newCustomerOffer} />
                         <BlogSidebarPromo promo={promotions.find(p => p.type !== 'voucher' && !p.discount_type) || promotions[0]} />
                         <BlogSidebarArticles articles={relatedPosts.slice(0, 3)} />
                     </div>

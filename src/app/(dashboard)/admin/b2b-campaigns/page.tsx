@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getSupabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { Image as ImageIcon, Layout, Tag, Link, Trash2, Edit2, Upload, Loader2, Save, Zap, Gift, Clock, AlertCircle, Plus } from 'lucide-react';
+import { Image as ImageIcon, Layout, Tag, Link, Trash2, Edit2, Upload, Loader2, Save, Zap, Gift, Clock, AlertCircle, Plus, Users } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface WholesaleBanner {
@@ -104,7 +104,7 @@ export default function B2bCampaignsPage() {
     // ==========================================
     // --- ADVANCED PROMOTIONS & FLASH SALES ---
     // ==========================================
-    const [promoTab, setPromoTab] = useState<'promos' | 'flash' | 'vouchers'>('promos');
+    const [promoTab, setPromoTab] = useState<'promos' | 'flash' | 'vouchers' | 'new_customer'>('promos');
 
     // --- Promotions State ---
     const [promotions, setPromotions] = useState<any[]>([]);
@@ -248,6 +248,49 @@ export default function B2bCampaignsPage() {
         fetchVouchers();
     };
 
+    // --- New Customer Offers State ---
+    const [newCustomerOffers, setNewCustomerOffers] = useState<any[]>([]);
+    const [isLoadingNewCustomer, setIsLoadingNewCustomer] = useState(false);
+    const [newCustomerOffer, setNewCustomerOffer] = useState({
+        title: 'Ưu đãi đặc biệt cho khách hàng mới', product_id: '', discount_price: 0
+    });
+
+    const fetchNewCustomerOffers = async () => {
+        setIsLoadingNewCustomer(true);
+        const { data, error } = await supabase.from('wholesale_new_customer_offers')
+            .select('*, product:products(name, sku, image_url, price)')
+            .order('created_at', { ascending: false });
+        if (error) toast.error("Lỗi tải Ưu đãi Khách mới: " + error.message);
+        else setNewCustomerOffers(data || []);
+        setIsLoadingNewCustomer(false);
+    };
+
+    useEffect(() => { if (activeTab === 'promotions' && promoTab === 'new_customer') fetchNewCustomerOffers(); }, [activeTab, promoTab]);
+
+    const handleSaveNewCustomerOffer = async () => {
+        if (!newCustomerOffer.product_id || newCustomerOffer.discount_price <= 0) return toast.warning("Vui lòng chọn sản phẩm và nhập giá ưu đãi!");
+        const { error } = await supabase.from('wholesale_new_customer_offers').insert({
+            title: newCustomerOffer.title,
+            product_id: newCustomerOffer.product_id,
+            discount_price: newCustomerOffer.discount_price,
+            is_active: true
+        });
+        if (error) return toast.error(error.message);
+        toast.success("Tạo Ưu đãi Khách mới thành công");
+        setNewCustomerOffer({ title: 'Ưu đãi đặc biệt cho khách hàng mới', product_id: '', discount_price: 0 });
+        fetchNewCustomerOffers();
+    };
+
+    const handleToggleNewCustomerOffer = async (id: string, status: boolean) => {
+        await supabase.from('wholesale_new_customer_offers').update({ is_active: !status }).eq('id', id);
+        fetchNewCustomerOffers();
+    };
+    const handleDeleteNewCustomerOffer = async (id: string) => {
+        if (!confirm("Xóa Ưu đãi này?")) return;
+        await supabase.from('wholesale_new_customer_offers').delete().eq('id', id);
+        fetchNewCustomerOffers();
+    };
+
     // Manage FS Items
     const openFsItems = async (fs: any) => {
         setActiveFS(fs);
@@ -352,6 +395,7 @@ export default function B2bCampaignsPage() {
                         <button onClick={() => setPromoTab('promos')} className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${promoTab === 'promos' ? 'border-primary-600 text-primary-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}><Gift className="inline w-4 h-4 mr-2" /> Chương trình Khuyến Mãi</button>
                         <button onClick={() => setPromoTab('flash')} className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${promoTab === 'flash' ? 'border-orange-500 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}><Zap className="inline w-4 h-4 mr-2" /> Flash Sale Giờ Vàng</button>
                         <button onClick={() => setPromoTab('vouchers')} className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${promoTab === 'vouchers' ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}><Tag className="inline w-4 h-4 mr-2" /> Phiếu Giảm Giá</button>
+                        <button onClick={() => setPromoTab('new_customer')} className={`px-4 py-3 text-sm font-semibold border-b-2 transition-colors ${promoTab === 'new_customer' ? 'border-blue-500 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-800'}`}><Users className="inline w-4 h-4 mr-2" /> Ưu đãi Khách Mới</button>
                     </div>
 
                     {/* === PROMOTIONS (CHIẾT KHẤU / TẶNG PHẨM) === */}
@@ -603,6 +647,62 @@ export default function B2bCampaignsPage() {
                                                         <span className="bg-slate-100 px-2 py-1 rounded">
                                                             {v.discount_type === 'percent' ? `Giảm ${v.discount_value}%` : `Giảm ${v.discount_value.toLocaleString()}đ`}
                                                         </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                    {/* === NEW CUSTOMER OFFERS === */}
+                    {promoTab === 'new_customer' as any && (
+                        <div className="grid grid-cols-1 md:grid-cols-[350px_1fr] gap-6">
+                            {/* NEW CUSTOMER CREATE FORM */}
+                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm h-fit space-y-4">
+                                <h3 className="font-bold text-slate-800 flex items-center gap-2 text-blue-600"><Users className="w-5 h-5" /> Tạo Ưu đãi Khách Mới</h3>
+                                <div>
+                                    <label className="text-xs uppercase text-slate-500 font-bold">Tiêu đề Banner</label>
+                                    <input type="text" value={newCustomerOffer.title} onChange={e=>setNewCustomerOffer({...newCustomerOffer, title: e.target.value})} placeholder="Vd: Ưu đãi đặc biệt..." className="w-full border border-slate-300 rounded px-3 py-2 text-sm mt-1" />
+                                </div>
+                                <div>
+                                    <label className="text-xs uppercase text-slate-500 font-bold">Sản phẩm</label>
+                                    <select value={newCustomerOffer.product_id} onChange={e=>setNewCustomerOffer({...newCustomerOffer, product_id: e.target.value})} className="w-full border border-slate-300 rounded px-3 py-2 text-sm mt-1 outline-none">
+                                        <option value="">-- Chọn sản phẩm ưu đãi --</option>
+                                        {products.map(p => <option key={p.id} value={p.id}>{p.name} (Giá gốc: {p.price?.toLocaleString()}đ)</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs uppercase text-slate-500 font-bold">Giá Ưu Đãi (Khách Mới)</label>
+                                    <input type="number" value={newCustomerOffer.discount_price || ''} onChange={e=>setNewCustomerOffer({...newCustomerOffer, discount_price: Number(e.target.value)})} placeholder="Giá sẽ bán" className="w-full border border-slate-300 rounded px-3 py-2 text-sm mt-1" />
+                                </div>
+                                
+                                <button onClick={handleSaveNewCustomerOffer} className="w-full bg-blue-600 text-white font-bold py-2.5 rounded-lg hover:bg-blue-700 mt-2">Lưu Ưu Đãi</button>
+                            </div>
+
+                            {/* NEW CUSTOMER OFFERS LIST */}
+                            <div className="space-y-4">
+                                {isLoadingNewCustomer ? <Loader2 className="animate-spin text-slate-400 mx-auto" /> : (
+                                    newCustomerOffers.length === 0 ? <div className="text-center p-8 bg-white rounded border border-slate-200 text-slate-500">Chưa có ưu đãi nào.</div> :
+                                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                                        {newCustomerOffers.map(offer => (
+                                            <div key={offer.id} className={`bg-white rounded-xl border shadow-sm flex overflow-hidden ${!offer.is_active ? 'opacity-60' : ''}`}>
+                                                <div className="w-24 bg-slate-100 flex items-center justify-center border-r border-slate-200 shrink-0 p-2">
+                                                    {offer.product?.image_url ? <img src={offer.product.image_url} className="w-full h-full object-contain" alt="img" /> : <ImageIcon className="w-8 h-8 text-slate-300" />}
+                                                </div>
+                                                <div className="p-4 flex-1 flex flex-col justify-center">
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <h4 className="font-bold text-slate-800 line-clamp-1">{offer.title}</h4>
+                                                        <div className="flex items-center gap-2">
+                                                            <button onClick={() => handleToggleNewCustomerOffer(offer.id, offer.is_active)} className={`relative flex items-center rounded-full h-5 w-9 transition-colors ${offer.is_active ? 'bg-primary-600' : 'bg-slate-300'}`}><div className={`w-3.5 h-3.5 bg-white rounded-full shadow transition-transform ${offer.is_active ? 'translate-x-[18px]' : 'translate-x-1'}`}/></button>
+                                                            <button onClick={() => handleDeleteNewCustomerOffer(offer.id)} className="text-slate-400 hover:text-red-500"><Trash2 className="w-4 h-4"/></button>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-xs text-slate-600 mb-2 font-medium line-clamp-1">{offer.product?.name}</p>
+                                                    <div className="flex gap-2 items-center">
+                                                        <span className="text-red-600 font-bold text-sm">{Number(offer.discount_price).toLocaleString()}đ</span>
+                                                        <span className="text-slate-400 text-xs line-through">{Number(offer.product?.price).toLocaleString()}đ</span>
                                                     </div>
                                                 </div>
                                             </div>
