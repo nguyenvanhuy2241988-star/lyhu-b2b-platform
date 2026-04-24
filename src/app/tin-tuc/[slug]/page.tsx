@@ -300,7 +300,7 @@ export default async function BlogPostPage({ params }: Props) {
                 {/* Right Sidebar - eCommerce Practical Style */}
                 <aside className="w-full lg:w-[320px] shrink-0">
                     <div className="sticky top-24 space-y-6">
-                        <BlogSidebarNewCustomerPromo offer={newCustomerOffer} />
+                        <BlogSidebarNewCustomerPromo offer={newCustomerOffer as any} />
                         <BlogSidebarPromo promo={promotions.find(p => p.type !== 'voucher' && !p.discount_type) || promotions[0]} />
                         <BlogSidebarArticles articles={relatedPosts.slice(0, 3)} />
                     </div>
