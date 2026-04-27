@@ -3,7 +3,8 @@ import { supabase } from "@/lib/supabaseClient";
 // --- CV Upload ---
 export const uploadCandidateCV = async (file: File): Promise<string> => {
     const fileExt = file.name.split('.').pop();
-    const fileName = `cv/${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
+    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const fileName = `cv/${Date.now()}_${safeName}`;
 
     const { error: uploadError } = await supabase.storage
         .from('hr-assets')
