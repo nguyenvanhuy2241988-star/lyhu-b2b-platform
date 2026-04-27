@@ -73,50 +73,17 @@ export function OrderDetailsModal({ order, onClose }: OrderDetailsModalProps) {
 
     const handleTestConnection = async () => {
         try {
-            const res = await fetch('/api/misa/debug-verify');
+            const res = await fetch('/api/misa/test-connection');
+            
+            // Check if response is not ok to catch 404/500 errors before parsing JSON
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(`Server returned status ${res.status}: ${text.substring(0, 100)}...`);
+            }
+            
             const data = await res.json();
             if (data.success) {
-                let msg = `✅ Kết nối API OK!\n`;
-
-                // Parse results
-                if (data.debug_info) {
-                    msg += `\n⚙ Company: "${data.debug_info.company_code || ''}" | Branch: "${data.debug_info.branch_id || ''}"`;
-                }
-
-                if (data.results && Array.isArray(data.results)) {
-                    data.results.forEach((r: any) => {
-                        const icon = r.error || (r.response && r.status !== 200 && !r.response.includes("Success")) ? "❌" : "✅";
-                        const status = r.error ? `Error: ${r.error}` : `Status: ${r.status}`;
-
-                        // Simple translation for test names
-                        let testName = r.test;
-                        // ... (existing renaming logic if needed, or remove for clarity since we use V1, V2 etc)
-
-                        msg += `\n${icon} ${testName}: ${status}`;
-
-                        if (icon === "❌" && r.payload_echo) {
-                            msg += `\n   ↪ Payload: ${JSON.stringify(r.payload_echo)}`;
-                        }
-
-                        if (r.response && !r.error) {
-                            try {
-                                // Try to format JSON nicely if possible, or just truncate
-                                const jsonResp = JSON.parse(r.response);
-                                if (Array.isArray(jsonResp) && jsonResp.length > 0) {
-                                    msg += `\n   ↪ Data: ${JSON.stringify(jsonResp[0]).substring(0, 100)}...`;
-                                } else {
-                                    msg += `\n   ↪ Data: ${r.response.substring(0, 150)}...`;
-                                }
-                            } catch (e) {
-                                msg += `\n   ↪ Data: ${r.response}`;
-                            }
-                        } else if (r.error) {
-                            msg += `\n   ↪ Error: ${r.error}`;
-                        }
-                    });
-                }
-
-                alert(msg + `\n\nPreview Token: ${typeof data.token_preview === 'object' ? data.token_preview.sample : data.token_preview}`);
+                alert(`✅ ${data.message}\n\nToken Preview: ${data.tokenPreview}`);
             } else {
                 alert(`❌ Kết nối thất bại: ${data.error}`);
             }
