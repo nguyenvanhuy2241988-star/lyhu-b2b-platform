@@ -38,18 +38,19 @@ export default function SettingsPage() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Header */}
-            <div className="flex items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Cài đặt hệ thống</h1>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Quản lý tùy chọn cá nhân và thiết lập bảo mật của bạn.</p>
+        <div className="max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="bg-white dark:bg-slate-950 p-6 md:p-10 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 space-y-8 transition-colors">
+                {/* Header */}
+                <div className="flex items-center justify-between pb-6 border-b border-slate-100 dark:border-slate-800">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Cài đặt hệ thống</h1>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Quản lý tùy chọn cá nhân và thiết lập bảo mật của bạn.</p>
+                    </div>
+                    <button className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-600 text-white rounded-xl font-medium text-sm shadow-sm transition-all active:scale-95">
+                        <Save className="w-4 h-4" />
+                        Lưu thay đổi
+                    </button>
                 </div>
-                <button className="flex items-center gap-2 px-5 py-2.5 bg-primary hover:bg-primary-600 text-white rounded-xl font-medium text-sm shadow-sm transition-all active:scale-95">
-                    <Save className="w-4 h-4" />
-                    Lưu thay đổi
-                </button>
-            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                 {/* Minimalist Sidebar Navigation */}
@@ -170,6 +171,7 @@ export default function SettingsPage() {
                     </div>
                 </div>
             </div>
+        </div>
         </div>
     );
 }
