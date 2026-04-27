@@ -387,10 +387,13 @@ export const MisaService = {
             // 3. Map Data
             const invoiceObj = MisaService.mapOrderToMisaInvoice(orderData, config);
 
-            // We purposely DO NOT send employee names to MISA.
-            // If we send them, MISA overrides the official employee name in the voucher
-            // with the display name from the LYHU app (e.g., "Dương cận").
-            // By only sending the code, MISA will automatically fetch the correct name from its own DB.
+            // Inject Name for debugging or if MISA supports it (unlikely for V5 but harmless)
+            if (mappedName) {
+                invoiceObj.sale_employee_name = mappedName;
+                invoiceObj.employee_name = mappedName;
+                invoiceObj.SaleEmployeeName = mappedName;
+                invoiceObj.EmployeeName = mappedName;
+            }
             // 3b. Check if Customer exists in MISA, if not → use default customer code
             // CONFIRMED: MISA does NOT auto-create customers even with is_auto_create_object: true
             // CONFIRMED: save_dictionary is async and takes 20+ seconds — cannot wait in serverless function
