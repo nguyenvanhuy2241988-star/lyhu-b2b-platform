@@ -161,6 +161,7 @@ export const NAV_ITEMS = {
     ],
     [ROLES.ADMIN]: [
         { label: "Tổng quan", href: "/admin", icon: LayoutDashboard },
+        { label: "Phân tích Truy cập", href: "/admin/analytics", icon: Globe },
         { label: "CRM", href: PATH_LEADS, icon: TrendingUp },
         { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
         { label: "Việc cần làm", href: "/admin/tasks", icon: ListTodo },

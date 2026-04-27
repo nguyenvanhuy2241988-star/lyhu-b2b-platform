@@ -14,6 +14,8 @@ export const metadata: Metadata = {
 
 const inter = Inter({ subsets: ["latin", "vietnamese"] });
 
+import WebTracker from "@/components/analytics/WebTracker";
+
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -24,10 +26,12 @@ export default function RootLayout({
             <body className={cn(inter.className, "min-h-screen bg-gray-50")}>
                 <AuthProvider>
                     <ToastProvider>
+                        <WebTracker />
                         {children}
                     </ToastProvider>
                 </AuthProvider>
             </body>
+
         </html>
     );
 }
