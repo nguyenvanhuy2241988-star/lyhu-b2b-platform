@@ -99,7 +99,7 @@ export default function AnalyticsDashboard() {
             </div>
 
             {/* Overview Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
                         <Eye className="w-16 h-16 text-primary" />
@@ -108,10 +108,10 @@ export default function AnalyticsDashboard() {
                         <div className="p-2 bg-primary-50 rounded-lg text-primary">
                             <Eye className="w-5 h-5" />
                         </div>
-                        <span className="font-medium">Tổng Lượt Xem (Pageviews)</span>
+                        <span className="font-medium text-sm">Lượt Xem (Người thật)</span>
                     </div>
-                    <div className="text-4xl font-bold text-slate-900">{data?.totalViews?.toLocaleString() || 0}</div>
-                    <div className="mt-2 text-sm text-emerald-600 flex items-center gap-1">
+                    <div className="text-3xl font-bold text-slate-900">{data?.humanViews?.toLocaleString() || 0}</div>
+                    <div className="mt-2 text-xs text-emerald-600 flex items-center gap-1">
                         <Activity className="w-4 h-4" /> Real-time active
                     </div>
                 </div>
@@ -124,10 +124,10 @@ export default function AnalyticsDashboard() {
                         <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
                             <Users className="w-5 h-5" />
                         </div>
-                        <span className="font-medium">Khách Truy Cập (Unique)</span>
+                        <span className="font-medium text-sm">Khách (Unique)</span>
                     </div>
-                    <div className="text-4xl font-bold text-slate-900">{data?.uniqueVisitors?.toLocaleString() || 0}</div>
-                    <div className="mt-2 text-sm text-slate-500">Khách hàng duy nhất</div>
+                    <div className="text-3xl font-bold text-slate-900">{data?.uniqueVisitors?.toLocaleString() || 0}</div>
+                    <div className="mt-2 text-xs text-slate-500">Khách hàng duy nhất</div>
                 </div>
 
                 <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
@@ -138,10 +138,26 @@ export default function AnalyticsDashboard() {
                         <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
                             <MousePointerClick className="w-5 h-5" />
                         </div>
-                        <span className="font-medium">Tổng Phiên (Sessions)</span>
+                        <span className="font-medium text-sm">Tổng Phiên (Sessions)</span>
                     </div>
-                    <div className="text-4xl font-bold text-slate-900">{data?.totalSessions?.toLocaleString() || 0}</div>
-                    <div className="mt-2 text-sm text-slate-500">Lượt vào trang</div>
+                    <div className="text-3xl font-bold text-slate-900">{data?.totalSessions?.toLocaleString() || 0}</div>
+                    <div className="mt-2 text-xs text-slate-500">Lượt vào trang</div>
+                </div>
+
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
+                        <Globe className="w-16 h-16 text-slate-500" />
+                    </div>
+                    <div className="flex items-center gap-3 text-slate-500 mb-2">
+                        <div className="p-2 bg-slate-100 rounded-lg text-slate-600">
+                            <Globe className="w-5 h-5" />
+                        </div>
+                        <span className="font-medium text-sm">Lượt quét (AI/Bot)</span>
+                    </div>
+                    <div className="text-3xl font-bold text-slate-900">{data?.botViews?.toLocaleString() || 0}</div>
+                    <div className="mt-2 text-xs text-slate-500">
+                        {data?.botBreakdown?.[0] ? `${data.botBreakdown[0].bot} quét nhiều nhất` : 'Bot & Crawler'}
+                    </div>
                 </div>
             </div>
 
@@ -164,12 +180,21 @@ export default function AnalyticsDashboard() {
                                 />
                                 <Line 
                                     type="monotone" 
-                                    dataKey="views" 
-                                    name="Lượt xem"
+                                    dataKey="human_views" 
+                                    name="Người thật"
                                     stroke="#00afa9" 
                                     strokeWidth={3}
                                     dot={{ r: 4, strokeWidth: 2 }}
                                     activeDot={{ r: 6, stroke: '#00afa9', strokeWidth: 2, fill: '#fff' }} 
+                                />
+                                <Line 
+                                    type="monotone" 
+                                    dataKey="bot_views" 
+                                    name="Bot / AI"
+                                    stroke="#94a3b8" 
+                                    strokeWidth={2}
+                                    strokeDasharray="5 5"
+                                    dot={false}
                                 />
                             </LineChart>
                         </ResponsiveContainer>

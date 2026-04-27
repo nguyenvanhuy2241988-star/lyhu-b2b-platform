@@ -36,6 +36,24 @@ export async function POST(req: NextRequest) {
         else if (userAgent.includes("iPhone") || userAgent.includes("iPad")) os = "iOS";
         else if (userAgent.includes("Linux")) os = "Linux";
 
+        // Detect Bots & AI Agents
+        let is_bot = false;
+        let bot_name = null;
+        const lowerUA = userAgent.toLowerCase();
+        
+        if (lowerUA.includes("googlebot")) { is_bot = true; bot_name = "Googlebot"; }
+        else if (lowerUA.includes("bingbot")) { is_bot = true; bot_name = "Bingbot"; }
+        else if (lowerUA.includes("yandex")) { is_bot = true; bot_name = "YandexBot"; }
+        else if (lowerUA.includes("baiduspider")) { is_bot = true; bot_name = "BaiduSpider"; }
+        else if (lowerUA.includes("facebookexternalhit") || lowerUA.includes("facebookcatalog")) { is_bot = true; bot_name = "Facebook Bot"; }
+        else if (lowerUA.includes("zalo")) { is_bot = true; bot_name = "Zalo Bot"; }
+        else if (lowerUA.includes("chatgpt") || lowerUA.includes("gptbot")) { is_bot = true; bot_name = "ChatGPT"; }
+        else if (lowerUA.includes("claude")) { is_bot = true; bot_name = "Claude AI"; }
+        else if (lowerUA.includes("bot") || lowerUA.includes("crawler") || lowerUA.includes("spider")) { 
+            is_bot = true; 
+            bot_name = "Generic Bot"; 
+        }
+
         // Insert to DB
         const { error } = await supabaseAdmin
             .from("website_page_views")
@@ -50,6 +68,8 @@ export async function POST(req: NextRequest) {
                 os,
                 user_agent: userAgent,
                 screen_width: screen_width || null,
+                is_bot,
+                bot_name
             });
 
         if (error) {
