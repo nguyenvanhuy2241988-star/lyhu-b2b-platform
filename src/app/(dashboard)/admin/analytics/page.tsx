@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from "@/lib/supabaseClient";
 import { 
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
     BarChart, Bar, PieChart, Pie, Cell
@@ -10,7 +10,6 @@ import { Users, Eye, MousePointerClick, Activity, Monitor, Smartphone, Globe, Ca
 import dayjs from "dayjs";
 
 export default function AnalyticsDashboard() {
-    const supabase = createClientComponentClient();
     const [loading, setLoading] = useState(true);
     const [dateRange, setDateRange] = useState("7d"); // 7d, 30d, all
     const [data, setData] = useState<any>(null);
