@@ -1,3 +1,4 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 
 // Google Drive folder management API
@@ -202,3 +203,4 @@ export async function DELETE(req: NextRequest) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }
+

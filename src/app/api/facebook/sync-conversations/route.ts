@@ -1,3 +1,4 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -79,10 +80,10 @@ export async function POST(request: Request) {
             if (firstPageMsg) {
                 const msgText = (firstPageMsg.message || '').toLowerCase();
                 // Page's first automated message often contains ad keywords
-                if (msgText.includes('quảng cáo') || msgText.includes('ưu đãi') ||
-                    msgText.includes('khuyến mãi') || msgText.includes('npp') ||
-                    msgText.includes('đại lý') || msgText.includes('tìm đại lý') ||
-                    msgText.includes('nhà phân phối') || msgText.includes('mua 10 tặng')) {
+                if (msgText.includes('quáº£ng cÃ¡o') || msgText.includes('Æ°u Ä‘Ã£i') ||
+                    msgText.includes('khuyáº¿n mÃ£i') || msgText.includes('npp') ||
+                    msgText.includes('Ä‘áº¡i lÃ½') || msgText.includes('tÃ¬m Ä‘áº¡i lÃ½') ||
+                    msgText.includes('nhÃ  phÃ¢n phá»‘i') || msgText.includes('mua 10 táº·ng')) {
                     isFromAd = true;
                 }
             }
@@ -148,7 +149,7 @@ export async function POST(request: Request) {
                         return {
                             conversation_id: insertedConv.id,
                             external_id: m.id,
-                            content: m.message || (msgAttachments.length > 0 ? `[${msgAttachments[0].type === 'image' ? 'Hình ảnh' : 'Tệp tin'}]` : ''),
+                            content: m.message || (msgAttachments.length > 0 ? `[${msgAttachments[0].type === 'image' ? 'HÃ¬nh áº£nh' : 'Tá»‡p tin'}]` : ''),
                             sender_id: m.from?.id,
                             sender_name: m.from?.name,
                             created_at: m.created_time,
@@ -167,10 +168,11 @@ export async function POST(request: Request) {
         return NextResponse.json({
             success: true,
             count,
-            message: `Đồng bộ thành công ${count} hội thoại`
+            message: `Äá»“ng bá»™ thÃ nh cÃ´ng ${count} há»™i thoáº¡i`
         });
     } catch (error: any) {
         console.error("Sync API Error:", error);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
+

@@ -1,9 +1,10 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { MisaService } from "@/lib/misa/misaService";
 import { MisaValidation } from "@/lib/misa/misaValidation";
 
-// Allow up to 30 seconds — customer pre-creation needs 8+ seconds for MISA async processing
+// Allow up to 30 seconds â€” customer pre-creation needs 8+ seconds for MISA async processing
 export const maxDuration = 30;
 // Initialize Supabase Admin Client to bypass RLS for system operations
 const supabaseAdmin = createClient(
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
 
             return NextResponse.json({
                 success: false,
-                error: "Dữ liệu không hợp lệ: " + validation.errors.join(", "),
+                error: "Dá»¯ liá»‡u khÃ´ng há»£p lá»‡: " + validation.errors.join(", "),
                 details: validation.errors,
                 warnings: validation.warnings
             }, { status: 400 });
@@ -107,3 +108,4 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: err.message }, { status: 500 });
     }
 }
+

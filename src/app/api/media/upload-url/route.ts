@@ -1,3 +1,4 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 
 // Returns a short-lived access token + resumable upload URL for direct client upload
@@ -112,3 +113,4 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: err.message || "Failed to create upload URL" }, { status: 500 });
     }
 }
+

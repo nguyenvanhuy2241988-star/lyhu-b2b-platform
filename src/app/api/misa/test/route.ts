@@ -1,3 +1,4 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { MisaService } from "@/lib/misa/misaService";
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            message: "Kết nối thành công! Token đã được lấy.",
+            message: "Káº¿t ná»‘i thÃ nh cÃ´ng! Token Ä‘Ã£ Ä‘Æ°á»£c láº¥y.",
             token_preview: token.substring(0, 10) + "..."
         });
 
@@ -27,3 +28,4 @@ export async function POST(req: NextRequest) {
         }, { status: 500 });
     }
 }
+

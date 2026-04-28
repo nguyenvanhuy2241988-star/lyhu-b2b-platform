@@ -1,3 +1,4 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { deleteFileFromDrive } from "@/lib/googleDriveService";
@@ -54,3 +55,4 @@ export async function DELETE(req: NextRequest) {
         return NextResponse.json({ error: err.message || "Delete failed" }, { status: 500 });
     }
 }
+

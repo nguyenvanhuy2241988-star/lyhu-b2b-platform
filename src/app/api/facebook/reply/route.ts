@@ -1,3 +1,4 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
         }
 
         if (!finalPageToken) {
-            return NextResponse.json({ error: 'Missing page_token — could not resolve from DB' }, { status: 400 });
+            return NextResponse.json({ error: 'Missing page_token â€” could not resolve from DB' }, { status: 400 });
         }
 
         if (!finalRecipientId) {
@@ -110,7 +111,7 @@ export async function POST(request: Request) {
         // Update conversation snippet
         if (finalConversationId) {
             const snippet = attachment_url
-                ? `[${attachment_type === 'image' ? 'Hình ảnh' : 'Tệp tin'}]`
+                ? `[${attachment_type === 'image' ? 'HÃ¬nh áº£nh' : 'Tá»‡p tin'}]`
                 : message;
 
             await supabase
@@ -129,3 +130,4 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
+

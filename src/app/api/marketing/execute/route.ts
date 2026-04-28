@@ -1,3 +1,4 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -28,14 +29,14 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Invalid script name' }, { status: 400 });
         }
 
-        // Lấy client Admin (Service Role) để bỏ qua rào cản Bảo mật RLS (do chúng ta không cấu hình session rườm rà)
+        // Láº¥y client Admin (Service Role) Ä‘á»ƒ bá» qua rÃ o cáº£n Báº£o máº­t RLS (do chÃºng ta khÃ´ng cáº¥u hÃ¬nh session rÆ°á»m rÃ )
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
-        // Ưu tiên dùng Service Role Key (Admin) để bypass RLS, nếu không có thì fallback qua Anon Key 
+        // Æ¯u tiÃªn dÃ¹ng Service Role Key (Admin) Ä‘á»ƒ bypass RLS, náº¿u khÃ´ng cÃ³ thÃ¬ fallback qua Anon Key 
         const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key";
         
         const supabase = createClient(supabaseUrl, supabaseKey);
         
-        // Cố tình ghi đè created_by null (Vì RLS sẽ được Bypass bởi Service Role)
+        // Cá»‘ tÃ¬nh ghi Ä‘Ã¨ created_by null (VÃ¬ RLS sáº½ Ä‘Æ°á»£c Bypass bá»Ÿi Service Role)
         const { error } = await supabase
             .from('marketing_bot_commands')
             .insert({
@@ -47,16 +48,17 @@ export async function POST(req: Request) {
             });
 
         if (error) {
-            console.error("Lỗi insert lệnh bot vào Supabase:", error);
-            // In error.message ra console log server để dễ debug
+            console.error("Lá»—i insert lá»‡nh bot vÃ o Supabase:", error);
+            // In error.message ra console log server Ä‘á»ƒ dá»… debug
             console.error(error.message);
             return NextResponse.json({ error: 'Database insert failed' }, { status: 500 });
         }
 
-        return NextResponse.json({ success: true, message: `Lệnh [${scriptName}] đã được chuyển vào hàng đợi thành công!` });
+        return NextResponse.json({ success: true, message: `Lá»‡nh [${scriptName}] Ä‘Ã£ Ä‘Æ°á»£c chuyá»ƒn vÃ o hÃ ng Ä‘á»£i thÃ nh cÃ´ng!` });
 
     } catch (error) {
         console.error('API Error:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
+

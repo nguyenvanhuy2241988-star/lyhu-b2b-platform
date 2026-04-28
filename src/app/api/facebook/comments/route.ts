@@ -1,3 +1,4 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -180,9 +181,9 @@ export async function POST(request: Request) {
                 if (!firstPageData) {
                     return NextResponse.json({
                         success: false,
-                        error: 'Không thể đọc comment. Tất cả cách thử đều bị từ chối.',
+                        error: 'KhÃ´ng thá»ƒ Ä‘á»c comment. Táº¥t cáº£ cÃ¡ch thá»­ Ä‘á»u bá»‹ tá»« chá»‘i.',
                         error_code: 10,
-                        hint: 'Facebook App cần được App Review cho quyền pages_read_engagement. Vào developers.facebook.com → App Dashboard → App Review để gửi yêu cầu.'
+                        hint: 'Facebook App cáº§n Ä‘Æ°á»£c App Review cho quyá»n pages_read_engagement. VÃ o developers.facebook.com â†’ App Dashboard â†’ App Review Ä‘á»ƒ gá»­i yÃªu cáº§u.'
                     });
                 }
                 
@@ -288,7 +289,7 @@ export async function POST(request: Request) {
                     success: true,
                     post: {
                         id: postData.id,
-                        message: postData.message || '(Bài quảng cáo)',
+                        message: postData.message || '(BÃ i quáº£ng cÃ¡o)',
                         created_time: postData.created_time,
                         full_picture: postData.full_picture,
                         permalink_url: postData.permalink_url,
@@ -427,7 +428,7 @@ export async function POST(request: Request) {
 
             return {
                 id: post.id,
-                message: post.message || '(Không có nội dung)',
+                message: post.message || '(KhÃ´ng cÃ³ ná»™i dung)',
                 created_time: post.created_time,
                 full_picture: post.full_picture,
                 permalink_url: post.permalink_url,
@@ -460,3 +461,4 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: error.message || 'Failed' }, { status: 500 });
     }
 }
+

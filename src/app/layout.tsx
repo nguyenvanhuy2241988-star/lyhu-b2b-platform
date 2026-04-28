@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ToastProvider } from "@/components/ui/toast";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
     title: "LYHU App",
@@ -24,7 +25,9 @@ export default function RootLayout({
             <body className={cn(inter.className, "min-h-screen bg-gray-50")}>
                 <AuthProvider>
                     <ToastProvider>
-                        <WebTracker />
+                        <Suspense fallback={null}>
+                            <WebTracker />
+                        </Suspense>
                         {children}
                     </ToastProvider>
                 </AuthProvider>

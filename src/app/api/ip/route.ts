@@ -1,7 +1,8 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 
 /**
- * GET /api/ip — Returns the client's public IP address.
+ * GET /api/ip â€” Returns the client's public IP address.
  * Used by ActivityTracker to track which IP users are connecting from.
  */
 export async function GET(request: Request) {
@@ -14,3 +15,4 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ ip });
 }
+

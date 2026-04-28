@@ -1,3 +1,4 @@
+﻿export const dynamic = 'force-dynamic';
 /**
  * POST /api/marketing/analyze-brand
  * Analyze logo + product images using Gemini Vision
@@ -25,7 +26,7 @@ interface AnalyzeBrandResponse {
 }
 
 function extractBase64(dataUri: string): { mimeType: string; data: string } {
-  // data:image/png;base64,iVBOR... → { mimeType, data }
+  // data:image/png;base64,iVBOR... â†’ { mimeType, data }
   const match = dataUri.match(/^data:(image\/\w+);base64,(.+)$/);
   if (!match) {
     // Already raw base64 without prefix
@@ -137,3 +138,4 @@ RULES:
     return NextResponse.json({ error: 'Failed to analyze brand', details: err.message }, { status: 500 });
   }
 }
+

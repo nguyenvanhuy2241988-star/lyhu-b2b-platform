@@ -1,3 +1,4 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
         const config = (pageData?.chatbot_config as any) || {};
         const inboxEnabled = config.auto_comment_inbox_enabled !== false;
         const inboxText = config.auto_comment_inbox_text ||
-            'Chào bạn! 👋\nCảm ơn bạn đã quan tâm đến sản phẩm LYHU!\nBạn vui lòng cho mình xin SĐT để tư vấn chi tiết hơn nhé ❤️';
+            'ChÃ o báº¡n! ðŸ‘‹\nCáº£m Æ¡n báº¡n Ä‘Ã£ quan tÃ¢m Ä‘áº¿n sáº£n pháº©m LYHU!\nBáº¡n vui lÃ²ng cho mÃ¬nh xin SÄT Ä‘á»ƒ tÆ° váº¥n chi tiáº¿t hÆ¡n nhÃ© â¤ï¸';
 
         // Get chatbot rules
         const { data: rules } = await supabase
@@ -267,4 +268,5 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: error.message || 'Scan failed' }, { status: 500 });
     }
 }
+
 

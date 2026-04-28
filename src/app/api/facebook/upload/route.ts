@@ -1,3 +1,4 @@
+﻿export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
 
         // Max 25MB (Facebook limit)
         if (file.size > 25 * 1024 * 1024) {
-            return NextResponse.json({ error: 'File quá lớn (tối đa 25MB)' }, { status: 400 });
+            return NextResponse.json({ error: 'File quÃ¡ lá»›n (tá»‘i Ä‘a 25MB)' }, { status: 400 });
         }
 
         const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -69,3 +70,4 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: error.message || 'Upload failed' }, { status: 500 });
     }
 }
+
