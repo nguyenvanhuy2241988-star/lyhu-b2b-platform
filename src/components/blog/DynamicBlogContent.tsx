@@ -61,6 +61,12 @@ export default function DynamicBlogContent({ content, videoUrl, isVideoVertical 
                         if (match && match[1]) {
                             finalUrl = `https://www.youtube.com/embed/${match[1]}`;
                         }
+                    } else if (videoUrl.includes('tiktok.com/')) {
+                        // Convert standard tiktok link to embed link
+                        const match = videoUrl.match(/\/video\/(\d+)/);
+                        if (match && match[1]) {
+                            finalUrl = `https://www.tiktok.com/embed/v2/${match[1]}`;
+                        }
                     }
 
                     const videoClasses = isVideoVertical 
