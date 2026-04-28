@@ -11,14 +11,15 @@ interface DynamicBlogContentProps {
 export default function DynamicBlogContent({ content, videoUrl, isVideoVertical = false, products = [] }: DynamicBlogContentProps) {
     if (!content) return null;
 
-    // A simple parser to split HTML by paragraph tags.
-    // We split by </p> to retain the structural flow and insert components between them.
-    const parts = content.split(/(<\/p>)/i);
+    // A simple parser to split HTML by block endings (paragraphs, lists).
+    // We use a negative lookahead (?!\s*<\/li>) to ensure we DO NOT split inside a list item.
+    // This prevents breaking the HTML structure of <ul> or <ol>.
+    const parts = content.split(/(<\/p>|<\/ul>|<\/ol>)(?!\s*<\/li>)/i);
     const elements: React.ReactNode[] = [];
     let paragraphCount = 0;
 
     for (let i = 0; i < parts.length; i += 2) {
-        // parts[i] is the content, parts[i+1] is the delimiter (</p>) if it exists
+        // parts[i] is the content, parts[i+1] is the delimiter (</p>, </ul>, </ol>) if it exists
         const htmlChunk = parts[i] + (parts[i + 1] || '');
         
         if (htmlChunk.trim()) {
@@ -30,7 +31,7 @@ export default function DynamicBlogContent({ content, videoUrl, isVideoVertical 
                 />
             );
             
-            // If this chunk actually ended with </p>, we consider it a paragraph block
+            // If this chunk actually ended with a block delimiter, we consider it a paragraph block
             if (parts[i + 1]) {
                 paragraphCount++;
 
