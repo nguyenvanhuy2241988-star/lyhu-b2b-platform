@@ -38,9 +38,13 @@ export default function WebTracker() {
                 // Calculate Load Time (only for initial hard loads)
                 let loadTimeMs = null;
                 if (isFirstRender.current) {
-                    // performance.now() inside useEffect gives a good approximation of Time to Interactive / DOM Ready
-                    loadTimeMs = Math.round(performance.now());
-                    isFirstRender.current = false;
+                    const navEntries = performance.getEntriesByType('navigation');
+                    if (navEntries.length > 0) {
+                        const navTiming = navEntries[0] as PerformanceNavigationTiming;
+                        loadTimeMs = Math.round(navTiming.domContentLoadedEventEnd || performance.now());
+                    } else {
+                        loadTimeMs = Math.round(performance.now());
+                    }
                 }
 
                 await fetch("/api/analytics/track", {
@@ -69,6 +73,9 @@ export default function WebTracker() {
         if (pathname && !pathname.startsWith('/admin') && !pathname.startsWith('/telesales') && !pathname.startsWith('/settings')) {
              trackPageView();
         }
+        
+        // Unconditionally mark first render as done, so subsequent client navigations don't log a huge performance.now()
+        isFirstRender.current = false;
         
     }, [pathname, searchParams]); // Re-run when path changes
 
