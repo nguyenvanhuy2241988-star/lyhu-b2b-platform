@@ -11,27 +11,46 @@ import dayjs from "dayjs";
 
 export default function AnalyticsDashboard() {
     const [loading, setLoading] = useState(true);
-    const [dateRange, setDateRange] = useState("7d"); // 7d, 30d, all
+    const [dateRange, setDateRange] = useState("7d"); // today, yesterday, 7d, 30d, this_month, custom
+    const [customStart, setCustomStart] = useState(dayjs().subtract(7, 'day').format('YYYY-MM-DD'));
+    const [customEnd, setCustomEnd] = useState(dayjs().format('YYYY-MM-DD'));
     const [excludeInternal, setExcludeInternal] = useState(true);
     const [data, setData] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        fetchAnalytics();
-    }, [dateRange, excludeInternal]);
+        if (dateRange !== 'custom' || (customStart && customEnd)) {
+            fetchAnalytics();
+        }
+    }, [dateRange, customStart, customEnd, excludeInternal]);
 
     const fetchAnalytics = async () => {
         setLoading(true);
         setError(null);
         
         try {
-            let startDate = dayjs().subtract(7, 'day').toISOString();
-            if (dateRange === '30d') startDate = dayjs().subtract(30, 'day').toISOString();
-            if (dateRange === 'all') startDate = dayjs().subtract(1, 'year').toISOString(); // arbitrary 'all'
+            let startDate = dayjs().subtract(7, 'day').startOf('day').toISOString();
+            let endDate = dayjs().endOf('day').toISOString();
+
+            if (dateRange === 'today') {
+                startDate = dayjs().startOf('day').toISOString();
+            } else if (dateRange === 'yesterday') {
+                startDate = dayjs().subtract(1, 'day').startOf('day').toISOString();
+                endDate = dayjs().subtract(1, 'day').endOf('day').toISOString();
+            } else if (dateRange === '7d') {
+                startDate = dayjs().subtract(7, 'day').startOf('day').toISOString();
+            } else if (dateRange === '30d') {
+                startDate = dayjs().subtract(30, 'day').startOf('day').toISOString();
+            } else if (dateRange === 'this_month') {
+                startDate = dayjs().startOf('month').toISOString();
+            } else if (dateRange === 'custom') {
+                startDate = dayjs(customStart).startOf('day').toISOString();
+                endDate = dayjs(customEnd).endOf('day').toISOString();
+            }
 
             const { data: result, error } = await supabase.rpc('get_analytics_summary', {
                 start_date: startDate,
-                end_date: dayjs().toISOString(),
+                end_date: endDate,
                 exclude_internal: excludeInternal
             });
 
@@ -78,25 +97,37 @@ export default function AnalyticsDashboard() {
                     <p className="text-slate-500 text-sm mt-1">Theo dõi lưu lượng khách hàng truy cập website theo thời gian thực.</p>
                 </div>
                 
-                <div className="flex items-center bg-slate-100 p-1 rounded-xl">
-                    <button 
-                        onClick={() => setDateRange('7d')}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${dateRange === '7d' ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                    <select 
+                        value={dateRange}
+                        onChange={(e) => setDateRange(e.target.value)}
+                        className="px-4 py-2 bg-slate-100 border-none rounded-xl text-sm font-medium text-slate-700 focus:ring-2 focus:ring-primary-500 outline-none w-full sm:w-auto cursor-pointer"
                     >
-                        7 ngày qua
-                    </button>
-                    <button 
-                        onClick={() => setDateRange('30d')}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${dateRange === '30d' ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
-                    >
-                        30 ngày qua
-                    </button>
-                    <button 
-                        onClick={() => setDateRange('all')}
-                        className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${dateRange === 'all' ? 'bg-white text-primary-700 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
-                    >
-                        Tất cả
-                    </button>
+                        <option value="today">Hôm nay</option>
+                        <option value="yesterday">Hôm qua</option>
+                        <option value="7d">7 ngày qua</option>
+                        <option value="30d">30 ngày qua</option>
+                        <option value="this_month">Tháng này</option>
+                        <option value="custom">Tùy chỉnh...</option>
+                    </select>
+
+                    {dateRange === 'custom' && (
+                        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+                            <input 
+                                type="date" 
+                                value={customStart}
+                                onChange={(e) => setCustomStart(e.target.value)}
+                                className="px-3 py-1.5 bg-white border-none rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-primary-500 outline-none cursor-pointer"
+                            />
+                            <span className="text-slate-400 font-medium">-</span>
+                            <input 
+                                type="date" 
+                                value={customEnd}
+                                onChange={(e) => setCustomEnd(e.target.value)}
+                                className="px-3 py-1.5 bg-white border-none rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-primary-500 outline-none cursor-pointer"
+                            />
+                        </div>
+                    )}
                 </div>
                 
                 <div className="flex items-center gap-3">
@@ -329,7 +360,42 @@ export default function AnalyticsDashboard() {
                                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
                                     <span className="text-xs font-medium text-slate-600 capitalize">{entry.device} ({entry.views})</span>
                                 </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                        <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                            <Monitor className="w-5 h-5 text-indigo-500" />
+                            Hệ điều hành
+                        </h3>
+                        <div className="space-y-4">
+                            {data?.topOs?.map((item: any, idx: number) => (
+                                <div key={idx} className="flex items-center justify-between">
+                                    <span className="text-sm font-medium text-slate-700 truncate">{item.name}</span>
+                                    <div className="text-sm font-bold text-slate-900">{item.views}</div>
+                                </div>
                             ))}
+                            {(!data?.topOs || data.topOs.length === 0) && (
+                                <div className="text-center text-slate-400 py-4">Chưa có dữ liệu</div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                        <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                            <Globe className="w-5 h-5 text-pink-500" />
+                            Trình duyệt
+                        </h3>
+                        <div className="space-y-4">
+                            {data?.topBrowsers?.map((item: any, idx: number) => (
+                                <div key={idx} className="flex items-center justify-between">
+                                    <span className="text-sm font-medium text-slate-700 truncate">{item.name}</span>
+                                    <div className="text-sm font-bold text-slate-900">{item.views}</div>
+                                </div>
+                            ))}
+                            {(!data?.topBrowsers || data.topBrowsers.length === 0) && (
+                                <div className="text-center text-slate-400 py-4">Chưa có dữ liệu</div>
+                            )}
                         </div>
                     </div>
                 </div>
