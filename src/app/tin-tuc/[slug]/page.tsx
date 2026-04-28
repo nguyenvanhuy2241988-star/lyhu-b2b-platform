@@ -63,9 +63,12 @@ async function getPost(slug: string) {
         .eq('is_active', true);
 
     if (data.keywords) {
-        // Use the first keyword for searching
-        const firstKeyword = data.keywords.split(',')[0].trim();
-        productQuery = productQuery.ilike('name', `%${firstKeyword}%`);
+        // Use all keywords for a broader OR search
+        const keywordsList = data.keywords.split(',').map((k: string) => k.trim()).filter((k: string) => k.length > 2);
+        if (keywordsList.length > 0) {
+            const orConditions = keywordsList.map((kw: string) => `name.ilike.%${kw}%`).join(',');
+            productQuery = productQuery.or(orConditions);
+        }
     }
 
     let { data: products } = await productQuery.limit(4);
