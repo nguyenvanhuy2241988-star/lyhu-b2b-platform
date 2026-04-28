@@ -11,6 +11,7 @@ import BlogProductGrid from '@/components/blog/BlogProductGrid';
 import BlogSidebarPromo from '@/components/blog/BlogSidebarPromo';
 import BlogSidebarArticles from '@/components/blog/BlogSidebarArticles';
 import BlogSidebarNewCustomerPromo from '@/components/blog/BlogSidebarNewCustomerPromo';
+import DynamicBlogContent from '@/components/blog/DynamicBlogContent';
 
 export const revalidate = 3600;
 
@@ -214,17 +215,11 @@ export default async function BlogPostPage({ params }: Props) {
                         </div>
                     )}
 
-                    {/* Prose Content */}
-                    <div 
-                        className="prose prose-base sm:prose-lg prose-slate max-w-none 
-                        prose-headings:font-bold prose-headings:text-primary-800 
-                        prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4
-                        prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-4
-                        prose-p:text-gray-800 prose-p:leading-relaxed prose-p:mb-5
-                        prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
-                        prose-img:rounded-lg prose-img:border prose-img:border-gray-200 prose-img:mx-auto
-                        prose-blockquote:border-l-4 prose-blockquote:border-primary-400 prose-blockquote:bg-primary-50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:italic prose-blockquote:text-gray-700"
-                        dangerouslySetInnerHTML={{ __html: post.content }}
+                    {/* Prose Content with Dynamic Interleaved Components */}
+                    <DynamicBlogContent 
+                        content={post.content} 
+                        videoUrl={post.video_url} 
+                        products={products} 
                     />
 
                     {/* Tags */}

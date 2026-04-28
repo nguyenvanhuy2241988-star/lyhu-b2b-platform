@@ -24,6 +24,7 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
         slug: '',
         content: '',
         category_id: '',
+        video_url: '',
         status: 'draft',
         ai_summary: '',
         meta_title: '',
@@ -329,6 +330,19 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
                                 <img src={post.thumbnail_url} alt="Thumbnail preview" className="w-full h-full object-cover" />
                             </div>
                         )}
+                    </div>
+
+                    {/* Video URL */}
+                    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                        <h3 className="font-semibold text-gray-900 mb-3">Video hướng dẫn (Tùy chọn)</h3>
+                        <p className="text-xs text-gray-500 mb-2">Nhập link Youtube hoặc link Google Drive có đuôi preview.</p>
+                        <input
+                            type="text"
+                            value={post.video_url || ''}
+                            onChange={(e) => setPost(prev => ({ ...prev, video_url: e.target.value }))}
+                            className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            placeholder="https://www.youtube.com/embed/..."
+                        />
                     </div>
 
                     {/* AEO settings */}

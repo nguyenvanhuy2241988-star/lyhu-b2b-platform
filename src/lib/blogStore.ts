@@ -17,6 +17,7 @@ export interface BlogPost {
     slug: string;
     content: string;
     thumbnail_url: string | null;
+    video_url: string | null;
     
     // SEO & AEO Metadata
     ai_summary: string | null;
