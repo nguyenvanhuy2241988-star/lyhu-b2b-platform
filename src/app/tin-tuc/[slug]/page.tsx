@@ -63,10 +63,11 @@ async function getPost(slug: string) {
         .eq('is_active', true);
 
     if (data.keywords) {
-        // Use all keywords for a broader OR search
-        const keywordsList = data.keywords.split(',').map((k: string) => k.trim()).filter((k: string) => k.length > 2);
-        if (keywordsList.length > 0) {
-            const orConditions = keywordsList.map((kw: string) => `name.ilike.%${kw}%`).join(',');
+        // Break down keywords into individual significant words for a much broader AI match
+        const words = data.keywords.split(/[\s,]+/).map((k: string) => k.trim()).filter((k: string) => k.length > 2);
+        const uniqueWords = [...new Set(words)]; // remove duplicates
+        if (uniqueWords.length > 0) {
+            const orConditions = uniqueWords.map((w: string) => `name.ilike.%${w}%`).join(',');
             productQuery = productQuery.or(orConditions);
         }
     }
