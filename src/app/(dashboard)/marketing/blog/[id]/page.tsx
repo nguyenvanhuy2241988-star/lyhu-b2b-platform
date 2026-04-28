@@ -76,6 +76,10 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
                 author_id: post.author_id || user?.id,
             };
             
+            // Remove joined relations before saving to database
+            delete postDataToSave.category;
+            delete postDataToSave.author;
+            
             // Generate slug if empty (safety fallback)
             if (!postDataToSave.slug) {
                 postDataToSave.slug = generateSlug(postDataToSave.title || '');
