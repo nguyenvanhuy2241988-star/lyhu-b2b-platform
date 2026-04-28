@@ -23,7 +23,7 @@ export default function InlineProductBox({ product }: { product: any }) {
             
             {/* Info */}
             <div className="w-2/3 p-4 sm:p-6 flex flex-col justify-center">
-                <div className="text-xs font-bold text-primary-600 uppercase tracking-wider mb-2">Giá sỉ tận xưởng</div>
+                <div className="text-xs font-bold text-primary-600 uppercase tracking-wider mb-2">Giá sỉ tận gốc</div>
                 <h4 className="text-base sm:text-lg font-bold text-gray-900 line-clamp-2 mb-2 leading-snug">
                     {product.name}
                 </h4>
@@ -32,7 +32,7 @@ export default function InlineProductBox({ product }: { product: any }) {
                     <span className="text-xl sm:text-2xl font-bold text-primary-600">
                         {price > 0 ? new Intl.NumberFormat('vi-VN').format(price) : 'Liên hệ'}
                     </span>
-                    {price > 0 && <span className="text-sm font-medium text-gray-500 mb-1">₫ / thùng</span>}
+                    {price > 0 && <span className="text-sm font-medium text-gray-500 mb-1">₫ / gói</span>}
                 </div>
                 
                 <Link 
