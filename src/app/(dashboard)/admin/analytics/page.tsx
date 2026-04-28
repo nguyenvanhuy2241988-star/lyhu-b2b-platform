@@ -12,12 +12,13 @@ import dayjs from "dayjs";
 export default function AnalyticsDashboard() {
     const [loading, setLoading] = useState(true);
     const [dateRange, setDateRange] = useState("7d"); // 7d, 30d, all
+    const [excludeInternal, setExcludeInternal] = useState(true);
     const [data, setData] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         fetchAnalytics();
-    }, [dateRange]);
+    }, [dateRange, excludeInternal]);
 
     const fetchAnalytics = async () => {
         setLoading(true);
@@ -30,7 +31,8 @@ export default function AnalyticsDashboard() {
 
             const { data: result, error } = await supabase.rpc('get_analytics_summary', {
                 start_date: startDate,
-                end_date: dayjs().toISOString()
+                end_date: dayjs().toISOString(),
+                exclude_internal: excludeInternal
             });
 
             if (error) throw error;
@@ -95,6 +97,24 @@ export default function AnalyticsDashboard() {
                     >
                         Tất cả
                     </button>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                    <label className="flex items-center cursor-pointer">
+                        <div className="relative">
+                            <input 
+                                type="checkbox" 
+                                className="sr-only" 
+                                checked={excludeInternal} 
+                                onChange={() => setExcludeInternal(!excludeInternal)}
+                            />
+                            <div className={`block w-10 h-6 rounded-full transition-colors ${excludeInternal ? 'bg-primary-600' : 'bg-slate-200'}`}></div>
+                            <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${excludeInternal ? 'transform translate-x-4' : ''}`}></div>
+                        </div>
+                        <div className="ml-3 text-sm font-medium text-slate-700">
+                            Loại trừ truy cập nội bộ
+                        </div>
+                    </label>
                 </div>
             </div>
 
