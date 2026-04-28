@@ -226,11 +226,18 @@ export default async function BlogPostPage({ params }: Props) {
                     {post.keywords && (
                         <div className="mt-12 pt-6 border-t border-gray-100 flex items-center gap-2 flex-wrap">
                             <Tag className="w-4 h-4 text-gray-400" />
-                            {post.keywords.split(',').map((kw, i) => (
-                                <span key={i} className="bg-gray-50 border border-gray-200 text-gray-600 px-3 py-1 rounded text-sm font-medium">
-                                    {kw.trim()}
-                                </span>
-                            ))}
+                            {post.keywords.split(',').map((kw, i) => {
+                                const keyword = kw.trim();
+                                return (
+                                    <Link 
+                                        key={i} 
+                                        href={`/tin-tuc?search=${encodeURIComponent(keyword)}`}
+                                        className="bg-gray-50 border border-gray-200 text-gray-600 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 px-3 py-1 rounded text-sm font-medium transition-colors cursor-pointer"
+                                    >
+                                        {keyword}
+                                    </Link>
+                                );
+                            })}
                         </div>
                     )}
 

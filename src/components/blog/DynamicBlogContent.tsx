@@ -42,6 +42,24 @@ export default function DynamicBlogContent({ content, videoUrl, products = [] }:
                         if (match && match[1]) {
                             finalUrl = match[1];
                         }
+                    } else if (videoUrl.includes('drive.google.com/file/d/')) {
+                        // Convert Google Drive view link to preview link
+                        const match = videoUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                        if (match && match[1]) {
+                            finalUrl = `https://drive.google.com/file/d/${match[1]}/preview`;
+                        }
+                    } else if (videoUrl.includes('youtube.com/watch?v=')) {
+                        // Convert standard youtube link to embed link
+                        const match = videoUrl.match(/v=([^&]+)/);
+                        if (match && match[1]) {
+                            finalUrl = `https://www.youtube.com/embed/${match[1]}`;
+                        }
+                    } else if (videoUrl.includes('youtu.be/')) {
+                        // Convert short youtube link to embed link
+                        const match = videoUrl.match(/youtu\.be\/([^?]+)/);
+                        if (match && match[1]) {
+                            finalUrl = `https://www.youtube.com/embed/${match[1]}`;
+                        }
                     }
 
                     elements.push(
