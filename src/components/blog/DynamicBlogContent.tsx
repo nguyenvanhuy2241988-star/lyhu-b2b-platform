@@ -4,10 +4,11 @@ import InlineProductBox from './InlineProductBox';
 interface DynamicBlogContentProps {
     content: string;
     videoUrl?: string | null;
+    isVideoVertical?: boolean;
     products?: any[];
 }
 
-export default function DynamicBlogContent({ content, videoUrl, products = [] }: DynamicBlogContentProps) {
+export default function DynamicBlogContent({ content, videoUrl, isVideoVertical = false, products = [] }: DynamicBlogContentProps) {
     if (!content) return null;
 
     // A simple parser to split HTML by paragraph tags.
@@ -62,8 +63,12 @@ export default function DynamicBlogContent({ content, videoUrl, products = [] }:
                         }
                     }
 
+                    const videoClasses = isVideoVertical 
+                        ? "my-8 w-full max-w-sm mx-auto aspect-[9/16] rounded-xl overflow-hidden shadow-sm border border-gray-200 bg-black"
+                        : "my-8 w-full aspect-video rounded-xl overflow-hidden shadow-sm border border-gray-200 bg-black";
+
                     elements.push(
-                        <div key="video-embed" className="my-8 w-full aspect-video rounded-xl overflow-hidden shadow-sm border border-gray-200 bg-black">
+                        <div key="video-embed" className={videoClasses}>
                             <iframe 
                                 src={finalUrl} 
                                 className="w-full h-full"

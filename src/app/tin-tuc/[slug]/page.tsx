@@ -56,12 +56,29 @@ async function getPost(slug: string) {
         .select('*')
         .eq('is_active', true);
 
-    // Fetch some active products
-    const { data: products } = await supabase
+    // Fetch contextual products (AI matching via keywords)
+    let productQuery = supabase
         .from('products')
         .select('id, name, price, image_url')
-        .eq('is_active', true)
-        .limit(4);
+        .eq('is_active', true);
+
+    if (data.keywords) {
+        // Use the first keyword for searching
+        const firstKeyword = data.keywords.split(',')[0].trim();
+        productQuery = productQuery.ilike('name', `%${firstKeyword}%`);
+    }
+
+    let { data: products } = await productQuery.limit(4);
+
+    // Fallback if no matching products found
+    if (!products || products.length === 0) {
+        const { data: fallbackProducts } = await supabase
+            .from('products')
+            .select('id, name, price, image_url')
+            .eq('is_active', true)
+            .limit(4);
+        products = fallbackProducts || [];
+    }
 
     // Fetch active new customer offer
     const { data: newCustomerOffer } = await supabase
@@ -219,6 +236,7 @@ export default async function BlogPostPage({ params }: Props) {
                     <DynamicBlogContent 
                         content={post.content} 
                         videoUrl={post.video_url} 
+                        isVideoVertical={post.is_video_vertical}
                         products={products} 
                     />
 

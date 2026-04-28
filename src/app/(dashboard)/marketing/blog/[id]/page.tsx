@@ -25,6 +25,7 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
         content: '',
         category_id: '',
         video_url: '',
+        is_video_vertical: false,
         status: 'draft',
         ai_summary: '',
         meta_title: '',
@@ -344,9 +345,18 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
                             type="text"
                             value={post.video_url || ''}
                             onChange={(e) => setPost(prev => ({ ...prev, video_url: e.target.value }))}
-                            className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 mb-3"
                             placeholder="https://www.youtube.com/embed/..."
                         />
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                checked={post.is_video_vertical || false}
+                                onChange={(e) => setPost(prev => ({ ...prev, is_video_vertical: e.target.checked }))}
+                                className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+                            />
+                            <span className="text-sm text-gray-700 font-medium">Giao diện Video Dọc (Tiktok/Shorts)</span>
+                        </label>
                     </div>
 
                     {/* AEO settings */}

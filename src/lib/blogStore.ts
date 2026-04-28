@@ -18,6 +18,7 @@ export interface BlogPost {
     content: string;
     thumbnail_url: string | null;
     video_url: string | null;
+    is_video_vertical: boolean;
     
     // SEO & AEO Metadata
     ai_summary: string | null;
