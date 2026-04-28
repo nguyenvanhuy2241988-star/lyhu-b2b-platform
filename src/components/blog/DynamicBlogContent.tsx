@@ -55,6 +55,12 @@ export default function DynamicBlogContent({ content, videoUrl, isVideoVertical 
                         if (match && match[1]) {
                             finalUrl = `https://www.youtube.com/embed/${match[1]}`;
                         }
+                    } else if (videoUrl.includes('youtube.com/shorts/')) {
+                        // Convert youtube shorts link to embed link
+                        const match = videoUrl.match(/shorts\/([^?]+)/);
+                        if (match && match[1]) {
+                            finalUrl = `https://www.youtube.com/embed/${match[1]}`;
+                        }
                     } else if (videoUrl.includes('youtu.be/')) {
                         // Convert short youtube link to embed link
                         const match = videoUrl.match(/youtu\.be\/([^?]+)/);
