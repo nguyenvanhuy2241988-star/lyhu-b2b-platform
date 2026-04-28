@@ -116,15 +116,15 @@ export default function BlogEditorPage({ params }: { params: { id: string } }) {
             const fileName = `${Math.random()}.${fileExt}`;
             const filePath = `blog-thumbnails/${fileName}`;
 
-            // Assuming we have a 'public' storage bucket. Change if different.
+            // We use the 'media' storage bucket.
             const { error: uploadError, data } = await supabase.storage
-                .from('public')
+                .from('media')
                 .upload(filePath, file);
 
             if (uploadError) throw uploadError;
 
             const { data: publicUrlData } = supabase.storage
-                .from('public')
+                .from('media')
                 .getPublicUrl(filePath);
 
             setPost(prev => ({ ...prev, thumbnail_url: publicUrlData.publicUrl }));
