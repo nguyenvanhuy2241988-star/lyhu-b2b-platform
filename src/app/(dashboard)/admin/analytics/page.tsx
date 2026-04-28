@@ -360,6 +360,7 @@ export default function AnalyticsDashboard() {
                                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }}></div>
                                     <span className="text-xs font-medium text-slate-600 capitalize">{entry.device} ({entry.views})</span>
                                 </div>
+                            ))}
                         </div>
                     </div>
 
