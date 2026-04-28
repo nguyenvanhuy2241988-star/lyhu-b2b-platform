@@ -63,12 +63,13 @@ async function getPost(slug: string) {
         .eq('is_active', true);
 
     if (data.keywords) {
-        // Break down keywords into individual significant words for a much broader AI match
-        const words = data.keywords.split(/[\s,]+/).map((k: string) => k.trim()).filter((k: string) => k.length > 2);
-        const uniqueWords = [...new Set(words)]; // remove duplicates
-        if (uniqueWords.length > 0) {
-            const orConditions = uniqueWords.map((w: string) => `name.ilike.%${w}%`).join(',');
-            productQuery = productQuery.or(orConditions);
+        // To avoid overly broad matches (like "bánh" from "bánh kẹo" matching "Bánh tráng"),
+        // we use the very first word of the first keyword (e.g., "kẹo" from "kẹo chua UHi")
+        const firstKeyword = data.keywords.split(',')[0].trim();
+        const firstWord = firstKeyword.split(' ')[0];
+        
+        if (firstWord && firstWord.length >= 2) {
+            productQuery = productQuery.ilike('name', `%${firstWord}%`);
         }
     }
 
