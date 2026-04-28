@@ -35,7 +35,13 @@ export default function WebTracker() {
                 // usually only cares about external referrers.
                 let referrer = document.referrer;
                 
-                // If it's an internal referrer, we can keep it or null it. Let's send it anyway.
+                // Calculate Load Time (only for initial hard loads)
+                let loadTimeMs = null;
+                if (isFirstRender.current) {
+                    // performance.now() inside useEffect gives a good approximation of Time to Interactive / DOM Ready
+                    loadTimeMs = Math.round(performance.now());
+                    isFirstRender.current = false;
+                }
 
                 await fetch("/api/analytics/track", {
                     method: "POST",
@@ -49,6 +55,7 @@ export default function WebTracker() {
                         pathname: pathname,
                         referrer: referrer,
                         screen_width: window.innerWidth,
+                        load_time_ms: loadTimeMs,
                     }),
                     // Keepalive ensures the request fires even if user navigates away quickly
                     keepalive: true 

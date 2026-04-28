@@ -99,64 +99,71 @@ export default function AnalyticsDashboard() {
             </div>
 
             {/* Overview Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
-                        <Eye className="w-16 h-16 text-primary" />
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                        <Eye className="w-12 h-12 text-primary" />
                     </div>
-                    <div className="flex items-center gap-3 text-slate-500 mb-2">
-                        <div className="p-2 bg-primary-50 rounded-lg text-primary">
-                            <Eye className="w-5 h-5" />
+                    <div className="flex items-center gap-2 text-slate-500 mb-2">
+                        <div className="p-1.5 bg-primary-50 rounded-md text-primary">
+                            <Eye className="w-4 h-4" />
                         </div>
-                        <span className="font-medium text-sm">Lượt Xem (Người thật)</span>
+                        <span className="font-medium text-xs">Xem (Người)</span>
                     </div>
-                    <div className="text-3xl font-bold text-slate-900">{data?.humanViews?.toLocaleString() || 0}</div>
-                    <div className="mt-2 text-xs text-emerald-600 flex items-center gap-1">
-                        <Activity className="w-4 h-4" /> Real-time active
-                    </div>
+                    <div className="text-2xl font-bold text-slate-900">{data?.humanViews?.toLocaleString() || 0}</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
-                        <Users className="w-16 h-16 text-blue-500" />
+                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                        <Users className="w-12 h-12 text-blue-500" />
                     </div>
-                    <div className="flex items-center gap-3 text-slate-500 mb-2">
-                        <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
-                            <Users className="w-5 h-5" />
+                    <div className="flex items-center gap-2 text-slate-500 mb-2">
+                        <div className="p-1.5 bg-blue-50 rounded-md text-blue-600">
+                            <Users className="w-4 h-4" />
                         </div>
-                        <span className="font-medium text-sm">Khách (Unique)</span>
+                        <span className="font-medium text-xs">Khách (Unique)</span>
                     </div>
-                    <div className="text-3xl font-bold text-slate-900">{data?.uniqueVisitors?.toLocaleString() || 0}</div>
-                    <div className="mt-2 text-xs text-slate-500">Khách hàng duy nhất</div>
+                    <div className="text-2xl font-bold text-slate-900">{data?.uniqueVisitors?.toLocaleString() || 0}</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
-                        <MousePointerClick className="w-16 h-16 text-amber-500" />
+                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                        <MousePointerClick className="w-12 h-12 text-amber-500" />
                     </div>
-                    <div className="flex items-center gap-3 text-slate-500 mb-2">
-                        <div className="p-2 bg-amber-50 rounded-lg text-amber-600">
-                            <MousePointerClick className="w-5 h-5" />
+                    <div className="flex items-center gap-2 text-slate-500 mb-2">
+                        <div className="p-1.5 bg-amber-50 rounded-md text-amber-600">
+                            <MousePointerClick className="w-4 h-4" />
                         </div>
-                        <span className="font-medium text-sm">Tổng Phiên (Sessions)</span>
+                        <span className="font-medium text-xs">Tổng Phiên</span>
                     </div>
-                    <div className="text-3xl font-bold text-slate-900">{data?.totalSessions?.toLocaleString() || 0}</div>
-                    <div className="mt-2 text-xs text-slate-500">Lượt vào trang</div>
+                    <div className="text-2xl font-bold text-slate-900">{data?.totalSessions?.toLocaleString() || 0}</div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
-                        <Globe className="w-16 h-16 text-slate-500" />
+                <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
+                        <Globe className="w-12 h-12 text-slate-500" />
                     </div>
-                    <div className="flex items-center gap-3 text-slate-500 mb-2">
-                        <div className="p-2 bg-slate-100 rounded-lg text-slate-600">
-                            <Globe className="w-5 h-5" />
+                    <div className="flex items-center gap-2 text-slate-500 mb-2">
+                        <div className="p-1.5 bg-slate-100 rounded-md text-slate-600">
+                            <Globe className="w-4 h-4" />
                         </div>
-                        <span className="font-medium text-sm">Lượt quét (AI/Bot)</span>
+                        <span className="font-medium text-xs">Lượt quét (Bot)</span>
                     </div>
-                    <div className="text-3xl font-bold text-slate-900">{data?.botViews?.toLocaleString() || 0}</div>
-                    <div className="mt-2 text-xs text-slate-500">
-                        {data?.botBreakdown?.[0] ? `${data.botBreakdown[0].bot} quét nhiều nhất` : 'Bot & Crawler'}
+                    <div className="text-2xl font-bold text-slate-900">{data?.botViews?.toLocaleString() || 0}</div>
+                </div>
+
+                <div className={`p-5 rounded-2xl border shadow-sm relative overflow-hidden group ${data?.avgLoadTime && data.avgLoadTime > 3000 ? 'bg-red-50 border-red-100' : 'bg-white border-slate-100'}`}>
+                    <div className="flex items-center gap-2 text-slate-500 mb-2">
+                        <div className={`p-1.5 rounded-md ${data?.avgLoadTime && data.avgLoadTime > 3000 ? 'bg-red-100 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                            <Activity className="w-4 h-4" />
+                        </div>
+                        <span className="font-medium text-xs">Tốc độ Tải trang</span>
+                    </div>
+                    <div className="text-2xl font-bold text-slate-900">
+                        {data?.avgLoadTime ? (data.avgLoadTime / 1000).toFixed(2) : 0}s
+                    </div>
+                    <div className={`mt-2 text-xs ${data?.avgLoadTime && data.avgLoadTime > 3000 ? 'text-red-600' : 'text-emerald-600'}`}>
+                        {data?.avgLoadTime && data.avgLoadTime > 3000 ? 'Chậm! Cần tối ưu' : 'Rất nhanh'}
                     </div>
                 </div>
             </div>

@@ -10,7 +10,7 @@ const supabaseAdmin = createClient(
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { session_id, visitor_id, url, pathname, referrer, screen_width } = body;
+        const { session_id, visitor_id, url, pathname, referrer, screen_width, load_time_ms } = body;
 
         if (!session_id || !visitor_id || !url || !pathname) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -69,7 +69,8 @@ export async function POST(req: NextRequest) {
                 user_agent: userAgent,
                 screen_width: screen_width || null,
                 is_bot,
-                bot_name
+                bot_name,
+                load_time_ms: load_time_ms || null
             });
 
         if (error) {
