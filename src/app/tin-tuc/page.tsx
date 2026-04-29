@@ -6,14 +6,15 @@ import { BlogPost, BlogCategory } from '@/lib/blogStore';
 import SearchBar from '@/components/blog/SearchBar';
 import Pagination from '@/components/blog/Pagination';
 
-export const revalidate = 60; // Revalidate more frequently since we have search/pagination
 export const dynamic = 'force-dynamic';
 const POSTS_PER_PAGE = 12;
 
 async function getBlogData(page: number, categorySlug: string, searchQuery: string) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+        global: { fetch: (url, options) => fetch(url, { ...options, cache: 'no-store' }) }
+    });
 
     // 1. Fetch Categories
     const { data: categories } = await supabase

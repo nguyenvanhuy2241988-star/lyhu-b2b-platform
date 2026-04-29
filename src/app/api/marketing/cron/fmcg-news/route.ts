@@ -85,9 +85,9 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
   "meta_description": "Mô tả SEO tóm tắt sự kiện",
   "keywords": "từ khóa SEO liên quan đến sự kiện",
   "image_search_queries": [
-    "Từ khóa tiếng Anh mô tả CỤ THỂ hình ảnh làm ảnh đại diện (VD: grocery store exterior, busy supermarket)",
-    "Từ khóa tiếng Anh mô tả CỤ THỂ hình ảnh minh họa giữa bài (VD: supermarket shelves, milk products)",
-    "Từ khóa tiếng Anh mô tả CỤ THỂ hình ảnh minh họa cuối bài (VD: people shopping, tax paperwork, retail checkout)"
+    "Câu lệnh (Prompt) tiếng Anh dài khoảng 10-20 chữ để AI VẼ hình ảnh đại diện (VD: A modern Vietnamese supermarket exterior with green branding like Bach Hoa Xanh, busy customers)",
+    "Câu lệnh (Prompt) tiếng Anh dài khoảng 10-20 chữ để AI VẼ hình ảnh minh họa giữa bài (VD: Close up of supermarket shelves filled with milk and snack products, bright lighting)",
+    "Câu lệnh (Prompt) tiếng Anh dài khoảng 10-20 chữ để AI VẼ hình ảnh minh họa cuối bài (VD: People shopping at retail checkout counter, paying with cash, realistic)"
   ]
 }
 ---JSON_END---
@@ -130,24 +130,18 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
         const metaData = JSON.parse(jsonStr);
         const topic = metaData.topic || `Bản tin thị trường FMCG ${todayStr}`;
 
-        // 2. Fetch High-Quality Images from Pexels
+        // 2. Generate High-Quality Contextual Images via Pollinations AI
         let thumbnailUrl = null;
         let images: string[] = [];
         
         if (metaData.image_search_queries && Array.isArray(metaData.image_search_queries)) {
-            // Fetch 1 image per query to ensure high variety and context
-            for (const query of metaData.image_search_queries) {
-                const fetched = await fetchPexelsImages(query, 1);
-                if (fetched && fetched.length > 0) {
-                    images.push(fetched[0]);
-                } else {
-                    // Fallback to generic supermarket if specific query fails
-                    const fallback = await fetchPexelsImages("supermarket", 1);
-                    if (fallback && fallback.length > 0) images.push(fallback[0]);
-                }
-            }
+            images = metaData.image_search_queries.map((prompt: string) => 
+                `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt + ", photorealistic, professional photography, 8k resolution, highly detailed")}?width=1200&height=630&nologo=true`
+            );
         } else if (metaData.image_search_keyword) {
-            images = await fetchPexelsImages(metaData.image_search_keyword, 3);
+            images = [
+                `https://image.pollinations.ai/prompt/${encodeURIComponent(metaData.image_search_keyword + " supermarket retail photorealistic")}?width=1200&height=630&nologo=true`
+            ];
         }
 
         if (images.length > 0) {
