@@ -65,7 +65,7 @@ Ví dụ Format trả về:
                 contents: [{ role: 'user', parts: [{ text: prompt }] }],
                 generationConfig: {
                     temperature: 0.7,
-                    maxOutputTokens: 2048,
+                    maxOutputTokens: 8192,
                 }
             })
         });
@@ -74,7 +74,7 @@ Ví dụ Format trả về:
         
         if (data.error) {
             console.error('Lỗi từ Gemini API:', data.error.message);
-            return null;
+            return { error: data.error.message };
         }
 
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -84,13 +84,10 @@ Ví dụ Format trả về:
         const jsonStartIdx = text.indexOf('---JSON_START---');
         const jsonEndIdx = text.indexOf('---JSON_END---');
         
+        // Nếu không tìm thấy JSON tức là bài viết bị cắt ngang do giới hạn độ dài hoặc lỗi AI
         if (jsonStartIdx === -1 || jsonEndIdx === -1) {
-            return {
-                content: text.replace(/```html/g, '').replace(/```/g, ''),
-                meta_title: topic,
-                meta_description: topic,
-                keywords: 'kinh doanh tạp hóa, bánh kẹo sỉ',
-            };
+            console.error('Bài viết bị cắt ngang hoặc không có JSON metadata');
+            return null;
         }
 
         let content = text.substring(0, jsonStartIdx).trim();
@@ -158,7 +155,11 @@ export async function GET() {
             const topic = topicsToProcess[i];
             const articleData = await generateArticle(topic, GEMINI_API_KEY);
             if (!articleData) {
-                completed.push({ topic, status: 'failed (API Rate Limit hoặc lỗi)' });
+                completed.push({ topic, status: 'failed (Lỗi không xác định hoặc không có JSON metadata)' });
+                continue;
+            }
+            if (articleData.error) {
+                completed.push({ topic, status: `failed (Lỗi API: ${articleData.error})` });
                 continue;
             }
 
