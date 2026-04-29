@@ -59,12 +59,14 @@ export async function GET(req: Request) {
         // 1. Generate Content via Gemini (Brainstorm + Write in one go)
         const prompt = `
 Bạn là một TỔNG BIÊN TẬP KIÊM NHÀ BÁO kinh tế uy tín hàng đầu Việt Nam, chuyên sâu về thị trường Bán lẻ và Tiêu dùng nhanh (FMCG).
-Hôm nay là ngày ${todayStr}. Nhiệm vụ của bạn là TỰ SÁNG TẠO và viết một bản tin/bài báo thị trường HOT NHẤT, CHƯA TỪNG ĐƯỢC VIẾT ĐỂ ĐĂNG LÊN TRANG TIN TỨC CỦA LYHU.
+Hôm nay là ngày ${todayStr}. 
+
+BẮT BUỘC: HÃY TÌM KIẾM TRÊN GOOGLE ĐỂ CẬP NHẬT NHỮNG TIN TỨC THỰC TẾ MỚI NHẤT VỀ NGÀNH FMCG HOẶC BÁN LẺ TẠI VIỆT NAM TRONG VÒNG 1-2 NGÀY QUA (Ví dụ: chính sách thuế mới, biến động giá cả, các siêu thị lớn mở rộng, báo cáo doanh thu...). Dựa vào thông tin THỰC TẾ đó để viết bài.
 
 YÊU CẦU NỘI DUNG (GIỌNG VĂN BÁO CHÍ):
-1. Tự nghĩ ra 1 Chủ đề mang tính THỜI SỰ cao: Ví dụ: Phân tích xu hướng tiêu dùng mùa hè, chiến lược nhập hàng, sự bùng nổ của kẹo dẻo UHI, đứt gãy chuỗi cung ứng, cách siêu thị mini sinh tồn...
-2. Văn phong: Khách quan, sắc sảo, có tính cập nhật tin tức (Sử dụng các từ ngữ như "Ghi nhận mới nhất", "Theo khảo sát", "Báo cáo thị trường").
-3. Lồng ghép LYHU: Nhắc đến LYHU như một "Cứu cánh", một "Nền tảng B2B hàng đầu", "Đối tác chiến lược" giúp các chủ tạp hóa nhập sỉ Kẹo chua UHI và bánh kẹo với chiết khấu 45%, giá tận xưởng.
+1. Chủ đề: Dựa trên tin tức có thật vừa tìm kiếm được.
+2. Văn phong: Khách quan, sắc sảo, có tính cập nhật tin tức (Sử dụng các từ ngữ như "Ghi nhận mới nhất", "Theo báo cáo thực tế", "Sự kiện vừa diễn ra").
+3. Lồng ghép LYHU: Ở cuối bài, hãy khéo léo gợi ý các chủ tạp hóa nhập sỉ Kẹo chua UHI và bánh kẹo tại nền tảng B2B LYHU với chiết khấu 45%, giá tận xưởng để tối ưu lợi nhuận trước những biến động thị trường vừa phân tích.
 
 YÊU CẦU BẮT BUỘC VỀ FORMAT:
 1. CHỈ TRẢ VỀ mã HTML chuẩn. KHÔNG dùng Markdown (** hay #).
@@ -79,11 +81,11 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
 
 ---JSON_START---
 {
-  "topic": "Tiêu đề của bài báo (Ví dụ: Tin nóng thị trường: Xu hướng tiêu dùng đồ ăn vặt bùng nổ tháng này)",
+  "topic": "Tiêu đề của bài báo (Ví dụ: Theo dòng sự kiện: Masan vừa phát hành trái phiếu...)",
   "meta_title": "Tiêu đề chuẩn SEO (tối đa 60 ký tự)",
   "meta_description": "Mô tả SEO",
   "keywords": "từ khóa SEO",
-  "image_search_keyword": "1 từ khóa tiếng Anh cực kỳ ngắn (1-2 chữ) để tìm ảnh minh họa trên Pexels (VD: supermarket, candy, snack, market, retail)"
+  "image_search_keyword": "1 từ khóa tiếng Anh cực kỳ ngắn (1-2 chữ) để tìm ảnh minh họa trên Pexels (VD: supermarket, business, finance, tax, retail)"
 }
 ---JSON_END---
 `;
@@ -93,6 +95,7 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                tools: [{ googleSearch: {} }],
                 generationConfig: {
                     temperature: 0.8, // Slightly higher for more creative brainstorming
                     maxOutputTokens: 8192,
