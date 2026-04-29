@@ -157,42 +157,121 @@ export default async function BlogIndexPage({
                         </div>
                     ) : (
                         <>
-                            {/* Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                {posts.map(post => (
-                                    <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex flex-col bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300">
-                                        <div className="aspect-[16/10] w-full bg-gray-100 overflow-hidden relative">
-                                            {post.thumbnail_url ? (
-                                                <img 
-                                                    src={post.thumbnail_url} 
-                                                    alt={post.title}
-                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center bg-primary-50 text-primary-200">
-                                                    <span className="font-bold text-2xl">LYHU</span>
+                            {/* Top News (Hero) & Timeline */}
+                            <div className="space-y-8">
+                                {/* Only show Hero on the first page of "All Categories" without search */}
+                                {currentPage === 1 && activeCategory === 'all' && !searchQuery && posts.length >= 3 && (
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 pb-10 border-b border-gray-200">
+                                        {/* Main Featured Article (Col 1 & 2) */}
+                                        <div className="md:col-span-2">
+                                            <Link href={`/tin-tuc/${posts[0].slug}`} className="group block">
+                                                <div className="aspect-[16/9] w-full bg-gray-100 overflow-hidden relative mb-4 rounded-xl">
+                                                    {posts[0].thumbnail_url ? (
+                                                        <img 
+                                                            src={posts[0].thumbnail_url} 
+                                                            alt={posts[0].title}
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center bg-primary-50 text-primary-200">
+                                                            <span className="font-bold text-3xl">LYHU</span>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
+                                                {posts[0].category && (
+                                                    <span className="text-xs font-bold text-primary-600 uppercase tracking-wider mb-2 block">
+                                                        {posts[0].category.name}
+                                                    </span>
+                                                )}
+                                                <h2 className="text-3xl font-extrabold text-gray-900 group-hover:text-primary-600 transition-colors mb-3 leading-tight">
+                                                    {posts[0].title}
+                                                </h2>
+                                                <p className="text-gray-600 text-base line-clamp-3 mb-4">
+                                                    {posts[0].meta_description || posts[0].ai_summary}
+                                                </p>
+                                                <div className="flex items-center text-xs text-gray-500 font-medium">
+                                                    <Clock className="w-3.5 h-3.5 mr-1.5" />
+                                                    {new Date(posts[0].published_at || posts[0].created_at).toLocaleDateString('vi-VN')}
+                                                </div>
+                                            </Link>
                                         </div>
-                                        <div className="p-6 flex flex-col flex-1">
-                                            {post.category && (
-                                                <span className="text-xs font-bold text-primary-600 uppercase tracking-wider mb-2">
-                                                    {post.category.name}
-                                                </span>
-                                            )}
-                                            <h4 className="text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors line-clamp-2 mb-3 leading-snug">
-                                                {post.title}
-                                            </h4>
-                                            <p className="text-gray-500 text-sm line-clamp-2 mb-4 flex-1">
-                                                {post.meta_description || post.ai_summary}
-                                            </p>
-                                            <div className="mt-auto pt-4 border-t border-gray-50 flex items-center text-xs text-gray-400 font-medium">
-                                                <Clock className="w-3.5 h-3.5 mr-1.5" />
-                                                {new Date(post.published_at || post.created_at).toLocaleDateString('vi-VN')}
+
+                                        {/* 2 Sub Featured Articles (Col 3) */}
+                                        <div className="flex flex-col gap-6 md:pl-6 md:border-l md:border-gray-200">
+                                            {[posts[1], posts[2]].map(post => (
+                                                <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex flex-col flex-1">
+                                                    <div className="aspect-[16/10] w-full bg-gray-100 overflow-hidden relative mb-3 rounded-lg">
+                                                        {post.thumbnail_url ? (
+                                                            <img 
+                                                                src={post.thumbnail_url} 
+                                                                alt={post.title}
+                                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center bg-primary-50 text-primary-200">
+                                                                <span className="font-bold text-xl">LYHU</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <h3 className="text-lg font-bold text-gray-900 group-hover:text-primary-600 transition-colors line-clamp-3 mb-2 leading-snug">
+                                                        {post.title}
+                                                    </h3>
+                                                    <div className="mt-auto flex items-center text-xs text-gray-400 font-medium">
+                                                        <Clock className="w-3.5 h-3.5 mr-1.5" />
+                                                        {new Date(post.published_at || post.created_at).toLocaleDateString('vi-VN')}
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Timeline List View */}
+                                <div className="space-y-8">
+                                    {(currentPage === 1 && activeCategory === 'all' && !searchQuery && posts.length >= 3 
+                                        ? posts.slice(3) 
+                                        : posts).map((post, index) => (
+                                        <Link 
+                                            key={post.id} 
+                                            href={`/tin-tuc/${post.slug}`} 
+                                            className="group flex flex-col sm:flex-row gap-6 pb-8 border-b border-gray-100 last:border-0"
+                                        >
+                                            {/* Thumbnail Left */}
+                                            <div className="w-full sm:w-[280px] shrink-0 aspect-[16/10] bg-gray-100 overflow-hidden relative rounded-lg">
+                                                {post.thumbnail_url ? (
+                                                    <img 
+                                                        src={post.thumbnail_url} 
+                                                        alt={post.title}
+                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center bg-primary-50 text-primary-200">
+                                                        <span className="font-bold text-xl">LYHU</span>
+                                                    </div>
+                                                )}
                                             </div>
-                                        </div>
-                                    </Link>
-                                ))}
+                                            
+                                            {/* Content Right */}
+                                            <div className="flex-1 flex flex-col justify-center">
+                                                {post.category && (
+                                                    <span className="text-xs font-bold text-primary-600 uppercase tracking-wider mb-2 block">
+                                                        {post.category.name}
+                                                    </span>
+                                                )}
+                                                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors line-clamp-2 mb-2 sm:mb-3 leading-snug">
+                                                    {post.title}
+                                                </h3>
+                                                <p className="text-gray-500 text-sm sm:text-base line-clamp-2 mb-3">
+                                                    {post.meta_description || post.ai_summary}
+                                                </p>
+                                                <div className="mt-auto flex items-center text-xs text-gray-400 font-medium">
+                                                    <Clock className="w-3.5 h-3.5 mr-1.5" />
+                                                    {new Date(post.published_at || post.created_at).toLocaleDateString('vi-VN')}
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
                             </div>
 
                             {/* Pagination Component */}
