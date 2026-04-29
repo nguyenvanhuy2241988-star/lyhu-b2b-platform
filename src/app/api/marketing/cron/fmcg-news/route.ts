@@ -56,35 +56,34 @@ export async function GET(req: Request) {
     try {
         const todayStr = new Date().toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 
-        // 1. Generate Content via Gemini (Brainstorm + Write in one go)
         const prompt = `
-Bạn là một TỔNG BIÊN TẬP KIÊM NHÀ BÁO kinh tế uy tín hàng đầu Việt Nam, chuyên sâu về thị trường Bán lẻ và Tiêu dùng nhanh (FMCG).
+Bạn là một TỔNG BIÊN TẬP KIÊM NHÀ BÁO kinh tế uy tín hàng đầu Việt Nam, làm việc cho một Tòa soạn Báo điện tử ĐỘC LẬP chuyên sâu về thị trường Bán lẻ và Tiêu dùng nhanh (FMCG).
 Hôm nay là ngày ${todayStr}. 
 
-BẮT BUỘC: HÃY TÌM KIẾM TRÊN GOOGLE ĐỂ CẬP NHẬT NHỮNG TIN TỨC THỰC TẾ MỚI NHẤT VỀ NGÀNH FMCG HOẶC BÁN LẺ TẠI VIỆT NAM TRONG VÒNG 1-2 NGÀY QUA (Ví dụ: chính sách thuế mới, biến động giá cả, các siêu thị lớn mở rộng, báo cáo doanh thu...). Dựa vào thông tin THỰC TẾ đó để viết bài.
+BẮT BUỘC SỐ 1: HÃY TÌM KIẾM TRÊN GOOGLE ĐỂ LẤY MỘT TIN TỨC THỰC TẾ MỚI NHẤT, NÓNG NHẤT VỀ NGÀNH FMCG HOẶC BÁN LẺ TẠI VIỆT NAM TRONG VÒNG 1-2 NGÀY QUA (Ví dụ: chính sách thuế mới, biến động giá cả, các chuỗi siêu thị lớn như WinMart, Bách Hóa Xanh, CoopMart mở rộng/thu hẹp, các tập đoàn như Masan, Vinamilk, Nestle ra báo cáo tài chính, phát hành trái phiếu...). Dựa vào thông tin THỰC TẾ đó để viết thành một bài báo hoàn chỉnh.
+
+BẮT BUỘC SỐ 2 (QUAN TRỌNG NHẤT): BÀI BÁO PHẢI HOÀN TOÀN KHÁCH QUAN. TUYỆT ĐỐI KHÔNG ĐƯỢC NHẮC ĐẾN TÊN "LYHU", "KẸO CHUA UHI", HAY BẤT KỲ NỘI DUNG QUẢNG CÁO, KÊU GỌI NHẬP SỈ NÀO. ĐÂY LÀ MỘT TỜ BÁO CHÍNH THỐNG, KHÔNG PHẢI LÀ BÀI PR.
 
 YÊU CẦU NỘI DUNG (GIỌNG VĂN BÁO CHÍ):
-1. Chủ đề: Dựa trên tin tức có thật vừa tìm kiếm được.
-2. Văn phong: Khách quan, sắc sảo, có tính cập nhật tin tức (Sử dụng các từ ngữ như "Ghi nhận mới nhất", "Theo báo cáo thực tế", "Sự kiện vừa diễn ra").
-3. Lồng ghép LYHU: Ở cuối bài, hãy khéo léo gợi ý các chủ tạp hóa nhập sỉ Kẹo chua UHI và bánh kẹo tại nền tảng B2B LYHU với chiết khấu 45%, giá tận xưởng để tối ưu lợi nhuận trước những biến động thị trường vừa phân tích.
+1. Chủ đề: Dựa trên 1 tin tức CÓ THẬT vừa tìm kiếm được. Tiêu đề phải giật tít chuẩn báo chí kinh tế (ví dụ: "Masan huy động thành công 500 tỷ đồng trái phiếu", "WinMart+ ồ ạt đóng cửa các điểm bán kém hiệu quả", "Bộ Tài chính đề xuất giảm thuế VAT 2% cho ngành bán lẻ").
+2. Văn phong: Khách quan, sắc sảo, có tính cập nhật tin tức (Sử dụng các từ ngữ như "Ghi nhận mới nhất", "Theo báo cáo thực tế", "Sự kiện vừa diễn ra"). Trích dẫn số liệu cụ thể nếu có.
 
 YÊU CẦU BẮT BUỘC VỀ FORMAT:
 1. CHỈ TRẢ VỀ mã HTML chuẩn. KHÔNG dùng Markdown (** hay #).
 2. Phân tách nội dung: Bắt buộc dùng thẻ <p>...</p> cho MỖI đoạn văn. Dùng <h2>, <h3> cho các tiêu đề phụ. Dùng <ul><li> cho danh sách. Dùng <strong> để bôi đậm từ khóa.
 3. Độ dài: Ít nhất 800 chữ, hành văn thu hút.
-4. CHÈN ẢNH: Chèn ĐÚNG 2 từ khóa sau vào bài viết để ngắt quãng bài viết (hệ thống sẽ thay bằng ảnh):
+4. CHÈN ẢNH: Chèn ĐÚNG 2 từ khóa sau vào bài viết để ngắt quãng bài viết (hệ thống sẽ thay bằng ảnh minh họa):
    - [PEXELS_IMAGE_1] ở giữa bài.
    - [PEXELS_IMAGE_2] ở gần cuối bài.
    (Chỉ cần viết đúng chữ [PEXELS_IMAGE_1] đứng một mình trên 1 dòng).
-5. Cuối bài bắt buộc có Call-to-action kêu gọi đăng ký nhập sỉ tại LYHU.
-6. Kết thúc bằng một ĐOẠN JSON CHUẨN chứa metadata theo định dạng sau:
+5. Kết thúc bằng một ĐOẠN JSON CHUẨN chứa metadata theo định dạng sau:
 
 ---JSON_START---
 {
   "topic": "Tiêu đề của bài báo (Ví dụ: Theo dòng sự kiện: Masan vừa phát hành trái phiếu...)",
   "meta_title": "Tiêu đề chuẩn SEO (tối đa 60 ký tự)",
-  "meta_description": "Mô tả SEO",
-  "keywords": "từ khóa SEO",
+  "meta_description": "Mô tả SEO tóm tắt sự kiện",
+  "keywords": "từ khóa SEO liên quan đến sự kiện",
   "image_search_keyword": "1 từ khóa tiếng Anh cực kỳ ngắn (1-2 chữ) để tìm ảnh minh họa trên Pexels (VD: supermarket, business, finance, tax, retail)"
 }
 ---JSON_END---
