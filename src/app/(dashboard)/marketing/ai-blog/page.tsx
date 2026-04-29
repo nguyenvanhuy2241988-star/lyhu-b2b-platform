@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabaseClient';
 import { CheckCircle2, CircleDashed, XCircle, Settings, Play } from 'lucide-react';
 import { BlogCategory } from '@/lib/blogStore';
@@ -144,13 +143,13 @@ export default function AIBlogPage() {
                             </select>
                         </div>
 
-                        <Button 
-                            className="w-full mt-4 bg-gray-800 hover:bg-gray-900 text-white"
+                        <button 
+                            className="w-full mt-4 px-4 py-2 rounded-lg font-medium bg-gray-800 hover:bg-gray-900 text-white transition disabled:opacity-50"
                             onClick={handlePrepareTopics}
                             disabled={isGenerating || topicsInput.trim().length === 0}
                         >
                             Đưa vào danh sách chờ
-                        </Button>
+                        </button>
                     </div>
 
                     <div className="bg-yellow-50 p-4 rounded-xl border border-yellow-100 text-sm text-yellow-800">
@@ -167,10 +166,10 @@ export default function AIBlogPage() {
                     <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm h-full flex flex-col">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="font-semibold text-gray-700">2. Danh sách Chờ ({topicsList.length} bài)</h2>
-                            <Button 
+                            <button 
                                 onClick={startGenerating}
                                 disabled={isGenerating || topicsList.length === 0}
-                                className="bg-[#0B9679] hover:bg-[#087f65] text-white gap-2"
+                                className="flex items-center bg-[#0B9679] hover:bg-[#087f65] text-white px-4 py-2 rounded-lg font-medium transition disabled:opacity-50 gap-2"
                             >
                                 {isGenerating ? (
                                     <>
@@ -183,7 +182,7 @@ export default function AIBlogPage() {
                                         Bắt đầu Viết
                                     </>
                                 )}
-                            </Button>
+                            </button>
                         </div>
 
                         {/* Thanh tiến trình */}
