@@ -84,7 +84,11 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
   "meta_title": "Tiêu đề chuẩn SEO (tối đa 60 ký tự)",
   "meta_description": "Mô tả SEO tóm tắt sự kiện",
   "keywords": "từ khóa SEO liên quan đến sự kiện",
-  "image_search_keyword": "1 từ khóa tiếng Anh cực kỳ ngắn (1-2 chữ) để tìm ảnh minh họa trên Pexels (VD: supermarket, business, finance, tax, retail)"
+  "image_search_queries": [
+    "Từ khóa tiếng Anh mô tả CỤ THỂ hình ảnh làm ảnh đại diện (VD: grocery store exterior, busy supermarket)",
+    "Từ khóa tiếng Anh mô tả CỤ THỂ hình ảnh minh họa giữa bài (VD: supermarket shelves, milk products)",
+    "Từ khóa tiếng Anh mô tả CỤ THỂ hình ảnh minh họa cuối bài (VD: people shopping, tax paperwork, retail checkout)"
+  ]
 }
 ---JSON_END---
 `;
@@ -129,11 +133,25 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
         // 2. Fetch High-Quality Images from Pexels
         let thumbnailUrl = null;
         let images: string[] = [];
-        if (metaData.image_search_keyword) {
-            images = await fetchPexelsImages(metaData.image_search_keyword, 3);
-            if (images.length > 0) {
-                thumbnailUrl = images[0]; 
+        
+        if (metaData.image_search_queries && Array.isArray(metaData.image_search_queries)) {
+            // Fetch 1 image per query to ensure high variety and context
+            for (const query of metaData.image_search_queries) {
+                const fetched = await fetchPexelsImages(query, 1);
+                if (fetched && fetched.length > 0) {
+                    images.push(fetched[0]);
+                } else {
+                    // Fallback to generic supermarket if specific query fails
+                    const fallback = await fetchPexelsImages("supermarket", 1);
+                    if (fallback && fallback.length > 0) images.push(fallback[0]);
+                }
             }
+        } else if (metaData.image_search_keyword) {
+            images = await fetchPexelsImages(metaData.image_search_keyword, 3);
+        }
+
+        if (images.length > 0) {
+            thumbnailUrl = images[0]; 
         }
 
         // 3. Inject Inline Images into content
