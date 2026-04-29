@@ -15,6 +15,10 @@
         {
             "path": "/api/facebook/auto-comment-reply",
             "schedule": "*/3 * * * *"
+        },
+        {
+            "path": "/api/marketing/cron/fmcg-news",
+            "schedule": "0 1,8,13 * * *"
         }
     ]
 }
