@@ -131,18 +131,18 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
 
         // 3. Inject Inline Images into content
         if (images.length > 1) {
-            const img1 = \`<figure class="my-8"><img src="\${images[1]}" alt="\${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>\`;
+            const img1 = `<figure class="my-8"><img src="${images[1]}" alt="${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>`;
             content = content.replace(/\[PEXELS_IMAGE_1\]/g, img1);
         } else {
             content = content.replace(/\[PEXELS_IMAGE_1\]/g, ''); // Remove if not found
         }
 
         if (images.length > 2) {
-            const img2 = \`<figure class="my-8"><img src="\${images[2]}" alt="\${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>\`;
+            const img2 = `<figure class="my-8"><img src="${images[2]}" alt="${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>`;
             content = content.replace(/\[PEXELS_IMAGE_2\]/g, img2);
         } else if (images.length > 1) {
              // Fallback to image 1 if image 2 not available
-             const img2 = \`<figure class="my-8"><img src="\${images[1]}" alt="\${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>\`;
+             const img2 = `<figure class="my-8"><img src="${images[1]}" alt="${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>`;
              content = content.replace(/\[PEXELS_IMAGE_2\]/g, img2);
         } else {
             content = content.replace(/\[PEXELS_IMAGE_2\]/g, '');
