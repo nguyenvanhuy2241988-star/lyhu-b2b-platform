@@ -7,8 +7,14 @@ async function trigger() {
                 'User-Agent': 'vercel-cron/1.0'
             }
         });
-        const data = await response.json();
-        console.log('Kết quả từ Bot:', data);
+        const text = await response.text();
+        console.log('Phản hồi thô:', text);
+        try {
+            const data = JSON.parse(text);
+            console.log('Kết quả từ Bot:', data);
+        } catch (err) {
+            console.log('Không thể parse JSON.');
+        }
     } catch (e) {
         console.error('Lỗi khi gọi API:', e);
     }

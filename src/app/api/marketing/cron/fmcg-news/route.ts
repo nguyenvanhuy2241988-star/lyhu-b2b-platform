@@ -62,7 +62,7 @@ Hôm nay là ngày ${todayStr}.
 
 BẮT BUỘC SỐ 1: HÃY TÌM KIẾM TRÊN GOOGLE ĐỂ LẤY MỘT TIN TỨC THỰC TẾ MỚI NHẤT, NÓNG NHẤT VỀ NGÀNH FMCG HOẶC BÁN LẺ TẠI VIỆT NAM TRONG VÒNG 1-2 NGÀY QUA (Ví dụ: chính sách thuế mới, biến động giá cả, các chuỗi siêu thị lớn như WinMart, Bách Hóa Xanh, CoopMart mở rộng/thu hẹp, các tập đoàn như Masan, Vinamilk, Nestle ra báo cáo tài chính, phát hành trái phiếu...). Dựa vào thông tin THỰC TẾ đó để viết thành một bài báo hoàn chỉnh.
 
-BẮT BUỘC SỐ 2 (QUAN TRỌNG NHẤT): BÀI BÁO PHẢI HOÀN TOÀN KHÁCH QUAN. TUYỆT ĐỐI KHÔNG ĐƯỢC NHẮC ĐẾN TÊN "LYHU", "KẸO CHUA UHI", HAY BẤT KỲ NỘI DUNG QUẢNG CÁO, KÊU GỌI NHẬP SỈ NÀO. ĐÂY LÀ MỘT TỜ BÁO CHÍNH THỐNG, KHÔNG PHẢI LÀ BÀI PR.
+BẮT BUỘC SỐ 2 (QUAN TRỌNG NHẤT): BÀI BÁO PHẢI HOÀN TOÀN KHÁCH QUAN, DỰA TRÊN SỰ THẬT. ĐÂY LÀ MỘT TỜ BÁO CHÍNH THỐNG CHUYÊN NGÀNH, KHÔNG PHẢI LÀ BÀI VIẾT QUẢNG CÁO HAY PR CHO BẤT KỲ NỀN TẢNG NÀO. KHÔNG THÊM BẤT KỲ LỜI KÊU GỌI MUA HÀNG HAY NHẬP SỈ NÀO VÀO CUỐI BÀI.
 
 YÊU CẦU NỘI DUNG (GIỌNG VĂN BÁO CHÍ):
 1. Chủ đề: Dựa trên 1 tin tức CÓ THẬT vừa tìm kiếm được. Tiêu đề phải giật tít chuẩn báo chí kinh tế (ví dụ: "Masan huy động thành công 500 tỷ đồng trái phiếu", "WinMart+ ồ ạt đóng cửa các điểm bán kém hiệu quả", "Bộ Tài chính đề xuất giảm thuế VAT 2% cho ngành bán lẻ").
