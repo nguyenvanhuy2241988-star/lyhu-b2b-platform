@@ -7,7 +7,7 @@ import SearchBar from '@/components/blog/SearchBar';
 import Pagination from '@/components/blog/Pagination';
 
 export const revalidate = 60; // Revalidate more frequently since we have search/pagination
-
+export const dynamic = 'force-dynamic';
 const POSTS_PER_PAGE = 12;
 
 async function getBlogData(page: number, categorySlug: string, searchQuery: string) {
