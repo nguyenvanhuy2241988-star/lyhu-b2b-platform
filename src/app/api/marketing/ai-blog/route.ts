@@ -18,24 +18,25 @@ function generateSlug(title: string): string {
         .replace(/-+$/, ""); 
 }
 
-async function fetchPexelsImage(query: string): Promise<string | null> {
+async function fetchPexelsImages(query: string, count: number = 3): Promise<string[]> {
     const PEXELS_API_KEY = process.env.PEXELS_API_KEY;
-    if (!PEXELS_API_KEY) return null;
+    if (!PEXELS_API_KEY) return [];
 
     try {
-        const res = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1`, {
+        const res = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=${count}&orientation=landscape`, {
             headers: {
                 Authorization: PEXELS_API_KEY
             }
         });
         const data = await res.json();
         if (data.photos && data.photos.length > 0) {
-            return data.photos[0].src.large || data.photos[0].src.medium;
+            // Use large2x or original for high quality
+            return data.photos.map((p: any) => p.src.large2x || p.src.original);
         }
     } catch (e) {
         console.error('Pexels API error:', e);
     }
-    return null;
+    return [];
 }
 
 export async function POST(req: Request) {
@@ -55,21 +56,30 @@ export async function POST(req: Request) {
         // 1. Generate Content via Gemini
         const prompt = `
 Bạn là một chuyên gia content SEO về mảng kinh doanh tạp hóa, siêu thị mini, và bán lẻ tại Việt Nam.
-Hãy viết một bài blog thật dài, chi tiết, chuyên nghiệp về chủ đề: "${topic}".
-Bài viết dành cho LYHU - Nền tảng phân phối sỉ bánh kẹo, ăn vặt hàng đầu (Sản phẩm nổi bật: Kẹo chua UHI, bánh tráng, snack).
+Hãy viết một bài blog thật chi tiết, chuyên nghiệp về chủ đề: "${topic}".
 
-YÊU CẦU:
-1. Độ dài: 800 - 1000 chữ.
-2. Format: CHỈ TRẢ VỀ HTML của bài viết (bắt đầu bằng <h2>, không dùng <h1>, <html>, <body>). Dùng các thẻ <h2>, <h3>, <ul>, <li>, <strong>. KHÔNG dùng markdown code block như \`\`\`html.
-3. Kêu gọi mua hàng (Call to action): Cuối bài luôn phải có đoạn mời nhập sỉ bánh kẹo tại LYHU.
-4. Cuối cùng, trả về ĐÚNG MỘT ĐOẠN JSON chứa metadata theo định dạng sau:
+THÔNG TIN VỀ THƯƠNG HIỆU LYHU (Bắt buộc chèn khéo léo vào bài viết):
+- LYHU là nền tảng phân phối sỉ bánh kẹo, đồ ăn vặt B2B hàng đầu Việt Nam dành cho tạp hóa, siêu thị mini.
+- Sản phẩm nổi bật: Kẹo dẻo chua UHI (Mặt hàng độc quyền đang làm mưa làm gió giới học sinh, sinh viên), bánh tráng trộn, snack giòn tan.
+- Ưu điểm cạnh tranh: Nhập sỉ tận gốc xưởng không qua trung gian, vốn khởi điểm thấp, mức chiết khấu cực cao lên tới 45%, mang lại biên độ lợi nhuận lớn cho chủ tiệm.
+
+YÊU CẦU BẮT BUỘC VỀ FORMAT:
+1. CHỈ TRẢ VỀ mã HTML chuẩn của nội dung bài viết. Không trả về mã Markdown (Tuyệt đối KHÔNG DÙNG dấu ** hoặc #).
+2. Phân tách nội dung thật rõ ràng: Bắt buộc dùng thẻ <p>...</p> cho MỖI đoạn văn. Dùng <h2>, <h3> cho các tiêu đề phụ. Dùng <ul><li> cho danh sách. Dùng <strong> để bôi đậm từ khóa.
+3. Độ dài: 800 - 1000 chữ, hành văn thu hút, thực tế, nhắm đúng nỗi đau của chủ tiệm tạp hóa.
+4. CHÈN ẢNH MINH HỌA: Hãy chèn CHÍNH XÁC 2 từ khóa sau vào các vị trí phù hợp để ngắt quãng bài viết (hệ thống sẽ tự động thay bằng ảnh thật):
+   - Đặt từ khóa [PEXELS_IMAGE_1] ở giữa bài.
+   - Đặt từ khóa [PEXELS_IMAGE_2] ở gần đoạn kết luận.
+   (Chỉ cần viết đúng chữ [PEXELS_IMAGE_1] đứng một mình trên 1 dòng, không cần bọc thẻ <img>).
+5. Cuối bài luôn có 1 đoạn Call-to-action kêu gọi chủ tiệm nhập sỉ Kẹo chua UHI và bánh kẹo tại nền tảng LYHU.
+6. Kết thúc bằng một ĐOẠN JSON CHUẨN chứa metadata theo định dạng sau:
 
 ---JSON_START---
 {
   "meta_title": "Tiêu đề chuẩn SEO",
   "meta_description": "Mô tả SEO",
   "keywords": "từ khóa SEO",
-  "image_search_keyword": "1 từ khóa tiếng Anh ngắn để tìm ảnh minh họa trên Pexels (VD: supermarket, candy, snack, retail)"
+  "image_search_keyword": "1 từ khóa tiếng Anh cực kỳ ngắn (1-2 chữ) để tìm ảnh minh họa trên Pexels (VD: supermarket, candy, snack, grocery, retail)"
 }
 ---JSON_END---
 `;
@@ -109,13 +119,40 @@ YÊU CẦU:
         const jsonStr = text.substring(jsonStartIdx + 16, jsonEndIdx).trim();
         const metaData = JSON.parse(jsonStr);
 
-        // 2. Fetch Image from Pexels
+        // 2. Fetch High-Quality Images from Pexels
         let thumbnailUrl = null;
+        let images: string[] = [];
         if (metaData.image_search_keyword) {
-            thumbnailUrl = await fetchPexelsImage(metaData.image_search_keyword);
+            images = await fetchPexelsImages(metaData.image_search_keyword, 3);
+            if (images.length > 0) {
+                thumbnailUrl = images[0]; // Image 0 goes to thumbnail
+            }
         }
 
-        // 3. Save to Database
+        // 3. Inject Inline Images into content
+        if (images.length > 1) {
+            const img1 = \`<figure class="my-8"><img src="\${images[1]}" alt="\${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>\`;
+            content = content.replace(/\[PEXELS_IMAGE_1\]/g, img1);
+        } else {
+            content = content.replace(/\[PEXELS_IMAGE_1\]/g, ''); // Remove if not found
+        }
+
+        if (images.length > 2) {
+            const img2 = \`<figure class="my-8"><img src="\${images[2]}" alt="\${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>\`;
+            content = content.replace(/\[PEXELS_IMAGE_2\]/g, img2);
+        } else if (images.length > 1) {
+             // Fallback to image 1 if image 2 not available
+             const img2 = \`<figure class="my-8"><img src="\${images[1]}" alt="\${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>\`;
+             content = content.replace(/\[PEXELS_IMAGE_2\]/g, img2);
+        } else {
+            content = content.replace(/\[PEXELS_IMAGE_2\]/g, '');
+        }
+
+        // Clean up markdown bold asterisks if Gemini still sneaks them in
+        content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        content = content.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+        // 4. Save to Database
         const slug = generateSlug(topic);
         const { data: insertedPost, error } = await supabase.from('blog_posts').insert({
             title: topic,
