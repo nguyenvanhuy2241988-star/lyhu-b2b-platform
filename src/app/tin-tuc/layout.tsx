@@ -16,7 +16,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
                 <div className="max-w-[1200px] mx-auto px-4 h-20 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-4">
                         <img src="/logo-full.png" alt="LYHU Logo" className="h-16 object-contain brightness-0 invert" />
-                        <span className="text-2xl font-medium border-l border-white/30 pl-4 hidden sm:block">Góc Kiến Thức</span>
+                        <span className="text-2xl font-medium border-l border-white/30 pl-4 hidden sm:block">Tin tức Thị trường</span>
                     </Link>
                     <nav className="flex items-center gap-6 text-base font-medium">
                         <Link href="/wholesale" className="hover:text-primary-100 transition-colors">Vào trang Mua Sỉ</Link>

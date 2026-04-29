@@ -780,7 +780,7 @@ export default function WholesaleStore({
                 <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-8">
                     <div className="flex items-center gap-4">
                         <span className="hover:text-white cursor-pointer">Kênh NPP</span>
-                        <Link href="/tin-tuc" className="hover:text-white transition-colors font-medium text-secondary-300">Góc Kiến Thức (Tin tức)</Link>
+                        <Link href="/tin-tuc" className="hover:text-white transition-colors font-medium text-secondary-300">Tin tức Thị trường</Link>
                         <span className="hover:text-white cursor-pointer">Tải ứng dụng</span>
                         <span>Kết nối</span>
                     </div>

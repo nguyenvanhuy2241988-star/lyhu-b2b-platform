@@ -171,7 +171,7 @@ export default async function BlogPostPage({ params }: Props) {
             {/* Breadcrumb / Back Navigation */}
             <div className="max-w-4xl mx-auto px-6 lg:px-8 pt-8 pb-6 border-b border-gray-100 flex items-center justify-between">
                 <Link href="/tin-tuc" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-primary-600 font-medium transition-colors">
-                    <ArrowLeft className="w-4 h-4" /> Về Góc Kiến Thức
+                    <ArrowLeft className="w-4 h-4" /> Về Trang Tin Tức
                 </Link>
                 {post.category && (
                     <span className="text-sm font-bold text-primary-600 uppercase tracking-widest">
