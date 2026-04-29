@@ -142,14 +142,28 @@ export async function GET() {
         const now = new Date();
         const results = [];
 
-        // Note: For Vercel Serverless, running 5 requests sequentially might timeout (max 60s for Pro).
-        // Using Promise.all to generate them concurrently.
-        const articlePromises = TOPICS.map(async (topic, index) => {
+        // Lấy danh sách các bài đã tạo để không tạo trùng lặp
+        const { data: existingPosts } = await supabase.from('blog_posts').select('slug');
+        const existingSlugs = existingPosts?.map(p => p.slug) || [];
+        
+        const topicsToProcess = TOPICS.filter(t => !existingSlugs.includes(generateSlug(t)));
+
+        if (topicsToProcess.length === 0) {
+             return NextResponse.json({ message: "Tất cả các chủ đề mẫu đều đã được tạo thành công!" });
+        }
+
+        // Dùng vòng lặp for thay vì Promise.all để tránh bị Google API chặn do gửi quá nhiều yêu cầu cùng lúc
+        const completed = [];
+        for (let i = 0; i < topicsToProcess.length; i++) {
+            const topic = topicsToProcess[i];
             const articleData = await generateArticle(topic, GEMINI_API_KEY);
-            if (!articleData) return { topic, status: 'failed' };
+            if (!articleData) {
+                completed.push({ topic, status: 'failed (API Rate Limit hoặc lỗi)' });
+                continue;
+            }
 
             const publishDate = new Date(now);
-            publishDate.setDate(now.getDate() + index);
+            publishDate.setDate(now.getDate() + count);
 
             const slug = generateSlug(topic);
             const { error } = await supabase.from('blog_posts').insert({
@@ -165,14 +179,15 @@ export async function GET() {
             });
 
             if (error) {
-                return { topic, status: 'db_error', error: error.message };
+                completed.push({ topic, status: 'db_error', error: error.message });
+            } else {
+                completed.push({ topic, status: 'success', date: publishDate.toLocaleDateString() });
+                count++;
             }
-
-            count++;
-            return { topic, status: 'success', date: publishDate.toLocaleDateString() };
-        });
-
-        const completed = await Promise.all(articlePromises);
+            
+            // Wait 2 seconds between requests to avoid rate limits
+            await new Promise(r => setTimeout(r, 2000));
+        }
 
         return NextResponse.json({
             message: `Quá trình sinh bài viết hoàn tất`,
