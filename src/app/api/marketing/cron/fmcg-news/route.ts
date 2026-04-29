@@ -88,7 +88,7 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
 ---JSON_END---
 `;
 
-        const response = await fetch(\`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=\${GEMINI_API_KEY}\`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -102,7 +102,7 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
 
         const data = await response.json();
         if (data.error) {
-            return NextResponse.json({ error: \`Gemini API Error: \${data.error.message}\` }, { status: 500 });
+            return NextResponse.json({ error: `Gemini API Error: ${data.error.message}` }, { status: 500 });
         }
 
         const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -122,7 +122,7 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
         
         const jsonStr = text.substring(jsonStartIdx + 16, jsonEndIdx).trim();
         const metaData = JSON.parse(jsonStr);
-        const topic = metaData.topic || \`Bản tin thị trường FMCG \${todayStr}\`;
+        const topic = metaData.topic || `Bản tin thị trường FMCG ${todayStr}`;
 
         // 2. Fetch High-Quality Images from Pexels
         let thumbnailUrl = null;
@@ -136,24 +136,24 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
 
         // 3. Inject Inline Images into content
         if (images.length > 1) {
-            const img1 = \`<figure class="my-8"><img src="\${images[1]}" alt="\${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>\`;
-            content = content.replace(/\\[PEXELS_IMAGE_1\\]/g, img1);
+            const img1 = `<figure class="my-8"><img src="${images[1]}" alt="${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>`;
+            content = content.replace(/\[PEXELS_IMAGE_1\]/g, img1);
         } else {
-            content = content.replace(/\\[PEXELS_IMAGE_1\\]/g, ''); 
+            content = content.replace(/\[PEXELS_IMAGE_1\]/g, ''); 
         }
 
         if (images.length > 2) {
-            const img2 = \`<figure class="my-8"><img src="\${images[2]}" alt="\${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>\`;
-            content = content.replace(/\\[PEXELS_IMAGE_2\\]/g, img2);
+            const img2 = `<figure class="my-8"><img src="${images[2]}" alt="${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>`;
+            content = content.replace(/\[PEXELS_IMAGE_2\]/g, img2);
         } else if (images.length > 1) {
-             const img2 = \`<figure class="my-8"><img src="\${images[1]}" alt="\${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>\`;
-             content = content.replace(/\\[PEXELS_IMAGE_2\\]/g, img2);
+             const img2 = `<figure class="my-8"><img src="${images[1]}" alt="${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>`;
+             content = content.replace(/\[PEXELS_IMAGE_2\]/g, img2);
         } else {
-            content = content.replace(/\\[PEXELS_IMAGE_2\\]/g, '');
+            content = content.replace(/\[PEXELS_IMAGE_2\]/g, '');
         }
 
-        content = content.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');
-        content = content.replace(/\\*(.*?)\\*/g, '<em>$1</em>');
+        content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        content = content.replace(/\*(.*?)\*/g, '<em>$1</em>');
 
         // 4. Save to Database
         const slug = generateSlug(topic) + '-' + Date.now().toString().slice(-4); // Ensure uniqueness
