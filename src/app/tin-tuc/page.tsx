@@ -109,8 +109,8 @@ async function getBlogData(page: number, categorySlug: string, searchQuery: stri
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
 
-    const sideTopBanner = sideBanners?.find(b => b.position === 'side_top');
-    const sideBottomBanner = sideBanners?.find(b => b.position === 'side_bottom');
+    const sideTopBanners = sideBanners?.filter(b => b.position === 'side_top') || [];
+    const sideBottomBanners = sideBanners?.filter(b => b.position === 'side_bottom') || [];
 
     return {
         posts: (posts || []) as BlogPost[],
@@ -119,8 +119,8 @@ async function getBlogData(page: number, categorySlug: string, searchQuery: stri
         totalCount: count || 0,
         featuredBlocks,
         megaBanner,
-        sideTopBanner,
-        sideBottomBanner
+        sideTopBanners,
+        sideBottomBanners
     };
 }
 
@@ -133,7 +133,7 @@ export default async function BlogIndexPage({
     const currentPage = parseInt(searchParams.page || '1', 10);
     const searchQuery = searchParams.q || '';
 
-    const { posts, categories, trendingPosts, totalCount, featuredBlocks, megaBanner, sideTopBanner, sideBottomBanner } = await getBlogData(
+    const { posts, categories, trendingPosts, totalCount, featuredBlocks, megaBanner, sideTopBanners, sideBottomBanners } = await getBlogData(
         currentPage,
         activeCategory,
         searchQuery
@@ -469,16 +469,16 @@ export default async function BlogIndexPage({
                 </div>
 
                 {/* Right Sidebar */}
-                <aside className="w-full lg:w-[320px] shrink-0 space-y-8 lg:sticky lg:top-24 h-fit">
+                <aside className="w-full lg:w-[320px] shrink-0 space-y-8">
                     
-                    {/* Side Top Banner */}
-                    {sideTopBanner && (
-                        <div className="w-full relative overflow-hidden">
-                            <Link href={sideTopBanner.link_url || "/wholesale"} target={sideTopBanner.link_url?.startsWith('http') ? "_blank" : "_self"}>
-                                <img src={sideTopBanner.image_url} alt="Side Top Banner" className="w-full h-auto object-cover border border-gray-100" />
+                    {/* Side Top Banners */}
+                    {sideTopBanners.map((banner, idx) => (
+                        <div key={banner.id || idx} className="w-full relative overflow-hidden">
+                            <Link href={banner.link_url || "/wholesale"} target={banner.link_url?.startsWith('http') ? "_blank" : "_self"}>
+                                <img src={banner.image_url} alt={`Side Top Banner ${idx + 1}`} className="w-full h-auto object-cover border border-gray-100" />
                             </Link>
                         </div>
-                    )}
+                    ))}
                     
                     {/* Trending Widget */}
                     <div className="bg-white p-6 border border-gray-100">
@@ -505,14 +505,14 @@ export default async function BlogIndexPage({
                         </div>
                     </div>
 
-                    {/* Side Bottom Banner */}
-                    {sideBottomBanner && (
-                        <div className="w-full relative overflow-hidden">
-                            <Link href={sideBottomBanner.link_url || "/wholesale"} target={sideBottomBanner.link_url?.startsWith('http') ? "_blank" : "_self"}>
-                                <img src={sideBottomBanner.image_url} alt="Side Bottom Banner" className="w-full h-auto object-cover border border-gray-100" />
+                    {/* Side Bottom Banners */}
+                    {sideBottomBanners.map((banner, idx) => (
+                        <div key={banner.id || idx} className="w-full relative overflow-hidden">
+                            <Link href={banner.link_url || "/wholesale"} target={banner.link_url?.startsWith('http') ? "_blank" : "_self"}>
+                                <img src={banner.image_url} alt={`Side Bottom Banner ${idx + 1}`} className="w-full h-auto object-cover border border-gray-100" />
                             </Link>
                         </div>
-                    )}
+                    ))}
 
                     {/* B2B Promo Widget */}
                     <div className="bg-primary-50 p-6 border border-primary-100 text-center">
