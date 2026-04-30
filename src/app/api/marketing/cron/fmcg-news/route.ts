@@ -56,11 +56,27 @@ export async function GET(req: Request) {
     try {
         const todayStr = new Date().toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 
+        const focusAreas = [
+            "báo cáo tài chính, doanh thu, lợi nhuận của các tập đoàn FMCG (Masan, Vinamilk, Kido, Sabeco...)",
+            "chiến lược mở rộng hoặc thu hẹp của các chuỗi siêu thị (Bách Hóa Xanh, WinMart, CoopMart, Go!...)",
+            "xu hướng tiêu dùng, thói quen mua sắm của người Việt Nam hiện nay",
+            "chính sách kinh tế, thuế, quy định pháp luật ảnh hưởng đến ngành bán lẻ",
+            "ứng dụng công nghệ, AI, chuyển đổi số trong quản lý tạp hóa và siêu thị mini",
+            "chiến lược marketing, ra mắt sản phẩm mới của các thương hiệu tiêu dùng lớn",
+            "cạnh tranh giữa các nền tảng thương mại điện tử (Shopee, TikTok Shop) và bán lẻ truyền thống",
+            "chuỗi cung ứng, logistics và biến động giá cả nguyên vật liệu ngành FMCG",
+            "thị trường đồ uống, nước giải khát, bia rượu tại Việt Nam",
+            "xu hướng thực phẩm sạch, hữu cơ (organic) và an toàn vệ sinh thực phẩm"
+        ];
+        const randomFocus = focusAreas[Math.floor(Math.random() * focusAreas.length)];
+
         const prompt = `
 Bạn là một TỔNG BIÊN TẬP KIÊM NHÀ BÁO kinh tế uy tín hàng đầu Việt Nam, làm việc cho một Tòa soạn Báo điện tử ĐỘC LẬP chuyên sâu về thị trường Bán lẻ và Tiêu dùng nhanh (FMCG).
 Hôm nay là ngày ${todayStr}. 
 
-BẮT BUỘC SỐ 1: HÃY TÌM KIẾM TRÊN GOOGLE ĐỂ LẤY MỘT TIN TỨC THỰC TẾ MỚI NHẤT, NÓNG NHẤT VỀ NGÀNH FMCG HOẶC BÁN LẺ TẠI VIỆT NAM TRONG VÒNG 1-2 NGÀY QUA (Ví dụ: chính sách thuế mới, biến động giá cả, các chuỗi siêu thị lớn như WinMart, Bách Hóa Xanh, CoopMart mở rộng/thu hẹp, các tập đoàn như Masan, Vinamilk, Nestle ra báo cáo tài chính, phát hành trái phiếu...). Dựa vào thông tin THỰC TẾ đó để viết thành một bài báo hoàn chỉnh.
+BẮT BUỘC SỐ 1: HÃY TÌM KIẾM TRÊN GOOGLE ĐỂ LẤY MỘT TIN TỨC THỰC TẾ MỚI NHẤT VỀ NGÀNH FMCG HOẶC BÁN LẺ TẠI VIỆT NAM TRONG VÒNG 1-2 NGÀY QUA. 
+ĐỂ ĐẢM BẢO TIN TỨC ĐA DẠNG, BÀI BÁO HÔM NAY BẮT BUỘC PHẢI TẬP TRUNG TÌM KIẾM VÀ VIẾT VỀ CHỦ ĐỀ: "${randomFocus}".
+Dựa vào các thông tin THỰC TẾ TÌM ĐƯỢC từ Google để tổng hợp, phân tích và viết thành một bài báo hoàn chỉnh.
 
 BẮT BUỘC SỐ 2 (QUAN TRỌNG NHẤT): BÀI BÁO PHẢI HOÀN TOÀN KHÁCH QUAN, DỰA TRÊN SỰ THẬT. ĐÂY LÀ MỘT TỜ BÁO CHÍNH THỐNG CHUYÊN NGÀNH, KHÔNG PHẢI LÀ BÀI VIẾT QUẢNG CÁO HAY PR CHO BẤT KỲ NỀN TẢNG NÀO. KHÔNG THÊM BẤT KỲ LỜI KÊU GỌI MUA HÀNG HAY NHẬP SỈ NÀO VÀO CUỐI BÀI.
 
