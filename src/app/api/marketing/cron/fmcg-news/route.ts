@@ -56,61 +56,25 @@ export async function GET(req: Request) {
     try {
         const todayStr = new Date().toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 
-        const focusAreas = [
-            // Nhóm 1: Các Đại gia & Tập đoàn FMCG
-            "báo cáo tài chính, doanh thu, lợi nhuận của các ông lớn (Masan, Vinamilk, Kido...)",
-            "động thái M&A (sát nhập và mua lại) trong ngành tiêu dùng và bán lẻ Việt Nam",
-            "cạnh tranh thị phần trong ngành Sữa và Thực phẩm dinh dưỡng (Vinamilk, TH, Nutifood)",
-            "cuộc chiến thị phần ngành Mì gói và Thực phẩm đóng gói (Acecook, Masan, Asia Foods)",
-            "cuộc đua của các tập đoàn đồ uống, bia rượu (Sabeco, Habeco, Heineken, Suntory PepsiCo)",
-            "tái cấu trúc bộ máy, thay đổi nhân sự cấp cao tại các tập đoàn bán lẻ lớn",
-            
-            // Nhóm 2: Chuỗi Bán lẻ hiện đại
-            "chiến lược mở rộng hoặc thu hẹp điểm bán của Bách Hóa Xanh, WinMart, CoopMart",
-            "sự trỗi dậy của các cửa hàng tiện lợi phục vụ Gen Z (Circle K, GS25, FamilyMart)",
-            "chiến lược cạnh tranh của các đại siêu thị ngoại (Aeon Mall, Lotte Mart, Central Retail/Go!)",
-            "tình hình kinh doanh và lợi nhuận của mô hình siêu thị mini tại các khu dân cư",
-            "chiến lược 'Hàng nhãn riêng' (Private Label) của các chuỗi siêu thị để cạnh tranh giá",
-            
-            // Nhóm 3: Bán lẻ truyền thống
-            "sự chuyển mình và số hóa của các cửa hàng tạp hóa truyền thống",
-            "xu hướng các chủ tạp hóa nhập hàng qua nền tảng B2B thay vì đại lý truyền thống",
-            "sức ép cạnh tranh từ cửa hàng tiện lợi lên các tiệm tạp hóa ở khu vực thành thị",
-            "tiềm năng và xu hướng bùng nổ của thị trường FMCG tại khu vực nông thôn",
-            
-            // Nhóm 4: Hành vi người tiêu dùng
-            "xu hướng thắt chặt chi tiêu hoặc Trading Down (chuyển sang hàng giá rẻ) do kinh tế khó khăn",
-            "xu hướng Cao cấp hóa (Premiumization) ở nhóm người tiêu dùng trung lưu",
-            "sự lên ngôi của xu hướng thực phẩm xanh, hữu cơ (organic) và an toàn sức khỏe",
-            "nhu cầu tiêu thụ các sản phẩm không đường (Sugar-free), ít béo, Eat Clean",
-            "thói quen mua sắm theo thời vụ: Các chiến dịch lễ Tết, Trung Thu, Hè của ngành FMCG",
-            "sự quan tâm đến bao bì thân thiện môi trường, tái chế trong ngành tiêu dùng nhanh",
-            
-            // Nhóm 5: Thương mại điện tử & Đa kênh
-            "sự đe dọa của TikTok Shop, Shopee đối với các kênh bán lẻ truyền thống",
-            "xu hướng mua sắm nhu yếu phẩm, đồ ăn nhanh qua các ứng dụng (GrabMart, ShopeeFood)",
-            "cuộc đua Giao hàng siêu tốc (Quick Commerce) của các chuỗi bán lẻ",
-            "tác động của xu hướng Livestream bán hàng (KOC/KOL) đối với các thương hiệu FMCG",
-            "chiến lược bán hàng đa kênh (Omnichannel) kết hợp giữa cửa hàng vật lý và online",
-            
-            // Nhóm 6: Vĩ mô, Thuế & Pháp lý
-            "đề xuất tăng/giảm Thuế giá trị gia tăng (VAT) và tác động trực tiếp đến sức mua bán lẻ",
-            "ảnh hưởng của Thuế tiêu thụ đặc biệt đối với ngành đồ uống có đường và bia rượu",
-            "tác động của lạm phát, giá xăng dầu lên giá bán lẻ hàng hóa FMCG",
-            "quy định mới về an toàn vệ sinh thực phẩm, nhãn mác đối với hàng tiêu dùng",
-            "các rào cản pháp lý và thuận lợi khi doanh nghiệp nước ngoài đầu tư vào bán lẻ Việt Nam",
-            
-            // Nhóm 7: Chuỗi cung ứng, Logistics & Công nghệ
-            "khủng hoảng hoặc biến động giá nguyên vật liệu đầu vào (đường, cà phê, lúa mì, dầu cọ)",
-            "ứng dụng Trí tuệ nhân tạo (AI) và Big Data trong quản lý tồn kho và dự báo nhu cầu",
-            "vai trò của Logistics lạnh (Cold Chain) trong việc phân phối thực phẩm tươi sống",
-            "chuyển đổi số và ứng dụng phần mềm quản lý bán hàng (POS) tại các điểm bán lẻ",
-            "tối ưu hóa chuỗi cung ứng 'Từ nông trại đến bàn ăn' (Farm to Fork)",
-            "thiếu hụt lao động và giải pháp tự động hóa trong ngành bán lẻ/FMCG",
-            "xu hướng thanh toán không tiền mặt (QR Code, ví điện tử) tại các điểm bán lẻ",
-            "chương trình khách hàng thân thiết (Loyalty programs) giữ chân người mua hàng",
-            "thực trạng chống hàng giả, hàng nhái, hàng nhập lậu trong ngành tiêu dùng nhanh"
-        ];
+        // Lấy danh sách các chủ đề từ Database
+        const { data: topicsData, error: topicsError } = await supabase
+            .from('ai_news_topics')
+            .select('content')
+            .eq('is_active', true);
+
+        let focusAreas = [];
+        if (!topicsError && topicsData && topicsData.length > 0) {
+            focusAreas = topicsData.map(t => t.content);
+        } else {
+            // Fallback trong trường hợp DB rỗng hoặc lỗi
+            focusAreas = [
+                "báo cáo tài chính, doanh thu, lợi nhuận của các tập đoàn FMCG (Masan, Vinamilk, Kido, Sabeco...)",
+                "chiến lược mở rộng hoặc thu hẹp của các chuỗi siêu thị (Bách Hóa Xanh, WinMart, CoopMart, Go!...)",
+                "xu hướng tiêu dùng, thói quen mua sắm của người Việt Nam hiện nay",
+                "chính sách kinh tế, thuế, quy định pháp luật ảnh hưởng đến ngành bán lẻ"
+            ];
+        }
+
         const randomFocus = focusAreas[Math.floor(Math.random() * focusAreas.length)];
 
         const prompt = `
