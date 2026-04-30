@@ -124,7 +124,10 @@ export default async function BlogIndexPage({
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 
                 {/* Category Pills Navigation */}
-                <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    <style dangerouslySetInnerHTML={{__html: `
+                        .scrollbar-hide::-webkit-scrollbar { display: none; }
+                    `}} />
                     <Link 
                         href={`/tin-tuc?category=all${searchQuery ? `&q=${searchQuery}` : ''}`}
                         className={`shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
