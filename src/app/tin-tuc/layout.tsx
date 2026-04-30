@@ -14,13 +14,13 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
     return (
         <div className="min-h-screen bg-[#F5F5F5] flex flex-col font-sans">
             {/* Magazine-style Header (Minimalist & Brand Colors) */}
-            <header className="bg-[#F8FCFA] border-b border-primary-100">
+            <header className="bg-primary-50 border-b border-primary-200">
                 {/* Top thin bar */}
-                <div className="bg-primary-800 text-primary-50 text-xs font-medium py-1.5 hidden sm:block">
+                <div className="bg-primary-700 text-primary-50 text-xs font-medium py-1.5 hidden sm:block">
                     <div className="max-w-[1200px] mx-auto px-4 flex justify-between items-center">
                         <div className="flex items-center space-x-4">
                             <span>Hệ thống phân phối LYHU B2B</span>
-                            <span className="text-primary-400">|</span>
+                            <span className="text-primary-300">|</span>
                             <span>Hotline: 1900 xxxx</span>
                         </div>
                         <div className="flex gap-4">
