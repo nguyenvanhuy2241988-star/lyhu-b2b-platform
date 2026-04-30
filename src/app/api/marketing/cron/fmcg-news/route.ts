@@ -65,13 +65,24 @@ export async function GET(req: Request) {
         let focusAreas = [];
         if (!topicsError && topicsData && topicsData.length > 0) {
             focusAreas = topicsData.map(t => t.content);
-        } else {
-            // Fallback trong trường hợp DB rỗng hoặc lỗi
+        }
+
+        // Fallback trong trường hợp DB rỗng hoặc lỗi
+        if (focusAreas.length === 0) {
             focusAreas = [
-                "Biến động chiến lược tại các tập đoàn FMCG & bán lẻ",
-                "Chuyển đổi số tại điểm bán truyền thống",
-                "Xu hướng tiêu dùng mới: cơ hội cho tạp hóa và siêu thị mini",
-                "Phân tích cách tính chiết khấu và lợi nhuận cho nhà phân phối"
+                "Thị trường FMCG Việt Nam",
+                "Doanh nghiệp FMCG lớn",
+                "Hệ thống bán lẻ hiện đại",
+                "Cửa hàng tiện lợi & tiêu dùng Gen Z",
+                "Kênh tạp hóa, siêu thị mini & GT truyền thống",
+                "Thương mại điện tử & Social Commerce FMCG",
+                "Xu hướng người tiêu dùng",
+                "Ngành hàng FMCG trọng điểm",
+                "Chính sách, pháp lý & tiêu chuẩn hàng hóa",
+                "Chuỗi cung ứng, logistics & giá nguyên liệu",
+                "Công nghệ bán lẻ & dữ liệu",
+                "Góc nhà phân phối & điểm bán",
+                "Nhân sự, tuyển dụng & việc làm ngành FMCG - Bán lẻ"
             ];
         }
 
@@ -84,19 +95,22 @@ BẮT BUỘC SỐ 1: Hãy tự động tìm kiếm trên Google các tin tức N
 CHỦ ĐỀ TẬP TRUNG: "${randomFocus}"
 
 Dựa trên thông tin tìm được, hãy viết một bài phân tích chuyên sâu (khoảng 800-1000 chữ). 
-TUYỆT ĐỐI tuân thủ cấu trúc 4 phần sau (hãy dùng tiêu đề cho từng phần):
+TUYỆT ĐỐI tuân thủ cấu trúc 5 phần sau (hãy dùng tiêu đề cho từng phần):
 
 1. Chuyện gì đang xảy ra?
-(Tóm tắt ngắn gọn sự kiện, tin tức, xu hướng vừa diễn ra. Bám sát sự thật, có số liệu cụ thể).
+(Tóm tắt tin tức, sự kiện hoặc xu hướng mới vừa diễn ra. Bám sát sự thật, có số liệu cụ thể).
 
-2. Vì sao nó quan trọng?
-(Bóc tách ý nghĩa của sự kiện đối với toàn cảnh thị trường FMCG Việt Nam).
+2. Vì sao điều này quan trọng?
+(Giải thích tác động đến thị trường FMCG, bán lẻ, nhà phân phối, điểm bán hoặc người tiêu dùng).
 
-3. Tác động đến kênh phân phối (GT/MT) là gì?
-(Phân tích xem điều này mang lại lợi ích hay gây khó khăn gì cho kênh bán lẻ truyền thống (tạp hóa) và hiện đại (siêu thị mini). Ai được lợi, ai bị ép?).
+3. Ảnh hưởng đến kênh GT/MT như thế nào?
+(Phân tích tác động đến tạp hóa, siêu thị mini, chuỗi bán lẻ, cửa hàng tiện lợi, nhà phân phối hoặc thương hiệu nhỏ. Ai được lợi, ai bị ép?).
 
-4. Lời khuyên thực chiến cho Nhà bán lẻ & NPP
-(Đưa ra 2-3 hành động cụ thể. Ví dụ: Chủ tạp hóa nên thay đổi cách nhập hàng thế nào? Nhà phân phối nên ưu tiên nhóm SKU nào? Tuyệt đối không khuyên sáo rỗng, phải mang tính B2B thực tế).
+4. LYHU góc nhìn thực chiến
+(Đưa ra nhận định thực tế: điểm bán nên làm gì, nhà phân phối nên chuẩn bị gì, thương hiệu nhỏ có cơ hội gì).
+
+5. Gợi ý hành động
+(Kết bài bằng 2-3 gợi ý hành động ngắn gọn, dễ áp dụng cho nhà bán lẻ/NPP. Ví dụ: Ưu tiên nhóm hàng nào? Cần thay đổi cách trưng bày ra sao?).
 
 YÊU CẦU BẮT BUỘC VỀ FORMAT:
 1. CHỈ TRẢ VỀ mã HTML chuẩn. KHÔNG dùng Markdown (** hay #).
