@@ -109,8 +109,18 @@ async function getBlogData(page: number, categorySlug: string, searchQuery: stri
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
 
-    const sideTopBanners = sideBanners?.filter(b => b.position === 'side_top') || [];
-    const sideBottomBanners = sideBanners?.filter(b => b.position === 'side_bottom') || [];
+    // Hàm trộn mảng ngẫu nhiên (Giả lập AI phân phối ngẫu nhiên)
+    const shuffleArray = (array: any[]) => {
+        const newArr = [...array];
+        for (let i = newArr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+        }
+        return newArr;
+    };
+
+    const sideTopBanners = shuffleArray(sideBanners?.filter(b => b.position === 'side_top') || []);
+    const sideBottomBanners = shuffleArray(sideBanners?.filter(b => b.position === 'side_bottom') || []);
 
     return {
         posts: (posts || []) as BlogPost[],
