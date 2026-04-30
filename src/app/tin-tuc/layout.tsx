@@ -32,7 +32,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
                 </div>
 
                 {/* Main Header Area: Logo, Slogan, Trending, Search */}
-                <div className="max-w-[1200px] mx-auto px-4 pt-2 pb-1 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
+                <div className="max-w-[1200px] mx-auto px-4 pt-2 pb-1 flex flex-col md:flex-row items-center justify-start gap-6 md:gap-8">
                     {/* Logo & Slogan */}
                     <Link href="/tin-tuc" className="flex flex-col items-center shrink-0 group">
                         {/* Container crops the top/bottom transparent whitespace of the logo */}
@@ -49,8 +49,8 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
                         </span>
                     </Link>
 
-                    {/* Trending Topics Bar (Shifted to the left) */}
-                    <div className="flex-1 w-full flex items-center justify-start gap-4 overflow-x-auto scrollbar-hide pb-2 md:pb-0">
+                    {/* Trending Topics Bar */}
+                    <div className="flex items-center justify-start gap-4 overflow-x-auto scrollbar-hide pb-2 md:pb-0 shrink-0">
                         <TrendingUp className="w-4 h-4 text-primary-600 shrink-0" />
                         <Link href="/tin-tuc?q=tiktok" className="shrink-0 text-gray-600 hover:text-primary-700 text-xs font-bold transition-colors"># TikTok Shop</Link>
                         <Link href="/tin-tuc?q=chiết+khấu" className="shrink-0 text-gray-600 hover:text-primary-700 text-xs font-bold transition-colors"># Chiết khấu đại lý</Link>
@@ -59,7 +59,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
                     </div>
 
                     {/* Search Bar */}
-                    <div className="w-full md:w-auto shrink-0 md:min-w-[280px]">
+                    <div className="w-full md:w-[280px] shrink-0 ml-auto md:ml-0">
                         <SearchBar />
                     </div>
                 </div>

@@ -148,7 +148,7 @@ export default async function BlogIndexPage({
             <div className="bg-white py-3 border-y border-gray-200">
                 
                 {/* Category Navigation */}
-                <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 px-4">
+                <div className="flex flex-row items-center justify-start gap-x-6 overflow-x-auto whitespace-nowrap scrollbar-hide px-4 md:px-0 max-w-[1200px] mx-auto pb-1">
                     <Link 
                         href={`/tin-tuc?category=all${searchQuery ? `&q=${searchQuery}` : ''}`}
                         className={`shrink-0 px-4 py-2 text-sm font-semibold transition-colors duration-300 ${
