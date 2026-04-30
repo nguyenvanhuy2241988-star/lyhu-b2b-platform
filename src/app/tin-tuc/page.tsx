@@ -132,16 +132,16 @@ export default async function BlogIndexPage({
         <div className="space-y-8">
             
             {/* Top Toolbar: Categories & Search */}
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="bg-white py-3 border-y border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 
                 {/* Category Pills Navigation */}
                 <div className="flex flex-wrap gap-2">
                     <Link 
                         href={`/tin-tuc?category=all${searchQuery ? `&q=${searchQuery}` : ''}`}
-                        className={`shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
+                        className={`shrink-0 px-4 py-2 text-sm font-semibold transition-colors duration-300 ${
                             activeCategory === 'all' 
-                            ? 'bg-primary-50 text-primary-700 border border-primary-200' 
-                            : 'text-gray-600 hover:bg-gray-50 border border-transparent'
+                            ? 'bg-primary-50 text-primary-700 border-b-2 border-primary-600' 
+                            : 'text-gray-600 hover:text-primary-600 border-b-2 border-transparent'
                         }`}
                     >
                         Tất cả
@@ -150,10 +150,10 @@ export default async function BlogIndexPage({
                         <Link 
                             key={cat.id}
                             href={`/tin-tuc?category=${cat.slug}${searchQuery ? `&q=${searchQuery}` : ''}`}
-                            className={`shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
+                            className={`shrink-0 px-4 py-2 text-sm font-semibold transition-colors duration-300 ${
                                 activeCategory === cat.slug 
-                                ? 'bg-primary-50 text-primary-700 border border-primary-200' 
-                                : 'text-gray-600 hover:bg-gray-50 border border-transparent'
+                                ? 'bg-primary-50 text-primary-700 border-b-2 border-primary-600' 
+                                : 'text-gray-600 hover:text-primary-600 border-b-2 border-transparent'
                             }`}
                         >
                             {cat.name}
@@ -169,21 +169,21 @@ export default async function BlogIndexPage({
 
             {/* Mega Banner Space (Dynamic or Placeholder) */}
             {megaBanner ? (
-                <div className="w-full relative rounded-xl overflow-hidden shadow-sm group border border-gray-100">
+                <div className="w-full relative overflow-hidden">
                     <Link href={megaBanner.link_url || "/wholesale"} target={megaBanner.link_url?.startsWith('http') ? "_blank" : "_self"}>
                         <img 
                             src={megaBanner.image_url} 
                             alt="Mega Banner" 
-                            className="w-full aspect-[21/9] object-cover group-hover:scale-[1.02] transition-transform duration-700"
+                            className="w-full aspect-[21/9] object-cover"
                         />
                     </Link>
                 </div>
             ) : (
-                <div className="w-full relative rounded-xl overflow-hidden shadow-sm group border border-gray-100">
+                <div className="w-full relative overflow-hidden">
                     <img 
                         src="https://images.pexels.com/photos/5632371/pexels-photo-5632371.jpeg?auto=compress&cs=tinysrgb&w=1200" 
                         alt="Mega Banner" 
-                        className="w-full aspect-[21/9] object-cover group-hover:scale-[1.02] transition-transform duration-700"
+                        className="w-full aspect-[21/9] object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-primary-900/90 via-primary-800/60 to-transparent flex flex-col justify-center px-6 md:px-12">
                         <h2 className="text-white text-2xl md:text-4xl font-black mb-3 drop-shadow-lg max-w-2xl leading-tight">
@@ -240,12 +240,12 @@ export default async function BlogIndexPage({
                                         {/* Main Featured Article (Col 1 & 2) */}
                                         <div className="md:col-span-2">
                                             <Link href={`/tin-tuc/${posts[0].slug}`} className="group block">
-                                                <div className="aspect-[16/9] w-full bg-gray-100 overflow-hidden relative mb-4 rounded-xl">
+                                                <div className="aspect-[16/9] w-full bg-gray-100 overflow-hidden relative mb-4">
                                                     {posts[0].thumbnail_url ? (
                                                         <img 
                                                             src={posts[0].thumbnail_url} 
                                                             alt={posts[0].title}
-                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                            className="w-full h-full object-cover"
                                                         />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center bg-primary-50 text-primary-200">
@@ -275,12 +275,12 @@ export default async function BlogIndexPage({
                                         <div className="flex flex-col gap-6 md:pl-6 md:border-l md:border-gray-200">
                                             {[posts[1], posts[2]].map(post => (
                                                 <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex flex-col flex-1">
-                                                    <div className="aspect-[16/10] w-full bg-gray-100 overflow-hidden relative mb-3 rounded-lg">
+                                                    <div className="aspect-[16/10] w-full bg-gray-100 overflow-hidden relative mb-3">
                                                         {post.thumbnail_url ? (
                                                             <img 
                                                                 src={post.thumbnail_url} 
                                                                 alt={post.title}
-                                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                                className="w-full h-full object-cover"
                                                             />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center bg-primary-50 text-primary-200">
@@ -312,10 +312,10 @@ export default async function BlogIndexPage({
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                             {featuredBlocks.block1.map(post => (
-                                                <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex gap-4 bg-gray-50 p-4 rounded-xl hover:bg-primary-50 transition-colors border border-gray-100">
-                                                    <div className="w-28 h-28 shrink-0 bg-white rounded-lg overflow-hidden relative">
+                                                <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex gap-4 bg-gray-50 p-4 hover:bg-primary-50 transition-colors border border-gray-100">
+                                                    <div className="w-28 h-28 shrink-0 bg-white overflow-hidden relative">
                                                         {post.thumbnail_url ? (
-                                                            <img src={post.thumbnail_url} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                                            <img src={post.thumbnail_url} alt={post.title} className="w-full h-full object-cover" />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center text-primary-200 font-bold text-xs">LYHU</div>
                                                         )}
@@ -350,9 +350,9 @@ export default async function BlogIndexPage({
                                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                                             {featuredBlocks.block2.map(post => (
                                                 <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex flex-col">
-                                                    <div className="w-full aspect-[4/3] bg-gray-100 rounded-lg overflow-hidden relative mb-3">
+                                                    <div className="w-full aspect-[4/3] bg-gray-100 overflow-hidden relative mb-3">
                                                         {post.thumbnail_url ? (
-                                                            <img src={post.thumbnail_url} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                                            <img src={post.thumbnail_url} alt={post.title} className="w-full h-full object-cover" />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center text-primary-200 font-bold">LYHU</div>
                                                         )}
@@ -383,12 +383,12 @@ export default async function BlogIndexPage({
                                             className="group flex flex-col sm:flex-row gap-6 pb-8 border-b border-gray-100 last:border-0"
                                         >
                                             {/* Thumbnail Left */}
-                                            <div className="w-full sm:w-[280px] shrink-0 aspect-[16/10] bg-gray-100 overflow-hidden relative rounded-lg">
+                                            <div className="w-full sm:w-[280px] shrink-0 aspect-[16/10] bg-gray-100 overflow-hidden relative">
                                                 {post.thumbnail_url ? (
                                                     <img 
                                                         src={post.thumbnail_url} 
                                                         alt={post.title}
-                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                        className="w-full h-full object-cover"
                                                     />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center bg-primary-50 text-primary-200">

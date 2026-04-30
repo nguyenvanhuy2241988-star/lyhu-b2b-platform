@@ -14,13 +14,13 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
     return (
         <div className="min-h-screen bg-[#F5F5F5] flex flex-col font-sans">
             {/* Magazine-style Header (Minimalist & Brand Colors) */}
-            <header className="bg-white border-b border-gray-200 shadow-sm">
+            <header className="bg-[#F8FCFA] border-b border-primary-100">
                 {/* Top thin bar */}
-                <div className="bg-primary-700 text-primary-50 text-xs font-medium py-1.5 hidden sm:block">
+                <div className="bg-primary-800 text-primary-50 text-xs font-medium py-1.5 hidden sm:block">
                     <div className="max-w-[1200px] mx-auto px-4 flex justify-between items-center">
                         <div className="flex items-center space-x-4">
                             <span>Hệ thống phân phối LYHU B2B</span>
-                            <span className="text-primary-300">|</span>
+                            <span className="text-primary-400">|</span>
                             <span>Hotline: 1900 xxxx</span>
                         </div>
                         <div className="flex gap-4">
@@ -48,12 +48,12 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
                     </Link>
 
                     {/* Trending Topics Bar (Shifted to the left) */}
-                    <div className="flex-1 w-full flex items-center justify-start gap-2 overflow-x-auto scrollbar-hide pb-2 md:pb-0">
-                        <TrendingUp className="w-5 h-5 text-primary-600 shrink-0" />
-                        <Link href="/tin-tuc?q=tiktok" className="shrink-0 px-4 py-1.5 bg-gray-50 border border-gray-100 hover:border-primary-300 hover:text-primary-600 text-gray-700 text-xs font-semibold rounded-full transition-all shadow-sm"># TikTok Shop</Link>
-                        <Link href="/tin-tuc?q=chiết+khấu" className="shrink-0 px-4 py-1.5 bg-gray-50 border border-gray-100 hover:border-primary-300 hover:text-primary-600 text-gray-700 text-xs font-semibold rounded-full transition-all shadow-sm"># Chiết khấu đại lý</Link>
-                        <Link href="/tin-tuc?q=gen+z" className="shrink-0 px-4 py-1.5 bg-gray-50 border border-gray-100 hover:border-primary-300 hover:text-primary-600 text-gray-700 text-xs font-semibold rounded-full transition-all shadow-sm"># Khách hàng Gen Z</Link>
-                        <Link href="/tin-tuc?q=nhập+sỉ" className="shrink-0 px-4 py-1.5 bg-gray-50 border border-gray-100 hover:border-primary-300 hover:text-primary-600 text-gray-700 text-xs font-semibold rounded-full transition-all shadow-sm"># Nguồn nhập sỉ rẻ</Link>
+                    <div className="flex-1 w-full flex items-center justify-start gap-4 overflow-x-auto scrollbar-hide pb-2 md:pb-0">
+                        <TrendingUp className="w-4 h-4 text-primary-600 shrink-0" />
+                        <Link href="/tin-tuc?q=tiktok" className="shrink-0 text-gray-600 hover:text-primary-700 text-xs font-bold transition-colors"># TikTok Shop</Link>
+                        <Link href="/tin-tuc?q=chiết+khấu" className="shrink-0 text-gray-600 hover:text-primary-700 text-xs font-bold transition-colors"># Chiết khấu đại lý</Link>
+                        <Link href="/tin-tuc?q=gen+z" className="shrink-0 text-gray-600 hover:text-primary-700 text-xs font-bold transition-colors"># Khách hàng Gen Z</Link>
+                        <Link href="/tin-tuc?q=nguồn+nhập+sỉ" className="shrink-0 text-gray-600 hover:text-primary-700 text-xs font-bold transition-colors"># Nguồn nhập sỉ rẻ</Link>
                     </div>
                 </div>
             </header>
