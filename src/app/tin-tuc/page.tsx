@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
-import { Clock, TrendingUp, Sparkles } from 'lucide-react';
+import { Clock, TrendingUp, Sparkles, ChevronDown } from 'lucide-react';
 import { BlogPost, BlogCategory } from '@/lib/blogStore';
 import SearchBar from '@/components/blog/SearchBar';
 import Pagination from '@/components/blog/Pagination';
@@ -148,10 +148,10 @@ export default async function BlogIndexPage({
             <div className="bg-white py-3 border-y border-gray-200">
                 
                 {/* Category Navigation */}
-                <div className="flex flex-row items-center justify-start gap-x-6 overflow-x-auto whitespace-nowrap scrollbar-hide px-4 md:px-0 max-w-[1200px] mx-auto pb-1">
+                <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 px-4 md:px-0 max-w-[1200px] mx-auto pb-1 relative z-40">
                     <Link 
                         href={`/tin-tuc?category=all${searchQuery ? `&q=${searchQuery}` : ''}`}
-                        className={`shrink-0 px-4 py-2 text-sm font-semibold transition-colors duration-300 ${
+                        className={`shrink-0 px-2 md:px-4 py-2 text-sm font-semibold transition-colors duration-300 ${
                             activeCategory === 'all' 
                             ? 'bg-primary-50 text-primary-700 border-b-2 border-primary-600' 
                             : 'text-gray-600 hover:text-primary-600 border-b-2 border-transparent'
@@ -159,11 +159,11 @@ export default async function BlogIndexPage({
                     >
                         Tất cả
                     </Link>
-                    {categories.map(cat => (
+                    {categories.slice(0, 6).map(cat => (
                         <Link 
                             key={cat.id}
                             href={`/tin-tuc?category=${cat.slug}${searchQuery ? `&q=${searchQuery}` : ''}`}
-                            className={`shrink-0 px-4 py-2 text-sm font-semibold transition-colors duration-300 ${
+                            className={`shrink-0 px-2 md:px-4 py-2 text-sm font-semibold transition-colors duration-300 ${
                                 activeCategory === cat.slug 
                                 ? 'bg-primary-50 text-primary-700 border-b-2 border-primary-600' 
                                 : 'text-gray-600 hover:text-primary-600 border-b-2 border-transparent'
@@ -172,6 +172,29 @@ export default async function BlogIndexPage({
                             {cat.name}
                         </Link>
                     ))}
+                    
+                    {categories.length > 6 && (
+                        <div className="relative group shrink-0">
+                            <button className="px-2 md:px-4 py-2 text-sm font-semibold text-gray-600 hover:text-primary-600 flex items-center gap-1 border-b-2 border-transparent transition-colors duration-300">
+                                Xem thêm <ChevronDown className="w-4 h-4" />
+                            </button>
+                            <div className="absolute top-full right-0 mt-1 w-56 bg-white border border-gray-100 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 flex flex-col py-2">
+                                {categories.slice(6).map(cat => (
+                                    <Link 
+                                        key={cat.id}
+                                        href={`/tin-tuc?category=${cat.slug}${searchQuery ? `&q=${searchQuery}` : ''}`}
+                                        className={`px-4 py-2.5 text-sm transition-colors ${
+                                            activeCategory === cat.slug 
+                                            ? 'bg-primary-50 text-primary-700 font-bold' 
+                                            : 'text-gray-600 hover:bg-gray-50 hover:text-primary-600 font-medium'
+                                        }`}
+                                    >
+                                        {cat.name}
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
