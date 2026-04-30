@@ -148,10 +148,10 @@ export default async function BlogIndexPage({
             <div className="bg-white border-y border-gray-200 relative z-40">
                 
                 {/* Category Navigation */}
-                <div className="flex flex-wrap items-center justify-center gap-x-4 md:gap-x-8 px-4 md:px-0 max-w-[1200px] mx-auto">
+                <div className="flex flex-row items-center justify-center gap-x-2 md:gap-x-6 px-4 md:px-0 max-w-[1200px] mx-auto overflow-hidden whitespace-nowrap">
                     <Link 
                         href={`/tin-tuc?category=all${searchQuery ? `&q=${searchQuery}` : ''}`}
-                        className={`shrink-0 px-2 md:px-4 py-3.5 text-sm md:text-[15px] font-bold uppercase transition-colors duration-300 ${
+                        className={`shrink-0 px-2 md:px-3 py-3.5 text-[13px] md:text-[14px] font-bold uppercase transition-colors duration-300 ${
                             activeCategory === 'all' 
                             ? 'text-primary-700 border-b-[3px] border-primary-600' 
                             : 'text-gray-800 hover:text-primary-600 border-b-[3px] border-transparent'
@@ -163,7 +163,7 @@ export default async function BlogIndexPage({
                         <Link 
                             key={cat.id}
                             href={`/tin-tuc?category=${cat.slug}${searchQuery ? `&q=${searchQuery}` : ''}`}
-                            className={`shrink-0 px-2 md:px-4 py-3.5 text-sm md:text-[15px] font-bold uppercase transition-colors duration-300 ${
+                            className={`shrink-0 px-2 md:px-3 py-3.5 text-[13px] md:text-[14px] font-bold uppercase transition-colors duration-300 ${
                                 activeCategory === cat.slug 
                                 ? 'text-primary-700 border-b-[3px] border-primary-600' 
                                 : 'text-gray-800 hover:text-primary-600 border-b-[3px] border-transparent'
