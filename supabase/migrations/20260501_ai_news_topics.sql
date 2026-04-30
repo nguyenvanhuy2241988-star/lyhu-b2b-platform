@@ -10,9 +10,11 @@ CREATE TABLE IF NOT EXISTS public.ai_news_topics (
 ALTER TABLE public.ai_news_topics ENABLE ROW LEVEL SECURITY;
 
 -- Policies
+DROP POLICY IF EXISTS "Enable read access for all users" ON public.ai_news_topics;
 CREATE POLICY "Enable read access for all users" ON public.ai_news_topics
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Enable all access for authenticated users" ON public.ai_news_topics;
 CREATE POLICY "Enable all access for authenticated users" ON public.ai_news_topics
     FOR ALL USING (auth.role() = 'authenticated');
 
