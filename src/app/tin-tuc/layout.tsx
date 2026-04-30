@@ -21,7 +21,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
                         <div className="flex items-center space-x-4">
                             <span>Hệ thống phân phối LYHU B2B</span>
                             <span className="text-primary-300">|</span>
-                            <span>Hotline: 1900 xxxx</span>
+                            <span>Hotline: 0969 069 798</span>
                         </div>
                         <div className="flex gap-4">
                             <Link href="/wholesale" className="hover:text-white transition-colors font-bold">Vào trang Mua Sỉ</Link>

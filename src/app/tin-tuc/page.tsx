@@ -101,13 +101,26 @@ async function getBlogData(page: number, categorySlug: string, searchQuery: stri
         .limit(1)
         .maybeSingle();
 
+    // 6. Fetch Side Banners
+    const { data: sideBanners } = await supabase
+        .from('wholesale_banners')
+        .select('*')
+        .in('position', ['side_top', 'side_bottom'])
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+
+    const sideTopBanner = sideBanners?.find(b => b.position === 'side_top');
+    const sideBottomBanner = sideBanners?.find(b => b.position === 'side_bottom');
+
     return {
         posts: (posts || []) as BlogPost[],
         categories: (categories || []) as BlogCategory[],
         trendingPosts: (trending || []) as Partial<BlogPost>[],
         totalCount: count || 0,
         featuredBlocks,
-        megaBanner
+        megaBanner,
+        sideTopBanner,
+        sideBottomBanner
     };
 }
 
@@ -120,7 +133,7 @@ export default async function BlogIndexPage({
     const currentPage = parseInt(searchParams.page || '1', 10);
     const searchQuery = searchParams.q || '';
 
-    const { posts, categories, trendingPosts, totalCount, featuredBlocks, megaBanner } = await getBlogData(
+    const { posts, categories, trendingPosts, totalCount, featuredBlocks, megaBanner, sideTopBanner, sideBottomBanner } = await getBlogData(
         currentPage,
         activeCategory,
         searchQuery
@@ -132,7 +145,7 @@ export default async function BlogIndexPage({
         <div className="space-y-8">
             
             {/* Top Toolbar: Categories & Search */}
-            <div className="bg-white py-3 border-y border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="bg-white py-3 border-y border-gray-200 flex flex-col md:flex-row md:items-center justify-start gap-4 md:gap-8 flex-wrap">
                 
                 {/* Category Pills Navigation */}
                 <div className="flex flex-wrap gap-2">
@@ -429,8 +442,17 @@ export default async function BlogIndexPage({
                 {/* Right Sidebar */}
                 <aside className="w-full lg:w-[320px] shrink-0 space-y-8">
                     
+                    {/* Side Top Banner */}
+                    {sideTopBanner && (
+                        <div className="w-full relative overflow-hidden">
+                            <Link href={sideTopBanner.link_url || "/wholesale"} target={sideTopBanner.link_url?.startsWith('http') ? "_blank" : "_self"}>
+                                <img src={sideTopBanner.image_url} alt="Side Top Banner" className="w-full h-auto object-cover border border-gray-100" />
+                            </Link>
+                        </div>
+                    )}
+                    
                     {/* Trending Widget */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div className="bg-white p-6 border border-gray-100">
                         <h3 className="text-lg font-bold text-gray-900 mb-5 pb-3 border-b border-gray-100 flex items-center gap-2">
                             <TrendingUp className="w-5 h-5 text-gray-400" />
                             Bài viết nổi bật
@@ -454,15 +476,24 @@ export default async function BlogIndexPage({
                         </div>
                     </div>
 
-                    {/* B2B Banner Widget */}
-                    <div className="bg-primary-50 p-6 rounded-xl border border-primary-100 text-center">
+                    {/* Side Bottom Banner */}
+                    {sideBottomBanner && (
+                        <div className="w-full relative overflow-hidden">
+                            <Link href={sideBottomBanner.link_url || "/wholesale"} target={sideBottomBanner.link_url?.startsWith('http') ? "_blank" : "_self"}>
+                                <img src={sideBottomBanner.image_url} alt="Side Bottom Banner" className="w-full h-auto object-cover border border-gray-100" />
+                            </Link>
+                        </div>
+                    )}
+
+                    {/* B2B Promo Widget */}
+                    <div className="bg-primary-50 p-6 border border-primary-100 text-center">
                         <h3 className="text-lg font-bold text-primary-900 mb-2">Nhập sỉ tận xưởng?</h3>
                         <p className="text-primary-700 text-sm mb-5 leading-relaxed">
                             Tham gia hệ thống phân phối LYHU với mức chiết khấu lên tới 45%.
                         </p>
                         <Link 
                             href="/wholesale" 
-                            className="block w-full bg-primary-600 text-white py-2.5 rounded text-sm font-bold hover:bg-primary-700 transition-colors shadow-sm"
+                            className="block w-full bg-primary-600 text-white py-2.5 text-sm font-bold hover:bg-primary-700 transition-colors"
                         >
                             Đăng ký Báo Giá
                         </Link>
