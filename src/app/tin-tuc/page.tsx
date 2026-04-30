@@ -174,7 +174,7 @@ export default async function BlogIndexPage({
                         <img 
                             src={megaBanner.image_url} 
                             alt="Mega Banner" 
-                            className="w-full h-[180px] md:h-[260px] object-cover group-hover:scale-[1.02] transition-transform duration-700"
+                            className="w-full aspect-[21/9] object-cover group-hover:scale-[1.02] transition-transform duration-700"
                         />
                     </Link>
                 </div>
@@ -183,7 +183,7 @@ export default async function BlogIndexPage({
                     <img 
                         src="https://images.pexels.com/photos/5632371/pexels-photo-5632371.jpeg?auto=compress&cs=tinysrgb&w=1200" 
                         alt="Mega Banner" 
-                        className="w-full h-[180px] md:h-[260px] object-cover group-hover:scale-[1.02] transition-transform duration-700"
+                        className="w-full aspect-[21/9] object-cover group-hover:scale-[1.02] transition-transform duration-700"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-primary-900/90 via-primary-800/60 to-transparent flex flex-col justify-center px-6 md:px-12">
                         <h2 className="text-white text-2xl md:text-4xl font-black mb-3 drop-shadow-lg max-w-2xl leading-tight">

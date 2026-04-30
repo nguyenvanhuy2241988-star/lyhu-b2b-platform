@@ -30,26 +30,25 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
                 </div>
 
                 {/* Main Header Area: Logo, Slogan, Trending */}
-                <div className="max-w-[1200px] mx-auto px-4 pt-0 pb-1 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="max-w-[1200px] mx-auto px-4 pt-2 pb-1 flex flex-col md:flex-row items-center justify-start gap-6 md:gap-12">
                     {/* Logo & Slogan */}
-                    <Link href="/tin-tuc" className="flex flex-col items-center md:items-start shrink-0 group">
-                        {/* Pulling the logo up with negative margin to hide its built-in transparent whitespace */}
-                        <img 
-                            src="/logo-full.png" 
-                            alt="LYHU Logo" 
-                            className="h-28 md:h-32 object-contain transition-transform origin-left group-hover:scale-105 -mt-6 -ml-1" 
-                        />
-                        {/* Slogan fits right under the visual part of the logo */}
-                        <div className="w-full text-center md:text-left mt-[-24px] mb-1 relative pl-2">
-                            <span className="text-[10px] md:text-[11px] font-extrabold text-primary-700 uppercase tracking-widest block">
-                                Chuyển động FMCG 24/7
-                            </span>
-                            <div className="absolute -bottom-1 md:left-2 left-1/2 md:translate-x-0 -translate-x-1/2 w-[40px] h-[2px] bg-primary-600"></div>
+                    <Link href="/tin-tuc" className="flex flex-col items-center shrink-0 group">
+                        {/* Container crops the top/bottom transparent whitespace of the logo */}
+                        <div className="h-14 md:h-16 overflow-hidden flex items-center justify-center">
+                            <img 
+                                src="/logo-full.png" 
+                                alt="LYHU Logo" 
+                                className="h-28 md:h-32 object-contain transition-transform group-hover:scale-105" 
+                            />
                         </div>
+                        {/* Slogan perfectly centered under logo, smaller, no underline */}
+                        <span className="text-[8px] md:text-[9px] font-bold text-primary-700 uppercase tracking-widest mt-1">
+                            Chuyển động FMCG 24/7
+                        </span>
                     </Link>
 
-                    {/* Trending Topics Bar (Centered with Logo) */}
-                    <div className="flex-1 w-full md:w-auto flex items-center md:justify-end gap-2 overflow-x-auto scrollbar-hide pb-2 md:pb-0 md:-mt-6">
+                    {/* Trending Topics Bar (Shifted to the left) */}
+                    <div className="flex-1 w-full flex items-center justify-start gap-2 overflow-x-auto scrollbar-hide pb-2 md:pb-0">
                         <TrendingUp className="w-5 h-5 text-primary-600 shrink-0" />
                         <Link href="/tin-tuc?q=tiktok" className="shrink-0 px-4 py-1.5 bg-gray-50 border border-gray-100 hover:border-primary-300 hover:text-primary-600 text-gray-700 text-xs font-semibold rounded-full transition-all shadow-sm"># TikTok Shop</Link>
                         <Link href="/tin-tuc?q=chiết+khấu" className="shrink-0 px-4 py-1.5 bg-gray-50 border border-gray-100 hover:border-primary-300 hover:text-primary-600 text-gray-700 text-xs font-semibold rounded-full transition-all shadow-sm"># Chiết khấu đại lý</Link>
