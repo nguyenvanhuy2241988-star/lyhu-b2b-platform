@@ -469,7 +469,7 @@ export default async function BlogIndexPage({
                 </div>
 
                 {/* Right Sidebar */}
-                <aside className="w-full lg:w-[320px] shrink-0 space-y-8">
+                <aside className="w-full lg:w-[320px] shrink-0 space-y-8 lg:sticky lg:top-24 h-fit">
                     
                     {/* Side Top Banner */}
                     {sideTopBanner && (
