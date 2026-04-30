@@ -144,11 +144,11 @@ export default async function BlogIndexPage({
     return (
         <div className="space-y-8">
             
-            {/* Top Toolbar: Categories & Search */}
-            <div className="bg-white py-3 border-y border-gray-200 flex flex-col md:flex-row md:items-center justify-start gap-4 md:gap-8 flex-wrap">
+            {/* Top Toolbar: Categories */}
+            <div className="bg-white py-3 border-y border-gray-200">
                 
-                {/* Category Pills Navigation */}
-                <div className="flex flex-wrap gap-2">
+                {/* Category Navigation */}
+                <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 px-4">
                     <Link 
                         href={`/tin-tuc?category=all${searchQuery ? `&q=${searchQuery}` : ''}`}
                         className={`shrink-0 px-4 py-2 text-sm font-semibold transition-colors duration-300 ${
@@ -172,11 +172,6 @@ export default async function BlogIndexPage({
                             {cat.name}
                         </Link>
                     ))}
-                </div>
-
-                {/* Search Bar */}
-                <div className="w-full md:w-auto min-w-[280px]">
-                    <SearchBar />
                 </div>
             </div>
 

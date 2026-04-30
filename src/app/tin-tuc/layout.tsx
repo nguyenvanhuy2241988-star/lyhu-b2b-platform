@@ -5,6 +5,8 @@ import Link from 'next/link';
 
 import { TrendingUp } from 'lucide-react';
 
+import SearchBar from '@/components/blog/SearchBar';
+
 export const metadata: Metadata = {
     title: 'Tin tức & Kiến thức Kinh doanh B2B - LYHU',
     description: 'Cập nhật tin tức thị trường, kiến thức mở tạp hóa, siêu thị mini và kinh nghiệm nhập sỉ bánh kẹo ăn vặt tận xưởng.',
@@ -29,8 +31,8 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
                     </div>
                 </div>
 
-                {/* Main Header Area: Logo, Slogan, Trending */}
-                <div className="max-w-[1200px] mx-auto px-4 pt-2 pb-1 flex flex-col md:flex-row items-center justify-start gap-6 md:gap-12">
+                {/* Main Header Area: Logo, Slogan, Trending, Search */}
+                <div className="max-w-[1200px] mx-auto px-4 pt-2 pb-1 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
                     {/* Logo & Slogan */}
                     <Link href="/tin-tuc" className="flex flex-col items-center shrink-0 group">
                         {/* Container crops the top/bottom transparent whitespace of the logo */}
@@ -54,6 +56,11 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
                         <Link href="/tin-tuc?q=chiết+khấu" className="shrink-0 text-gray-600 hover:text-primary-700 text-xs font-bold transition-colors"># Chiết khấu đại lý</Link>
                         <Link href="/tin-tuc?q=gen+z" className="shrink-0 text-gray-600 hover:text-primary-700 text-xs font-bold transition-colors"># Khách hàng Gen Z</Link>
                         <Link href="/tin-tuc?q=nguồn+nhập+sỉ" className="shrink-0 text-gray-600 hover:text-primary-700 text-xs font-bold transition-colors"># Nguồn nhập sỉ rẻ</Link>
+                    </div>
+
+                    {/* Search Bar */}
+                    <div className="w-full md:w-auto shrink-0 md:min-w-[280px]">
+                        <SearchBar />
                     </div>
                 </div>
             </header>
