@@ -159,7 +159,7 @@ export default async function BlogIndexPage({
                     >
                         Tất cả
                     </Link>
-                    {categories.slice(0, 6).map(cat => (
+                    {categories.slice(0, 5).map(cat => (
                         <Link 
                             key={cat.id}
                             href={`/tin-tuc?category=${cat.slug}${searchQuery ? `&q=${searchQuery}` : ''}`}
@@ -173,7 +173,7 @@ export default async function BlogIndexPage({
                         </Link>
                     ))}
                     
-                    {categories.length > 6 && (
+                    {categories.length > 5 && (
                         <div className="group shrink-0 h-full flex items-center ml-auto md:ml-0 cursor-pointer">
                             <div className="px-3 py-3.5 text-gray-800 hover:text-primary-600 transition-colors duration-300">
                                 <Menu className="w-6 h-6 group-hover:hidden" />
