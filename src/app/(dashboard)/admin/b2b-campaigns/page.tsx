@@ -78,13 +78,36 @@ export default function B2bCampaignsPage() {
 
     const handleSaveBanner = async () => {
         if (!newBanner.image_url) return toast.warning("Bạn cần tải ảnh lên trước!");
-        const { error } = await supabase.from('wholesale_banners').insert(newBanner);
-        if (error) toast.error("Lỗi lưu banner: " + error.message);
-        else {
-            toast.success("Đã thêm Banner mới!");
-            setNewBanner({ position: 'main_slider', sort_order: 1, is_active: true });
-            fetchBanners();
+        
+        if (newBanner.id) {
+            const { error } = await supabase.from('wholesale_banners').update({
+                position: newBanner.position,
+                link_url: newBanner.link_url,
+                image_url: newBanner.image_url,
+                sort_order: newBanner.sort_order,
+                is_active: newBanner.is_active
+            }).eq('id', newBanner.id);
+            
+            if (error) toast.error("Lỗi cập nhật banner: " + error.message);
+            else {
+                toast.success("Đã cập nhật Banner!");
+                setNewBanner({ position: 'main_slider', sort_order: 1, is_active: true });
+                fetchBanners();
+            }
+        } else {
+            const { error } = await supabase.from('wholesale_banners').insert(newBanner);
+            if (error) toast.error("Lỗi lưu banner: " + error.message);
+            else {
+                toast.success("Đã thêm Banner mới!");
+                setNewBanner({ position: 'main_slider', sort_order: 1, is_active: true });
+                fetchBanners();
+            }
         }
+    };
+
+    const handleEditBanner = (banner: WholesaleBanner) => {
+        setNewBanner(banner);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
     const handleDeleteBanner = async (id: string) => {
@@ -336,7 +359,10 @@ export default function B2bCampaignsPage() {
             {activeTab === 'banners' && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col items-center justify-center space-y-4" onPaste={handlePaste}>
-                        <h3 className="font-bold text-slate-800 self-start mb-2 flex items-center gap-2"><Upload className="w-5 h-5 text-slate-400" /> Tạo Banner Mới</h3>
+                        <h3 className="font-bold text-slate-800 self-start mb-2 flex items-center gap-2">
+                            {newBanner.id ? <Edit2 className="w-5 h-5 text-slate-400" /> : <Upload className="w-5 h-5 text-slate-400" />} 
+                            {newBanner.id ? 'Chỉnh sửa Banner' : 'Tạo Banner Mới'}
+                        </h3>
                         <div className="w-full relative group">
                             <input type="file" accept="image/*" onChange={e => { if (e.target.files?.[0]) handleUpload(e.target.files[0]); }} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                             <div className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center transition-colors ${newBanner.image_url ? 'border-primary-300 bg-primary-50' : 'border-slate-300 hover:border-primary-400 bg-slate-50'}`}>
@@ -359,8 +385,13 @@ export default function B2bCampaignsPage() {
                                 <input type="url" value={newBanner.link_url || ''} placeholder="https://" onChange={e => setNewBanner(p => ({...p, link_url: e.target.value}))} className="w-full mt-1 border border-slate-300 rounded-md py-2 px-3 text-sm outline-none focus:border-primary-500" />
                             </div>
                             <button onClick={handleSaveBanner} disabled={isUploading || !newBanner.image_url} className="w-full bg-primary-600 text-white font-medium py-2.5 rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2">
-                                <Save className="w-4 h-4" /> Lưu Banner
+                                <Save className="w-4 h-4" /> {newBanner.id ? 'Cập nhật Banner' : 'Lưu Banner'}
                             </button>
+                            {newBanner.id && (
+                                <button onClick={() => setNewBanner({ position: 'main_slider', sort_order: 1, is_active: true })} className="w-full bg-slate-100 text-slate-600 font-medium py-2 rounded-md hover:bg-slate-200 transition-colors text-sm mt-2">
+                                    Hủy chỉnh sửa
+                                </button>
+                            )}
                         </div>
                     </div>
                     <div className="col-span-2 space-y-4">
@@ -370,8 +401,9 @@ export default function B2bCampaignsPage() {
                                     <div key={banner.id} className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm flex flex-col group">
                                         <div className="relative aspect-video bg-slate-100">
                                             <img src={banner.image_url} className={`w-full h-full object-cover ${!banner.is_active ? 'opacity-40 grayscale' : ''}`} />
-                                            <div className="absolute top-2 right-2 flex gap-1">
-                                                <button onClick={() => handleDeleteBanner(banner.id)} className="bg-red-500 text-white p-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 className="w-3.5 h-3.5"/></button>
+                                            <div className="absolute top-2 right-2 flex gap-1 z-20">
+                                                <button onClick={(e) => { e.stopPropagation(); handleEditBanner(banner); }} className="bg-blue-500 text-white p-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-blue-600"><Edit2 className="w-3.5 h-3.5"/></button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleDeleteBanner(banner.id); }} className="bg-red-500 text-white p-1.5 rounded opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"><Trash2 className="w-3.5 h-3.5"/></button>
                                             </div>
                                             <span className="absolute bottom-2 left-2 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">{banner.position}</span>
                                         </div>
