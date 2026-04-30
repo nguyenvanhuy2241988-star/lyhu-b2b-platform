@@ -68,42 +68,48 @@ export async function GET(req: Request) {
         } else {
             // Fallback trong trường hợp DB rỗng hoặc lỗi
             focusAreas = [
-                "báo cáo tài chính, doanh thu, lợi nhuận của các tập đoàn FMCG (Masan, Vinamilk, Kido, Sabeco...)",
-                "chiến lược mở rộng hoặc thu hẹp của các chuỗi siêu thị (Bách Hóa Xanh, WinMart, CoopMart, Go!...)",
-                "xu hướng tiêu dùng, thói quen mua sắm của người Việt Nam hiện nay",
-                "chính sách kinh tế, thuế, quy định pháp luật ảnh hưởng đến ngành bán lẻ"
+                "Biến động chiến lược tại các tập đoàn FMCG & bán lẻ",
+                "Chuyển đổi số tại điểm bán truyền thống",
+                "Xu hướng tiêu dùng mới: cơ hội cho tạp hóa và siêu thị mini",
+                "Phân tích cách tính chiết khấu và lợi nhuận cho nhà phân phối"
             ];
         }
 
         const randomFocus = focusAreas[Math.floor(Math.random() * focusAreas.length)];
 
         const prompt = `
-Bạn là một TỔNG BIÊN TẬP KIÊM NHÀ BÁO kinh tế uy tín hàng đầu Việt Nam, làm việc cho một Tòa soạn Báo điện tử ĐỘC LẬP chuyên sâu về thị trường Bán lẻ và Tiêu dùng nhanh (FMCG).
-Hôm nay là ngày ${todayStr}. 
+Bạn là "Chuyên gia phân tích thị trường B2B FMCG", làm việc cho LYHU - Nền tảng phân phối sỉ hàng tiêu dùng nhanh (FMCG) hàng đầu Việt Nam. Khán giả của bạn là các nhà phân phối, chủ tạp hóa, chủ siêu thị mini và các điểm bán lẻ truyền thống (GT).
 
-BẮT BUỘC SỐ 1: HÃY TÌM KIẾM TRÊN GOOGLE ĐỂ LẤY MỘT TIN TỨC THỰC TẾ MỚI NHẤT VỀ NGÀNH FMCG HOẶC BÁN LẺ TẠI VIỆT NAM TRONG VÒNG 1-2 NGÀY QUA. 
-ĐỂ ĐẢM BẢO TIN TỨC ĐA DẠNG, BÀI BÁO HÔM NAY BẮT BUỘC PHẢI TẬP TRUNG TÌM KIẾM VÀ VIẾT VỀ CHỦ ĐỀ: "${randomFocus}".
-Dựa vào các thông tin THỰC TẾ TÌM ĐƯỢC từ Google để tổng hợp, phân tích và viết thành một bài báo hoàn chỉnh.
+BẮT BUỘC SỐ 1: Hãy tự động tìm kiếm trên Google các tin tức NÓNG NHẤT, MỚI NHẤT trong 24-48 giờ qua tại thị trường Việt Nam về chủ đề sau:
+CHỦ ĐỀ TẬP TRUNG: "${randomFocus}"
 
-BẮT BUỘC SỐ 2 (QUAN TRỌNG NHẤT): BÀI BÁO PHẢI HOÀN TOÀN KHÁCH QUAN, DỰA TRÊN SỰ THẬT. ĐÂY LÀ MỘT TỜ BÁO CHÍNH THỐNG CHUYÊN NGÀNH, KHÔNG PHẢI LÀ BÀI VIẾT QUẢNG CÁO HAY PR CHO BẤT KỲ NỀN TẢNG NÀO. KHÔNG THÊM BẤT KỲ LỜI KÊU GỌI MUA HÀNG HAY NHẬP SỈ NÀO VÀO CUỐI BÀI.
+Dựa trên thông tin tìm được, hãy viết một bài phân tích chuyên sâu (khoảng 800-1000 chữ). 
+TUYỆT ĐỐI tuân thủ cấu trúc 4 phần sau (hãy dùng tiêu đề cho từng phần):
 
-YÊU CẦU NỘI DUNG (GIỌNG VĂN BÁO CHÍ):
-1. Chủ đề: Dựa trên 1 tin tức CÓ THẬT vừa tìm kiếm được. Tiêu đề phải giật tít chuẩn báo chí kinh tế (ví dụ: "Masan huy động thành công 500 tỷ đồng trái phiếu", "WinMart+ ồ ạt đóng cửa các điểm bán kém hiệu quả", "Bộ Tài chính đề xuất giảm thuế VAT 2% cho ngành bán lẻ").
-2. Văn phong: Khách quan, sắc sảo, có tính cập nhật tin tức (Sử dụng các từ ngữ như "Ghi nhận mới nhất", "Theo báo cáo thực tế", "Sự kiện vừa diễn ra"). Trích dẫn số liệu cụ thể nếu có.
+1. Chuyện gì đang xảy ra?
+(Tóm tắt ngắn gọn sự kiện, tin tức, xu hướng vừa diễn ra. Bám sát sự thật, có số liệu cụ thể).
+
+2. Vì sao nó quan trọng?
+(Bóc tách ý nghĩa của sự kiện đối với toàn cảnh thị trường FMCG Việt Nam).
+
+3. Tác động đến kênh phân phối (GT/MT) là gì?
+(Phân tích xem điều này mang lại lợi ích hay gây khó khăn gì cho kênh bán lẻ truyền thống (tạp hóa) và hiện đại (siêu thị mini). Ai được lợi, ai bị ép?).
+
+4. Lời khuyên thực chiến cho Nhà bán lẻ & NPP
+(Đưa ra 2-3 hành động cụ thể. Ví dụ: Chủ tạp hóa nên thay đổi cách nhập hàng thế nào? Nhà phân phối nên ưu tiên nhóm SKU nào? Tuyệt đối không khuyên sáo rỗng, phải mang tính B2B thực tế).
 
 YÊU CẦU BẮT BUỘC VỀ FORMAT:
 1. CHỈ TRẢ VỀ mã HTML chuẩn. KHÔNG dùng Markdown (** hay #).
 2. Phân tách nội dung: Bắt buộc dùng thẻ <p>...</p> cho MỖI đoạn văn. Dùng <h2>, <h3> cho các tiêu đề phụ. Dùng <ul><li> cho danh sách. Dùng <strong> để bôi đậm từ khóa.
-3. Độ dài: Ít nhất 800 chữ, hành văn thu hút.
-4. CHÈN ẢNH: Chèn ĐÚNG 2 từ khóa sau vào bài viết để ngắt quãng bài viết (hệ thống sẽ thay bằng ảnh minh họa):
+3. CHÈN ẢNH: Chèn ĐÚNG 2 từ khóa sau vào bài viết để ngắt quãng bài viết (hệ thống sẽ thay bằng ảnh minh họa):
    - [PEXELS_IMAGE_1] ở giữa bài.
    - [PEXELS_IMAGE_2] ở gần cuối bài.
    (Chỉ cần viết đúng chữ [PEXELS_IMAGE_1] đứng một mình trên 1 dòng).
-5. Kết thúc bằng một ĐOẠN JSON CHUẨN chứa metadata theo định dạng sau:
+4. Kết thúc bằng một ĐOẠN JSON CHUẨN chứa metadata theo định dạng sau:
 
 ---JSON_START---
 {
-  "topic": "Tiêu đề của bài báo (Ví dụ: Theo dòng sự kiện: Masan vừa phát hành trái phiếu...)",
+  "topic": "Tiêu đề của bài báo (Ví dụ: Theo dòng sự kiện: Bách Hóa Xanh mở rộng - cơ hội hay thách thức cho siêu thị mini?)",
   "meta_title": "Tiêu đề chuẩn SEO (tối đa 60 ký tự)",
   "meta_description": "Mô tả SEO tóm tắt sự kiện",
   "keywords": "từ khóa SEO liên quan đến sự kiện",
