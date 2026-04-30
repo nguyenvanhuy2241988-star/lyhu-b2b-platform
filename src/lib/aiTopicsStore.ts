@@ -1,4 +1,4 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/lib/supabaseClient';
 
 export type AINewsTopic = {
     id: string;
@@ -8,7 +8,6 @@ export type AINewsTopic = {
 };
 
 export async function getAITopics(): Promise<AINewsTopic[]> {
-    const supabase = createClientComponentClient();
     const { data, error } = await supabase
         .from('ai_news_topics')
         .select('*')
@@ -19,7 +18,6 @@ export async function getAITopics(): Promise<AINewsTopic[]> {
 }
 
 export async function createAITopic(content: string): Promise<AINewsTopic> {
-    const supabase = createClientComponentClient();
     const { data, error } = await supabase
         .from('ai_news_topics')
         .insert([{ content, is_active: true }])
@@ -31,7 +29,6 @@ export async function createAITopic(content: string): Promise<AINewsTopic> {
 }
 
 export async function updateAITopic(id: string, updates: Partial<AINewsTopic>): Promise<void> {
-    const supabase = createClientComponentClient();
     const { error } = await supabase
         .from('ai_news_topics')
         .update(updates)
@@ -41,7 +38,6 @@ export async function updateAITopic(id: string, updates: Partial<AINewsTopic>): 
 }
 
 export async function deleteAITopic(id: string): Promise<void> {
-    const supabase = createClientComponentClient();
     const { error } = await supabase
         .from('ai_news_topics')
         .delete()
