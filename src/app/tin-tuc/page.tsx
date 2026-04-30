@@ -192,7 +192,7 @@ export default async function BlogIndexPage({
                                                 </p>
                                                 <div className="flex items-center text-xs text-gray-500 font-medium">
                                                     <Clock className="w-3.5 h-3.5 mr-1.5" />
-                                                    {new Date(posts[0].published_at || posts[0].created_at).toLocaleDateString('vi-VN')}
+                                                    {new Date(posts[0].published_at || posts[0].created_at).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                 </div>
                                             </Link>
                                         </div>
@@ -219,7 +219,7 @@ export default async function BlogIndexPage({
                                                     </h3>
                                                     <div className="mt-auto flex items-center text-xs text-gray-400 font-medium">
                                                         <Clock className="w-3.5 h-3.5 mr-1.5" />
-                                                        {new Date(post.published_at || post.created_at).toLocaleDateString('vi-VN')}
+                                                        {new Date(post.published_at || post.created_at).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                     </div>
                                                 </Link>
                                             ))}
@@ -267,7 +267,7 @@ export default async function BlogIndexPage({
                                                 </p>
                                                 <div className="mt-auto flex items-center text-xs text-gray-400 font-medium">
                                                     <Clock className="w-3.5 h-3.5 mr-1.5" />
-                                                    {new Date(post.published_at || post.created_at).toLocaleDateString('vi-VN')}
+                                                    {new Date(post.published_at || post.created_at).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                 </div>
                                             </div>
                                         </Link>
@@ -301,7 +301,7 @@ export default async function BlogIndexPage({
                                             {post.title}
                                         </h4>
                                         <div className="text-xs text-gray-400 mt-1">
-                                            {new Date(post.published_at || post.created_at || '').toLocaleDateString('vi-VN')}
+                                            {new Date(post.published_at || post.created_at || '').toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
                                         </div>
                                     </div>
                                 </Link>

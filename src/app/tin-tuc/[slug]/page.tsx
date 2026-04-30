@@ -198,7 +198,7 @@ export default async function BlogPostPage({ params }: Props) {
                     <div className="flex items-center gap-1.5">
                         <Clock className="w-4 h-4 text-gray-400" />
                         <time dateTime={post.published_at || post.created_at}>
-                            {new Date(post.published_at || post.created_at).toLocaleDateString('vi-VN')}
+                            {new Date(post.published_at || post.created_at).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
                         </time>
                     </div>
                 </div>

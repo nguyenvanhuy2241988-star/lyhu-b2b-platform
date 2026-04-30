@@ -120,7 +120,7 @@ export default function BlogCMSPage() {
                                             )}
                                         </td>
                                         <td className="p-4 text-sm text-gray-600">
-                                            {post.published_at ? new Date(post.published_at).toLocaleDateString('vi-VN') : '-'}
+                                            {post.published_at ? new Date(post.published_at).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }) : '-'}
                                         </td>
                                         <td className="p-4 text-right space-x-2">
                                             <Link
