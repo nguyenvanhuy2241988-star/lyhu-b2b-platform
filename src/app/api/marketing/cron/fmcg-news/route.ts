@@ -174,17 +174,23 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
         const metaData = JSON.parse(jsonStr);
         const topic = metaData.topic || `Bản tin thị trường FMCG ${todayStr}`;
 
-        // 2. Generate High-Quality Contextual Images via Pollinations AI
+        // 2. Fetch High-Quality Contextual Images via Pexels API
         let thumbnailUrl = null;
         let images: string[] = [];
         
-        if (metaData.image_search_queries && Array.isArray(metaData.image_search_queries)) {
-            images = metaData.image_search_queries.map((prompt: string) => 
-                `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt + ", photorealistic, professional photography, 8k resolution, highly detailed")}?width=1200&height=630&nologo=true`
-            );
-        } else if (metaData.image_search_keyword) {
+        // Use the first image search query provided by AI, or fallback to the topic
+        const pexelsQuery = (metaData.image_search_queries && metaData.image_search_queries.length > 0) 
+            ? metaData.image_search_queries[0] 
+            : topic;
+            
+        images = await fetchPexelsImages(pexelsQuery, 3);
+
+        // If Pexels fails or returns no images, use fallback static Pexels images related to FMCG/Retail
+        if (images.length === 0) {
             images = [
-                `https://image.pollinations.ai/prompt/${encodeURIComponent(metaData.image_search_keyword + " supermarket retail photorealistic")}?width=1200&height=630&nologo=true`
+                'https://images.pexels.com/photos/264636/pexels-photo-264636.jpeg?auto=compress&cs=tinysrgb&w=1200', // Supermarket aisle
+                'https://images.pexels.com/photos/1000633/pexels-photo-1000633.jpeg?auto=compress&cs=tinysrgb&w=1200', // Groceries
+                'https://images.pexels.com/photos/3962283/pexels-photo-3962283.jpeg?auto=compress&cs=tinysrgb&w=1200'  // Payment/Retail
             ];
         }
 
