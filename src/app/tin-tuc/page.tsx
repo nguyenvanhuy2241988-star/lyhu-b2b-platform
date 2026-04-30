@@ -61,11 +61,42 @@ async function getBlogData(page: number, categorySlug: string, searchQuery: stri
         .order('published_at', { ascending: false })
         .limit(5);
 
+    // 4. Fetch Featured Blocks for Magazine Layout (Only on homepage)
+    let featuredBlocks = { block1: [] as BlogPost[], block2: [] as BlogPost[] };
+    if (categorySlug === 'all' && page === 1 && !searchQuery) {
+        // Block 1: Tạp hóa & Phân phối (tap-hoa-gt, nha-phan-phoi-diem-ban)
+        const block1CatIds = (categories || []).filter(c => ['tap-hoa-gt', 'nha-phan-phoi-diem-ban'].includes(c.slug)).map(c => c.id);
+        if (block1CatIds.length > 0) {
+            const { data: b1 } = await supabase
+                .from('blog_posts')
+                .select('*, category:blog_categories(id, name, slug)')
+                .eq('status', 'published')
+                .in('category_id', block1CatIds)
+                .order('published_at', { ascending: false })
+                .limit(4);
+            featuredBlocks.block1 = (b1 || []) as BlogPost[];
+        }
+
+        // Block 2: Xu hướng & TMĐT (tmdt-tiktok-shop, xu-huong-tieu-dung)
+        const block2CatIds = (categories || []).filter(c => ['tmdt-tiktok-shop', 'xu-huong-tieu-dung'].includes(c.slug)).map(c => c.id);
+        if (block2CatIds.length > 0) {
+            const { data: b2 } = await supabase
+                .from('blog_posts')
+                .select('*, category:blog_categories(id, name, slug)')
+                .eq('status', 'published')
+                .in('category_id', block2CatIds)
+                .order('published_at', { ascending: false })
+                .limit(4);
+            featuredBlocks.block2 = (b2 || []) as BlogPost[];
+        }
+    }
+
     return {
         posts: (posts || []) as BlogPost[],
         categories: (categories || []) as BlogCategory[],
         trendingPosts: (trending || []) as Partial<BlogPost>[],
-        totalCount: count || 0
+        totalCount: count || 0,
+        featuredBlocks
     };
 }
 
@@ -78,7 +109,7 @@ export default async function BlogIndexPage({
     const currentPage = parseInt(searchParams.page || '1', 10);
     const searchQuery = searchParams.q || '';
 
-    const { posts, categories, trendingPosts, totalCount } = await getBlogData(
+    const { posts, categories, trendingPosts, totalCount, featuredBlocks } = await getBlogData(
         currentPage,
         activeCategory,
         searchQuery
@@ -227,8 +258,79 @@ export default async function BlogIndexPage({
                                     </div>
                                 )}
 
+                                {/* Featured Block 1: Tạp hóa & Phân phối */}
+                                {currentPage === 1 && activeCategory === 'all' && !searchQuery && featuredBlocks?.block1?.length > 0 && (
+                                    <div className="mb-10 pb-10 border-b border-gray-200">
+                                        <div className="flex items-center justify-between mb-6">
+                                            <h3 className="text-2xl font-bold text-gray-900 border-l-4 border-primary-600 pl-3">Góc Nhà Phân Phối & Tạp Hóa</h3>
+                                            <Link href="/tin-tuc?category=tap-hoa-gt" className="text-sm font-semibold text-primary-600 hover:text-primary-700 flex items-center">
+                                                Xem thêm <TrendingUp className="w-4 h-4 ml-1" />
+                                            </Link>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                            {featuredBlocks.block1.map(post => (
+                                                <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex gap-4 bg-gray-50 p-4 rounded-xl hover:bg-primary-50 transition-colors border border-gray-100">
+                                                    <div className="w-28 h-28 shrink-0 bg-white rounded-lg overflow-hidden relative">
+                                                        {post.thumbnail_url ? (
+                                                            <img src={post.thumbnail_url} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-primary-200 font-bold text-xs">LYHU</div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-col justify-center">
+                                                        {post.category && (
+                                                            <span className="text-[10px] font-bold text-primary-600 uppercase tracking-wider mb-1 block">
+                                                                {post.category.name}
+                                                            </span>
+                                                        )}
+                                                        <h4 className="font-bold text-gray-900 line-clamp-2 mb-2 group-hover:text-primary-700 leading-snug">{post.title}</h4>
+                                                        <div className="text-xs text-gray-500 font-medium flex items-center mt-auto">
+                                                            <Clock className="w-3 h-3 mr-1" />
+                                                            {new Date(post.published_at || post.created_at).toLocaleDateString('vi-VN')}
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Featured Block 2: Xu hướng & TMĐT */}
+                                {currentPage === 1 && activeCategory === 'all' && !searchQuery && featuredBlocks?.block2?.length > 0 && (
+                                    <div className="mb-10 pb-10 border-b border-gray-200">
+                                        <div className="flex items-center justify-between mb-6">
+                                            <h3 className="text-2xl font-bold text-gray-900 border-l-4 border-primary-600 pl-3">Thương mại điện tử & Xu hướng</h3>
+                                            <Link href="/tin-tuc?category=tmdt-tiktok-shop" className="text-sm font-semibold text-primary-600 hover:text-primary-700 flex items-center">
+                                                Xem thêm <TrendingUp className="w-4 h-4 ml-1" />
+                                            </Link>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                                            {featuredBlocks.block2.map(post => (
+                                                <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex flex-col">
+                                                    <div className="w-full aspect-[4/3] bg-gray-100 rounded-lg overflow-hidden relative mb-3">
+                                                        {post.thumbnail_url ? (
+                                                            <img src={post.thumbnail_url} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-primary-200 font-bold">LYHU</div>
+                                                        )}
+                                                    </div>
+                                                    {post.category && (
+                                                        <span className="text-[10px] font-bold text-primary-600 uppercase tracking-wider mb-1 block">
+                                                            {post.category.name}
+                                                        </span>
+                                                    )}
+                                                    <h4 className="font-bold text-gray-900 line-clamp-3 mb-2 group-hover:text-primary-700 text-sm leading-snug">{post.title}</h4>
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Timeline List View */}
                                 <div className="space-y-8">
+                                    {currentPage === 1 && activeCategory === 'all' && !searchQuery && (
+                                        <h3 className="text-2xl font-bold text-gray-900 mb-2 border-l-4 border-primary-600 pl-3">Dòng sự kiện mới nhất</h3>
+                                    )}
                                     {(currentPage === 1 && activeCategory === 'all' && !searchQuery && posts.length >= 3 
                                         ? posts.slice(3) 
                                         : posts).map((post, index) => (

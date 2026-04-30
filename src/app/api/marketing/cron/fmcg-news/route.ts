@@ -127,6 +127,7 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
   "meta_title": "Tiêu đề chuẩn SEO (tối đa 60 ký tự)",
   "meta_description": "Mô tả SEO tóm tắt sự kiện",
   "keywords": "từ khóa SEO liên quan đến sự kiện",
+  "category_slug": "MỘT trong 13 slug sau đây phù hợp nhất với bài viết: tin-nganh-fmcg, doanh-nghiep-lon, ban-le-hien-dai, cua-hang-tien-loi, tap-hoa-gt, tmdt-tiktok-shop, xu-huong-tieu-dung, nganh-hang, phap-ly-chinh-ngach, chuoi-cung-ung, cong-nghe-ban-le, nha-phan-phoi-diem-ban, nghe-fmcg",
   "image_search_queries": [
     "Câu lệnh (Prompt) tiếng Anh dài khoảng 10-20 chữ để AI VẼ hình ảnh đại diện (VD: A modern Vietnamese supermarket exterior with green branding like Bach Hoa Xanh, busy customers)",
     "Câu lệnh (Prompt) tiếng Anh dài khoảng 10-20 chữ để AI VẼ hình ảnh minh họa giữa bài (VD: Close up of supermarket shelves filled with milk and snack products, bright lighting)",
@@ -215,13 +216,24 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
         // 4. Save to Database
         const slug = generateSlug(topic) + '-' + Date.now().toString().slice(-4); // Ensure uniqueness
         
-        // Find category ID for "Tin tức - Thị trường" or use null
-        const { data: category } = await supabase.from('blog_categories').select('id').ilike('name', '%Tin tức%').limit(1).single();
+        let categoryId = null;
+        if (metaData.category_slug) {
+            const { data: category } = await supabase.from('blog_categories').select('id').eq('slug', metaData.category_slug).single();
+            if (category) {
+                categoryId = category.id;
+            }
+        }
+        
+        // Fallback to "tin-nganh-fmcg" if category not found or AI failed to provide a valid slug
+        if (!categoryId) {
+             const { data: defaultCategory } = await supabase.from('blog_categories').select('id').eq('slug', 'tin-nganh-fmcg').single();
+             if (defaultCategory) categoryId = defaultCategory.id;
+        }
 
         const { data: insertedPost, error } = await supabase.from('blog_posts').insert({
             title: topic,
             slug: slug,
-            category_id: category?.id || null, // Best effort
+            category_id: categoryId,
             content: content,
             meta_title: metaData.meta_title || topic,
             meta_description: metaData.meta_description || topic,
