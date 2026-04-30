@@ -10,7 +10,7 @@ interface WholesaleBanner {
     id: string;
     image_url: string;
     link_url?: string;
-    position: 'main_slider' | 'side_top' | 'side_bottom' | 'popup';
+    position: 'main_slider' | 'side_top' | 'side_bottom' | 'popup' | 'news_mega';
     sort_order: number;
     is_active: boolean;
 }
@@ -351,6 +351,7 @@ export default function B2bCampaignsPage() {
                                     <option value="side_top">Banner Cố Định - Góc Trên (Tỷ lệ 1/3)</option>
                                     <option value="side_bottom">Banner Cố Định - Góc Dưới (Tỷ lệ 1/3)</option>
                                     <option value="popup">Popup Banner (Hiển thị khi vào trang)</option>
+                                    <option value="news_mega">Mega Banner (Trang Tin Tức Tạp chí)</option>
                                 </select>
                             </div>
                             <div>

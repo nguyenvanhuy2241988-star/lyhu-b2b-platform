@@ -91,12 +91,23 @@ async function getBlogData(page: number, categorySlug: string, searchQuery: stri
         }
     }
 
+    // 5. Fetch Mega Banner
+    const { data: megaBanner } = await supabase
+        .from('wholesale_banners')
+        .select('*')
+        .eq('position', 'news_mega')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
     return {
         posts: (posts || []) as BlogPost[],
         categories: (categories || []) as BlogCategory[],
         trendingPosts: (trending || []) as Partial<BlogPost>[],
         totalCount: count || 0,
-        featuredBlocks
+        featuredBlocks,
+        megaBanner
     };
 }
 
@@ -109,7 +120,7 @@ export default async function BlogIndexPage({
     const currentPage = parseInt(searchParams.page || '1', 10);
     const searchQuery = searchParams.q || '';
 
-    const { posts, categories, trendingPosts, totalCount, featuredBlocks } = await getBlogData(
+    const { posts, categories, trendingPosts, totalCount, featuredBlocks, megaBanner } = await getBlogData(
         currentPage,
         activeCategory,
         searchQuery
@@ -155,6 +166,38 @@ export default async function BlogIndexPage({
                     <SearchBar />
                 </div>
             </div>
+
+            {/* Mega Banner Space (Dynamic or Placeholder) */}
+            {megaBanner ? (
+                <div className="w-full relative rounded-xl overflow-hidden shadow-sm group border border-gray-100">
+                    <Link href={megaBanner.link_url || "/wholesale"} target={megaBanner.link_url?.startsWith('http') ? "_blank" : "_self"}>
+                        <img 
+                            src={megaBanner.image_url} 
+                            alt="Mega Banner" 
+                            className="w-full h-[180px] md:h-[260px] object-cover group-hover:scale-[1.02] transition-transform duration-700"
+                        />
+                    </Link>
+                </div>
+            ) : (
+                <div className="w-full relative rounded-xl overflow-hidden shadow-sm group border border-gray-100">
+                    <img 
+                        src="https://images.pexels.com/photos/5632371/pexels-photo-5632371.jpeg?auto=compress&cs=tinysrgb&w=1200" 
+                        alt="Mega Banner" 
+                        className="w-full h-[180px] md:h-[260px] object-cover group-hover:scale-[1.02] transition-transform duration-700"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary-900/90 via-primary-800/60 to-transparent flex flex-col justify-center px-6 md:px-12">
+                        <h2 className="text-white text-2xl md:text-4xl font-black mb-3 drop-shadow-lg max-w-2xl leading-tight">
+                            CẦN NGUỒN SỈ TẠP HÓA?<br/>TỚI NGAY LYHU WHOLESALE
+                        </h2>
+                        <p className="text-primary-100 text-sm md:text-base font-medium mb-5 max-w-xl">Hệ thống phân phối hàng tiêu dùng B2B chiết khấu lên tới 45% dành riêng cho các điểm bán lẻ và siêu thị mini.</p>
+                        <div>
+                            <Link href="/wholesale" className="inline-block px-6 py-2.5 bg-white text-primary-700 font-bold rounded-lg hover:bg-primary-50 hover:shadow-lg transition-all text-sm">
+                                Đăng Ký Báo Giá
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Content Area */}
             <div className="flex flex-col lg:flex-row gap-10">
