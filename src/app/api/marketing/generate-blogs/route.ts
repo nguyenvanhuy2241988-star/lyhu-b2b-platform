@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { marked } from 'marked';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -146,15 +147,15 @@ ${specificInstructions}
 
 YÊU CẦU ĐỊNH DẠNG:
 1. Độ dài: Ít nhất 800 - 1000 chữ.
-2. Cấu trúc HTML: CHỈ TRẢ VỀ MÃ HTML CỦA PHẦN NỘI DUNG BÀI VIẾT (từ <h2> trở đi, không dùng thẻ <h1> vì trang web đã tự tạo <h1> cho tiêu đề). KHÔNG dùng các thẻ <html> hay <body>. KHÔNG bọc trong markdown code block (như \`\`\`html).
-3. Định dạng HTML chuẩn: Sử dụng các thẻ <h2>, <h3>, <p>, <ul>, <li>, <strong> để trình bày. Tuyệt đối không dùng markdown (* hay #).
+2. Cấu trúc bài viết: Sử dụng hoàn toàn cú pháp Markdown chuẩn (không dùng thẻ HTML thô). Dùng các thẻ Heading (##, ###), danh sách có gạch đầu dòng (- hoặc 1. 2.), in đậm (**text**) để bài viết rõ ràng, mạch lạc.
+3. Nếu bài viết yêu cầu bảng tóm tắt, hãy dùng bảng Markdown chuẩn (ví dụ: | Cột 1 | Cột 2 |). KHÔNG dùng markdown code block (như \`\`\`markdown hay \`\`\`html) bọc quanh bài.
 4. CHÈN ẢNH MINH HỌA: Hãy chèn CHÍNH XÁC 2 từ khóa sau vào các vị trí phù hợp để ngắt quãng bài viết (hệ thống sẽ tự động thay bằng ảnh thật từ Pexels):
    - Đặt từ khóa [PEXELS_IMAGE_1] ở giữa bài.
    - Đặt từ khóa [PEXELS_IMAGE_2] ở gần đoạn kết luận.
    (Chỉ cần viết đúng chữ [PEXELS_IMAGE_1] đứng một mình trên 1 dòng, không cần bọc thẻ <img>).
 5. BẮT BUỘC trả về nội dung ĐÚNG theo cấu trúc sau (KHÔNG ĐƯỢC thay đổi thứ tự):
 
-[TOÀN BỘ NỘI DUNG BÀI VIẾT BẰNG THẺ HTML Ở ĐÂY]
+[TOÀN BỘ NỘI DUNG BÀI VIẾT BẰNG MARKDOWN Ở ĐÂY]
 
 ---JSON_START---
 {
@@ -244,9 +245,8 @@ YÊU CẦU ĐỊNH DẠNG:
             content = content.replace(/\[PEXELS_IMAGE_2\]/g, '');
         }
 
-        // Clean up markdown bold asterisks if Gemini still sneaks them in
-        content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        content = content.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        // Convert raw Markdown to HTML properly
+        content = await marked.parse(content);
 
         return {
             content,
