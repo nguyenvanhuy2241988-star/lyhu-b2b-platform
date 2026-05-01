@@ -9,7 +9,7 @@ const TOPICS = [
     "Kinh nghiệm mở siêu thị mini ở nông thôn với số vốn nhỏ",
     "Bí quyết nhập sỉ bánh kẹo giá tận xưởng không qua trung gian",
     "Tại sao kẹo chua UHI lại được học sinh sinh viên săn lùng?",
-    "Top 5 mặt hàng ăn vặt bán chạy nhất cho tạp hóa gần trường học",
+    "5 nhóm hàng ăn vặt tạp hóa gần trường học nên ưu tiên nhập",
     "Cách trưng bày hàng hóa siêu thị mini giúp tăng gấp đôi doanh thu"
 ];
 
@@ -28,25 +28,34 @@ function generateSlug(title: string): string {
 
 async function generateArticle(topic: string, apiKey: string) {
     const prompt = `
-Bạn là một chuyên gia về kinh doanh bán lẻ, tạp hóa, và siêu thị mini tại Việt Nam.
-Hãy viết một bài blog thật chi tiết, chuẩn SEO về chủ đề: "${topic}".
-Bài viết dành cho LYHU - Nền tảng phân phối sỉ bánh kẹo, đồ ăn vặt (có sản phẩm nổi bật là Kẹo chua UHI, kẹo dẻo Thái Lan, snack).
+Bạn là một chuyên gia về phân phối FMCG và kinh doanh bán lẻ, đang tư vấn cho chủ tạp hóa và siêu thị mini tại Việt Nam.
+Hãy viết một bài báo chuyên ngành FMCG thật chi tiết, chuẩn SEO về chủ đề: "${topic}".
+Bài viết dành cho chuyên mục "LYHU Chuyển động FMCG 24/7" - Nền tảng phân phối sỉ bánh kẹo, đồ ăn vặt (có sản phẩm nổi bật là Kẹo chua UHI, kẹo dẻo Thái Lan, bánh tráng Abi, snack).
 
-YÊU CẦU:
+YÊU CẦU QUAN TRỌNG:
+1. Đối tượng đọc: chủ tạp hóa, siêu thị mini, nhà phân phối, người làm FMCG.
+2. Phong cách: chuyên ngành nhưng dễ hiểu, thực chiến, không viết chung chung như blog SEO. Ưu tiên giọng văn của LYHU: thực tế, rõ ràng, có kinh nghiệm thị trường.
+3. Nội dung bắt buộc:
+- Không bịa số liệu nếu không có nguồn.
+- Không dùng các cụm quá đà như "làm mưa làm gió", "bán chạy nhất" nếu không có dữ liệu thật.
+- Phải có góc nhìn tác động đến điểm bán (như tiêu chí chọn hàng, rủi ro tồn kho, cách trưng bày, vòng quay, biên lợi nhuận, và gợi ý hành động).
+- Không lặp lại tiêu đề nhiều lần trong bài.
+4. Quản lý Quảng cáo / CTA:
+- Không chen quá nhiều sản phẩm quảng cáo vào giữa bài gây đứt mạch.
+- CTA bán hàng chỉ đặt ở cuối bài hoặc trong khối "Gợi ý sản phẩm phù hợp".
+
+YÊU CẦU ĐỊNH DẠNG:
 1. Độ dài: Ít nhất 800 - 1000 chữ.
 2. Cấu trúc HTML: CHỈ TRẢ VỀ MÃ HTML CỦA PHẦN NỘI DUNG BÀI VIẾT (từ <h2> trở đi, không dùng thẻ <h1> vì trang web đã tự tạo <h1> cho tiêu đề). KHÔNG dùng các thẻ <html> hay <body>. KHÔNG bọc trong markdown code block (như \`\`\`html).
 3. Sử dụng các thẻ: <h2>, <h3>, <p>, <ul>, <li>, <strong> để chia bố cục rõ ràng.
-4. Call to Action: Ở cuối bài, hãy chèn một đoạn ngắn mời mọi người nhập sỉ bánh kẹo, kẹo UHI giá tốt tại LYHU.
-5. Cuối cùng, tạo một đoạn JSON chứa meta data (Bắt buộc định dạng chuẩn JSON) ở ngay sau HTML. 
+4. Cuối cùng, tạo một đoạn JSON chứa meta data (Bắt buộc định dạng chuẩn JSON) ở ngay sau HTML. 
 
 Ví dụ Format trả về:
 <h2>Tiêu đề phần 1</h2>
 <p>Nội dung phần 1...</p>
-<h3>Mục con 1</h3>
-<p>Chi tiết...</p>
 ...
-<h2>Nhập sỉ bánh kẹo ở đâu?</h2>
-<p>Hãy liên hệ ngay LYHU để nhập sỉ kẹo chua UHI và các mặt hàng ăn vặt giá tốt nhất nhé!</p>
+<h2>Gợi ý sản phẩm phù hợp</h2>
+<p>LYHU cung cấp các nhóm hàng ăn vặt phù hợp cho tạp hóa, siêu thị mini và điểm bán gần trường học, bao gồm kẹo chua UHI, bánh tráng Abi, snack và các sản phẩm tiêu dùng nhanh có nguồn gốc rõ ràng.</p>
 
 ---JSON_START---
 {
@@ -55,7 +64,7 @@ Ví dụ Format trả về:
   "keywords": "từ khóa 1, từ khóa 2, từ khóa 3"
 }
 ---JSON_END---
-`;
+\`;
 
     try {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`, {
@@ -122,12 +131,12 @@ export async function GET() {
 
     try {
         let categoryId = null;
-        const { data: categories } = await supabase.from('blog_categories').select('*').limit(1);
+        const { data: categories } = await supabase.from('blog_categories').select('*').eq('slug', 'goc-nha-phan-phoi-diem-ban').limit(1);
         
         if (!categories || categories.length === 0) {
             const { data: newCat } = await supabase.from('blog_categories').insert({
-                name: 'Góc Kiến Thức',
-                slug: 'goc-kien-thuc',
+                name: 'Góc Nhà Phân Phối & Điểm Bán',
+                slug: 'goc-nha-phan-phoi-diem-ban',
                 sort_order: 1
             }).select().single();
             categoryId = newCat?.id;
