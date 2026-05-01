@@ -67,15 +67,19 @@ async function fetchPexelsImages(query: string, count: number = 3): Promise<stri
     if (!PEXELS_API_KEY) return [];
 
     try {
-        const res = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=${count}&orientation=landscape`, {
+        // Fetch 15 images instead of just 3 to give us a pool to randomly select from
+        const res = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=15&orientation=landscape`, {
             headers: {
                 Authorization: PEXELS_API_KEY
             }
         });
         const data = await res.json();
         if (data.photos && data.photos.length > 0) {
+            // Shuffle the array to get random images for the same keyword
+            const shuffled = data.photos.sort(() => 0.5 - Math.random());
+            const selected = shuffled.slice(0, count);
             // Use large2x or original for high quality
-            return data.photos.map((p: any) => p.src.large2x || p.src.original);
+            return selected.map((p: any) => p.src.large2x || p.src.original);
         }
     } catch (e) {
         console.error('Pexels API error:', e);
