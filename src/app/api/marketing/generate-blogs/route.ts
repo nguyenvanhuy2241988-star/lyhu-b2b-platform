@@ -64,7 +64,7 @@ Ví dụ Format trả về:
   "keywords": "từ khóa 1, từ khóa 2, từ khóa 3"
 }
 ---JSON_END---
-\`;
+`;
 
     try {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`, {
