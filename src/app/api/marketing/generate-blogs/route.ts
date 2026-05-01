@@ -161,11 +161,12 @@ YÊU CẦU ĐỊNH DẠNG:
         }
 
         let content = text.substring(0, jsonStartIdx).trim();
-        content = content.replace(/```html/g, '').replace(/```/g, ''); 
+        content = content.replace(/```html/g, '').replace(/```/g, '').trim(); 
         
         const jsonStr = text.substring(jsonStartIdx + 16, jsonEndIdx).trim();
         const metaData = JSON.parse(jsonStr);
 
+        // Đảm bảo không bị lỗi truthy với chuỗi chỉ chứa khoảng trắng/xuống dòng
         if (!content && metaData.content) {
             content = metaData.content;
         }
