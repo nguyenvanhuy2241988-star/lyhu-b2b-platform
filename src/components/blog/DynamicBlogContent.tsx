@@ -93,22 +93,22 @@ export default function DynamicBlogContent({ content, videoUrl, isVideoVertical 
                     );
                 }
 
-                // Inject 1st Product after the 3rd paragraph
-                if (paragraphCount === 3 && products.length > 0) {
+                // Inject 1st Product after the 8th paragraph (after criteria/intro)
+                if (paragraphCount === 8 && products.length > 0) {
                     elements.push(
                         <InlineProductBox key="product-0" product={products[0]} />
                     );
                 }
 
-                // Inject 2nd Product after the 6th paragraph
-                if (paragraphCount === 6 && products.length > 1) {
+                // Inject 2nd Product after the 14th paragraph
+                if (paragraphCount === 14 && products.length > 1) {
                     elements.push(
                         <InlineProductBox key="product-1" product={products[1]} />
                     );
                 }
                 
-                // Inject 3rd Product after the 10th paragraph
-                if (paragraphCount === 10 && products.length > 2) {
+                // Inject 3rd Product after the 20th paragraph
+                if (paragraphCount === 20 && products.length > 2) {
                     elements.push(
                         <InlineProductBox key="product-2" product={products[2]} />
                     );

@@ -36,12 +36,13 @@ YÊU CẦU QUAN TRỌNG VỀ NỘI DUNG VÀ VĂN PHONG:
 1. Đối tượng đọc: chủ tạp hóa, siêu thị mini, nhà phân phối.
 2. Phong cách: Đi thẳng vào vấn đề, tư vấn thực tế, có chuyên môn. KHÔNG dùng các từ ngữ quảng cáo, sáo rỗng hoặc chung chung (TUYỆT ĐỐI KHÔNG dùng các cụm từ như "thị trường sôi động", "mỏ vàng tiềm năng", "kinh nghiệm dày dặn", "làm mưa làm gió", "bán chạy nhất").
 3. Bố cục bài viết bắt buộc phải đi theo luồng sau:
-  - Mở bài ngắn gọn, đi thẳng vào vấn đề.
+  - Mở bài (Sapo): BẮT BUỘC có một đoạn văn ngắn 2-3 dòng đặt trong thẻ <p class="lead font-medium text-gray-700 italic text-lg mb-6"> ngay đầu bài, tóm tắt giá trị cốt lõi.
   - Vì sao tạp hóa gần trường học có lợi thế bán hàng?
   - Tiêu chí chọn hàng (giá hợp lý, an toàn thực phẩm, bao bì bắt mắt, vòng quay nhanh, biên lợi nhuận tốt).
   - 5 nhóm hàng nên ưu tiên nhập (Gợi ý nếu tiêu đề không chỉ định rõ: Kẹo chua/kẹo dẻo; Snack/bim bim; Bánh tráng/đồ ăn vặt cay; Đồ uống/sữa; và Văn phòng phẩm cơ bản/khăn giấy).
   - Hướng dẫn cách nhập thử cho điểm bán (ví dụ: không nhập sâu ngay từ đầu, test 3-5 mã, ưu tiên gói nhỏ, theo dõi mã nào bán nhanh trong 7-14 ngày, kiểm tra hạn sử dụng định kỳ).
   - Gợi ý cách trưng bày.
+  - Bảng tóm tắt: BẮT BUỘC có một bảng HTML (<table>, <th>, <td>) ở cuối phần nội dung để tóm tắt 5 nhóm hàng, lý do nên nhập và lưu ý.
   - Đoạn cuối: Gợi ý nguồn hàng nhập sỉ.
 4. Nguyên tắc khác:
   - Không bịa số liệu nếu không có nguồn.
