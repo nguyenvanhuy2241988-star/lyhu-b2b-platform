@@ -285,8 +285,10 @@ export default async function BlogPostPage({ params }: Props) {
                         </div>
                     )}
 
-                    {/* Products Grid */}
-                    <BlogProductGrid products={products} />
+                    {/* Products Grid (Only for Advisory posts) */}
+                    {post.category?.slug === 'goc-nha-phan-phoi-diem-ban' && (
+                        <BlogProductGrid products={products} />
+                    )}
 
                     {/* Bottom Related Posts Grid (Tham khảo thêm) */}
                     {relatedPosts.slice(3).length > 0 && (

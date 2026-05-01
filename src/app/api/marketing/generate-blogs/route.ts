@@ -46,7 +46,7 @@ function generateSlug(title: string): string {
         .replace(/-+$/, ""); // trim
 }
 
-async function generateArticle(topic: string, type: 'advisory' | 'news' | 'report', apiKey: string) {
+async function generateArticle(topic: string, type: 'advisory' | 'news' | 'report', apiKey: string, activeProductsContext: string) {
     let specificInstructions = '';
     
     if (type === 'advisory') {
@@ -56,11 +56,11 @@ async function generateArticle(topic: string, type: 'advisory' | 'news' | 'repor
   - Mở bài: Đi thẳng vào nội dung chi tiết. (Sapo tóm tắt bài viết sẽ được xuất riêng qua trường JSON).
   - Vì sao chủ đề này lại quan trọng với điểm bán?
   - Tiêu chí chọn hàng hoặc cách giải quyết vấn đề.
-  - Các nhóm hàng / chiến lược nên ưu tiên áp dụng.
+  - Các nhóm hàng / chiến lược nên ưu tiên áp dụng. Khi lấy ví dụ về sản phẩm, TUYỆT ĐỐI CHỈ DÙNG các sản phẩm có trong danh sách phân phối thực tế của LYHU ở mục 5.
   - Hướng dẫn cách test thử hoặc triển khai rủi ro thấp cho điểm bán nhỏ.
   - Gợi ý cách trưng bày / vận hành.
   - Bảng tóm tắt: BẮT BUỘC có một bảng HTML (<table>, <th>, <td>) ở cuối phần nội dung để tóm tắt ý chính.
-  - Đoạn cuối: Gợi ý nguồn hàng nhập sỉ (CTA mua hàng LYHU, UHI, Abi).
+  - Đoạn cuối: Gợi ý nguồn hàng nhập sỉ (CTA mua hàng).
 4. Quản lý CTA và Quảng cáo:
   - TUYỆT ĐỐI KHÔNG chèn sản phẩm quảng cáo ở 30-40% đầu bài để tránh làm đứt mạch đọc.
   - Chỉ chèn CTA ở đoạn cuối cùng của bài viết hoặc trong mục "Gợi ý nguồn hàng".
@@ -103,6 +103,11 @@ YÊU CẦU QUAN TRỌNG VỀ NỘI DUNG VÀ VĂN PHONG:
 1. Đối tượng đọc: chủ tạp hóa, siêu thị mini, nhà phân phối, chuyên gia trong ngành.
 2. Phong cách chung: Đi thẳng vào vấn đề, tư vấn thực tế, có chuyên môn. KHÔNG dùng các từ ngữ quảng cáo, sáo rỗng hoặc chung chung.
 ${specificInstructions}
+5. DANH SÁCH SẢN PHẨM THỰC TẾ:
+${activeProductsContext}
+  - Nếu bài viết cần nhắc đến ví dụ sản phẩm cụ thể, BẮT BUỘC phải lấy tên chính xác từ danh sách trên.
+  - KHÔNG TỰ BỊA ra các sản phẩm không có trong danh sách (Ví dụ: KHÔNG được viết "kẹo dẻo Thái Lan" nếu trong danh sách không có chữ này).
+
 
 YÊU CẦU ĐỊNH DẠNG:
 1. Độ dài: Ít nhất 800 - 1000 chữ.
@@ -221,13 +226,20 @@ export async function GET() {
              return NextResponse.json({ message: "Tất cả các chủ đề mẫu đều đã được tạo thành công!" });
         }
 
+        // Fetch active products from Wholesale database to provide context to the AI
+        const { data: activeProducts } = await supabase.from('products').select('name').eq('is_active', true).limit(30);
+        let activeProductsContext = "Hiện tại không có dữ liệu sản phẩm.";
+        if (activeProducts && activeProducts.length > 0) {
+            activeProductsContext = "- " + activeProducts.map(p => p.name).join('\n- ');
+        }
+
         // Dùng vòng lặp for thay vì Promise.all để tránh bị Google API chặn do gửi quá nhiều yêu cầu cùng lúc
         const completed = [];
         for (let i = 0; i < topicsToProcess.length; i++) {
             const config = topicsToProcess[i];
             const { topic, type, categorySlug } = config;
             
-            const articleData = await generateArticle(topic, type, GEMINI_API_KEY);
+            const articleData = await generateArticle(topic, type, GEMINI_API_KEY, activeProductsContext);
             if (!articleData) {
                 completed.push({ topic, status: 'failed (Lỗi không xác định hoặc không có JSON metadata)' });
                 continue;
