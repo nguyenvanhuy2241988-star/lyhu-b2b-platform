@@ -106,10 +106,13 @@ YÊU CẦU QUAN TRỌNG VỀ NỘI DUNG VÀ VĂN PHONG:
 1. Đối tượng đọc: chủ tạp hóa, siêu thị mini, nhà phân phối, chuyên gia trong ngành.
 2. Phong cách chung: Đi thẳng vào vấn đề, tư vấn thực tế, có chuyên môn. KHÔNG dùng các từ ngữ quảng cáo, sáo rỗng hoặc chung chung.
 ${specificInstructions}
-5. DANH SÁCH SẢN PHẨM THỰC TẾ:
+5. NGUYÊN TẮC SỬ DỤNG SẢN PHẨM:
+Dưới đây là danh sách sản phẩm thực tế LYHU đang phân phối:
 ${activeProductsContext}
-  - Nếu bài viết cần nhắc đến ví dụ sản phẩm cụ thể, BẮT BUỘC phải lấy tên chính xác từ danh sách trên.
-  - KHÔNG TỰ BỊA ra các sản phẩm không có trong danh sách (Ví dụ: KHÔNG được viết "kẹo dẻo Thái Lan" nếu trong danh sách không có chữ này).
+  - QUAN TRỌNG: TUYỆT ĐỐI KHÔNG liệt kê một tràng dài các sản phẩm một cách nhồi nhét, khiên cưỡng.
+  - Hãy rút gọn tên sản phẩm cho tự nhiên. (Ví dụ: Chỉ viết "Bánh tráng Abi" hoặc "Khoai môn sấy tẩm vị", KHÔNG BÊ NGUYÊN VĂN "Khoai môn sấy tẩm vị gạch cua 180g" hay "Kẹo dẻo TWITCHUI vị chanh 24g" vào bài).
+  - Đối với bài News/Report: Chỉ nhắc đến ngành hàng chung hoặc mượn tên thương hiệu ngắn gọn làm ví dụ minh họa khách quan. Không quảng cáo.
+  - KHÔNG TỰ BỊA ra các sản phẩm không có thật (Ví dụ: KHÔNG được viết "kẹo dẻo Thái Lan" nếu trong kho không có).
 
 
 YÊU CẦU ĐỊNH DẠNG:
