@@ -181,12 +181,12 @@ export default async function BlogPostPage({ params }: Props) {
             </div>
 
             {/* Clean Header Area */}
-            <header className="max-w-4xl mx-auto px-6 lg:px-8 py-8">
+            <header className="max-w-4xl mx-auto px-6 lg:px-8 pt-8 pb-2">
                 <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-primary-800 leading-snug mb-6">
                     {post.title}
                 </h1>
                 
-                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-8 pb-6 border-b border-gray-100">
+                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-5 pb-5 border-b border-gray-100">
                     <div className="flex items-center gap-2">
                         {post.author?.avatar_url ? (
                             <img src={post.author.avatar_url} className="w-6 h-6 rounded-full border border-gray-200" alt="Avatar" />
@@ -203,8 +203,19 @@ export default async function BlogPostPage({ params }: Props) {
                     </div>
                 </div>
 
-                {/* Top Vouchers Slider */}
-                <BlogVoucherList vouchers={promotions.filter(p => p.type === 'voucher' || p.discount_type)} />
+                {/* AEO Summary Block (Sapo) */}
+                {post.ai_summary && (
+                    <div className="bg-gray-50/80 p-5 rounded-lg border-l-4 border-primary-500 mb-6 mt-2">
+                        <p className="text-gray-700 font-medium text-[15px] leading-relaxed italic">
+                            {post.ai_summary}
+                        </p>
+                    </div>
+                )}
+
+                {/* Top Vouchers Slider (Only for Advisory posts) */}
+                {post.category?.slug === 'goc-nha-phan-phoi-diem-ban' && (
+                    <BlogVoucherList vouchers={promotions.filter(p => p.type === 'voucher' || p.discount_type)} />
+                )}
             </header>
 
             {/* Main Content Area */}
@@ -213,15 +224,7 @@ export default async function BlogPostPage({ params }: Props) {
                 {/* Left Content */}
                 <div className="flex-1 w-full max-w-3xl mx-auto lg:mx-0">
                     
-                    {/* AEO Summary Block */}
-                    {post.ai_summary && (
-                        <div className="bg-gray-50 p-5 rounded border-l-4 border-primary-500 mb-8">
-                            <p className="text-gray-800 font-medium text-sm leading-relaxed">
-                                <strong>Tóm tắt: </strong>
-                                {post.ai_summary}
-                            </p>
-                        </div>
-                    )}
+                    {/* Sapo has been moved to the header */}
 
                     {/* Featured Image (Mobile Friendly 16:9) */}
                     {post.thumbnail_url && (
@@ -243,6 +246,7 @@ export default async function BlogPostPage({ params }: Props) {
                         videoUrl={post.video_url} 
                         isVideoVertical={post.is_video_vertical}
                         products={products} 
+                        showProductCards={post.category?.slug === 'goc-nha-phan-phoi-diem-ban'}
                     />
 
                     {/* Tags */}

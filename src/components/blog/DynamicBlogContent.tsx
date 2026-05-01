@@ -6,9 +6,10 @@ interface DynamicBlogContentProps {
     videoUrl?: string | null;
     isVideoVertical?: boolean;
     products?: any[];
+    showProductCards?: boolean;
 }
 
-export default function DynamicBlogContent({ content, videoUrl, isVideoVertical = false, products = [] }: DynamicBlogContentProps) {
+export default function DynamicBlogContent({ content, videoUrl, isVideoVertical = false, products = [], showProductCards = true }: DynamicBlogContentProps) {
     if (!content) return null;
 
     // A simple parser to split HTML by block endings (paragraphs, lists).
@@ -94,21 +95,21 @@ export default function DynamicBlogContent({ content, videoUrl, isVideoVertical 
                 }
 
                 // Inject 1st Product after the 8th paragraph (after criteria/intro)
-                if (paragraphCount === 8 && products.length > 0) {
+                if (showProductCards && paragraphCount === 8 && products.length > 0) {
                     elements.push(
                         <InlineProductBox key="product-0" product={products[0]} />
                     );
                 }
 
                 // Inject 2nd Product after the 14th paragraph
-                if (paragraphCount === 14 && products.length > 1) {
+                if (showProductCards && paragraphCount === 14 && products.length > 1) {
                     elements.push(
                         <InlineProductBox key="product-1" product={products[1]} />
                     );
                 }
                 
                 // Inject 3rd Product after the 20th paragraph
-                if (paragraphCount === 20 && products.length > 2) {
+                if (showProductCards && paragraphCount === 20 && products.length > 2) {
                     elements.push(
                         <InlineProductBox key="product-2" product={products[2]} />
                     );
