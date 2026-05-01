@@ -16,24 +16,36 @@ interface BlogConfig {
 }
 
 const TOPICS: BlogConfig[] = [
-    {
-        topic: "Tạp hóa gần trường học nên nhập gì? 5 nhóm hàng có vòng quay tốt",
-        categorySlug: "goc-nha-phan-phoi-diem-ban",
-        categoryName: "Góc Nhà Phân Phối & Điểm Bán",
-        type: "advisory"
-    },
-    {
-        topic: "Phân tích xu hướng tiêu dùng FMCG 2026: Tạp hóa truyền thống đang chuyển mình ra sao?",
-        categorySlug: "tin-tuc-fmcg",
-        categoryName: "Tin Tức FMCG",
-        type: "news"
-    },
-    {
-        topic: "Báo cáo: Tái cấu trúc chuỗi cung ứng kẹo dẻo và bánh tráng tại thị trường Việt Nam",
-        categorySlug: "bao-cao-thi-truong",
-        categoryName: "Báo Cáo Thị Trường",
-        type: "report"
-    }
+    // Advisory (Góc Nhà Phân Phối & Điểm Bán)
+    { topic: "Tuyệt chiêu quản lý hàng tồn kho cho tạp hóa nhỏ: Làm sao để không đọng vốn?", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
+    { topic: "Cách thiết kế quầy thanh toán siêu thị mini để tăng 15% doanh thu ngẫu hứng.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
+    { topic: "5 sai lầm chết người khi nhập hàng giá sỉ qua các hội nhóm Facebook.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
+    { topic: "Kỹ năng tư vấn chốt sale tại quầy: Biến khách mua 1 món thành mua 3 món.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
+    { topic: "Giải pháp chống thất thoát hàng hóa hiệu quả nhất cho cửa hàng tạp hóa tự chọn.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
+    { topic: "Hướng dẫn lên kế hoạch nhập hàng mùa tựu trường cho tiệm tạp hóa.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
+    { topic: "Chiến lược định giá sản phẩm: Khi nào nên bán rẻ, khi nào nên giữ giá?", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
+    { topic: "Tại sao việc sắp xếp quầy kệ theo nguyên tắc 'mắt nhìn tay với' lại quan trọng?", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
+    { topic: "Bí quyết giữ chân khách hàng quen: Đừng chỉ cạnh tranh bằng giá.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
+
+    // News (Tin Tức FMCG)
+    { topic: "Làn sóng tạp hóa hiện đại đang dần thay thế các điểm bán truyền thống tại nông thôn.", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
+    { topic: "Bùng nổ xu hướng ăn vặt 'healthy' của Gen Z và tác động đến ngành FMCG.", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
+    { topic: "Các siêu thị mini đang đối mặt với sự cạnh tranh khốc liệt từ thương mại điện tử.", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
+    { topic: "Dự báo thị trường bánh kẹo Việt Nam nửa cuối năm 2026: Phân khúc nào sẽ lên ngôi?", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
+    { topic: "Ngành FMCG chuyển mình: Bán hàng đa kênh không còn là lựa chọn, mà là bắt buộc.", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
+    { topic: "Các ông lớn bán lẻ liên tục mở rộng: Áp lực nào cho điểm bán nhỏ lẻ?", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
+    { topic: "Xu hướng tiêu dùng tối giản và ảnh hưởng trực tiếp đến kích cỡ đóng gói sản phẩm.", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
+    { topic: "Sự bứt phá của các thương hiệu bánh kẹo nội địa so với hàng nhập khẩu.", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
+
+    // Report (Báo Cáo Phân Tích)
+    { topic: "Báo cáo định kỳ: Đánh giá hiệu quả chuỗi cung ứng hàng tiêu dùng nhanh tại các thành phố cấp 2.", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" },
+    { topic: "Phân tích chuyên sâu: Hành trình mua sắm của người tiêu dùng tại siêu thị mini năm 2026.", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" },
+    { topic: "Đánh giá rủi ro và cơ hội khi mở mới cửa hàng tạp hóa trong khu dân cư đông đúc.", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" },
+    { topic: "Tối ưu hóa chi phí vận hành điểm bán: Báo cáo từ các mô hình bán lẻ thành công.", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" },
+    { topic: "Báo cáo: Tác động của chính sách thuế và giá nguyên liệu đến tỷ suất lợi nhuận ngành bánh kẹo.", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" },
+    { topic: "Phân tích chiến lược đa dạng hóa sản phẩm của các điểm bán lẻ hàng đầu.", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" },
+    { topic: "Báo cáo xu hướng: Tầm quan trọng của việc ứng dụng công nghệ trong quản lý chuỗi cung ứng bán lẻ.", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" },
+    { topic: "Đánh giá tiềm năng phát triển của mô hình siêu thị mini kết hợp cửa hàng tiện lợi.", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" }
 ];
 
 function generateSlug(title: string): string {
@@ -49,11 +61,32 @@ function generateSlug(title: string): string {
         .replace(/-+$/, ""); // trim
 }
 
+async function fetchPexelsImages(query: string, count: number = 3): Promise<string[]> {
+    const PEXELS_API_KEY = process.env.PEXELS_API_KEY;
+    if (!PEXELS_API_KEY) return [];
+
+    try {
+        const res = await fetch(\`https://api.pexels.com/v1/search?query=\${encodeURIComponent(query)}&per_page=\${count}&orientation=landscape\`, {
+            headers: {
+                Authorization: PEXELS_API_KEY
+            }
+        });
+        const data = await res.json();
+        if (data.photos && data.photos.length > 0) {
+            // Use large2x or original for high quality
+            return data.photos.map((p: any) => p.src.large2x || p.src.original);
+        }
+    } catch (e) {
+        console.error('Pexels API error:', e);
+    }
+    return [];
+}
+
 async function generateArticle(topic: string, type: 'advisory' | 'news' | 'report', apiKey: string) {
     let specificInstructions = '';
     
     if (type === 'advisory') {
-        specificInstructions = `
+        specificInstructions = \`
 3. Bố cục bài viết bắt buộc phải đi theo luồng sau:
   - KHÔNG sử dụng thẻ <h2> đầu tiên lặp lại nguyên văn tiêu đề. Hãy dùng một câu hỏi hoặc heading dẫn dắt.
   - Mở bài: Đi thẳng vào nội dung chi tiết. (Sapo tóm tắt bài viết sẽ được xuất riêng qua trường JSON).
@@ -67,9 +100,9 @@ async function generateArticle(topic: string, type: 'advisory' | 'news' | 'repor
 4. Quản lý CTA và Quảng cáo:
   - TUYỆT ĐỐI KHÔNG chèn sản phẩm quảng cáo ở 30-40% đầu bài để tránh làm đứt mạch đọc.
   - Chỉ chèn CTA ở đoạn cuối cùng của bài viết hoặc trong mục "Gợi ý nguồn hàng".
-`;
+\`;
     } else if (type === 'news') {
-        specificInstructions = `
+        specificInstructions = \`
 3. Bố cục bài viết bắt buộc phải đi theo luồng sau:
   - KHÔNG sử dụng thẻ <h2> đầu tiên lặp lại nguyên văn tiêu đề. Hãy dùng một câu hỏi hoặc heading dẫn dắt.
   - Mở bài: Nêu bật tính thời sự của xu hướng/tin tức. (Sapo tóm tắt bài viết sẽ được xuất riêng qua trường JSON).
@@ -80,9 +113,9 @@ async function generateArticle(topic: string, type: 'advisory' | 'news' | 'repor
 4. Quản lý CTA và Quảng cáo:
   - Phong cách viết PHẢI KHÁCH QUAN, chuẩn báo chí. Không dùng giọng điệu bán hàng, không xưng hô "LYHU có kinh nghiệm dày dặn".
   - KHÔNG chèn các đoạn chèo kéo mua hàng. Chỉ được nhắc nhẹ đến LYHU như một nền tảng chuyển đổi số/cung cấp sỉ ở dòng cuối cùng nếu phù hợp. Không cần lập bảng tóm tắt cách nhập hàng.
-`;
+\`;
     } else if (type === 'report') {
-        specificInstructions = `
+        specificInstructions = \`
 3. Bố cục bài viết bắt buộc phải đi theo luồng sau:
   - KHÔNG sử dụng thẻ <h2> đầu tiên lặp lại nguyên văn tiêu đề.
   - Mở bài: Tóm tắt bức tranh vĩ mô. (Sapo tóm tắt bài viết sẽ được xuất riêng qua trường JSON).
@@ -94,29 +127,32 @@ async function generateArticle(topic: string, type: 'advisory' | 'news' | 'repor
 4. Quản lý CTA và Quảng cáo:
   - Giọng văn CHUYÊN GIA, học thuật, phân tích sâu sắc.
   - TUYỆT ĐỐI KHÔNG CÓ CTA bán hàng. Không quảng cáo sản phẩm. Bài viết đóng vai trò báo cáo định hướng thị trường thuần túy.
-`;
+\`;
     }
 
-    const prompt = `
+    const prompt = \`
 Bạn là một chuyên gia về phân phối FMCG và kinh doanh bán lẻ.
-Hãy viết một bài báo chuyên ngành FMCG thật chi tiết, chuẩn SEO về chủ đề: "${topic}".
+Hãy viết một bài báo chuyên ngành FMCG thật chi tiết, chuẩn SEO về chủ đề: "\${topic}".
 Bài viết dành cho chuyên mục "LYHU Chuyển động FMCG 24/7".
 
 YÊU CẦU QUAN TRỌNG VỀ NỘI DUNG VÀ VĂN PHONG:
 1. Đối tượng đọc: chủ tạp hóa, siêu thị mini, nhà phân phối, chuyên gia trong ngành.
 2. Phong cách chung: Đi thẳng vào vấn đề, tư vấn thực tế, có chuyên môn. KHÔNG dùng các từ ngữ quảng cáo, sáo rỗng hoặc chung chung.
-${specificInstructions}
+\${specificInstructions}
 5. NGUYÊN TẮC BÁO CHÍ VÀ KHÁCH QUAN:
   - QUAN TRỌNG: Bài viết mang tính chất chuyên trang phân tích ngành. TUYỆT ĐỐI KHÔNG nhắc đến bất kỳ tên thương hiệu hay tên sản phẩm cụ thể nào (Ví dụ: Không được viết "Bánh tráng Abi", "Kẹo dẻo TWITCHUI", "Kẹo dẻo Thái Lan").
   - Nếu cần lấy ví dụ, CHỈ ĐƯỢC PHÉP nói về các "ngành hàng chung" (ví dụ: "các loại đồ ăn vặt sấy", "bánh tráng trộn", "kẹo dẻo chua ngọt").
   - Không lồng ghép yếu tố quảng cáo, PR, hay bán hàng vào bài viết. Không được tạo cảm giác đang chèo kéo người đọc mua sản phẩm.
 
-
 YÊU CẦU ĐỊNH DẠNG:
 1. Độ dài: Ít nhất 800 - 1000 chữ.
-2. Cấu trúc HTML: CHỈ TRẢ VỀ MÃ HTML CỦA PHẦN NỘI DUNG BÀI VIẾT (từ <h2> trở đi, không dùng thẻ <h1> vì trang web đã tự tạo <h1> cho tiêu đề). KHÔNG dùng các thẻ <html> hay <body>. KHÔNG bọc trong markdown code block (như \`\`\`html).
+2. Cấu trúc HTML: CHỈ TRẢ VỀ MÃ HTML CỦA PHẦN NỘI DUNG BÀI VIẾT (từ <h2> trở đi, không dùng thẻ <h1> vì trang web đã tự tạo <h1> cho tiêu đề). KHÔNG dùng các thẻ <html> hay <body>. KHÔNG bọc trong markdown code block (như \\\`\\\`\\\`html).
 3. Định dạng HTML chuẩn: Sử dụng các thẻ <h2>, <h3>, <p>, <ul>, <li>, <strong> để trình bày. Tuyệt đối không dùng markdown (* hay #).
-4. BẮT BUỘC trả về nội dung ĐÚNG theo cấu trúc sau (KHÔNG ĐƯỢC thay đổi thứ tự):
+4. CHÈN ẢNH MINH HỌA: Hãy chèn CHÍNH XÁC 2 từ khóa sau vào các vị trí phù hợp để ngắt quãng bài viết (hệ thống sẽ tự động thay bằng ảnh thật từ Pexels):
+   - Đặt từ khóa [PEXELS_IMAGE_1] ở giữa bài.
+   - Đặt từ khóa [PEXELS_IMAGE_2] ở gần đoạn kết luận.
+   (Chỉ cần viết đúng chữ [PEXELS_IMAGE_1] đứng một mình trên 1 dòng, không cần bọc thẻ <img>).
+5. BẮT BUỘC trả về nội dung ĐÚNG theo cấu trúc sau (KHÔNG ĐƯỢC thay đổi thứ tự):
 
 [TOÀN BỘ NỘI DUNG BÀI VIẾT BẰNG THẺ HTML Ở ĐÂY]
 
@@ -125,13 +161,14 @@ YÊU CẦU ĐỊNH DẠNG:
   "sapo": "Đoạn tóm tắt mở bài khoảng 2-3 câu, nêu bật vấn đề và giải pháp...",
   "meta_title": "Tiêu đề chuẩn SEO",
   "meta_description": "Mô tả chuẩn SEO khoảng 150 ký tự",
-  "keywords": "từ khóa 1, từ khóa 2"
+  "keywords": "từ khóa 1, từ khóa 2",
+  "image_search_keyword": "1 từ khóa tiếng Anh cực kỳ ngắn (1-2 chữ) để tìm ảnh minh họa trên Pexels (VD: supermarket, store, retail, grocery, warehouse)"
 }
 ---JSON_END---
-`;
+\`;
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`, {
+        const response = await fetch(\`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=\${apiKey}\`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -164,7 +201,7 @@ YÊU CẦU ĐỊNH DẠNG:
         }
 
         let content = text.substring(0, jsonStartIdx).trim();
-        content = content.replace(/```html/g, '').replace(/```/g, '').trim(); 
+        content = content.replace(/\`\`\`html/g, '').replace(/\`\`\`/g, '').trim(); 
         
         const jsonStr = text.substring(jsonStartIdx + 16, jsonEndIdx).trim();
         const metaData = JSON.parse(jsonStr);
@@ -178,12 +215,46 @@ YÊU CẦU ĐỊNH DẠNG:
             content = "<div class='p-4 bg-red-50 text-red-600 rounded'><b>Lỗi:</b> AI không sinh nội dung HTML hoặc sai định dạng. <br/><br/><b>Raw Data:</b><br/> " + text.replace(/</g, '&lt;').replace(/>/g, '&gt;') + "</div>";
         }
 
+        // Fetch High-Quality Images from Pexels
+        let thumbnailUrl = null;
+        let images: string[] = [];
+        if (metaData.image_search_keyword) {
+            images = await fetchPexelsImages(metaData.image_search_keyword, 3);
+            if (images.length > 0) {
+                thumbnailUrl = images[0]; // Image 0 goes to thumbnail
+            }
+        }
+
+        // Inject Inline Images into content
+        if (images.length > 1) {
+            const img1 = \`<figure class="my-8"><img src="\${images[1]}" alt="\${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>\`;
+            content = content.replace(/\\[PEXELS_IMAGE_1\\]/g, img1);
+        } else {
+            content = content.replace(/\\[PEXELS_IMAGE_1\\]/g, ''); // Remove if not found
+        }
+
+        if (images.length > 2) {
+            const img2 = \`<figure class="my-8"><img src="\${images[2]}" alt="\${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>\`;
+            content = content.replace(/\\[PEXELS_IMAGE_2\\]/g, img2);
+        } else if (images.length > 1) {
+             // Fallback to image 1 if image 2 not available
+             const img2 = \`<figure class="my-8"><img src="\${images[1]}" alt="\${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>\`;
+             content = content.replace(/\\[PEXELS_IMAGE_2\\]/g, img2);
+        } else {
+            content = content.replace(/\\[PEXELS_IMAGE_2\\]/g, '');
+        }
+
+        // Clean up markdown bold asterisks if Gemini still sneaks them in
+        content = content.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');
+        content = content.replace(/\\*(.*?)\\*/g, '<em>$1</em>');
+
         return {
             content,
             sapo: metaData.sapo || '',
             meta_title: metaData.meta_title || topic,
             meta_description: metaData.meta_description || topic,
             keywords: metaData.keywords || '',
+            thumbnail_url: thumbnailUrl
         };
 
     } catch (e: any) {
@@ -264,6 +335,7 @@ export async function GET() {
                 meta_title: articleData.meta_title,
                 meta_description: articleData.meta_description,
                 keywords: articleData.keywords,
+                thumbnail_url: articleData.thumbnail_url,
                 status: 'published',
                 published_at: publishDate.toISOString()
             });
@@ -280,7 +352,7 @@ export async function GET() {
         }
 
         return NextResponse.json({
-            message: `Quá trình sinh bài viết hoàn tất`,
+            message: \`Quá trình sinh bài viết hoàn tất\`,
             total_generated: count,
             details: completed
         });
