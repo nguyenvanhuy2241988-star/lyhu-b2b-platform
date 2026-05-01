@@ -21,6 +21,10 @@ export default function SearchBar() {
 
     // Update URL when debounced value changes
     useEffect(() => {
+        const currentQ = searchParams.get('q') || '';
+        // Only trigger push if the search value actually changed
+        if (debouncedValue === currentQ) return;
+
         const params = new URLSearchParams(searchParams.toString());
         
         if (debouncedValue) {
