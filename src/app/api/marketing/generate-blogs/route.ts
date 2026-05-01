@@ -36,7 +36,8 @@ YÊU CẦU QUAN TRỌNG VỀ NỘI DUNG VÀ VĂN PHONG:
 1. Đối tượng đọc: chủ tạp hóa, siêu thị mini, nhà phân phối.
 2. Phong cách: Đi thẳng vào vấn đề, tư vấn thực tế, có chuyên môn. KHÔNG dùng các từ ngữ quảng cáo, sáo rỗng hoặc chung chung (TUYỆT ĐỐI KHÔNG dùng các cụm từ như "thị trường sôi động", "mỏ vàng tiềm năng", "kinh nghiệm dày dặn", "làm mưa làm gió", "bán chạy nhất").
 3. Bố cục bài viết bắt buộc phải đi theo luồng sau:
-  - Mở bài (Sapo): BẮT BUỘC có một đoạn văn ngắn 2-3 dòng đặt trong thẻ <p class="lead font-medium text-gray-700 italic text-lg mb-6"> ngay đầu bài, tóm tắt giá trị cốt lõi.
+  - KHÔNG sử dụng thẻ <h2> đầu tiên lặp lại nguyên văn tiêu đề. Hãy dùng một câu hỏi hoặc heading dẫn dắt (ví dụ: "Vì sao tạp hóa gần trường học cần chọn hàng theo vòng quay?").
+  - Mở bài: Đi thẳng vào nội dung chi tiết. (Sapo tóm tắt bài viết sẽ được xuất riêng qua trường JSON).
   - Vì sao tạp hóa gần trường học có lợi thế bán hàng?
   - Tiêu chí chọn hàng (giá hợp lý, an toàn thực phẩm, bao bì bắt mắt, vòng quay nhanh, biên lợi nhuận tốt).
   - 5 nhóm hàng nên ưu tiên nhập (Gợi ý nếu tiêu đề không chỉ định rõ: Kẹo chua/kẹo dẻo; Snack/bim bim; Bánh tráng/đồ ăn vặt cay; Đồ uống/sữa; và Văn phòng phẩm cơ bản/khăn giấy).
@@ -56,9 +57,10 @@ YÊU CẦU ĐỊNH DẠNG:
 2. Cấu trúc HTML: CHỈ TRẢ VỀ MÃ HTML CỦA PHẦN NỘI DUNG BÀI VIẾT (từ <h2> trở đi, không dùng thẻ <h1> vì trang web đã tự tạo <h1> cho tiêu đề). KHÔNG dùng các thẻ <html> hay <body>. KHÔNG bọc trong markdown code block (như \`\`\`html).
 3. Sử dụng các thẻ: <h2>, <h3>, <p>, <ul>, <li>, <strong> để chia bố cục rõ ràng.
 4. Cuối cùng, tạo một đoạn JSON chứa meta data (Bắt buộc định dạng chuẩn JSON) ở ngay sau HTML. 
+Trong JSON này BẮT BUỘC phải có trường "sapo" là một đoạn văn ngắn 2-3 dòng tóm tắt giá trị cốt lõi của bài.
 
 Ví dụ Format trả về:
-<h2>Tiêu đề phần 1</h2>
+<h2>Vì sao tạp hóa gần trường học cần chọn hàng theo vòng quay?</h2>
 <p>Nội dung phần 1...</p>
 ...
 <h2>Gợi ý sản phẩm phù hợp</h2>
@@ -66,12 +68,13 @@ Ví dụ Format trả về:
 
 ---JSON_START---
 {
+  "sapo": "Với tạp hóa gần trường học, lợi thế không nằm ở đơn hàng lớn mà ở tần suất mua lặp lại hằng ngày. Chủ điểm bán nên ưu tiên các nhóm hàng giá dễ mua, dễ trưng bày, vòng quay nhanh và ít rủi ro tồn kho.",
   "meta_title": "Tiêu đề SEO (khoảng 60 ký tự)",
   "meta_description": "Mô tả ngắn gọn chuẩn SEO (khoảng 150 ký tự)",
   "keywords": "từ khóa 1, từ khóa 2, từ khóa 3"
 }
 ---JSON_END---
-`;
+\`;
 
     try {
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`, {
@@ -114,6 +117,7 @@ Ví dụ Format trả về:
 
         return {
             content,
+            sapo: metaData.sapo || '',
             meta_title: metaData.meta_title || topic,
             meta_description: metaData.meta_description || topic,
             keywords: metaData.keywords || '',
@@ -188,6 +192,7 @@ export async function GET() {
                 slug: slug,
                 category_id: categoryId,
                 content: articleData.content,
+                ai_summary: articleData.sapo,
                 meta_title: articleData.meta_title,
                 meta_description: articleData.meta_description,
                 keywords: articleData.keywords,
