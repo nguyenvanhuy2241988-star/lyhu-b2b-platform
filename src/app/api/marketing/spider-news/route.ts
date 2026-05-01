@@ -133,7 +133,7 @@ Thông tin bản gốc:
 
 YÊU CẦU QUAN TRỌNG VỀ NỘI DUNG VÀ VĂN PHONG:
 1. Đối tượng đọc: chủ tạp hóa, siêu thị mini, nhà phân phối, chuyên gia.
-2. Cấu trúc bài viết: Sử dụng hoàn toàn cú pháp Markdown chuẩn. Dùng các thẻ Heading (##, ###), danh sách có gạch đầu dòng, in đậm để bài viết mạch lạc. KHÔNG DÙNG HTML THÔ.
+2. Cấu trúc bài viết: Sử dụng hoàn toàn cú pháp Markdown chuẩn. Dùng các thẻ Heading (##, ###), danh sách có gạch đầu dòng, in đậm để bài viết mạch lạc. TUYỆT ĐỐI KHÔNG dùng Heading (##) đầu tiên lặp lại tiêu đề bài viết (vì website đã tự tạo H1 rồi). KHÔNG DÙNG HTML THÔ.
 ${specificInstructions}
 4. NGUYÊN TẮC BÁO CHÍ: Báo chí khách quan. Dịch chuẩn xác nếu là báo nước ngoài. Phân tích thêm góc nhìn Việt Nam. Tuyệt đối không nhắc đến bất kỳ tên thương hiệu hay tên sản phẩm LYHU nào.
 
