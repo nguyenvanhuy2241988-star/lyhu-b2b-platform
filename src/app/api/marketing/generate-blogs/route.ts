@@ -49,7 +49,7 @@ function generateSlug(title: string): string {
         .replace(/-+$/, ""); // trim
 }
 
-async function generateArticle(topic: string, type: 'advisory' | 'news' | 'report', apiKey: string, activeProductsContext: string) {
+async function generateArticle(topic: string, type: 'advisory' | 'news' | 'report', apiKey: string) {
     let specificInstructions = '';
     
     if (type === 'advisory') {
@@ -59,7 +59,7 @@ async function generateArticle(topic: string, type: 'advisory' | 'news' | 'repor
   - Mở bài: Đi thẳng vào nội dung chi tiết. (Sapo tóm tắt bài viết sẽ được xuất riêng qua trường JSON).
   - Vì sao chủ đề này lại quan trọng với điểm bán?
   - Tiêu chí chọn hàng hoặc cách giải quyết vấn đề.
-  - Các nhóm hàng / chiến lược nên ưu tiên áp dụng. Khi lấy ví dụ về sản phẩm, TUYỆT ĐỐI CHỈ DÙNG các sản phẩm có trong danh sách phân phối thực tế của LYHU ở mục 5.
+  - Các nhóm hàng / chiến lược nên ưu tiên áp dụng. Khi lấy ví dụ về ngành hàng, hãy phân tích khách quan dựa trên xu hướng tiêu dùng (ví dụ: thực phẩm sấy khô, bánh kẹo nhập khẩu).
   - Hướng dẫn cách test thử hoặc triển khai rủi ro thấp cho điểm bán nhỏ.
   - Gợi ý cách trưng bày / vận hành.
   - Bảng tóm tắt: BẮT BUỘC có một bảng HTML (<table>, <th>, <td>) ở cuối phần nội dung để tóm tắt ý chính.
@@ -106,13 +106,10 @@ YÊU CẦU QUAN TRỌNG VỀ NỘI DUNG VÀ VĂN PHONG:
 1. Đối tượng đọc: chủ tạp hóa, siêu thị mini, nhà phân phối, chuyên gia trong ngành.
 2. Phong cách chung: Đi thẳng vào vấn đề, tư vấn thực tế, có chuyên môn. KHÔNG dùng các từ ngữ quảng cáo, sáo rỗng hoặc chung chung.
 ${specificInstructions}
-5. NGUYÊN TẮC SỬ DỤNG SẢN PHẨM:
-Dưới đây là danh sách sản phẩm thực tế LYHU đang phân phối:
-${activeProductsContext}
-  - QUAN TRỌNG: TUYỆT ĐỐI KHÔNG liệt kê một tràng dài các sản phẩm một cách nhồi nhét, khiên cưỡng.
-  - Hãy rút gọn tên sản phẩm cho tự nhiên. (Ví dụ: Chỉ viết "Bánh tráng Abi" hoặc "Khoai môn sấy tẩm vị", KHÔNG BÊ NGUYÊN VĂN "Khoai môn sấy tẩm vị gạch cua 180g" hay "Kẹo dẻo TWITCHUI vị chanh 24g" vào bài).
-  - Đối với bài News/Report: Chỉ nhắc đến ngành hàng chung hoặc mượn tên thương hiệu ngắn gọn làm ví dụ minh họa khách quan. Không quảng cáo.
-  - KHÔNG TỰ BỊA ra các sản phẩm không có thật (Ví dụ: KHÔNG được viết "kẹo dẻo Thái Lan" nếu trong kho không có).
+5. NGUYÊN TẮC BÁO CHÍ VÀ KHÁCH QUAN:
+  - QUAN TRỌNG: Bài viết mang tính chất chuyên trang phân tích ngành. TUYỆT ĐỐI KHÔNG nhắc đến bất kỳ tên thương hiệu hay tên sản phẩm cụ thể nào (Ví dụ: Không được viết "Bánh tráng Abi", "Kẹo dẻo TWITCHUI", "Kẹo dẻo Thái Lan").
+  - Nếu cần lấy ví dụ, CHỈ ĐƯỢC PHÉP nói về các "ngành hàng chung" (ví dụ: "các loại đồ ăn vặt sấy", "bánh tráng trộn", "kẹo dẻo chua ngọt").
+  - Không lồng ghép yếu tố quảng cáo, PR, hay bán hàng vào bài viết. Không được tạo cảm giác đang chèo kéo người đọc mua sản phẩm.
 
 
 YÊU CẦU ĐỊNH DẠNG:
@@ -235,20 +232,13 @@ export async function GET() {
              return NextResponse.json({ message: "Tất cả các chủ đề mẫu đều đã được tạo thành công!" });
         }
 
-        // Fetch active products from Wholesale database to provide context to the AI
-        const { data: activeProducts } = await supabase.from('products').select('name').eq('is_active', true).limit(30);
-        let activeProductsContext = "Hiện tại không có dữ liệu sản phẩm.";
-        if (activeProducts && activeProducts.length > 0) {
-            activeProductsContext = "- " + activeProducts.map(p => p.name).join('\n- ');
-        }
-
         // Dùng vòng lặp for thay vì Promise.all để tránh bị Google API chặn do gửi quá nhiều yêu cầu cùng lúc
         const completed = [];
         for (let i = 0; i < topicsToProcess.length; i++) {
             const config = topicsToProcess[i];
             const { topic, type, categorySlug } = config;
             
-            const articleData = await generateArticle(topic, type, GEMINI_API_KEY, activeProductsContext);
+            const articleData = await generateArticle(topic, type, GEMINI_API_KEY);
             if (!articleData) {
                 completed.push({ topic, status: 'failed (Lỗi không xác định hoặc không có JSON metadata)' });
                 continue;
