@@ -9,7 +9,7 @@ const TOPICS = [
     "Kinh nghiệm mở siêu thị mini ở nông thôn với số vốn nhỏ",
     "Bí quyết nhập sỉ bánh kẹo giá tận xưởng không qua trung gian",
     "Tại sao kẹo chua UHI lại được học sinh sinh viên săn lùng?",
-    "5 nhóm hàng ăn vặt tạp hóa gần trường học nên ưu tiên nhập",
+    "Tạp hóa gần trường học nên nhập gì? 5 nhóm hàng có vòng quay tốt",
     "Cách trưng bày hàng hóa siêu thị mini giúp tăng gấp đôi doanh thu"
 ];
 
@@ -32,17 +32,23 @@ Bạn là một chuyên gia về phân phối FMCG và kinh doanh bán lẻ, đa
 Hãy viết một bài báo chuyên ngành FMCG thật chi tiết, chuẩn SEO về chủ đề: "${topic}".
 Bài viết dành cho chuyên mục "LYHU Chuyển động FMCG 24/7" - Nền tảng phân phối sỉ bánh kẹo, đồ ăn vặt (có sản phẩm nổi bật là Kẹo chua UHI, kẹo dẻo Thái Lan, bánh tráng Abi, snack).
 
-YÊU CẦU QUAN TRỌNG:
-1. Đối tượng đọc: chủ tạp hóa, siêu thị mini, nhà phân phối, người làm FMCG.
-2. Phong cách: chuyên ngành nhưng dễ hiểu, thực chiến, không viết chung chung như blog SEO. Ưu tiên giọng văn của LYHU: thực tế, rõ ràng, có kinh nghiệm thị trường.
-3. Nội dung bắt buộc:
-- Không bịa số liệu nếu không có nguồn.
-- Không dùng các cụm quá đà như "làm mưa làm gió", "bán chạy nhất" nếu không có dữ liệu thật.
-- Phải có góc nhìn tác động đến điểm bán (như tiêu chí chọn hàng, rủi ro tồn kho, cách trưng bày, vòng quay, biên lợi nhuận, và gợi ý hành động).
-- Không lặp lại tiêu đề nhiều lần trong bài.
-4. Quản lý Quảng cáo / CTA:
-- Không chen quá nhiều sản phẩm quảng cáo vào giữa bài gây đứt mạch.
-- CTA bán hàng chỉ đặt ở cuối bài hoặc trong khối "Gợi ý sản phẩm phù hợp".
+YÊU CẦU QUAN TRỌNG VỀ NỘI DUNG VÀ VĂN PHONG:
+1. Đối tượng đọc: chủ tạp hóa, siêu thị mini, nhà phân phối.
+2. Phong cách: Đi thẳng vào vấn đề, tư vấn thực tế, có chuyên môn. KHÔNG dùng các từ ngữ quảng cáo, sáo rỗng hoặc chung chung (TUYỆT ĐỐI KHÔNG dùng các cụm từ như "thị trường sôi động", "mỏ vàng tiềm năng", "kinh nghiệm dày dặn", "làm mưa làm gió", "bán chạy nhất").
+3. Bố cục bài viết bắt buộc phải đi theo luồng sau:
+  - Mở bài ngắn gọn, đi thẳng vào vấn đề.
+  - Vì sao tạp hóa gần trường học có lợi thế bán hàng?
+  - Tiêu chí chọn hàng (giá hợp lý, an toàn thực phẩm, bao bì bắt mắt, vòng quay nhanh, biên lợi nhuận tốt).
+  - 5 nhóm hàng nên ưu tiên nhập (Gợi ý nếu tiêu đề không chỉ định rõ: Kẹo chua/kẹo dẻo; Snack/bim bim; Bánh tráng/đồ ăn vặt cay; Đồ uống/sữa; và Văn phòng phẩm cơ bản/khăn giấy).
+  - Hướng dẫn cách nhập thử cho điểm bán (ví dụ: không nhập sâu ngay từ đầu, test 3-5 mã, ưu tiên gói nhỏ, theo dõi mã nào bán nhanh trong 7-14 ngày, kiểm tra hạn sử dụng định kỳ).
+  - Gợi ý cách trưng bày.
+  - Đoạn cuối: Gợi ý nguồn hàng nhập sỉ.
+4. Nguyên tắc khác:
+  - Không bịa số liệu nếu không có nguồn.
+  - Không lặp lại tiêu đề bài viết nhiều lần.
+5. Quản lý CTA và Quảng cáo:
+  - TUYỆT ĐỐI KHÔNG chèn sản phẩm quảng cáo ở 30-40% đầu bài để tránh làm đứt mạch đọc.
+  - Chỉ chèn Call to Action (CTA) và giới thiệu sản phẩm bán sỉ (LYHU, UHI, Abi) ở đoạn cuối cùng của bài viết hoặc trong mục "Gợi ý nguồn hàng".
 
 YÊU CẦU ĐỊNH DẠNG:
 1. Độ dài: Ít nhất 800 - 1000 chữ.
