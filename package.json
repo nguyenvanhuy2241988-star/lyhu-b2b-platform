@@ -46,6 +46,7 @@
     "react-virtuoso": "^4.6.0",
     "recharts": "^3.6.0",
     "remark-gfm": "^4.0.1",
+    "rss-parser": "^3.13.0",
     "sonner": "^1.4.0",
     "tailwind-merge": "^2.2.1",
     "use-debounce": "^10.0.6",
