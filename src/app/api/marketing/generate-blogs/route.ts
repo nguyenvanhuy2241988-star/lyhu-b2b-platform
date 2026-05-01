@@ -112,23 +112,17 @@ ${activeProductsContext}
 YÊU CẦU ĐỊNH DẠNG:
 1. Độ dài: Ít nhất 800 - 1000 chữ.
 2. Cấu trúc HTML: CHỈ TRẢ VỀ MÃ HTML CỦA PHẦN NỘI DUNG BÀI VIẾT (từ <h2> trở đi, không dùng thẻ <h1> vì trang web đã tự tạo <h1> cho tiêu đề). KHÔNG dùng các thẻ <html> hay <body>. KHÔNG bọc trong markdown code block (như \`\`\`html).
-3. Sử dụng các thẻ: <h2>, <h3>, <p>, <ul>, <li>, <strong> để chia bố cục rõ ràng.
-4. Cuối cùng, tạo một đoạn JSON chứa meta data (Bắt buộc định dạng chuẩn JSON) ở ngay sau HTML. 
-Trong JSON này BẮT BUỘC phải có trường "sapo" là một đoạn văn ngắn 2-3 dòng tóm tắt giá trị cốt lõi của bài.
+3. Định dạng HTML chuẩn: Sử dụng các thẻ <h2>, <h3>, <p>, <ul>, <li>, <strong> để trình bày. Tuyệt đối không dùng markdown (* hay #).
+4. BẮT BUỘC trả về nội dung ĐÚNG theo cấu trúc sau (KHÔNG ĐƯỢC thay đổi thứ tự):
 
-Ví dụ Format trả về:
-<h2>Vì sao tạp hóa gần trường học cần chọn hàng theo vòng quay?</h2>
-<p>Nội dung phần 1...</p>
-...
-<h2>Gợi ý sản phẩm phù hợp</h2>
-<p>LYHU cung cấp các nhóm hàng ăn vặt phù hợp cho tạp hóa, siêu thị mini và điểm bán gần trường học, bao gồm kẹo chua UHI, bánh tráng Abi, snack và các sản phẩm tiêu dùng nhanh có nguồn gốc rõ ràng.</p>
+[TOÀN BỘ NỘI DUNG BÀI VIẾT BẰNG THẺ HTML Ở ĐÂY]
 
 ---JSON_START---
 {
-  "sapo": "Với tạp hóa gần trường học, lợi thế không nằm ở đơn hàng lớn mà ở tần suất mua lặp lại hằng ngày. Chủ điểm bán nên ưu tiên các nhóm hàng giá dễ mua, dễ trưng bày, vòng quay nhanh và ít rủi ro tồn kho.",
-  "meta_title": "Tiêu đề SEO (khoảng 60 ký tự)",
-  "meta_description": "Mô tả ngắn gọn chuẩn SEO (khoảng 150 ký tự)",
-  "keywords": "từ khóa 1, từ khóa 2, từ khóa 3"
+  "sapo": "Đoạn tóm tắt mở bài khoảng 2-3 câu, nêu bật vấn đề và giải pháp...",
+  "meta_title": "Tiêu đề chuẩn SEO",
+  "meta_description": "Mô tả chuẩn SEO khoảng 150 ký tự",
+  "keywords": "từ khóa 1, từ khóa 2"
 }
 ---JSON_END---
 `;
@@ -171,6 +165,15 @@ Ví dụ Format trả về:
         
         const jsonStr = text.substring(jsonStartIdx + 16, jsonEndIdx).trim();
         const metaData = JSON.parse(jsonStr);
+
+        if (!content && metaData.content) {
+            content = metaData.content;
+        }
+
+        if (!content) {
+            console.error('Bài viết không có nội dung HTML');
+            return null;
+        }
 
         return {
             content,
