@@ -66,7 +66,7 @@ async function fetchPexelsImages(query: string, count: number = 3): Promise<stri
     if (!PEXELS_API_KEY) return [];
 
     try {
-        const res = await fetch(\`https://api.pexels.com/v1/search?query=\${encodeURIComponent(query)}&per_page=\${count}&orientation=landscape\`, {
+        const res = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=${count}&orientation=landscape`, {
             headers: {
                 Authorization: PEXELS_API_KEY
             }
@@ -86,7 +86,7 @@ async function generateArticle(topic: string, type: 'advisory' | 'news' | 'repor
     let specificInstructions = '';
     
     if (type === 'advisory') {
-        specificInstructions = \`
+        specificInstructions = `
 3. Bố cục bài viết bắt buộc phải đi theo luồng sau:
   - KHÔNG sử dụng thẻ <h2> đầu tiên lặp lại nguyên văn tiêu đề. Hãy dùng một câu hỏi hoặc heading dẫn dắt.
   - Mở bài: Đi thẳng vào nội dung chi tiết. (Sapo tóm tắt bài viết sẽ được xuất riêng qua trường JSON).
@@ -100,9 +100,9 @@ async function generateArticle(topic: string, type: 'advisory' | 'news' | 'repor
 4. Quản lý CTA và Quảng cáo:
   - TUYỆT ĐỐI KHÔNG chèn sản phẩm quảng cáo ở 30-40% đầu bài để tránh làm đứt mạch đọc.
   - Chỉ chèn CTA ở đoạn cuối cùng của bài viết hoặc trong mục "Gợi ý nguồn hàng".
-\`;
+`;
     } else if (type === 'news') {
-        specificInstructions = \`
+        specificInstructions = `
 3. Bố cục bài viết bắt buộc phải đi theo luồng sau:
   - KHÔNG sử dụng thẻ <h2> đầu tiên lặp lại nguyên văn tiêu đề. Hãy dùng một câu hỏi hoặc heading dẫn dắt.
   - Mở bài: Nêu bật tính thời sự của xu hướng/tin tức. (Sapo tóm tắt bài viết sẽ được xuất riêng qua trường JSON).
@@ -113,9 +113,9 @@ async function generateArticle(topic: string, type: 'advisory' | 'news' | 'repor
 4. Quản lý CTA và Quảng cáo:
   - Phong cách viết PHẢI KHÁCH QUAN, chuẩn báo chí. Không dùng giọng điệu bán hàng, không xưng hô "LYHU có kinh nghiệm dày dặn".
   - KHÔNG chèn các đoạn chèo kéo mua hàng. Chỉ được nhắc nhẹ đến LYHU như một nền tảng chuyển đổi số/cung cấp sỉ ở dòng cuối cùng nếu phù hợp. Không cần lập bảng tóm tắt cách nhập hàng.
-\`;
+`;
     } else if (type === 'report') {
-        specificInstructions = \`
+        specificInstructions = `
 3. Bố cục bài viết bắt buộc phải đi theo luồng sau:
   - KHÔNG sử dụng thẻ <h2> đầu tiên lặp lại nguyên văn tiêu đề.
   - Mở bài: Tóm tắt bức tranh vĩ mô. (Sapo tóm tắt bài viết sẽ được xuất riêng qua trường JSON).
@@ -127,18 +127,18 @@ async function generateArticle(topic: string, type: 'advisory' | 'news' | 'repor
 4. Quản lý CTA và Quảng cáo:
   - Giọng văn CHUYÊN GIA, học thuật, phân tích sâu sắc.
   - TUYỆT ĐỐI KHÔNG CÓ CTA bán hàng. Không quảng cáo sản phẩm. Bài viết đóng vai trò báo cáo định hướng thị trường thuần túy.
-\`;
+`;
     }
 
-    const prompt = \`
+    const prompt = `
 Bạn là một chuyên gia về phân phối FMCG và kinh doanh bán lẻ.
-Hãy viết một bài báo chuyên ngành FMCG thật chi tiết, chuẩn SEO về chủ đề: "\${topic}".
+Hãy viết một bài báo chuyên ngành FMCG thật chi tiết, chuẩn SEO về chủ đề: "${topic}".
 Bài viết dành cho chuyên mục "LYHU Chuyển động FMCG 24/7".
 
 YÊU CẦU QUAN TRỌNG VỀ NỘI DUNG VÀ VĂN PHONG:
 1. Đối tượng đọc: chủ tạp hóa, siêu thị mini, nhà phân phối, chuyên gia trong ngành.
 2. Phong cách chung: Đi thẳng vào vấn đề, tư vấn thực tế, có chuyên môn. KHÔNG dùng các từ ngữ quảng cáo, sáo rỗng hoặc chung chung.
-\${specificInstructions}
+${specificInstructions}
 5. NGUYÊN TẮC BÁO CHÍ VÀ KHÁCH QUAN:
   - QUAN TRỌNG: Bài viết mang tính chất chuyên trang phân tích ngành. TUYỆT ĐỐI KHÔNG nhắc đến bất kỳ tên thương hiệu hay tên sản phẩm cụ thể nào (Ví dụ: Không được viết "Bánh tráng Abi", "Kẹo dẻo TWITCHUI", "Kẹo dẻo Thái Lan").
   - Nếu cần lấy ví dụ, CHỈ ĐƯỢC PHÉP nói về các "ngành hàng chung" (ví dụ: "các loại đồ ăn vặt sấy", "bánh tráng trộn", "kẹo dẻo chua ngọt").
@@ -146,7 +146,7 @@ YÊU CẦU QUAN TRỌNG VỀ NỘI DUNG VÀ VĂN PHONG:
 
 YÊU CẦU ĐỊNH DẠNG:
 1. Độ dài: Ít nhất 800 - 1000 chữ.
-2. Cấu trúc HTML: CHỈ TRẢ VỀ MÃ HTML CỦA PHẦN NỘI DUNG BÀI VIẾT (từ <h2> trở đi, không dùng thẻ <h1> vì trang web đã tự tạo <h1> cho tiêu đề). KHÔNG dùng các thẻ <html> hay <body>. KHÔNG bọc trong markdown code block (như \\\`\\\`\\\`html).
+2. Cấu trúc HTML: CHỈ TRẢ VỀ MÃ HTML CỦA PHẦN NỘI DUNG BÀI VIẾT (từ <h2> trở đi, không dùng thẻ <h1> vì trang web đã tự tạo <h1> cho tiêu đề). KHÔNG dùng các thẻ <html> hay <body>. KHÔNG bọc trong markdown code block (như \`\`\`html).
 3. Định dạng HTML chuẩn: Sử dụng các thẻ <h2>, <h3>, <p>, <ul>, <li>, <strong> để trình bày. Tuyệt đối không dùng markdown (* hay #).
 4. CHÈN ẢNH MINH HỌA: Hãy chèn CHÍNH XÁC 2 từ khóa sau vào các vị trí phù hợp để ngắt quãng bài viết (hệ thống sẽ tự động thay bằng ảnh thật từ Pexels):
    - Đặt từ khóa [PEXELS_IMAGE_1] ở giữa bài.
@@ -165,10 +165,10 @@ YÊU CẦU ĐỊNH DẠNG:
   "image_search_keyword": "1 từ khóa tiếng Anh cực kỳ ngắn (1-2 chữ) để tìm ảnh minh họa trên Pexels (VD: supermarket, store, retail, grocery, warehouse)"
 }
 ---JSON_END---
-\`;
+`;
 
     try {
-        const response = await fetch(\`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=\${apiKey}\`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -201,7 +201,7 @@ YÊU CẦU ĐỊNH DẠNG:
         }
 
         let content = text.substring(0, jsonStartIdx).trim();
-        content = content.replace(/\`\`\`html/g, '').replace(/\`\`\`/g, '').trim(); 
+        content = content.replace(/```html/g, '').replace(/```/g, '').trim(); 
         
         const jsonStr = text.substring(jsonStartIdx + 16, jsonEndIdx).trim();
         const metaData = JSON.parse(jsonStr);
@@ -227,26 +227,26 @@ YÊU CẦU ĐỊNH DẠNG:
 
         // Inject Inline Images into content
         if (images.length > 1) {
-            const img1 = \`<figure class="my-8"><img src="\${images[1]}" alt="\${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>\`;
-            content = content.replace(/\\[PEXELS_IMAGE_1\\]/g, img1);
+            const img1 = `<figure class="my-8"><img src="${images[1]}" alt="${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>`;
+            content = content.replace(/\[PEXELS_IMAGE_1\]/g, img1);
         } else {
-            content = content.replace(/\\[PEXELS_IMAGE_1\\]/g, ''); // Remove if not found
+            content = content.replace(/\[PEXELS_IMAGE_1\]/g, ''); // Remove if not found
         }
 
         if (images.length > 2) {
-            const img2 = \`<figure class="my-8"><img src="\${images[2]}" alt="\${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>\`;
-            content = content.replace(/\\[PEXELS_IMAGE_2\\]/g, img2);
+            const img2 = `<figure class="my-8"><img src="${images[2]}" alt="${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>`;
+            content = content.replace(/\[PEXELS_IMAGE_2\]/g, img2);
         } else if (images.length > 1) {
              // Fallback to image 1 if image 2 not available
-             const img2 = \`<figure class="my-8"><img src="\${images[1]}" alt="\${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>\`;
-             content = content.replace(/\\[PEXELS_IMAGE_2\\]/g, img2);
+             const img2 = `<figure class="my-8"><img src="${images[1]}" alt="${topic}" class="w-full rounded-xl shadow-sm object-cover" style="max-height: 450px;" /></figure>`;
+             content = content.replace(/\[PEXELS_IMAGE_2\]/g, img2);
         } else {
-            content = content.replace(/\\[PEXELS_IMAGE_2\\]/g, '');
+            content = content.replace(/\[PEXELS_IMAGE_2\]/g, '');
         }
 
         // Clean up markdown bold asterisks if Gemini still sneaks them in
-        content = content.replace(/\\*\\*(.*?)\\*\\*/g, '<strong>$1</strong>');
-        content = content.replace(/\\*(.*?)\\*/g, '<em>$1</em>');
+        content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        content = content.replace(/\*(.*?)\*/g, '<em>$1</em>');
 
         return {
             content,
@@ -352,7 +352,7 @@ export async function GET() {
         }
 
         return NextResponse.json({
-            message: \`Quá trình sinh bài viết hoàn tất\`,
+            message: `Quá trình sinh bài viết hoàn tất`,
             total_generated: count,
             details: completed
         });
