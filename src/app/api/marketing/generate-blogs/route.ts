@@ -251,6 +251,11 @@ export async function GET() {
                 continue;
             }
 
+            if (articleData.error) {
+                completed.push({ topic, status: 'api_error', error: articleData.error });
+                continue;
+            }
+
             const publishDate = new Date(now);
             publishDate.setDate(now.getDate() + count);
 
@@ -277,8 +282,8 @@ export async function GET() {
                 count++;
             }
             
-            // Wait 2 seconds between requests to avoid rate limits
-            await new Promise(r => setTimeout(r, 2000));
+            // Wait 5 seconds between requests to avoid rate limits
+            await new Promise(r => setTimeout(r, 5000));
         }
 
         return NextResponse.json({
