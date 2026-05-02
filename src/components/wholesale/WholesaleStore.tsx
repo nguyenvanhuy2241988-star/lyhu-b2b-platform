@@ -849,17 +849,17 @@ export default function WholesaleStore({
                 <div className="max-w-6xl mx-auto hidden md:flex items-center gap-6 py-3">
                     {/* Col 1: Logo */}
                     <div className="shrink-0 flex items-center">
-                        <div className="h-[70px] overflow-hidden flex items-center justify-center cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                        <div className="h-[55px] overflow-hidden flex items-center justify-center cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                             <img 
                                 src="/logo-full.png" 
                                 alt="LYHU" 
-                                className="h-[240px] w-auto object-contain brightness-0 invert drop-shadow-sm" 
+                                className="h-[200px] w-auto object-contain brightness-0 invert drop-shadow-sm" 
                             />
                         </div>
                     </div>
                     
                     {/* Col 2: Search Input + Keywords — centered between logo & cart */}
-                    <div className="w-[500px] flex flex-col gap-1.5 pt-1">
+                    <div className="flex-1 flex flex-col gap-1.5 pt-1">
                         {/* Search Bar constrained to 40px */}
                         <div className="relative h-[40px]">
                             <input 
@@ -909,9 +909,10 @@ export default function WholesaleStore({
                             )}
                         </div>
 
-                        {/* Keywords perfectly flush with search bar left edge */}
+                        {/* Keywords — only show from real search history */}
+                        {searchHistory.length > 0 && (
                         <div className="flex items-center gap-3 overflow-hidden h-[20px]">
-                            {(searchHistory.length > 0 ? searchHistory.slice(0, 7) : ['Bánh tráng Abi', 'Khoai môn sấy', 'Snack BOYO', 'Đặc sản miền Tây', 'Bánh tráng phô mai', 'Gia vị', 'Flash Sale']).map((kw, i) => (
+                            {searchHistory.slice(0, 7).map((kw, i) => (
                                 <button 
                                     key={i}
                                     onClick={() => { setSearchQuery(kw); document.getElementById('product-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
@@ -921,6 +922,7 @@ export default function WholesaleStore({
                                 </button>
                             ))}
                         </div>
+                        )}
                     </div>
 
                     {/* Col 3: Cart — flush right */}
