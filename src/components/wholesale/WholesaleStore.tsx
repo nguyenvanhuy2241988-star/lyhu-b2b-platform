@@ -848,12 +848,12 @@ export default function WholesaleStore({
             <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 sticky top-0 z-40 shadow-md">
                 <div className="max-w-6xl mx-auto hidden md:flex items-center gap-6 pt-3 pb-2">
                     {/* Col 1: Logo */}
-                    <div className="w-[180px] shrink-0 flex items-center">
-                        <div className="h-[42px] overflow-hidden flex items-center justify-center cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                    <div className="w-[220px] shrink-0 flex items-center">
+                        <div className="h-[55px] overflow-hidden flex items-center justify-center cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                             <img 
                                 src="/logo-full.png" 
                                 alt="LYHU" 
-                                className="h-[150px] w-auto object-contain brightness-0 invert drop-shadow-sm" 
+                                className="h-[200px] w-auto object-contain brightness-0 invert drop-shadow-sm" 
                             />
                         </div>
                     </div>
