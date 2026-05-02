@@ -32,13 +32,13 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
                 </div>
 
                 {/* Main Header Area: Logo, Slogan, Trending, Search */}
-                <div className="max-w-[1200px] mx-auto px-4 pt-2 pb-1 flex flex-col md:flex-row items-center justify-start gap-6 md:gap-8">
+                <div className="max-w-[1200px] mx-auto px-4 py-3 md:py-5 flex flex-col md:flex-row items-center justify-start gap-6 md:gap-8">
                     {/* Logo */}
-                    <Link href="/tin-tuc" className="flex items-center shrink-0 group h-10 md:h-12 w-[200px] md:w-[280px]">
+                    <Link href="/tin-tuc" className="flex items-center shrink-0 group">
                         <img 
                             src="/logo-tin-tuc.png" 
                             alt="LYHU Chuyển động FMCG 24/7" 
-                            className="w-full h-full object-contain origin-left scale-[2] md:scale-[2.5] transition-transform group-hover:scale-[2.05] md:group-hover:scale-[2.55]" 
+                            className="w-[280px] md:w-[380px] h-auto object-contain transition-transform group-hover:scale-105" 
                         />
                     </Link>
 
