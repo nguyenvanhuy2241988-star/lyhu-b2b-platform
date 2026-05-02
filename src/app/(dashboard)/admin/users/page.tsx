@@ -48,6 +48,9 @@ interface User {
     status: string;
     misa_employee_code?: string; // Add this field
     misa_branch_code?: string; // Add MISA Organization Unit code
+    zalo_phone?: string;
+    zalo_password?: string;
+    zalo_backup_password?: string;
     created_at: string;
     // Activity Stats
     online_seconds: number;
@@ -108,7 +111,10 @@ export default function UsersPage() {
         role: "telesales", // Default
         status: "active",
         misa_employee_code: "",
-        misa_branch_code: "NB" // Default to NB
+        misa_branch_code: "NB", // Default to NB
+        zalo_phone: "",
+        zalo_password: "",
+        zalo_backup_password: ""
     });
 
     const { session } = useAuth();
@@ -241,7 +247,7 @@ export default function UsersPage() {
 
     const handleOpenCreate = () => {
         setEditingUser(null);
-        setFormData({ email: "", password: "", fullName: "", role: "telesales", status: "active", misa_employee_code: "", misa_branch_code: "NB" });
+        setFormData({ email: "", password: "", fullName: "", role: "telesales", status: "active", misa_employee_code: "", misa_branch_code: "NB", zalo_phone: "", zalo_password: "", zalo_backup_password: "" });
         setIsModalOpen(true);
     };
 
@@ -254,7 +260,10 @@ export default function UsersPage() {
             role: user.role,
             status: user.status,
             misa_employee_code: user.misa_employee_code || "",
-            misa_branch_code: user.misa_branch_code || "NB"
+            misa_branch_code: user.misa_branch_code || "NB",
+            zalo_phone: user.zalo_phone || "",
+            zalo_password: user.zalo_password || "",
+            zalo_backup_password: user.zalo_backup_password || ""
         });
         setIsModalOpen(true);
     };
@@ -398,6 +407,7 @@ export default function UsersPage() {
                             <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                                 <tr>
                                     <th className="px-6 py-3 font-medium">Họ & Tên</th>
+                                    <th className="px-6 py-3 font-medium">Tài khoản Zalo</th>
                                     <th className="px-6 py-3 font-medium">Mã MISA</th> {/* New Column */}
                                     <th className="px-6 py-3 font-medium">Trạng thái</th>
                                     <th className="px-6 py-3 font-medium">Hoạt động</th>
@@ -412,6 +422,13 @@ export default function UsersPage() {
                                         <td className="px-6 py-4">
                                             <div className="font-medium text-slate-900">{user.full_name || user.email}</div>
                                             <div className="text-xs text-slate-500">{user.full_name ? user.email : "Chưa đặt tên"}</div>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {user.zalo_phone ? (
+                                                <div className="font-medium text-blue-600">{user.zalo_phone}</div>
+                                            ) : (
+                                                <div className="text-slate-400 text-xs italic">Chưa cấp</div>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 text-xs font-mono text-slate-600">
                                             <div>{user.misa_employee_code || "-"}</div>
@@ -799,29 +816,6 @@ export default function UsersPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Mã nhân viên MISA</label>
-                                    <input
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                        placeholder="vd: NV001"
-                                        value={formData.misa_employee_code}
-                                        onChange={e => setFormData({ ...formData, misa_employee_code: e.target.value })}
-                                    />
-                                    <p className="text-xs text-slate-500 mt-1">Dùng để tính doanh số và đồng bộ đơn hàng</p>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-1">Mã Chi nhánh/Đơn vị (MISA)</label>
-                                    <input
-                                        className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                                        placeholder="vd: NB, BĐH, KD"
-                                        value={formData.misa_branch_code}
-                                        onChange={e => setFormData({ ...formData, misa_branch_code: e.target.value })}
-                                    />
-                                    <p className="text-xs text-slate-500 mt-1">Mã này phải khớp với cấu hình Đơn vị của nhân viên trên MISA.</p>
-                                </div>
-
-
-                                <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Vai trò</label>
                                     <select
                                         className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
@@ -847,6 +841,74 @@ export default function UsersPage() {
                                         </select>
                                     </div>
                                 )}
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Mã nhân viên (MISA)</label>
+                                        <input
+                                            type="text"
+                                            className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder="vd: NV000123"
+                                            value={formData.misa_employee_code}
+                                            onChange={e => setFormData({ ...formData, misa_employee_code: e.target.value })}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">Đơn vị / Chi nhánh (MISA)</label>
+                                        <select
+                                            className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                                            value={formData.misa_branch_code}
+                                            onChange={e => setFormData({ ...formData, misa_branch_code: e.target.value })}
+                                        >
+                                            <option value="NB">Miền Bắc</option>
+                                            <option value="MT">Miền Trung</option>
+                                            <option value="MN">Miền Nam</option>
+                                            <option value="CTY">Công ty tổng</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                {/* Zalo Info */}
+                                <div className="border-t border-slate-200 pt-4 mt-2">
+                                    <h4 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                                        <Smartphone className="w-4 h-4 text-blue-600" />
+                                        Tài khoản Zalo cấp phát
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-700 mb-1">Số điện thoại Zalo</label>
+                                            <input
+                                                type="text"
+                                                className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                                placeholder="vd: 0987654321"
+                                                value={formData.zalo_phone}
+                                                onChange={e => setFormData({ ...formData, zalo_phone: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 mb-1">Mật khẩu Zalo</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm"
+                                                    placeholder="Mật khẩu đăng nhập"
+                                                    value={formData.zalo_password}
+                                                    onChange={e => setFormData({ ...formData, zalo_password: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-slate-700 mb-1">Mật khẩu sao lưu</label>
+                                                <input
+                                                    type="text"
+                                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none font-mono text-sm text-red-600"
+                                                    placeholder="Mật khẩu đồng bộ"
+                                                    value={formData.zalo_backup_password}
+                                                    onChange={e => setFormData({ ...formData, zalo_backup_password: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
                                 <div className="pt-4 flex justify-end gap-3">
                                     <button

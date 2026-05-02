@@ -82,7 +82,7 @@ export async function POST(request: Request) {
 
         // 2. Parse Request Body
         const body = await request.json();
-        const { email, password, fullName, role, misa_employee_code, misa_branch_code } = body;
+        const { email, password, fullName, role, misa_employee_code, misa_branch_code, zalo_phone, zalo_password, zalo_backup_password } = body;
 
         if (!email || !password || !fullName || !role) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -114,6 +114,9 @@ export async function POST(request: Request) {
                 status: 'active',
                 misa_employee_code: misa_employee_code,
                 misa_branch_code: misa_branch_code || "NB", // Default to NB if not provided
+                zalo_phone: zalo_phone,
+                zalo_password: zalo_password,
+                zalo_backup_password: zalo_backup_password,
                 updated_at: new Date().toISOString()
             });
 
@@ -174,7 +177,7 @@ export async function PUT(request: Request) {
 
         // 2. Parse Request Body
         const body = await request.json();
-        const { id, email, password, fullName, role, status, misa_employee_code, misa_branch_code } = body;
+        const { id, email, password, fullName, role, status, misa_employee_code, misa_branch_code, zalo_phone, zalo_password, zalo_backup_password } = body;
 
         console.log(`[Admin Update] Starting for ID: ${id}`, { fullName, role, status, misa_employee_code, misa_branch_code });
 
@@ -207,6 +210,9 @@ export async function PUT(request: Request) {
                 status: status,
                 misa_employee_code: misa_employee_code, // Add this field
                 misa_branch_code: misa_branch_code, // Add this field
+                zalo_phone: zalo_phone,
+                zalo_password: zalo_password,
+                zalo_backup_password: zalo_backup_password,
                 updated_at: new Date().toISOString()
             })
             .eq("id", id)
