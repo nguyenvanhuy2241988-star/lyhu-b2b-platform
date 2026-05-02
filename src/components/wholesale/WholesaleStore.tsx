@@ -849,11 +849,11 @@ export default function WholesaleStore({
                 <div className="max-w-6xl mx-auto hidden md:flex items-center gap-6 py-3">
                     {/* Col 1: Logo */}
                     <div className="shrink-0 flex items-center">
-                        <div className="h-[55px] overflow-hidden flex items-center justify-center cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                        <div className="h-[62px] overflow-hidden flex items-center justify-center cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                             <img 
                                 src="/logo-full.png" 
                                 alt="LYHU" 
-                                className="h-[200px] w-auto object-contain brightness-0 invert drop-shadow-sm" 
+                                className="h-[190px] w-auto object-contain brightness-0 invert drop-shadow-sm" 
                             />
                         </div>
                     </div>
