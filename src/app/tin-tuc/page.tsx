@@ -30,6 +30,7 @@ async function getBlogData(page: number, categorySlug: string, searchQuery: stri
             category:blog_categories(id, name, slug)
         `, { count: 'exact' })
         .eq('status', 'published')
+        .lte('published_at', new Date().toISOString())
         .order('published_at', { ascending: false, nullsFirst: false })
         .order('created_at', { ascending: false });
 
@@ -59,6 +60,7 @@ async function getBlogData(page: number, categorySlug: string, searchQuery: stri
         .from('blog_posts')
         .select('id, title, slug, published_at, created_at')
         .eq('status', 'published')
+        .lte('published_at', new Date().toISOString())
         .order('published_at', { ascending: false })
         .limit(5);
 
@@ -73,6 +75,7 @@ async function getBlogData(page: number, categorySlug: string, searchQuery: stri
                 .select('*, category:blog_categories(id, name, slug)')
                 .eq('status', 'published')
                 .in('category_id', block1CatIds)
+                .lte('published_at', new Date().toISOString())
                 .order('published_at', { ascending: false })
                 .limit(4);
             featuredBlocks.block1 = (b1 || []) as BlogPost[];
@@ -86,6 +89,7 @@ async function getBlogData(page: number, categorySlug: string, searchQuery: stri
                 .select('*, category:blog_categories(id, name, slug)')
                 .eq('status', 'published')
                 .in('category_id', block2CatIds)
+                .lte('published_at', new Date().toISOString())
                 .order('published_at', { ascending: false })
                 .limit(4);
             featuredBlocks.block2 = (b2 || []) as BlogPost[];
