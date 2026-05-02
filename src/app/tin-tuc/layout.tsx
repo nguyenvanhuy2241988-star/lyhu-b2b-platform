@@ -38,7 +38,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
                         <img 
                             src="/logo-tin-tuc.png" 
                             alt="LYHU Chuyển động FMCG 24/7" 
-                            className="h-12 md:h-14 object-contain transition-transform group-hover:scale-105" 
+                            className="h-16 md:h-24 object-contain transition-transform group-hover:scale-105" 
                         />
                     </Link>
 
