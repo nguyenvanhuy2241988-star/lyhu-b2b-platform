@@ -13,8 +13,7 @@ const PLATFORMS = [
     { id: 'facebook', label: 'Facebook' },
     { id: 'zalo', label: 'Zalo' },
     { id: 'threads', label: 'Threads' },
-    { id: 'tiktok', label: 'TikTok' },
-    { id: 'linkedin', label: 'LinkedIn' },
+    { id: 'tiktok', label: 'TikTok' }
 ];
 
 export default function PlatformFunnelManager({ userId, date }: PlatformFunnelManagerProps) {
