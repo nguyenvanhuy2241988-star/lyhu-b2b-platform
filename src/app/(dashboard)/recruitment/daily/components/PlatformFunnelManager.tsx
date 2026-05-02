@@ -18,7 +18,6 @@ const PLATFORMS = [
 
 export default function PlatformFunnelManager({ userId, date }: PlatformFunnelManagerProps) {
     const [funnels, setFunnels] = useState<DailyPlatformFunnel[]>([]);
-    const [postCounts, setPostCounts] = useState<Record<string, number>>({});
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
@@ -29,9 +28,8 @@ export default function PlatformFunnelManager({ userId, date }: PlatformFunnelMa
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [funnelData, logsData] = await Promise.all([
-                getDailyPlatformFunnels(userId, date),
-                getPostLogs(userId, date)
+            const [funnelData] = await Promise.all([
+                getDailyPlatformFunnels(userId, date)
             ]);
 
             // Map existing funnels
@@ -49,16 +47,6 @@ export default function PlatformFunnelManager({ userId, date }: PlatformFunnelMa
                 };
             });
             setFunnels(initializedFunnels);
-
-            // Calculate auto post counts
-            const counts: Record<string, number> = {};
-            logsData.forEach(log => {
-                if (log.activity_type !== 'post') return;
-                let platformKey: string = log.platform;
-                if (platformKey.startsWith('facebook')) platformKey = 'facebook';
-                counts[platformKey] = (counts[platformKey] || 0) + 1;
-            });
-            setPostCounts(counts);
 
         } catch (error) {
             console.error("Error loading funnels:", error);
@@ -118,7 +106,6 @@ export default function PlatformFunnelManager({ userId, date }: PlatformFunnelMa
                     <thead className="bg-slate-50 border-y border-slate-200 text-slate-600 font-medium">
                         <tr>
                             <th className="px-4 py-3 rounded-tl-lg">Nền tảng</th>
-                            <th className="px-4 py-3 text-center">Đầu vào (Bài đã đăng)</th>
                             <th className="px-4 py-3 text-center text-blue-600"><MessageSquare className="w-4 h-4 inline mr-1"/>Số người hỏi việc</th>
                             <th className="px-4 py-3 text-center text-orange-600"><FileText className="w-4 h-4 inline mr-1"/>Số CV thu được</th>
                             <th className="px-4 py-3 text-center text-green-600 rounded-tr-lg"><Briefcase className="w-4 h-4 inline mr-1"/>Số hẹn Phỏng vấn</th>
@@ -128,14 +115,10 @@ export default function PlatformFunnelManager({ userId, date }: PlatformFunnelMa
                         {PLATFORMS.map(platform => {
                             const funnel = funnels.find(f => f.platform === platform.id);
                             if (!funnel) return null;
-                            const postsCount = postCounts[platform.id] || 0;
 
                             return (
                                 <tr key={platform.id} className="hover:bg-slate-50 transition-colors">
                                     <td className="px-4 py-3 font-medium text-slate-700">{platform.label}</td>
-                                    <td className="px-4 py-3 text-center font-bold text-slate-500">
-                                        {postsCount} bài
-                                    </td>
                                     <td className="px-4 py-3">
                                         <input
                                             type="number"
