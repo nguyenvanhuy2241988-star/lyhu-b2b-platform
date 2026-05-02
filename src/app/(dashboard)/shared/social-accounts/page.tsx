@@ -34,7 +34,7 @@ const STATUSES = {
 };
 
 export default function SocialAccountsPage() {
-    const { session } = useAuth();
+    const { session, role } = useAuth();
     const [accounts, setAccounts] = useState<SocialAccount[]>([]);
     const [profiles, setProfiles] = useState<Profile[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -173,13 +173,15 @@ export default function SocialAccountsPage() {
                     <h1 className="text-2xl font-bold text-slate-800">Tài khoản Công ty</h1>
                     <p className="text-slate-500 mt-1">Quản lý tập trung toàn bộ tài khoản mạng xã hội, email của công ty</p>
                 </div>
-                <button
-                    onClick={handleOpenCreate}
-                    className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors"
-                >
-                    <Plus className="w-4 h-4" />
-                    Thêm tài khoản
-                </button>
+                {role === 'admin' && (
+                    <button
+                        onClick={handleOpenCreate}
+                        className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium transition-colors"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Thêm tài khoản
+                    </button>
+                )}
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -213,9 +215,9 @@ export default function SocialAccountsPage() {
                                 <th className="px-6 py-3 font-medium">ID Đăng nhập</th>
                                 <th className="px-6 py-3 font-medium">Mật khẩu</th>
                                 <th className="px-6 py-3 font-medium">Khôi phục</th>
-                                <th className="px-6 py-3 font-medium">Giao cho</th>
+                                {role === 'admin' && <th className="px-6 py-3 font-medium">Giao cho</th>}
                                 <th className="px-6 py-3 font-medium">Trạng thái</th>
-                                <th className="px-6 py-3 font-medium text-right">Hành động</th>
+                                {role === 'admin' && <th className="px-6 py-3 font-medium text-right">Hành động</th>}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
@@ -266,13 +268,15 @@ export default function SocialAccountsPage() {
                                             <td className="px-6 py-4 text-xs text-slate-500">
                                                 {account.recovery_info || '-'}
                                             </td>
-                                            <td className="px-6 py-4">
-                                                {assignee ? (
-                                                    <span className="text-blue-600 font-medium">{assignee.full_name || assignee.email}</span>
-                                                ) : (
-                                                    <span className="text-slate-400 italic">Chưa giao</span>
-                                                )}
-                                            </td>
+                                            {role === 'admin' && (
+                                                <td className="px-6 py-4">
+                                                    {assignee ? (
+                                                        <span className="text-blue-600 font-medium">{assignee.full_name || assignee.email}</span>
+                                                    ) : (
+                                                        <span className="text-slate-400 italic">Chưa giao</span>
+                                                    )}
+                                                </td>
+                                            )}
                                             <td className="px-6 py-4">
                                                 <span className={`inline-flex px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                                                     account.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
@@ -283,22 +287,24 @@ export default function SocialAccountsPage() {
                                                     {STATUSES[account.status as keyof typeof STATUSES]}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-right space-x-2">
-                                                <button
-                                                    onClick={() => handleOpenEdit(account)}
-                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                                    title="Chỉnh sửa"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(account.id)}
-                                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
-                                                    title="Xóa"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </td>
+                                            {role === 'admin' && (
+                                                <td className="px-6 py-4 text-right space-x-2">
+                                                    <button
+                                                        onClick={() => handleOpenEdit(account)}
+                                                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                        title="Chỉnh sửa"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(account.id)}
+                                                        className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                        title="Xóa"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </td>
+                                            )}
                                         </tr>
                                     );
                                 })
