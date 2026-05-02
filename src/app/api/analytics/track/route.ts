@@ -55,9 +55,9 @@ async function getGeoFromIP(ip: string): Promise<{ city: string | null; region: 
             // Evict old entries periodically (keep cache manageable)
             if (geoCache.size > 5000) {
                 const now = Date.now();
-                for (const [key, val] of geoCache) {
+                geoCache.forEach((val, key) => {
                     if (now - val.ts > GEO_CACHE_TTL) geoCache.delete(key);
-                }
+                });
             }
 
             return result;
