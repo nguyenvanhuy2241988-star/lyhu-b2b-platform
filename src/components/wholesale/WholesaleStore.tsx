@@ -858,8 +858,8 @@ export default function WholesaleStore({
                         </div>
                     </div>
                     
-                    {/* Col 2: Search Input + Keywords — centered between logo & cart */}
-                    <div className="flex-1 flex flex-col gap-1.5 pt-1">
+                    {/* Col 2: Search Input + Keywords */}
+                    <div className="flex-1 flex flex-col gap-1.5 pt-1 max-w-[600px]">
                         {/* Search Bar constrained to 40px */}
                         <div className="relative h-[40px]">
                             <input 
@@ -925,11 +925,11 @@ export default function WholesaleStore({
                         )}
                     </div>
 
-                    {/* Col 3: Cart — flush right */}
-                    <div className="shrink-0 flex items-center">
+                    {/* Col 3: Cart — balanced with logo */}
+                    <div className="shrink-0 flex items-center pl-4">
                         <div className="relative group">
                             <button className="p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors flex items-center justify-center">
-                                <ShoppingCart className="w-[28px] h-[28px] text-white" strokeWidth={1.5} />
+                                <ShoppingCart className="w-[26px] h-[26px] text-white" strokeWidth={1.5} />
                                 {cartAnalysis.totalItems > 0 && (
                                     <span className="absolute top-0 -right-1 bg-white text-primary-600 outline outline-2 outline-primary-500 text-[10px] font-bold min-w-[20px] h-[20px] rounded-full flex items-center justify-center px-0.5 shadow-sm">
                                         {cartAnalysis.totalItems}
