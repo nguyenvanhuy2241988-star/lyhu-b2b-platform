@@ -196,6 +196,7 @@ export const NAV_ITEMS = {
         { label: "------------", href: "#", icon: List }, // Separator
         { label: "Góc Giải Trí", href: "/entertainment", icon: Gamepad2 },
         { label: "Lương & Thưởng", href: "/admin/payroll", icon: DollarSign },
+        { label: "Tài khoản Công ty", href: "/admin/social-accounts", icon: Globe },
         { label: "Cài đặt", href: "/admin/settings", icon: Settings },
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
         { label: "Tài liệu", href: "/documents", icon: FileText },
