@@ -33,20 +33,13 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
 
                 {/* Main Header Area: Logo, Slogan, Trending, Search */}
                 <div className="max-w-[1200px] mx-auto px-4 pt-2 pb-1 flex flex-col md:flex-row items-center justify-start gap-6 md:gap-8">
-                    {/* Logo & Slogan */}
-                    <Link href="/tin-tuc" className="flex flex-col items-center shrink-0 group">
-                        {/* Container crops the top/bottom transparent whitespace of the logo */}
-                        <div className="h-14 md:h-16 overflow-hidden flex items-center justify-center">
-                            <img 
-                                src="/logo-full.png" 
-                                alt="LYHU Logo" 
-                                className="h-28 md:h-32 object-contain transition-transform group-hover:scale-105" 
-                            />
-                        </div>
-                        {/* Slogan perfectly centered under logo, smaller, no underline */}
-                        <span className="text-[8px] md:text-[9px] font-bold text-primary-700 uppercase tracking-widest mt-1">
-                            Chuyển động FMCG 24/7
-                        </span>
+                    {/* Logo */}
+                    <Link href="/tin-tuc" className="flex items-center shrink-0 group">
+                        <img 
+                            src="/logo-tin-tuc.png" 
+                            alt="LYHU Chuyển động FMCG 24/7" 
+                            className="h-12 md:h-14 object-contain transition-transform group-hover:scale-105" 
+                        />
                     </Link>
 
                     {/* Trending Topics Bar */}
