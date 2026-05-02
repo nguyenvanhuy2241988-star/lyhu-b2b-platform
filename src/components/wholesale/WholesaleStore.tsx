@@ -846,20 +846,20 @@ export default function WholesaleStore({
 
             {/* Header LYHU Style - Shopee layout */}
             <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-4 sticky top-0 z-40 shadow-md">
-                <div className="max-w-6xl mx-auto hidden md:flex items-center gap-6 pt-3 pb-2">
-                    {/* Col 1: Logo */}
-                    <div className="w-[220px] shrink-0 flex items-center">
-                        <div className="h-[55px] overflow-hidden flex items-center justify-center cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                <div className="max-w-6xl mx-auto hidden md:flex items-center gap-8 py-3">
+                    {/* Col 1: Logo — large, balanced left margin */}
+                    <div className="shrink-0 flex items-center">
+                        <div className="h-[60px] overflow-hidden flex items-center justify-center cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                             <img 
                                 src="/logo-full.png" 
                                 alt="LYHU" 
-                                className="h-[200px] w-auto object-contain brightness-0 invert drop-shadow-sm" 
+                                className="h-[220px] w-auto object-contain brightness-0 invert drop-shadow-sm" 
                             />
                         </div>
                     </div>
                     
-                    {/* Col 2: Search Input + Keywords */}
-                    <div className="flex-1 flex flex-col gap-1.5 pt-1">
+                    {/* Col 2: Search Input + Keywords — capped width for balance */}
+                    <div className="flex-1 max-w-[550px] flex flex-col gap-1.5 pt-1">
                         {/* Search Bar constrained to 40px */}
                         <div className="relative h-[40px]">
                             <input 
@@ -923,8 +923,8 @@ export default function WholesaleStore({
                         </div>
                     </div>
 
-                    {/* Col 3: Actions constraints */}
-                    <div className="shrink-0 flex items-center justify-end">
+                    {/* Col 3: Cart — balanced right margin */}
+                    <div className="shrink-0 flex items-center justify-end ml-auto">
                         <div className="relative group">
                             <button className="p-2 cursor-pointer hover:bg-white/10 rounded-sm transition-colors flex items-center justify-center">
                                 <ShoppingCart className="w-[28px] h-[28px] text-white" strokeWidth={1.5} />
