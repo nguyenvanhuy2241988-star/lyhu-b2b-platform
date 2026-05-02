@@ -36,6 +36,17 @@ export interface DailyActivity {
     other_tasks?: string;
     no_post_reason?: string;
     plan_next_day?: string;
+    candidate_feedback?: string;
+}
+
+export interface DailyPlatformFunnel {
+    id?: string;
+    user_id: string;
+    date: string;
+    platform: string; // 'facebook' | 'zalo' | 'threads' | 'tiktok' | 'linkedin' | 'other'
+    inquiries_count: number;
+    cvs_count: number;
+    interviews_count: number;
 }
 
 export interface PostLog {
@@ -315,6 +326,36 @@ export const getMyReportsHistory = async (userId: string, limit = 7) => {
 
     if (error) throw error;
     return data as DailyActivity[];
+};
+
+export const getDailyPlatformFunnels = async (userId: string, date: string) => {
+    const { data, error } = await supabase
+        .from('recruitment_daily_platform_funnels')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('date', date);
+
+    if (error) {
+        console.error("Error fetching funnels:", error);
+        return [];
+    }
+    return data as DailyPlatformFunnel[];
+};
+
+export const upsertDailyPlatformFunnels = async (funnels: DailyPlatformFunnel[]) => {
+    if (funnels.length === 0) return;
+    
+    // Clean up IDs for new records if necessary
+    const payload = funnels.map(f => {
+        const { id, ...rest } = f;
+        return id ? f : rest;
+    });
+
+    const { error } = await supabase
+        .from('recruitment_daily_platform_funnels')
+        .upsert(payload, { onConflict: 'user_id, date, platform' });
+
+    if (error) throw error;
 };
 
 export const getAllDailyReports = async (startDate: string, endDate: string) => {

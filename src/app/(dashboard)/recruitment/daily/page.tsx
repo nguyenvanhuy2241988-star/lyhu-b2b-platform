@@ -9,6 +9,7 @@ import { getDailyReport, upsertDailyReport, getMyReportsHistory, DailyActivity }
 import { supabase } from "@/lib/supabaseClient";
 import PostLogManager from "./components/PostLogManager";
 import KpiDashboard from "./components/KpiDashboard";
+import PlatformFunnelManager from "./components/PlatformFunnelManager";
 
 export default function DailyReportPage() {
     const { user, role } = useAuth();
@@ -39,7 +40,8 @@ export default function DailyReportPage() {
         request_support: "",
         other_tasks: "",
         no_post_reason: "",
-        plan_next_day: ""
+        plan_next_day: "",
+        candidate_feedback: ""
     });
 
     useEffect(() => {
@@ -81,7 +83,8 @@ export default function DailyReportPage() {
                     request_support: "",
                     other_tasks: "",
                     no_post_reason: "",
-                    plan_next_day: ""
+                    plan_next_day: "",
+                    candidate_feedback: ""
                 });
             }
         } catch (error) {
@@ -178,6 +181,12 @@ export default function DailyReportPage() {
                         }}
                     />
 
+                    {/* Funnel Matrix */}
+                    <PlatformFunnelManager
+                        userId={effectiveUserId}
+                        date={date}
+                    />
+
                     {/* Non-recruitment / Explanation Section */}
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
                         <h2 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
@@ -240,6 +249,17 @@ export default function DailyReportPage() {
                                     placeholder="Cần cấp thêm ngân sách chạy ads..."
                                     value={formData.request_support || ""}
                                     onChange={e => handleChange('request_support', e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1 flex items-center gap-2">
+                                    <span className="text-purple-600 font-semibold">Phản hồi của Ứng viên / Thị trường</span>
+                                </label>
+                                <textarea
+                                    className="w-full p-3 border border-purple-200 bg-purple-50/30 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none min-h-[100px] text-purple-900"
+                                    placeholder="Ví dụ: Ứng viên chê lương cứng thấp, Thắc mắc về việc xoay ca, Có chế độ cơm trưa không?..."
+                                    value={formData.candidate_feedback || ""}
+                                    onChange={e => handleChange('candidate_feedback', e.target.value)}
                                 />
                             </div>
                             <div>
