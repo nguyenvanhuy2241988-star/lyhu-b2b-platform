@@ -849,12 +849,13 @@ export default function WholesaleStore({
                 <div className="max-w-6xl mx-auto hidden md:flex items-center gap-6 pt-3 pb-2">
                     {/* Col 1: Logo */}
                     <div className="w-[180px] shrink-0 flex items-center">
-                        <img 
-                            src="/logo-full.png" 
-                            alt="LYHU" 
-                            className="w-full object-contain cursor-pointer brightness-0 invert drop-shadow-sm pb-1" 
-                            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                        />
+                        <div className="h-[42px] overflow-hidden flex items-center justify-center cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                            <img 
+                                src="/logo-full.png" 
+                                alt="LYHU" 
+                                className="h-[150px] w-auto object-contain brightness-0 invert drop-shadow-sm" 
+                            />
+                        </div>
                     </div>
                     
                     {/* Col 2: Search Input + Keywords */}
@@ -975,7 +976,9 @@ export default function WholesaleStore({
 
                 {/* Mobile header (simple) */}
                 <div className="md:hidden flex items-center gap-3 py-2">
-                    <img src="/logo-full.png" alt="LYHU" className="w-[100px] object-contain brightness-0 invert" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
+                    <div className="h-[32px] overflow-hidden flex items-center justify-center" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+                        <img src="/logo-full.png" alt="LYHU" className="h-[120px] w-auto object-contain brightness-0 invert" />
+                    </div>
                     <div className="relative flex-1">
                         <input 
                             type="text" 
