@@ -55,7 +55,7 @@ export default function PlatformFunnelManager({ userId, date }: PlatformFunnelMa
             const counts: Record<string, number> = {};
             logsData.forEach(log => {
                 if (log.activity_type !== 'post') return;
-                let platformKey = log.platform;
+                let platformKey: string = log.platform;
                 if (platformKey.startsWith('facebook')) platformKey = 'facebook';
                 counts[platformKey] = (counts[platformKey] || 0) + 1;
             });
