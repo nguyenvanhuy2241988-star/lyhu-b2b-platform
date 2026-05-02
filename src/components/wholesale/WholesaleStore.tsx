@@ -910,7 +910,7 @@ export default function WholesaleStore({
                         </div>
 
                         {/* Keywords perfectly flush with search bar left edge */}
-                        <div className="flex items-center gap-3 overflow-x-auto h-[20px]">
+                        <div className="flex items-center gap-3 overflow-hidden h-[20px]">
                             {(searchHistory.length > 0 ? searchHistory.slice(0, 7) : ['Bánh tráng Abi', 'Khoai môn sấy', 'Snack BOYO', 'Đặc sản miền Tây', 'Bánh tráng phô mai', 'Gia vị', 'Flash Sale']).map((kw, i) => (
                                 <button 
                                     key={i}
