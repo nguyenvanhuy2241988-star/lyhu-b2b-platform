@@ -6,7 +6,7 @@ import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
     BarChart, Bar, PieChart, Pie, Cell
 } from "recharts";
-import { Users, Eye, MousePointerClick, Activity, Monitor, Smartphone, Globe, Calendar as CalendarIcon, ArrowUpRight } from "lucide-react";
+import { Users, Eye, MousePointerClick, Activity, Monitor, Smartphone, Globe, Calendar as CalendarIcon, ArrowUpRight, MapPin } from "lucide-react";
 import dayjs from "dayjs";
 
 export default function AnalyticsDashboard() {
@@ -398,6 +398,94 @@ export default function AnalyticsDashboard() {
                                 <div className="text-center text-slate-400 py-4">Chưa có dữ liệu</div>
                             )}
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Geographic Analytics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Top Regions - Bar Chart */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                    <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                        <MapPin className="w-5 h-5 text-rose-500" />
+                        Khu vực truy cập (Tỉnh/Thành)
+                    </h3>
+                    {data?.topRegions?.length > 0 ? (
+                        <div className="h-[350px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                    data={data.topRegions.slice(0, 10)}
+                                    layout="vertical"
+                                    margin={{ top: 0, right: 20, bottom: 0, left: 10 }}
+                                >
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                                    <XAxis type="number" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 11}} />
+                                    <YAxis 
+                                        type="category" 
+                                        dataKey="name" 
+                                        axisLine={false} 
+                                        tickLine={false} 
+                                        tick={{fill: '#334155', fontSize: 12, fontWeight: 500}} 
+                                        width={120}
+                                    />
+                                    <RechartsTooltip
+                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                        formatter={(value: any, name: any) => {
+                                            if (name === 'views') return [value, 'Lượt xem'];
+                                            if (name === 'visitors') return [value, 'Khách'];
+                                            return [value, name];
+                                        }}
+                                    />
+                                    <Bar dataKey="views" name="views" fill="#f43f5e" radius={[0, 6, 6, 0]} barSize={16} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    ) : (
+                        <div className="h-[200px] flex items-center justify-center text-slate-400">
+                            <div className="text-center">
+                                <MapPin className="w-10 h-10 mx-auto mb-3 text-slate-200" />
+                                <p>Chưa có dữ liệu khu vực</p>
+                                <p className="text-xs mt-1">Dữ liệu sẽ bắt đầu thu thập từ lượt truy cập mới</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Top Cities */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                    <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                        <Globe className="w-5 h-5 text-violet-500" />
+                        Chi tiết Thành phố
+                    </h3>
+                    <div className="space-y-3 max-h-[350px] overflow-y-auto">
+                        {data?.topCities?.map((item: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between group hover:bg-slate-50 rounded-lg px-3 py-2 -mx-3 transition-colors">
+                                <div className="flex items-center gap-3 truncate">
+                                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-100 to-purple-100 text-violet-600 flex items-center justify-center text-xs font-bold">
+                                        {idx + 1}
+                                    </div>
+                                    <div className="truncate">
+                                        <span className="text-sm font-medium text-slate-800 block truncate">
+                                            {item.name}
+                                        </span>
+                                        {item.region && (
+                                            <span className="text-[11px] text-slate-400">
+                                                {item.region}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="text-sm font-bold text-slate-900 bg-slate-50 group-hover:bg-white px-3 py-1 rounded-lg transition-colors">
+                                    {item.views}
+                                </div>
+                            </div>
+                        ))}
+                        {(!data?.topCities || data.topCities.length === 0) && (
+                            <div className="text-center text-slate-400 py-8">
+                                <Globe className="w-10 h-10 mx-auto mb-3 text-slate-200" />
+                                <p>Chưa có dữ liệu thành phố</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

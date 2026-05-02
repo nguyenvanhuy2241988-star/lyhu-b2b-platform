@@ -1,4 +1,4 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -8,6 +8,67 @@ const getSupabaseAdmin = () => createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
     process.env.SUPABASE_SERVICE_ROLE_KEY || "placeholder-key"
 );
+
+// Simple in-memory cache for IP geolocation to avoid hitting rate limits
+// Key: IP address, Value: { city, region, country, timestamp }
+const geoCache = new Map<string, { city: string | null; region: string | null; country: string | null; ts: number }>();
+const GEO_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+
+async function getGeoFromIP(ip: string): Promise<{ city: string | null; region: string | null; country: string | null }> {
+    const fallback = { city: null, region: null, country: null };
+
+    // Skip localhost / private IPs
+    if (!ip || ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {
+        return fallback;
+    }
+
+    // Check cache first
+    const cached = geoCache.get(ip);
+    if (cached && (Date.now() - cached.ts) < GEO_CACHE_TTL) {
+        return { city: cached.city, region: cached.region, country: cached.country };
+    }
+
+    try {
+        // ip-api.com free tier — no API key needed, 45 req/min limit
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 3000); // 3s timeout
+
+        const response = await fetch(
+            `http://ip-api.com/json/${ip}?fields=status,city,regionName,country&lang=vi`,
+            { signal: controller.signal }
+        );
+        clearTimeout(timeout);
+
+        if (!response.ok) return fallback;
+
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            const result = {
+                city: data.city || null,
+                region: data.regionName || null,
+                country: data.country || null,
+            };
+            // Cache the result
+            geoCache.set(ip, { ...result, ts: Date.now() });
+
+            // Evict old entries periodically (keep cache manageable)
+            if (geoCache.size > 5000) {
+                const now = Date.now();
+                for (const [key, val] of geoCache) {
+                    if (now - val.ts > GEO_CACHE_TTL) geoCache.delete(key);
+                }
+            }
+
+            return result;
+        }
+    } catch (err) {
+        // Silently fail — geolocation is best-effort, should never block tracking
+        console.warn('[Analytics Geo] Lookup failed for IP:', ip, err);
+    }
+
+    return fallback;
+}
 
 export async function POST(req: NextRequest) {
     try {
@@ -57,6 +118,16 @@ export async function POST(req: NextRequest) {
             bot_name = "Generic Bot"; 
         }
 
+        // Get visitor IP and lookup geolocation
+        const forwarded = req.headers.get("x-forwarded-for");
+        const ip = forwarded ? forwarded.split(",")[0].trim() : req.headers.get("x-real-ip") || "";
+        
+        // Only lookup geo for human visitors (bots don't need it)
+        let geo = { city: null as string | null, region: null as string | null, country: null as string | null };
+        if (!is_bot && ip) {
+            geo = await getGeoFromIP(ip);
+        }
+
         // Insert to DB
         const { error } = await supabaseAdmin
             .from("website_page_views")
@@ -73,7 +144,10 @@ export async function POST(req: NextRequest) {
                 screen_width: screen_width || null,
                 is_bot,
                 bot_name,
-                load_time_ms: load_time_ms || null
+                load_time_ms: load_time_ms || null,
+                city: geo.city,
+                region: geo.region,
+                country: geo.country,
             });
 
         if (error) {
@@ -87,4 +161,3 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }
-
