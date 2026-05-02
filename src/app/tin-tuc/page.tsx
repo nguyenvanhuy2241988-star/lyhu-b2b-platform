@@ -30,7 +30,8 @@ async function getBlogData(page: number, categorySlug: string, searchQuery: stri
             category:blog_categories(id, name, slug)
         `, { count: 'exact' })
         .eq('status', 'published')
-        .order('published_at', { ascending: false });
+        .order('published_at', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false });
 
     // Apply Category Filter
     if (categorySlug && categorySlug !== 'all') {
