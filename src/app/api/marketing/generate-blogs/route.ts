@@ -67,19 +67,24 @@ async function fetchPexelsImages(query: string, count: number = 3): Promise<stri
     if (!PEXELS_API_KEY) return [];
 
     try {
-        // Fetch 15 images instead of just 3 to give us a pool to randomly select from
-        const res = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=15&orientation=landscape`, {
+        const randomPage = Math.floor(Math.random() * 5) + 1;
+        const res = await fetch(`https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=15&page=${randomPage}&orientation=landscape`, {
             headers: {
                 Authorization: PEXELS_API_KEY
             }
         });
         const data = await res.json();
         if (data.photos && data.photos.length > 0) {
-            // Shuffle the array to get random images for the same keyword
+            const { data: existingPosts } = await supabase
+                .from('blog_posts')
+                .select('thumbnail_url')
+                .not('thumbnail_url', 'is', null);
+            const usedUrls = new Set((existingPosts || []).map(p => p.thumbnail_url));
+
             const shuffled = data.photos.sort(() => 0.5 - Math.random());
-            const selected = shuffled.slice(0, count);
-            // Use large2x or original for high quality
-            return selected.map((p: any) => p.src.large2x || p.src.original);
+            const fresh = shuffled.filter((p: any) => !usedUrls.has(p.src.large2x) && !usedUrls.has(p.src.original));
+            const pool = fresh.length >= count ? fresh : shuffled;
+            return pool.slice(0, count).map((p: any) => p.src.large2x || p.src.original);
         }
     } catch (e) {
         console.error('Pexels API error:', e);
