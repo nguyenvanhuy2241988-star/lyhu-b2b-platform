@@ -17,7 +17,7 @@ interface BlogConfig {
 }
 
 const TOPICS: BlogConfig[] = [
-    // Advisory (Góc Nhà Phân Phối & Điểm Bán)
+    // === ADVISORY: Góc Nhà Phân Phối & Điểm Bán ===
     { topic: "Tuyệt chiêu quản lý hàng tồn kho cho tạp hóa nhỏ: Làm sao để không đọng vốn?", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
     { topic: "Cách thiết kế quầy thanh toán siêu thị mini để tăng 15% doanh thu ngẫu hứng.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
     { topic: "5 sai lầm chết người khi nhập hàng giá sỉ qua các hội nhóm Facebook.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
@@ -25,28 +25,84 @@ const TOPICS: BlogConfig[] = [
     { topic: "Giải pháp chống thất thoát hàng hóa hiệu quả nhất cho cửa hàng tạp hóa tự chọn.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
     { topic: "Hướng dẫn lên kế hoạch nhập hàng mùa tựu trường cho tiệm tạp hóa.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
     { topic: "Chiến lược định giá sản phẩm: Khi nào nên bán rẻ, khi nào nên giữ giá?", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
-    { topic: "Tại sao việc sắp xếp quầy kệ theo nguyên tắc 'mắt nhìn tay với' lại quan trọng?", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
     { topic: "Bí quyết giữ chân khách hàng quen: Đừng chỉ cạnh tranh bằng giá.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
+    { topic: "10 combo cross-sell hiệu quả nhất cho tiệm tạp hóa: Mì + trứng, bia + đá + đồ nhắm.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
+    { topic: "Checklist nhập hàng Tết Trung Thu cho tiệm tạp hóa: Bánh, đèn lồng, kẹo.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
 
-    // News (Tin Tức FMCG)
-    { topic: "Làn sóng tạp hóa hiện đại đang dần thay thế các điểm bán truyền thống tại nông thôn.", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
+    // === NEWS: Tin Tức FMCG ===
     { topic: "Bùng nổ xu hướng ăn vặt 'healthy' của Gen Z và tác động đến ngành FMCG.", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
-    { topic: "Các siêu thị mini đang đối mặt với sự cạnh tranh khốc liệt từ thương mại điện tử.", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
     { topic: "Dự báo thị trường bánh kẹo Việt Nam nửa cuối năm 2026: Phân khúc nào sẽ lên ngôi?", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
-    { topic: "Ngành FMCG chuyển mình: Bán hàng đa kênh không còn là lựa chọn, mà là bắt buộc.", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
-    { topic: "Các ông lớn bán lẻ liên tục mở rộng: Áp lực nào cho điểm bán nhỏ lẻ?", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
-    { topic: "Xu hướng tiêu dùng tối giản và ảnh hưởng trực tiếp đến kích cỡ đóng gói sản phẩm.", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
     { topic: "Sự bứt phá của các thương hiệu bánh kẹo nội địa so với hàng nhập khẩu.", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
+    { topic: "Vinamilk, TH True Milk, Nutifood: Cuộc đua sữa tươi organic năm 2026.", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
+    { topic: "Thị trường bia Việt Nam 2026: Bia craft, bia 0 độ có đáng nhập cho tiệm?", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
+    { topic: "Masan ra mắt sản phẩm mới: Cơ hội gì cho nhà phân phối nhỏ?", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
 
-    // Report (Báo Cáo Phân Tích)
-    { topic: "Báo cáo định kỳ: Đánh giá hiệu quả chuỗi cung ứng hàng tiêu dùng nhanh tại các thành phố cấp 2.", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" },
-    { topic: "Phân tích chuyên sâu: Hành trình mua sắm của người tiêu dùng tại siêu thị mini năm 2026.", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" },
-    { topic: "Đánh giá rủi ro và cơ hội khi mở mới cửa hàng tạp hóa trong khu dân cư đông đúc.", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" },
+    // === REPORT: Báo Cáo Thị Trường ===
+    { topic: "Báo cáo: Đánh giá hiệu quả chuỗi cung ứng hàng tiêu dùng nhanh tại thành phố cấp 2.", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" },
+    { topic: "Phân tích chuyên sâu: Hành trình mua sắm của người tiêu dùng tại siêu thị mini.", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" },
     { topic: "Tối ưu hóa chi phí vận hành điểm bán: Báo cáo từ các mô hình bán lẻ thành công.", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" },
-    { topic: "Báo cáo: Tác động của chính sách thuế và giá nguyên liệu đến tỷ suất lợi nhuận ngành bánh kẹo.", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" },
-    { topic: "Phân tích chiến lược đa dạng hóa sản phẩm của các điểm bán lẻ hàng đầu.", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" },
-    { topic: "Báo cáo xu hướng: Tầm quan trọng của việc ứng dụng công nghệ trong quản lý chuỗi cung ứng bán lẻ.", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" },
-    { topic: "Đánh giá tiềm năng phát triển của mô hình siêu thị mini kết hợp cửa hàng tiện lợi.", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" }
+    { topic: "Khác biệt thị hiếu Bắc-Trung-Nam: Nhập hàng sao cho đúng vùng miền?", categorySlug: "bao-cao-thi-truong", categoryName: "Báo Cáo Thị Trường", type: "report" },
+
+    // === APP & PHẦN MỀM CHO CỬA HÀNG ===
+    { topic: "So sánh chi tiết KiotViet vs Sapo POS vs Suno: Phần mềm nào phù hợp tiệm tạp hóa?", categorySlug: "cong-nghe-ban-le", categoryName: "Công Nghệ Bán Lẻ", type: "advisory" },
+    { topic: "Top 7 app quản lý bán hàng miễn phí cho tiệm tạp hóa nhỏ năm 2026.", categorySlug: "cong-nghe-ban-le", categoryName: "Công Nghệ Bán Lẻ", type: "advisory" },
+    { topic: "Hướng dẫn cài đặt máy POS và phần mềm tính tiền cho siêu thị mini từ A-Z.", categorySlug: "cong-nghe-ban-le", categoryName: "Công Nghệ Bán Lẻ", type: "advisory" },
+    { topic: "Camera an ninh cho cửa hàng: Loại nào tốt, giá bao nhiêu, lắp ở đâu?", categorySlug: "cong-nghe-ban-le", categoryName: "Công Nghệ Bán Lẻ", type: "advisory" },
+
+    // === THANH TOÁN ĐIỆN TỬ ===
+    { topic: "MoMo vs ZaloPay vs VNPay: So sánh phí giao dịch và ưu đãi cho chủ tiệm.", categorySlug: "cong-nghe-ban-le", categoryName: "Công Nghệ Bán Lẻ", type: "advisory" },
+    { topic: "Hướng dẫn đăng ký nhận thanh toán QR code cho tiệm tạp hóa: Miễn phí, 5 phút.", categorySlug: "cong-nghe-ban-le", categoryName: "Công Nghệ Bán Lẻ", type: "advisory" },
+
+    // === TOP LIST ===
+    { topic: "Top 10 snack bán chạy nhất mùa hè 2026 tại các tiệm tạp hóa.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
+    { topic: "Top 5 loại nước giải khát mới ra mắt đáng nhập sỉ nhất quý 2/2026.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
+    { topic: "Top 8 sản phẩm ăn vặt Hàn Quốc đang hot tại Việt Nam, giới trẻ mê mẩn.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
+    { topic: "Top 10 thương hiệu mì gói bán chạy nhất Việt Nam 2026: Hảo Hảo còn giữ ngôi?", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
+
+    // === SẢN PHẨM MỚI FMCG ===
+    { topic: "Review sản phẩm mới: Sữa chua uống Vinamilk Greek - Giá sỉ và biên lợi nhuận.", categorySlug: "nganh-hang", categoryName: "Ngành Hàng", type: "news" },
+    { topic: "Pepsi ra mắt vị mới tại Việt Nam: Cơ hội nào cho điểm bán lẻ?", categorySlug: "nganh-hang", categoryName: "Ngành Hàng", type: "news" },
+    { topic: "Xu hướng đồ uống không đường 2026: Coca-Cola Zero, Pepsi Zero hay TH True Tea?", categorySlug: "nganh-hang", categoryName: "Ngành Hàng", type: "news" },
+
+    // === TÀI CHÍNH & KẾ TOÁN CHO CHỦ TIỆM ===
+    { topic: "Hướng dẫn xuất hóa đơn điện tử cho cửa hàng tạp hóa nhỏ: Bắt buộc từ 2026.", categorySlug: "phap-ly-chinh-ngach", categoryName: "Pháp Lý & Chính Ngạch", type: "advisory" },
+    { topic: "Cách tính lãi lỗ chính xác cho tiệm tạp hóa: Đừng nhầm doanh thu với lợi nhuận.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
+    { topic: "Thủ tục đăng ký kinh doanh siêu thị mini từ A-Z: Giấy phép, thuế, ATTP.", categorySlug: "phap-ly-chinh-ngach", categoryName: "Pháp Lý & Chính Ngạch", type: "advisory" },
+
+    // === MARKETING CHO CỬA HÀNG ===
+    { topic: "Cách chạy quảng cáo Facebook cho tiệm tạp hóa chỉ với 50.000đ/ngày.", categorySlug: "nha-phan-phoi-diem-ban", categoryName: "Nhà Phân Phối & Điểm Bán", type: "advisory" },
+    { topic: "Tạo fanpage, Zalo OA cho tiệm tạp hóa: Hướng dẫn chi tiết cho người không biết IT.", categorySlug: "nha-phan-phoi-diem-ban", categoryName: "Nhà Phân Phối & Điểm Bán", type: "advisory" },
+    { topic: "Bán hàng tạp hóa trên TikTok Shop: Có nên không? Hướng dẫn từ đầu.", categorySlug: "nha-phan-phoi-diem-ban", categoryName: "Nhà Phân Phối & Điểm Bán", type: "advisory" },
+
+    // === THIẾT KẾ & BÀY TRÍ CỬA HÀNG ===
+    { topic: "5 mẫu bày kệ siêu thị mini dưới 30m² đẹp, khoa học và tối ưu doanh thu.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
+    { topic: "Bảng hiệu, biển quảng cáo cho tiệm tạp hóa: Làm sao cho đẹp mà rẻ?", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
+    { topic: "Ánh sáng trong cửa hàng: Tại sao đèn LED trắng giúp bán hàng tốt hơn?", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
+
+    // === NHƯỢNG QUYỀN & MÔ HÌNH ===
+    { topic: "Mở cửa hàng Bách Hóa Xanh, Circle K, GS25: Chi phí thật sự là bao nhiêu?", categorySlug: "ban-le-hien-dai", categoryName: "Bán Lẻ Hiện Đại", type: "report" },
+    { topic: "Mô hình tạp hóa kết hợp trà sữa, cà phê: Có đáng đầu tư không?", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
+
+    // === GIAO HÀNG & ONLINE ===
+    { topic: "Đăng ký GrabMart, ShopeeFood cho tiệm tạp hóa: Hướng dẫn từ A-Z.", categorySlug: "cong-nghe-ban-le", categoryName: "Công Nghệ Bán Lẻ", type: "advisory" },
+    { topic: "Nhận đơn online cho tiệm tạp hóa qua Zalo, Facebook: Không cần app phức tạp.", categorySlug: "cong-nghe-ban-le", categoryName: "Công Nghệ Bán Lẻ", type: "advisory" },
+
+    // === NHÂN SỰ CỬA HÀNG ===
+    { topic: "Cách tuyển và giữ chân nhân viên bán hàng ở tiệm tạp hóa vùng nông thôn.", categorySlug: "nghe-fmcg", categoryName: "Nghề FMCG", type: "advisory" },
+    { topic: "Quản lý nhân viên bán hàng: Nên trả lương cứng hay phần trăm doanh thu?", categorySlug: "nghe-fmcg", categoryName: "Nghề FMCG", type: "advisory" },
+
+    // === XU HƯỚNG HEALTHY & ORGANIC ===
+    { topic: "Organic, sugar-free, plant-based lên ngôi: Tiệm tạp hóa nên nhập gì?", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
+    { topic: "Khách hàng ngày càng ghét túi nilon: Giải pháp xanh nào cho tiệm tạp hóa?", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
+
+    // === THƯƠNG HIỆU NỔI BẬT ===
+    { topic: "Câu chuyện Masan: Từ nước mắm Chinsu đến đế chế FMCG - Bài học cho nhà bán lẻ.", categorySlug: "doanh-nghiep-lon", categoryName: "Doanh Nghiệp Lớn", type: "report" },
+    { topic: "Acecook Việt Nam: Vì sao Hảo Hảo vẫn là vua mì gói sau 20 năm?", categorySlug: "doanh-nghiep-lon", categoryName: "Doanh Nghiệp Lớn", type: "report" },
+
+    // === KIẾN THỨC NỀN TẢNG ===
+    { topic: "FMCG là gì? Giải thích đơn giản cho người mới bắt đầu kinh doanh tạp hóa.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
+    { topic: "Kênh GT là gì? MT là gì? Hiểu rõ để chọn đúng nguồn hàng sỉ.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
+    { topic: "Đọc báo cáo bán hàng: 5 con số quan trọng nhất mà chủ tiệm phải theo dõi mỗi ngày.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
 ];
 
 function generateSlug(title: string): string {
