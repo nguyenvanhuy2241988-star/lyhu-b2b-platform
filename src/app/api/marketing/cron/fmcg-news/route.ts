@@ -98,8 +98,24 @@ export async function GET(req: Request) {
                 "Nhân sự, tuyển dụng & việc làm ngành FMCG - Bán lẻ"
             ];
         }
-
-        const randomFocus = focusAreas[Math.floor(Math.random() * focusAreas.length)];
+        // Avoid picking same topic as recent posts: check last 3 posts
+        const { data: recentPosts } = await supabase
+            .from('blog_posts')
+            .select('meta_title')
+            .eq('status', 'published')
+            .order('created_at', { ascending: false })
+            .limit(3);
+        const recentTitles = (recentPosts || []).map(p => (p.meta_title || '').toLowerCase());
+        
+        // Filter out topics that match recent post titles (fuzzy match)
+        const freshTopics = focusAreas.filter(topic => {
+            const topicLower = topic.toLowerCase();
+            return !recentTitles.some(title => 
+                title.includes(topicLower.slice(0, 15)) || topicLower.includes(title.slice(0, 15))
+            );
+        });
+        const pool = freshTopics.length > 0 ? freshTopics : focusAreas;
+        const randomFocus = pool[Math.floor(Math.random() * pool.length)];
 
         // Build a date string the AI can reference for accurate year context
         const now = new Date();

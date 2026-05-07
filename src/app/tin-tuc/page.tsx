@@ -158,65 +158,67 @@ export default async function BlogIndexPage({
             <div className="bg-white border-y border-gray-200 relative z-40">
                 
                 {/* Category Navigation */}
-                <div className="flex flex-row items-center justify-center gap-x-2 md:gap-x-6 px-4 md:px-0 max-w-[1200px] mx-auto overflow-hidden whitespace-nowrap">
-                    <Link 
-                        href={`/tin-tuc?category=all${searchQuery ? `&q=${searchQuery}` : ''}`}
-                        className={`shrink-0 px-2 md:px-3 py-3.5 text-[13px] md:text-[14px] font-bold uppercase transition-colors duration-300 ${
-                            activeCategory === 'all' 
-                            ? 'text-primary-700 border-b-[3px] border-primary-600' 
-                            : 'text-gray-800 hover:text-primary-600 border-b-[3px] border-transparent'
-                        }`}
-                    >
-                        Tất cả
-                    </Link>
-                    {categories.slice(0, 5).map(cat => (
-                        <Link 
-                            key={cat.id}
-                            href={`/tin-tuc?category=${cat.slug}${searchQuery ? `&q=${searchQuery}` : ''}`}
-                            className={`shrink-0 px-2 md:px-3 py-3.5 text-[13px] md:text-[14px] font-bold uppercase transition-colors duration-300 ${
-                                activeCategory === cat.slug 
-                                ? 'text-primary-700 border-b-[3px] border-primary-600' 
-                                : 'text-gray-800 hover:text-primary-600 border-b-[3px] border-transparent'
-                            }`}
-                        >
-                            {cat.name}
-                        </Link>
-                    ))}
-                    
-                    {categories.length > 5 && (
-                        <div className="group shrink-0 h-full flex items-center ml-auto md:ml-0 cursor-pointer">
-                            <div className="px-3 py-3.5 text-gray-800 hover:text-primary-600 transition-colors duration-300">
-                                <Menu className="w-6 h-6 group-hover:hidden" />
-                                <X className="w-6 h-6 hidden group-hover:block" />
-                            </div>
-                            
-                            {/* Mega Menu Dropdown */}
-                            <div className="absolute top-full left-0 w-full bg-white border-b border-gray-200 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 p-8 border-t-[3px] border-t-primary-600">
-                                <div className="max-w-[1200px] mx-auto">
-                                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6 pb-2 border-b border-gray-100">
-                                        Tất cả chuyên mục
-                                    </h3>
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-x-8 gap-y-6">
-                                        {categories.map(cat => (
-                                            <Link 
-                                                key={cat.id}
-                                                href={`/tin-tuc?category=${cat.slug}${searchQuery ? `&q=${searchQuery}` : ''}`}
-                                                className={`flex items-center gap-3 group/item ${
-                                                    activeCategory === cat.slug 
-                                                    ? 'text-primary-700 font-bold' 
-                                                    : 'text-gray-700 hover:text-primary-600 font-semibold'
-                                                }`}
-                                            >
-                                                <span className={`w-2 h-2 rounded-full transition-colors ${activeCategory === cat.slug ? 'bg-primary-500' : 'bg-gray-200 group-hover/item:bg-primary-500'}`}></span>
-                                                {cat.name}
-                                            </Link>
-                                        ))}
+            {/* Category Navigation - Grouped */}
+                {(() => {
+                    const MENU_GROUPS = [
+                        { name: 'Tin tức', icon: '📰', slugs: ['tin-nganh-fmcg', 'tin-tuc-fmcg', 'doanh-nghiep-lon'] },
+                        { name: 'Kinh doanh', icon: '🏪', slugs: ['goc-nha-phan-phoi-diem-ban', 'tap-hoa-gt', 'nha-phan-phoi-diem-ban', 'nghe-fmcg'] },
+                        { name: 'Phân tích', icon: '📊', slugs: ['bao-cao-thi-truong', 'ban-le-hien-dai', 'cua-hang-tien-loi', 'chuoi-cung-ung'] },
+                        { name: 'Kiến thức', icon: '💡', slugs: ['cong-nghe-ban-le', 'phap-ly-chinh-ngach', 'tmdt-tiktok-shop'] },
+                        { name: 'Sản phẩm', icon: '🛒', slugs: ['nganh-hang', 'xu-huong-tieu-dung'] },
+                    ];
+                    const activeCatObj = categories.find(c => c.slug === activeCategory);
+                    const activeGroup = MENU_GROUPS.find(g => g.slugs.includes(activeCategory));
+                    return (
+                        <div className="flex flex-row items-center justify-center gap-x-1 md:gap-x-4 px-4 md:px-0 max-w-[1200px] mx-auto overflow-hidden whitespace-nowrap">
+                            <Link 
+                                href={`/tin-tuc?category=all${searchQuery ? `&q=${searchQuery}` : ''}`}
+                                className={`shrink-0 px-2 md:px-3 py-3.5 text-[13px] md:text-[14px] font-bold uppercase transition-colors duration-300 ${
+                                    activeCategory === 'all' 
+                                    ? 'text-primary-700 border-b-[3px] border-primary-600' 
+                                    : 'text-gray-800 hover:text-primary-600 border-b-[3px] border-transparent'
+                                }`}
+                            >
+                                Tất cả
+                            </Link>
+                            {MENU_GROUPS.map(group => {
+                                const isActive = group.slugs.includes(activeCategory);
+                                return (
+                                    <div key={group.name} className="group shrink-0 h-full flex items-center relative">
+                                        <div className={`px-2 md:px-3 py-3.5 text-[13px] md:text-[14px] font-bold uppercase transition-colors duration-300 cursor-pointer flex items-center gap-1.5 ${
+                                            isActive 
+                                            ? 'text-primary-700 border-b-[3px] border-primary-600' 
+                                            : 'text-gray-800 hover:text-primary-600 border-b-[3px] border-transparent'
+                                        }`}>
+                                            <span className="hidden md:inline text-base">{group.icon}</span>
+                                            {group.name}
+                                        </div>
+                                        {/* Dropdown */}
+                                        <div className="absolute top-full left-0 min-w-[220px] bg-white border border-gray-200 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 py-2 border-t-[3px] border-t-primary-600">
+                                            {group.slugs.map(slug => {
+                                                const cat = categories.find(c => c.slug === slug);
+                                                if (!cat) return null;
+                                                return (
+                                                    <Link 
+                                                        key={cat.id}
+                                                        href={`/tin-tuc?category=${cat.slug}${searchQuery ? `&q=${searchQuery}` : ''}`}
+                                                        className={`block px-4 py-2.5 text-sm font-medium transition-colors ${
+                                                            activeCategory === cat.slug 
+                                                            ? 'text-primary-700 bg-primary-50 font-bold' 
+                                                            : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
+                                                        }`}
+                                                    >
+                                                        {cat.name}
+                                                    </Link>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
+                                );
+                            })}
                         </div>
-                    )}
-                </div>
+                    );
+                })()}
             </div>
 
             {/* Mega Banner Space (Dynamic or Placeholder) */}
