@@ -166,9 +166,9 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
   "keywords": "từ khóa SEO liên quan đến sự kiện",
   "category_slug": "MỘT trong 13 slug sau đây phù hợp nhất với bài viết: tin-nganh-fmcg, doanh-nghiep-lon, ban-le-hien-dai, cua-hang-tien-loi, tap-hoa-gt, tmdt-tiktok-shop, xu-huong-tieu-dung, nganh-hang, phap-ly-chinh-ngach, chuoi-cung-ung, cong-nghe-ban-le, nha-phan-phoi-diem-ban, nghe-fmcg",
   "image_search_queries": [
-    "Câu lệnh (Prompt) tiếng Anh dài khoảng 10-20 chữ để AI VẼ hình ảnh đại diện (VD: A modern Vietnamese supermarket exterior with green branding like Bach Hoa Xanh, busy customers)",
-    "Câu lệnh (Prompt) tiếng Anh dài khoảng 10-20 chữ để AI VẼ hình ảnh minh họa giữa bài (VD: Close up of supermarket shelves filled with milk and snack products, bright lighting)",
-    "Câu lệnh (Prompt) tiếng Anh dài khoảng 10-20 chữ để AI VẼ hình ảnh minh họa cuối bài (VD: People shopping at retail checkout counter, paying with cash, realistic)"
+    "2-3 từ khóa tiếng Anh NGẮN GỌN, CỤ THỂ để tìm ảnh đại diện trên Pexels (VD: 'grocery store aisle', 'snack shelf display', 'cashier counter'). KHÔNG dùng câu dài hay từ chung như 'business'.",
+    "2-3 từ khóa tiếng Anh cho ảnh giữa bài (VD: 'warehouse inventory boxes', 'convenience store interior')",
+    "2-3 từ khóa tiếng Anh cho ảnh cuối bài (VD: 'delivery truck loading', 'small shop owner')"
   ]
 }
 ---JSON_END---

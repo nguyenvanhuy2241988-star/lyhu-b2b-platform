@@ -273,7 +273,7 @@ YÊU CẦU ĐỊNH DẠNG:
   "meta_title": "Tiêu đề chuẩn SEO",
   "meta_description": "Mô tả chuẩn SEO khoảng 150 ký tự",
   "keywords": "từ khóa 1, từ khóa 2",
-  "image_search_keyword": "1 từ khóa tiếng Anh cực kỳ ngắn (1-2 chữ) để tìm ảnh minh họa trên Pexels (VD: supermarket, store, retail, grocery, warehouse)"
+  "image_search_keyword": "2-3 từ khóa tiếng Anh CỤ THỂ liên quan đến NỘI DUNG bài viết để tìm ảnh trên Pexels. Ưu tiên: tên sản phẩm/ngành hàng cụ thể (VD: 'korean snacks', 'convenience store shelf', 'grocery cashier', 'warehouse boxes', 'mobile payment QR'). KHÔNG dùng từ chung chung như 'shopping', 'business', 'retail'."
 }
 ---JSON_END---
 `;
