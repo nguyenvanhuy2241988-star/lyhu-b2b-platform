@@ -123,8 +123,15 @@ async function generateSpiderArticle(feedItem: any, type: 'advisory' | 'news' | 
 `;
     }
 
+    // Provide current date context for accurate year references
+    const vnFormatter = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric' });
+    const currentDateVN = vnFormatter.format(new Date());
+    const currentYear = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric' });
+
     const prompt = `
 Bạn là một chuyên gia về phân phối FMCG và kinh doanh bán lẻ. Tòa soạn vừa giao cho bạn một bản tin gốc (có thể bằng tiếng Anh hoặc tiếng Việt). Nhiệm vụ của bạn là xào bài, phân tích và viết lại một bài báo hoàn toàn mới bằng tiếng Việt, chuẩn SEO và chuyên sâu cho chuyên mục "LYHU Chuyển động FMCG 24/7".
+
+⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu, sự kiện và phân tích trong bài PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay sự kiện từ năm 2024 hoặc 2025 trừ khi là so sánh lịch sử (phải ghi rõ "so với năm trước").
 
 Thông tin bản gốc:
 - Tiêu đề gốc: ${feedItem.title}

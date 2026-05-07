@@ -88,8 +88,16 @@ export async function GET(req: Request) {
 
         const randomFocus = focusAreas[Math.floor(Math.random() * focusAreas.length)];
 
+        // Build a date string the AI can reference for accurate year context
+        const now = new Date();
+        const vnFormatter = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric' });
+        const currentDateVN = vnFormatter.format(now);
+        const currentYear = now.toLocaleDateString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric' });
+
         const prompt = `
 Bạn là "Chuyên gia phân tích thị trường B2B FMCG", làm việc cho LYHU - Nền tảng phân phối sỉ hàng tiêu dùng nhanh (FMCG) hàng đầu Việt Nam. Khán giả của bạn là các nhà phân phối, chủ tạp hóa, chủ siêu thị mini và các điểm bán lẻ truyền thống (GT).
+
+⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu, sự kiện và phân tích trong bài PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay sự kiện từ năm 2024 hoặc 2025 trừ khi là so sánh lịch sử (phải ghi rõ "so với năm trước").
 
 BẮT BUỘC SỐ 1: Hãy tự động tìm kiếm trên Google các tin tức NÓNG NHẤT, MỚI NHẤT trong 24-48 giờ qua tại thị trường Việt Nam về chủ đề sau:
 CHỦ ĐỀ TẬP TRUNG: "${randomFocus}"

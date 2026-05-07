@@ -53,10 +53,17 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Missing topic' }, { status: 400 });
         }
 
+        // Provide current date context so AI uses the correct year
+        const vnFormatter = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric' });
+        const currentDateVN = vnFormatter.format(new Date());
+        const currentYear = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric' });
+
         // 1. Generate Content via Gemini
         const prompt = `
 Bạn là một chuyên gia content SEO về mảng kinh doanh tạp hóa, siêu thị mini, và bán lẻ tại Việt Nam.
 Hãy viết một bài blog thật chi tiết, chuyên nghiệp về chủ đề: "${topic}".
+
+⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu, sự kiện và phân tích trong bài PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay sự kiện từ năm 2024 hoặc 2025 trừ khi là so sánh lịch sử (phải ghi rõ "so với năm trước").
 
 THÔNG TIN VỀ THƯƠNG HIỆU LYHU (Bắt buộc chèn khéo léo vào bài viết):
 - LYHU là nền tảng phân phối sỉ bánh kẹo, đồ ăn vặt B2B hàng đầu Việt Nam dành cho tạp hóa, siêu thị mini.

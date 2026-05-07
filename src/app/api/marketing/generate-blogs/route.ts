@@ -135,10 +135,17 @@ async function generateArticle(topic: string, type: 'advisory' | 'news' | 'repor
 `;
     }
 
+    // Provide current date context so AI doesn't hallucinate old years
+    const vnFormatter = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric' });
+    const currentDateVN = vnFormatter.format(new Date());
+    const currentYear = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric' });
+
     const prompt = `
 Bạn là một chuyên gia về phân phối FMCG và kinh doanh bán lẻ.
 Hãy viết một bài báo chuyên ngành FMCG thật chi tiết, chuẩn SEO về chủ đề: "${topic}".
 Bài viết dành cho chuyên mục "LYHU Chuyển động FMCG 24/7".
+
+⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu, sự kiện và phân tích trong bài PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay sự kiện từ năm 2024 hoặc 2025 trừ khi là so sánh lịch sử (phải ghi rõ "so với năm trước").
 
 YÊU CẦU QUAN TRỌNG VỀ NỘI DUNG VÀ VĂN PHONG:
 1. Đối tượng đọc: chủ tạp hóa, siêu thị mini, nhà phân phối, chuyên gia trong ngành.
