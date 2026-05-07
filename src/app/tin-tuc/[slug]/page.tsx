@@ -3,7 +3,8 @@ import { Metadata, ResolvingMetadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
-import { Clock, Tag, ChevronRight, ShoppingCart, UserCircle2, ArrowLeft } from 'lucide-react';
+import { Clock, Tag, ChevronRight, ShoppingCart, UserCircle2, ArrowLeft, BookOpen, Share2 } from 'lucide-react';
+import ShareButtons from '@/components/blog/ShareButtons';
 import { BlogPost } from '@/lib/blogStore';
 import ReadingProgressBar from '@/components/blog/ReadingProgressBar';
 import BlogVoucherList from '@/components/blog/BlogVoucherList';
@@ -136,6 +137,12 @@ export default async function BlogPostPage({ params }: Props) {
     if (!data) notFound();
     const { post, relatedPosts, promotions, products, newCustomerOffer } = data;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lyhu.com.vn';
+    const postUrl = `${siteUrl}/tin-tuc/${post.slug}`;
+
+    // Calculate reading time (average 200 words/min for Vietnamese)
+    const plainText = post.content.replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ');
+    const wordCount = plainText.split(' ').length;
+    const readingTime = Math.max(1, Math.ceil(wordCount / 200));
 
     const articleSchema = {
         '@context': 'https://schema.org',
@@ -168,17 +175,29 @@ export default async function BlogPostPage({ params }: Props) {
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
             {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
 
-            {/* Breadcrumb / Back Navigation */}
-            <div className="max-w-4xl mx-auto px-6 lg:px-8 pt-8 pb-6 border-b border-gray-100 flex items-center justify-between">
-                <Link href="/tin-tuc" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-primary-600 font-medium transition-colors">
-                    <ArrowLeft className="w-4 h-4" /> Về Trang Tin Tức
-                </Link>
-                {post.category && (
-                    <span className="text-sm font-bold text-primary-600 uppercase tracking-widest">
-                        {post.category.name}
-                    </span>
-                )}
-            </div>
+            {/* Breadcrumb Navigation */}
+            <nav className="max-w-4xl mx-auto px-6 lg:px-8 pt-6 pb-4">
+                <ol className="flex items-center gap-1.5 text-sm text-gray-500 flex-wrap">
+                    <li><Link href="/" className="hover:text-primary-600 transition-colors">Trang chủ</Link></li>
+                    <li><ChevronRight className="w-3.5 h-3.5" /></li>
+                    <li><Link href="/tin-tuc" className="hover:text-primary-600 transition-colors">Tin tức</Link></li>
+                    {post.category && (
+                        <>
+                            <li><ChevronRight className="w-3.5 h-3.5" /></li>
+                            <li>
+                                <Link 
+                                    href={`/tin-tuc?category=${post.category.slug}`} 
+                                    className="hover:text-primary-600 transition-colors"
+                                >
+                                    {post.category.name}
+                                </Link>
+                            </li>
+                        </>
+                    )}
+                    <li><ChevronRight className="w-3.5 h-3.5" /></li>
+                    <li className="text-gray-800 font-medium truncate max-w-[250px]">{post.title}</li>
+                </ol>
+            </nav>
 
             {/* Clean Header Area */}
             <header className="max-w-4xl mx-auto px-6 lg:px-8 pt-8 pb-2">
@@ -200,6 +219,10 @@ export default async function BlogPostPage({ params }: Props) {
                         <time dateTime={post.published_at || post.created_at}>
                             {new Date(post.published_at || post.created_at).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
                         </time>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <BookOpen className="w-4 h-4 text-gray-400" />
+                        <span>{readingTime} phút đọc</span>
                     </div>
                 </div>
 
@@ -258,7 +281,7 @@ export default async function BlogPostPage({ params }: Props) {
                                 return (
                                     <Link 
                                         key={i} 
-                                        href={`/tin-tuc?search=${encodeURIComponent(keyword)}`}
+                                        href={`/tin-tuc?q=${encodeURIComponent(keyword)}`}
                                         className="bg-gray-50 border border-gray-200 text-gray-600 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 px-3 py-1 rounded text-sm font-medium transition-colors cursor-pointer"
                                     >
                                         {keyword}
@@ -267,6 +290,9 @@ export default async function BlogPostPage({ params }: Props) {
                             })}
                         </div>
                     )}
+
+                    {/* Share Buttons */}
+                    <ShareButtons url={postUrl} title={post.title} />
 
                     {/* Related text links (Có thể bạn quan tâm) */}
                     {relatedPosts.slice(0, 3).length > 0 && (
