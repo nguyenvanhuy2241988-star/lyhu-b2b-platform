@@ -250,9 +250,10 @@ YÊU CẦU QUAN TRỌNG VỀ NỘI DUNG VÀ VĂN PHONG:
 2. Phong cách chung: Đi thẳng vào vấn đề, tư vấn thực tế, có chuyên môn. KHÔNG dùng các từ ngữ quảng cáo, sáo rỗng hoặc chung chung.
 ${specificInstructions}
 5. NGUYÊN TẮC BÁO CHÍ VÀ KHÁCH QUAN:
-  - QUAN TRỌNG: Bài viết mang tính chất chuyên trang phân tích ngành. TUYỆT ĐỐI KHÔNG nhắc đến bất kỳ tên thương hiệu hay tên sản phẩm cụ thể nào (Ví dụ: Không được viết "Bánh tráng Abi", "Kẹo dẻo TWITCHUI", "Kẹo dẻo Thái Lan").
-  - Nếu cần lấy ví dụ, CHỈ ĐƯỢC PHÉP nói về các "ngành hàng chung" (ví dụ: "các loại đồ ăn vặt sấy", "bánh tráng trộn", "kẹo dẻo chua ngọt").
-  - Không lồng ghép yếu tố quảng cáo, PR, hay bán hàng vào bài viết. Không được tạo cảm giác đang chèo kéo người đọc mua sản phẩm.
+  - Bài viết mang tính chất chuyên trang phân tích ngành, viết KHÁCH QUAN như một phóng viên.
+  - NẾU tiêu đề bài viết ĐÃ NÊU TÊN thương hiệu/sản phẩm cụ thể (VD: "Masan ra mắt...", "So sánh KiotViet vs Sapo", "Top 8 snack Hàn Quốc"): BẮT BUỘC phải nhắc đến tên thương hiệu/sản phẩm đó TRONG BÀI VIẾT với thông tin cụ thể (tên sản phẩm, giá, đặc điểm). KHÔNG ĐƯỢC viết chung chung.
+  - NẾU tiêu đề KHÔNG nêu tên thương hiệu cụ thể: KHÔNG tự ý chèn tên thương hiệu nhỏ lẻ để quảng cáo. Chỉ nhắc các thương hiệu lớn phổ biến nếu cần minh họa.
+  - TUYỆT ĐỐI KHÔNG quảng cáo sản phẩm của LYHU (bánh tráng, kẹo...) trong bài. Không tạo cảm giác đang chèo kéo mua hàng.
 
 YÊU CẦU ĐỊNH DẠNG:
 1. Độ dài: Ít nhất 800 - 1000 chữ.
