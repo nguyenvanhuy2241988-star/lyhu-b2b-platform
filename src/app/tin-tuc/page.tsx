@@ -1,7 +1,15 @@
 import React from 'react';
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
-import { Clock, TrendingUp, Sparkles, Menu, X } from 'lucide-react';
+import { Clock, TrendingUp, Sparkles, ChevronDown } from 'lucide-react';
+
+const MENU_GROUPS = [
+    { key: 'tin-tuc', name: 'Tin tức', icon: '📰', slugs: ['tin-nganh-fmcg', 'tin-tuc-fmcg', 'doanh-nghiep-lon'] },
+    { key: 'kinh-doanh', name: 'Kinh doanh', icon: '🏪', slugs: ['goc-nha-phan-phoi-diem-ban', 'tap-hoa-gt', 'nha-phan-phoi-diem-ban', 'nghe-fmcg'] },
+    { key: 'phan-tich', name: 'Phân tích', icon: '📊', slugs: ['bao-cao-thi-truong', 'ban-le-hien-dai', 'cua-hang-tien-loi', 'chuoi-cung-ung'] },
+    { key: 'kien-thuc', name: 'Kiến thức', icon: '💡', slugs: ['cong-nghe-ban-le', 'phap-ly-chinh-ngach', 'tmdt-tiktok-shop'] },
+    { key: 'san-pham', name: 'Sản phẩm', icon: '🛒', slugs: ['nganh-hang', 'xu-huong-tieu-dung'] },
+];
 import { BlogPost, BlogCategory } from '@/lib/blogStore';
 import SearchBar from '@/components/blog/SearchBar';
 import Pagination from '@/components/blog/Pagination';
@@ -9,7 +17,7 @@ import Pagination from '@/components/blog/Pagination';
 export const dynamic = 'force-dynamic';
 const POSTS_PER_PAGE = 12;
 
-async function getBlogData(page: number, categorySlug: string, searchQuery: string) {
+async function getBlogData(page: number, categorySlug: string, groupKey: string, searchQuery: string) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
     const supabase = createClient(supabaseUrl, supabaseKey, {
@@ -32,8 +40,16 @@ async function getBlogData(page: number, categorySlug: string, searchQuery: stri
         .eq('status', 'published')
         .order('created_at', { ascending: false });
 
-    // Apply Category Filter
-    if (categorySlug && categorySlug !== 'all') {
+    // Apply Category Filter (single category or group)
+    if (groupKey && groupKey !== 'all') {
+        const group = MENU_GROUPS.find(g => g.key === groupKey);
+        if (group) {
+            const groupCatIds = (categories || []).filter(c => group.slugs.includes(c.slug)).map(c => c.id);
+            if (groupCatIds.length > 0) {
+                query = query.in('category_id', groupCatIds);
+            }
+        }
+    } else if (categorySlug && categorySlug !== 'all') {
         const selectedCat = categories?.find(c => c.slug === categorySlug);
         if (selectedCat) {
             query = query.eq('category_id', selectedCat.id);
@@ -137,15 +153,17 @@ async function getBlogData(page: number, categorySlug: string, searchQuery: stri
 export default async function BlogIndexPage({
     searchParams
 }: {
-    searchParams: { category?: string; page?: string; q?: string }
+    searchParams: { category?: string; group?: string; page?: string; q?: string }
 }) {
     const activeCategory = searchParams.category || 'all';
+    const activeGroup = searchParams.group || '';
     const currentPage = parseInt(searchParams.page || '1', 10);
     const searchQuery = searchParams.q || '';
 
     const { posts, categories, trendingPosts, totalCount, featuredBlocks, megaBanner, sideTopBanners, sideBottomBanners } = await getBlogData(
         currentPage,
         activeCategory,
+        activeGroup,
         searchQuery
     );
 
@@ -159,66 +177,68 @@ export default async function BlogIndexPage({
                 
                 {/* Category Navigation */}
             {/* Category Navigation - Grouped */}
-                {(() => {
-                    const MENU_GROUPS = [
-                        { name: 'Tin tức', icon: '📰', slugs: ['tin-nganh-fmcg', 'tin-tuc-fmcg', 'doanh-nghiep-lon'] },
-                        { name: 'Kinh doanh', icon: '🏪', slugs: ['goc-nha-phan-phoi-diem-ban', 'tap-hoa-gt', 'nha-phan-phoi-diem-ban', 'nghe-fmcg'] },
-                        { name: 'Phân tích', icon: '📊', slugs: ['bao-cao-thi-truong', 'ban-le-hien-dai', 'cua-hang-tien-loi', 'chuoi-cung-ung'] },
-                        { name: 'Kiến thức', icon: '💡', slugs: ['cong-nghe-ban-le', 'phap-ly-chinh-ngach', 'tmdt-tiktok-shop'] },
-                        { name: 'Sản phẩm', icon: '🛒', slugs: ['nganh-hang', 'xu-huong-tieu-dung'] },
-                    ];
-                    const activeCatObj = categories.find(c => c.slug === activeCategory);
-                    const activeGroup = MENU_GROUPS.find(g => g.slugs.includes(activeCategory));
-                    return (
-                        <div className="flex flex-row items-center justify-center gap-x-1 md:gap-x-4 px-4 md:px-0 max-w-[1200px] mx-auto overflow-hidden whitespace-nowrap">
-                            <Link 
-                                href={`/tin-tuc?category=all${searchQuery ? `&q=${searchQuery}` : ''}`}
-                                className={`shrink-0 px-2 md:px-3 py-3.5 text-[13px] md:text-[14px] font-bold uppercase transition-colors duration-300 ${
-                                    activeCategory === 'all' 
-                                    ? 'text-primary-700 border-b-[3px] border-primary-600' 
-                                    : 'text-gray-800 hover:text-primary-600 border-b-[3px] border-transparent'
-                                }`}
-                            >
-                                Tất cả
-                            </Link>
-                            {MENU_GROUPS.map(group => {
-                                const isActive = group.slugs.includes(activeCategory);
-                                return (
-                                    <div key={group.name} className="group shrink-0 h-full flex items-center relative">
-                                        <div className={`px-2 md:px-3 py-3.5 text-[13px] md:text-[14px] font-bold uppercase transition-colors duration-300 cursor-pointer flex items-center gap-1.5 ${
-                                            isActive 
-                                            ? 'text-primary-700 border-b-[3px] border-primary-600' 
-                                            : 'text-gray-800 hover:text-primary-600 border-b-[3px] border-transparent'
-                                        }`}>
-                                            <span className="hidden md:inline text-base">{group.icon}</span>
-                                            {group.name}
-                                        </div>
-                                        {/* Dropdown */}
-                                        <div className="absolute top-full left-0 min-w-[220px] bg-white border border-gray-200 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 py-2 border-t-[3px] border-t-primary-600">
-                                            {group.slugs.map(slug => {
-                                                const cat = categories.find(c => c.slug === slug);
-                                                if (!cat) return null;
-                                                return (
-                                                    <Link 
-                                                        key={cat.id}
-                                                        href={`/tin-tuc?category=${cat.slug}${searchQuery ? `&q=${searchQuery}` : ''}`}
-                                                        className={`block px-4 py-2.5 text-sm font-medium transition-colors ${
-                                                            activeCategory === cat.slug 
-                                                            ? 'text-primary-700 bg-primary-50 font-bold' 
-                                                            : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
-                                                        }`}
-                                                    >
-                                                        {cat.name}
-                                                    </Link>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    );
-                })()}
+                <div className="flex flex-row items-center justify-center gap-x-1 md:gap-x-4 px-4 md:px-0 max-w-[1200px] mx-auto overflow-hidden whitespace-nowrap">
+                    <Link 
+                        href={`/tin-tuc${searchQuery ? `?q=${searchQuery}` : ''}`}
+                        className={`shrink-0 px-2 md:px-3 py-3.5 text-[13px] md:text-[14px] font-bold uppercase transition-colors duration-300 ${
+                            !activeGroup && activeCategory === 'all' 
+                            ? 'text-primary-700 border-b-[3px] border-primary-600' 
+                            : 'text-gray-800 hover:text-primary-600 border-b-[3px] border-transparent'
+                        }`}
+                    >
+                        Tất cả
+                    </Link>
+                    {MENU_GROUPS.map(group => {
+                        const isActive = activeGroup === group.key || (!activeGroup && group.slugs.includes(activeCategory));
+                        return (
+                            <div key={group.key} className="group shrink-0 h-full flex items-center relative">
+                                <Link 
+                                    href={`/tin-tuc?group=${group.key}${searchQuery ? `&q=${searchQuery}` : ''}`}
+                                    className={`px-2 md:px-3 py-3.5 text-[13px] md:text-[14px] font-bold uppercase transition-colors duration-300 flex items-center gap-1.5 ${
+                                        isActive 
+                                        ? 'text-primary-700 border-b-[3px] border-primary-600' 
+                                        : 'text-gray-800 hover:text-primary-600 border-b-[3px] border-transparent'
+                                    }`}
+                                >
+                                    <span className="hidden md:inline text-base">{group.icon}</span>
+                                    {group.name}
+                                    <ChevronDown className="w-3 h-3 opacity-50" />
+                                </Link>
+                                {/* Dropdown */}
+                                <div className="absolute top-full left-0 min-w-[220px] bg-white border border-gray-200 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 py-2 border-t-[3px] border-t-primary-600">
+                                    <Link 
+                                        href={`/tin-tuc?group=${group.key}${searchQuery ? `&q=${searchQuery}` : ''}`}
+                                        className={`block px-4 py-2.5 text-sm font-bold transition-colors ${
+                                            activeGroup === group.key && !activeCategory.includes('-')
+                                            ? 'text-primary-700 bg-primary-50' 
+                                            : 'text-gray-900 hover:text-primary-600 hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        📋 Tất cả {group.name}
+                                    </Link>
+                                    <div className="border-t border-gray-100 my-1"></div>
+                                    {group.slugs.map(slug => {
+                                        const cat = categories.find(c => c.slug === slug);
+                                        if (!cat) return null;
+                                        return (
+                                            <Link 
+                                                key={cat.id}
+                                                href={`/tin-tuc?category=${cat.slug}${searchQuery ? `&q=${searchQuery}` : ''}`}
+                                                className={`block px-4 py-2.5 text-sm font-medium transition-colors ${
+                                                    activeCategory === cat.slug 
+                                                    ? 'text-primary-700 bg-primary-50 font-bold' 
+                                                    : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
+                                                }`}
+                                            >
+                                                {cat.name}
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
 
             {/* Mega Banner Space (Dynamic or Placeholder) */}
@@ -264,8 +284,11 @@ export default async function BlogIndexPage({
                         {searchQuery ? (
                             <p>Kết quả tìm kiếm cho: <strong className="text-gray-900">"{searchQuery}"</strong></p>
                         ) : (
-                            <p className="font-semibold text-gray-800">
-                                {activeCategory === 'all' ? 'Tin mới cập nhật' : categories.find(c => c.slug === activeCategory)?.name}
+                            <p className="font-semibold text-gray-800 flex items-center gap-2">
+                                {activeGroup 
+                                    ? (MENU_GROUPS.find(g => g.key === activeGroup)?.icon || '') + ' ' + (MENU_GROUPS.find(g => g.key === activeGroup)?.name || '')
+                                    : activeCategory === 'all' ? 'Tin mới cập nhật' : categories.find(c => c.slug === activeCategory)?.name
+                                }
                             </p>
                         )}
                         <p>{totalCount} bài viết</p>
