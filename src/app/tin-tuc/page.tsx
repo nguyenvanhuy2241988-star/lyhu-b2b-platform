@@ -174,9 +174,7 @@ export default async function BlogIndexPage({
             
             {/* Top Toolbar: Categories */}
             <div className="bg-white border-y border-gray-200 relative z-40">
-                
-                {/* Row 1: Main Groups */}
-                <div className="flex flex-row items-center justify-center gap-x-1 md:gap-x-4 px-4 md:px-0 max-w-[1200px] mx-auto overflow-hidden whitespace-nowrap">
+                <div className="flex flex-row items-center justify-center gap-x-1 md:gap-x-4 px-4 md:px-0 max-w-[1200px] mx-auto overflow-visible whitespace-nowrap">
                     <Link 
                         href={`/tin-tuc${searchQuery ? `?q=${searchQuery}` : ''}`}
                         className={`shrink-0 px-2 md:px-3 py-3.5 text-[13px] md:text-[14px] font-bold uppercase transition-colors duration-300 ${
@@ -190,62 +188,42 @@ export default async function BlogIndexPage({
                     {MENU_GROUPS.map(group => {
                         const isActive = activeGroup === group.key || (!activeGroup && group.slugs.includes(activeCategory));
                         return (
-                            <Link 
-                                key={group.key}
-                                href={`/tin-tuc?group=${group.key}${searchQuery ? `&q=${searchQuery}` : ''}`}
-                                className={`shrink-0 px-2 md:px-3 py-3.5 text-[13px] md:text-[14px] font-bold uppercase transition-colors duration-300 flex items-center gap-1.5 ${
-                                    isActive 
-                                    ? 'text-primary-700 border-b-[3px] border-primary-600' 
-                                    : 'text-gray-800 hover:text-primary-600 border-b-[3px] border-transparent'
-                                }`}
-                            >
-                                <span className="hidden md:inline text-base">{group.icon}</span>
-                                {group.name}
-                            </Link>
+                            <div key={group.key} className="shrink-0 relative [&:hover>.sub-dropdown]:opacity-100 [&:hover>.sub-dropdown]:visible">
+                                <Link 
+                                    href={`/tin-tuc?group=${group.key}${searchQuery ? `&q=${searchQuery}` : ''}`}
+                                    className={`block px-2 md:px-3 py-3.5 text-[13px] md:text-[14px] font-bold uppercase transition-colors duration-300 ${
+                                        isActive 
+                                        ? 'text-primary-700 border-b-[3px] border-primary-600' 
+                                        : 'text-gray-800 hover:text-primary-600 border-b-[3px] border-transparent'
+                                    }`}
+                                >
+                                    <span className="hidden md:inline mr-1">{group.icon}</span>
+                                    {group.name}
+                                </Link>
+                                {/* Hover Dropdown */}
+                                <div className="sub-dropdown absolute top-full left-1/2 -translate-x-1/2 min-w-[200px] bg-white border border-gray-200 rounded-b-lg shadow-xl opacity-0 invisible transition-all duration-200 z-50 py-1 mt-0">
+                                    {group.slugs.map(slug => {
+                                        const cat = categories.find(c => c.slug === slug);
+                                        if (!cat) return null;
+                                        return (
+                                            <Link 
+                                                key={cat.id}
+                                                href={`/tin-tuc?category=${cat.slug}${searchQuery ? `&q=${searchQuery}` : ''}`}
+                                                className={`block px-4 py-2.5 text-[13px] transition-colors whitespace-nowrap ${
+                                                    activeCategory === cat.slug 
+                                                    ? 'text-primary-700 bg-primary-50 font-bold' 
+                                                    : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50 font-medium'
+                                                }`}
+                                            >
+                                                {cat.name}
+                                            </Link>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                         );
                     })}
                 </div>
-
-                {/* Row 2: Sub-categories of active group */}
-                {(() => {
-                    const currentGroup = activeGroup 
-                        ? MENU_GROUPS.find(g => g.key === activeGroup)
-                        : MENU_GROUPS.find(g => g.slugs.includes(activeCategory));
-                    if (!currentGroup) return null;
-                    return (
-                        <div className="bg-gray-50 border-t border-gray-100">
-                            <div className="flex flex-row items-center justify-center gap-x-1 md:gap-x-3 px-4 md:px-0 max-w-[1200px] mx-auto overflow-x-auto whitespace-nowrap scrollbar-hide">
-                                <Link 
-                                    href={`/tin-tuc?group=${currentGroup.key}${searchQuery ? `&q=${searchQuery}` : ''}`}
-                                    className={`shrink-0 px-3 py-2.5 text-[12px] md:text-[13px] font-semibold transition-colors ${
-                                        activeGroup === currentGroup.key && !activeCategory.includes('-')
-                                        ? 'text-primary-700 border-b-2 border-primary-500' 
-                                        : 'text-gray-600 hover:text-primary-600 border-b-2 border-transparent'
-                                    }`}
-                                >
-                                    Tất cả {currentGroup.name}
-                                </Link>
-                                {currentGroup.slugs.map(slug => {
-                                    const cat = categories.find(c => c.slug === slug);
-                                    if (!cat) return null;
-                                    return (
-                                        <Link 
-                                            key={cat.id}
-                                            href={`/tin-tuc?category=${cat.slug}${searchQuery ? `&q=${searchQuery}` : ''}`}
-                                            className={`shrink-0 px-3 py-2.5 text-[12px] md:text-[13px] font-medium transition-colors ${
-                                                activeCategory === cat.slug 
-                                                ? 'text-primary-700 font-bold border-b-2 border-primary-500' 
-                                                : 'text-gray-600 hover:text-primary-600 border-b-2 border-transparent'
-                                            }`}
-                                        >
-                                            {cat.name}
-                                        </Link>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    );
-                })()}
             </div>
 
             {/* Mega Banner Space (Dynamic or Placeholder) */}
