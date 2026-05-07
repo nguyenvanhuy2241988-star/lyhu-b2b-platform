@@ -4,6 +4,7 @@ import { marked } from 'marked';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+export const maxDuration = 300;
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
