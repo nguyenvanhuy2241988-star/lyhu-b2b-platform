@@ -197,6 +197,42 @@ async function generateArticle(topic: string, type: 'advisory' | 'news' | 'repor
 `;
     }
 
+    // Auto-detect Top List articles and add specific listicle instructions
+    const topListMatch = topic.match(/top\s+(\d+)/i);
+    if (topListMatch) {
+        const listCount = topListMatch[1];
+        specificInstructions += `
+⚠️ BẮT BUỘC CHO BÀI TOP LIST:
+- Tiêu đề ghi "Top ${listCount}" nên bài viết PHẢI liệt kê ĐÚNG ${listCount} mục cụ thể.
+- Mỗi mục PHẢI có: số thứ tự (1-${listCount}), tên cụ thể, mô tả ngắn 2-3 câu, và lý do nằm trong danh sách.
+- Dùng heading ### cho mỗi mục (VD: ### 1. Tên sản phẩm/app).
+- Nếu là sản phẩm: ghi rõ tên thương hiệu, phân khúc giá, ưu/nhược điểm.
+- Nếu là app/phần mềm: ghi rõ tên app, giá, tính năng nổi bật, phù hợp với ai.
+- KHÔNG viết chung chung. Phải có tên CỤ THỂ cho từng mục.
+`;
+    }
+
+    // Auto-detect comparison articles (vs, so sánh)
+    if (/\bvs\b|so sánh/i.test(topic)) {
+        specificInstructions += `
+⚠️ BẮT BUỘC CHO BÀI SO SÁNH:
+- PHẢI có bảng so sánh (Markdown table) với các tiêu chí cụ thể (giá, tính năng, ưu/nhược điểm).
+- PHẢI có kết luận rõ ràng: sản phẩm/dịch vụ nào phù hợp với đối tượng nào.
+- Mỗi mục so sánh PHẢI có heading riêng với đánh giá chi tiết.
+`;
+    }
+
+    // Auto-detect how-to/guide articles
+    if (/hướng dẫn|từ a-z|a đến z|cách |checklist/i.test(topic)) {
+        specificInstructions += `
+⚠️ BẮT BUỘC CHO BÀI HƯỚNG DẪN:
+- PHẢI có các bước rõ ràng, đánh số thứ tự (Bước 1, Bước 2...).
+- Mỗi bước PHẢI cụ thể, có thể làm theo ngay, KHÔNG viết chung chung.
+- Nếu liên quan đến thủ tục: ghi rõ giấy tờ cần, chi phí, thời gian xử lý.
+- Nếu liên quan đến cài đặt: ghi rõ link tải, yêu cầu hệ thống, các bước cấu hình.
+`;
+    }
+
     // Provide current date context so AI doesn't hallucinate old years
     const vnFormatter = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric' });
     const currentDateVN = vnFormatter.format(new Date());
