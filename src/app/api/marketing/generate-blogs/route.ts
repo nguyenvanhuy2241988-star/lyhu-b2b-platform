@@ -393,8 +393,7 @@ export async function GET() {
                 continue;
             }
 
-            const publishDate = new Date(now);
-            publishDate.setDate(now.getDate() + count);
+            const publishDate = new Date();
 
             const slug = generateSlug(topic);
             const categoryId = categoriesCache[categorySlug];
