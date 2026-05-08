@@ -451,9 +451,9 @@ export default function B2bCampaignsPage() {
                                     <div className="border-t border-slate-100 pt-4">
                                         <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded inline-block mb-3">1. ĐIỀU KIỆN ĐẠT ĐƯỢC (CONDITION)</span>
                                         <select value={newPromo.conditionType} onChange={e => setNewPromo(p => ({...p, conditionType: e.target.value}))} className="w-full border border-slate-300 rounded-md py-2 px-3 text-sm mb-3">
-                                            <option value="min_cart_qty">Mua tối thiểu X sản phẩm (bất kỳ)</option>
+                                            <option value="min_cart_qty">Mua tối thiểu X (Sản phẩm / Thùng) bất kỳ</option>
                                             <option value="min_unique_items">Mua tối thiểu X mặt hàng khác nhau</option>
-                                            <option value="specific_item_qty">Mua tối thiểu X sản phẩm CHỈ ĐỊNH</option>
+                                            <option value="specific_item_qty">Mua tối thiểu X (Sản phẩm / Thùng) CHỈ ĐỊNH</option>
                                         </select>
                                         
                                         {(newPromo.conditionType === 'specific_item_qty') && (
@@ -461,7 +461,7 @@ export default function B2bCampaignsPage() {
                                                 <label className="text-xs text-slate-500 mb-1 block">Chọn các Sản phẩm Chỉ định:</label>
                                                 <div className="flex-1 border border-slate-300 rounded bg-white relative group">
                                                     <div className="py-2 px-3 text-sm text-slate-500 cursor-pointer flex justify-between items-center">
-                                                        {newPromo.targetProducts.length === 0 ? '-- Chọn sản phẩm --' : `Đã chọn ${newPromo.targetProducts.length} SP`}
+                                                        {newPromo.targetProducts.length === 0 ? '-- Chọn sản phẩm / thùng --' : `Đã chọn ${newPromo.targetProducts.length} mặt hàng`}
                                                         <span>▼</span>
                                                     </div>
                                                     <div className="absolute top-full left-0 w-full bg-white border shadow-lg rounded-b z-20 hidden group-hover:block max-h-48 overflow-y-auto">
@@ -489,7 +489,7 @@ export default function B2bCampaignsPage() {
                                             </div>
                                         )}
                                         <div className="flex items-center gap-2">
-                                            <span className="text-sm text-slate-600">Với giá trị X là:</span>
+                                            <span className="text-sm text-slate-600">Với số lượng X là:</span>
                                             <input type="number" value={newPromo.requiredValue} onChange={e => setNewPromo(p => ({...p, requiredValue: Number(e.target.value)}))} className="w-24 border border-slate-300 rounded py-1 px-2 text-sm" />
                                         </div>
                                     </div>
@@ -498,7 +498,7 @@ export default function B2bCampaignsPage() {
                                         <span className="text-xs font-bold text-slate-700 bg-slate-100 px-2 py-1 rounded inline-block mb-3">2. ƯU ĐÃI NHẬN ĐƯỢC (ACTION)</span>
                                         <select value={newPromo.actionType} onChange={e => setNewPromo(p => ({...p, actionType: e.target.value}))} className="w-full border border-slate-300 rounded-md py-2 px-3 text-sm mb-3">
                                             <option value="discount_percent">Giảm % cho toàn bộ Đơn Hàng</option>
-                                            <option value="free_items">Tặng X mặt hàng làm quà (Mua X Tặng Y)</option>
+                                            <option value="free_items">Tặng Y (Sản phẩm / Thùng) làm quà</option>
                                             <option value="override_price">Giảm thẳng tổng tiền (Tùy biến)</option>
                                         </select>
                                         
