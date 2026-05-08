@@ -8,10 +8,11 @@ interface DynamicBlogContentProps {
     isVideoVertical?: boolean;
     products?: any[];
     promotions?: any[];
+    allProducts?: any[];
     showProductCards?: boolean;
 }
 
-export default function DynamicBlogContent({ content, videoUrl, isVideoVertical = false, products = [], promotions = [], showProductCards = true }: DynamicBlogContentProps) {
+export default function DynamicBlogContent({ content, videoUrl, isVideoVertical = false, products = [], promotions = [], allProducts = [], showProductCards = true }: DynamicBlogContentProps) {
     if (!content) return null;
 
     // A simple parser to split HTML by block endings (paragraphs, lists).
@@ -20,12 +21,41 @@ export default function DynamicBlogContent({ content, videoUrl, isVideoVertical 
     const parts = content.split(/(<\/p>|<\/ul>|<\/ol>)(?!\s*<\/li>)/i);
     const elements: React.ReactNode[] = [];
     let paragraphCount = 0;
+    
+    // Set to keep track of products already linked so we only link once per article
+    const linkedProductIds = new Set<string>();
+
+    const escapeRegExp = (string: string) => {
+        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    };
 
     for (let i = 0; i < parts.length; i += 2) {
         // parts[i] is the content, parts[i+1] is the delimiter (</p>, </ul>, </ol>) if it exists
-        const htmlChunk = parts[i] + (parts[i + 1] || '');
+        let htmlChunk = parts[i] + (parts[i + 1] || '');
         
         if (htmlChunk.trim()) {
+            // Apply Auto Internal Linking for SEO
+            if (allProducts && allProducts.length > 0) {
+                // Sort products by length descending so longer names match first (e.g. "Kẹo mút dâu" before "Kẹo")
+                const sortedProducts = [...allProducts].sort((a, b) => b.name.length - a.name.length);
+                
+                sortedProducts.forEach(product => {
+                    // Skip very short generic names or already linked products
+                    if (product.name.length < 5 || linkedProductIds.has(product.id)) return;
+                    
+                    // Regex: Match the exact product name, case insensitive.
+                    // (?![^<]*>) ensures we don't replace text inside HTML tag attributes (like href or src)
+                    // (?<=^|\s|>|&nbsp;) ensures it's preceded by a word boundary
+                    // (?=\s|<|&nbsp;|[.,!?]|$) ensures it's followed by a word boundary
+                    const pattern = new RegExp(`(?![^<]*>)(?<=^|\\s|>|&nbsp;)(${escapeRegExp(product.name)})(?=\\s|<|&nbsp;|[.,!?]|$)`, 'i');
+                    
+                    if (pattern.test(htmlChunk)) {
+                        htmlChunk = htmlChunk.replace(pattern, `<a href="/wholesale/product/${product.id}" title="Mua sỉ ${product.name}" class="text-primary-600 font-medium hover:underline border-b border-primary-200" target="_blank">$1</a>`);
+                        linkedProductIds.add(product.id);
+                    }
+                });
+            }
+
             elements.push(
                 <div 
                     key={`chunk-${i}`} 

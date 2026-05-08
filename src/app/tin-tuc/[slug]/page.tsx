@@ -95,11 +95,18 @@ async function getPost(slug: string) {
         .limit(1)
         .single();
 
+    // Fetch all products for SEO Internal Linking
+    const { data: allProducts } = await supabase
+        .from('products')
+        .select('id, name')
+        .eq('is_active', true);
+
     return { 
         post: data as BlogPost, 
         relatedPosts, 
         promotions: promotions || [], 
         products: products || [],
+        allProducts: allProducts || [],
         newCustomerOffer
     };
 }
@@ -133,7 +140,7 @@ export async function generateMetadata(
 export default async function BlogPostPage({ params }: Props) {
     const data = await getPost(params.slug);
     if (!data) notFound();
-    const { post, relatedPosts, promotions, products, newCustomerOffer } = data;
+    const { post, relatedPosts, promotions, products, allProducts, newCustomerOffer } = data;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lyhu.com.vn';
     const postUrl = `${siteUrl}/tin-tuc/${post.slug}`;
 
@@ -149,9 +156,17 @@ export default async function BlogPostPage({ params }: Props) {
         description: post.meta_description || post.ai_summary,
         image: post.thumbnail_url ? [post.thumbnail_url] : [],
         datePublished: post.published_at || post.created_at,
-        dateModified: post.updated_at,
-        author: [{ '@type': 'Person', name: post.author?.full_name || 'LYHU Team', url: siteUrl }],
-        publisher: { '@type': 'Organization', name: 'LYHU', logo: { '@type': 'ImageObject', url: `${siteUrl}/logo-full.png` } }
+        dateModified: post.updated_at || post.created_at,
+        author: {
+            '@type': 'Person',
+            name: post.author?.full_name || 'LYHU Team',
+            url: siteUrl
+        },
+        publisher: {
+            '@type': 'Organization',
+            name: 'LYHU B2B',
+            logo: { '@type': 'ImageObject', url: `${siteUrl}/logo-full.png` }
+        }
     };
 
     let faqSchema = null;
@@ -168,25 +183,22 @@ export default async function BlogPostPage({ params }: Props) {
     }
 
     return (
-        <article className="min-h-screen bg-white pb-20">
+        <div className="bg-white min-h-screen pb-16">
             <ReadingProgressBar />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
             {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
 
             {/* Breadcrumb Navigation */}
-            <nav className="max-w-4xl mx-auto px-6 lg:px-8 pt-6 pb-4">
-                <ol className="flex items-center gap-1.5 text-sm text-gray-500 flex-wrap">
-                    <li><Link href="/" className="hover:text-primary-600 transition-colors">Trang chủ</Link></li>
+            <nav className="border-b border-gray-100 bg-gray-50/50 py-3 hidden md:block">
+                <ol className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center space-x-2 text-sm text-gray-500">
+                    <li><Link href="/" className="hover:text-primary-600">Trang chủ</Link></li>
                     <li><ChevronRight className="w-3.5 h-3.5" /></li>
-                    <li><Link href="/tin-tuc" className="hover:text-primary-600 transition-colors">Tin tức</Link></li>
+                    <li><Link href="/tin-tuc" className="hover:text-primary-600">Tin tức B2B</Link></li>
                     {post.category && (
                         <>
                             <li><ChevronRight className="w-3.5 h-3.5" /></li>
                             <li>
-                                <Link 
-                                    href={`/tin-tuc?category=${post.category.slug}`} 
-                                    className="hover:text-primary-600 transition-colors"
-                                >
+                                <Link href={`/tin-tuc?category=${post.category.slug}`} className="hover:text-primary-600 font-medium">
                                     {post.category.name}
                                 </Link>
                             </li>
@@ -245,8 +257,6 @@ export default async function BlogPostPage({ params }: Props) {
                 {/* Left Content */}
                 <div className="flex-1 w-full max-w-3xl mx-auto lg:mx-0">
                     
-                    {/* Sapo has been moved to the header */}
-
                     {/* Featured Image (Mobile Friendly 16:9) */}
                     {post.thumbnail_url && (
                         <div className="w-full mb-10">
@@ -268,6 +278,7 @@ export default async function BlogPostPage({ params }: Props) {
                         isVideoVertical={post.is_video_vertical}
                         products={products} 
                         promotions={promotions}
+                        allProducts={allProducts}
                         showProductCards={post.category?.slug === 'goc-nha-phan-phoi-diem-ban'}
                     />
 
@@ -362,6 +373,6 @@ export default async function BlogPostPage({ params }: Props) {
                     </div>
                 </aside>
             </div>
-        </article>
+        </div>
     );
 }
