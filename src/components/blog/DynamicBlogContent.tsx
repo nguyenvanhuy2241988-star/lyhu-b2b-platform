@@ -15,10 +15,40 @@ interface DynamicBlogContentProps {
 export default function DynamicBlogContent({ content, videoUrl, isVideoVertical = false, products = [], promotions = [], allProducts = [], showProductCards = true }: DynamicBlogContentProps) {
     if (!content) return null;
 
+    const toc: { id: string; text: string; level: number }[] = [];
+
+    // Pre-process content to extract headings and inject IDs for TOC
+    let processedContent = content.replace(/<h([23])(.*?)>(.*?)<\/h\1>/gi, (match, level, attrs, text) => {
+        // Strip HTML from text to get plain text for TOC
+        const plainText = text.replace(/<[^>]*>?/gm, '').trim();
+        if (!plainText) return match;
+        
+        // Generate an ID (slugify)
+        // Convert Vietnamese characters to English equivalent
+        const slugId = plainText
+            .toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/đ/g, "d")
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+|-+$/g, "");
+            
+        // Append unique suffix to avoid ID collisions
+        const uniqueId = `${slugId}-${Math.random().toString(36).substring(2, 6)}`;
+        
+        // Add to TOC array
+        toc.push({ id: uniqueId, text: plainText, level: parseInt(level) });
+        
+        // Preserve existing id if it has one (rare for AI generated), otherwise inject
+        if (attrs.includes('id=')) return match;
+        
+        return `<h${level}${attrs} id="${uniqueId}" class="scroll-mt-24">${text}</h${level}>`;
+    });
+
     // A simple parser to split HTML by block endings (paragraphs, lists).
     // We use a negative lookahead (?!\s*<\/li>) to ensure we DO NOT split inside a list item.
     // This prevents breaking the HTML structure of <ul> or <ol>.
-    const parts = content.split(/(<\/p>|<\/ul>|<\/ol>)(?!\s*<\/li>)/i);
+    const parts = processedContent.split(/(<\/p>|<\/ul>|<\/ol>)(?!\s*<\/li>)/i);
     const elements: React.ReactNode[] = [];
     let paragraphCount = 0;
     
@@ -173,7 +203,33 @@ export default function DynamicBlogContent({ content, videoUrl, isVideoVertical 
             prose-img:rounded-lg prose-img:border prose-img:border-gray-200 prose-img:mx-auto
             prose-blockquote:border-l-4 prose-blockquote:border-primary-400 prose-blockquote:bg-primary-50 prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:italic prose-blockquote:text-gray-700"
         >
-            {elements.length > 0 ? elements : <div dangerouslySetInnerHTML={{ __html: content }} />}
+            {toc.length > 0 && (
+                <details className="mb-8 bg-gray-50 border border-gray-200 rounded-lg open:shadow-sm transition-all duration-300" open>
+                    <summary className="px-5 py-4 font-bold text-gray-800 cursor-pointer list-none flex items-center justify-between hover:bg-gray-100/50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xl">📑</span>
+                            <span>Mục Lục Bài Viết</span>
+                        </div>
+                        <span className="text-gray-400 text-sm font-normal">[Hiện/Ẩn]</span>
+                    </summary>
+                    <div className="px-5 pb-5 pt-1 border-t border-gray-100">
+                        <ul className="space-y-2 mt-0 mb-0 pl-0 list-none">
+                            {toc.map((item, idx) => (
+                                <li key={idx} className={`leading-snug ${item.level === 3 ? 'ml-6 text-[15px]' : 'font-medium text-[16px] mt-3'}`}>
+                                    <a 
+                                        href={`#${item.id}`} 
+                                        className={`text-gray-700 hover:text-primary-600 !no-underline hover:!underline ${item.level === 3 ? 'text-gray-500' : ''}`}
+                                    >
+                                        {item.text}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </details>
+            )}
+
+            {elements.length > 0 ? elements : <div dangerouslySetInnerHTML={{ __html: processedContent }} />}
         </div>
     );
 }
