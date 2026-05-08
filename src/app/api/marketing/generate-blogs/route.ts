@@ -18,6 +18,12 @@ interface BlogConfig {
 }
 
 const TOPICS: BlogConfig[] = [
+    // === TOP LIST ===
+    { topic: "Top 10 snack bán chạy nhất mùa hè 2026 tại các tiệm tạp hóa.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
+    { topic: "Top 5 loại nước giải khát mới ra mắt đáng nhập sỉ nhất quý 2/2026.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
+    { topic: "Top 8 sản phẩm ăn vặt Hàn Quốc đang hot tại Việt Nam, giới trẻ mê mẩn.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
+    { topic: "Top 10 thương hiệu mì gói bán chạy nhất Việt Nam 2026: Hảo Hảo còn giữ ngôi?", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
+
     // === ADVISORY: Góc Nhà Phân Phối & Điểm Bán ===
     { topic: "Tuyệt chiêu quản lý hàng tồn kho cho tạp hóa nhỏ: Làm sao để không đọng vốn?", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
     { topic: "Cách thiết kế quầy thanh toán siêu thị mini để tăng 15% doanh thu ngẫu hứng.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
@@ -53,12 +59,6 @@ const TOPICS: BlogConfig[] = [
     // === THANH TOÁN ĐIỆN TỬ ===
     { topic: "MoMo vs ZaloPay vs VNPay: So sánh phí giao dịch và ưu đãi cho chủ tiệm.", categorySlug: "cong-nghe-ban-le", categoryName: "Công Nghệ Bán Lẻ", type: "advisory" },
     { topic: "Hướng dẫn đăng ký nhận thanh toán QR code cho tiệm tạp hóa: Miễn phí, 5 phút.", categorySlug: "cong-nghe-ban-le", categoryName: "Công Nghệ Bán Lẻ", type: "advisory" },
-
-    // === TOP LIST ===
-    { topic: "Top 10 snack bán chạy nhất mùa hè 2026 tại các tiệm tạp hóa.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
-    { topic: "Top 5 loại nước giải khát mới ra mắt đáng nhập sỉ nhất quý 2/2026.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
-    { topic: "Top 8 sản phẩm ăn vặt Hàn Quốc đang hot tại Việt Nam, giới trẻ mê mẩn.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
-    { topic: "Top 10 thương hiệu mì gói bán chạy nhất Việt Nam 2026: Hảo Hảo còn giữ ngôi?", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
 
     // === SẢN PHẨM MỚI FMCG ===
     { topic: "Review sản phẩm mới: Sữa chua uống Vinamilk Greek - Giá sỉ và biên lợi nhuận.", categorySlug: "nganh-hang", categoryName: "Ngành Hàng", type: "news" },

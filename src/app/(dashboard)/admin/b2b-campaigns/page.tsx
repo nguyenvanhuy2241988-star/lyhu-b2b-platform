@@ -458,11 +458,34 @@ export default function B2bCampaignsPage() {
                                         
                                         {(newPromo.conditionType === 'specific_item_qty') && (
                                             <div className="mb-3">
-                                                <label className="text-xs text-slate-500">Chọn SP Chỉ Định (bỏ trống để cảnh báo):</label>
-                                                <select onChange={e => setNewPromo(p => ({...p, targetProducts: [e.target.value]}))} className="w-full border border-slate-300 rounded py-2 px-3 text-sm">
-                                                    <option value="">-- Chọn 1 mặt hàng --</option>
-                                                    {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                                                </select>
+                                                <label className="text-xs text-slate-500 mb-1 block">Chọn các Sản phẩm Chỉ định:</label>
+                                                <div className="flex-1 border border-slate-300 rounded bg-white relative group">
+                                                    <div className="py-2 px-3 text-sm text-slate-500 cursor-pointer flex justify-between items-center">
+                                                        {newPromo.targetProducts.length === 0 ? '-- Chọn sản phẩm --' : `Đã chọn ${newPromo.targetProducts.length} SP`}
+                                                        <span>▼</span>
+                                                    </div>
+                                                    <div className="absolute top-full left-0 w-full bg-white border shadow-lg rounded-b z-20 hidden group-hover:block max-h-48 overflow-y-auto">
+                                                        {products.map(p => (
+                                                            <label key={p.id} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm">
+                                                                <input 
+                                                                    type="checkbox" 
+                                                                    checked={newPromo.targetProducts.includes(p.id)}
+                                                                    onChange={(e) => {
+                                                                        const checked = e.target.checked;
+                                                                        setNewPromo(prev => ({
+                                                                            ...prev, 
+                                                                            targetProducts: checked 
+                                                                                ? [...prev.targetProducts, p.id] 
+                                                                                : prev.targetProducts.filter(id => id !== p.id)
+                                                                        }));
+                                                                    }}
+                                                                    className="w-4 h-4 accent-primary-600"
+                                                                />
+                                                                <span className="truncate">{p.name}</span>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </div>
                                             </div>
                                         )}
                                         <div className="flex items-center gap-2">
