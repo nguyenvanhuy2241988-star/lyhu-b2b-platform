@@ -16,7 +16,13 @@ export default function BlogSidebarPromo({ promo }: { promo: any }) {
                 </h3>
                 
                 {promo?.description ? (
-                    <p className="text-sm text-gray-600 mb-6">{promo.description}</p>
+                    <ul className="text-sm space-y-2.5 mb-6 text-gray-600">
+                        {promo.description.split('\n').map((line: string, i: number) => line.trim() && (
+                            <li key={i} className="flex items-start gap-2">
+                                <span className="text-primary-500 mt-0.5">•</span> {line.trim()}
+                            </li>
+                        ))}
+                    </ul>
                 ) : (
                     <ul className="text-sm space-y-2.5 mb-6 text-gray-600">
                         <li className="flex items-start gap-2"><span className="text-primary-500 mt-0.5">•</span> Đơn từ 500K: Tặng 1 lốc bia</li>
