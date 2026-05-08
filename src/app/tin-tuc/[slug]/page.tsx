@@ -13,9 +13,7 @@ import BlogSidebarPromo from '@/components/blog/BlogSidebarPromo';
 import BlogSidebarArticles from '@/components/blog/BlogSidebarArticles';
 import BlogSidebarNewCustomerPromo from '@/components/blog/BlogSidebarNewCustomerPromo';
 import DynamicBlogContent from '@/components/blog/DynamicBlogContent';
-
-export const revalidate = 3600;
-
+export const revalidate = 60;
 type Props = {
     params: { slug: string }
 };
