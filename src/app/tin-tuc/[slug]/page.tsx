@@ -169,6 +169,16 @@ export default async function BlogPostPage({ params }: Props) {
         }
     };
 
+    const breadcrumbSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang chủ', item: siteUrl },
+            { '@type': 'ListItem', position: 2, name: 'Tin tức B2B', item: `${siteUrl}/tin-tuc` },
+            ...(post.category ? [{ '@type': 'ListItem', position: 3, name: post.category.name, item: `${siteUrl}/tin-tuc?category=${post.category.slug}` }] : [])
+        ]
+    };
+
     let faqSchema = null;
     const faqs = Array.isArray(post.faq_data) ? post.faq_data : [];
     if (faqs.length > 0) {
@@ -186,6 +196,7 @@ export default async function BlogPostPage({ params }: Props) {
         <div className="bg-white min-h-screen pb-16">
             <ReadingProgressBar />
             <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
+            <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
             {faqSchema && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />}
 
             {/* Breadcrumb Navigation */}
