@@ -1,15 +1,17 @@
 import React from 'react';
 import InlineProductBox from './InlineProductBox';
+import BlogSidebarPromo from './BlogSidebarPromo';
 
 interface DynamicBlogContentProps {
     content: string;
     videoUrl?: string | null;
     isVideoVertical?: boolean;
     products?: any[];
+    promotions?: any[];
     showProductCards?: boolean;
 }
 
-export default function DynamicBlogContent({ content, videoUrl, isVideoVertical = false, products = [], showProductCards = true }: DynamicBlogContentProps) {
+export default function DynamicBlogContent({ content, videoUrl, isVideoVertical = false, products = [], promotions = [], showProductCards = true }: DynamicBlogContentProps) {
     if (!content) return null;
 
     // A simple parser to split HTML by block endings (paragraphs, lists).
@@ -92,6 +94,18 @@ export default function DynamicBlogContent({ content, videoUrl, isVideoVertical 
                             ></iframe>
                         </div>
                     );
+                }
+
+                // Inject Promo Banner after 3rd paragraph ONLY for Mobile screens
+                if (paragraphCount === 3 && promotions.length > 0) {
+                    const activePromo = promotions.find(p => p.type === 'promotion' || !p.discount_type) || promotions[0];
+                    if (activePromo) {
+                        elements.push(
+                            <div key="mobile-promo" className="my-8 block lg:hidden w-full max-w-md mx-auto relative z-10">
+                                <BlogSidebarPromo promo={activePromo} />
+                            </div>
+                        );
+                    }
                 }
 
                 // Inject 1st Product after the 8th paragraph (after criteria/intro)

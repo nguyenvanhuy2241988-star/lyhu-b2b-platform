@@ -267,6 +267,7 @@ export default async function BlogPostPage({ params }: Props) {
                         videoUrl={post.video_url} 
                         isVideoVertical={post.is_video_vertical}
                         products={products} 
+                        promotions={promotions}
                         showProductCards={post.category?.slug === 'goc-nha-phan-phoi-diem-ban'}
                     />
 

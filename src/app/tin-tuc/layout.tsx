@@ -32,7 +32,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
                 </div>
 
                 {/* Main Header Area: Logo, Slogan, Trending, Search */}
-                <div className="max-w-[1200px] mx-auto px-4 pt-3 pb-2 flex flex-col md:flex-row items-center justify-start gap-4 md:gap-8">
+                <div className="max-w-[1200px] mx-auto px-4 pt-3 pb-2 flex flex-col md:flex-row items-center justify-start gap-2 md:gap-8">
                     {/* Logo — image is square with whitespace, so we crop it */}
                     <Link href="/tin-tuc" className="shrink-0 group block">
                         <div className="h-[50px] md:h-[60px] overflow-hidden flex items-center justify-center">
@@ -44,8 +44,8 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
                         </div>
                     </Link>
 
-                    {/* Trending Topics Bar */}
-                    <div className="flex items-center justify-start gap-4 overflow-x-auto scrollbar-hide pb-2 md:pb-0 shrink-0">
+                    {/* Trending Topics Bar (Hidden on Mobile) */}
+                    <div className="hidden lg:flex items-center justify-start gap-4 overflow-x-auto scrollbar-hide shrink-0">
                         <TrendingUp className="w-4 h-4 text-primary-600 shrink-0" />
                         <Link href="/tin-tuc?q=tiktok" className="shrink-0 text-gray-600 hover:text-primary-700 text-xs font-bold transition-colors"># TikTok Shop</Link>
                         <Link href="/tin-tuc?q=chiết+khấu" className="shrink-0 text-gray-600 hover:text-primary-700 text-xs font-bold transition-colors"># Chiết khấu đại lý</Link>
@@ -54,7 +54,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
                     </div>
 
                     {/* Search Bar */}
-                    <div className="w-full md:w-[280px] shrink-0 ml-auto md:ml-0">
+                    <div className="w-full md:w-[280px] shrink-0 ml-auto md:ml-auto lg:ml-0 mt-1 md:mt-0">
                         <SearchBar />
                     </div>
                 </div>

@@ -174,10 +174,39 @@ export default async function BlogIndexPage({
             
             {/* Top Toolbar: Categories */}
             <div className="bg-white border-y border-gray-200 relative z-40" style={{ overflow: 'visible' }}>
-                <div className="flex flex-row items-center justify-center gap-x-1 md:gap-x-4 px-4 md:px-0 max-w-[1200px] mx-auto" style={{ overflow: 'visible' }}>
+                
+                {/* Mobile Navigation (Horizontal Scroll with Pills) */}
+                <div className="flex md:hidden flex-row items-center gap-x-2 px-4 py-3 overflow-x-auto scrollbar-hide w-full">
                     <Link 
                         href={`/tin-tuc${searchQuery ? `?q=${searchQuery}` : ''}`}
-                        className={`shrink-0 px-2 md:px-3 py-3.5 text-[13px] md:text-[14px] font-bold uppercase transition-colors duration-300 whitespace-nowrap ${
+                        className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-bold transition-colors whitespace-nowrap ${
+                            !activeGroup && activeCategory === 'all' 
+                            ? 'bg-primary-600 text-white shadow-sm' 
+                            : 'bg-gray-100 text-gray-700 border border-gray-200'
+                        }`}
+                    >
+                        Tất cả
+                    </Link>
+                    {categories.map(cat => (
+                        <Link 
+                            key={cat.id}
+                            href={`/tin-tuc?category=${cat.slug}${searchQuery ? `&q=${searchQuery}` : ''}`}
+                            className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-bold transition-colors whitespace-nowrap ${
+                                activeCategory === cat.slug 
+                                ? 'bg-primary-600 text-white shadow-sm' 
+                                : 'bg-gray-100 text-gray-700 border border-gray-200'
+                            }`}
+                        >
+                            {cat.name}
+                        </Link>
+                    ))}
+                </div>
+
+                {/* Desktop Navigation (Mega Menu) */}
+                <div className="hidden md:flex flex-row items-center justify-center gap-x-4 max-w-[1200px] mx-auto" style={{ overflow: 'visible' }}>
+                    <Link 
+                        href={`/tin-tuc${searchQuery ? `?q=${searchQuery}` : ''}`}
+                        className={`shrink-0 px-3 py-3.5 text-[14px] font-bold uppercase transition-colors duration-300 whitespace-nowrap ${
                             !activeGroup && activeCategory === 'all' 
                             ? 'text-primary-700 border-b-[3px] border-primary-600' 
                             : 'text-gray-800 hover:text-primary-600 border-b-[3px] border-transparent'
@@ -191,13 +220,13 @@ export default async function BlogIndexPage({
                             <div key={group.key} className="group/menu shrink-0 relative" style={{ overflow: 'visible' }}>
                                 <Link 
                                     href={`/tin-tuc?group=${group.key}${searchQuery ? `&q=${searchQuery}` : ''}`}
-                                    className={`block px-2 md:px-3 py-3.5 pb-4 text-[13px] md:text-[14px] font-bold uppercase transition-colors duration-300 whitespace-nowrap ${
+                                    className={`block px-3 py-3.5 pb-4 text-[14px] font-bold uppercase transition-colors duration-300 whitespace-nowrap ${
                                         isActive 
                                         ? 'text-primary-700 border-b-[3px] border-primary-600' 
                                         : 'text-gray-800 hover:text-primary-600 border-b-[3px] border-transparent'
                                     }`}
                                 >
-                                    <span className="hidden md:inline mr-1">{group.icon}</span>
+                                    <span className="inline mr-1">{group.icon}</span>
                                     {group.name}
                                 </Link>
                                 {/* Hover Dropdown */}
