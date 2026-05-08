@@ -133,7 +133,7 @@ export default function B2bCampaignsPage() {
     const [promotions, setPromotions] = useState<any[]>([]);
     const [isLoadingPromos, setIsLoadingPromos] = useState(false);
     const [newPromo, setNewPromo] = useState({
-        name: '', description: '', priority: 1,
+        id: '', name: '', description: '', priority: 1,
         conditionType: 'min_cart_qty', requiredValue: 1, targetProducts: [] as string[],
         actionType: 'discount_percent', rewardValue: 10, rewardProduct: ''
     });
@@ -150,34 +150,62 @@ export default function B2bCampaignsPage() {
 
     useEffect(() => { if (activeTab === 'promotions' && promoTab === 'promos') fetchPromotions(); }, [activeTab, promoTab]);
 
+    const handleEditPromo = (promo: any) => {
+        const cond = promo.conditions?.[0];
+        const action = promo.actions?.[0];
+        setNewPromo({
+            id: promo.id,
+            name: promo.name,
+            description: promo.description || '',
+            priority: promo.priority || 1,
+            conditionType: cond?.condition_type || 'min_cart_qty',
+            requiredValue: cond?.required_value || 1,
+            targetProducts: cond?.target_product_ids || [],
+            actionType: action?.action_type || 'discount_percent',
+            rewardValue: action?.reward_value || 10,
+            rewardProduct: action?.reward_product_id || ''
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const handleSavePromo = async () => {
         if (!newPromo.name) return toast.warning("Nhập tên chương trình");
         if (newPromo.actionType === 'free_items' && !newPromo.rewardProduct) return toast.warning("Chọn SP tặng");
 
-        // 1. Create Promotion
-        const { data: promo, error: promoErr } = await supabase.from('wholesale_promotions').insert({
-            name: newPromo.name, description: newPromo.description, is_active: true, priority: newPromo.priority
-        }).select().single();
-        if (promoErr) return toast.error(promoErr.message);
+        if (newPromo.id) {
+            // Cập nhật
+            const { error: promoErr } = await supabase.from('wholesale_promotions').update({
+                name: newPromo.name, description: newPromo.description, priority: newPromo.priority
+            }).eq('id', newPromo.id);
+            if (promoErr) return toast.error(promoErr.message);
 
-        // 2. Condition
-        await supabase.from('wholesale_promotion_conditions').insert({
-            promotion_id: promo.id,
-            condition_type: newPromo.conditionType,
-            required_value: newPromo.requiredValue,
-            target_product_ids: newPromo.targetProducts.length > 0 ? newPromo.targetProducts : []
-        });
+            await supabase.from('wholesale_promotion_conditions').delete().eq('promotion_id', newPromo.id);
+            await supabase.from('wholesale_promotion_actions').delete().eq('promotion_id', newPromo.id);
 
-        // 3. Action
-        await supabase.from('wholesale_promotion_actions').insert({
-            promotion_id: promo.id,
-            action_type: newPromo.actionType,
-            reward_value: newPromo.rewardValue,
-            reward_product_id: newPromo.actionType === 'free_items' ? newPromo.rewardProduct : null
-        });
+            await supabase.from('wholesale_promotion_conditions').insert({
+                promotion_id: newPromo.id, condition_type: newPromo.conditionType, required_value: newPromo.requiredValue, target_product_ids: newPromo.targetProducts.length > 0 ? newPromo.targetProducts : []
+            });
+            await supabase.from('wholesale_promotion_actions').insert({
+                promotion_id: newPromo.id, action_type: newPromo.actionType, reward_value: newPromo.rewardValue, reward_product_id: newPromo.actionType === 'free_items' ? newPromo.rewardProduct : null
+            });
+            toast.success("✅ Đã cập nhật chương trình!");
+        } else {
+            // Tạo mới
+            const { data: promo, error: promoErr } = await supabase.from('wholesale_promotions').insert({
+                name: newPromo.name, description: newPromo.description, is_active: true, priority: newPromo.priority
+            }).select().single();
+            if (promoErr) return toast.error(promoErr.message);
 
-        toast.success("✅ Đã tạo chương trình KM!");
-        setNewPromo({ ...newPromo, name: '', description: '' });
+            await supabase.from('wholesale_promotion_conditions').insert({
+                promotion_id: promo.id, condition_type: newPromo.conditionType, required_value: newPromo.requiredValue, target_product_ids: newPromo.targetProducts.length > 0 ? newPromo.targetProducts : []
+            });
+            await supabase.from('wholesale_promotion_actions').insert({
+                promotion_id: promo.id, action_type: newPromo.actionType, reward_value: newPromo.rewardValue, reward_product_id: newPromo.actionType === 'free_items' ? newPromo.rewardProduct : null
+            });
+            toast.success("✅ Đã tạo chương trình KM!");
+        }
+
+        setNewPromo({ id: '', name: '', description: '', priority: 1, conditionType: 'min_cart_qty', requiredValue: 1, targetProducts: [], actionType: 'discount_percent', rewardValue: 10, rewardProduct: '' });
         fetchPromotions();
     };
 
@@ -517,9 +545,16 @@ export default function B2bCampaignsPage() {
                                         </div>
                                     </div>
 
-                                    <button onClick={handleSavePromo} className="w-full bg-primary-600 text-white font-medium py-3 rounded-md hover:bg-primary-700 mt-4 flex items-center justify-center gap-2">
-                                        <Save className="w-4 h-4" /> Bắt đầu CT Khuyến Mãi này
-                                    </button>
+                                    <div className="flex gap-2 mt-4">
+                                        <button onClick={handleSavePromo} className="flex-1 bg-primary-600 text-white font-medium py-3 rounded-md hover:bg-primary-700 flex items-center justify-center gap-2">
+                                            <Save className="w-4 h-4" /> {newPromo.id ? 'Lưu Cập Nhật' : 'Bắt đầu CT Khuyến Mãi này'}
+                                        </button>
+                                        {newPromo.id && (
+                                            <button onClick={() => setNewPromo({ id: '', name: '', description: '', priority: 1, conditionType: 'min_cart_qty', requiredValue: 1, targetProducts: [], actionType: 'discount_percent', rewardValue: 10, rewardProduct: '' })} className="px-4 bg-slate-100 text-slate-600 font-medium rounded-md hover:bg-slate-200">
+                                                Hủy
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -545,7 +580,10 @@ export default function B2bCampaignsPage() {
                                                 <button onClick={() => handleTogglePromo(promo.id, promo.is_active)} className={`relative flex items-center rounded-full h-6 w-11 transition-colors ${promo.is_active ? 'bg-primary-600' : 'bg-slate-300'}`}>
                                                     <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${promo.is_active ? 'translate-x-6' : 'translate-x-1'}`}/>
                                                 </button>
-                                                <button onClick={() => handleDeletePromo(promo.id)} className="text-red-400 hover:text-red-600 p-1 bg-red-50 rounded"><Trash2 className="w-4 h-4"/></button>
+                                                <div className="flex gap-1 mt-1">
+                                                    <button onClick={() => handleEditPromo(promo)} className="text-slate-400 hover:text-blue-600 p-1 bg-slate-50 hover:bg-blue-50 rounded"><Edit2 className="w-4 h-4"/></button>
+                                                    <button onClick={() => handleDeletePromo(promo.id)} className="text-slate-400 hover:text-red-600 p-1 bg-slate-50 hover:bg-red-50 rounded"><Trash2 className="w-4 h-4"/></button>
+                                                </div>
                                             </div>
                                         </div>
                                     )
