@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Share2, Facebook, Copy, Check } from 'lucide-react';
+import { Share2, Facebook, Copy, Check, MessageCircle } from 'lucide-react';
 
 interface ShareButtonsProps {
     url: string;
@@ -68,9 +68,7 @@ export default function ShareButtons({ url, title }: ShareButtonsProps) {
                     className="flex items-center gap-2 px-4 py-2 bg-[#0068FF] text-white text-sm font-medium rounded-lg hover:bg-[#0054CC] transition-colors"
                     title="Chia sẻ qua Zalo"
                 >
-                    <svg className="w-4 h-4" viewBox="0 0 48 48" fill="currentColor">
-                        <path d="M24 0C10.745 0 0 10.745 0 24s10.745 24 24 24 24-10.745 24-24S37.255 0 24 0zm8.7 33.2c-.6.3-3.7 1.8-4.2 2-.5.2-1 .3-1.4-.3-.4-.6-1.6-2-2-2.4-.3-.4-.7-.5-1.3-.2-.6.3-2.4 1-4.6 3-1.7 1.6-2.8 3.5-3.2 4.1-.3.6 0 .9.3 1.2.3.3.6.6.9 1 .3.3.4.6.6 1 .2.3.1.6-.1.9-.2.3-1.4 3.4-1.9 4.6-.5 1.2-1 1-1.4 1h-1.2c-.4 0-1.1-.2-1.7-.8-.6-.6-2.2-2.2-2.2-5.3 0-3.1 2.3-6.1 2.6-6.5.3-.4 4.5-6.9 10.9-9.7 1.5-.7 2.7-1.1 3.6-1.4 1.5-.5 2.9-.4 4-.2 1.2.2 3.7 1.5 4.3 3 .5 1.5.5 2.7.4 3-.2.3-.6.5-1.2.8z"/>
-                    </svg>
+                    <MessageCircle className="w-4 h-4" />
                     Zalo
                 </button>
 
