@@ -19,8 +19,19 @@ export default function DynamicBlogContent({ content, videoUrl, isVideoVertical 
 
     // Pre-process content to extract headings and inject IDs for TOC
     let processedContent = content.replace(/<h([23])(.*?)>(.*?)<\/h\1>/gi, (match, level, attrs, text) => {
+        // Decode common HTML entities
+        const decodeHTMLEntities = (str: string) => {
+            return str
+                .replace(/&quot;/g, '"')
+                .replace(/&amp;/g, '&')
+                .replace(/&#39;/g, "'")
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&nbsp;/g, ' ');
+        };
+
         // Strip HTML from text to get plain text for TOC
-        const plainText = text.replace(/<[^>]*>?/gm, '').trim();
+        const plainText = decodeHTMLEntities(text.replace(/<[^>]*>?/gm, '').trim());
         if (!plainText) return match;
         
         // Generate an ID (slugify)
@@ -218,7 +229,7 @@ export default function DynamicBlogContent({ content, videoUrl, isVideoVertical 
                                 <li key={idx} className={`leading-snug ${item.level === 3 ? 'ml-6 text-[15px]' : 'font-medium text-[16px] mt-3'}`}>
                                     <a 
                                         href={`#${item.id}`} 
-                                        className={`text-gray-700 hover:text-primary-600 !no-underline hover:!underline ${item.level === 3 ? 'text-gray-500' : ''}`}
+                                        className={`!text-gray-800 hover:!text-primary-600 !no-underline hover:!underline ${item.level === 3 ? '!text-gray-500' : ''}`}
                                     >
                                         {item.text}
                                     </a>
