@@ -268,17 +268,17 @@ export default async function BlogPostPage({ params }: Props) {
                 {/* Left Content */}
                 <div className="flex-1 w-full max-w-3xl mx-auto lg:mx-0">
                     
-                    {/* Featured Image (Mobile Friendly 16:9) */}
+                    {/* Featured Image (No cropping) */}
                     {post.thumbnail_url && (
                         <div className="w-full mb-10">
-                            <div className="aspect-video w-full rounded-lg overflow-hidden bg-gray-100">
+                            <div className="w-full rounded-lg overflow-hidden bg-gray-50 border border-gray-100 flex justify-center py-4">
                                 <img 
                                     src={post.thumbnail_url} 
                                     alt={post.title} 
-                                    className="w-full h-full object-cover"
+                                    className="max-h-[450px] w-auto object-contain"
                                 />
                             </div>
-                            <p className="text-center text-xs text-gray-400 mt-2 italic">{post.title}</p>
+                            <p className="text-center text-xs text-gray-400 mt-3 italic">{post.title}</p>
                         </div>
                     )}
 
