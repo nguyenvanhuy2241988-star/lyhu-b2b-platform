@@ -153,6 +153,7 @@ export interface Customer {
     notes?: string;
     source_category?: string;
     potential_level?: string;
+    old_address?: string;
 }
 
 export interface CRMDeal {
@@ -542,6 +543,7 @@ export async function createCustomer(customer: {
     notes?: string;
     tax_code?: string;
     ward?: string;
+    old_address?: string;
 }, token?: string): Promise<Customer> {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -631,7 +633,7 @@ export async function deleteCustomer(id: string, token?: string): Promise<boolea
 
 // Optimized select: only columns needed for CRM kanban/list display
 const CRM_DEAL_SELECT = 'id,title,stage,status,priority,customer_id,owner_user_id,next_action_at,handled_date,expected_value,source_category,source,created_at,note,potential_level,customer_type,is_new_customer,tags';
-const CRM_CUSTOMER_SELECT = 'id,name,phone,address,province';
+const CRM_CUSTOMER_SELECT = 'id,name,phone,address,province,old_address';
 
 // Fetch deals for a specific owner (Telesales, Sales use this) - Using PURE FETCH
 export async function fetchDeals(ownerId?: string, token?: string): Promise<CRMDeal[]> {

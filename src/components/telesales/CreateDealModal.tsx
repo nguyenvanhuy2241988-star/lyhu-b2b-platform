@@ -112,6 +112,7 @@ export const CreateDealModal = ({
     // For editing deal, we use dealCustomerType.
     const [customerType, setCustomerType] = useState("tap_hoa");
     const [customerAddress, setCustomerAddress] = useState("");
+    const [customerOldAddress, setCustomerOldAddress] = useState("");
     // Location State (2-cấp sau sáp nhập 2025: Tỉnh/Thành → Phường/Xã)
     const [customerProvince, setCustomerProvince] = useState("");
     const [customerWard, setCustomerWard] = useState("");
@@ -184,6 +185,7 @@ export const CreateDealModal = ({
                     setCustomerName(defaultNewCustomer.name || "");
                     setCustomerPhone(defaultNewCustomer.phone || "");
                 }
+                setCustomerOldAddress("");
             }
         }
 
@@ -248,6 +250,7 @@ export const CreateDealModal = ({
                 email: customerEmail.trim() || undefined,
                 zalo: customerZalo.trim() || undefined,
                 notes: customerNotes.trim() || undefined,
+                old_address: customerOldAddress.trim() || undefined,
 
                 owner_user_id: userId
             } : undefined
@@ -345,6 +348,11 @@ export const CreateDealModal = ({
                             <div>
                                 <label className="block text-xs font-medium text-slate-600 mb-1">Địa chỉ (Số nhà/Đường)</label>
                                 <input type="text" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Số 123..." />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">Địa chỉ cũ (Trước sáp nhập - Giao hàng)</label>
+                                <input type="text" value={customerOldAddress} onChange={(e) => setCustomerOldAddress(e.target.value)} className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Nhập đầy đủ Tỉnh/Huyện/Xã cũ..." />
                             </div>
 
                             <div className="grid grid-cols-2 gap-3">
