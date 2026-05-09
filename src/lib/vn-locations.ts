@@ -116,3 +116,67 @@ export const fetchDistricts = async (_provinceCode: string): Promise<LocationOpt
     console.warn('[vn-locations] fetchDistricts() is deprecated. District tier eliminated after 01/07/2025 merger.');
     return [];
 }
+
+// === LEGACY API v1 (Trước sáp nhập) ===
+export const fetchLegacyProvinces = async (): Promise<LocationOption[]> => {
+    const cacheKey = `legacy_p_all`;
+    const cached = getCache(cacheKey);
+    if (cached) return cached;
+
+    try {
+        const res = await fetch(`https://provinces.open-api.vn/api/p/`);
+        if (!res.ok) return [];
+        const data = await res.json();
+        const mapped = data.map((p: any) => ({
+            value: p.name,
+            code: p.code,
+            label: p.name
+        }));
+        setCache(cacheKey, mapped);
+        return mapped;
+    } catch {
+        return [];
+    }
+};
+
+export const fetchLegacyDistricts = async (provinceCode: string): Promise<LocationOption[]> => {
+    const cacheKey = `legacy_d_${provinceCode}`;
+    const cached = getCache(cacheKey);
+    if (cached) return cached;
+
+    try {
+        const res = await fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`);
+        if (!res.ok) return [];
+        const data = await res.json();
+        const mapped = (data.districts || []).map((d: any) => ({
+            value: d.name,
+            code: d.code,
+            label: d.name
+        }));
+        setCache(cacheKey, mapped);
+        return mapped;
+    } catch {
+        return [];
+    }
+};
+
+export const fetchLegacyWards = async (districtCode: string): Promise<LocationOption[]> => {
+    const cacheKey = `legacy_w_${districtCode}`;
+    const cached = getCache(cacheKey);
+    if (cached) return cached;
+
+    try {
+        const res = await fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
+        if (!res.ok) return [];
+        const data = await res.json();
+        const mapped = (data.wards || []).map((w: any) => ({
+            value: w.name,
+            code: w.code,
+            label: w.name
+        }));
+        setCache(cacheKey, mapped);
+        return mapped;
+    } catch {
+        return [];
+    }
+};
