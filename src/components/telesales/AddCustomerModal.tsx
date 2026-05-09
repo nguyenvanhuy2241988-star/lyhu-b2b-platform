@@ -41,7 +41,8 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
         province: "",
         district: "",
         ward: "",
-        notes: ""
+        notes: "",
+        old_address: ""
     });
 
     // Location State (2-cấp sau sáp nhập 2025: Tỉnh/Thành → Phường/Xã)
@@ -67,7 +68,8 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                     province: initialData.province || "",
                     district: initialData.district || "",
                     ward: initialData.ward || "",
-                    notes: initialData.notes || ""
+                    notes: initialData.notes || "",
+                    old_address: initialData.old_address || ""
                 });
 
                 // Initialize wards if province exists
@@ -85,7 +87,8 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                     province: "",
                     district: "",
                     ward: "",
-                    notes: ""
+                    notes: "",
+                    old_address: ""
                 });
                 setWards([]);
             }
@@ -170,7 +173,8 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                 district: formData.district,
                 ward: formData.ward,
                 // Also update legacy address field primarily for display
-                address: fullAddress
+                address: fullAddress,
+                old_address: formData.old_address.trim() || undefined
             };
 
             if (initialData) {
@@ -357,6 +361,16 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                                     onChange={(e) => handleChange('address', e.target.value)}
                                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
                                     placeholder="Số 123..."
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-medium text-slate-700">Địa chỉ cũ (Trước sáp nhập - Giao hàng)</label>
+                                <input
+                                    value={formData.old_address}
+                                    onChange={(e) => handleChange('old_address', e.target.value)}
+                                    className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500/20 outline-none"
+                                    placeholder="Nhập đầy đủ Tỉnh/Huyện/Xã cũ..."
                                 />
                             </div>
                         </div>
