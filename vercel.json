@@ -18,7 +18,7 @@
         },
         {
             "path": "/api/marketing/cron/fmcg-news",
-            "schedule": "0 1,8,13 * * *"
+            "schedule": "0 */3 * * *"
         },
         {
             "path": "/api/marketing/spider-news",
