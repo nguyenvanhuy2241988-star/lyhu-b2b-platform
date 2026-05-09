@@ -179,15 +179,6 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
 
     const onLegacyWardChange = (wCode: string) => {
         setLegacyW(wCode);
-        if (wCode && legacyP && legacyD) {
-            const pName = legacyProvinces.find(x => x.code === legacyP)?.label || "";
-            const dName = legacyDistricts.find(x => x.code === legacyD)?.label || "";
-            const wName = legacyWards.find(x => x.code === wCode)?.label || "";
-            const fullLegacy = [wName, dName, pName].filter(Boolean).join(", ");
-            handleChange('old_address', fullLegacy);
-        } else {
-            handleChange('old_address', "");
-        }
     };
 
     const copyPhoneToZalo = () => {
@@ -231,6 +222,14 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
             ].filter(Boolean);
             const fullAddress = addressParts.join(", ");
 
+            let finalOldAddress = formData.old_address;
+            if (legacyP && legacyW) {
+                const pName = legacyProvinces.find(x => x.code === legacyP)?.label || "";
+                const dName = legacyDistricts.find(x => x.code === legacyD)?.label || "";
+                const wName = legacyWards.find(x => x.code === legacyW)?.label || "";
+                finalOldAddress = [formData.address, wName, dName, pName].filter(Boolean).join(", ");
+            }
+
             const payload = {
                 ...formData,
                 name: formData.name.trim(),
@@ -241,7 +240,7 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
                 ward: formData.ward,
                 // Also update legacy address field primarily for display
                 address: fullAddress,
-                old_address: formData.old_address.trim() || undefined
+                old_address: finalOldAddress?.trim() || undefined
             };
 
             if (initialData) {

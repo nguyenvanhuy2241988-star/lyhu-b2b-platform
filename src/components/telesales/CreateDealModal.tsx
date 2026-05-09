@@ -201,15 +201,6 @@ export const CreateDealModal = ({
 
     const onLegacyWardChange = (wCode: string) => {
         setLegacyW(wCode);
-        if (wCode && legacyP && legacyD) {
-            const pName = legacyProvinces.find(x => x.code === legacyP)?.label || "";
-            const dName = legacyDistricts.find(x => x.code === legacyD)?.label || "";
-            const wName = legacyWards.find(x => x.code === wCode)?.label || "";
-            const fullLegacy = [wName, dName, pName].filter(Boolean).join(", ");
-            setCustomerOldAddress(fullLegacy);
-        } else {
-            setCustomerOldAddress("");
-        }
     };
 
     // Reset create/edit form
@@ -284,6 +275,14 @@ export const CreateDealModal = ({
             setTitle(`Cơ hội - ${customerLabel}`);
         }
 
+        let finalOldAddress = customerOldAddress;
+        if (activeTab === 'new' && legacyP && legacyW) {
+            const pName = legacyProvinces.find(x => x.code === legacyP)?.label || "";
+            const dName = legacyDistricts.find(x => x.code === legacyD)?.label || "";
+            const wName = legacyWards.find(x => x.code === legacyW)?.label || "";
+            finalOldAddress = [customerAddress, wName, dName, pName].filter(Boolean).join(", ");
+        }
+
         const dealData = {
             title: title.trim() || `Cơ hội - ${activeTab === 'new' ? customerName : selectedCustomer?.name}`,
             customer_id: selectedCustomer?.id || '',
@@ -314,7 +313,7 @@ export const CreateDealModal = ({
                 email: customerEmail.trim() || undefined,
                 zalo: customerZalo.trim() || undefined,
                 notes: customerNotes.trim() || undefined,
-                old_address: customerOldAddress.trim() || undefined,
+                old_address: finalOldAddress?.trim() || undefined,
 
                 owner_user_id: userId
             } : undefined
