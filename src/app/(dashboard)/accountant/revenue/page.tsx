@@ -143,7 +143,7 @@ export default function AccountantRevenuePage() {
                         <p className="text-slate-500">Không có dữ liệu đơn hàng phù hợp.</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
+                    <div className="hidden lg:block overflow-x-auto">
                         <table className="w-full text-left text-sm min-w-[900px]">
                             <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-medium">
                                 <tr>
@@ -206,6 +206,65 @@ export default function AccountantRevenuePage() {
                                 })}
                             </tbody>
                         </table>
+                    </div>
+                )}
+                
+                {/* Mobile Card List View */}
+                {!isLoading && filteredOrders.length > 0 && (
+                    <div className="lg:hidden divide-y divide-slate-100">
+                        {filteredOrders.map((order) => {
+                            const customer = customers.find(c => c.id === order.customerId);
+                            return (
+                                <div key={order.id} className="p-4 bg-white hover:bg-slate-50 transition-colors">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div>
+                                            <div className="font-bold text-slate-900">#{order.readableId}</div>
+                                            <div className="text-[10px] text-slate-400 font-mono mt-0.5">{order.id.slice(0, 8)}</div>
+                                            <div className="text-xs text-slate-500 mt-1">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="font-bold text-slate-900">
+                                                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.totalAmount)}
+                                            </div>
+                                            <div className={`text-[10px] font-bold uppercase mt-1 ${order.status === 'delivered' ? 'text-emerald-600' : 'text-slate-400'
+                                                }`}>
+                                                {order.status}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-2">
+                                        <div className="flex items-start justify-between">
+                                            <div>
+                                                <div className="font-medium text-slate-900 text-sm">{order.customerName}</div>
+                                                <div className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                                                    <AlertCircle className={`w-3.5 h-3.5 ${customer?.tax_code ? 'text-green-500' : 'text-orange-400'}`} />
+                                                    {customer?.tax_code || "Thiếu MST"}
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => handleEditCustomer(order)}
+                                                className="p-2 bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 rounded-lg shadow-sm transition-all flex-shrink-0"
+                                                title="Cập nhật thông tin xuất hóa đơn"
+                                            >
+                                                <Pencil className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                        
+                                        <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
+                                            <span className="text-slate-500">Mã MISA:</span>
+                                            {customer?.misa_code ? (
+                                                <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-600 font-mono font-bold">
+                                                    {customer.misa_code}
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-300 italic">Chưa map</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 )}
             </div>

@@ -92,7 +92,7 @@ export default function AccountantReconciliationPage() {
                                 KHỚP 2/3 GIAO DỊCH
                             </div>
                         </div>
-                        <div className="overflow-x-auto">
+                        <div className="hidden lg:block overflow-x-auto">
                             <table className="w-full text-left text-sm whitespace-nowrap">
                                 <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-medium">
                                     <tr>
@@ -147,6 +147,68 @@ export default function AccountantReconciliationPage() {
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                        
+                        {/* Mobile Card List View */}
+                        <div className="lg:hidden divide-y divide-slate-100">
+                            {transactions.map(t => (
+                                <div key={t.id} className="p-4 bg-white hover:bg-slate-50 transition-colors">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex-1">
+                                            <div className="font-bold text-slate-900 text-sm line-clamp-2">{t.description}</div>
+                                            <div className="text-[10px] text-slate-400 mt-1 uppercase tracking-wider flex items-center gap-2">
+                                                <span>{t.date}</span>
+                                            </div>
+                                        </div>
+                                        <div className="text-right ml-2 flex-shrink-0">
+                                            <div className="font-bold text-slate-900 text-base">
+                                                {formatCurrency(t.amount)}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-3 mb-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs text-slate-500 font-medium">Gợi ý hệ thống:</span>
+                                            {t.matchedOrderId ? (
+                                                <div className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 text-emerald-700 rounded-md">
+                                                    <CheckCircle2 className="w-3.5 h-3.5" />
+                                                    <span className="font-bold text-xs">Đơn #{t.matchedOrderId}</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-1.5 text-slate-400 italic text-xs">
+                                                    <AlertCircle className="w-3.5 h-3.5" />
+                                                    Không tìm thấy
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        <div className="flex items-center gap-2 pt-2 border-t border-slate-200/60">
+                                            <span className="text-[10px] text-slate-500 font-medium w-16">Tin cậy:</span>
+                                            <div className="flex-1 w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full rounded-full ${t.matchScore > 80 ? 'bg-emerald-500' : 'bg-orange-400'}`}
+                                                    style={{ width: `${t.matchScore}%` }}
+                                                />
+                                            </div>
+                                            <span className="text-[10px] font-bold text-slate-600">{t.matchScore}%</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <button className={`w-full py-2.5 rounded-xl text-sm font-bold transition-all flex justify-center items-center gap-2 ${t.matchedOrderId ? 'bg-primary-50 text-primary-700 hover:bg-primary-100' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                        }`}>
+                                        {t.matchedOrderId ? (
+                                            <>
+                                                <CheckCircle2 className="w-4 h-4" /> Xác nhận khớp
+                                            </>
+                                        ) : (
+                                            <>
+                                                <AlertCircle className="w-4 h-4" /> Gán thủ công
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}

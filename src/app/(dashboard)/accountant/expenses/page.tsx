@@ -214,8 +214,8 @@ export default function AccountantExpensesPage() {
                         <p className="text-slate-500">Chưa có dữ liệu chi phí.</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
+                    <div className="hidden lg:block overflow-x-auto">
+                        <table className="w-full text-left text-sm whitespace-nowrap">
                             <thead className="bg-slate-50 border-b text-slate-600 font-medium">
                                 <tr>
                                     <th className="px-6 py-4 w-10">
@@ -296,6 +296,80 @@ export default function AccountantExpensesPage() {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                )}
+                
+                {/* Mobile Card List View */}
+                {!isLoading && expenses.length > 0 && (
+                    <div className="lg:hidden divide-y divide-slate-100">
+                        {expenses.map((expense) => (
+                            <div key={expense.id} className={`p-4 bg-white hover:bg-slate-50 transition-colors ${selectedIds.includes(expense.id) ? 'bg-primary-50/30' : ''}`}>
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="flex gap-3">
+                                        <button onClick={() => toggleSelect(expense.id)} className="p-1 hover:bg-slate-200 rounded transition-colors mt-0.5">
+                                            {selectedIds.includes(expense.id) ? <CheckSquare className="w-4 h-4 text-primary-600" /> : <Square className="w-4 h-4 text-slate-300" />}
+                                        </button>
+                                        <div>
+                                            <div className="font-bold text-slate-900 line-clamp-2">{expense.description}</div>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <Calendar className="w-3 h-3 text-slate-400" />
+                                                <span className="text-xs text-slate-500">{new Date(expense.spent_at).toLocaleDateString('vi-VN')}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="font-bold text-red-600 text-base">
+                                            -{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(expense.amount)}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-3 space-y-2">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="text-[10px] bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded font-bold uppercase">
+                                            {EXPENSE_CATEGORY_LABELS[expense.category]}
+                                        </span>
+                                        {expense.accounting_account && (
+                                            <span className="text-[10px] text-primary-600 font-mono">TK {expense.accounting_account}</span>
+                                        )}
+                                        {expense.accounting_object && (
+                                            <span className="text-[10px] text-indigo-500 font-mono line-clamp-1">DT: {expense.accounting_object}</span>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                                        <span className="text-xs text-slate-500">MISA Sync:</span>
+                                        {expense.misa_sync_status === 'synced' ? (
+                                            <div className="flex items-center gap-1 text-emerald-600 font-bold text-[10px] uppercase">
+                                                <CheckCircle className="w-3 h-3" />
+                                                Đã Sync
+                                            </div>
+                                        ) : (
+                                            <div className="flex items-center gap-1 text-slate-400 font-bold text-[10px] uppercase">
+                                                <Clock className="w-3 h-3" />
+                                                Chờ Sync
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => openEditModal(expense)}
+                                        className="flex-1 py-2.5 bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-sm font-bold transition-all flex justify-center items-center gap-2"
+                                    >
+                                        <Pencil className="w-4 h-4" />
+                                        Sửa
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(expense.id)}
+                                        className="flex-1 py-2.5 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl text-sm font-bold transition-all flex justify-center items-center gap-2"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        Xóa
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>

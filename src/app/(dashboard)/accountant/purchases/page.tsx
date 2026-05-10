@@ -130,7 +130,7 @@ export default function AccountantPurchasesPage() {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
+                <div className="hidden lg:block overflow-x-auto">
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-20">
                             <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
@@ -186,6 +186,46 @@ export default function AccountantPurchasesPage() {
                         </table>
                     )}
                 </div>
+
+                {/* Mobile Card List View */}
+                {!isLoading && filteredPurchases.length > 0 && (
+                    <div className="lg:hidden divide-y divide-slate-100">
+                        {filteredPurchases.map((p) => (
+                            <div key={p.id} className="p-4 bg-white hover:bg-slate-50 transition-colors">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div>
+                                        <div className="font-bold text-slate-900">PO-{p.id.slice(0, 8).toUpperCase()}</div>
+                                        <div className="text-xs text-slate-500 mt-0.5">{new Date(p.orderedAt).toLocaleDateString('vi-VN')}</div>
+                                    </div>
+                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${getStatusStyle(p.status)}`}>
+                                        {getStatusLabel(p.status)}
+                                    </span>
+                                </div>
+                                
+                                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-3">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Building2 className="w-4 h-4 text-slate-400" />
+                                        <span className="font-medium text-slate-700 text-sm">{p.vendorName}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center pt-2 border-t border-slate-200/60">
+                                        <span className="text-xs text-slate-500">Tổng tiền</span>
+                                        <div className="font-bold text-slate-900 text-base">{formatCurrency(p.totalAmount)}</div>
+                                    </div>
+                                </div>
+                                
+                                <button className="w-full py-2.5 bg-white border border-slate-200 text-primary-600 hover:bg-primary-50 rounded-xl text-sm font-bold transition-all flex justify-center items-center gap-2">
+                                    Chi tiết <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                {!isLoading && filteredPurchases.length === 0 && (
+                    <div className="lg:hidden flex flex-col items-center justify-center py-12 text-center bg-slate-50">
+                        <Package className="w-10 h-10 text-slate-300 mb-3" />
+                        <p className="text-sm text-slate-500">Chưa có đơn nhập hàng nào.</p>
+                    </div>
+                )}
             </div>
         </div>
     );

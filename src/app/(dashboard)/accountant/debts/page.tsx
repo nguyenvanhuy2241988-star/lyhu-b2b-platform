@@ -114,7 +114,7 @@ export default function AccountantDebtsPage() {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
+                <div className="hidden lg:block overflow-x-auto">
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center py-20">
                             <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
@@ -183,6 +183,64 @@ export default function AccountantDebtsPage() {
                         </table>
                     )}
                 </div>
+
+                {/* Mobile Card List View */}
+                {!isLoading && filteredDebts.length > 0 && (
+                    <div className="lg:hidden divide-y divide-slate-100">
+                        {filteredDebts.map((d) => (
+                            <div key={d.id} className="p-4 bg-white hover:bg-slate-50 transition-colors">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="flex-1">
+                                        <div className="font-bold text-slate-900 line-clamp-2">{d.customerName}</div>
+                                        <div className="text-[10px] text-slate-400 uppercase mt-0.5">Hạn thanh toán: {d.paymentTermDays} ngày</div>
+                                    </div>
+                                    <div className="text-right ml-2 flex-shrink-0">
+                                        <div className="font-bold text-slate-900 text-base">{formatCurrency(d.totalDebt)}</div>
+                                    </div>
+                                </div>
+                                
+                                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-3 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-slate-500">Trạng thái quá hạn:</span>
+                                        {d.overdueDebt > 0 ? (
+                                            <div className="font-bold text-red-600 flex items-center gap-1 text-sm bg-red-50 px-2 py-0.5 rounded">
+                                                <Clock className="w-3.5 h-3.5" />
+                                                {formatCurrency(d.overdueDebt)}
+                                            </div>
+                                        ) : (
+                                            <span className="text-emerald-500 text-xs flex items-center gap-1 font-medium bg-emerald-50 px-2 py-0.5 rounded">
+                                                <CheckCircle2 className="w-3.5 h-3.5" /> Đúng hạn
+                                            </span>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="pt-2 border-t border-slate-200/60">
+                                        <div className="flex justify-between items-end mb-1">
+                                            <span className="text-[10px] text-slate-500">Hạn mức ({formatCurrency(d.creditLimit)})</span>
+                                            <span className="text-[10px] text-slate-400 font-bold">{((d.totalDebt / d.creditLimit) * 100).toFixed(0)}%</span>
+                                        </div>
+                                        <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                            <div
+                                                className={`h-full rounded-full ${d.totalDebt > d.creditLimit ? 'bg-red-500' : 'bg-emerald-500'}`}
+                                                style={{ width: `${Math.min((d.totalDebt / d.creditLimit) * 100, 100)}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button className="w-full py-2.5 bg-white border border-slate-200 text-primary-600 hover:bg-primary-50 rounded-xl text-sm font-bold transition-all flex justify-center items-center gap-2">
+                                    Chi tiết công nợ <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                {!isLoading && filteredDebts.length === 0 && (
+                    <div className="lg:hidden flex flex-col items-center justify-center py-12 text-center bg-slate-50">
+                        <Wallet className="w-10 h-10 text-slate-300 mb-3" />
+                        <p className="text-sm text-slate-500">Không có dữ liệu công nợ.</p>
+                    </div>
+                )}
             </div>
         </div>
     );

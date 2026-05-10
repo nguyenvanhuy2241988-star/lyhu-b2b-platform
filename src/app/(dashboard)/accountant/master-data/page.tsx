@@ -556,7 +556,7 @@ export default function AccountantMasterDataPage() {
                                 <p className="text-slate-500">Không tìm thấy kết quả.</p>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto">
+                            <div className="hidden lg:block overflow-x-auto">
                                 <table className="w-full text-left text-sm whitespace-nowrap">
                                     <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-medium">
                                         <tr>
@@ -626,8 +626,81 @@ export default function AccountantMasterDataPage() {
                                                 </tr>
                                             ))
                                         )}
-                                    </tbody>
+                                </tbody>
                                 </table>
+                            </div>
+                            
+                            {/* Mobile Card List View */}
+                            <div className="lg:hidden divide-y divide-slate-100">
+                                {activeTab === "products" ? (
+                                    products.filter(p => (p.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || (p.sku || "").toLowerCase().includes(searchQuery.toLowerCase())).map((p) => (
+                                        <div key={p.id} className="p-4 bg-white hover:bg-slate-50 transition-colors">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div className="flex-1 pr-2">
+                                                    <div className="font-bold text-slate-900 text-sm line-clamp-2">{p.name || "Không tên"}</div>
+                                                    <div className="text-[10px] text-slate-400 font-mono tracking-wider mt-1">{p.sku || "N/A"}</div>
+                                                </div>
+                                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 lowercase flex-shrink-0">
+                                                    {p.unit || "Cái/Hộp"}
+                                                </span>
+                                            </div>
+                                            
+                                            <div className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                                <div className="flex items-center gap-2 text-xs">
+                                                    <span className="text-slate-500">Mã MISA:</span>
+                                                    {p.misa_code ? (
+                                                        <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-600 font-mono font-bold">
+                                                            {p.misa_code}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-orange-400 italic">Chưa map</span>
+                                                    )}
+                                                </div>
+                                                
+                                                <button
+                                                    onClick={() => setEditingItem({ id: p.id, type: "product", value: p.misa_code || "" })}
+                                                    className="p-2 bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 rounded-lg shadow-sm transition-all"
+                                                >
+                                                    <Pencil className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    customers.filter(c => (c.name || "").toLowerCase().includes(searchQuery.toLowerCase()) || (c.tax_code || "").includes(searchQuery)).map((c) => (
+                                        <div key={c.id} className="p-4 bg-white hover:bg-slate-50 transition-colors">
+                                            <div className="flex justify-between items-start mb-3">
+                                                <div className="flex-1 pr-2">
+                                                    <div className="font-bold text-slate-900 text-sm line-clamp-2">{c.name || "Không tên"}</div>
+                                                    <div className="text-[10px] text-slate-400 uppercase mt-1">{c.type}</div>
+                                                </div>
+                                                <span className="text-[10px] font-mono bg-slate-50 border border-slate-200 px-2 py-0.5 rounded text-slate-600 flex-shrink-0">
+                                                    {c.tax_code || "Thiếu MST"}
+                                                </span>
+                                            </div>
+                                            
+                                            <div className="flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                                <div className="flex items-center gap-2 text-xs">
+                                                    <span className="text-slate-500">Mã MISA:</span>
+                                                    {c.misa_code ? (
+                                                        <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 font-mono font-bold">
+                                                            {c.misa_code}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-orange-400 italic">Chưa map</span>
+                                                    )}
+                                                </div>
+                                                
+                                                <button
+                                                    onClick={() => setEditingItem({ id: c.id, type: "customer", value: c.misa_code || "", tax_code: c.tax_code || "" })}
+                                                    className="p-2 bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 rounded-lg shadow-sm transition-all"
+                                                >
+                                                    <Pencil className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         )}
                     </div>

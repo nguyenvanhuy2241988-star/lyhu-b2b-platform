@@ -242,7 +242,7 @@ export default function AccountantPayrollPage() {
                         <p className="text-slate-500">Không có dữ liệu thu nhập phù hợp.</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
+                    <div className="hidden lg:block overflow-x-auto">
                         <table className="w-full text-left text-sm whitespace-nowrap">
                             <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-medium">
                                 <tr>
@@ -300,6 +300,55 @@ export default function AccountantPayrollPage() {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                )}
+                
+                {/* Mobile Card List View */}
+                {!isLoading && filteredEarnings.length > 0 && (
+                    <div className="lg:hidden divide-y divide-slate-100">
+                        {filteredEarnings.map((e) => (
+                            <div key={e.user.id} className="p-4 bg-white hover:bg-slate-50 transition-colors">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="flex-1">
+                                        <div className="font-bold text-slate-900">{e.user.name}</div>
+                                        <div className="text-[10px] text-slate-400 font-mono mt-0.5 truncate pr-2">{e.user.email}</div>
+                                    </div>
+                                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold uppercase whitespace-nowrap">
+                                        {e.user.role}
+                                    </span>
+                                </div>
+                                
+                                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-3 space-y-2 text-xs">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-slate-500">Lương cứng:</span>
+                                        <span className="font-medium text-slate-700">{formatCurrency(e.baseSalary)}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-slate-500">Hoa hồng:</span>
+                                        <span className="font-bold text-emerald-600">+{formatCurrency(e.commissions)}</span>
+                                    </div>
+                                    
+                                    {(e.bonuses > 0 || e.penalties > 0) && (
+                                        <div className="flex justify-between items-center pt-2 border-t border-slate-200/60">
+                                            <span className="text-slate-500">Thưởng / Phạt:</span>
+                                            <div className="flex gap-2">
+                                                {e.bonuses > 0 && <span className="text-blue-600 font-bold">+{formatCurrency(e.bonuses)}</span>}
+                                                {e.penalties > 0 && <span className="text-red-500 font-bold">-{formatCurrency(e.penalties)}</span>}
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="flex justify-between items-center pt-2 border-t border-slate-200/60">
+                                        <span className="font-bold text-slate-700 text-sm">Thực nhận:</span>
+                                        <span className="font-extrabold text-blue-700 text-base">{formatCurrency(e.total)}</span>
+                                    </div>
+                                </div>
+                                
+                                <button className="w-full py-2.5 bg-white border border-slate-200 text-primary-600 hover:bg-primary-50 rounded-xl text-sm font-bold transition-all">
+                                    Xem bảng kê
+                                </button>
+                            </div>
+                        ))}
                     </div>
                 )}
             </div>
