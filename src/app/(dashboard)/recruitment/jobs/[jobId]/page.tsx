@@ -239,7 +239,7 @@ export default function JobDetailPage() {
                                 Ứng viên ({candidates.length})
                             </h3>
                         </div>
-                        <div className="overflow-x-auto">
+                        <div className="hidden lg:block overflow-x-auto">
                             <table className="w-full text-left text-sm">
                                 <thead className="bg-slate-50 text-slate-600 font-medium border-b border-slate-200">
                                     <tr>
@@ -292,6 +292,54 @@ export default function JobDetailPage() {
                                     )}
                                 </tbody>
                             </table>
+                        </div>
+                        
+                        {/* Mobile Card List View */}
+                        <div className="lg:hidden divide-y divide-slate-100">
+                            {candidates.length === 0 ? (
+                                <div className="p-8 text-center text-slate-400">
+                                    Chưa có ứng viên nào nộp đơn.
+                                </div>
+                            ) : (
+                                candidates.map(c => (
+                                    <div key={c.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="font-medium text-slate-900">{c.full_name}</div>
+                                            <StatusBadge status={c.status} />
+                                        </div>
+                                        
+                                        <div className="bg-slate-50 p-3 rounded-lg space-y-2 mb-3">
+                                            <div className="text-xs text-slate-600">
+                                                <div className="flex items-center gap-1.5 mb-1"><Phone className="w-3.5 h-3.5 text-slate-400" /> {c.phone}</div>
+                                                <div className="flex items-center gap-1.5"><Mail className="w-3.5 h-3.5 text-slate-400" /> <span className="truncate">{c.email}</span></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                                            <div className="flex items-center gap-2">
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+                                                    {(c as any).source || 'Direct'}
+                                                </span>
+                                                <span className="text-[10px] text-slate-400">
+                                                    {format(new Date(c.created_at), 'dd/MM')}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                {c.cv_url ? (
+                                                    <button
+                                                        onClick={() => forceDownload(c.cv_url!, `CV_${c.full_name.replace(/\s+/g, '_')}`)}
+                                                        className="text-[11px] font-bold text-primary-600 bg-primary-50 px-2.5 py-1.5 rounded-md hover:bg-primary-100 transition-colors"
+                                                    >
+                                                        Tải CV
+                                                    </button>
+                                                ) : (
+                                                    <span className="text-[11px] text-slate-400 px-2 py-1">Không có CV</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 </div>

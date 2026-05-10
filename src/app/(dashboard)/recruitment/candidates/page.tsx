@@ -340,6 +340,7 @@ export default function CandidatesPage() {
             ) : (
                 // LIST VIEW
                 <div className="flex-1 overflow-auto bg-white rounded-xl shadow-sm border border-slate-200">
+                    <div className="hidden lg:block">
                     <table className="w-full text-left text-sm text-slate-600">
                         <thead className="bg-slate-50 text-xs uppercase font-semibold text-slate-500 sticky top-0 z-10">
                             <tr>
@@ -405,6 +406,59 @@ export default function CandidatesPage() {
                             ))}
                         </tbody>
                     </table>
+                    </div>
+                    
+                    {/* Mobile Card List View */}
+                    <div className="lg:hidden divide-y divide-slate-100">
+                        {candidates.map(cand => (
+                            <div key={cand.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div 
+                                        className="font-bold text-slate-900 cursor-pointer hover:text-primary-600"
+                                        onClick={() => handleViewCandidate(cand)}
+                                    >
+                                        {cand.full_name}
+                                    </div>
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${getStatusColor(cand.status)}`}>
+                                        {getStatusLabel(cand.status)}
+                                    </span>
+                                </div>
+                                
+                                <div className="bg-slate-50 p-3 rounded-lg space-y-2 mb-3">
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-slate-500">Vị trí:</span>
+                                        <span className="font-semibold text-slate-800">{cand.job?.title || '-'}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs items-center">
+                                        <span className="text-slate-500">Liên hệ:</span>
+                                        <div className="text-right">
+                                            <div>{cand.phone}</div>
+                                            {cand.email && <div className="text-[10px] text-slate-400">{cand.email}</div>}
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-slate-500">Ngày nộp:</span>
+                                        <span>{format(new Date(cand.created_at), 'dd/MM/yyyy')}</span>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                                    <button
+                                        onClick={() => handleDelete(cand.id)}
+                                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                    <Link
+                                        href={`/recruitment/interviews?candidateId=${cand.id}`}
+                                        className="px-3 py-1.5 text-xs font-bold text-primary-600 bg-primary-50 border border-primary-100 hover:bg-primary-100 rounded-lg transition-colors flex items-center gap-1.5"
+                                    >
+                                        <Calendar className="w-3.5 h-3.5" /> Đặt lịch
+                                    </Link>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
 

@@ -101,7 +101,7 @@ export default function PlatformFunnelManager({ userId, date }: PlatformFunnelMa
                 </button>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm text-left">
                     <thead className="bg-slate-50 border-y border-slate-200 text-slate-600 font-medium">
                         <tr>
@@ -154,6 +154,61 @@ export default function PlatformFunnelManager({ userId, date }: PlatformFunnelMa
                         })}
                     </tbody>
                 </table>
+            </div>
+            
+            {/* Mobile Card List View */}
+            <div className="md:hidden space-y-3 mt-4">
+                {PLATFORMS.map(platform => {
+                    const funnel = funnels.find(f => f.platform === platform.id);
+                    if (!funnel) return null;
+
+                    return (
+                        <div key={platform.id} className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            <h3 className="font-semibold text-slate-800 mb-3 text-sm">{platform.label}</h3>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between gap-4">
+                                    <label className="text-xs text-blue-600 flex items-center gap-1.5 whitespace-nowrap">
+                                        <MessageSquare className="w-3.5 h-3.5"/> Hỏi việc
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        className="w-24 text-center p-1.5 border border-blue-200 rounded-md focus:ring-2 focus:ring-blue-500 outline-none text-blue-700 bg-white"
+                                        value={funnel.inquiries_count || ''}
+                                        onChange={(e) => handleChange(platform.id, 'inquiries_count', e.target.value)}
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div className="flex items-center justify-between gap-4">
+                                    <label className="text-xs text-orange-600 flex items-center gap-1.5 whitespace-nowrap">
+                                        <FileText className="w-3.5 h-3.5"/> CV
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        className="w-24 text-center p-1.5 border border-orange-200 rounded-md focus:ring-2 focus:ring-orange-500 outline-none text-orange-700 bg-white"
+                                        value={funnel.cvs_count || ''}
+                                        onChange={(e) => handleChange(platform.id, 'cvs_count', e.target.value)}
+                                        placeholder="0"
+                                    />
+                                </div>
+                                <div className="flex items-center justify-between gap-4">
+                                    <label className="text-xs text-green-600 flex items-center gap-1.5 whitespace-nowrap">
+                                        <Briefcase className="w-3.5 h-3.5"/> Phỏng vấn
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        className="w-24 text-center p-1.5 border border-green-200 rounded-md focus:ring-2 focus:ring-green-500 outline-none text-green-700 bg-white"
+                                        value={funnel.interviews_count || ''}
+                                        onChange={(e) => handleChange(platform.id, 'interviews_count', e.target.value)}
+                                        placeholder="0"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );

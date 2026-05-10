@@ -281,8 +281,9 @@ export default function PlatformsPage() {
                         {loadingGroups && <Loader2 className="w-5 h-5 animate-spin text-teal-600" />}
                     </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
+                    <>
+                        <div className="hidden lg:block overflow-x-auto">
+                            <table className="w-full text-sm text-left">
                             <thead className="text-xs text-gray-500 uppercase bg-gray-50 border-b">
                                 <tr>
                                     <th className="px-6 py-4 font-semibold">Tên nhóm</th>
@@ -335,8 +336,54 @@ export default function PlatformsPage() {
                                     </tr>
                                 )}
                             </tbody>
-                        </table>
-                    </div>
+                            </table>
+                        </div>
+                        
+                        {/* Mobile Card List View */}
+                        <div className="lg:hidden divide-y divide-gray-100">
+                            {groups.map((group) => (
+                                <div key={group.id} className="p-4 hover:bg-gray-50 transition-colors">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="font-bold text-gray-900 pr-2 line-clamp-2">{group.name}</div>
+                                        <button
+                                            onClick={() => handleDeleteGroup(group.id)}
+                                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="flex flex-wrap gap-2 mb-3">
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${group.platform === 'facebook_group' ? 'bg-primary-50 text-primary-700' :
+                                                group.platform === 'zalo' ? 'bg-cyan-50 text-cyan-700' : 'bg-gray-100 text-gray-600'
+                                            }`}>
+                                            {group.platform === 'facebook_group' ? 'FB Group' : group.platform}
+                                        </span>
+                                        <span className="text-[10px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded border border-gray-100 flex items-center">
+                                            Cập nhật: {format(new Date(group.updated_at), 'dd/MM/yyyy')}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="bg-gray-50 p-3 rounded-lg space-y-2 text-sm">
+                                        {group.notes && (
+                                            <div className="text-gray-600 text-xs line-clamp-2 mb-2">
+                                                {group.notes}
+                                            </div>
+                                        )}
+                                        <a href={group.link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-teal-100 text-teal-600 hover:bg-teal-50 rounded-lg transition-colors text-xs font-medium shadow-sm">
+                                            <ExternalLink className="w-3.5 h-3.5" />
+                                            Truy cập nhóm
+                                        </a>
+                                    </div>
+                                </div>
+                            ))}
+                            {groups.length === 0 && !loadingGroups && (
+                                <div className="p-8 text-center text-gray-400">
+                                    Chưa có dữ liệu nhóm nào được lưu.
+                                </div>
+                            )}
+                        </div>
+                    </>
                 </div>
             )}
 

@@ -153,7 +153,8 @@ export default function NetworkingPage() {
 
             {/* List */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <table className="w-full text-left text-sm">
+                <div className="hidden lg:block overflow-x-auto">
+                    <table className="w-full text-left text-sm">
                     <thead className="bg-slate-50 text-slate-600 font-medium border-b border-slate-200">
                         <tr>
                             <th className="px-6 py-3">Họ tên & Chức vụ</th>
@@ -227,7 +228,77 @@ export default function NetworkingPage() {
                             ))
                         )}
                     </tbody>
-                </table>
+                    </table>
+                </div>
+                
+                {/* Mobile Card List View */}
+                <div className="lg:hidden divide-y divide-slate-100">
+                    {filteredContacts.length === 0 ? (
+                        <div className="p-8 text-center text-slate-400">
+                            Chưa có dữ liệu phù hợp.
+                        </div>
+                    ) : (
+                        filteredContacts.map(contact => (
+                            <div key={contact.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div>
+                                        <div className="font-bold text-slate-900 line-clamp-1">{contact.name}</div>
+                                        <div className="text-xs text-slate-500 mt-0.5">{contact.position || "---"}</div>
+                                    </div>
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${getStatusColor(contact.status)}`}>
+                                        {getStatusLabel(contact.status)}
+                                    </span>
+                                </div>
+                                
+                                <div className="bg-slate-50 p-3 rounded-lg space-y-2 mb-3">
+                                    <div className="flex items-center gap-2 text-xs text-slate-700 font-medium">
+                                        <Building className="w-3.5 h-3.5 text-slate-400" />
+                                        <span className="line-clamp-1">{contact.organization || "Tự do"}</span>
+                                    </div>
+                                    
+                                    {(contact.phone || contact.email) && (
+                                        <div className="pt-2 border-t border-slate-100 space-y-1">
+                                            {contact.phone && (
+                                                <div className="flex items-center gap-2 text-xs text-slate-600">
+                                                    <Phone className="w-3.5 h-3.5 text-slate-400" /> {contact.phone}
+                                                </div>
+                                            )}
+                                            {contact.email && (
+                                                <div className="flex items-center gap-2 text-xs text-slate-600">
+                                                    <Mail className="w-3.5 h-3.5 text-slate-400" /> <span className="truncate">{contact.email}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                                    <div>
+                                        {contact.social_link && (
+                                            <a href={contact.social_link} target="_blank" className="flex items-center gap-1.5 text-[10px] font-bold text-primary-600 hover:text-primary-700 hover:underline bg-primary-50 px-2 py-1 rounded">
+                                                <ExternalLink className="w-3 h-3" /> Profile
+                                            </a>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={() => openEdit(contact)}
+                                            className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 rounded-lg transition-colors flex items-center gap-1.5"
+                                        >
+                                            <Edit className="w-3 h-3" /> Sửa
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(contact.id, contact.name)}
+                                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
             </div>
 
             {/* Modal */}

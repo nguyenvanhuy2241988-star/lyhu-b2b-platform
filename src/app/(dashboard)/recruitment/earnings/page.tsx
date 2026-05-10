@@ -458,6 +458,7 @@ export default function RecruiterEarningsPage() {
                             <Award className="w-4 h-4 text-slate-400" />
                         </div>
                         <div className="max-h-[280px] overflow-y-auto">
+                            <div className="hidden lg:block">
                             <table className="w-full text-xs">
                                 <thead>
                                     <tr className="bg-slate-50 text-slate-500 text-left border-b border-slate-100">
@@ -496,6 +497,42 @@ export default function RecruiterEarningsPage() {
                                     )}
                                 </tbody>
                             </table>
+                            </div>
+                            
+                            {/* Mobile Card List View */}
+                            <div className="lg:hidden divide-y divide-slate-100">
+                                {transactions.length === 0 ? (
+                                    <div className="p-6 text-center text-slate-400 text-sm">Chưa có biến động tài chính.</div>
+                                ) : (
+                                    transactions.map((t) => (
+                                        <div key={t.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="flex-1 pr-2">
+                                                    <div className="font-medium text-slate-700">{t.category}</div>
+                                                    <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-1">
+                                                        <span>{new Date(t.createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                        <span>•</span>
+                                                        <span>{new Date(t.createdAt).toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit' })}</span>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right flex-shrink-0">
+                                                    <div className={`font-bold ${t.type === 'penalty' ? 'text-red-500' : 'text-primary-600'}`}>
+                                                        {t.type === 'penalty' ? '-' : '+'}{formatPrice(t.amount)}
+                                                    </div>
+                                                    <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-medium ${t.status === 'finalized' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'}`}>
+                                                        {t.status === 'finalized' ? 'Đã chốt' : 'Dự kiến'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            {t.note && (
+                                                <div className="bg-slate-50 p-2 rounded text-[10px] text-slate-500 line-clamp-2">
+                                                    {t.note}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>

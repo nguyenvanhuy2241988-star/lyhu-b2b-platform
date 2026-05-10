@@ -138,8 +138,9 @@ export default function RecruitmentPerformancePage() {
                         Chưa có dữ liệu nào. Hãy bắt đầu tạo link và chia sẻ!
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm">
+                    <>
+                        <div className="hidden lg:block overflow-x-auto">
+                            <table className="w-full text-left text-sm">
                             <thead className="bg-slate-50 text-slate-600 font-medium border-b border-slate-200">
                                 <tr>
                                     <th className="px-6 py-3">Nhân sự</th>
@@ -184,8 +185,50 @@ export default function RecruitmentPerformancePage() {
                                     </tr>
                                 ))}
                             </tbody>
-                        </table>
-                    </div>
+                            </table>
+                        </div>
+                        
+                        {/* Mobile Card List View */}
+                        <div className="lg:hidden divide-y divide-slate-100">
+                            {stats.map((s, idx) => (
+                                <div key={s.recruiter_id} className="p-4 hover:bg-slate-50 transition-colors">
+                                    <div className="flex items-center gap-3 mb-3">
+                                        <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center font-bold text-slate-600 text-sm flex-shrink-0">
+                                            {s.recruiter_avatar ? <img src={s.recruiter_avatar} className="w-full h-full rounded-full object-cover" /> : (idx + 1)}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-bold text-slate-900 truncate">{s.recruiter_name}</div>
+                                            <div className="text-[10px] text-slate-500 truncate">{s.recruiter_email}</div>
+                                        </div>
+                                        <span className="px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 flex-shrink-0">
+                                            {s.top_source}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-4 gap-2 bg-slate-50 p-3 rounded-lg text-center">
+                                        <div>
+                                            <div className="text-[10px] text-slate-500 uppercase font-semibold mb-1">Links</div>
+                                            <div className="font-mono text-sm text-slate-700">{s.total_links}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-[10px] text-slate-500 uppercase font-semibold mb-1">Clicks</div>
+                                            <div className="font-bold text-sm text-primary-600">{s.total_clicks.toLocaleString()}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-[10px] text-slate-500 uppercase font-semibold mb-1">Leads</div>
+                                            <div className="font-bold text-sm text-purple-600">{s.total_leads.toLocaleString()}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-[10px] text-slate-500 uppercase font-semibold mb-1">Tỷ lệ</div>
+                                            <div className={`font-bold text-sm ${s.conversion_rate > 1 ? 'text-green-600' : 'text-slate-500'}`}>
+                                                {s.conversion_rate}%
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </>
                 )}
             </div>
         </div>
