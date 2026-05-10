@@ -127,7 +127,7 @@ export async function GET(req: Request) {
 Bạn là "Chuyên gia phân tích thị trường B2B FMCG", làm việc cho LYHU - Nền tảng phân phối sỉ hàng tiêu dùng nhanh (FMCG) hàng đầu Việt Nam. Khán giả của bạn là các nhà phân phối, chủ tạp hóa, chủ siêu thị mini và các điểm bán lẻ truyền thống (GT).
 
 ⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu, sự kiện và phân tích trong bài PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay sự kiện từ năm 2024 hoặc 2025 trừ khi là so sánh lịch sử (phải ghi rõ "so với năm trước").
-⚠️ LƯU Ý VỀ TIÊU ĐỀ: TUYỆT ĐỐI KHÔNG chèn năm (ví dụ: "năm ${currentYear}", "${currentYear}") vào "topic" hoặc "meta_title". Tiêu đề phải tự nhiên, không gắn cứng năm.
+⚠️ LƯU Ý VỀ TIÊU ĐỀ: KHÔNG tự động chèn thêm năm vào cuối tiêu đề một cách máy móc. CHỈ ĐƯỢC PHÉP đưa năm vào tiêu đề nếu bản thân tin tức đó là báo cáo tài chính định kỳ, tổng kết quý/năm, hoặc xu hướng đặc thù của năm đó (Ví dụ: Báo cáo thị trường Quý 1/${currentYear}).
 
 BẮT BUỘC SỐ 1: Hãy tự động tìm kiếm trên Google các tin tức NÓNG NHẤT, MỚI NHẤT trong 24-48 giờ qua tại thị trường Việt Nam về chủ đề sau:
 CHỦ ĐỀ TẬP TRUNG: "${randomFocus}"
@@ -161,8 +161,8 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
 
 ---JSON_START---
 {
-  "topic": "Tiêu đề của bài báo (TUYỆT ĐỐI KHÔNG chứa số năm. Ví dụ: Theo dòng sự kiện: Bách Hóa Xanh mở rộng - cơ hội hay thách thức cho siêu thị mini?)",
-  "meta_title": "Tiêu đề chuẩn SEO (tối đa 60 ký tự, TUYỆT ĐỐI KHÔNG chứa số năm)",
+  "topic": "Tiêu đề của bài báo (KHÔNG tự tiện nhét thêm năm vào cuối câu nếu không thực sự cần thiết. Ví dụ: Theo dòng sự kiện: Bách Hóa Xanh mở rộng - cơ hội hay thách thức cho siêu thị mini?)",
+  "meta_title": "Tiêu đề chuẩn SEO (tối đa 60 ký tự, linh hoạt có thể chứa năm nếu nội dung là báo cáo/tổng kết)",
   "meta_description": "Mô tả SEO tóm tắt sự kiện",
   "keywords": "từ khóa SEO liên quan đến sự kiện",
   "category_slug": "MỘT trong 13 slug sau đây phù hợp nhất với bài viết: tin-nganh-fmcg, doanh-nghiep-lon, ban-le-hien-dai, cua-hang-tien-loi, tap-hoa-gt, tmdt-tiktok-shop, xu-huong-tieu-dung, nganh-hang, phap-ly-chinh-ngach, chuoi-cung-ung, cong-nghe-ban-le, nha-phan-phoi-diem-ban, nghe-fmcg",
@@ -212,15 +212,6 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
         const metaData = JSON.parse(jsonStr);
         let topic = metaData.topic || `Bản tin thị trường FMCG ${todayStr}`;
         let metaTitle = metaData.meta_title || topic;
-
-        // Post-processing to forcefully strip any "2026" or "năm 2026" that the AI hallucinated
-        const stripYear = (str: string) => {
-            if (!str) return str;
-            return str.replace(/(?:\s*[-|:]\s*)?(?:\s*(?:trong\s+)?năm\s+)?20\d{2}\b/gi, '').trim();
-        };
-
-        topic = stripYear(topic);
-        metaTitle = stripYear(metaTitle);
 
         // 2. Fetch High-Quality Contextual Images via Pexels API
         let thumbnailUrl = null;
