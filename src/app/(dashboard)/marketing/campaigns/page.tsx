@@ -222,7 +222,8 @@ export default function CampaignsPage() {
                 <TableSkeleton rows={5} cols={5} />
             ) : (
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                    <table className="w-full text-sm text-left">
+                    <div className="hidden lg:block overflow-x-auto">
+                        <table className="w-full text-sm text-left">
                         <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs font-medium">
                             <tr>
                                 <th className="px-6 py-4">Tên chiến dịch</th>
@@ -286,8 +287,70 @@ export default function CampaignsPage() {
                                     </td>
                                 </tr>
                             )}
-                        </tbody>
-                    </table>
+                        </table>
+                    </div>
+                    
+                    {/* Mobile Card List View */}
+                    <div className="lg:hidden divide-y divide-slate-100">
+                        {filteredCampaigns.map((campaign) => (
+                            <div key={campaign.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="flex-1 pr-2">
+                                        <Link
+                                            href={`/marketing/leads?campaign_id=${campaign.id}&campaign_name=${encodeURIComponent(campaign.title)}`}
+                                            className="font-bold text-slate-900 hover:text-blue-600 hover:underline block line-clamp-2"
+                                        >
+                                            {campaign.title}
+                                        </Link>
+                                        <div className="text-[10px] text-slate-500 mt-1 flex items-center gap-1">
+                                            <Calendar className="w-3 h-3" />
+                                            {campaign.start_date ? new Date(campaign.start_date).toLocaleDateString('vi-VN') : 'Chưa set ngày'}
+                                        </div>
+                                    </div>
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 border ${campaign.status === 'active' ? 'bg-green-50 text-green-700 border-green-200' :
+                                        campaign.status === 'planning' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                            campaign.status === 'paused' ? 'bg-orange-50 text-orange-700 border-orange-200' :
+                                                'bg-slate-100 text-slate-600 border-slate-200'
+                                        }`}>
+                                        {campaign.status === 'active' ? 'Đang chạy' :
+                                            campaign.status === 'planning' ? 'Lên kế hoạch' :
+                                                campaign.status === 'paused' ? 'Tạm dừng' : 'Đã xong'}
+                                    </span>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-3 mb-3 bg-slate-50 p-3 rounded-lg">
+                                    <div>
+                                        <div className="text-[10px] text-slate-500 uppercase font-semibold mb-1">Kênh</div>
+                                        <div className="font-medium text-slate-900 text-sm truncate">{campaign.channel || '-'}</div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-[10px] text-slate-500 uppercase font-semibold mb-1">Ngân sách</div>
+                                        <div className="font-bold text-slate-900 text-sm">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(campaign.budget || 0)}</div>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                                    <button
+                                        className="inline-flex items-center justify-center rounded-lg p-2 bg-white border border-slate-200 text-slate-500 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-colors"
+                                        onClick={() => handleOpenEdit(campaign)}
+                                    >
+                                        <Edit2 className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        className="inline-flex items-center justify-center rounded-lg p-2 bg-white border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors"
+                                        onClick={() => handleDelete(campaign.id)}
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                        {filteredCampaigns.length === 0 && (
+                            <div className="p-8 text-center text-slate-500 italic">
+                                {searchTerm || statusFilter !== 'all' ? 'Không tìm thấy kết quả phù hợp' : 'Chưa có chiến dịch nào'}
+                            </div>
+                        )}
+                    </div>
                 </div>
             )}
         </div>

@@ -154,8 +154,9 @@ export default function MarketingDashboard() {
                         </select>
                     </div>
                 </div>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
+                <>
+                    <div className="hidden lg:block overflow-x-auto">
+                        <table className="w-full text-sm text-left">
                         <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b">
                             <tr>
                                 <th className="px-6 py-3 font-medium">Chiến dịch</th>
@@ -214,9 +215,67 @@ export default function MarketingDashboard() {
                                     </td>
                                 </tr>
                             )}
-                        </tbody>
-                    </table>
-                </div>
+                        </table>
+                    </div>
+                    
+                    {/* Mobile Card List View */}
+                    <div className="lg:hidden divide-y divide-slate-100">
+                        {performance.length > 0 ? (
+                            performance.map((camp) => {
+                                const maxLeads = Math.max(...performance.map(p => p.lead_count));
+                                const percentage = maxLeads > 0 ? (camp.lead_count / maxLeads) * 100 : 0;
+
+                                return (
+                                    <div key={camp.campaign_id} className="p-4 hover:bg-slate-50 transition-colors">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="flex-1 pr-2">
+                                                <Link
+                                                    href={`/marketing/leads?campaign_id=${camp.campaign_id}&campaign_name=${encodeURIComponent(camp.title)}`}
+                                                    className="font-bold text-blue-600 hover:underline hover:text-blue-800 line-clamp-2"
+                                                >
+                                                    {camp.title}
+                                                </Link>
+                                            </div>
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${camp.status === 'active' ? 'bg-green-100 text-green-800' :
+                                                camp.status === 'completed' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'
+                                                }`}>
+                                                {camp.status === 'active' ? 'Đang chạy' : camp.status === 'completed' ? 'Hoàn thành' : camp.status}
+                                            </span>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-2 gap-3 mb-3 bg-slate-50 p-3 rounded-lg">
+                                            <div>
+                                                <div className="text-[10px] text-slate-500 uppercase font-semibold mb-1">Số Lead</div>
+                                                <div className="font-bold text-slate-900 text-sm">{camp.lead_count}</div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-[10px] text-slate-500 uppercase font-semibold mb-1">Dự kiến thu</div>
+                                                <div className="font-bold text-slate-900 text-sm">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(camp.revenue)}</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="space-y-1">
+                                            <div className="text-[10px] text-slate-500 flex justify-between">
+                                                <span>Tỷ trọng Lead</span>
+                                                <span className="font-medium">{percentage.toFixed(1)}%</span>
+                                            </div>
+                                            <div className="w-full bg-slate-100 rounded-full h-1.5">
+                                                <div
+                                                    className="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
+                                                    style={{ width: `${percentage}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="p-8 text-center text-slate-500 italic">
+                                Chưa có dữ liệu hiệu quả chiến dịch.
+                            </div>
+                        )}
+                    </div>
+                </>
             </div>
         </div >
     );

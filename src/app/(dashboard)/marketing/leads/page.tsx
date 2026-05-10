@@ -169,7 +169,8 @@ export default function LeadsPage() {
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                <table className="w-full text-sm text-left">
+                <div className="hidden lg:block overflow-x-auto">
+                    <table className="w-full text-sm text-left">
                     <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b">
                         <tr>
                             <th className="px-6 py-4 w-12 rounded-tl-xl text-center">
@@ -280,7 +281,102 @@ export default function LeadsPage() {
                             </tr>
                         )}
                     </tbody>
-                </table>
+                    </table>
+                </div>
+                
+                {/* Mobile Card List View */}
+                <div className="lg:hidden divide-y divide-slate-100">
+                    {/* Select All Row Mobile */}
+                    {leads.length > 0 && (
+                        <div className="p-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                    type="checkbox" 
+                                    className="w-4 h-4 text-emerald-600 bg-white border-slate-300 rounded focus:ring-emerald-500"
+                                    checked={leads.length > 0 && selectedLeads.length === leads.length}
+                                    onChange={toggleSelectAll}
+                                />
+                                <span className="text-sm font-medium text-slate-700">Chọn tất cả</span>
+                            </label>
+                            <span className="text-xs text-slate-500">Đã chọn {selectedLeads.length}</span>
+                        </div>
+                    )}
+                    
+                    {leads.length > 0 ? (
+                        leads.map((lead) => (
+                            <div key={lead.id} className={`p-4 transition-colors ${selectedLeads.includes(lead.id) ? 'bg-orange-50/50' : 'hover:bg-slate-50'}`}>
+                                <div className="flex items-start gap-3 mb-3">
+                                    <input 
+                                        type="checkbox" 
+                                        className="w-4 h-4 mt-1 text-orange-500 bg-white border-slate-300 rounded focus:ring-orange-500 cursor-pointer"
+                                        checked={selectedLeads.includes(lead.id)}
+                                        onChange={() => toggleSelect(lead.id)}
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-start mb-1">
+                                            <span className="font-bold text-slate-900 truncate pr-2">
+                                                {lead.name && lead.name !== 'Facebook User' ? lead.name : 'Khách hàng Ẩn danh'}
+                                            </span>
+                                            {lead.status === 'friend' ? (
+                                                <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-bold flex-shrink-0">
+                                                    Đã đồng ý
+                                                </span>
+                                            ) : lead.status === 'rejected' ? (
+                                                <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-[10px] font-bold flex-shrink-0">
+                                                    Từ chối
+                                                </span>
+                                            ) : lead.status === 'pending' ? (
+                                                <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-[10px] font-bold flex-shrink-0">
+                                                    Đã Add
+                                                </span>
+                                            ) : (
+                                                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-[10px] font-bold flex-shrink-0">
+                                                    Data
+                                                </span>
+                                            )}
+                                        </div>
+                                        {lead.profile_url && (
+                                            <a
+                                                href={lead.profile_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 hover:text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded"
+                                            >
+                                                <ExternalLink className="w-3 h-3" /> Facebook
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                <div className="bg-slate-50 p-3 rounded-lg flex flex-wrap gap-2 text-xs text-slate-600 mb-2">
+                                    <div className="w-full flex justify-between">
+                                        <span className="text-slate-400">Thời gian:</span>
+                                        <span className="font-medium">{dayjs(lead.created_at).format('HH:mm - DD/MM')}</span>
+                                    </div>
+                                    <div className="w-full flex justify-between">
+                                        <span className="text-slate-400">Nguồn:</span>
+                                        <span className="font-medium text-right line-clamp-1 max-w-[60%]">
+                                            {lead.source === 'fb_search' ? 'Từ khóa' : lead.source}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div className="flex justify-end">
+                                    <button
+                                        onClick={() => handleDelete(lead.id)}
+                                        className="p-2 text-slate-400 hover:text-red-600 bg-white border border-slate-200 hover:border-red-200 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-1.5 text-xs font-medium"
+                                    >
+                                        <Trash2 className="w-3.5 h-3.5" /> Xóa
+                                    </button>
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="p-8 text-center text-slate-500 italic">
+                            Chưa có dữ liệu. Hãy chạy Bot để săn khách hàng!
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

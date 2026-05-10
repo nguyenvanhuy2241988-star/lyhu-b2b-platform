@@ -339,8 +339,9 @@ export default function FbGroupsPage() {
                         <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-left">
+                    <div className="overflow-hidden">
+                        <div className="hidden lg:block overflow-x-auto">
+                            <table className="w-full text-sm text-left">
                             <thead className="text-xs text-gray-500 uppercase bg-gray-50/80 border-b">
                                 <tr>
                                     <th className="px-4 py-3 w-10">
@@ -474,8 +475,90 @@ export default function FbGroupsPage() {
                                         </td>
                                     </tr>
                                 )}
-                            </tbody>
-                        </table>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        {/* Mobile Card List View */}
+                        <div className="lg:hidden divide-y divide-gray-100">
+                            {filteredGroups.length === 0 && !loading ? (
+                                <div className="px-6 py-16 text-center">
+                                    <Users className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                                    <p className="text-gray-400 font-medium">Chưa có nhóm nào</p>
+                                    <p className="text-gray-400 text-xs mt-1">Thêm nhóm mới hoặc nhóm sẽ tự động được thu thập từ báo cáo hàng ngày</p>
+                                </div>
+                            ) : (
+                                filteredGroups.map((group) => (
+                                    <div key={group.id} className="p-4 hover:bg-gray-50/80 transition-colors">
+                                        <div className="flex justify-between items-start mb-2 gap-2">
+                                            <div className="flex items-start gap-3 flex-1">
+                                                <div className="pt-1">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedIds.has(group.id)}
+                                                        onChange={() => toggleSelect(group.id)}
+                                                        className="rounded border-gray-300"
+                                                    />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="font-medium text-gray-900 truncate pr-2">{group.name}</div>
+                                                    {group.link && (
+                                                        <a href={group.link} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-[11px] text-blue-600 hover:underline mt-1 w-fit">
+                                                            <ExternalLink className="w-3 h-3" /> Mở link
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(group.status)}`}>
+                                                    {getStatusLabel(group.status)}
+                                                </span>
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${getCategoryColor(group.category)}`}>
+                                                    {getCategoryLabel(group.category)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="mt-3 bg-gray-50 p-2.5 rounded-lg border border-gray-100">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <StarRating value={group.quality_rating || 0} readonly />
+                                                <div className="text-xs text-gray-600 font-medium">
+                                                    <Users className="w-3.5 h-3.5 inline mr-1 text-gray-400" />
+                                                    {group.member_count > 0 ? group.member_count.toLocaleString() : '-'} tv
+                                                </div>
+                                            </div>
+                                            <div className="flex justify-between items-center text-xs">
+                                                <div className="text-gray-600">
+                                                    Bài đăng: <span className={`font-semibold ${(postCounts[group.name]?.total || 0) > 0 ? 'text-blue-600' : 'text-gray-400'}`}>
+                                                        {postCounts[group.name]?.total || 0}
+                                                    </span>
+                                                </div>
+                                                {group.best_post_time && (
+                                                    <span className="flex items-center gap-1 text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
+                                                        <Clock className="w-3 h-3" />
+                                                        {group.best_post_time}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="flex justify-between items-center pt-3 mt-3 border-t border-gray-100">
+                                            <div className="text-[10px] text-gray-500">
+                                                {group.added_by_name ? `Thêm bởi: ${group.added_by_name}` : ''}
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button onClick={() => openEdit(group)} className="px-3 py-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors">
+                                                    <Edit className="w-3.5 h-3.5" /> Sửa
+                                                </button>
+                                                <button onClick={() => handleDelete(group.id, group.name)} className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
                 )}
             </div>

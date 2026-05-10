@@ -543,8 +543,9 @@ export default function MarketingScraperPage() {
                     </button>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full">
+                <div className="overflow-hidden border-t border-slate-100">
+                    <div className="hidden lg:block overflow-x-auto">
+                        <table className="w-full">
                         <thead className="bg-slate-50 border-b border-slate-200 text-left">
                             <tr>
                                 <th className="px-6 py-3 text-sm font-semibold text-slate-600">Loại</th>
@@ -605,8 +606,65 @@ export default function MarketingScraperPage() {
                                     </tr>
                                 ))
                             )}
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {/* Mobile Card List View */}
+                    <div className="lg:hidden divide-y divide-slate-100">
+                        {jobs.length === 0 ? (
+                            <div className="px-6 py-12 text-center text-slate-400">
+                                Chưa có lịch sử quét nào. Hãy thử chạy một job mới!
+                            </div>
+                        ) : (
+                            jobs.map((job) => (
+                                <div key={job.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="flex items-center gap-2 text-sm font-medium text-slate-700 flex-1">
+                                            {getJobIcon(job.job_type)}
+                                            {getJobLabel(job.job_type)}
+                                        </div>
+                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${getStatusColor(job.status)}`}>
+                                            {getStatusLabel(job.status)}
+                                        </span>
+                                    </div>
+                                    
+                                    <div className="text-sm text-blue-600 mb-3 bg-blue-50 p-2 rounded-lg border border-blue-100 line-clamp-2">
+                                        {job.job_type === 'google_maps' ? (
+                                            <span className="font-semibold text-slate-700">{job.keywords}</span>
+                                        ) : (
+                                            <a href={job.target_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline break-all">
+                                                {job.target_url}
+                                                <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                                            </a>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                                        <div className="flex items-center gap-4 text-sm">
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] text-slate-500 uppercase font-semibold">Kết quả</span>
+                                                <span className="font-medium text-slate-700">{job.result_count}</span>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-[10px] text-slate-500 uppercase font-semibold">Đã xử lý</span>
+                                                <span className="font-bold text-green-600">{job.processed_count}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        {job.status === 'completed' && job.result_count > 0 && (
+                                            <button
+                                                onClick={() => handleViewResults(job)}
+                                                className="text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 transition-colors">
+                                                <UserPlus className="w-3.5 h-3.5" />
+                                                Xem & Lưu
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
                 </div>
             </div>
 

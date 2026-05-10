@@ -267,7 +267,9 @@ export default function MarketingContentPage() {
                                 <p>Chưa có bài đăng nào</p>
                             </div>
                         ) : (
-                            <table className="w-full text-sm text-left">
+                            <>
+                                <div className="hidden lg:block overflow-x-auto">
+                                    <table className="w-full text-sm text-left">
                                 <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs font-medium">
                                     <tr>
                                         <th className="px-6 py-4">Nội dung</th>
@@ -317,7 +319,60 @@ export default function MarketingContentPage() {
                                         </tr>
                                     ))}
                                 </tbody>
-                            </table>
+                                    </table>
+                                </div>
+                                
+                                {/* Mobile Card List View */}
+                                <div className="lg:hidden divide-y divide-slate-100">
+                                    {posts.map(post => (
+                                        <div 
+                                            key={post.id} 
+                                            className="p-4 hover:bg-slate-50 transition-colors cursor-pointer"
+                                            onClick={() => handleEditPost(post)}
+                                        >
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="flex-1 pr-2">
+                                                    <div className="font-bold text-slate-900 line-clamp-2">{post.title}</div>
+                                                    {post.campaign && (
+                                                        <span className="inline-block mt-1 bg-blue-50 text-blue-700 text-[10px] font-medium px-1.5 py-0.5 rounded border border-blue-100">
+                                                            {post.campaign.title}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 border ${post.status === 'published' ? 'bg-green-50 text-green-700 border-green-200' :
+                                                    post.status === 'scheduled' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                                                        'bg-slate-50 text-slate-600 border-slate-200'
+                                                    }`}>
+                                                    {post.status === 'published' ? 'Đã đăng' :
+                                                        post.status === 'scheduled' ? 'Đã lên lịch' : 'Bản nháp'}
+                                                </span>
+                                            </div>
+                                            
+                                            <div className="text-xs text-slate-600 line-clamp-2 mb-3 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                                {post.content}
+                                            </div>
+                                            
+                                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100">
+                                                <div className="flex items-center gap-2">
+                                                    {post.facebook_page?.avatar_url ? (
+                                                        <img src={post.facebook_page.avatar_url} className="w-5 h-5 rounded-full" alt="" />
+                                                    ) : (
+                                                        <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center">
+                                                            <Facebook className="w-3 h-3 text-slate-400" />
+                                                        </div>
+                                                    )}
+                                                    <span className="text-[11px] font-medium text-slate-700 truncate max-w-[120px]">{post.facebook_page?.name || 'Chưa chọn'}</span>
+                                                </div>
+                                                <div className="text-[11px] text-slate-500 font-medium">
+                                                    {post.scheduled_at
+                                                        ? format(new Date(post.scheduled_at), 'HH:mm dd/MM', { locale: vi })
+                                                        : '---'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
                         )}
                     </div>
                 </div>

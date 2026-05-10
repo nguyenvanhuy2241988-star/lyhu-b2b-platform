@@ -281,8 +281,9 @@ function TabProfiles() {
                     <p className="text-sm text-slate-500 mt-1">Hệ thống đang chạy trên 1 Profile ẩn danh duy nhất.</p>
                 </div>
             ) : (
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
+                <div className="overflow-hidden border border-slate-200 rounded-lg">
+                    <div className="hidden lg:block overflow-x-auto">
+                        <table className="w-full text-sm text-left bg-white">
                         <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b">
                             <tr>
                                 <th className="px-6 py-3 font-medium">Tên Profile</th>
@@ -311,7 +312,36 @@ function TabProfiles() {
                                 </tr>
                             ))}
                         </tbody>
-                    </table>
+                        </table>
+                    </div>
+                    
+                    {/* Mobile Card List View */}
+                    <div className="lg:hidden divide-y divide-slate-100 bg-white">
+                        {profiles.map(p => (
+                            <div key={p.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="font-semibold text-slate-800">{p.profile_name}</div>
+                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${p.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                        {p.status.toUpperCase()}
+                                    </span>
+                                </div>
+                                
+                                <div className="text-xs text-slate-500 mb-2 font-mono">
+                                    📁 {p.folder_name}
+                                </div>
+                                
+                                <div className="text-xs text-slate-500 mb-3">
+                                    🌐 {p.proxy_url || <span className="text-slate-300 italic">Mạng Gốc (Không dùng Proxy)</span>}
+                                </div>
+                                
+                                <div className="flex justify-end pt-2 border-t border-slate-100">
+                                    <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:text-red-700 p-2 bg-red-50 rounded-lg flex items-center gap-2 text-xs font-medium transition-colors">
+                                        <Trash2 className="w-4 h-4" /> Xóa Profile
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>
@@ -417,8 +447,9 @@ function TabQueue() {
                     <p className="text-sm text-slate-500 mt-1">Hệ thống cỗ máy BOT hiện đang rảnh rỗi.</p>
                 </div>
             ) : (
-                <div className="overflow-hidden border border-slate-200 rounded-lg">
-                    <table className="w-full text-sm text-left bg-white">
+                <div className="overflow-hidden border border-slate-200 rounded-lg bg-white">
+                    <div className="hidden lg:block overflow-x-auto">
+                        <table className="w-full text-sm text-left bg-white">
                         <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b">
                             <tr>
                                 <th className="px-5 py-3 font-medium">Lệnh (Task)</th>
@@ -464,8 +495,48 @@ function TabQueue() {
                                     </td>
                                 </tr>
                             ))}
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {/* Mobile Card List View */}
+                    <div className="lg:hidden divide-y divide-slate-100 bg-white">
+                        {commands.map(cmd => (
+                            <div key={cmd.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="font-semibold text-slate-800 flex-1 pr-2">{formatScript(cmd.script_name)}</div>
+                                    <div className="flex-shrink-0">{getStatusBadge(cmd.status)}</div>
+                                </div>
+                                
+                                <div className="text-xs text-slate-600 mb-2 p-2 bg-slate-50 rounded border border-slate-100 line-clamp-2">
+                                    {cmd.args ? `Mục tiêu: "${cmd.args}"` : <span className="text-slate-400 italic">Mục tiêu: Mặc định</span>}
+                                </div>
+                                
+                                <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100">
+                                    <div className="flex flex-col gap-1">
+                                        {cmd.bot_profiles?.profile_name ? (
+                                            <span className="font-medium text-purple-700 bg-purple-50 px-2 py-0.5 rounded text-[10px] self-start">{cmd.bot_profiles.profile_name}</span>
+                                        ) : (
+                                            <span className="text-slate-500 italic text-[10px] bg-slate-100 px-2 py-0.5 rounded self-start">🌍 Mặc định</span>
+                                        )}
+                                        <span className="text-slate-400 text-[10px]">{new Date(cmd.created_at).toLocaleString('vi-VN')}</span>
+                                    </div>
+                                    
+                                    <div>
+                                        {cmd.status === 'pending' ? (
+                                            <button onClick={() => handleCancel(cmd.id)} className="text-xs font-semibold text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors">
+                                                Hủy Lệnh
+                                            </button>
+                                        ) : (
+                                            <button onClick={() => handleRetry(cmd)} className="text-xs font-semibold text-blue-500 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1">
+                                                <RefreshCw className="w-3 h-3" /> Chạy Lại
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>
@@ -726,8 +797,9 @@ function TabCompetitors({ onRunScript }: { onRunScript: (s: any) => void }) {
                     <p className="text-sm text-slate-500 mt-1">Chưa có mục tiêu nào. Hãy thêm Link Facebook của đối thủ để Bot có thể tự động đi cướp khách.</p>
                 </div>
             ) : (
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
+                <div className="overflow-hidden border border-slate-200 rounded-lg bg-white">
+                    <div className="hidden lg:block overflow-x-auto">
+                        <table className="w-full text-sm text-left bg-white">
                         <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b">
                             <tr>
                                 <th className="px-6 py-3 font-medium">Tên Đối Thủ</th>
@@ -757,8 +829,42 @@ function TabCompetitors({ onRunScript }: { onRunScript: (s: any) => void }) {
                                     </td>
                                 </tr>
                             ))}
-                        </tbody>
-                    </table>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {/* Mobile Card List View */}
+                    <div className="lg:hidden divide-y divide-slate-100 bg-white">
+                        {competitors.map(c => (
+                            <div key={c.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div className="font-bold text-slate-800 line-clamp-1 flex-1 pr-2">{c.name}</div>
+                                </div>
+                                
+                                <div className="text-xs text-blue-600 mb-2 truncate bg-blue-50 p-1.5 rounded inline-block max-w-full">
+                                    <a href={c.profile_url} target="_blank" rel="noreferrer" className="hover:underline">{c.profile_url}</a>
+                                </div>
+                                
+                                {c.notes && (
+                                    <div className="text-xs text-slate-500 mb-3 bg-slate-50 p-2 rounded border border-slate-100">
+                                        📝 {c.notes}
+                                    </div>
+                                )}
+                                
+                                <div className="flex justify-end items-center mt-2 pt-2 border-t border-slate-100 gap-2">
+                                    <button 
+                                        onClick={() => onRunScript({ name: 'execute_profile_add.js', title: 'Cướp Khách (Đối thủ)' })} 
+                                        className="px-3 py-1.5 bg-orange-100 text-orange-700 font-bold rounded-lg hover:bg-orange-200 transition-colors text-xs"
+                                    >
+                                        🔫 Cướp Ngay
+                                    </button>
+                                    <button onClick={() => handleDelete(c.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>

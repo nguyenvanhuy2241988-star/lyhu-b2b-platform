@@ -343,7 +343,8 @@ export default function AutomationPage() {
                         <div className="text-center py-10 text-slate-500">Đang tải...</div>
                     ) : (
                         <div className="bg-white rounded-xl shadow border overflow-hidden">
-                            <table className="w-full text-left border-collapse">
+                            <div className="hidden lg:block overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
                                 <thead className="bg-slate-50 border-b">
                                     <tr>
                                         <th className="p-4 font-medium text-slate-600 w-1/4">Từ khóa (Key)</th>
@@ -391,7 +392,49 @@ export default function AutomationPage() {
                                         </tr>
                                     ))}
                                 </tbody>
-                            </table>
+                                </table>
+                            </div>
+                            
+                            {/* Mobile Card List View */}
+                            <div className="lg:hidden divide-y divide-slate-100">
+                                {rules.filter(r => (r.keyword + ' ' + (r.response_text || '')).toLowerCase().includes(search.toLowerCase())).length === 0 ? (
+                                    <div className="p-8 text-center text-slate-400">
+                                        <Bot className="w-12 h-12 mx-auto mb-2 opacity-20" />
+                                        Chưa có quy tắc nào
+                                    </div>
+                                ) : rules.filter(r => (r.keyword + ' ' + (r.response_text || '')).toLowerCase().includes(search.toLowerCase())).map(rule => (
+                                    <div key={rule.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div className="font-medium text-blue-700 text-sm">"{rule.keyword}"</div>
+                                            <button
+                                                onClick={() => toggleStatus(rule)}
+                                                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors flex-shrink-0 ${rule.is_active ? 'bg-green-500' : 'bg-slate-300'}`}
+                                            >
+                                                <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${rule.is_active ? 'translate-x-5' : 'translate-x-1'}`} />
+                                            </button>
+                                        </div>
+                                        
+                                        <div className="text-xs text-slate-600 mb-3 line-clamp-3 bg-slate-50 p-2 rounded border border-slate-100">
+                                            {rule.response_type === 'image' ? '[Hình ảnh] ' + (rule.response_text || '') : rule.response_text}
+                                        </div>
+                                        
+                                        <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${rule.match_type === 'exact' ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-600'}`}>
+                                                {rule.match_type === 'exact' ? 'Chính xác' : 'Chứa'}
+                                            </span>
+                                            
+                                            <div className="flex gap-2">
+                                                <button onClick={() => handleOpenModal(rule)} className="p-1.5 hover:bg-slate-200 rounded text-slate-600 transition-colors">
+                                                    <Edit className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button onClick={() => handleDelete(rule.id)} className="p-1.5 hover:bg-red-100 rounded text-red-600 transition-colors">
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </>
