@@ -488,6 +488,15 @@ export default function TelesalesOrdersPage() {
                     onMarkAsRead={handleMarkAsRead}
                 />
             )}
+
+            {/* Mobile Floating Action Button (FAB) for Create Order */}
+            <button
+                onClick={() => router.push('/telesales/create-order')}
+                className="fixed lg:hidden bottom-24 right-4 md:right-8 w-14 h-14 bg-primary-600 hover:bg-primary-700 text-white rounded-full shadow-lg shadow-primary-600/30 flex items-center justify-center transition-transform hover:scale-105 active:scale-95 z-40"
+                aria-label="Tạo đơn hàng mới"
+            >
+                <Pencil className="w-6 h-6" />
+            </button>
         </div>
     );
 }
