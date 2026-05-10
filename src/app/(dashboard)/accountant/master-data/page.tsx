@@ -556,7 +556,8 @@ export default function AccountantMasterDataPage() {
                                 <p className="text-slate-500">Không tìm thấy kết quả.</p>
                             </div>
                         ) : (
-                            <div className="hidden lg:block overflow-x-auto">
+                            <>
+                                <div className="hidden lg:block overflow-x-auto">
                                 <table className="w-full text-left text-sm whitespace-nowrap">
                                     <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-medium">
                                         <tr>
@@ -702,6 +703,7 @@ export default function AccountantMasterDataPage() {
                                     ))
                                 )}
                             </div>
+                            </>
                         )}
                     </div>
                 </>
