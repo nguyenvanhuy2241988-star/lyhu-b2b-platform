@@ -581,9 +581,10 @@ export default function TelesalesCustomersPage() {
             {/* B2B Codes Manager */}
             <B2bCodesManager />
 
-            {/* Customers Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 mt-6">
-                <div className="overflow-x-auto">
+            {/* Customers Table/List */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 mt-6 overflow-hidden">
+                {/* Desktop Table View */}
+                <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
                             <tr>
@@ -689,6 +690,91 @@ export default function TelesalesCustomersPage() {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="lg:hidden divide-y divide-slate-100">
+                    {filteredCustomers.map((customer) => (
+                        <div key={customer.id} className="p-4 bg-white hover:bg-slate-50 transition-colors">
+                            <div className="flex justify-between items-start mb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <Building className="w-5 h-5 text-slate-500" />
+                                    </div>
+                                    <div>
+                                        <div className="font-semibold text-slate-900">{customer.name}</div>
+                                        <span className={`inline-flex items-center px-1.5 py-0.5 mt-1.5 rounded text-[10px] font-bold uppercase ${customer.type === 'tap_hoa' ? 'bg-green-100 text-green-700' :
+                                            customer.type === 'mini_mart' ? 'bg-purple-100 text-purple-700' :
+                                                customer.type === 'npp' ? 'bg-orange-100 text-orange-700' :
+                                                    customer.type === 'dai_ly' ? 'bg-blue-100 text-blue-700' :
+                                                        customer.type === 'sieu_thi' ? 'bg-pink-100 text-pink-700' :
+                                                            'bg-slate-100 text-slate-600'
+                                            }`}>
+                                            {CUSTOMER_TYPES.find(t => t.value === customer.type)?.label || customer.type}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="relative">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            e.nativeEvent.stopImmediatePropagation();
+                                            e.preventDefault();
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            setMenuPos({
+                                                top: rect.bottom + 4,
+                                                right: window.innerWidth - rect.right
+                                            });
+                                            setOpenMenuId(openMenuId === customer.id ? null : customer.id);
+                                        }}
+                                        className={`p-1.5 rounded-full transition-colors ${openMenuId === customer.id ? 'bg-slate-100 text-slate-600' : 'text-slate-400 hover:bg-slate-100'}`}
+                                    >
+                                        <MoreHorizontal className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 mb-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <div className="flex items-center gap-2 text-slate-700 text-sm">
+                                    <Phone className="w-4 h-4 text-slate-400" />
+                                    <a href={`tel:${customer.phone}`} className="hover:text-primary-600 font-medium">{customer.phone}</a>
+                                </div>
+                                {customer.email && (
+                                    <div className="flex items-center gap-2 text-slate-600 text-sm">
+                                        <Mail className="w-4 h-4 text-slate-400" />
+                                        <span className="truncate">{customer.email}</span>
+                                    </div>
+                                )}
+                                <div className="flex items-start gap-2 text-slate-600 text-sm">
+                                    <MapPin className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                                    <span className="line-clamp-2 leading-tight">{customer.address || "Chưa cập nhật địa chỉ"}</span>
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => handleCreateDeal(customer)}
+                                    className="flex-1 flex items-center justify-center gap-1.5 bg-primary-50 text-primary-700 hover:bg-primary-100 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                                >
+                                    <UserPlus className="w-4 h-4" />
+                                    Tạo cơ hội
+                                </button>
+                                <button
+                                    onClick={() => handleEditClick(customer)}
+                                    className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                                >
+                                    Sửa thông tin
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                    {filteredCustomers.length === 0 && (
+                        <div className="px-6 py-12 text-center text-slate-500 bg-white">
+                            <Building className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                            <p className="font-medium">Chưa có khách hàng nào</p>
+                            <p className="text-sm mt-1">Thêm khách hàng mới hoặc tạo cơ hội từ CRM</p>
+                        </div>
+                    )}
                 </div>
             </div>
 

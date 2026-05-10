@@ -207,7 +207,8 @@ export default function TelesalesOrdersPage() {
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="overflow-x-auto">
+                {/* Desktop Table View */}
+                <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
                             <tr>
@@ -357,6 +358,110 @@ export default function TelesalesOrdersPage() {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="lg:hidden divide-y divide-slate-100">
+                    {filteredOrders.map((order) => {
+                        const statusConfig = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
+                        const StatusIcon = statusConfig.icon;
+                        const hasShippingData = order.shippingCarrier || order.trackingCode || order.packedByName || (order.totalBoxes && order.totalBoxes > 0) || order.shippingFee || order.shippingNote;
+
+                        return (
+                            <div key={order.id} className="p-4 bg-white hover:bg-slate-50 transition-colors">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div>
+                                        <div className="font-bold text-slate-900 text-base">ORD-{order.readableId}</div>
+                                        <div className="text-xs text-slate-500 mt-0.5">{formatDate(order.createdAt)}</div>
+                                    </div>
+                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${statusConfig.color}`}>
+                                        {StatusIcon && <StatusIcon className="w-3 h-3" />}
+                                        {statusConfig.label}
+                                    </span>
+                                </div>
+                                
+                                <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-3 space-y-2">
+                                    <div className="flex items-start gap-2">
+                                        <UserCheck className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                                        <span className="font-semibold text-slate-800 leading-tight">{order.customerName}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Package className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                                        <span className="font-bold text-primary-600 text-base">{formatPrice(order.totalAmount)}</span>
+                                    </div>
+                                </div>
+
+                                {hasShippingData && (
+                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs mb-4 bg-blue-50/50 p-3 rounded-lg border border-blue-100">
+                                        {order.shippingCarrier && (
+                                            <span className="inline-flex items-center gap-1 text-slate-600">
+                                                <Truck className="w-3.5 h-3.5 text-blue-500" />
+                                                <strong>{SHIPPING_CARRIERS.find((c: any) => c.value === order.shippingCarrier)?.label || order.shippingCarrier}</strong>
+                                                {order.trackingCode && <span className="text-blue-600 font-mono font-medium ml-1">{order.trackingCode}</span>}
+                                            </span>
+                                        )}
+                                        {order.packedByName && (
+                                            <span className="inline-flex items-center gap-1 text-slate-600">
+                                                <UserCheck className="w-3.5 h-3.5 text-emerald-500" />
+                                                Đóng: <strong>{order.packedByName}</strong>
+                                            </span>
+                                        )}
+                                        {order.totalBoxes && order.totalBoxes > 0 ? (
+                                            <span className="inline-flex items-center gap-1 text-slate-600">
+                                                <Package className="w-3.5 h-3.5 text-amber-500" />
+                                                {order.totalBoxes} thùng
+                                            </span>
+                                        ) : null}
+                                        {order.shippingFee && order.shippingFee > 0 ? (
+                                            <span className="inline-flex items-center gap-1 text-slate-600 font-semibold">
+                                                Phí VC: {formatPrice(order.shippingFee)}
+                                            </span>
+                                        ) : null}
+                                        {order.shippingNote && (
+                                            <span className="inline-flex items-start gap-1.5 text-slate-500 italic w-full mt-1">
+                                                <StickyNote className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
+                                                <span className="leading-tight">{order.shippingNote}</span>
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setChatOrder({ id: order.id, readableId: String(order.readableId || order.id.slice(0, 8)) })}
+                                        className="relative flex-1 flex items-center justify-center gap-1.5 bg-primary-50 text-primary-700 hover:bg-primary-100 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                                    >
+                                        <MessageCircle className="w-4 h-4" />
+                                        Chat
+                                        {unreadOrders.has(order.id) && (
+                                            <span className="absolute top-1.5 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedOrder(order)}
+                                        className="flex-1 flex items-center justify-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                                    >
+                                        <Eye className="w-4 h-4" />
+                                        Chi tiết
+                                    </button>
+                                    {order.status === 'pending' && (
+                                        <button
+                                            onClick={() => router.push(`/telesales/create-order?edit=${order.id}`)}
+                                            className="px-4 flex items-center justify-center bg-white border border-slate-200 text-blue-600 hover:bg-blue-50 py-2.5 rounded-lg transition-colors"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    })}
+                    {filteredOrders.length === 0 && (
+                        <div className="px-6 py-12 text-center text-slate-500 bg-white">
+                            <FileText className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                            <p className="font-medium">Chưa có đơn hàng nào</p>
+                        </div>
+                    )}
                 </div>
             </div>
 

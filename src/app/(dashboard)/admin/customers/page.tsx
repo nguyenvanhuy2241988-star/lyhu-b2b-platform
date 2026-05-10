@@ -716,7 +716,7 @@ export default function AdminCustomersPage() {
                     </div>
                 ) : (
                     <>
-                        <div className="overflow-x-auto">
+                        <div className="hidden lg:block overflow-x-auto">
                             <table className="w-full text-left text-sm min-w-[1000px]">
                                 <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-medium">
                                     <tr>
@@ -789,6 +789,66 @@ export default function AdminCustomersPage() {
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+
+                        {/* Mobile Card List View */}
+                        <div className="lg:hidden divide-y divide-slate-100">
+                            {paginatedCustomers.map((customer) => (
+                                <div key={customer.id} className="p-4 bg-white hover:bg-slate-50 transition-colors">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+                                                <Building2 className="w-5 h-5 text-slate-400" />
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-slate-900 leading-tight">{customer.name}</div>
+                                                <div className="text-[10px] text-slate-400 font-mono mt-0.5 uppercase tracking-wider">{customer.id.split('-')[0]}</div>
+                                            </div>
+                                        </div>
+                                        <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[10px] font-bold uppercase flex-shrink-0">
+                                            {typeMap[customer.type || ''] || customer.type || '-'}
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-2 mb-4">
+                                        <div className="flex items-start gap-2">
+                                            <Phone className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                                            <div className="font-medium text-slate-700">{customer.phone}</div>
+                                        </div>
+                                        {customer.email && (
+                                            <div className="flex items-start gap-2 text-sm text-slate-600">
+                                                <Mail className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                                                <span className="break-all">{customer.email}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex items-start gap-2 text-sm text-slate-600">
+                                            <MapPin className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                                            <span className="line-clamp-2">{customer.address || "Chưa cập nhật"}</span>
+                                        </div>
+                                        <div className="flex items-start gap-2 text-sm text-slate-600">
+                                            <UserCircle className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" />
+                                            <span>NV: <strong className="text-slate-800">{getOwnerName(customer.owner_user_id)}</strong></span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handleEditClick(customer)}
+                                            className="flex-1 flex items-center justify-center gap-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                            Sửa
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(customer.id, customer.name)}
+                                            className="flex-1 flex items-center justify-center gap-1.5 bg-red-50 text-red-600 hover:bg-red-100 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                            Xóa
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                         {totalPages > 1 && (
                             <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
