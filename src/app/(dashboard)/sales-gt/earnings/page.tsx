@@ -327,53 +327,104 @@ export default function GTEarningsPage() {
                     </h3>
                 </div>
                 <div className="max-h-[400px] overflow-y-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="bg-slate-50 text-slate-500 text-left border-b border-slate-100 sticky top-0">
-                                <th className="p-3 text-xs font-medium">Ngày</th>
-                                <th className="p-3 text-xs font-medium text-center">Check-in</th>
-                                <th className="p-3 text-xs font-medium text-center">Điểm bán</th>
-                                <th className="p-3 text-xs font-medium text-center">Đơn hàng</th>
-                                <th className="p-3 text-xs font-medium text-right">Doanh số</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50">
-                            {dailyStats.length === 0 ? (
-                                <tr>
-                                    <td colSpan={5} className="p-8 text-center text-slate-400">Chưa có dữ liệu.</td>
+                    {/* Desktop Table */}
+                    <div className="hidden lg:block">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="bg-slate-50 text-slate-500 text-left border-b border-slate-100 sticky top-0">
+                                    <th className="p-3 text-xs font-medium">Ngày</th>
+                                    <th className="p-3 text-xs font-medium text-center">Check-in</th>
+                                    <th className="p-3 text-xs font-medium text-center">Điểm bán</th>
+                                    <th className="p-3 text-xs font-medium text-center">Đơn hàng</th>
+                                    <th className="p-3 text-xs font-medium text-right">Doanh số</th>
                                 </tr>
-                            ) : (
-                                dailyStats.map((row, idx) => (
-                                    <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                                        <td className="p-3 font-medium text-slate-700">{row.dateLabel}</td>
-                                        <td className="p-3 text-center">
-                                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${row.checkins > 0 ? 'bg-teal-50 text-teal-700' : 'text-slate-400'}`}>
-                                                {row.checkins}
-                                            </span>
-                                        </td>
-                                        <td className="p-3 text-center text-slate-600">{row.uniqueOutlets}</td>
-                                        <td className="p-3 text-center">
-                                            <span className={`px-2 py-0.5 rounded text-xs font-medium ${row.orders > 0 ? 'bg-blue-50 text-blue-700' : 'text-slate-400'}`}>
-                                                {row.orders}
-                                            </span>
-                                        </td>
-                                        <td className="p-3 text-right font-medium text-slate-900">{row.revenue > 0 ? formatPrice(row.revenue) : '-'}</td>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {dailyStats.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="p-8 text-center text-slate-400">Chưa có dữ liệu.</td>
                                     </tr>
-                                ))
+                                ) : (
+                                    dailyStats.map((row, idx) => (
+                                        <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                                            <td className="p-3 font-medium text-slate-700">{row.dateLabel}</td>
+                                            <td className="p-3 text-center">
+                                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${row.checkins > 0 ? 'bg-teal-50 text-teal-700' : 'text-slate-400'}`}>
+                                                    {row.checkins}
+                                                </span>
+                                            </td>
+                                            <td className="p-3 text-center text-slate-600">{row.uniqueOutlets}</td>
+                                            <td className="p-3 text-center">
+                                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${row.orders > 0 ? 'bg-blue-50 text-blue-700' : 'text-slate-400'}`}>
+                                                    {row.orders}
+                                                </span>
+                                            </td>
+                                            <td className="p-3 text-right font-medium text-slate-900">{row.revenue > 0 ? formatPrice(row.revenue) : '-'}</td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                            {dailyStats.length > 0 && (
+                                <tfoot>
+                                    <tr className="bg-slate-50 font-bold border-t border-slate-200">
+                                        <td className="p-3 text-slate-700">Tổng</td>
+                                        <td className="p-3 text-center text-teal-700">{dailyStats.reduce((s, r) => s + r.checkins, 0)}</td>
+                                        <td className="p-3 text-center text-slate-600">-</td>
+                                        <td className="p-3 text-center text-blue-700">{dailyStats.reduce((s, r) => s + r.orders, 0)}</td>
+                                        <td className="p-3 text-right text-slate-900">{formatPrice(dailyStats.reduce((s, r) => s + r.revenue, 0))}</td>
+                                    </tr>
+                                </tfoot>
                             )}
-                        </tbody>
-                        {dailyStats.length > 0 && (
-                            <tfoot>
-                                <tr className="bg-slate-50 font-bold border-t border-slate-200">
-                                    <td className="p-3 text-slate-700">Tổng</td>
-                                    <td className="p-3 text-center text-teal-700">{dailyStats.reduce((s, r) => s + r.checkins, 0)}</td>
-                                    <td className="p-3 text-center text-slate-600">-</td>
-                                    <td className="p-3 text-center text-blue-700">{dailyStats.reduce((s, r) => s + r.orders, 0)}</td>
-                                    <td className="p-3 text-right text-slate-900">{formatPrice(dailyStats.reduce((s, r) => s + r.revenue, 0))}</td>
-                                </tr>
-                            </tfoot>
+                        </table>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="lg:hidden divide-y divide-slate-100">
+                        {dailyStats.length === 0 ? (
+                            <div className="p-8 text-center text-slate-400">Chưa có dữ liệu.</div>
+                        ) : (
+                            <>
+                                {dailyStats.map((row, idx) => (
+                                    <div key={idx} className="p-4 hover:bg-slate-50 transition-colors">
+                                        <div className="flex justify-between items-center mb-3">
+                                            <span className="font-semibold text-slate-900">{row.dateLabel}</span>
+                                            <span className="font-bold text-slate-900">{row.revenue > 0 ? formatPrice(row.revenue) : '-'}</span>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <div className="bg-slate-50 p-2 rounded text-center">
+                                                <div className="text-[10px] text-slate-500 uppercase mb-1">Check-in</div>
+                                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${row.checkins > 0 ? 'bg-teal-50 text-teal-700' : 'text-slate-400'}`}>
+                                                    {row.checkins}
+                                                </span>
+                                            </div>
+                                            <div className="bg-slate-50 p-2 rounded text-center">
+                                                <div className="text-[10px] text-slate-500 uppercase mb-1">Điểm bán</div>
+                                                <span className="text-xs font-medium text-slate-700">{row.uniqueOutlets}</span>
+                                            </div>
+                                            <div className="bg-slate-50 p-2 rounded text-center">
+                                                <div className="text-[10px] text-slate-500 uppercase mb-1">Đơn hàng</div>
+                                                <span className={`px-2 py-0.5 rounded text-xs font-medium ${row.orders > 0 ? 'bg-blue-50 text-blue-700' : 'text-slate-400'}`}>
+                                                    {row.orders}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                {dailyStats.length > 0 && (
+                                    <div className="p-4 bg-slate-50 font-bold border-t border-slate-200 mt-2">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-slate-700">Tổng doanh số</span>
+                                            <span className="text-slate-900 text-lg">{formatPrice(dailyStats.reduce((s, r) => s + r.revenue, 0))}</span>
+                                        </div>
+                                        <div className="flex justify-between text-xs mt-1">
+                                            <span className="text-slate-500">Tổng Check-in: <span className="text-teal-700">{dailyStats.reduce((s, r) => s + r.checkins, 0)}</span></span>
+                                            <span className="text-slate-500">Tổng Đơn hàng: <span className="text-blue-700">{dailyStats.reduce((s, r) => s + r.orders, 0)}</span></span>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
                         )}
-                    </table>
+                    </div>
                 </div>
             </div>
 
@@ -385,42 +436,77 @@ export default function GTEarningsPage() {
                     </h3>
                 </div>
                 <div className="max-h-[300px] overflow-y-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="bg-slate-50 text-slate-500 text-left border-b border-slate-100 sticky top-0">
-                                <th className="p-3 text-xs font-medium">Mã đơn</th>
-                                <th className="p-3 text-xs font-medium">Khách hàng</th>
-                                <th className="p-3 text-xs font-medium text-right">Giá trị</th>
-                                <th className="p-3 text-xs font-medium text-center">Trạng thái</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50">
-                            {orders.filter(o => {
-                                const d = new Date(o.createdAt);
-                                return d >= currentRange.from && d <= currentRange.to;
-                            }).length === 0 ? (
-                                <tr><td colSpan={4} className="p-8 text-center text-slate-400 text-sm">Chưa có đơn hàng nào.</td></tr>
-                            ) : (
-                                orders
-                                    .filter(o => {
-                                        const d = new Date(o.createdAt);
-                                        return d >= currentRange.from && d <= currentRange.to;
-                                    })
-                                    .map((o) => (
-                                        <tr key={o.id} className="hover:bg-slate-50 transition-colors">
-                                            <td className="p-3 font-mono text-xs text-slate-400">#{o.readableId || o.id.slice(0, 8)}</td>
-                                            <td className="p-3 font-medium text-slate-800">{o.customerName}</td>
-                                            <td className="p-3 text-right font-medium text-teal-600">{formatPrice(o.totalAmount || 0)}</td>
-                                            <td className="p-3 text-center">
-                                                <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${o.status === 'delivered' ? 'bg-emerald-50 text-emerald-600' : o.status === 'cancelled' ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-500'}`}>
+                    {/* Desktop Table */}
+                    <div className="hidden lg:block">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="bg-slate-50 text-slate-500 text-left border-b border-slate-100 sticky top-0">
+                                    <th className="p-3 text-xs font-medium">Mã đơn</th>
+                                    <th className="p-3 text-xs font-medium">Khách hàng</th>
+                                    <th className="p-3 text-xs font-medium text-right">Giá trị</th>
+                                    <th className="p-3 text-xs font-medium text-center">Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-50">
+                                {orders.filter(o => {
+                                    const d = new Date(o.createdAt);
+                                    return d >= currentRange.from && d <= currentRange.to;
+                                }).length === 0 ? (
+                                    <tr><td colSpan={4} className="p-8 text-center text-slate-400 text-sm">Chưa có đơn hàng nào.</td></tr>
+                                ) : (
+                                    orders
+                                        .filter(o => {
+                                            const d = new Date(o.createdAt);
+                                            return d >= currentRange.from && d <= currentRange.to;
+                                        })
+                                        .map((o) => (
+                                            <tr key={o.id} className="hover:bg-slate-50 transition-colors">
+                                                <td className="p-3 font-mono text-xs text-slate-400">#{o.readableId || o.id.slice(0, 8)}</td>
+                                                <td className="p-3 font-medium text-slate-800">{o.customerName}</td>
+                                                <td className="p-3 text-right font-medium text-teal-600">{formatPrice(o.totalAmount || 0)}</td>
+                                                <td className="p-3 text-center">
+                                                    <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${o.status === 'delivered' ? 'bg-emerald-50 text-emerald-600' : o.status === 'cancelled' ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-500'}`}>
+                                                        {o.status === 'delivered' ? 'Thành công' : o.status === 'cancelled' ? 'Đã hủy' : 'Đang xử lý'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="lg:hidden divide-y divide-slate-100">
+                        {orders.filter(o => {
+                            const d = new Date(o.createdAt);
+                            return d >= currentRange.from && d <= currentRange.to;
+                        }).length === 0 ? (
+                            <div className="p-8 text-center text-slate-400 text-sm">Chưa có đơn hàng nào.</div>
+                        ) : (
+                            orders
+                                .filter(o => {
+                                    const d = new Date(o.createdAt);
+                                    return d >= currentRange.from && d <= currentRange.to;
+                                })
+                                .map((o) => (
+                                    <div key={o.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <div className="font-medium text-slate-900 text-sm">{o.customerName}</div>
+                                                <div className="font-mono text-[11px] text-slate-400 mt-0.5">#{o.readableId || o.id.slice(0, 8)}</div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="font-bold text-teal-600">{formatPrice(o.totalAmount || 0)}</div>
+                                                <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-medium ${o.status === 'delivered' ? 'bg-emerald-50 text-emerald-600' : o.status === 'cancelled' ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-500'}`}>
                                                     {o.status === 'delivered' ? 'Thành công' : o.status === 'cancelled' ? 'Đã hủy' : 'Đang xử lý'}
                                                 </span>
-                                            </td>
-                                        </tr>
-                                    ))
-                            )}
-                        </tbody>
-                    </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

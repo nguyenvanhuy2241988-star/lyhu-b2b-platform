@@ -173,7 +173,8 @@ export default function OutletsPage() {
                 </div>
             ) : (
                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-                    <div className="overflow-x-auto">
+                    {/* Desktop Table View */}
+                    <div className="hidden lg:block overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead className="bg-slate-50 border-b border-slate-200">
                                 <tr>
@@ -210,6 +211,44 @@ export default function OutletsPage() {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+
+                    {/* Mobile Card List View */}
+                    <div className="lg:hidden divide-y divide-slate-100">
+                        {outlets.map(outlet => (
+                            <div key={outlet.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h4 className="font-medium text-slate-900 text-sm">{outlet.name}</h4>
+                                        <div className="text-xs text-slate-500 flex flex-wrap items-center gap-2 mt-1">
+                                            {outlet.owner_name && <span>Chủ: {outlet.owner_name}</span>}
+                                            {outlet.phone && (
+                                                <a href={`tel:${outlet.phone}`} className="flex items-center gap-0.5 text-teal-600 font-medium">
+                                                    <Phone className="w-3 h-3" />{outlet.phone}
+                                                </a>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <span className={`shrink-0 ml-2 px-2 py-0.5 rounded-full text-[10px] font-medium ${STATUS_LABELS[outlet.status]?.style || 'bg-slate-100'}`}>
+                                        {STATUS_LABELS[outlet.status]?.label || outlet.status}
+                                    </span>
+                                </div>
+                                
+                                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
+                                    <div className="flex items-center gap-1.5 text-slate-600">
+                                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                                        <span>{outlet.district}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-slate-600">
+                                        <Store className="w-3.5 h-3.5 text-slate-400" />
+                                        <span>{OUTLET_TYPES[outlet.outlet_type] || outlet.outlet_type}</span>
+                                    </div>
+                                    <div className="text-slate-500 bg-slate-50 px-2 py-0.5 rounded">
+                                        {FREQUENCIES[outlet.visit_frequency] || outlet.visit_frequency}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}

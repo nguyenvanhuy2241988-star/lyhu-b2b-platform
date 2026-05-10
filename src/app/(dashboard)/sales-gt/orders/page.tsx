@@ -140,7 +140,8 @@ export default function GTOrdersPage() {
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="overflow-x-auto">
+                {/* Desktop Table View */}
+                <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
                             <tr>
@@ -276,6 +277,105 @@ export default function GTOrdersPage() {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card List View */}
+                <div className="lg:hidden divide-y divide-slate-100">
+                    {filteredOrders.map((order) => {
+                        const statusConfig = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
+                        const StatusIcon = statusConfig.icon;
+                        const hasShippingData = order.shippingCarrier || order.trackingCode || order.packedByName || (order.totalBoxes && order.totalBoxes > 0) || order.shippingFee || order.shippingNote;
+
+                        return (
+                            <div key={order.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                <div className="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h4 className="font-medium text-slate-900 text-sm">ORD-{order.readableId}</h4>
+                                        <p className="text-xs text-slate-500 mt-0.5">{formatDate(order.createdAt)}</p>
+                                    </div>
+                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-medium ${statusConfig.color}`}>
+                                        {StatusIcon && <StatusIcon className="w-3 h-3" />}
+                                        {statusConfig.label}
+                                    </span>
+                                </div>
+                                
+                                <div className="mt-3 mb-4">
+                                    <div className="font-medium text-slate-800 text-sm">{order.customerName}</div>
+                                    <div className="text-teal-600 font-bold mt-1">{formatPrice(order.totalAmount)}</div>
+                                </div>
+
+                                {hasShippingData && (
+                                    <div className="bg-blue-50/40 p-2.5 rounded-lg mb-4 space-y-1.5 text-[11px]">
+                                        {order.shippingCarrier && (
+                                            <div className="flex items-center gap-1.5 text-slate-600">
+                                                <Truck className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                                                <span>
+                                                    <strong>{SHIPPING_CARRIERS.find((c: any) => c.value === order.shippingCarrier)?.label || order.shippingCarrier}</strong>
+                                                    {order.trackingCode && <span className="text-blue-600 font-mono ml-1">{order.trackingCode}</span>}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {order.totalBoxes && order.totalBoxes > 0 ? (
+                                            <div className="flex items-center gap-1.5 text-slate-600">
+                                                <Package className="w-3.5 h-3.5 text-amber-500 shrink-0" /> 
+                                                <span>{order.totalBoxes} thùng</span>
+                                            </div>
+                                        ) : null}
+                                        {order.shippingNote && (
+                                            <div className="flex items-start gap-1.5 text-slate-500 italic mt-1">
+                                                <StickyNote className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" /> 
+                                                <span className="line-clamp-2">{order.shippingNote}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+                                    <button
+                                        onClick={() => setChatOrder({ id: order.id, readableId: String(order.readableId || order.id.slice(0, 8)) })}
+                                        className="relative flex-1 py-1.5 flex items-center justify-center gap-1.5 text-slate-600 hover:text-teal-600 transition-colors bg-slate-50 hover:bg-teal-50 rounded-lg text-xs font-medium"
+                                    >
+                                        <MessageCircle className="w-4 h-4" />
+                                        Chat
+                                        {unreadOrders.has(order.id) && (
+                                            <span className="absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full" />
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedOrder(order)}
+                                        className="flex-1 py-1.5 flex items-center justify-center gap-1.5 text-slate-600 hover:text-indigo-600 transition-colors bg-slate-50 hover:bg-indigo-50 rounded-lg text-xs font-medium"
+                                    >
+                                        <Eye className="w-4 h-4" /> Chi tiết
+                                    </button>
+                                    {order.status === 'pending' && (
+                                        <button
+                                            onClick={() => router.push(`/sales-gt/create-order?edit=${order.id}`)}
+                                            className="py-1.5 px-3 flex items-center justify-center text-slate-600 hover:text-blue-600 transition-colors bg-slate-50 hover:bg-blue-50 rounded-lg"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={async () => {
+                                            if (window.confirm("Bạn có chắc chắn muốn xóa đơn hàng này không?")) {
+                                                const { deleteOrder } = await import("@/lib/ordersStore");
+                                                await deleteOrder(order.id);
+                                            }
+                                        }}
+                                        className="py-1.5 px-3 flex items-center justify-center text-slate-600 hover:text-red-600 transition-colors bg-slate-50 hover:bg-red-50 rounded-lg"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
+                    {filteredOrders.length === 0 && (
+                        <div className="p-8 text-center text-slate-500">
+                            <FileText className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+                            <p className="font-medium text-sm">Chưa có đơn hàng nào</p>
+                        </div>
+                    )}
                 </div>
             </div>
 

@@ -121,33 +121,65 @@ export default function ReportsPage() {
                 ) : reports.length === 0 ? (
                     <div className="p-8 text-center text-slate-400">Chưa có dữ liệu</div>
                 ) : (
-                    <table className="w-full text-sm">
-                        <thead className="bg-slate-50 text-slate-600">
-                            <tr>
-                                <th className="text-left px-5 py-2.5 font-medium">Quận/Huyện</th>
-                                <th className="text-center px-5 py-2.5 font-medium">Điểm bán</th>
-                                <th className="text-center px-5 py-2.5 font-medium">Check-in</th>
-                                <th className="text-center px-5 py-2.5 font-medium">Tỷ lệ</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
+                    <div className="overflow-x-auto">
+                        {/* Desktop Table View */}
+                        <div className="hidden lg:block">
+                            <table className="w-full text-sm">
+                                <thead className="bg-slate-50 text-slate-600">
+                                    <tr>
+                                        <th className="text-left px-5 py-2.5 font-medium">Quận/Huyện</th>
+                                        <th className="text-center px-5 py-2.5 font-medium">Điểm bán</th>
+                                        <th className="text-center px-5 py-2.5 font-medium">Check-in</th>
+                                        <th className="text-center px-5 py-2.5 font-medium">Tỷ lệ</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {reports.map(r => (
+                                        <tr key={r.district} className="hover:bg-slate-50">
+                                            <td className="px-5 py-3 font-medium text-slate-800">{r.district}</td>
+                                            <td className="px-5 py-3 text-center text-slate-600">{r.outletCount}</td>
+                                            <td className="px-5 py-3 text-center text-slate-600">{r.checkinCount}</td>
+                                            <td className="px-5 py-3 text-center">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <div className="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                                                        <div className="h-full bg-teal-500 rounded-full" style={{ width: `${r.outletCount > 0 ? Math.min(100, (r.checkinCount / r.outletCount) * 100) : 0}%` }} />
+                                                    </div>
+                                                    <span className="text-xs text-slate-500">{r.outletCount > 0 ? Math.round((r.checkinCount / r.outletCount) * 100) : 0}%</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Mobile Card View */}
+                        <div className="lg:hidden divide-y divide-slate-100">
                             {reports.map(r => (
-                                <tr key={r.district} className="hover:bg-slate-50">
-                                    <td className="px-5 py-3 font-medium text-slate-800">{r.district}</td>
-                                    <td className="px-5 py-3 text-center text-slate-600">{r.outletCount}</td>
-                                    <td className="px-5 py-3 text-center text-slate-600">{r.checkinCount}</td>
-                                    <td className="px-5 py-3 text-center">
-                                        <div className="flex items-center justify-center gap-2">
+                                <div key={r.district} className="p-4 hover:bg-slate-50 transition-colors">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <span className="font-semibold text-slate-800">{r.district}</span>
+                                        <div className="flex items-center gap-2">
                                             <div className="w-16 h-1.5 bg-slate-200 rounded-full overflow-hidden">
                                                 <div className="h-full bg-teal-500 rounded-full" style={{ width: `${r.outletCount > 0 ? Math.min(100, (r.checkinCount / r.outletCount) * 100) : 0}%` }} />
                                             </div>
-                                            <span className="text-xs text-slate-500">{r.outletCount > 0 ? Math.round((r.checkinCount / r.outletCount) * 100) : 0}%</span>
+                                            <span className="text-xs font-medium text-slate-600">{r.outletCount > 0 ? Math.round((r.checkinCount / r.outletCount) * 100) : 0}%</span>
                                         </div>
-                                    </td>
-                                </tr>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="bg-slate-50 p-2 rounded-lg text-center">
+                                            <div className="text-[10px] text-slate-500 mb-0.5">ĐIỂM BÁN</div>
+                                            <div className="font-medium text-slate-700">{r.outletCount}</div>
+                                        </div>
+                                        <div className="bg-slate-50 p-2 rounded-lg text-center">
+                                            <div className="text-[10px] text-slate-500 mb-0.5">CHECK-IN</div>
+                                            <div className="font-medium text-slate-700">{r.checkinCount}</div>
+                                        </div>
+                                    </div>
+                                </div>
                             ))}
-                        </tbody>
-                    </table>
+                        </div>
+                    </div>
                 )}
             </div>
         </div>

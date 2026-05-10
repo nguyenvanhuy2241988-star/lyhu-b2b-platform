@@ -367,7 +367,8 @@ export default function GTCustomersPage() {
 
             {/* Outlets Table */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-                <div className="overflow-x-auto">
+                {/* Desktop Table View */}
+                <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
                             <tr>
@@ -472,6 +473,91 @@ export default function GTCustomersPage() {
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Mobile Card List View */}
+                <div className="lg:hidden divide-y divide-slate-100">
+                    {outlets.map((outlet) => (
+                        <div key={outlet.id} className="p-4 hover:bg-slate-50 transition-colors">
+                            <div className="flex justify-between items-start mb-3">
+                                <div className="flex items-start gap-3">
+                                    <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center shrink-0">
+                                        <Building className="w-5 h-5 text-slate-500" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-medium text-slate-900 text-sm">{outlet.name}</h4>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${outlet.outlet_type === 'tap_hoa' ? 'bg-green-100 text-green-700' :
+                                                outlet.outlet_type === 'mini_mart' ? 'bg-purple-100 text-purple-700' :
+                                                    outlet.outlet_type === 'npp' ? 'bg-orange-100 text-orange-700' :
+                                                        outlet.outlet_type === 'dai_ly' ? 'bg-blue-100 text-blue-700' :
+                                                            outlet.outlet_type === 'sieu_thi' ? 'bg-pink-100 text-pink-700' :
+                                                                'bg-slate-100 text-slate-600'
+                                                }`}>
+                                                {OUTLET_TYPES.find(t => t.value === outlet.outlet_type)?.label || outlet.outlet_type || 'Khác'}
+                                            </span>
+                                            {outlet.owner_name && (
+                                                <span className="text-[11px] text-slate-500">Chủ: {outlet.owner_name}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        e.nativeEvent.stopImmediatePropagation();
+                                        e.preventDefault();
+                                        const rect = e.currentTarget.getBoundingClientRect();
+                                        setMenuPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+                                        setOpenMenuId(openMenuId === outlet.id ? null : outlet.id);
+                                    }}
+                                    className={`p-1.5 rounded-full ${openMenuId === outlet.id ? 'bg-slate-100 text-slate-600' : 'text-slate-400 hover:bg-slate-100'}`}
+                                >
+                                    <MoreHorizontal className="w-5 h-5" />
+                                </button>
+                            </div>
+                            
+                            <div className="space-y-1.5 text-xs text-slate-600 pl-13 ml-13">
+                                {outlet.phone && (
+                                    <div className="flex items-center gap-2">
+                                        <Phone className="w-3.5 h-3.5" />
+                                        <a href={`tel:${outlet.phone}`} className="hover:text-teal-600 font-medium">{outlet.phone}</a>
+                                    </div>
+                                )}
+                                <div className="flex items-start gap-2">
+                                    <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                                    <div>
+                                        <span className="line-clamp-2">{outlet.address || "-"}</span>
+                                        <span className="text-slate-400 block mt-0.5">{outlet.district}{outlet.ward ? ` • ${outlet.ward}` : ''}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="mt-4 flex gap-2 pl-13 ml-13">
+                                <button
+                                    onClick={() => router.push(`/sales-gt/create-order?outletId=${outlet.id}`)}
+                                    className="flex-1 bg-teal-50 text-teal-700 py-1.5 rounded-lg text-xs font-medium hover:bg-teal-100 flex items-center justify-center gap-1.5"
+                                >
+                                    <Plus className="w-3.5 h-3.5" /> Tạo đơn
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setEditingOutlet(outlet as GTOutletData);
+                                        setShowEditModal(true);
+                                    }}
+                                    className="flex-1 border border-slate-200 text-slate-600 py-1.5 rounded-lg text-xs font-medium hover:bg-slate-50 flex items-center justify-center gap-1.5"
+                                >
+                                    <Pencil className="w-3.5 h-3.5" /> Sửa
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                    {outlets.length === 0 && (
+                        <div className="p-8 text-center text-slate-500">
+                            <Building className="w-10 h-10 mx-auto text-slate-300 mb-3" />
+                            <p className="font-medium text-sm">Chưa có điểm bán nào</p>
+                        </div>
+                    )}
                 </div>
             </div>
 
