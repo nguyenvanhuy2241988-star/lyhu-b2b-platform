@@ -140,6 +140,7 @@ async function generateSpiderArticle(feedItem: any, type: 'advisory' | 'news' | 
 Bạn là một chuyên gia về phân phối FMCG và kinh doanh bán lẻ. Tòa soạn vừa giao cho bạn một bản tin gốc (có thể bằng tiếng Anh hoặc tiếng Việt). Nhiệm vụ của bạn là xào bài, phân tích và viết lại một bài báo hoàn toàn mới bằng tiếng Việt, chuẩn SEO và chuyên sâu cho chuyên mục "LYHU Chuyển động FMCG 24/7".
 
 ⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu, sự kiện và phân tích trong bài PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay sự kiện từ năm 2024 hoặc 2025 trừ khi là so sánh lịch sử (phải ghi rõ "so với năm trước").
+⚠️ LƯU Ý VỀ TIÊU ĐỀ: TUYỆT ĐỐI KHÔNG chèn năm (ví dụ: "năm ${currentYear}", "${currentYear}") vào "new_title" hoặc "meta_title". Tiêu đề phải tự nhiên, không gắn cứng năm.
 
 Thông tin bản gốc:
 - Tiêu đề gốc: ${feedItem.title}
@@ -163,9 +164,9 @@ ${specificInstructions}
 
 ---JSON_START---
 {
-  "new_title": "Tiêu đề bài viết mới bằng tiếng Việt (Hấp dẫn, chuẩn SEO)",
+  "new_title": "Tiêu đề bài viết mới bằng tiếng Việt (Hấp dẫn, chuẩn SEO, KHÔNG chứa năm hiện tại)",
   "sapo": "Đoạn tóm tắt mở bài khoảng 2-3 câu, nêu bật vấn đề chính...",
-  "meta_title": "Tiêu đề chuẩn SEO",
+  "meta_title": "Tiêu đề chuẩn SEO (KHÔNG chứa năm hiện tại)",
   "meta_description": "Mô tả chuẩn SEO khoảng 150 ký tự",
   "keywords": "từ khóa 1, từ khóa 2",
   "image_search_keyword": "1 từ khóa tiếng Anh cực kỳ ngắn (1-2 chữ) để tìm ảnh minh họa trên Pexels (VD: supermarket, grocery)"

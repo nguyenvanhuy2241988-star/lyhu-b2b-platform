@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
+import BottomNav from "./BottomNav";
 import { UserRole } from "@/lib/auth";
 import { WelcomeGreeting } from "@/components/common/WelcomeGreeting";
 import QuickChatWidget from "@/components/chat/QuickChatWidget";
@@ -41,7 +42,7 @@ export default function DashboardShell({ children, role, allowedRoles, title }: 
                 onClose={() => setSidebarOpen(false)}
             />
 
-            <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 flex flex-col min-w-0 pb-16 lg:pb-0">
                 <Topbar
                     title={title}
                     onMenuClick={() => setSidebarOpen(true)}
@@ -51,6 +52,9 @@ export default function DashboardShell({ children, role, allowedRoles, title }: 
                 </main>
                 <WelcomeGreeting />
                 <QuickChatWidget />
+                
+                {/* Mobile Bottom Navigation */}
+                <BottomNav role={sidebarRole} />
             </div>
         </div>
     );

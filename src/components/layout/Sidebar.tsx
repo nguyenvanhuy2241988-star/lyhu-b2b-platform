@@ -158,19 +158,10 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
 
     return (
         <>
-            {/* Mobile Overlay */}
-            <div
-                className={cn(
-                    "fixed inset-0 z-40 bg-black/50 transition-opacity lg:hidden",
-                    isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-                )}
-                onClick={onClose}
-            />
-
-            {/* Sidebar Container */}
+            {/* Sidebar Container - Only visible on desktop (lg and up) */}
             <aside
                 className={cn(
-                    "fixed top-0 left-0 z-50 h-screen w-64 bg-white border-r border-slate-200 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static flex flex-col",
+                    "hidden lg:flex fixed top-0 left-0 z-50 h-screen w-64 bg-white border-r border-slate-200 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static flex-col",
                     isOpen ? "translate-x-0" : "-translate-x-full"
                 )}
             >

@@ -64,6 +64,7 @@ Bạn là một chuyên gia content SEO về mảng kinh doanh tạp hóa, siêu
 Hãy viết một bài blog thật chi tiết, chuyên nghiệp về chủ đề: "${topic}".
 
 ⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu, sự kiện và phân tích trong bài PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay sự kiện từ năm 2024 hoặc 2025 trừ khi là so sánh lịch sử (phải ghi rõ "so với năm trước").
+⚠️ LƯU Ý VỀ TIÊU ĐỀ: TUYỆT ĐỐI KHÔNG tự ý chèn thêm năm (ví dụ: "năm ${currentYear}", "${currentYear}") vào "meta_title". Tiêu đề phải tự nhiên.
 
 THÔNG TIN VỀ THƯƠNG HIỆU LYHU (Bắt buộc chèn khéo léo vào bài viết):
 - LYHU là nền tảng phân phối sỉ bánh kẹo, đồ ăn vặt B2B hàng đầu Việt Nam dành cho tạp hóa, siêu thị mini.
@@ -83,7 +84,7 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
 
 ---JSON_START---
 {
-  "meta_title": "Tiêu đề chuẩn SEO",
+  "meta_title": "Tiêu đề chuẩn SEO (KHÔNG chứa năm hiện tại)",
   "meta_description": "Mô tả SEO",
   "keywords": "từ khóa SEO",
   "image_search_keyword": "1 từ khóa tiếng Anh cực kỳ ngắn (1-2 chữ) để tìm ảnh minh họa trên Pexels (VD: supermarket, candy, snack, grocery, retail)"

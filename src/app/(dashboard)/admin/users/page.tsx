@@ -402,100 +402,152 @@ export default function UsersPage() {
                 {isLoading ? (
                     <div className="p-8 flex justify-center text-slate-500">Đang tải dữ liệu...</div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm min-w-[900px]">
-                            <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
-                                <tr>
-                                    <th className="px-6 py-3 font-medium">Họ & Tên</th>
-                                    <th className="px-6 py-3 font-medium">Tài khoản Zalo</th>
-                                    <th className="px-6 py-3 font-medium">Mã MISA</th> {/* New Column */}
-                                    <th className="px-6 py-3 font-medium">Trạng thái</th>
-                                    <th className="px-6 py-3 font-medium">Hoạt động</th>
-                                    <th className="px-6 py-3 font-medium">Vai trò</th>
-                                    <th className="px-6 py-3 font-medium">Chi tiết</th>
-                                    <th className="px-6 py-3 font-medium text-right">Hành động</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-200">
-                                {paginatedUsers.map((user: any) => (
-                                    <tr key={user.user_id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleViewDetail(user)}>
-                                        <td className="px-6 py-4">
-                                            <div className="font-medium text-slate-900">{user.full_name || user.email}</div>
-                                            <div className="text-xs text-slate-500">{user.full_name ? user.email : "Chưa đặt tên"}</div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            {user.zalo_phone ? (
-                                                <div className="font-medium text-blue-600">{user.zalo_phone}</div>
-                                            ) : (
-                                                <div className="text-slate-400 text-xs italic">Chưa cấp</div>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 text-xs font-mono text-slate-600">
-                                            <div>{user.misa_employee_code || "-"}</div>
-                                            {user.misa_branch_code && (
-                                                <div className="text-[10px] text-slate-400 mt-0.5">Unit: {user.misa_branch_code}</div>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col gap-1 items-start">
-                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border
-                                                    ${user.is_online
-                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
-                                                        : 'bg-slate-50 text-slate-500 border-slate-100'
-                                                    }`}>
-                                                    <span className={`w-1.5 h-1.5 rounded-full ${user.is_online ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
-                                                    {user.is_online ? "Online" : "Offline"}
-                                                </span>
-                                                {user.is_online && user.last_path && (
-                                                    <span className="text-[10px] text-slate-500 truncate max-w-[150px]" title={user.last_path}>
-                                                        {user.last_path}
-                                                    </span>
-                                                )}
+                    <>
+                        {/* Mobile View (Cards) */}
+                        <div className="grid grid-cols-1 gap-4 p-4 lg:hidden bg-slate-50">
+                            {paginatedUsers.map((user: any) => (
+                                <div key={user.user_id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm active:scale-[0.98] transition-transform" onClick={() => handleViewDetail(user)}>
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white flex items-center justify-center font-bold shadow-sm">
+                                                {(user.full_name || user.email).charAt(0).toUpperCase()}
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <div className="font-mono text-slate-700 font-medium">
-                                                {formatDuration(user.online_seconds)}
+                                            <div>
+                                                <div className="font-bold text-slate-900">{user.full_name || "Chưa đặt tên"}</div>
+                                                <div className="text-xs text-slate-500 max-w-[150px] truncate">{user.email}</div>
                                             </div>
-                                            <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
-                                                {user.device_info == 'Mobile' ? <Smartphone size={10} /> : <Monitor size={10} />}
-                                                {user.device_info || 'Unknown'}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
-                                                ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
-                                                    user.role === 'customer' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                                        </div>
+                                        <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                                            <button onClick={() => handleOpenEdit(user)} className="p-2 text-slate-400 hover:text-blue-600 bg-slate-50 rounded-lg active:bg-slate-100"><Pencil className="w-4 h-4"/></button>
+                                            <button onClick={() => handleDelete(user)} className="p-2 text-slate-400 hover:text-red-600 bg-slate-50 rounded-lg active:bg-slate-100"><Trash2 className="w-4 h-4"/></button>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2 mt-4 pt-4 border-t border-slate-100 text-sm">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-slate-500">Trạng thái:</span>
+                                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold border uppercase tracking-wider
+                                                ${user.is_online
+                                                    ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                                                    : 'bg-slate-50 text-slate-500 border-slate-100'
+                                                }`}>
+                                                <span className={`w-1.5 h-1.5 rounded-full ${user.is_online ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
+                                                {user.is_online ? "Online" : "Offline"}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-slate-500">Vai trò:</span>
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wider
+                                                ${user.role === 'admin' ? 'bg-purple-50 border-purple-100 text-purple-700' :
+                                                    user.role === 'customer' ? 'bg-green-50 border-green-100 text-green-700' : 'bg-blue-50 border-blue-100 text-blue-700'
                                                 }`}>
                                                 {ROLE_LABELS[user.role] || user.role}
                                             </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-slate-500 text-xs">
-                                            {formatLastSeen(user.last_seen)}
-                                        </td>
-                                        <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
-                                            <div className="flex justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleOpenEdit(user)}
-                                                    className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                    title="Chỉnh sửa"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(user)}
-                                                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Xóa tài khoản"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-slate-500">Mã MISA:</span>
+                                            <span className="font-mono text-xs font-medium text-slate-700">{user.misa_employee_code || "-"}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Desktop View (Table) */}
+                        <div className="hidden lg:block overflow-x-auto">
+                            <table className="w-full text-left text-sm min-w-[900px]">
+                                <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                                    <tr>
+                                        <th className="px-6 py-3 font-medium">Họ & Tên</th>
+                                        <th className="px-6 py-3 font-medium">Tài khoản Zalo</th>
+                                        <th className="px-6 py-3 font-medium">Mã MISA</th> {/* New Column */}
+                                        <th className="px-6 py-3 font-medium">Trạng thái</th>
+                                        <th className="px-6 py-3 font-medium">Hoạt động</th>
+                                        <th className="px-6 py-3 font-medium">Vai trò</th>
+                                        <th className="px-6 py-3 font-medium">Chi tiết</th>
+                                        <th className="px-6 py-3 font-medium text-right">Hành động</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200">
+                                    {paginatedUsers.map((user: any) => (
+                                        <tr key={user.user_id} className="hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => handleViewDetail(user)}>
+                                            <td className="px-6 py-4">
+                                                <div className="font-medium text-slate-900">{user.full_name || user.email}</div>
+                                                <div className="text-xs text-slate-500">{user.full_name ? user.email : "Chưa đặt tên"}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                {user.zalo_phone ? (
+                                                    <div className="font-medium text-blue-600">{user.zalo_phone}</div>
+                                                ) : (
+                                                    <div className="text-slate-400 text-xs italic">Chưa cấp</div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-xs font-mono text-slate-600">
+                                                <div>{user.misa_employee_code || "-"}</div>
+                                                {user.misa_branch_code && (
+                                                    <div className="text-[10px] text-slate-400 mt-0.5">Unit: {user.misa_branch_code}</div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col gap-1 items-start">
+                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border
+                                                        ${user.is_online
+                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
+                                                            : 'bg-slate-50 text-slate-500 border-slate-100'
+                                                        }`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${user.is_online ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
+                                                        {user.is_online ? "Online" : "Offline"}
+                                                    </span>
+                                                    {user.is_online && user.last_path && (
+                                                        <span className="text-[10px] text-slate-500 truncate max-w-[150px]" title={user.last_path}>
+                                                            {user.last_path}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="font-mono text-slate-700 font-medium">
+                                                    {formatDuration(user.online_seconds)}
+                                                </div>
+                                                <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1">
+                                                    {user.device_info == 'Mobile' ? <Smartphone size={10} /> : <Monitor size={10} />}
+                                                    {user.device_info || 'Unknown'}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                                                    ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' :
+                                                        user.role === 'customer' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+                                                    }`}>
+                                                    {ROLE_LABELS[user.role] || user.role}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-500 text-xs">
+                                                {formatLastSeen(user.last_seen)}
+                                            </td>
+                                            <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
+                                                <div className="flex justify-end gap-2">
+                                                    <button
+                                                        onClick={() => handleOpenEdit(user)}
+                                                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                        title="Chỉnh sửa"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(user)}
+                                                        className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Xóa tài khoản"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
                 )}
             </div>
 
@@ -529,8 +581,8 @@ export default function UsersPage() {
 
             {/* Detail Modal */}
             {isDetailOpen && viewingUser && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-5xl overflow-hidden animate-in zoom-in-95 h-[90vh] flex flex-col">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in">
+                    <div className="bg-white rounded-none sm:rounded-xl shadow-xl w-full max-w-5xl overflow-hidden animate-in zoom-in-95 h-full sm:h-[90vh] flex flex-col">
                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <div>
                                 <h3 className="font-bold text-lg text-slate-800 flex items-center gap-2">
@@ -550,17 +602,17 @@ export default function UsersPage() {
                         <div className="px-6 border-b border-slate-100 flex gap-6">
                             <button
                                 onClick={() => setCurrentTab('overview')}
-                                className={`py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${currentTab === 'overview' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                                className={`py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 flex-1 sm:flex-none justify-center sm:justify-start ${currentTab === 'overview' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                             >
-                                <BarChart3 className="w-4 h-4" />
-                                Tổng quan & Hoạt động
+                                <BarChart3 className="w-4 h-4 hidden sm:block" />
+                                Tổng quan
                             </button>
                             <button
                                 onClick={() => setCurrentTab('activity_log')}
-                                className={`py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 ${currentTab === 'activity_log' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                                className={`py-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 flex-1 sm:flex-none justify-center sm:justify-start ${currentTab === 'activity_log' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                             >
-                                <Activity className="w-4 h-4" />
-                                Nhật ký công việc
+                                <Activity className="w-4 h-4 hidden sm:block" />
+                                Nhật ký
                             </button>
 
                         </div>
@@ -764,9 +816,9 @@ export default function UsersPage() {
             {/* Create/Edit Modal */}
             {
                 isModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
-                        <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95">
-                            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in">
+                        <div className="bg-white rounded-none sm:rounded-xl shadow-xl w-full h-full sm:h-auto sm:max-w-md overflow-hidden animate-in zoom-in-95 flex flex-col">
+                            <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
                                 <h3 className="font-bold text-lg text-slate-800">
                                     {editingUser ? "Chỉnh sửa nhân sự" : "Thêm nhân sự mới"}
                                 </h3>
@@ -775,7 +827,7 @@ export default function UsersPage() {
                                 </button>
                             </div>
 
-                            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                            <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
                                     <input

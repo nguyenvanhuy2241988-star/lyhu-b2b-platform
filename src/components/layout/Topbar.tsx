@@ -56,7 +56,7 @@ export default function Topbar({ onMenuClick, title = "Dashboard" }: TopbarProps
             <div className="flex items-center gap-3 sm:gap-4">
                 <button
                     onClick={onMenuClick}
-                    className="p-2 hover:bg-slate-100 rounded-lg lg:hidden transition-colors"
+                    className="p-2 hover:bg-slate-100 rounded-lg hidden transition-colors"
                     aria-label="Toggle Menu"
                 >
                     <Menu className="w-6 h-6 text-slate-600" />
