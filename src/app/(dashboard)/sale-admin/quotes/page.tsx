@@ -287,7 +287,7 @@ export default function SaleAdminQuotesPage() {
 
             {/* Table */}
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="overflow-x-auto">
+                <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                             <tr>
@@ -370,6 +370,71 @@ export default function SaleAdminQuotesPage() {
                             ))}
                         </tbody>
                     </table>
+                </div>
+                
+                {/* Mobile Card List View */}
+                <div className="lg:hidden divide-y divide-slate-100">
+                    {isLoading ? (
+                        <div className="p-10 text-center text-slate-400">
+                            <Loader2 className="w-5 h-5 animate-spin inline mr-2" /> Đang tải...
+                        </div>
+                    ) : filteredQuotes.length === 0 ? (
+                        <div className="p-10 text-center text-slate-400">Chưa có báo giá nào</div>
+                    ) : filteredQuotes.map(q => (
+                        <div key={q.id} className="p-4 hover:bg-slate-50 transition-colors">
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <span className="font-bold text-slate-800">#{q.readable_id}</span>
+                                    <p className="text-[10px] text-slate-400 mt-0.5">{fmtDate(q.created_at)}</p>
+                                </div>
+                                <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${QUOTE_STATUS_COLORS[q.status]}`}>
+                                    {QUOTE_STATUS_LABELS[q.status]}
+                                </span>
+                            </div>
+                            
+                            <div className="bg-slate-50 rounded-lg p-3 space-y-2 mb-3">
+                                <div>
+                                    <p className="font-semibold text-slate-800 text-sm">{q.customer_name}</p>
+                                    {q.customer_phone && <p className="text-xs text-slate-500">{q.customer_phone}</p>}
+                                </div>
+                                <div className="flex justify-between text-xs">
+                                    <span className="text-slate-500">Sản phẩm:</span>
+                                    <span className="font-semibold">{q.items.length}</span>
+                                </div>
+                                <div className="flex justify-between text-xs">
+                                    <span className="text-slate-500">Tổng tiền:</span>
+                                    <span className="font-bold text-slate-800">{fmtPrice(q.total)}</span>
+                                </div>
+                            </div>
+                            
+                            {/* Actions */}
+                            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+                                <button onClick={() => { setEditingQuote(q); setIsCreating(q.quote_type || 'order_quote'); }}
+                                    className="px-2.5 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 rounded-lg transition-colors flex items-center gap-1.5">
+                                    <Edit className="w-3.5 h-3.5" /> Sửa
+                                </button>
+                                
+                                <button onClick={() => setPrintingQuote(q)}
+                                    className="px-2.5 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 rounded-lg transition-colors flex items-center gap-1.5">
+                                    <Printer className="w-3.5 h-3.5" /> In
+                                </button>
+                                
+                                {q.status === 'draft' && (
+                                    <button onClick={() => handleStatusChange(q.id, 'sent')}
+                                        className="px-2.5 py-1.5 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 rounded-lg transition-colors flex items-center gap-1.5">
+                                        <Send className="w-3.5 h-3.5" /> Gửi
+                                    </button>
+                                )}
+                                
+                                {q.status === 'accepted' && (
+                                    <button onClick={() => handleConvert(q)}
+                                        className="px-2.5 py-1.5 text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors flex items-center gap-1.5 shadow-sm">
+                                        <ShoppingCart className="w-3.5 h-3.5" /> Chuyển đơn
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
 

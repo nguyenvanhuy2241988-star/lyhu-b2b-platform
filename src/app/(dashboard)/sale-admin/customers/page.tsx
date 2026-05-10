@@ -177,7 +177,7 @@ export default function SaleAdminCustomersPage() {
                     </div>
                 ) : (
                     <>
-                        <div className="overflow-x-auto">
+                        <div className="hidden lg:block overflow-x-auto">
                         <table className="w-full text-left text-sm min-w-[800px]">
                             <thead className="bg-slate-50 text-slate-600 border-b border-slate-200 font-medium">
                                 <tr>
@@ -248,6 +248,61 @@ export default function SaleAdminCustomersPage() {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                    
+                    {/* Mobile Card List View */}
+                    <div className="lg:hidden divide-y divide-slate-100">
+                        {paginatedCustomers.map((customer) => (
+                            <div key={customer.id} className="p-4 hover:bg-slate-50 transition-colors">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="flex-1 pr-2">
+                                        <div className="font-bold text-slate-900 line-clamp-2">{customer.name}</div>
+                                        <div className="text-[10px] text-slate-400 font-mono mt-1">ID: {customer.id.slice(0, 8)}</div>
+                                    </div>
+                                    <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold flex-shrink-0">
+                                        {typeMap[customer.type || ''] || customer.type || '-'}
+                                    </span>
+                                </div>
+                                
+                                <div className="bg-slate-50 p-3 rounded-lg space-y-2 mb-3">
+                                    <div className="flex items-start gap-2 text-xs text-slate-600">
+                                        <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 flex-shrink-0" />
+                                        <span className="line-clamp-2">{customer.address || "Chưa có địa chỉ"}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-slate-700 font-medium">
+                                        <Phone className="w-3.5 h-3.5 text-slate-400" />
+                                        {customer.phone}
+                                    </div>
+                                    {customer.email && (
+                                        <div className="flex items-center gap-2 text-xs text-slate-500">
+                                            <Mail className="w-3.5 h-3.5 text-slate-400" />
+                                            <span className="truncate">{customer.email}</span>
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+                                    <button
+                                        onClick={() => router.push(`/sale-admin/create-order?customer_id=${customer.id}`)}
+                                        className="px-3 py-1.5 text-xs font-bold text-teal-600 bg-teal-50 border border-teal-100 hover:bg-teal-100 rounded-lg transition-colors flex items-center gap-1.5"
+                                    >
+                                        <ShoppingCart className="w-3.5 h-3.5" /> Tạo đơn
+                                    </button>
+                                    <button
+                                        onClick={() => handleEditClick(customer)}
+                                        className="px-3 py-1.5 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-200 rounded-lg transition-colors flex items-center gap-1.5"
+                                    >
+                                        <Pencil className="w-3.5 h-3.5" /> Sửa
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(customer.id, customer.name)}
+                                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                     {totalPages > 1 && (
                         <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">

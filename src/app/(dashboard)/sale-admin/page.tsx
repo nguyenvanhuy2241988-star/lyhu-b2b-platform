@@ -900,6 +900,8 @@ export default function SaleAdminDashboard() {
                                 <Loader2 className="w-4 h-4 animate-spin mr-2" /> Đang tải...
                             </div>
                         ) : recentPending.length > 0 ? (
+                            <>
+                            <div className="hidden lg:block">
                             <table className="w-full text-xs">
                                 <thead className="bg-slate-50 text-slate-400 border-b border-slate-100 sticky top-0">
                                     <tr>
@@ -925,6 +927,40 @@ export default function SaleAdminDashboard() {
                                     ))}
                                 </tbody>
                             </table>
+                            </div>
+                            
+                            {/* Mobile Card List View */}
+                            <div className="lg:hidden divide-y divide-slate-50">
+                                {recentPending.map(order => (
+                                    <div key={order.id} className="p-3 hover:bg-primary-50/30 transition-colors">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <span className="font-bold text-slate-800">#{order.readableId}</span>
+                                                <p className="text-[10px] text-slate-400 mt-0.5">{fmtDate(order.createdAt)}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="font-bold text-slate-800">{fmtPrice(order.totalAmount)}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="bg-slate-50 rounded-lg p-2.5 space-y-1.5">
+                                            <div className="flex justify-between items-center text-xs">
+                                                <span className="text-slate-500">Khách hàng:</span>
+                                                <span className="font-semibold text-slate-700">{order.customerName}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-[10px]">
+                                                <span className="text-slate-400">Người tạo:</span>
+                                                <span className="text-slate-500">{order.creatorName || '—'}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-[10px]">
+                                                <span className="text-slate-400">Số lượng:</span>
+                                                <span className="text-slate-500">{order.items?.length || 0} sản phẩm</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            </>
                         ) : (
                             <div className="flex flex-col items-center justify-center py-10 text-slate-300">
                                 <CheckCircle className="w-8 h-8 text-primary-300 mb-2" />
