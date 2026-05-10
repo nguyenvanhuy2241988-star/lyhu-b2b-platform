@@ -19,10 +19,10 @@ interface BlogConfig {
 
 const TOPICS: BlogConfig[] = [
     // === TOP LIST ===
-    { topic: "Top 10 snack bán chạy nhất mùa hè 2026 tại các tiệm tạp hóa.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
-    { topic: "Top 5 loại nước giải khát mới ra mắt đáng nhập sỉ nhất quý 2/2026.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
+    { topic: "Top 10 snack bán chạy nhất mùa hè này tại các tiệm tạp hóa.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
+    { topic: "Top 5 loại nước giải khát mới ra mắt đáng nhập sỉ nhất hiện nay.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
     { topic: "Top 8 sản phẩm ăn vặt Hàn Quốc đang hot tại Việt Nam, giới trẻ mê mẩn.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
-    { topic: "Top 10 thương hiệu mì gói bán chạy nhất Việt Nam 2026: Hảo Hảo còn giữ ngôi?", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
+    { topic: "Top 10 thương hiệu mì gói bán chạy nhất Việt Nam: Hảo Hảo còn giữ ngôi?", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
 
     // === ADVISORY: Góc Nhà Phân Phối & Điểm Bán ===
     { topic: "Tuyệt chiêu quản lý hàng tồn kho cho tạp hóa nhỏ: Làm sao để không đọng vốn?", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
@@ -38,10 +38,10 @@ const TOPICS: BlogConfig[] = [
 
     // === NEWS: Tin Tức FMCG ===
     { topic: "Bùng nổ xu hướng ăn vặt 'healthy' của Gen Z và tác động đến ngành FMCG.", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
-    { topic: "Dự báo thị trường bánh kẹo Việt Nam nửa cuối năm 2026: Phân khúc nào sẽ lên ngôi?", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
+    { topic: "Dự báo thị trường bánh kẹo Việt Nam nửa cuối năm: Phân khúc nào sẽ lên ngôi?", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
     { topic: "Sự bứt phá của các thương hiệu bánh kẹo nội địa so với hàng nhập khẩu.", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
-    { topic: "Vinamilk, TH True Milk, Nutifood: Cuộc đua sữa tươi organic năm 2026.", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
-    { topic: "Thị trường bia Việt Nam 2026: Bia craft, bia 0 độ có đáng nhập cho tiệm?", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
+    { topic: "Vinamilk, TH True Milk, Nutifood: Cuộc đua sữa tươi organic mới nhất.", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
+    { topic: "Thị trường bia Việt Nam hiện nay: Bia craft, bia 0 độ có đáng nhập cho tiệm?", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
     { topic: "Masan ra mắt sản phẩm mới: Cơ hội gì cho nhà phân phối nhỏ?", categorySlug: "tin-tuc-fmcg", categoryName: "Tin Tức FMCG", type: "news" },
 
     // === REPORT: Báo Cáo Thị Trường ===
@@ -52,7 +52,7 @@ const TOPICS: BlogConfig[] = [
 
     // === APP & PHẦN MỀM CHO CỬA HÀNG ===
     { topic: "So sánh chi tiết KiotViet vs Sapo POS vs Suno: Phần mềm nào phù hợp tiệm tạp hóa?", categorySlug: "cong-nghe-ban-le", categoryName: "Công Nghệ Bán Lẻ", type: "advisory" },
-    { topic: "Top 7 app quản lý bán hàng miễn phí cho tiệm tạp hóa nhỏ năm 2026.", categorySlug: "cong-nghe-ban-le", categoryName: "Công Nghệ Bán Lẻ", type: "advisory" },
+    { topic: "Top 7 app quản lý bán hàng miễn phí cho tiệm tạp hóa nhỏ tốt nhất.", categorySlug: "cong-nghe-ban-le", categoryName: "Công Nghệ Bán Lẻ", type: "advisory" },
     { topic: "Hướng dẫn cài đặt máy POS và phần mềm tính tiền cho siêu thị mini từ A-Z.", categorySlug: "cong-nghe-ban-le", categoryName: "Công Nghệ Bán Lẻ", type: "advisory" },
     { topic: "Camera an ninh cho cửa hàng: Loại nào tốt, giá bao nhiêu, lắp ở đâu?", categorySlug: "cong-nghe-ban-le", categoryName: "Công Nghệ Bán Lẻ", type: "advisory" },
 
@@ -63,10 +63,10 @@ const TOPICS: BlogConfig[] = [
     // === SẢN PHẨM MỚI FMCG ===
     { topic: "Review sản phẩm mới: Sữa chua uống Vinamilk Greek - Giá sỉ và biên lợi nhuận.", categorySlug: "nganh-hang", categoryName: "Ngành Hàng", type: "news" },
     { topic: "Pepsi ra mắt vị mới tại Việt Nam: Cơ hội nào cho điểm bán lẻ?", categorySlug: "nganh-hang", categoryName: "Ngành Hàng", type: "news" },
-    { topic: "Xu hướng đồ uống không đường 2026: Coca-Cola Zero, Pepsi Zero hay TH True Tea?", categorySlug: "nganh-hang", categoryName: "Ngành Hàng", type: "news" },
+    { topic: "Xu hướng đồ uống không đường hiện nay: Coca-Cola Zero, Pepsi Zero hay TH True Tea?", categorySlug: "nganh-hang", categoryName: "Ngành Hàng", type: "news" },
 
     // === TÀI CHÍNH & KẾ TOÁN CHO CHỦ TIỆM ===
-    { topic: "Hướng dẫn xuất hóa đơn điện tử cho cửa hàng tạp hóa nhỏ: Bắt buộc từ 2026.", categorySlug: "phap-ly-chinh-ngach", categoryName: "Pháp Lý & Chính Ngạch", type: "advisory" },
+    { topic: "Hướng dẫn xuất hóa đơn điện tử cho cửa hàng tạp hóa nhỏ: Những lưu ý mới nhất.", categorySlug: "phap-ly-chinh-ngach", categoryName: "Pháp Lý & Chính Ngạch", type: "advisory" },
     { topic: "Cách tính lãi lỗ chính xác cho tiệm tạp hóa: Đừng nhầm doanh thu với lợi nhuận.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
     { topic: "Thủ tục đăng ký kinh doanh siêu thị mini từ A-Z: Giấy phép, thuế, ATTP.", categorySlug: "phap-ly-chinh-ngach", categoryName: "Pháp Lý & Chính Ngạch", type: "advisory" },
 
@@ -243,7 +243,8 @@ Bạn là một chuyên gia về phân phối FMCG và kinh doanh bán lẻ.
 Hãy viết một bài báo chuyên ngành FMCG thật chi tiết, chuẩn SEO về chủ đề: "${topic}".
 Bài viết dành cho chuyên mục "LYHU Chuyển động FMCG 24/7".
 
-⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu, sự kiện và phân tích trong bài PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay sự kiện từ năm 2024 hoặc 2025 trừ khi là so sánh lịch sử (phải ghi rõ "so với năm trước").
+⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu, sự kiện và phân tích trong bài PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay sự kiện từ năm 2024 hoặc 2025 trừ khi là so sánh lịch sử.
+⚠️ LƯU Ý QUAN TRỌNG VỀ TIÊU ĐỀ: TUYỆT ĐỐI KHÔNG ĐƯỢC tự động thêm năm (ví dụ: "năm ${currentYear}", "${currentYear}") vào cuối meta_title hay tiêu đề bài viết. Tiêu đề phải tự nhiên, không gắn cứng năm.
 
 YÊU CẦU QUAN TRỌNG VỀ NỘI DUNG VÀ VĂN PHONG:
 1. Đối tượng đọc: chủ tạp hóa, siêu thị mini, nhà phân phối, chuyên gia trong ngành.
@@ -270,7 +271,7 @@ YÊU CẦU ĐỊNH DẠNG:
 ---JSON_START---
 {
   "sapo": "Đoạn tóm tắt mở bài khoảng 2-3 câu, nêu bật vấn đề và giải pháp...",
-  "meta_title": "Tiêu đề chuẩn SEO",
+  "meta_title": "Tiêu đề chuẩn SEO (TUYỆT ĐỐI KHÔNG chứa số năm như 2026, năm 2026, v.v.)",
   "meta_description": "Mô tả chuẩn SEO khoảng 150 ký tự",
   "keywords": "từ khóa 1, từ khóa 2",
   "image_search_keyword": "2-3 từ khóa tiếng Anh CỤ THỂ liên quan đến NỘI DUNG bài viết để tìm ảnh trên Pexels. Ưu tiên: tên sản phẩm/ngành hàng cụ thể (VD: 'korean snacks', 'convenience store shelf', 'grocery cashier', 'warehouse boxes', 'mobile payment QR'). KHÔNG dùng từ chung chung như 'shopping', 'business', 'retail'."
@@ -358,10 +359,16 @@ YÊU CẦU ĐỊNH DẠNG:
         // Convert raw Markdown to HTML properly
         content = await marked.parse(content);
 
+        // Post-processing to forcefully strip any "2026" or "năm 2026" that the AI hallucinated
+        const stripYear = (str: string) => {
+            if (!str) return str;
+            return str.replace(/(?:\s*[-|:]\s*)?(?:\s*(?:trong\s+)?năm\s+)?20\d{2}\b/gi, '').trim();
+        };
+
         return {
             content,
             sapo: metaData.sapo || '',
-            meta_title: metaData.meta_title || topic,
+            meta_title: stripYear(metaData.meta_title || topic),
             meta_description: metaData.meta_description || topic,
             keywords: metaData.keywords || '',
             thumbnail_url: thumbnailUrl
