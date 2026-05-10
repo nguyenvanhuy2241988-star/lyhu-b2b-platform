@@ -287,6 +287,7 @@ export default function CampaignsPage() {
                                     </td>
                                 </tr>
                             )}
+                        </tbody>
                         </table>
                     </div>
                     

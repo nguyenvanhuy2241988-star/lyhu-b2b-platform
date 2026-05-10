@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { RecruitmentJob, RecruitmentCandidate, getJob, getCandidates, updateJob } from "@/lib/recruitmentStore";
-import { Loader2, Share2, Copy, ArrowLeft, Users, Briefcase, MapPin, DollarSign, Edit, Zap, TrendingUp } from "lucide-react";
+import { Loader2, Share2, Copy, ArrowLeft, Users, Briefcase, MapPin, DollarSign, Edit, Zap, TrendingUp, Phone, Mail } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
 import { toast } from "sonner";

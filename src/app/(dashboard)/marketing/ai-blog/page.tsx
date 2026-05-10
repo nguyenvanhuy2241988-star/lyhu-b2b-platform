@@ -204,48 +204,50 @@ export default function AIBlogPage() {
                                     Chưa có bài viết nào trong danh sách.
                                 </div>
                             ) : (
-                                <div className="hidden lg:block">
-                                    <table className="w-full text-sm text-left">
-                                        <thead className="bg-gray-50 text-gray-500 sticky top-0">
-                                        <tr>
-                                            <th className="px-4 py-3 font-medium">Tiêu đề bài viết</th>
-                                            <th className="px-4 py-3 font-medium w-32">Trạng thái</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-100">
+                                <>
+                                    <div className="hidden lg:block">
+                                        <table className="w-full text-sm text-left">
+                                            <thead className="bg-gray-50 text-gray-500 sticky top-0">
+                                            <tr>
+                                                <th className="px-4 py-3 font-medium">Tiêu đề bài viết</th>
+                                                <th className="px-4 py-3 font-medium w-32">Trạng thái</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                            {topicsList.map((topic, index) => (
+                                                <tr key={topic.id} className="hover:bg-gray-50">
+                                                    <td className="px-4 py-3">
+                                                        <span className="font-medium text-gray-800">{topic.text}</span>
+                                                        {topic.error && <p className="text-xs text-red-500 mt-1">{topic.error}</p>}
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        {topic.status === 'pending' && <span className="flex items-center text-gray-400 gap-1"><CircleDashed className="w-4 h-4" /> Chờ chạy</span>}
+                                                        {topic.status === 'generating' && <span className="flex items-center text-blue-500 gap-1 font-medium"><CircleDashed className="w-4 h-4 animate-spin" /> Đang viết...</span>}
+                                                        {topic.status === 'success' && <span className="flex items-center text-green-500 gap-1 font-medium"><CheckCircle2 className="w-4 h-4" /> Hoàn thành</span>}
+                                                        {topic.status === 'failed' && <span className="flex items-center text-red-500 gap-1 font-medium"><XCircle className="w-4 h-4" /> Lỗi</span>}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    
+                                    {/* Mobile Card List View */}
+                                    <div className="lg:hidden divide-y divide-gray-100">
                                         {topicsList.map((topic, index) => (
-                                            <tr key={topic.id} className="hover:bg-gray-50">
-                                                <td className="px-4 py-3">
-                                                    <span className="font-medium text-gray-800">{topic.text}</span>
-                                                    {topic.error && <p className="text-xs text-red-500 mt-1">{topic.error}</p>}
-                                                </td>
-                                                <td className="px-4 py-3">
+                                            <div key={topic.id} className="p-4 hover:bg-gray-50">
+                                                <div className="font-medium text-gray-800 mb-2">{topic.text}</div>
+                                                {topic.error && <p className="text-xs text-red-500 mb-2">{topic.error}</p>}
+                                                <div className="text-xs">
                                                     {topic.status === 'pending' && <span className="flex items-center text-gray-400 gap-1"><CircleDashed className="w-4 h-4" /> Chờ chạy</span>}
                                                     {topic.status === 'generating' && <span className="flex items-center text-blue-500 gap-1 font-medium"><CircleDashed className="w-4 h-4 animate-spin" /> Đang viết...</span>}
                                                     {topic.status === 'success' && <span className="flex items-center text-green-500 gap-1 font-medium"><CheckCircle2 className="w-4 h-4" /> Hoàn thành</span>}
                                                     {topic.status === 'failed' && <span className="flex items-center text-red-500 gap-1 font-medium"><XCircle className="w-4 h-4" /> Lỗi</span>}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                
-                                {/* Mobile Card List View */}
-                                <div className="lg:hidden divide-y divide-gray-100">
-                                    {topicsList.map((topic, index) => (
-                                        <div key={topic.id} className="p-4 hover:bg-gray-50">
-                                            <div className="font-medium text-gray-800 mb-2">{topic.text}</div>
-                                            {topic.error && <p className="text-xs text-red-500 mb-2">{topic.error}</p>}
-                                            <div className="text-xs">
-                                                {topic.status === 'pending' && <span className="flex items-center text-gray-400 gap-1"><CircleDashed className="w-4 h-4" /> Chờ chạy</span>}
-                                                {topic.status === 'generating' && <span className="flex items-center text-blue-500 gap-1 font-medium"><CircleDashed className="w-4 h-4 animate-spin" /> Đang viết...</span>}
-                                                {topic.status === 'success' && <span className="flex items-center text-green-500 gap-1 font-medium"><CheckCircle2 className="w-4 h-4" /> Hoàn thành</span>}
-                                                {topic.status === 'failed' && <span className="flex items-center text-red-500 gap-1 font-medium"><XCircle className="w-4 h-4" /> Lỗi</span>}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
+                                        ))}
+                                    </div>
+                                </>
                             )}
                         </div>
                     </div>

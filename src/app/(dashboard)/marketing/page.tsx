@@ -215,6 +215,7 @@ export default function MarketingDashboard() {
                                     </td>
                                 </tr>
                             )}
+                        </tbody>
                         </table>
                     </div>
                     
