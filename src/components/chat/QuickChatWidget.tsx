@@ -239,8 +239,8 @@ export default function QuickChatWidget() {
     if (isOnChatPage) return null;
     if (!user) return null;
 
-    const panelWidth = isExpanded ? 'w-[800px]' : 'w-[420px]';
-    const panelHeight = isExpanded ? 'h-[600px]' : 'h-[520px]';
+    const panelWidth = isExpanded ? 'w-[calc(100vw-32px)] sm:w-[800px]' : 'w-[calc(100vw-32px)] sm:w-[420px]';
+    const panelHeight = isExpanded ? 'h-[75vh] sm:h-[600px]' : 'h-[65vh] sm:h-[520px]';
 
     return (
         <>
@@ -285,7 +285,7 @@ export default function QuickChatWidget() {
 
             {/* Mini Chat Panel */}
             {isOpen && (
-                <div className={`fixed bottom-[150px] lg:bottom-24 right-4 lg:right-6 z-[9998] ${panelWidth} ${panelHeight} max-h-[70vh] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in slide-in-from-bottom-3 zoom-in-95 fade-in duration-200`}>
+                <div className={`fixed bottom-[150px] lg:bottom-24 right-4 lg:right-6 z-[9998] ${panelWidth} ${panelHeight} bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in slide-in-from-bottom-3 zoom-in-95 fade-in duration-200`}>
                     {/* Panel Header */}
                     <div className="bg-gradient-to-r from-teal-500 to-emerald-500 px-3 py-2.5 flex items-center justify-between flex-shrink-0">
                         <div className="flex items-center gap-2">
