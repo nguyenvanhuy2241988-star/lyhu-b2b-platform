@@ -246,7 +246,7 @@ export default function QuickChatWidget() {
         <>
             {/* Floating Alert Popup (only when widget is closed) */}
             {!isOpen && newMessageAlert && (
-                <div className="fixed bottom-24 right-6 z-[9999] animate-in slide-in-from-right-5 fade-in duration-300">
+                <div className="fixed bottom-[150px] lg:bottom-24 right-4 lg:right-6 z-[9999] animate-in slide-in-from-right-5 fade-in duration-300">
                     <div
                         className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-80 overflow-hidden cursor-pointer hover:shadow-3xl transition-shadow"
                         onClick={openFromAlert}
@@ -285,7 +285,7 @@ export default function QuickChatWidget() {
 
             {/* Mini Chat Panel */}
             {isOpen && (
-                <div className={`fixed bottom-24 right-6 z-[9998] ${panelWidth} ${panelHeight} bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in slide-in-from-bottom-3 zoom-in-95 fade-in duration-200`}>
+                <div className={`fixed bottom-[150px] lg:bottom-24 right-4 lg:right-6 z-[9998] ${panelWidth} ${panelHeight} max-h-[70vh] bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in slide-in-from-bottom-3 zoom-in-95 fade-in duration-200`}>
                     {/* Panel Header */}
                     <div className="bg-gradient-to-r from-teal-500 to-emerald-500 px-3 py-2.5 flex items-center justify-between flex-shrink-0">
                         <div className="flex items-center gap-2">
@@ -498,7 +498,7 @@ export default function QuickChatWidget() {
             )}
 
             {/* Floating Button (always visible) */}
-            <div className="fixed bottom-6 right-6 z-[9997]">
+            <div className="fixed bottom-[84px] lg:bottom-6 right-4 lg:right-6 z-[9997]">
                 <button
                     onClick={() => {
                         setIsOpen(!isOpen);
