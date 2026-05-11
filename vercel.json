@@ -23,6 +23,10 @@
         {
             "path": "/api/marketing/spider-news",
             "schedule": "0 */6 * * *"
+        },
+        {
+            "path": "/api/cron/auto-post-facebook",
+            "schedule": "0 1,10 * * *"
         }
     ]
 }
