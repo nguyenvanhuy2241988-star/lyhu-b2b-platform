@@ -151,14 +151,14 @@ export default function Home() {
         <main className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
             <div className="max-w-6xl w-full">
                 {/* Header with Brand Logo */}
-                <div className="text-center mb-10 sm:mb-20 flex flex-col items-center">
+                <div className="text-center mb-12 flex flex-col items-center mt-6 sm:mt-10">
                     <div className="relative h-32 sm:h-48 w-64 sm:w-96 mb-8">
                         {!logoError ? (
                             <Image
                                 src="/logo-full.png"
                                 alt="LYHU Logo"
                                 fill
-                                className="object-contain px-4"
+                                className="object-contain"
                                 onError={() => setLogoError(true)}
                                 priority
                             />
@@ -166,11 +166,13 @@ export default function Home() {
                             <h1 className="text-6xl sm:text-7xl font-bold text-primary-600 mb-2">LYHU</h1>
                         )}
                     </div>
-                    <div className="h-2 w-48 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full mb-8 shadow-sm"></div>
-                    <p className="text-lg sm:text-2xl text-slate-700 font-bold max-w-2xl tracking-tight">
-                        KẾT NỐI CHÂN THÀNH • HỢP TÁC BỀN VỮNG
-                    </p>
-                    <p className="text-base text-slate-500 mt-4 font-medium">
+                    
+                    <div className="h-1 w-24 sm:w-32 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full mb-8"></div>
+                    
+                    <h2 className="text-lg sm:text-2xl text-slate-800 font-bold tracking-wide mb-3">
+                        KẾT NỐI CHÂN THÀNH <span className="text-primary-500 mx-1">•</span> HỢP TÁC BỀN VỮNG
+                    </h2>
+                    <p className="text-sm sm:text-base text-slate-500">
                         Giải pháp quản trị kênh phân phối GT/MT hàng đầu
                     </p>
                 </div>
