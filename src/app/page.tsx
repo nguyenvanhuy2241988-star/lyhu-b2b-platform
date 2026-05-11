@@ -152,7 +152,7 @@ export default function Home() {
             <div className="max-w-6xl w-full">
                 {/* Header with Brand Logo */}
                 <div className="text-center mb-12 flex flex-col items-center mt-6 sm:mt-10">
-                    <div className="relative h-32 sm:h-48 w-64 sm:w-96 mb-8">
+                    <div className="relative h-40 sm:h-56 w-80 sm:w-[32rem] mb-6">
                         {!logoError ? (
                             <Image
                                 src="/logo-full.png"
@@ -167,7 +167,7 @@ export default function Home() {
                         )}
                     </div>
                     
-                    <div className="h-1 w-24 sm:w-32 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full mb-8"></div>
+                    <div className="h-[1px] w-64 sm:w-[32rem] bg-gradient-to-r from-transparent via-primary-300 to-transparent mb-8"></div>
                     
                     <h2 className="text-lg sm:text-2xl text-slate-800 font-bold tracking-wide mb-3">
                         KẾT NỐI CHÂN THÀNH <span className="text-primary-500 mx-1">•</span> HỢP TÁC BỀN VỮNG
