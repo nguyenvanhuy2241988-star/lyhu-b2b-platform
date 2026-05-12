@@ -109,9 +109,11 @@ export default function ProfilePage() {
     return (
         <div className="max-w-5xl mx-auto space-y-6">
             {/* Header Banner */}
-            <div className="relative h-40 rounded-2xl bg-gradient-to-r from-primary/90 to-primary-600 overflow-hidden shadow-sm">
-                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-                <div className="absolute -bottom-14 left-6 flex items-end gap-5">
+            <div className="relative h-40 rounded-2xl bg-gradient-to-r from-primary/90 to-primary-600 shadow-sm mb-8">
+                <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+                    <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                </div>
+                <div className="absolute -bottom-12 left-6 flex items-end gap-5 z-10">
                     <div className="relative group">
                         <div className="w-28 h-28 rounded-2xl bg-white p-1 shadow-lg">
                             <div className="w-full h-full rounded-[0.85rem] bg-slate-100 flex items-center justify-center overflow-hidden">
@@ -133,9 +135,9 @@ export default function ProfilePage() {
                             />
                         </label>
                     </div>
-                    <div className="pb-16">
-                        <h2 className="text-2xl font-bold text-white">{profile?.full_name || user?.email}</h2>
-                        <p className="text-slate-300 flex items-center gap-1.5 mt-0.5">
+                    <div className="pb-14">
+                        <h2 className="text-2xl font-bold text-white drop-shadow-sm">{profile?.full_name || user?.email}</h2>
+                        <p className="text-white/90 flex items-center gap-1.5 mt-0.5 drop-shadow-sm">
                             <Shield className="w-3.5 h-3.5" />
                             <span className="uppercase tracking-wider text-xs font-medium">{profile?.role || "Thành viên"}</span>
                         </p>
@@ -143,7 +145,7 @@ export default function ProfilePage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-2">
                 {/* Left: Personal Info */}
                 <div className="lg:col-span-1 space-y-5">
                     <div className="bg-white rounded-2xl p-5 border border-slate-200">
