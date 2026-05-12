@@ -61,11 +61,8 @@ export default function ProfilePage() {
 
     return (
         <div className="max-w-5xl mx-auto space-y-6">
-            {/* Page Title */}
-            <h1 className="text-xl font-bold text-slate-800">Hồ sơ người dùng</h1>
-
             {/* Header Banner */}
-            <div className="relative h-40 rounded-2xl bg-gradient-to-r from-slate-800 to-slate-700 overflow-hidden">
+            <div className="relative h-40 rounded-2xl bg-gradient-to-r from-primary/90 to-primary-600 overflow-hidden shadow-sm">
                 <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
                 <div className="absolute -bottom-14 left-6 flex items-end gap-5">
                     <div className="relative group">
@@ -124,21 +121,22 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Member Card */}
-                    <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 text-white overflow-hidden relative">
-                        <div className="relative z-10">
-                            <h3 className="font-bold text-sm mb-1">Thẻ thành viên LYHU</h3>
-                            <p className="text-[11px] text-slate-400 mb-5">Mã nhân viên: LH-{user?.id?.slice(0, 8).toUpperCase()}</p>
+                    <div className="bg-white rounded-2xl p-5 border border-slate-200 relative overflow-hidden group">
+                        <div className="absolute top-0 left-0 w-1.5 h-full bg-primary rounded-l-2xl"></div>
+                        <div className="relative z-10 pl-2">
+                            <h3 className="font-bold text-sm text-slate-800 mb-1">Thẻ thành viên LYHU</h3>
+                            <p className="text-[11px] text-slate-500 mb-5">Mã nhân viên: LH-{user?.id?.slice(0, 8).toUpperCase()}</p>
                             <div className="flex justify-between items-end">
                                 <div>
-                                    <p className="text-[10px] uppercase font-bold tracking-widest text-slate-500">Tên hiển thị</p>
-                                    <p className="font-mono text-base mt-0.5">{profile?.full_name?.toUpperCase() || "NEW USER"}</p>
+                                    <p className="text-[10px] uppercase font-bold tracking-widest text-primary">Tên hiển thị</p>
+                                    <p className="font-mono text-base font-semibold text-slate-800 mt-0.5">{profile?.full_name?.toUpperCase() || "NEW USER"}</p>
                                 </div>
-                                <div className="w-9 h-9 bg-primary/20 rounded-lg flex items-center justify-center backdrop-blur-md">
-                                    <Shield className="w-5 h-5 text-primary-300" />
+                                <div className="w-9 h-9 bg-primary-50 rounded-lg flex items-center justify-center border border-primary-100">
+                                    <Shield className="w-4 h-4 text-primary" />
                                 </div>
                             </div>
                         </div>
-                        <div className="absolute -top-8 -right-8 w-32 h-32 bg-primary/10 rounded-full blur-3xl"></div>
+                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors"></div>
                     </div>
                 </div>
 
