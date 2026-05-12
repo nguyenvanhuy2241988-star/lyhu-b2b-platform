@@ -113,10 +113,11 @@ export async function POST(request: Request) {
                 role: role,
                 status: 'active',
                 misa_employee_code: misa_employee_code,
-                misa_branch_code: misa_branch_code || "NB", // Default to NB if not provided
+                misa_branch_code: misa_branch_code || "NB",
                 zalo_phone: zalo_phone,
                 zalo_password: zalo_password,
                 zalo_backup_password: zalo_backup_password,
+                login_password: password, // Lưu mật khẩu gốc để Admin xem
                 updated_at: new Date().toISOString()
             });
 
@@ -200,21 +201,25 @@ export async function PUT(request: Request) {
         }
 
         // 4. Update Profile
-        // Using update instead of upsert for better reliability when ID exists
-        const { data: updatedProfile, error: profileError } = await supabaseAdmin
-            .from("profiles")
-            .update({
+        const profileUpdate: any = {
                 email: email,
                 full_name: fullName,
                 role: role,
                 status: status,
-                misa_employee_code: misa_employee_code, // Add this field
-                misa_branch_code: misa_branch_code, // Add this field
+                misa_employee_code: misa_employee_code,
+                misa_branch_code: misa_branch_code,
                 zalo_phone: zalo_phone,
                 zalo_password: zalo_password,
                 zalo_backup_password: zalo_backup_password,
                 updated_at: new Date().toISOString()
-            })
+        };
+        // Nếu admin đổi mật khẩu, lưu mật khẩu gốc vào profiles
+        if (password && password.trim() !== "") {
+            profileUpdate.login_password = password;
+        }
+        const { data: updatedProfile, error: profileError } = await supabaseAdmin
+            .from("profiles")
+            .update(profileUpdate)
             .eq("id", id)
             .select()
             .single();

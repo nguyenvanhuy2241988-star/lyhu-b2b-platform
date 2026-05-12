@@ -51,6 +51,7 @@ interface User {
     zalo_phone?: string;
     zalo_password?: string;
     zalo_backup_password?: string;
+    login_password?: string;
     created_at: string;
     // Activity Stats
     online_seconds: number;
@@ -1058,6 +1059,12 @@ export default function UsersPage() {
                                 <p className="text-sm font-bold text-slate-800">{resetPasswordUser.full_name || resetPasswordUser.email}</p>
                                 <p className="text-xs text-slate-400">{resetPasswordUser.email}</p>
                             </div>
+                            {resetPasswordUser.login_password && (
+                                <div className="bg-amber-50 border border-amber-100 rounded-lg p-3">
+                                    <p className="text-xs text-amber-600 font-medium">Mật khẩu hiện tại</p>
+                                    <p className="text-sm font-mono font-bold text-amber-800 mt-0.5 select-all">{resetPasswordUser.login_password}</p>
+                                </div>
+                            )}
                             <div>
                                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Mật khẩu mới</label>
                                 <div className="relative">
