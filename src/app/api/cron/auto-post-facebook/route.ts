@@ -51,7 +51,7 @@ export async function GET(req: Request) {
             return NextResponse.json({ message: 'Không có bài viết mới nào cần chia sẻ.' });
         }
 
-        const post = posts[0];
+        const post: any = posts[0];
         const categorySlug = Array.isArray(post.category) ? post.category[0]?.slug : post.category?.slug;
 
         // 3. Phân loại bài viết
