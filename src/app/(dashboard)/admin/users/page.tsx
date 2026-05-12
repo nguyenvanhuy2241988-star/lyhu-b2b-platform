@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Plus, Pencil, Trash2, X, Loader2, Check, BarChart3, Smartphone, Monitor, User as UserIcon, Clock, Activity, FileText, CheckCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Loader2, Check, BarChart3, Smartphone, Monitor, User as UserIcon, Clock, Activity, FileText, CheckCircle, KeyRound, Eye, EyeOff } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
 import { toast } from "sonner";
@@ -81,6 +81,13 @@ export default function UsersPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [viewingUser, setViewingUser] = useState<User | null>(null);
+
+    // Password Reset State
+    const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+    const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
+    const [resetPassword, setResetPassword] = useState("");
+    const [showResetPassword, setShowResetPassword] = useState(false);
+    const [isResettingPassword, setIsResettingPassword] = useState(false);
 
     // Chart State
     const [historyData, setHistoryData] = useState<any[]>([]);
@@ -318,6 +325,43 @@ export default function UsersPage() {
         }
     };
 
+    const handleOpenResetPassword = (user: User) => {
+        setResetPasswordUser(user);
+        setResetPassword("");
+        setShowResetPassword(false);
+        setIsResetPasswordOpen(true);
+    };
+
+    const handleResetPassword = async () => {
+        if (!resetPasswordUser || !resetPassword || resetPassword.length < 6) {
+            toast.error("Mật khẩu phải có ít nhất 6 ký tự");
+            return;
+        }
+        setIsResettingPassword(true);
+        try {
+            const res = await fetch("/api/admin/users", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: resetPasswordUser.id,
+                    email: resetPasswordUser.email,
+                    password: resetPassword,
+                    fullName: resetPasswordUser.full_name,
+                    role: resetPasswordUser.role,
+                    status: resetPasswordUser.status
+                })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || "Có lỗi xảy ra");
+            toast.success(`Đã đặt lại mật khẩu cho ${resetPasswordUser.email}`);
+            setIsResetPasswordOpen(false);
+        } catch (error: any) {
+            toast.error(error.message);
+        } finally {
+            setIsResettingPassword(false);
+        }
+    };
+
     // Helper to format seconds to HH:mm
     const formatDuration = (seconds: number) => {
         if (!seconds) return "0p";
@@ -525,7 +569,14 @@ export default function UsersPage() {
                                                 {formatLastSeen(user.last_seen)}
                                             </td>
                                             <td className="px-6 py-4 text-right" onClick={e => e.stopPropagation()}>
-                                                <div className="flex justify-end gap-2">
+                                                <div className="flex justify-end gap-1">
+                                                    <button
+                                                        onClick={() => handleOpenResetPassword(user)}
+                                                        className="p-2 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                                        title="Đặt lại mật khẩu"
+                                                    >
+                                                        <KeyRound className="w-4 h-4" />
+                                                    </button>
                                                     <button
                                                         onClick={() => handleOpenEdit(user)}
                                                         className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -987,6 +1038,57 @@ export default function UsersPage() {
                     </div >
                 )
             }
+
+            {/* Quick Password Reset Modal */}
+            {isResetPasswordOpen && resetPasswordUser && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden animate-in zoom-in-95">
+                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-amber-50">
+                            <div className="flex items-center gap-2">
+                                <KeyRound className="w-5 h-5 text-amber-600" />
+                                <h3 className="font-bold text-slate-800">Đặt lại mật khẩu</h3>
+                            </div>
+                            <button onClick={() => setIsResetPasswordOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div className="bg-slate-50 rounded-lg p-3">
+                                <p className="text-xs text-slate-500">Tài khoản</p>
+                                <p className="text-sm font-bold text-slate-800">{resetPasswordUser.full_name || resetPasswordUser.email}</p>
+                                <p className="text-xs text-slate-400">{resetPasswordUser.email}</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1.5">Mật khẩu mới</label>
+                                <div className="relative">
+                                    <input
+                                        type={showResetPassword ? "text" : "password"}
+                                        className="w-full border border-slate-300 rounded-lg px-3 py-2.5 pr-10 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none"
+                                        placeholder="Tối thiểu 6 ký tự..."
+                                        value={resetPassword}
+                                        onChange={e => setResetPassword(e.target.value)}
+                                        autoFocus
+                                    />
+                                    <button type="button" onClick={() => setShowResetPassword(!showResetPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+                                        {showResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                                <p className="text-xs text-slate-400 mt-1">Mật khẩu sẽ được áp dụng ngay lập tức</p>
+                            </div>
+                            <div className="flex justify-end gap-3 pt-2">
+                                <button onClick={() => setIsResetPasswordOpen(false)} className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium text-sm">Hủy</button>
+                                <button
+                                    onClick={handleResetPassword}
+                                    disabled={isResettingPassword || resetPassword.length < 6}
+                                    className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium text-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    {isResettingPassword ? <><Loader2 className="w-4 h-4 animate-spin" /> Đang xử lý...</> : <><KeyRound className="w-4 h-4" /> Đặt lại</>}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 }
