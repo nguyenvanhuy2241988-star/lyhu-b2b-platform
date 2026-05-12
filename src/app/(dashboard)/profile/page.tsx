@@ -122,20 +122,16 @@ export default function ProfilePage() {
                                 )}
                             </div>
                         </div>
-                        <button 
-                            disabled={isUploading}
-                            onClick={() => document.getElementById('avatar-upload')?.click()}
-                            className="absolute bottom-1 right-1 p-1.5 bg-white rounded-lg shadow-md hover:bg-slate-50 transition-colors border border-slate-100 disabled:opacity-50"
-                        >
+                        <label className={`absolute bottom-1 right-1 p-1.5 bg-white rounded-lg shadow-md transition-colors border border-slate-100 z-20 ${isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50 cursor-pointer'}`}>
                             {isUploading ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /> : <Camera className="w-3.5 h-3.5 text-primary" />}
-                        </button>
-                        <input 
-                            type="file" 
-                            id="avatar-upload" 
-                            accept="image/*" 
-                            className="hidden" 
-                            onChange={handleAvatarUpload}
-                        />
+                            <input 
+                                type="file" 
+                                accept="image/*" 
+                                className="hidden" 
+                                onChange={handleAvatarUpload}
+                                disabled={isUploading}
+                            />
+                        </label>
                     </div>
                     <div className="pb-16">
                         <h2 className="text-2xl font-bold text-white">{profile?.full_name || user?.email}</h2>
