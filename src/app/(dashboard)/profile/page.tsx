@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { supabase } from "@/lib/supabaseClient";
-import { User, Mail, Shield, Calendar, Phone, MapPin, Camera, Edit2, Users, Search } from "lucide-react";
+import { User, Mail, Shield, Calendar, Phone, MapPin, Camera, Edit2, Users, Search, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
     const { user } = useAuth();
@@ -12,6 +13,7 @@ export default function ProfilePage() {
     const [colleagues, setColleagues] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(true);
+    const [isUploading, setIsUploading] = useState(false);
 
     const fetchData = useCallback(async () => {
         setIsLoading(true);
@@ -47,6 +49,51 @@ export default function ProfilePage() {
         c.role?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        try {
+            setIsUploading(true);
+            if (!event.target.files || event.target.files.length === 0) {
+                return;
+            }
+            const file = event.target.files[0];
+            const fileExt = file.name.split('.').pop();
+            const fileName = `${user.id}-${Math.random()}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            // 1. Upload image to Supabase Storage
+            const { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(filePath, file, { upsert: true });
+
+            if (uploadError) {
+                throw uploadError;
+            }
+
+            // 2. Get public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(filePath);
+
+            // 3. Update profile
+            const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ avatar_url: publicUrl })
+                .eq('id', user.id);
+
+            if (updateError) {
+                throw updateError;
+            }
+
+            setProfile((prev: any) => ({ ...prev, avatar_url: publicUrl }));
+            toast.success('Cập nhật ảnh đại diện thành công!');
+        } catch (error: any) {
+            console.error('Error uploading avatar:', error);
+            toast.error('Lỗi khi tải ảnh lên: ' + error.message);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -75,9 +122,20 @@ export default function ProfilePage() {
                                 )}
                             </div>
                         </div>
-                        <button className="absolute bottom-1 right-1 p-1.5 bg-white rounded-lg shadow-md hover:bg-slate-50 transition-colors border border-slate-100">
-                            <Camera className="w-3.5 h-3.5 text-primary" />
+                        <button 
+                            disabled={isUploading}
+                            onClick={() => document.getElementById('avatar-upload')?.click()}
+                            className="absolute bottom-1 right-1 p-1.5 bg-white rounded-lg shadow-md hover:bg-slate-50 transition-colors border border-slate-100 disabled:opacity-50"
+                        >
+                            {isUploading ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" /> : <Camera className="w-3.5 h-3.5 text-primary" />}
                         </button>
+                        <input 
+                            type="file" 
+                            id="avatar-upload" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={handleAvatarUpload}
+                        />
                     </div>
                     <div className="pb-16">
                         <h2 className="text-2xl font-bold text-white">{profile?.full_name || user?.email}</h2>
