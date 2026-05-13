@@ -667,11 +667,7 @@ export async function fetchDeals(ownerId?: string, token?: string): Promise<CRMD
                 `${supabaseUrl}/rest/v1/crm_deals?select=${CRM_DEAL_SELECT},customer:customers(${CRM_CUSTOMER_SELECT})&owner_user_id=eq.${ownerId}&order=created_at.desc`,
                 {
                     method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': supabaseKey,
-                        'Authorization': `Bearer ${token || supabaseKey}`
-                    }
+                    headers: getHeaders(token)
                 }
             );
 
@@ -692,11 +688,7 @@ export async function fetchDeals(ownerId?: string, token?: string): Promise<CRMD
                         `${supabaseUrl}/rest/v1/profiles?select=id,full_name,avatar_url&id=in.(${userIds.join(',')})`,
                         {
                             method: 'GET',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'apikey': supabaseKey,
-                                'Authorization': `Bearer ${token || supabaseKey}`
-                            }
+                            headers: getHeaders(token)
                         }
                     );
                     if (profilesRes.ok) {
@@ -745,11 +737,7 @@ export async function fetchAllDeals(token?: string): Promise<CRMDeal[]> {
                 `${supabaseUrl}/rest/v1/crm_deals?select=${CRM_DEAL_SELECT},customer:customers(${CRM_CUSTOMER_SELECT})&order=created_at.desc`,
                 {
                     method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': supabaseKey,
-                        'Authorization': `Bearer ${token || supabaseKey}`
-                    }
+                    headers: getHeaders(token)
                 }
             );
 
@@ -771,11 +759,7 @@ export async function fetchAllDeals(token?: string): Promise<CRMDeal[]> {
                         `${supabaseUrl}/rest/v1/profiles?select=id,full_name,avatar_url&id=in.(${userIds.join(',')})`,
                         {
                             method: 'GET',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'apikey': supabaseKey,
-                                'Authorization': `Bearer ${token || supabaseKey}`
-                            }
+                            headers: getHeaders(token)
                         }
                     );
                     if (profilesRes.ok) {
@@ -839,10 +823,9 @@ export async function fetchPaginatedDeals(
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     try {
+        const baseHeaders = getHeaders(token);
         const headers: Record<string, string> = {
-            'Content-Type': 'application/json',
-            'apikey': supabaseKey || '',
-            'Authorization': `Bearer ${token || supabaseKey}`,
+            ...baseHeaders,
             'Prefer': 'count=exact'
         };
 
@@ -952,15 +935,20 @@ export async function getDealStageCounts(ownerId?: string, token?: string): Prom
     today: number;
 }> {
     try {
-        const { data, error } = await supabase.rpc('get_crm_deal_counts', {
-            p_owner_id: ownerId || null
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const headers = getHeaders(token);
+        const response = await fetch(`${supabaseUrl}/rest/v1/rpc/get_crm_deal_counts`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ p_owner_id: ownerId || null })
         });
 
-        if (error) {
-            console.error('[getDealStageCounts] error:', error);
+        if (!response.ok) {
+            console.error('[getDealStageCounts] error:', await response.text());
             return { stages: {}, overdue: 0, today: 0 };
         }
-
+        
+        const data = await response.json();
         return (data || { stages: {}, overdue: 0, today: 0 }) as any;
     } catch (err) {
         console.error('[getDealStageCounts] exception:', err);
