@@ -166,7 +166,7 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
   "meta_title": "Tiêu đề chuẩn SEO (tối đa 60 ký tự, linh hoạt có thể chứa năm nếu nội dung là báo cáo/tổng kết)",
   "meta_description": "Mô tả SEO tóm tắt sự kiện",
   "keywords": "từ khóa SEO liên quan đến sự kiện",
-  "category_slug": "MỘT trong 13 slug sau đây phù hợp nhất với bài viết: tin-nganh-fmcg, doanh-nghiep-lon, ban-le-hien-dai, cua-hang-tien-loi, tap-hoa-gt, tmdt-tiktok-shop, xu-huong-tieu-dung, nganh-hang, phap-ly-chinh-ngach, chuoi-cung-ung, cong-nghe-ban-le, nha-phan-phoi-diem-ban, nghe-fmcg",
+  "category_slug": "MỘT trong 15 slug sau đây phù hợp nhất với bài viết: tin-nganh-fmcg, doanh-nghiep-lon, ban-le-hien-dai, cua-hang-tien-loi, tap-hoa-gt, tmdt-tiktok-shop, xu-huong-tieu-dung, nganh-hang, phap-ly-chinh-ngach, chuoi-cung-ung, cong-nghe-ban-le, nha-phan-phoi-diem-ban, nghe-fmcg, am-thuc-nau-an, suc-khoe-doi-song",
   "image_search_queries": [
     "2-3 từ khóa tiếng Anh NGẮN GỌN, CỤ THỂ để tìm ảnh đại diện trên Pexels (VD: 'grocery store aisle', 'snack shelf display', 'cashier counter'). KHÔNG dùng câu dài hay từ chung như 'business'.",
     "2-3 từ khóa tiếng Anh cho ảnh giữa bài (VD: 'warehouse inventory boxes', 'convenience store interior')",
