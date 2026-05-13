@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { TrendingUp } from 'lucide-react';
-import { supabaseBrowser } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function TrendingWidget() {
     const [activeTab, setActiveTab] = useState<'day' | 'week' | 'month'>('day');
@@ -21,7 +21,7 @@ export default function TrendingWidget() {
             else if (activeTab === 'week') thresholdDate.setDate(now.getDate() - 7);
             else if (activeTab === 'month') thresholdDate.setDate(now.getDate() - 30);
             
-            const { data, error } = await supabaseBrowser
+            const { data, error } = await supabase
                 .from('blog_posts')
                 .select('id, title, slug, published_at, created_at, view_count')
                 .eq('status', 'published')

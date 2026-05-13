@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { supabaseBrowser } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function ViewCounter({ postId }: { postId: string }) {
     useEffect(() => {
@@ -10,7 +10,7 @@ export default function ViewCounter({ postId }: { postId: string }) {
         // Prevent counting views in local development if desired, but here we just count always
         const countView = async () => {
             // Using the RPC function we created
-            const { error } = await supabaseBrowser.rpc('increment_blog_view', { post_id: postId });
+            const { error } = await supabase.rpc('increment_blog_view', { post_id: postId });
             if (error) {
                 console.error('Error incrementing view count:', error);
             }

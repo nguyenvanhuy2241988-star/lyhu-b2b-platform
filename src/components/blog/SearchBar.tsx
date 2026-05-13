@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { Search, X } from 'lucide-react';
 import { useDebounce } from 'use-debounce';
-import { supabaseBrowser } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function SearchBar() {
     const router = useRouter();
@@ -32,7 +32,7 @@ export default function SearchBar() {
             params.set('q', debouncedValue);
             // Log the search query in background if it's meaningful
             if (debouncedValue.trim().length > 1) {
-                supabaseBrowser.from('search_logs').insert([{ query: debouncedValue.trim() }]).then();
+                supabase.from('search_logs').insert([{ query: debouncedValue.trim() }]).then();
             }
         } else {
             params.delete('q');
