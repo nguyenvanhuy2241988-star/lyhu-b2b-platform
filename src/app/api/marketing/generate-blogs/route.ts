@@ -19,12 +19,14 @@ interface BlogConfig {
 
 const TOPICS: BlogConfig[] = [
     // === ẨM THỰC & NẤU ĂN ===
-    { topic: "Gợi ý 5 mâm cơm gia đình siêu tiết kiệm dưới 100k từ nguyên liệu tạp hóa.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "advisory" },
-    { topic: "Tuyệt chiêu làm các món ăn vặt cực bắt miệng từ bánh tráng và khô gà.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "advisory" },
+    { topic: "Hướng dẫn nấu bún bò Huế cực ngon và nhanh gọn bằng gia vị nêm sẵn.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "advisory" },
+    { topic: "Công thức làm các món ăn vặt đơn giản để bán thêm tại tiệm tạp hóa.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "advisory" },
+    { topic: "Gợi ý mâm cơm gia đình 30 phút siêu tốc dành cho chủ tiệm bận rộn.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "advisory" },
 
     // === SỨC KHỎE & ĐỜI SỐNG ===
-    { topic: "Cách chọn mua thực phẩm đóng hộp an toàn cho sức khỏe gia đình.", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "advisory" },
-    { topic: "Sự thật về các loại nước tăng lực và nước ngọt không đường hiện nay.", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "advisory" },
+    { topic: "Mẹo giữ gìn sức khỏe cho chủ tiệm tạp hóa phải thức khuya dậy sớm.", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "advisory" },
+    { topic: "Cách bảo vệ cột sống và xương khớp khi phải bê vác hàng hóa mỗi ngày.", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "advisory" },
+    { topic: "Chế độ ăn uống nhanh gọn nhưng đủ chất cho người bán hàng bận rộn.", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "advisory" },
 
     // === TOP LIST ===
     { topic: "Top 10 snack bán chạy nhất mùa hè này tại các tiệm tạp hóa.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
@@ -241,15 +243,36 @@ async function generateArticle(topic: string, type: 'advisory' | 'news' | 'repor
 `;
     }
 
+    // Auto-detect Cooking articles
+    if (/hướng dẫn nấu|cách làm món|công thức|mâm cơm|nấu ăn/i.test(topic)) {
+        specificInstructions += `
+⚠️ BẮT BUỘC CHO BÀI NẤU ĂN/ẨM THỰC:
+- Viết theo văn phong hướng dẫn nấu ăn, truyền cảm hứng.
+- PHẢI có danh sách nguyên liệu cụ thể (có định lượng). Gợi ý ưu tiên các nguyên liệu có sẵn tại tiệm tạp hóa.
+- PHẢI có các bước thực hiện chi tiết (Bước 1: Sơ chế, Bước 2: Chế biến...).
+- Nêu mẹo nhỏ để món ăn ngon hơn hoặc tiết kiệm thời gian cho người bận rộn.
+`;
+    }
+
+    // Auto-detect Health articles
+    if (/sức khỏe|cột sống|ăn uống|thức khuya|bê vác/i.test(topic)) {
+        specificInstructions += `
+⚠️ BẮT BUỘC CHO BÀI SỨC KHỎE DÀNH CHO CHỦ TIỆM:
+- Viết theo văn phong chia sẻ kiến thức, mẹo hay, thấu hiểu nỗi vất vả của người làm nghề bán hàng.
+- Nêu rõ các vấn đề sức khỏe thường gặp (đau lưng do bê vác, thiếu ngủ, ăn uống thất thường).
+- Đưa ra các bài tập nhỏ, mẹo vặt hoặc thực đơn dễ áp dụng ngay tại chỗ bán hàng mà không tốn nhiều thời gian.
+`;
+    }
+
     // Provide current date context so AI doesn't hallucinate old years
     const vnFormatter = new Intl.DateTimeFormat('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', day: '2-digit', month: '2-digit', year: 'numeric' });
     const currentDateVN = vnFormatter.format(new Date());
     const currentYear = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric' });
 
     const prompt = `
-Bạn là một chuyên gia về phân phối FMCG và kinh doanh bán lẻ.
-Hãy viết một bài báo chuyên ngành FMCG thật chi tiết, chuẩn SEO về chủ đề: "${topic}".
-Bài viết dành cho chuyên mục "LYHU Chuyển động FMCG 24/7".
+Bạn là một chuyên gia về kinh doanh bán lẻ, đồng thời am hiểu về đời sống, sức khỏe và ẩm thực.
+Hãy viết một bài viết thật chi tiết, hấp dẫn và chuẩn SEO về chủ đề: "${topic}".
+Bài viết dành cho nền tảng LYHU - Nơi cung cấp kiến thức, nguồn hàng và mẹo hay cho các chủ tiệm tạp hóa, siêu thị mini.
 
 ⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu, sự kiện và phân tích trong bài PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay sự kiện từ năm 2024 hoặc 2025 trừ khi là so sánh lịch sử.
 ⚠️ LƯU Ý QUAN TRỌNG VỀ TIÊU ĐỀ: TUYỆT ĐỐI KHÔNG ĐƯỢC tự động thêm năm (ví dụ: "năm ${currentYear}", "${currentYear}") vào cuối meta_title hay tiêu đề bài viết. Tiêu đề phải tự nhiên, không gắn cứng năm.
