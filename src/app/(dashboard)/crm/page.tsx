@@ -649,8 +649,8 @@ export default function CRMPage() {
 
     const getUserInfo = useCallback((): { id: string | null; role: string } => {
         // First try: Supabase auth with role from profiles table
-        if (user?.id && authRole) {
-            return { id: user.id, role: authRole };
+        if (user?.id) {
+            return { id: user.id, role: authRole || 'telesales' };
         }
         // Fallback: localStorage mock user
         if (typeof window !== "undefined") {
