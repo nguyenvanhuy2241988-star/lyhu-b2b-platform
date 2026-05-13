@@ -18,15 +18,15 @@ interface BlogConfig {
 }
 
 const TOPICS: BlogConfig[] = [
-    // === ẨM THỰC & NẤU ĂN ===
-    { topic: "Hướng dẫn nấu bún bò Huế cực ngon và nhanh gọn bằng gia vị nêm sẵn.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "advisory" },
-    { topic: "Công thức làm các món ăn vặt đơn giản để bán thêm tại tiệm tạp hóa.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "advisory" },
-    { topic: "Gợi ý mâm cơm gia đình 30 phút siêu tốc dành cho chủ tiệm bận rộn.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "advisory" },
+    // === ẨM THỰC & NẤU ĂN (PHỄU KHÁCH LẺ) ===
+    { topic: "Bí quyết nấu phở bò chuẩn vị truyền thống ngay tại nhà cuối tuần.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "advisory" },
+    { topic: "7 công thức sinh tố detox giải nhiệt mùa hè cực kỳ dễ làm.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "advisory" },
+    { topic: "Cách ướp thịt nướng BBQ cực ngon mềm cho những buổi dã ngoại gia đình.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "advisory" },
 
-    // === SỨC KHỎE & ĐỜI SỐNG ===
-    { topic: "Mẹo giữ gìn sức khỏe cho chủ tiệm tạp hóa phải thức khuya dậy sớm.", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "advisory" },
-    { topic: "Cách bảo vệ cột sống và xương khớp khi phải bê vác hàng hóa mỗi ngày.", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "advisory" },
-    { topic: "Chế độ ăn uống nhanh gọn nhưng đủ chất cho người bán hàng bận rộn.", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "advisory" },
+    // === SỨC KHỎE & ĐỜI SỐNG (PHỄU KHÁCH LẺ) ===
+    { topic: "Top 5 nhóm thực phẩm giúp tăng sức đề kháng tự nhiên cho cả gia đình.", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "advisory" },
+    { topic: "Tác hại của việc lạm dụng đường tinh luyện và các lựa chọn thay thế lành mạnh.", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "advisory" },
+    { topic: "Hiểu đúng về Calories: Ăn bao nhiêu là đủ để giữ dáng và khỏe mạnh?", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "advisory" },
 
     // === TOP LIST ===
     { topic: "Top 10 snack bán chạy nhất mùa hè này tại các tiệm tạp hóa.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
@@ -244,23 +244,24 @@ async function generateArticle(topic: string, type: 'advisory' | 'news' | 'repor
     }
 
     // Auto-detect Cooking articles
-    if (/hướng dẫn nấu|cách làm món|công thức|mâm cơm|nấu ăn/i.test(topic)) {
+    if (/hướng dẫn nấu|cách làm món|công thức|mâm cơm|nấu ăn|bí quyết nấu/i.test(topic)) {
         specificInstructions += `
 ⚠️ BẮT BUỘC CHO BÀI NẤU ĂN/ẨM THỰC:
-- Viết theo văn phong hướng dẫn nấu ăn, truyền cảm hứng.
-- PHẢI có danh sách nguyên liệu cụ thể (có định lượng). Gợi ý ưu tiên các nguyên liệu có sẵn tại tiệm tạp hóa.
-- PHẢI có các bước thực hiện chi tiết (Bước 1: Sơ chế, Bước 2: Chế biến...).
-- Nêu mẹo nhỏ để món ăn ngon hơn hoặc tiết kiệm thời gian cho người bận rộn.
+- Đối tượng đọc là người tiêu dùng đại chúng, các bà nội trợ, gia đình. Bài viết đóng vai trò nội dung phễu thu hút traffic.
+- Viết theo văn phong hướng dẫn nấu ăn, thân thiện, truyền cảm hứng.
+- PHẢI có danh sách nguyên liệu cụ thể (có định lượng). Khéo léo nhắc nhẹ rằng các nguyên liệu/gia vị cơ bản này có thể dễ dàng tìm mua ở các tiệm tạp hóa, siêu thị mini gần nhà.
+- PHẢI có các bước thực hiện chi tiết (Bước 1, Bước 2...).
 `;
     }
 
     // Auto-detect Health articles
-    if (/sức khỏe|cột sống|ăn uống|thức khuya|bê vác/i.test(topic)) {
+    if (/sức khỏe|đề kháng|thực phẩm|lành mạnh|calories|đời sống/i.test(topic)) {
         specificInstructions += `
-⚠️ BẮT BUỘC CHO BÀI SỨC KHỎE DÀNH CHO CHỦ TIỆM:
-- Viết theo văn phong chia sẻ kiến thức, mẹo hay, thấu hiểu nỗi vất vả của người làm nghề bán hàng.
-- Nêu rõ các vấn đề sức khỏe thường gặp (đau lưng do bê vác, thiếu ngủ, ăn uống thất thường).
-- Đưa ra các bài tập nhỏ, mẹo vặt hoặc thực đơn dễ áp dụng ngay tại chỗ bán hàng mà không tốn nhiều thời gian.
+⚠️ BẮT BUỘC CHO BÀI SỨC KHỎE ĐỜI SỐNG:
+- Đối tượng đọc là người tiêu dùng đại chúng, các gia đình quan tâm đến sức khỏe. Bài viết đóng vai trò nội dung phễu thu hút traffic.
+- Viết theo văn phong chia sẻ kiến thức khoa học, hữu ích, dễ hiểu.
+- Cung cấp các thông tin thiết thực về dinh dưỡng, lựa chọn thực phẩm.
+- Khéo léo khuyên người tiêu dùng nên chọn các sản phẩm chính hãng, rõ nguồn gốc tại các siêu thị, tạp hóa uy tín.
 `;
     }
 
@@ -270,9 +271,9 @@ async function generateArticle(topic: string, type: 'advisory' | 'news' | 'repor
     const currentYear = new Date().toLocaleDateString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric' });
 
     const prompt = `
-Bạn là một chuyên gia về kinh doanh bán lẻ, đồng thời am hiểu về đời sống, sức khỏe và ẩm thực.
-Hãy viết một bài viết thật chi tiết, hấp dẫn và chuẩn SEO về chủ đề: "${topic}".
-Bài viết dành cho nền tảng LYHU - Nơi cung cấp kiến thức, nguồn hàng và mẹo hay cho các chủ tiệm tạp hóa, siêu thị mini.
+Bạn là một chuyên gia sáng tạo nội dung, am hiểu sâu sắc về kinh doanh, đời sống, sức khỏe và ẩm thực.
+Hãy viết một bài viết thật chi tiết, hấp dẫn, chuẩn SEO (khoảng 800-1000 chữ) về chủ đề: "${topic}".
+Bài viết được đăng trên nền tảng LYHU - Kênh tin tức tổng hợp nhằm thu hút traffic, vừa chia sẻ kiến thức cho người tiêu dùng đại chúng, vừa kết nối họ với hệ sinh thái bán lẻ/tạp hóa.
 
 ⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu, sự kiện và phân tích trong bài PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay sự kiện từ năm 2024 hoặc 2025 trừ khi là so sánh lịch sử.
 ⚠️ LƯU Ý QUAN TRỌNG VỀ TIÊU ĐỀ: TUYỆT ĐỐI KHÔNG ĐƯỢC tự động thêm năm (ví dụ: "năm ${currentYear}", "${currentYear}") vào cuối meta_title hay tiêu đề bài viết. Tiêu đề phải tự nhiên, không gắn cứng năm.
