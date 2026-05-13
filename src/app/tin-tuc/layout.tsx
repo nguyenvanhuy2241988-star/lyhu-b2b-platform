@@ -16,9 +16,10 @@ export const metadata: Metadata = {
 
 export default async function BlogLayout({ children }: { children: React.ReactNode }) {
     // Lấy top từ khóa tìm kiếm
-    let topKeywords = ['TikTok Shop', 'Chiết khấu đại lý', 'Khách hàng Gen Z', 'Nguồn nhập sỉ rẻ'];
+    let topKeywords: string[] = [];
     
     try {
+        // 1. Thử lấy từ lịch sử tìm kiếm (search_logs)
         const { data: logs } = await supabase
             .from('search_logs')
             .select('query')
@@ -38,13 +39,52 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
                 .slice(0, 4)
                 .map(e => e[0]);
             
-            if (sorted.length > 0) {
-                // Capitalize first letter of each word for display
+            if (sorted.length >= 4) {
                 topKeywords = sorted.map(k => k.replace(/\b\w/g, l => l.toUpperCase()));
             }
         }
+
+        // 2. Nếu không đủ dữ liệu tìm kiếm, fallback lấy từ khóa từ các bài viết
+        if (topKeywords.length < 4) {
+            const { data: posts } = await supabase
+                .from('blog_posts')
+                .select('keywords')
+                .not('keywords', 'is', null)
+                .eq('status', 'published')
+                .order('created_at', { ascending: false })
+                .limit(50);
+                
+            if (posts && posts.length > 0) {
+                const kwCounts: Record<string, number> = {};
+                posts.forEach((post: any) => {
+                    if (post.keywords) {
+                        const keywordsArray = post.keywords.split(',').map((k: string) => k.trim().toLowerCase());
+                        keywordsArray.forEach((kw: string) => {
+                            if (kw.length > 3 && !kw.includes('2026') && !kw.includes('fmcg 247')) {
+                                kwCounts[kw] = (kwCounts[kw] || 0) + 1;
+                            }
+                        });
+                    }
+                });
+                
+                const sortedKw = Object.entries(kwCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 4)
+                    .map(e => e[0]);
+                    
+                if (sortedKw.length > 0) {
+                    topKeywords = sortedKw.map(k => k.replace(/\b\w/g, l => l.toUpperCase()));
+                }
+            }
+        }
+        
+        // 3. Fallback cứng cuối cùng nếu vẫn trống
+        if (topKeywords.length === 0) {
+            topKeywords = ['Kinh Doanh Bán Lẻ', 'Siêu Thị Mini', 'Nhà Phân Phối', 'Nhập Hàng Sỉ'];
+        }
     } catch (e) {
-        console.error('Error fetching search logs:', e);
+        console.error('Error fetching search keywords:', e);
+        topKeywords = ['Kinh Doanh Bán Lẻ', 'Siêu Thị Mini', 'Nhà Phân Phối', 'Nhập Hàng Sỉ'];
     }
 
     return (
