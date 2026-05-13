@@ -60,11 +60,20 @@ export function invalidateCRMCache() {
 
 // Helper for Session with Timeout
 async function getSessionSafe() {
+    const getLocalSession = () => {
+        if (typeof window !== 'undefined') {
+            const localToken = localStorage.getItem('lyhu_access_token');
+            if (localToken) return { access_token: localToken } as any;
+        }
+        return null;
+    };
+
     try {
         const { data } = await supabase.auth.getSession();
-        return data?.session;
+        if (data?.session) return data.session;
+        return getLocalSession();
     } catch (e) {
-        return null;
+        return getLocalSession();
     }
 }
 
