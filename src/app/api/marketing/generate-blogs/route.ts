@@ -14,19 +14,19 @@ interface BlogConfig {
     topic: string;
     categorySlug: string;
     categoryName: string;
-    type: 'advisory' | 'news' | 'report';
+    type: 'advisory' | 'news' | 'report' | 'consumer';
 }
 
 const TOPICS: BlogConfig[] = [
     // === ẨM THỰC & NẤU ĂN (PHỄU KHÁCH LẺ) ===
-    { topic: "Bí quyết nấu phở bò chuẩn vị truyền thống ngay tại nhà cuối tuần.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "advisory" },
-    { topic: "7 công thức sinh tố detox giải nhiệt mùa hè cực kỳ dễ làm.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "advisory" },
-    { topic: "Cách ướp thịt nướng BBQ cực ngon mềm cho những buổi dã ngoại gia đình.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "advisory" },
+    { topic: "Bí quyết nấu phở bò chuẩn vị truyền thống ngay tại nhà.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "consumer" },
+    { topic: "7 công thức sinh tố detox giải nhiệt mùa hè cực dễ làm.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "consumer" },
+    { topic: "Cách ướp thịt nướng BBQ cực ngon mềm cho buổi dã ngoại gia đình.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "consumer" },
 
     // === SỨC KHỎE & ĐỜI SỐNG (PHỄU KHÁCH LẺ) ===
-    { topic: "Top 5 nhóm thực phẩm giúp tăng sức đề kháng tự nhiên cho cả gia đình.", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "advisory" },
-    { topic: "Tác hại của việc lạm dụng đường tinh luyện và các lựa chọn thay thế lành mạnh.", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "advisory" },
-    { topic: "Hiểu đúng về Calories: Ăn bao nhiêu là đủ để giữ dáng và khỏe mạnh?", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "advisory" },
+    { topic: "Top 5 nhóm thực phẩm giúp tăng sức đề kháng tự nhiên cho gia đình.", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "consumer" },
+    { topic: "Tác hại lạm dụng đường tinh luyện và các lựa chọn thay thế lành mạnh.", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "consumer" },
+    { topic: "Hiểu đúng về Calories: Ăn bao nhiêu là đủ giữ dáng và khỏe mạnh?", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "consumer" },
 
     // === TOP LIST ===
     { topic: "Top 10 snack bán chạy nhất mùa hè này tại các tiệm tạp hóa.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
@@ -159,7 +159,7 @@ async function fetchPexelsImages(query: string, count: number = 3): Promise<stri
     return [];
 }
 
-async function generateArticle(topic: string, type: 'advisory' | 'news' | 'report', apiKey: string) {
+async function generateArticle(topic: string, type: 'advisory' | 'news' | 'report' | 'consumer', apiKey: string) {
     let specificInstructions = '';
     
     if (type === 'advisory') {
@@ -204,6 +204,17 @@ async function generateArticle(topic: string, type: 'advisory' | 'news' | 'repor
 4. Quản lý CTA và Quảng cáo:
   - Giọng văn CHUYÊN GIA, học thuật, phân tích sâu sắc.
   - TUYỆT ĐỐI KHÔNG CÓ CTA bán hàng. Không quảng cáo sản phẩm. Bài viết đóng vai trò báo cáo định hướng thị trường thuần túy.
+`;
+    } else if (type === 'consumer') {
+        specificInstructions = `
+3. Bố cục bài viết bắt buộc phải đi theo luồng sau:
+  - Mở bài: Dẫn dắt thu hút sự chú ý của người tiêu dùng, bà nội trợ, gia đình.
+  - Nội dung chính: Giải quyết triệt để vấn đề/chủ đề bài viết nêu ra (ví dụ: công thức nấu ăn, mẹo chăm sóc sức khỏe).
+  - Kết bài: Lời khuyên ngắn gọn.
+4. Quản lý CTA và Quảng cáo:
+  - Viết hoàn toàn cho NGƯỜI TIÊU DÙNG ĐẠI CHÚNG. KHÔNG viết phân tích chiến lược cho điểm bán.
+  - TUYỆT ĐỐI KHÔNG xưng hô kiểu phân phối/nhập sỉ.
+  - Nhắc nhẹ một cách tinh tế rằng các nguyên liệu/sản phẩm nhắc đến có thể mua tại các cửa hàng tạp hóa, siêu thị mini trên toàn quốc.
 `;
     }
 
