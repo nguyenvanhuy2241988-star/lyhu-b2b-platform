@@ -7,12 +7,46 @@ import { TrendingUp } from 'lucide-react';
 
 import SearchBar from '@/components/blog/SearchBar';
 
+import { supabase } from '@/lib/supabaseClient';
+
 export const metadata: Metadata = {
     title: 'Tin tức & Kiến thức Kinh doanh B2B - LYHU',
     description: 'Cập nhật tin tức thị trường, kiến thức mở tạp hóa, siêu thị mini và kinh nghiệm nhập sỉ bánh kẹo ăn vặt tận xưởng.',
 };
 
-export default function BlogLayout({ children }: { children: React.ReactNode }) {
+export default async function BlogLayout({ children }: { children: React.ReactNode }) {
+    // Lấy top từ khóa tìm kiếm
+    let topKeywords = ['TikTok Shop', 'Chiết khấu đại lý', 'Khách hàng Gen Z', 'Nguồn nhập sỉ rẻ'];
+    
+    try {
+        const { data: logs } = await supabase
+            .from('search_logs')
+            .select('query')
+            .order('created_at', { ascending: false })
+            .limit(100);
+            
+        if (logs && logs.length > 0) {
+            const counts: Record<string, number> = {};
+            logs.forEach(log => {
+                const q = log.query.trim().toLowerCase();
+                if (q.length > 1) {
+                    counts[q] = (counts[q] || 0) + 1;
+                }
+            });
+            const sorted = Object.entries(counts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 4)
+                .map(e => e[0]);
+            
+            if (sorted.length > 0) {
+                // Capitalize first letter of each word for display
+                topKeywords = sorted.map(k => k.replace(/\b\w/g, l => l.toUpperCase()));
+            }
+        }
+    } catch (e) {
+        console.error('Error fetching search logs:', e);
+    }
+
     return (
         <div className="min-h-screen bg-[#F5F5F5] flex flex-col font-sans">
             {/* Magazine-style Header (Minimalist & Brand Colors) */}
@@ -47,10 +81,11 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
                     {/* Trending Topics Bar (Hidden on Mobile) */}
                     <div className="hidden lg:flex items-center justify-start gap-4 overflow-x-auto scrollbar-hide shrink-0">
                         <TrendingUp className="w-4 h-4 text-primary-600 shrink-0" />
-                        <Link href="/tin-tuc?q=tiktok" className="shrink-0 text-gray-600 hover:text-primary-700 text-xs font-bold transition-colors"># TikTok Shop</Link>
-                        <Link href="/tin-tuc?q=chiết+khấu" className="shrink-0 text-gray-600 hover:text-primary-700 text-xs font-bold transition-colors"># Chiết khấu đại lý</Link>
-                        <Link href="/tin-tuc?q=gen+z" className="shrink-0 text-gray-600 hover:text-primary-700 text-xs font-bold transition-colors"># Khách hàng Gen Z</Link>
-                        <Link href="/tin-tuc?q=nguồn+nhập+sỉ" className="shrink-0 text-gray-600 hover:text-primary-700 text-xs font-bold transition-colors"># Nguồn nhập sỉ rẻ</Link>
+                        {topKeywords.map((kw, idx) => (
+                            <Link key={idx} href={`/tin-tuc?q=${encodeURIComponent(kw)}`} className="shrink-0 text-gray-600 hover:text-primary-700 text-xs font-bold transition-colors">
+                                #{kw}
+                            </Link>
+                        ))}
                     </div>
 
                     {/* Search Bar */}

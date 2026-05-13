@@ -14,6 +14,7 @@ const MENU_GROUPS = [
 import { BlogPost, BlogCategory } from '@/lib/blogStore';
 import SearchBar from '@/components/blog/SearchBar';
 import Pagination from '@/components/blog/Pagination';
+import TrendingWidget from '@/components/blog/TrendingWidget';
 
 export const dynamic = 'force-dynamic';
 const POSTS_PER_PAGE = 12;
@@ -424,7 +425,7 @@ export default async function BlogIndexPage({
                                                 </p>
                                                 <div className="flex items-center text-xs text-gray-500 font-medium">
                                                     <Clock className="w-3.5 h-3.5 mr-1.5" />
-                                                    {new Date(posts[0].published_at || posts[0].created_at).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                                    {new Date(posts[0].published_at || posts[0].created_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                 </div>
                                             </Link>
                                         </div>
@@ -451,7 +452,7 @@ export default async function BlogIndexPage({
                                                     </h3>
                                                     <div className="mt-auto flex items-center text-xs text-gray-400 font-medium">
                                                         <Clock className="w-3.5 h-3.5 mr-1.5" />
-                                                        {new Date(post.published_at || post.created_at).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                                        {new Date(post.published_at || post.created_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                     </div>
                                                 </Link>
                                             ))}
@@ -487,7 +488,7 @@ export default async function BlogIndexPage({
                                                         <h4 className="font-bold text-gray-900 line-clamp-2 mb-2 group-hover:text-primary-700 leading-snug">{post.title}</h4>
                                                         <div className="text-xs text-gray-500 font-medium flex items-center mt-auto">
                                                             <Clock className="w-3 h-3 mr-1" />
-                                                            {new Date(post.published_at || post.created_at).toLocaleDateString('vi-VN')}
+                                                            {new Date(post.published_at || post.created_at).toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' })}
                                                         </div>
                                                     </div>
                                                 </Link>
@@ -570,7 +571,7 @@ export default async function BlogIndexPage({
                                                 </p>
                                                 <div className="mt-auto flex items-center text-xs text-gray-400 font-medium">
                                                     <Clock className="w-3.5 h-3.5 mr-1.5" />
-                                                    {new Date(post.published_at || post.created_at).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                                    {new Date(post.published_at || post.created_at).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
                                                 </div>
                                             </div>
                                         </Link>
@@ -596,30 +597,8 @@ export default async function BlogIndexPage({
                         </div>
                     ))}
                     
-                    {/* Trending Widget */}
-                    <div className="bg-white p-6 border border-gray-100">
-                        <h3 className="text-lg font-bold text-gray-900 mb-5 pb-3 border-b border-gray-100 flex items-center gap-2">
-                            <TrendingUp className="w-5 h-5 text-gray-400" />
-                            Bài viết nổi bật
-                        </h3>
-                        <div className="space-y-4">
-                            {trendingPosts.map((post, index) => (
-                                <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex gap-3 items-start">
-                                    <span className="text-2xl font-bold text-gray-200 w-6 text-center group-hover:text-primary-200 transition-colors">
-                                        {index + 1}
-                                    </span>
-                                    <div className="flex-1 min-w-0">
-                                        <h4 className="font-semibold text-gray-800 text-sm group-hover:text-primary-600 transition-colors line-clamp-2 leading-tight">
-                                            {post.title}
-                                        </h4>
-                                        <div className="text-xs text-gray-400 mt-1">
-                                            {new Date(post.published_at || post.created_at || '').toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
-                                        </div>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-                    </div>
+                    {/* Trending Widget (Client Component with Day/Week/Month) */}
+                    <TrendingWidget />
 
                     {/* Side Bottom Banners */}
                     {sideBottomBanners.map((banner, idx) => (
