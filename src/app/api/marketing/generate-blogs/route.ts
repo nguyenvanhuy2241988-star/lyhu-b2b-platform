@@ -18,6 +18,14 @@ interface BlogConfig {
 }
 
 const TOPICS: BlogConfig[] = [
+    // === ẨM THỰC & NẤU ĂN ===
+    { topic: "Gợi ý 5 mâm cơm gia đình siêu tiết kiệm dưới 100k từ nguyên liệu tạp hóa.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "advisory" },
+    { topic: "Tuyệt chiêu làm các món ăn vặt cực bắt miệng từ bánh tráng và khô gà.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "advisory" },
+
+    // === SỨC KHỎE & ĐỜI SỐNG ===
+    { topic: "Cách chọn mua thực phẩm đóng hộp an toàn cho sức khỏe gia đình.", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "advisory" },
+    { topic: "Sự thật về các loại nước tăng lực và nước ngọt không đường hiện nay.", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "advisory" },
+
     // === TOP LIST ===
     { topic: "Top 10 snack bán chạy nhất mùa hè này tại các tiệm tạp hóa.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
     { topic: "Top 5 loại nước giải khát mới ra mắt đáng nhập sỉ nhất hiện nay.", categorySlug: "xu-huong-tieu-dung", categoryName: "Xu Hướng Tiêu Dùng", type: "news" },
@@ -104,14 +112,6 @@ const TOPICS: BlogConfig[] = [
     { topic: "FMCG là gì? Giải thích đơn giản cho người mới bắt đầu kinh doanh tạp hóa.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
     { topic: "Kênh GT là gì? MT là gì? Hiểu rõ để chọn đúng nguồn hàng sỉ.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
     { topic: "Đọc báo cáo bán hàng: 5 con số quan trọng nhất mà chủ tiệm phải theo dõi mỗi ngày.", categorySlug: "goc-nha-phan-phoi-diem-ban", categoryName: "Góc Nhà Phân Phối & Điểm Bán", type: "advisory" },
-
-    // === ẨM THỰC & NẤU ĂN ===
-    { topic: "Gợi ý 5 mâm cơm gia đình siêu tiết kiệm dưới 100k từ nguyên liệu tạp hóa.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "advisory" },
-    { topic: "Tuyệt chiêu làm các món ăn vặt cực bắt miệng từ bánh tráng và khô gà.", categorySlug: "am-thuc-nau-an", categoryName: "Ẩm Thực & Nấu Ăn", type: "advisory" },
-
-    // === SỨC KHỎE & ĐỜI SỐNG ===
-    { topic: "Cách chọn mua thực phẩm đóng hộp an toàn cho sức khỏe gia đình.", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "advisory" },
-    { topic: "Sự thật về các loại nước tăng lực và nước ngọt không đường hiện nay.", categorySlug: "suc-khoe-doi-song", categoryName: "Sức Khỏe & Đời Sống", type: "advisory" },
 ];
 
 function generateSlug(title: string): string {
