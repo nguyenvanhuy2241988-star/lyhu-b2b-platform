@@ -128,6 +128,7 @@ Bạn là "Chuyên gia phân tích thị trường B2B FMCG", làm việc cho LY
 
 ⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu, sự kiện và phân tích trong bài PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay sự kiện từ năm 2024 hoặc 2025 trừ khi là so sánh lịch sử (phải ghi rõ "so với năm trước").
 ⚠️ LƯU Ý VỀ TIÊU ĐỀ: KHÔNG tự động chèn thêm năm vào cuối tiêu đề một cách máy móc. CHỈ ĐƯỢC PHÉP đưa năm vào tiêu đề nếu bản thân tin tức đó là báo cáo tài chính định kỳ, tổng kết quý/năm, hoặc xu hướng đặc thù của năm đó (Ví dụ: Báo cáo thị trường Quý 1/${currentYear}).
+⚠️ LƯU Ý VỀ VĂN PHONG: TUYỆT ĐỐI KHÔNG để lại các số trích dẫn nguồn dạng [1], [2], [3] trong bài viết. Bài viết phải trôi chảy tự nhiên như một bài báo thực thụ.
 
 BẮT BUỘC SỐ 1: Hãy tự động tìm kiếm trên Google các tin tức NÓNG NHẤT, MỚI NHẤT trong 24-48 giờ qua tại thị trường Việt Nam về chủ đề sau:
 CHỦ ĐỀ TẬP TRUNG: "${randomFocus}"
@@ -257,6 +258,9 @@ YÊU CẦU BẮT BUỘC VỀ FORMAT:
 
         content = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         content = content.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+        // Remove AI citation brackets like [1], [2, 3] from the text
+        content = content.replace(/\[\d+(,\s*\d+)*\]/g, '');
 
         // 4. Save to Database
         const slug = generateSlug(topic) + '-' + Date.now().toString().slice(-4); // Ensure uniqueness

@@ -141,6 +141,7 @@ Bạn là một chuyên gia về phân phối FMCG và kinh doanh bán lẻ. Tò
 
 ⚠️ THÔNG TIN QUAN TRỌNG VỀ THỜI GIAN: Ngày hôm nay là ${currentDateVN} (năm ${currentYear}). Mọi số liệu, sự kiện và phân tích trong bài PHẢI phản ánh đúng mốc thời gian hiện tại (năm ${currentYear}). TUYỆT ĐỐI KHÔNG viết số liệu hay sự kiện từ năm 2024 hoặc 2025 trừ khi là so sánh lịch sử (phải ghi rõ "so với năm trước").
 ⚠️ LƯU Ý VỀ TIÊU ĐỀ: TUYỆT ĐỐI KHÔNG chèn năm (ví dụ: "năm ${currentYear}", "${currentYear}") vào "new_title" hoặc "meta_title". Tiêu đề phải tự nhiên, không gắn cứng năm.
+⚠️ LƯU Ý VỀ VĂN PHONG: TUYỆT ĐỐI KHÔNG để lại các số trích dẫn nguồn dạng [1], [2], [3] trong bài viết. Bài viết phải trôi chảy tự nhiên.
 
 Thông tin bản gốc:
 - Tiêu đề gốc: ${feedItem.title}
@@ -226,6 +227,9 @@ ${specificInstructions}
 
         // Convert raw Markdown to HTML properly
         content = await marked.parse(content);
+
+        // Remove AI citation brackets like [1], [2, 3] from the text
+        content = content.replace(/\[\d+(,\s*\d+)*\]/g, '');
 
         return {
             content,

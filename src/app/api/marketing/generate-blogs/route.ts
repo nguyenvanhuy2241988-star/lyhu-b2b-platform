@@ -252,6 +252,7 @@ YÊU CẦU QUAN TRỌNG VỀ NỘI DUNG VÀ VĂN PHONG:
 ${specificInstructions}
 5. NGUYÊN TẮC BÁO CHÍ VÀ KHÁCH QUAN:
   - Bài viết mang tính chất chuyên trang phân tích ngành, viết KHÁCH QUAN như một phóng viên.
+  - TUYỆT ĐỐI KHÔNG để lại các đánh số trích dẫn nguồn dạng [1], [2], [3] trong bài viết. Bài viết phải trôi chảy tự nhiên.
   - NẾU tiêu đề bài viết ĐÃ NÊU TÊN thương hiệu/sản phẩm cụ thể (VD: "Masan ra mắt...", "So sánh KiotViet vs Sapo", "Top 8 snack Hàn Quốc"): BẮT BUỘC phải nhắc đến tên thương hiệu/sản phẩm đó TRONG BÀI VIẾT với thông tin cụ thể (tên sản phẩm, giá, đặc điểm). KHÔNG ĐƯỢC viết chung chung.
   - NẾU tiêu đề KHÔNG nêu tên thương hiệu cụ thể: KHÔNG tự ý chèn tên thương hiệu nhỏ lẻ để quảng cáo. Chỉ nhắc các thương hiệu lớn phổ biến nếu cần minh họa.
   - TUYỆT ĐỐI KHÔNG quảng cáo sản phẩm của LYHU (bánh tráng, kẹo...) trong bài. Không tạo cảm giác đang chèo kéo mua hàng.
@@ -358,6 +359,9 @@ YÊU CẦU ĐỊNH DẠNG:
 
         // Convert raw Markdown to HTML properly
         content = await marked.parse(content);
+
+        // Remove AI citation brackets like [1], [2, 3] from the text
+        content = content.replace(/\[\d+(,\s*\d+)*\]/g, '');
 
         // Post-processing to forcefully strip any "2026" or "năm 2026" that the AI hallucinated
         const stripYear = (str: string) => {
