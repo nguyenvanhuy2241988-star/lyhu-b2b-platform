@@ -27,7 +27,7 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
             
         if (logs && logs.length > 0) {
             const counts: Record<string, number> = {};
-            logs.forEach(log => {
+            logs.forEach((log: any) => {
                 const q = log.query.trim().toLowerCase();
                 if (q.length > 1) {
                     counts[q] = (counts[q] || 0) + 1;
