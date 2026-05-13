@@ -5,9 +5,9 @@ export const getCRMBanner = async () => {
         .from('crm_settings')
         .select('banner_url')
         .eq('id', 1)
-        .single();
+        .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') throw error; // Ignore not found if empty
+    if (error) throw error;
     return data?.banner_url as string | null;
 };
 
