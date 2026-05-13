@@ -9,6 +9,7 @@ const MENU_GROUPS = [
     { key: 'phan-tich', name: 'Phân tích', icon: '📊', slugs: ['bao-cao-thi-truong', 'ban-le-hien-dai', 'cua-hang-tien-loi', 'chuoi-cung-ung'] },
     { key: 'kien-thuc', name: 'Kiến thức', icon: '💡', slugs: ['cong-nghe-ban-le', 'phap-ly-chinh-ngach', 'tmdt-tiktok-shop'] },
     { key: 'san-pham', name: 'Sản phẩm', icon: '🛒', slugs: ['nganh-hang', 'xu-huong-tieu-dung'] },
+    { key: 'doi-song', name: 'Đời sống', icon: '🌿', slugs: ['am-thuc-nau-an', 'suc-khoe-doi-song'] },
 ];
 import { BlogPost, BlogCategory } from '@/lib/blogStore';
 import SearchBar from '@/components/blog/SearchBar';
@@ -202,56 +203,80 @@ export default async function BlogIndexPage({
                     ))}
                 </div>
 
-                {/* Desktop Navigation (Mega Menu) */}
-                <div className="hidden md:flex flex-row items-center justify-center gap-x-4 max-w-[1200px] mx-auto" style={{ overflow: 'visible' }}>
-                    <Link 
-                        href={`/tin-tuc${searchQuery ? `?q=${searchQuery}` : ''}`}
-                        className={`shrink-0 px-3 py-3.5 text-[14px] font-bold uppercase transition-colors duration-300 whitespace-nowrap ${
-                            !activeGroup && activeCategory === 'all' 
-                            ? 'text-primary-700 border-b-[3px] border-primary-600' 
-                            : 'text-gray-800 hover:text-primary-600 border-b-[3px] border-transparent'
-                        }`}
-                    >
-                        Tất cả
-                    </Link>
-                    {MENU_GROUPS.map(group => {
-                        const isActive = activeGroup === group.key || (!activeGroup && group.slugs.includes(activeCategory));
-                        return (
-                            <div key={group.key} className="group/menu shrink-0 relative" style={{ overflow: 'visible' }}>
+                {/* Desktop Navigation (Mega Menu - GenK Style) */}
+                <div className="hidden md:flex flex-row items-center justify-between max-w-[1200px] mx-auto relative group/megamenu" style={{ overflow: 'visible' }}>
+                    <div className="flex flex-row items-center gap-x-6 w-full px-4">
+                        <Link 
+                            href={`/tin-tuc${searchQuery ? `?q=${searchQuery}` : ''}`}
+                            className={`shrink-0 py-3.5 text-[14px] font-bold uppercase transition-colors duration-300 whitespace-nowrap ${
+                                !activeGroup && activeCategory === 'all' 
+                                ? 'text-primary-700 border-b-[3px] border-primary-600' 
+                                : 'text-gray-800 hover:text-primary-600 border-b-[3px] border-transparent'
+                            }`}
+                        >
+                            Tất cả
+                        </Link>
+                        {MENU_GROUPS.map(group => {
+                            const isActive = activeGroup === group.key || (!activeGroup && group.slugs.includes(activeCategory));
+                            return (
                                 <Link 
+                                    key={group.key}
                                     href={`/tin-tuc?group=${group.key}${searchQuery ? `&q=${searchQuery}` : ''}`}
-                                    className={`block px-3 py-3.5 pb-4 text-[14px] font-bold uppercase transition-colors duration-300 whitespace-nowrap ${
+                                    className={`block py-3.5 pb-4 text-[14px] font-bold uppercase transition-colors duration-300 whitespace-nowrap ${
                                         isActive 
                                         ? 'text-primary-700 border-b-[3px] border-primary-600' 
                                         : 'text-gray-800 hover:text-primary-600 border-b-[3px] border-transparent'
                                     }`}
                                 >
-                                    <span className="inline mr-1">{group.icon}</span>
                                     {group.name}
                                 </Link>
-                                {/* Hover Dropdown */}
-                                <div className="absolute top-full left-1/2 -translate-x-1/2 min-w-[220px] bg-white border border-gray-200 rounded-b-lg shadow-xl opacity-0 invisible group-hover/menu:opacity-100 group-hover/menu:visible transition-all duration-200 z-50 py-1.5">
-                                    {group.slugs.map(slug => {
-                                        const cat = categories.find(c => c.slug === slug);
-                                        if (!cat) return null;
-                                        return (
-                                            <Link 
-                                                key={cat.id}
-                                                href={`/tin-tuc?category=${cat.slug}${searchQuery ? `&q=${searchQuery}` : ''}`}
-                                                className={`block px-5 py-2.5 text-[13px] transition-colors whitespace-nowrap ${
-                                                    activeCategory === cat.slug 
-                                                    ? 'text-primary-700 bg-primary-50 font-bold' 
-                                                    : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50 font-medium'
-                                                }`}
-                                            >
-                                                {cat.name}
-                                            </Link>
-                                        );
-                                    })}
+                            );
+                        })}
+                        
+                        {/* Hamburger Trigger for Mega Menu */}
+                        <div className="ml-auto flex items-center cursor-pointer py-3.5 text-gray-800 hover:text-primary-600 transition-colors">
+                            <span className="text-[14px] font-bold uppercase mr-2">Danh Mục</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    {/* Full Width Mega Menu Dropdown */}
+                    <div className="absolute top-full left-0 w-full bg-white border-t-2 border-primary-600 shadow-2xl opacity-0 invisible group-hover/megamenu:opacity-100 group-hover/megamenu:visible transition-all duration-300 z-[60]">
+                        <div className="p-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
+                            {MENU_GROUPS.map(group => (
+                                <div key={group.key} className="flex flex-col">
+                                    <Link 
+                                        href={`/tin-tuc?group=${group.key}`}
+                                        className="text-[14px] font-bold text-gray-900 uppercase mb-4 pb-2 border-b border-gray-200 flex items-center gap-2 hover:text-primary-600 transition-colors"
+                                    >
+                                        <span className="text-xl">{group.icon}</span> {group.name}
+                                    </Link>
+                                    <div className="flex flex-col space-y-3">
+                                        {group.slugs.map(slug => {
+                                            const cat = categories.find(c => c.slug === slug);
+                                            if (!cat) return null;
+                                            return (
+                                                <Link 
+                                                    key={cat.id}
+                                                    href={`/tin-tuc?category=${cat.slug}`}
+                                                    className={`text-[13px] transition-colors flex items-center group/link ${
+                                                        activeCategory === cat.slug 
+                                                        ? 'text-primary-600 font-bold' 
+                                                        : 'text-gray-600 hover:text-primary-600'
+                                                    }`}
+                                                >
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-gray-300 mr-2 group-hover/link:bg-primary-500 transition-colors"></span>
+                                                    {cat.name}
+                                                </Link>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                            </div>
-                        );
-                    })}
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
 
