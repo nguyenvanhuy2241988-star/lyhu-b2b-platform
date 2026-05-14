@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from "date-fns";
-import { Calendar, Filter, Megaphone, Share2, Users, AlertTriangle, MessageSquare, CheckCircle2, Eye } from "lucide-react";
-import { getAllDailyReports, DailyPlatformFunnel } from "@/lib/recruitmentStore";
+import { Calendar, Filter, Megaphone, Share2, Users, AlertTriangle, MessageSquare, CheckCircle2, Eye, Target } from "lucide-react";
+import { getAllDailyReports, DailyPlatformFunnel, PostLog } from "@/lib/recruitmentStore";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { fetchActiveKpiMetrics, KpiMetricDefinition } from "@/lib/kpiSalaryStore";
 import ReportDetailModal from "../daily/components/ReportDetailModal";
-import KpiDashboard from "../daily/components/KpiDashboard";
+import KpiDashboard, { countLogsForMetric } from "../daily/components/KpiDashboard";
 
 type ReportWithProfile = {
     id: string;
@@ -39,6 +40,9 @@ export default function ReportsPage() {
     const [filterType, setFilterType] = useState<'today' | 'yesterday' | 'week' | 'month' | 'custom'>('today');
     const [dateRange, setDateRange] = useState({ start: new Date(), end: new Date() });
     const [selectedReport, setSelectedReport] = useState<ReportWithProfile | null>(null);
+    const [teamLogs, setTeamLogs] = useState<PostLog[]>([]);
+    const [kpiMetrics, setKpiMetrics] = useState<KpiMetricDefinition[]>([]);
+    const [selectedUserId, setSelectedUserId] = useState<string>('all');
 
     useEffect(() => {
         if (filterType !== 'custom') {
@@ -95,6 +99,18 @@ export default function ReportsPage() {
                 .gte('date', startStr)
                 .lte('date', endStr);
 
+            // Fetch Team Logs
+            const { data: logsData } = await supabase
+                .from('recruitment_post_logs')
+                .select('*')
+                .gte('date', startStr)
+                .lte('date', endStr);
+            setTeamLogs(logsData || []);
+
+            // Fetch KPI Metrics
+            const metrics = await fetchActiveKpiMetrics('recruiter');
+            setKpiMetrics(metrics);
+
             // Merge
             const enrichedData = data?.map(report => {
                 const reportFunnels = (funnelsData || []).filter((f: DailyPlatformFunnel) => f.user_id === report.user_id && f.date === report.date);
@@ -109,17 +125,39 @@ export default function ReportsPage() {
         }
     };
 
+    const filteredReports = selectedUserId === 'all' ? reports : reports.filter(r => r.user_id === selectedUserId);
+    const filteredLogs = selectedUserId === 'all' ? teamLogs : teamLogs.filter(l => l.user_id === selectedUserId);
+
     // Calculate Summary Stats
-    const totalPosts = reports.reduce((sum, r) => sum + r.fb_posts_paid + r.fb_posts_free + r.threads_posts, 0);
-    const totalInteractions = reports.reduce((sum, r) => sum + r.fb_comments + r.threads_comments, 0);
-    const totalReports = reports.length;
+    const totalPosts = filteredReports.reduce((sum, r) => sum + r.fb_posts_paid + r.fb_posts_free + r.threads_posts, 0);
+    const totalInteractions = filteredReports.reduce((sum, r) => sum + r.fb_comments + r.threads_comments, 0);
+    const totalReports = filteredReports.length;
+
+    // Calculate Total Funnels
+    const totalFunnels = filteredReports.reduce((acc, report) => {
+        if (report.funnels) {
+            report.funnels.forEach(f => {
+                const key = f.platform.toLowerCase();
+                if (!acc[key]) {
+                    acc[key] = { platform: f.platform, inquiries: 0, cvs: 0, interviews: 0 };
+                }
+                acc[key].inquiries += f.inquiries_count || 0;
+                acc[key].cvs += f.cvs_count || 0;
+                acc[key].interviews += f.interviews_count || 0;
+            });
+        }
+        return acc;
+    }, {} as Record<string, { platform: string, inquiries: number, cvs: number, interviews: number }>);
+    const totalFunnelArray = Object.values(totalFunnels);
 
     // Group by Date for cleaner list
-    const reportsByDate = reports.reduce((acc, report) => {
+    const reportsByDate = filteredReports.reduce((acc, report) => {
         if (!acc[report.date]) acc[report.date] = [];
         acc[report.date].push(report);
         return acc;
     }, {} as Record<string, ReportWithProfile[]>);
+
+    const uniqueUsers = Array.from(new Map(reports.map(r => [r.user_id, { id: r.user_id, name: r.profile.full_name }])).values());
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -134,7 +172,19 @@ export default function ReportsPage() {
                 </div>
 
                 <div className="flex flex-col gap-2 items-end">
-                    <div className="flex bg-white rounded-lg border border-slate-200 p-1">
+                    <div className="flex items-center gap-3 mb-1">
+                        <select
+                            value={selectedUserId}
+                            onChange={(e) => setSelectedUserId(e.target.value)}
+                            className="px-3 py-1.5 text-sm border border-slate-200 rounded-lg outline-none focus:border-primary-500 bg-white font-medium text-slate-700"
+                        >
+                            <option value="all">Tổng (Tất cả nhân sự)</option>
+                            {uniqueUsers.map(u => (
+                                <option key={u.id} value={u.id}>{u.name}</option>
+                            ))}
+                        </select>
+                        
+                        <div className="flex bg-white rounded-lg border border-slate-200 p-1">
                         <button
                             onClick={() => setFilterType('today')}
                             className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${filterType === 'today' ? 'bg-slate-100 text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
@@ -218,6 +268,51 @@ export default function ReportsPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Team KPI Summary */}
+            {filteredLogs.length > 0 && kpiMetrics.length > 0 && (
+                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
+                        <Target className="w-5 h-5 text-indigo-600" />
+                        {selectedUserId === 'all' ? 'Tổng quan KPI Toàn đội' : `Tổng quan KPI Cá nhân`} ({format(dateRange.start, 'dd/MM')} - {format(dateRange.end, 'dd/MM')})
+                    </h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                        {kpiMetrics.sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((metric, idx) => {
+                            const count = countLogsForMetric(metric.key, metric.label, filteredLogs);
+                            return (
+                                <div key={idx} className="border border-slate-100 bg-slate-50 rounded-lg p-3 relative overflow-hidden">
+                                    <p className="text-[11px] text-slate-500 font-medium mb-1 truncate" title={metric.label}>{metric.label}</p>
+                                    <div className="text-xl font-bold text-slate-900">{count}</div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* Team Funnel Summary */}
+            {totalFunnelArray.length > 0 && (
+                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4">
+                        <Megaphone className="w-5 h-5 text-orange-600" />
+                        {selectedUserId === 'all' ? 'Tổng quan Hiệu quả Tuyển dụng Toàn đội' : 'Tổng quan Hiệu quả Tuyển dụng Cá nhân'}
+                    </h2>
+                    <div className="grid grid-cols-4 bg-slate-50 text-xs font-semibold text-slate-500 p-2 border-b border-slate-200 rounded-t-lg">
+                        <div>Nền tảng</div>
+                        <div className="text-center text-blue-600">Số người hỏi việc</div>
+                        <div className="text-center text-orange-600">Số CV thu được</div>
+                        <div className="text-center text-green-600">Số hẹn Phỏng vấn</div>
+                    </div>
+                    {totalFunnelArray.map((funnel, idx) => (
+                        <div key={idx} className="grid grid-cols-4 p-3 border-b border-slate-100 last:border-0 items-center">
+                            <div className="font-semibold text-slate-800 capitalize">{funnel.platform}</div>
+                            <div className="text-center font-bold text-slate-900 text-lg">{funnel.inquiries}</div>
+                            <div className="text-center font-bold text-slate-900 text-lg">{funnel.cvs}</div>
+                            <div className="text-center font-bold text-slate-900 text-lg">{funnel.interviews}</div>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* Report List */}
             <div className="space-y-6">

@@ -18,8 +18,7 @@ interface KpiDashboardProps {
 // Map a KPI metric to its count from post_logs
 // Same logic as resolveActualKey in kpiSalaryStore.ts
 // but returns the actual count from logs for a single day
-// =====================================================
-function countLogsForMetric(metricKey: string, metricLabel: string, logs: PostLog[]): number {
+export function countLogsForMetric(metricKey: string, metricLabel: string, logs: PostLog[]): number {
     // 1. Try direct key match first
     const key = metricKey.toLowerCase();
     const label = metricLabel.toLowerCase();
