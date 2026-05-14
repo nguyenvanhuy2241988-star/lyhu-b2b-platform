@@ -215,6 +215,7 @@ export default function ReportsPage() {
                         >
                             Tùy chọn
                         </button>
+                        </div>
                     </div>
 
                     {filterType === 'custom' && (
