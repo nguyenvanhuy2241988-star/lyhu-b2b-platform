@@ -97,7 +97,7 @@ export default function ReportsPage() {
 
             // Merge
             const enrichedData = data?.map(report => {
-                const reportFunnels = (funnelsData || []).filter(f => f.user_id === report.user_id && f.date === report.date);
+                const reportFunnels = (funnelsData || []).filter((f: DailyPlatformFunnel) => f.user_id === report.user_id && f.date === report.date);
                 return { ...report, funnels: reportFunnels };
             });
 
