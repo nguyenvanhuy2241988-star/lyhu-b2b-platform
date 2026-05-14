@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 interface KpiDashboardProps {
     date: string;
     userId: string;
+    compact?: boolean;
 }
 
 // =====================================================
@@ -99,7 +100,7 @@ const COLORS = [
 
 const WORKING_DAYS = 26; // Standard working days per month
 
-export default function KpiDashboard({ date, userId }: KpiDashboardProps) {
+export default function KpiDashboard({ date, userId, compact }: KpiDashboardProps) {
     const { user, role } = useAuth();
     const [metrics, setMetrics] = useState<KpiMetricDefinition[]>([]);
     const [logs, setLogs] = useState<PostLog[]>([]);
@@ -141,7 +142,7 @@ export default function KpiDashboard({ date, userId }: KpiDashboardProps) {
 
         // Realtime: reload on post_log changes
         const channel = supabase
-            .channel('recruitment-kpi-updates')
+            .channel(`recruitment-kpi-updates-${userId}-${date}`)
             .on(
                 'postgres_changes',
                 {
@@ -162,7 +163,7 @@ export default function KpiDashboard({ date, userId }: KpiDashboardProps) {
         };
     }, [userId, date]);
 
-    if (loading) return <div className="h-24 animate-pulse bg-slate-100 rounded-xl mb-6"></div>;
+    if (loading) return <div className={cn("animate-pulse bg-slate-100 rounded-xl", compact ? "flex-1 h-24" : "h-24 mb-6")}></div>;
     if (metrics.length === 0) return null;
 
     // Build display items from kpi_metric_definitions
@@ -198,6 +199,46 @@ export default function KpiDashboard({ date, userId }: KpiDashboardProps) {
             };
         });
 
+    const GridContent = (
+        <div className={cn("grid gap-3 flex-1", compact ? "grid-cols-2 md:grid-cols-4 lg:grid-cols-5" : "grid-cols-2 md:grid-cols-4 lg:grid-cols-6")}>
+            {items.map((item, idx) => {
+                const percent = item.target > 0 ? Math.min(100, Math.round((item.count / item.target) * 100)) : (item.count > 0 ? 100 : 0);
+                return (
+                    <div key={idx} className="border border-slate-100 bg-white rounded-lg p-2 relative overflow-hidden flex flex-col justify-between min-h-[100px] shadow-sm">
+                        <div className="flex justify-between items-start mb-1">
+                            <div className={cn("p-1.5 rounded-lg", item.bg)}>
+                                <Target className={cn("w-3.5 h-3.5", item.text)} />
+                            </div>
+                            <div className="text-right">
+                                <div className="text-lg font-bold text-slate-900 leading-none">
+                                    {item.count}<span className="text-[10px] font-normal text-slate-400">/{item.target}</span>
+                                </div>
+                                <p className={cn("text-[10px] font-medium mt-0.5",
+                                    percent >= 100 ? "text-green-600" : "text-slate-500"
+                                )}>
+                                    {percent}%
+                                </p>
+                            </div>
+                        </div>
+                        <div>
+                            <p className="text-[10px] text-slate-500 font-medium truncate mb-1" title={item.label}>{item.label}</p>
+                            <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                                <div
+                                    className={cn("h-full rounded-full transition-all duration-500", item.bar)}
+                                    style={{ width: `${percent}%` }}
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+
+    if (compact) {
+        return GridContent;
+    }
+
     return (
         <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6 relative">
             <div className="flex justify-between items-center mb-4">
@@ -206,40 +247,7 @@ export default function KpiDashboard({ date, userId }: KpiDashboardProps) {
                     Tiến độ công việc
                 </h2>
             </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                {items.map((item, idx) => {
-                    const percent = item.target > 0 ? Math.min(100, Math.round((item.count / item.target) * 100)) : (item.count > 0 ? 100 : 0);
-                    return (
-                        <div key={idx} className="border border-slate-100 rounded-lg p-2 relative overflow-hidden flex flex-col justify-between min-h-[100px]">
-                            <div className="flex justify-between items-start mb-1">
-                                <div className={cn("p-1.5 rounded-lg", item.bg)}>
-                                    <Target className={cn("w-3.5 h-3.5", item.text)} />
-                                </div>
-                                <div className="text-right">
-                                    <div className="text-lg font-bold text-slate-900 leading-none">
-                                        {item.count}<span className="text-[10px] font-normal text-slate-400">/{item.target}</span>
-                                    </div>
-                                    <p className={cn("text-[10px] font-medium mt-0.5",
-                                        percent >= 100 ? "text-green-600" : "text-slate-500"
-                                    )}>
-                                        {percent}%
-                                    </p>
-                                </div>
-                            </div>
-                            <div>
-                                <p className="text-[10px] text-slate-500 font-medium truncate mb-1" title={item.label}>{item.label}</p>
-                                <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
-                                    <div
-                                        className={cn("h-full rounded-full transition-all duration-500", item.bar)}
-                                        style={{ width: `${percent}%` }}
-                                    ></div>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
+            {GridContent}
         </div>
     );
 }

@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react";
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subDays } from "date-fns";
 import { Calendar, Filter, Megaphone, Share2, Users, AlertTriangle, MessageSquare, CheckCircle2, Eye } from "lucide-react";
-import { getAllDailyReports } from "@/lib/recruitmentStore";
+import { getAllDailyReports, DailyPlatformFunnel } from "@/lib/recruitmentStore";
+import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/components/auth/AuthProvider";
 import ReportDetailModal from "../daily/components/ReportDetailModal";
+import KpiDashboard from "../daily/components/KpiDashboard";
 
 type ReportWithProfile = {
     id: string;
@@ -27,6 +29,7 @@ type ReportWithProfile = {
         avatar_url: string;
         email: string;
     };
+    funnels?: DailyPlatformFunnel[];
 };
 
 export default function ReportsPage() {
@@ -84,7 +87,21 @@ export default function ReportsPage() {
             const startStr = format(dateRange.start, "yyyy-MM-dd");
             const endStr = format(dateRange.end, "yyyy-MM-dd");
             const data = await getAllDailyReports(startStr, endStr);
-            setReports(data || []);
+            
+            // Fetch funnels
+            const { data: funnelsData } = await supabase
+                .from('recruitment_daily_platform_funnels')
+                .select('*')
+                .gte('date', startStr)
+                .lte('date', endStr);
+
+            // Merge
+            const enrichedData = data?.map(report => {
+                const reportFunnels = (funnelsData || []).filter(f => f.user_id === report.user_id && f.date === report.date);
+                return { ...report, funnels: reportFunnels };
+            });
+
+            setReports(enrichedData || []);
         } catch (error) {
             console.error("Error loading reports:", error);
         } finally {
@@ -220,91 +237,100 @@ export default function ReportsPage() {
                             <div className="grid grid-cols-1 gap-4">
                                 {reportsByDate[dateKey].map(report => (
                                     <div key={report.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                                        <div className="flex flex-col md:flex-row gap-6">
-                                            {/* User Info */}
-                                            <div className="flex items-start gap-3 min-w-[200px]">
-                                                {report.profile.avatar_url ? (
-                                                    <img src={report.profile.avatar_url} alt={report.profile.full_name} className="w-10 h-10 rounded-full object-cover border border-slate-200" />
-                                                ) : (
-                                                    <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-500">
-                                                        {report.profile.full_name.charAt(0)}
+                                        <div className="flex flex-col gap-4">
+                                            {/* Top Row */}
+                                            <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
+                                                {/* User Info */}
+                                                <div className="flex items-start gap-3 min-w-[200px]">
+                                                    {report.profile.avatar_url ? (
+                                                        <img src={report.profile.avatar_url} alt={report.profile.full_name} className="w-10 h-10 rounded-full object-cover border border-slate-200" />
+                                                    ) : (
+                                                        <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-500">
+                                                            {report.profile.full_name.charAt(0)}
+                                                        </div>
+                                                    )}
+                                                    <div>
+                                                        <h4 className="font-semibold text-slate-900">{report.profile.full_name}</h4>
+                                                        <p className="text-xs text-slate-500">{report.profile.email}</p>
+                                                        <div className="text-xs text-slate-400 mt-1">
+                                                            {format(new Date(), "HH:mm")}
+                                                        </div>
                                                     </div>
-                                                )}
-                                                <div>
-                                                    <h4 className="font-semibold text-slate-900">{report.profile.full_name}</h4>
-                                                    <p className="text-xs text-slate-500">{report.profile.email}</p>
-                                                    <div className="text-xs text-slate-400 mt-1">
-                                                        {format(new Date(), "HH:mm")}
-                                                    </div>
+                                                </div>
+
+                                                {/* Metrics Grid */}
+                                                <KpiDashboard date={report.date} userId={report.user_id} compact={true} />
+
+                                                {/* Show Details Button */}
+                                                <div className="flex items-center ml-auto">
+                                                    <a
+                                                        href={`/recruitment/daily?userId=${report.user_id}&date=${report.date}`}
+                                                        className="p-3 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-full transition-colors shrink-0"
+                                                        title="Xem chi tiết & Chấm điểm"
+                                                    >
+                                                        <Eye className="w-5 h-5" />
+                                                    </a>
                                                 </div>
                                             </div>
 
-                                            {/* Metrics Grid */}
-                                            <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                                <div>
-                                                    <p className="text-xs text-slate-500 uppercase font-semibold">Facebook</p>
-                                                    <p className="text-sm font-medium text-slate-700 mt-1">
-                                                        {report.fb_posts_paid + report.fb_posts_free} bài
-                                                    </p>
+                                            {/* Bottom Row: Text Reports */}
+                                            {(report.issues || report.request_support || report.other_tasks || report.no_post_reason || report.plan_next_day) && (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm pt-3 border-t border-slate-100">
+                                                    {report.other_tasks && (
+                                                        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                                            <span className="font-semibold text-slate-700 block mb-1">Công việc khác</span>
+                                                            <span className="text-slate-600 break-words whitespace-pre-wrap">{report.other_tasks}</span>
+                                                        </div>
+                                                    )}
+                                                    {report.no_post_reason && (
+                                                        <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100">
+                                                            <span className="font-semibold text-yellow-800 block mb-1">Lý do không đăng bài</span>
+                                                            <span className="text-yellow-700 break-words whitespace-pre-wrap">{report.no_post_reason}</span>
+                                                        </div>
+                                                    )}
+                                                    {report.issues && (
+                                                        <div className="bg-red-50 p-3 rounded-lg border border-red-100">
+                                                            <span className="font-semibold text-red-800 flex items-center gap-1 mb-1"><AlertTriangle className="w-3 h-3" /> Vấn đề gặp phải</span>
+                                                            <span className="text-red-700 break-words whitespace-pre-wrap">{report.issues}</span>
+                                                        </div>
+                                                    )}
+                                                    {report.request_support && (
+                                                        <div className="bg-primary-50 p-3 rounded-lg border border-primary-100">
+                                                            <span className="font-semibold text-primary-800 flex items-center gap-1 mb-1"><Megaphone className="w-3 h-3" /> Đề xuất hỗ trợ</span>
+                                                            <span className="text-primary-700 break-words whitespace-pre-wrap">{report.request_support}</span>
+                                                        </div>
+                                                    )}
+                                                    {report.plan_next_day && (
+                                                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                                                            <span className="font-semibold text-blue-800 block mb-1">Kế hoạch ngày mai</span>
+                                                            <span className="text-blue-700 break-words whitespace-pre-wrap">{report.plan_next_day}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <div>
-                                                    <p className="text-xs text-slate-500 uppercase font-semibold">Tương tác</p>
-                                                    <p className="text-sm font-medium text-slate-700 mt-1">
-                                                        {report.fb_comments} cmt
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-slate-500 uppercase font-semibold">Kết bạn</p>
-                                                    <p className="text-sm font-medium text-slate-700 mt-1">
-                                                        {report.fb_friends}
-                                                    </p>
-                                                </div>
-                                                <div>
-                                                    <p className="text-xs text-slate-500 uppercase font-semibold">Threads</p>
-                                                    <p className="text-sm font-medium text-slate-700 mt-1">
-                                                        {report.threads_posts} bài
-                                                    </p>
-                                                </div>
-                                            </div>
+                                            )}
 
-                                            {/* Issues & Requests */}
-                                            <div className="flex-1 space-y-3">
-                                                {(report.issues || report.request_support) ? (
-                                                    <>
-                                                        {report.issues && (
-                                                            <div className="flex gap-2 text-sm bg-red-50 p-2 rounded text-red-700 border border-red-100">
-                                                                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                                                                <div>
-                                                                    <span className="font-semibold">Vấn đề:</span> {report.issues}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                        {report.request_support && (
-                                                            <div className="flex gap-2 text-sm bg-primary-50 p-2 rounded text-primary-700 border border-primary-100">
-                                                                <Megaphone className="w-4 h-4 shrink-0 mt-0.5" />
-                                                                <div>
-                                                                    <span className="font-semibold">Đề xuất:</span> {report.request_support}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </>
-                                                ) : (
-                                                    <div className="h-full flex items-center justify-center text-sm text-slate-400 italic">
-                                                        Không có vấn đề hay đề xuất nào.
+                                            {/* Bottom Row: Platform Funnels (Hiệu quả Tuyển dụng) */}
+                                            {report.funnels && report.funnels.length > 0 && report.funnels.some(f => f.inquiries_count > 0 || f.cvs_count > 0 || f.interviews_count > 0) && (
+                                                <div className="mt-3 bg-white rounded-lg border border-slate-200 overflow-hidden text-sm">
+                                                    <div className="bg-slate-50 px-3 py-2 border-b border-slate-200 font-semibold text-slate-700 flex items-center justify-between">
+                                                        <span>Hiệu quả Nguồn Tuyển dụng (Platform Funnel)</span>
                                                     </div>
-                                                )}
-                                            </div>
-
-                                            {/* Show Details Button */}
-                                            <div className="flex items-center">
-                                                <a
-                                                    href={`/recruitment/daily?userId=${report.user_id}&date=${report.date}`}
-                                                    className="p-3 text-slate-400 hover:text-teal-600 hover:bg-teal-50 rounded-full transition-colors"
-                                                    title="Xem chi tiết & Chấm điểm"
-                                                >
-                                                    <Eye className="w-5 h-5" />
-                                                </a>
-                                            </div>
+                                                    <div className="grid grid-cols-4 bg-slate-50 text-xs font-semibold text-slate-500 p-2 border-b border-slate-200">
+                                                        <div>Nền tảng</div>
+                                                        <div className="text-center text-blue-600">Số người hỏi việc</div>
+                                                        <div className="text-center text-orange-600">Số CV thu được</div>
+                                                        <div className="text-center text-green-600">Số hẹn Phỏng vấn</div>
+                                                    </div>
+                                                    {report.funnels.filter(f => f.inquiries_count > 0 || f.cvs_count > 0 || f.interviews_count > 0).map((funnel, idx) => (
+                                                        <div key={idx} className="grid grid-cols-4 p-2 border-b border-slate-100 last:border-0 items-center">
+                                                            <div className="font-medium text-slate-700 capitalize">{funnel.platform}</div>
+                                                            <div className="text-center font-semibold text-slate-900">{funnel.inquiries_count}</div>
+                                                            <div className="text-center font-semibold text-slate-900">{funnel.cvs_count}</div>
+                                                            <div className="text-center font-semibold text-slate-900">{funnel.interviews_count}</div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
