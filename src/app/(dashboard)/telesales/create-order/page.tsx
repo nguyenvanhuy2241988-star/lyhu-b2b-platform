@@ -10,7 +10,7 @@ import { addOrderSupabase, updateOrderSupabase } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { createClient } from "@/lib/supabaseClient";
 import { reserveStock, getInventoryLevel, getDefaultWarehouseId } from "@/lib/inventoryStore";
-import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import { Panel, Group, Separator } from "react-resizable-panels";
 
 const supabase = createClient();
 
@@ -699,7 +699,7 @@ function TelesalesCreateOrderContent() {
                     </div>
 
                     {/* Split-Panel: Product Catalog (left) + Order Cart (right) */}
-                    <PanelGroup direction={isDesktop ? "horizontal" : "vertical"} className="gap-6 lg:gap-0">
+                    <Group direction={isDesktop ? "horizontal" : "vertical"} className="gap-6 lg:gap-0">
                         {/* LEFT PANEL: Product Catalog — Compact Table */}
                         <Panel defaultSize={60} minSize={30} className="min-w-0">
                             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
@@ -924,9 +924,9 @@ function TelesalesCreateOrderContent() {
                         </Panel>
 
                         {isDesktop && (
-                            <PanelResizeHandle className="w-4 mx-2 hidden lg:flex items-center justify-center cursor-col-resize group rounded-full transition-colors outline-none">
+                            <Separator className="w-4 mx-2 hidden lg:flex items-center justify-center cursor-col-resize group rounded-full transition-colors outline-none">
                                 <div className="w-1 h-10 bg-slate-200 group-hover:bg-teal-400 group-active:bg-teal-600 rounded-full transition-colors" />
-                            </PanelResizeHandle>
+                            </Separator>
                         )}
                         {!isDesktop && <div className="h-6 lg:hidden" />}
 
@@ -1201,7 +1201,7 @@ function TelesalesCreateOrderContent() {
                                 </div>
                             </div>
                         </Panel>
-                    </PanelGroup>
+                    </Group>
                 </>
             )}
         </div>
