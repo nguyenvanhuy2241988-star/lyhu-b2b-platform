@@ -699,7 +699,7 @@ function TelesalesCreateOrderContent() {
                     </div>
 
                     {/* Split-Panel: Product Catalog (left) + Order Cart (right) */}
-                    <Group direction={isDesktop ? "horizontal" : "vertical"} className="gap-6 lg:gap-0">
+                    <Group orientation={isDesktop ? "horizontal" : "vertical"} className="gap-6 lg:gap-0">
                         {/* LEFT PANEL: Product Catalog — Compact Table */}
                         <Panel defaultSize={60} minSize={30} className="min-w-0">
                             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
