@@ -10,6 +10,7 @@ import { addOrderSupabase, updateOrderSupabase } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { createClient } from "@/lib/supabaseClient";
 import { reserveStock, getInventoryLevel, getDefaultWarehouseId } from "@/lib/inventoryStore";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 
 const supabase = createClient();
 
@@ -235,6 +236,14 @@ function TelesalesCreateOrderContent() {
     const [searchTerm, setSearchTerm] = useState("");
     const [productSearchTerm, setProductSearchTerm] = useState("");
     const [productQuantities, setProductQuantities] = useState<Record<string, number>>({});
+    const [isDesktop, setIsDesktop] = useState(true);
+
+    useEffect(() => {
+        const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
+        handleResize();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     // Product filter state
     const [brandFilter, setBrandFilter] = useState<string>("ALL");
@@ -690,9 +699,9 @@ function TelesalesCreateOrderContent() {
                     </div>
 
                     {/* Split-Panel: Product Catalog (left) + Order Cart (right) */}
-                    <div className="flex flex-col lg:flex-row gap-6">
+                    <PanelGroup direction={isDesktop ? "horizontal" : "vertical"} className="gap-6 lg:gap-0">
                         {/* LEFT PANEL: Product Catalog — Compact Table */}
-                        <div className="flex-[3] min-w-0">
+                        <Panel defaultSize={60} minSize={30} className="min-w-0">
                             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                                 {/* Header with search + filters */}
                                 <div className="p-4 border-b border-slate-100 space-y-3">
@@ -912,10 +921,17 @@ function TelesalesCreateOrderContent() {
                                     )}
                                 </div>
                             </div>
-                        </div>
+                        </Panel>
+
+                        {isDesktop && (
+                            <PanelResizeHandle className="w-4 mx-2 hidden lg:flex items-center justify-center cursor-col-resize group rounded-full transition-colors outline-none">
+                                <div className="w-1 h-10 bg-slate-200 group-hover:bg-teal-400 group-active:bg-teal-600 rounded-full transition-colors" />
+                            </PanelResizeHandle>
+                        )}
+                        {!isDesktop && <div className="h-6 lg:hidden" />}
 
                         {/* RIGHT PANEL: Sticky Order Cart */}
-                        <div className="flex-[2] min-w-0">
+                        <Panel defaultSize={40} minSize={25} className="min-w-0">
                             <div className="lg:sticky lg:top-4">
                                 <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                                     {/* Cart Header */}
@@ -1184,8 +1200,8 @@ function TelesalesCreateOrderContent() {
                                     )}
                                 </div>
                             </div>
-                        </div>
-                    </div>
+                        </Panel>
+                    </PanelGroup>
                 </>
             )}
         </div>
