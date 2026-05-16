@@ -434,7 +434,7 @@ function IntroductionView({ brand }: { brand: any }) {
     return (
         <div className="animate-in fade-in duration-500 space-y-16">
             <div>
-                <h1 className="text-2xl font-semibold text-slate-900 tracking-tight uppercase">Thông Điệp Từ Ban Lãnh Đạo</h1>
+                <h1 className="text-2xl font-semibold text-slate-900 tracking-tight uppercase"><EditableText id="intro_main_title" defaultText="Thông Điệp Từ Ban Lãnh Đạo" /></h1>
                 <div className="h-1 w-16 mt-4" style={{ backgroundColor: brand.teal }}></div>
             </div>
 
@@ -513,7 +513,7 @@ function BrandIdentityView({ brand }: { brand: any }) {
             <div key="adn" className="relative group/sort w-full text-slate-800">
                 {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'adn')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'adn')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
                 <div>
-                    <h1 className="text-2xl font-semibold text-slate-900 tracking-tight uppercase">ADN LYHU – Sức mạnh của 4 chữ cái</h1>
+                    <h1 className="text-2xl font-semibold text-slate-900 tracking-tight uppercase"><EditableText id="adn_main_title" defaultText="ADN LYHU – Sức mạnh của 4 chữ cái" /></h1>
                     <div className="h-1 w-16 mt-4 mb-10" style={{ backgroundColor: brand.teal }}></div>
                 </div>
 
@@ -574,7 +574,7 @@ function LogoView({ brand }: { brand: any }) {
         meaning: (
             <div key="meaning" className="relative group/sort w-full text-slate-800">
                 {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'meaning')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'meaning')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
-                <h2 className="text-3xl font-bold text-slate-800 mb-10 tracking-tight uppercase">Ý TƯỞNG THIẾT KẾ & Ý NGHĨA LOGO</h2>
+                <h2 className="text-3xl font-bold text-slate-800 mb-10 tracking-tight uppercase"><EditableText id="logo_meaning_title" defaultText="Ý TƯỞNG THIẾT KẾ & Ý NGHĨA LOGO" /></h2>
                 <div className="h-1 w-16 mb-10 mt-[-10px]" style={{ backgroundColor: brand.teal }}></div>
                 <div className="flex flex-col xl:flex-row gap-12 items-center">
                     <div className="w-full xl:w-5/12">
@@ -599,20 +599,20 @@ function LogoView({ brand }: { brand: any }) {
             <div key="structure" className="relative group/sort w-full text-slate-800">
                 {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'structure')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'structure')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
                 
-                <h2 className="text-3xl font-bold text-slate-800 mb-6 tracking-tight uppercase text-center">Tiêu Chuẩn Lưới Cấu Trúc & Tỷ Lệ Vàng</h2>
+                <h2 className="text-3xl font-bold text-slate-800 mb-6 tracking-tight uppercase text-center"><EditableText id="logo_structure_title" defaultText="Tiêu Chuẩn Lưới Cấu Trúc & Tỷ Lệ Vàng" /></h2>
                 <p className="text-xl text-slate-500 font-medium text-center mb-10 max-w-3xl mx-auto">
                     <EditableText id="logo_structure_intro" multiline defaultText="Thiết kế logo LYHU dựa trên hệ thống lưới (Grid System) chuẩn mực, đảm bảo tỷ lệ vàng và tính cân bằng tuyệt đối trong khả năng nhận diện." />
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                     <div className="flex flex-col">
-                        <h3 className="text-xl font-bold text-slate-800 mb-4 tracking-tight uppercase border-b border-slate-100 pb-2">Logo Có Chữ Kèm Biểu Tượng</h3>
+                        <h3 className="text-xl font-bold text-slate-800 mb-4 tracking-tight uppercase border-b border-slate-100 pb-2"><EditableText id="logo_structure_sub1" defaultText="Logo Có Chữ Kèm Biểu Tượng" /></h3>
                         <div className="bg-slate-50/50 rounded-2xl p-6 flex-1 flex items-center justify-center relative">
                             <EditableImage id="img_logo_full" className="w-full aspect-[2/1] mix-blend-multiply opacity-90" label="Logo đầy đủ (Lockup)" />
                         </div>
                     </div>
                     <div className="flex flex-col">
-                        <h3 className="text-xl font-bold text-slate-800 mb-4 tracking-tight uppercase border-b border-slate-100 pb-2">Bản Vẽ Lưới Sinh Tự Động</h3>
+                        <h3 className="text-xl font-bold text-slate-800 mb-4 tracking-tight uppercase border-b border-slate-100 pb-2"><EditableText id="logo_structure_sub2" defaultText="Bản Vẽ Lưới Sinh Tự Động" /></h3>
                         <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden flex-1 relative shadow-inner min-h-[300px] md:min-h-[400px]">
                             {content.img_logo_full ? (
                                 <div className="absolute inset-0 flex items-center justify-center">
@@ -667,7 +667,7 @@ function LogoView({ brand }: { brand: any }) {
         colors: (
             <div key="colors" className="relative group/sort w-full text-slate-800">
                 {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'colors')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'colors')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
-                <h2 className="text-2xl font-bold text-slate-800 mb-6 uppercase tracking-wide text-center">Ý Nghĩa Gam Màu Thương Hiệu</h2>
+                <h2 className="text-2xl font-bold text-slate-800 mb-6 uppercase tracking-wide text-center"><EditableText id="logo_color_title" defaultText="Ý Nghĩa Gam Màu Thương Hiệu" /></h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div className="flex bg-slate-50 rounded-2xl overflow-hidden border border-slate-100 p-2">
                         <div className="w-24 shrink-0 rounded-xl flex items-center justify-center text-white text-xs font-mono font-bold shadow-sm" style={{ backgroundColor: brand.teal }}>#04ACA9</div>
@@ -689,7 +689,7 @@ function LogoView({ brand }: { brand: any }) {
         num4: (
             <div key="num4" className="relative group/sort w-full text-slate-800">
                 {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'num4')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'num4')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
-                <h2 className="text-3xl font-bold text-slate-800 mb-6 tracking-tight uppercase text-center">ADN LYHU – Sức mạnh của số 4</h2>
+                <h2 className="text-3xl font-bold text-slate-800 mb-6 tracking-tight uppercase text-center"><EditableText id="logo_num4_title" defaultText="ADN LYHU – Sức mạnh của số 4" /></h2>
                 <p className="text-xl text-slate-500 font-medium text-center mb-10 max-w-3xl mx-auto">
                     <EditableText id="logo_num4_intro" multiline defaultText="Với LYHU, số 4 không chỉ là một con số. Nó chính là linh hồn của văn hóa doanh nghiệp." />
                 </p>
@@ -752,7 +752,7 @@ function CoreValuesView({ brand }: { brand: any }) {
             <div className="w-full text-slate-800">
                 <div className="flex flex-col md:flex-row gap-12 items-center">
                     <div className="flex-1 w-full">
-                        <h1 className="text-2xl font-semibold text-slate-900 tracking-tight uppercase">Giá Trị Cốt Lõi 3K1C</h1>
+                        <h1 className="text-2xl font-semibold text-slate-900 tracking-tight uppercase"><EditableText id="core_main_title" defaultText="Giá Trị Cốt Lõi 3K1C" /></h1>
                         <div className="h-1 w-16 mt-4 mb-6" style={{ backgroundColor: brand.teal }}></div>
                         <div className="text-slate-600 text-xl leading-relaxed font-light">
                             <EditableText id="core_desc" multiline defaultText="3K1C không chỉ là nguyên tắc làm việc, mà còn là thái độ sống, giúp mỗi thành viên LYHU cùng nhau trưởng thành, gắn kết và kiến tạo giá trị lâu dài." />
@@ -806,7 +806,7 @@ function PhilosophyView({ brand }: { brand: any }) {
         <div className="animate-in fade-in duration-500 space-y-10">
             <div className="w-full text-slate-800">
                 <div className="text-center mb-12">
-                    <h1 className="text-2xl font-semibold text-slate-900 tracking-tight uppercase">Triết Lý Làm Việc Của Chúng Ta</h1>
+                    <h1 className="text-2xl font-semibold text-slate-900 tracking-tight uppercase"><EditableText id="phil_main_title" defaultText="Triết Lý Làm Việc Của Chúng Ta" /></h1>
                     <div className="h-1 w-16 mx-auto mt-4" style={{ backgroundColor: brand.teal }}></div>
                 </div>
 
@@ -858,7 +858,7 @@ function VisionView({ brand }: { brand: any }) {
         <div className="animate-in fade-in duration-500 space-y-10">
             <div className="w-full text-slate-800">
                 <div>
-                    <h1 className="text-2xl font-semibold text-slate-900 tracking-tight uppercase">Chúng Ta Hướng Về Đâu?</h1>
+                    <h1 className="text-2xl font-semibold text-slate-900 tracking-tight uppercase"><EditableText id="vis_main_title" defaultText="Chúng Ta Hướng Về Đâu?" /></h1>
                     <div className="h-1 w-16 mt-4 mb-10" style={{ backgroundColor: brand.teal }}></div>
                 </div>
 
@@ -929,7 +929,7 @@ function BrandsView({ brand }: { brand: any }) {
         <div className="animate-in fade-in duration-500 space-y-10">
             <div className="w-full text-slate-800">
                 <div className="text-center mb-12">
-                    <h1 className="text-2xl font-semibold text-slate-900 tracking-tight uppercase">Danh Mục Nhãn Hàng & Sản Phẩm</h1>
+                    <h1 className="text-2xl font-semibold text-slate-900 tracking-tight uppercase"><EditableText id="brands_main_title" defaultText="Danh Mục Nhãn Hàng & Sản Phẩm" /></h1>
                     <div className="h-1 w-16 mx-auto mt-4" style={{ backgroundColor: brand.teal }}></div>
                     <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto font-light">
                         <EditableText id="brands_intro_desc" multiline defaultText="Hệ sinh thái sản phẩm phong phú và chất lượng, phục vụ cho nhiều nhu cầu khác nhau của thị trường." />
