@@ -695,14 +695,16 @@ function LogoView({ brand }: { brand: any }) {
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {[
-                        { n: 1, title: '4 Cánh nối tiếp nhau', desc: 'Logo của LYHU có 4 cánh, biểu tượng cho sức mạnh của tinh thần đoàn kết, gắn bó bền chặt.' },
-                        { n: 2, title: '4 Ký tự tên công ty', desc: 'Mỗi chữ cái là một giá trị cốt lõi: Love (Yêu thương), Yearn (Khao khát), Harmonize (Hòa hợp), Unify (Thống nhất).' },
-                        { n: 3, title: '4 Nguyên tắc cốt lõi', desc: 'Văn hóa LYHU tôn vinh 4 nguyên tắc: Kỷ luật – Kiên trì – Kiên nhẫn – Chấp nhận quá trình.' },
-                        { n: 4, title: 'Slogan có vần điệu', desc: 'Slogan của LYHU có 2 vế, mỗi vế chứa trọn 4 từ đắt giá: "Kết nối chân thành – Hợp tác bền vững".' },
-                    ].map((item, idx) => (
+                        { n: 1, title: '4 Cánh nối tiếp nhau', desc: 'Logo của LYHU có 4 cánh, biểu tượng cho sức mạnh của tinh thần đoàn kết, gắn bó bền chặt.', icon: HeartHandshake },
+                        { n: 2, title: '4 Ký tự tên công ty', desc: 'Mỗi chữ cái là một giá trị cốt lõi: Love (Yêu thương), Yearn (Khao khát), Harmonize (Hòa hợp), Unify (Thống nhất).', icon: Shapes },
+                        { n: 3, title: '4 Nguyên tắc cốt lõi', desc: 'Văn hóa LYHU tôn vinh 4 nguyên tắc: Kỷ luật – Kiên trì – Kiên nhẫn – Chấp nhận quá trình.', icon: CheckCircle2 },
+                        { n: 4, title: 'Slogan có vần điệu', desc: 'Slogan của LYHU có 2 vế, mỗi vế chứa trọn 4 từ đắt giá: "Kết nối chân thành – Hợp tác bền vững".', icon: Quote },
+                    ].map((item, idx) => {
+                        const Icon = item.icon;
+                        return (
                         <div key={idx} className="bg-slate-50/50 p-6 rounded-2xl flex gap-6 hover:shadow-sm transition-shadow group">
-                            <div className="w-20 shrink-0">
-                                <EditableImage id={`img_logo_num4_${idx}`} className="w-full aspect-square bg-white rounded-xl shadow-sm border border-slate-100 p-2" label={`Icon ${idx+1}`} />
+                            <div className="w-16 h-16 shrink-0 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-center transition-transform group-hover:scale-105" style={{ color: brand.teal }}>
+                                <Icon className="w-8 h-8 stroke-[1.5]" />
                             </div>
                             <div className="flex-1">
                                 <h4 className="text-xl font-bold text-slate-800 mb-2">
@@ -713,7 +715,7 @@ function LogoView({ brand }: { brand: any }) {
                                 </p>
                             </div>
                         </div>
-                    ))}
+                    )})}
                 </div>
 
                 <div className="mt-12 text-white p-8 md:p-12 rounded-2xl relative overflow-hidden shadow-sm" style={{ backgroundColor: brand.teal }}>
@@ -721,7 +723,7 @@ function LogoView({ brand }: { brand: any }) {
                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3"></div>
 
                     <div className="relative z-10 space-y-6 text-lg tracking-wide font-light">
-                        <p className="italic text-teal-300 font-medium pb-2 border-b border-white/10">
+                        <p className="italic text-white font-medium pb-2 border-b border-white/10">
                             <EditableText id="logo_quote_0" multiline defaultText="Trong thế giới quanh ta, số 4 xuất hiện ở khắp nơi. Bốn mùa luân chuyển – Xuân, Hạ, Thu, Đông. Bốn phương định hướng – Đông, Tây, Nam, Bắc. Bốn yếu tố tự nhiên – Đất, Nước, Lửa, Khí. Tất cả tạo nên một vòng tròn cân bằng, đầy đủ và vững chãi." />
                         </p>
                         <p>
