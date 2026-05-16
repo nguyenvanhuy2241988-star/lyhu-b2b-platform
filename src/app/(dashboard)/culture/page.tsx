@@ -39,7 +39,7 @@ function EditableText({ id, defaultText, className = "", multiline = false }: { 
 
     if (multiline) {
         return <textarea 
-            className={`w-full p-3 border-2 border-teal-400 bg-teal-50/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 min-h-[120px] transition-all resize-none shadow-sm ${className}`} 
+            className={`w-full p-3 border-2 border-slate-200 bg-slate-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 min-h-[120px] transition-all resize-none shadow-sm ${className}`} 
             value={val} 
             onChange={e => updateContent(id, e.target.value)} 
             placeholder="Nhập nội dung..."
@@ -47,7 +47,7 @@ function EditableText({ id, defaultText, className = "", multiline = false }: { 
     }
     return <input 
         type="text" 
-        className={`w-full p-2 border-2 border-teal-400 bg-teal-50/50 rounded-lg focus:outline-none shadow-sm transition-all ${className}`} 
+        className={`w-full p-2 border-2 border-slate-200 bg-slate-50 rounded-lg focus:outline-none shadow-sm transition-all ${className}`} 
         value={val} 
         onChange={e => updateContent(id, e.target.value)} 
         placeholder="Nhập nội dung..."
@@ -90,7 +90,7 @@ function EditableImage({ id, label = "Ảnh", className = "aspect-video" }: { id
             <div className={`relative overflow-hidden flex items-center justify-center group/preview cursor-pointer ${finalClasses}`} onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(true); }}>
                 <img src={imageUrl} alt={label} className="absolute inset-0 w-full h-full object-cover outline-none" />
                 <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover/preview:opacity-100 transition-opacity z-10 pointer-events-none backdrop-blur-[2px]">
-                    <div className="bg-white/20 p-3 rounded-full text-white backdrop-blur-md shadow-xl border border-white/20 transform scale-50 group-hover/preview:scale-100 transition-transform">
+                    <div className="bg-white/20 p-3 rounded-full text-white backdrop-blur-md shadow-sm border border-white/20 transform scale-50 group-hover/preview:scale-100 transition-transform">
                         <Eye className="w-6 h-6" />
                     </div>
                 </div>
@@ -108,21 +108,21 @@ function EditableImage({ id, label = "Ảnh", className = "aspect-video" }: { id
     }
 
     return (
-        <div className={`relative group border-2 border-dashed border-teal-400 flex items-center justify-center hover:z-50 ${finalClasses}`}>
+        <div className={`relative group border-2 border-dashed border-slate-200 flex items-center justify-center hover:z-50 ${finalClasses}`}>
            {imageUrl ? <img src={imageUrl} alt={label} className="absolute inset-0 w-full h-full object-cover opacity-60 rounded-[inherit]" /> : <div className="absolute inset-0 w-full h-full bg-teal-50 rounded-[inherit]" />}
 
            <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-[inherit] z-10 backdrop-blur-sm pointer-events-none"></div>
            
            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20">
                {isUploading ? (
-                   <span className="text-white text-sm font-bold flex items-center gap-2 whitespace-nowrap bg-slate-900/80 px-4 py-2 rounded-xl shadow-xl">
+                   <span className="text-white text-sm font-bold flex items-center gap-2 whitespace-nowrap bg-slate-900/80 px-4 py-2 rounded-xl shadow-sm">
                        <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></span> 
                        Đang tải ảnh...
                    </span>
                ) : (
                    <div className="flex flex-col items-center gap-3 w-max p-2 hover:z-50">
                        {/* Upload Button */}
-                       <label className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg cursor-pointer text-sm font-bold flex items-center gap-2 shadow-lg mb-1 pointer-events-auto transition hover:scale-105 active:scale-95">
+                       <label className="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg cursor-pointer text-sm font-bold flex items-center gap-2 shadow-sm mb-1 pointer-events-auto transition hover:scale-105 active:scale-95">
                            <ImageIcon className="w-4 h-4" /> Chọn ảnh mới
                            <input 
                                 type="file" 
@@ -133,7 +133,7 @@ function EditableImage({ id, label = "Ảnh", className = "aspect-video" }: { id
                        </label>
 
                        {/* Controls Panel */}
-                       <div className="flex flex-col gap-2 bg-slate-900/90 p-2.5 rounded-xl border border-slate-700 shadow-xl pointer-events-auto" onClick={e => e.stopPropagation()}>
+                       <div className="flex flex-col gap-2 bg-slate-900/90 p-2.5 rounded-xl border border-slate-700 shadow-sm pointer-events-auto" onClick={e => e.stopPropagation()}>
                            <div className="flex items-center gap-2 text-xs">
                                <span className="text-slate-300 w-10 font-medium tracking-wide">DÁNG:</span>
                                <button onClick={() => updateContent(`${id}_shape`, 'square')} className={`p-1.5 rounded transition ${shape==='square'?'bg-teal-500 text-white':'bg-slate-700 text-slate-300 hover:bg-slate-600'}`} title="Vuông">⏹️</button>
@@ -280,40 +280,40 @@ export default function CulturePage() {
     };
 
     if (isLoading) {
-        return <DashboardShell title="Văn hóa doanh nghiệp"><div className="p-8 text-center animate-pulse">Đang nạp dữ liệu cẩm nang...</div></DashboardShell>
+        return <DashboardShell title="Văn hóa doanh nghiệp"><div className="p-8 text-center animate-pulse text-slate-500">Đang nạp dữ liệu cẩm nang...</div></DashboardShell>
     }
 
     return (
         <CultureContext.Provider value={{ content, isEditMode, updateContent, uploadImage, uploadingId, goToNextTab, activeTab, TABS }}>
             <DashboardShell title="Văn hóa doanh nghiệp">
-                <div className="min-h-[calc(100vh-4rem)] bg-slate-50/40 flex flex-col -m-4 md:-m-8">
+                <div className="min-h-[calc(100vh-4rem)] bg-white flex flex-col -m-4 md:-m-8">
                     {/* Header - Sticky Top */}
-                    <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200/60 px-6 py-4 flex items-center justify-between shadow-sm">
+                    <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-xl border-b border-slate-100 px-6 py-4 flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center border border-teal-100 hidden sm:flex">
-                                <BookOpen className="w-5 h-5 text-teal-600" />
+                            <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 hidden sm:flex">
+                                <BookOpen className="w-4 h-4 text-slate-600" />
                             </div>
                             <div>
-                                <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-0.5">Cẩm nang nội bộ LYHU</div>
-                                <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight uppercase">Văn Hóa Doanh Nghiệp</h1>
+                                <div className="text-[10px] font-medium tracking-wide text-slate-400 mb-0.5">Cẩm nang nội bộ LYHU</div>
+                                <h1 className="text-xl md:text-2xl font-semibold text-slate-800 tracking-tight">Văn Hóa Doanh Nghiệp</h1>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-3">
                             {isEditMode ? (
                                 <>
-                                    <button onClick={() => setIsEditMode(false)} className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg max-md:hidden shadow-sm hover:bg-slate-50 transition-colors">
+                                    <button onClick={() => setIsEditMode(false)} className="px-4 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-100 rounded-full max-md:hidden shadow-sm hover:bg-slate-50 transition-colors">
                                         Hủy Sửa
                                     </button>
-                                    <button onClick={saveChanges} disabled={isSaving} className="flex items-center gap-2 px-6 py-2 text-sm font-bold text-white bg-primary-600 rounded-lg shadow-md hover:bg-primary-700 transition-colors disabled:opacity-70">
+                                    <button onClick={saveChanges} disabled={isSaving} className="flex items-center gap-2 px-6 py-2 text-sm font-semibold text-white bg-slate-900 rounded-full shadow-sm hover:bg-slate-800 transition-colors disabled:opacity-70">
                                         <Save className="w-4 h-4" />
                                         <span className="hidden sm:inline">{isSaving ? "Đang lưu..." : "Lưu Cẩm Nang"}</span>
                                         <span className="sm:hidden">{isSaving ? "..." : "Lưu"}</span>
                                     </button>
                                 </>
                             ) : (
-                                <button onClick={() => setIsEditMode(true)} className="flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-slate-700 bg-white border border-slate-200 hover:border-teal-400 rounded-xl shadow-sm hover:bg-teal-50 hover:text-teal-700 transition-colors tooltip group" title="Bật lên để thay ảnh, gắn chữ">
-                                    <Edit3 className="w-4 h-4 text-slate-400 group-hover:text-teal-600 transition-colors" />
+                                <button onClick={() => setIsEditMode(true)} className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-100 rounded-full shadow-sm hover:bg-slate-50 hover:text-slate-900 transition-colors tooltip group" title="Bật lên để thay ảnh, gắn chữ">
+                                    <Edit3 className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
                                     <span className="hidden sm:inline">Biên Tập Nội Dung</span>
                                     <span className="sm:hidden">Biên Tập</span>
                                 </button>
@@ -322,15 +322,14 @@ export default function CulturePage() {
                     </div>
 
                     {/* Content Body - 2 Columns */}
-                    <div className="flex flex-1 overflow-hidden w-full max-w-[1400px] mx-auto">
+                    <div className="flex flex-1 overflow-hidden w-full mx-auto max-w-[1400px]">
                         {/* LEFT SIDEBAR (Mục Lục) */}
-                        <div className="hidden lg:block w-72 shrink-0 border-r border-slate-200/50 bg-slate-50/50 overflow-y-auto h-[calc(100vh-[73px]-4rem)] sticky top-[73px]">
-                            <div className="p-8">
-                                <div className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400 mb-6 flex items-center gap-2">
-                                    <div className="w-4 h-[1px] bg-slate-300"></div> Mục Lục
+                        <div className="hidden lg:block w-72 shrink-0 border-r border-slate-100 bg-slate-50/30 overflow-y-auto h-[calc(100vh-73px)] sticky top-[73px]">
+                            <div className="p-8 pt-12">
+                                <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-6 flex items-center gap-2">
+                                    Mục Lục
                                 </div>
                                 <nav className="flex flex-col gap-1.5 relative">
-                                    <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-slate-100 rounded-full" />
                                     {TABS.map((tab) => {
                                         const isActive = tab.id === activeTab;
                                         const Icon = tab.icon;
@@ -338,18 +337,15 @@ export default function CulturePage() {
                                             <div 
                                                 key={tab.id}
                                                 onClick={() => setActiveTab(tab.id)}
-                                                className={`group relative flex items-center justify-between px-4 py-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                                                className={`group relative flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer transition-all duration-200 ${
                                                     isActive 
-                                                    ? "bg-white text-slate-900 shadow-sm font-bold ring-1 ring-slate-900/5" 
-                                                    : "text-slate-500 hover:bg-slate-100/80 hover:text-slate-900"
+                                                    ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200/50 font-medium" 
+                                                    : "text-slate-500 hover:bg-white/60 hover:text-slate-800"
                                                 }`}
                                             >
-                                                {isActive && <div className="absolute -left-[1px] top-1/2 -translate-y-1/2 w-[3px] h-6 bg-teal-500 rounded-r-full" />}
-                                                <div className="flex items-center gap-3">
-                                                    <Icon className="w-4 h-4 transition-colors" style={{ color: isActive ? BRAND.teal : '#cbd5e1' }} />
-                                                    <span className="text-[14px] leading-tight">{tab.label}</span>
-                                                </div>
-                                                <ArrowRight className={`w-3.5 h-3.5 transition-all ${isActive ? 'opacity-100 text-teal-600' : 'opacity-0 -translate-x-2 text-slate-300 group-hover:opacity-100 group-hover:translate-x-0'}`} />
+                                                {isActive && <div className="absolute -left-0 top-1/2 -translate-y-1/2 w-1 h-4 bg-slate-800 rounded-r-full" />}
+                                                <Icon className={`w-4 h-4 transition-colors ${isActive ? 'text-slate-800' : 'text-slate-400'}`} />
+                                                <span className="text-[14px] leading-tight">{tab.label}</span>
                                             </div>
                                         );
                                     })}
@@ -358,23 +354,23 @@ export default function CulturePage() {
                         </div>
 
                         {/* RIGHT CONTENT AREA */}
-                        <div id="culture-scroll-container" className="flex-1 flex flex-col h-[calc(100vh-[73px]-4rem)] overflow-y-auto w-full relative bg-white">
+                        <div id="culture-scroll-container" className="flex-1 flex flex-col h-[calc(100vh-73px)] overflow-y-auto w-full relative bg-white">
                             {/* Mobile Nav Top Bar */}
-                            <div className="lg:hidden border-b border-slate-200 bg-white/90 backdrop-blur-md sticky top-0 z-40">
+                            <div className="lg:hidden border-b border-slate-100 bg-white/90 backdrop-blur-md sticky top-0 z-40">
                                 <button 
                                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-                                    className="w-full p-4 flex items-center justify-between text-slate-800 font-bold"
+                                    className="w-full p-4 flex items-center justify-between text-slate-800 font-medium"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center">
-                                            <Menu className="w-4 h-4 text-teal-600" />
+                                        <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center">
+                                            <Menu className="w-4 h-4 text-slate-600" />
                                         </div>
                                         <span>{TABS.find(t => t.id === activeTab)?.label}</span>
                                     </div>
                                     <ChevronDown className={`w-5 h-5 text-slate-400 transition-transform ${isMobileMenuOpen ? 'rotate-180' : ''}`} />
                                 </button>
                                 {isMobileMenuOpen && (
-                                    <div className="absolute top-full left-0 w-full bg-white border-b border-slate-200 shadow-xl overflow-y-auto max-h-[60vh] z-50">
+                                    <div className="absolute top-full left-0 w-full bg-white border-b border-slate-100 shadow-sm overflow-y-auto max-h-[60vh] z-50">
                                         <div className="p-2 space-y-1">
                                             {TABS.map((tab) => {
                                                 const isActive = tab.id === activeTab;
@@ -383,9 +379,9 @@ export default function CulturePage() {
                                                     <div 
                                                         key={tab.id}
                                                         onClick={() => { setActiveTab(tab.id); setIsMobileMenuOpen(false); }}
-                                                        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer ${isActive ? 'bg-teal-50 text-teal-800 font-bold' : 'text-slate-600 hover:bg-slate-50'}`}
+                                                        className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer ${isActive ? 'bg-slate-50 text-slate-900 font-medium' : 'text-slate-600 hover:bg-slate-50'}`}
                                                     >
-                                                        <Icon className="w-4 h-4" style={{ color: isActive ? BRAND.teal : '' }} />
+                                                        <Icon className="w-4 h-4" />
                                                         {tab.label}
                                                     </div>
                                                 );
@@ -395,7 +391,7 @@ export default function CulturePage() {
                                 )}
                             </div>
 
-                            <div className="w-full max-w-4xl mx-auto p-6 md:p-12 lg:p-16 xl:p-20 lg:pt-12 pb-32">
+                            <div className="w-full max-w-4xl mx-auto p-6 md:p-12 lg:p-16 xl:p-24 pb-32">
                                 {activeTab === 'intro' && <IntroductionView brand={BRAND} />}
                                 {activeTab === 'brand' && <BrandIdentityView brand={BRAND} />}
                                 {activeTab === 'logo' && <LogoView brand={BRAND} />}
@@ -426,7 +422,7 @@ function NextTabButton() {
     
     return (
         <div className="mt-16 flex justify-end">
-            <button onClick={goToNextTab} className="group flex items-center gap-3 bg-teal-50 hover:bg-teal-500 text-teal-700 hover:text-white px-8 py-4 rounded-2xl transition-all shadow-sm hover:shadow-md">
+            <button onClick={goToNextTab} className="group flex items-center gap-3 bg-teal-50 hover:bg-teal-500 text-teal-700 hover:text-white px-8 py-4 rounded-2xl transition-all shadow-sm hover:shadow-sm">
                 <span className="font-semibold text-lg">Tiếp theo: {nextTab.label}</span>
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
             </button>
@@ -438,7 +434,7 @@ function IntroductionView({ brand }: { brand: any }) {
     return (
         <div className="animate-in fade-in duration-500 space-y-16">
             <div>
-                <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Thông Điệp Từ Ban Lãnh Đạo</h1>
+                <h1 className="text-2xl font-semibold text-slate-900 tracking-tight uppercase">Thông Điệp Từ Ban Lãnh Đạo</h1>
                 <div className="h-1 w-16 mt-4" style={{ backgroundColor: brand.teal }}></div>
             </div>
 
@@ -468,12 +464,12 @@ function IntroductionView({ brand }: { brand: any }) {
             </div>
 
             <div className="pt-8 w-full border-t border-slate-100 mt-12 hidden">
-                <h3 className="text-2xl font-black text-slate-800 mb-8 text-center uppercase tracking-widest">4 TRỤ CỘT HOẠT ĐỘNG</h3>
+                <h3 className="text-2xl font-bold text-slate-800 mb-8 text-center tracking-wide">4 TRỤ CỘT HOẠT ĐỘNG</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
                     {["Sản xuất", "Nhập khẩu", "Thương mại", "Bán lẻ"].map((label, i) => (
-                        <div key={i} className="p-4 bg-slate-50 rounded-3xl border border-slate-100 flex flex-col items-stretch text-center shadow-sm hover:shadow-md transition-shadow">
-                            <EditableImage id={`img_pillar_${i}`} className="w-full aspect-[3/4] rounded-2xl mb-5 !border border-slate-200 bg-white mx-auto" label={`Poster ${label}`} />
-                            <span className="font-extrabold uppercase text-slate-800 tracking-widest pb-2 mt-auto">
+                        <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col items-stretch text-center shadow-sm hover:shadow-sm transition-shadow">
+                            <EditableImage id={`img_pillar_${i}`} className="w-full aspect-[3/4] rounded-2xl mb-5 !border border-slate-100 bg-white mx-auto" label={`Poster ${label}`} />
+                            <span className="font-semibold uppercase text-slate-800 tracking-widest pb-2 mt-auto">
                                 <EditableText id={`pillar_txt_${i}`} defaultText={label} />
                             </span>
                         </div>
@@ -500,10 +496,10 @@ function BrandIdentityView({ brand }: { brand: any }) {
         hero: (
             <div key="hero" className="relative group/sort">
                 {isEditMode && <div className="absolute top-2 left-2 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'hero')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'hero')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
-                <div className="relative rounded-3xl overflow-hidden" style={{ backgroundColor: brand.teal }}>
+                <div className="relative rounded-2xl overflow-hidden" style={{ backgroundColor: brand.teal }}>
                     <EditableImage id="img_brand_hero" className="aspect-[21/9] w-full !border-none !rounded-none opacity-40 mix-blend-overlay" label="Ảnh nền đội ngũ" />
                     <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center text-white z-10 pointer-events-none">
-                        <h2 className="text-3xl md:text-5xl font-black uppercase tracking-widest mb-4 inline-block pointer-events-auto">
+                        <h2 className="text-3xl md:text-5xl font-bold tracking-wide mb-4 inline-block pointer-events-auto">
                             <EditableText id="brand_hero_title" defaultText="CHÚNG TA CÓ THỂ" />
                         </h2>
                         <p className="text-xl md:text-2xl font-light tracking-wide text-slate-200 inline-block pointer-events-auto">
@@ -517,7 +513,7 @@ function BrandIdentityView({ brand }: { brand: any }) {
             <div key="adn" className="relative group/sort w-full text-slate-800">
                 {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'adn')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'adn')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
                 <div>
-                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">ADN LYHU – Sức mạnh của 4 chữ cái</h1>
+                    <h1 className="text-2xl font-semibold text-slate-900 tracking-tight uppercase">ADN LYHU – Sức mạnh của 4 chữ cái</h1>
                     <div className="h-1 w-16 mt-4 mb-10" style={{ backgroundColor: brand.teal }}></div>
                 </div>
 
@@ -530,12 +526,12 @@ function BrandIdentityView({ brand }: { brand: any }) {
                     ].map((item, i) => (
                         <div key={i} className="group">
                             <div className="flex items-center gap-6 mb-4">
-                                <div className="text-6xl font-black" style={{ color: item.color }}>{item.l}</div>
+                                <div className="text-6xl font-bold" style={{ color: item.color }}>{item.l}</div>
                                 <div>
-                                    <h4 className="font-black text-slate-800 text-3xl tracking-widest uppercase">
+                                    <h4 className="font-bold text-slate-800 text-3xl tracking-widest uppercase">
                                         <EditableText id={`adn_title_${i}`} defaultText={item.textDefault} />
                                     </h4>
-                                    <p className="text-slate-500 font-medium uppercase tracking-widest text-sm mt-1">
+                                    <p className="text-slate-500 font-medium tracking-wide text-sm mt-1">
                                         <EditableText id={`adn_sub_${i}`} defaultText={item.sub} />
                                     </p>
                                 </div>
@@ -578,11 +574,11 @@ function LogoView({ brand }: { brand: any }) {
         meaning: (
             <div key="meaning" className="relative group/sort w-full text-slate-800">
                 {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'meaning')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'meaning')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
-                <h2 className="text-3xl font-black text-slate-800 mb-10 tracking-tight uppercase">Ý TƯỞNG THIẾT KẾ & Ý NGHĨA LOGO</h2>
+                <h2 className="text-3xl font-bold text-slate-800 mb-10 tracking-tight uppercase">Ý TƯỞNG THIẾT KẾ & Ý NGHĨA LOGO</h2>
                 <div className="h-1 w-16 mb-10 mt-[-10px]" style={{ backgroundColor: brand.teal }}></div>
                 <div className="flex flex-col xl:flex-row gap-12 items-center">
                     <div className="w-full xl:w-5/12">
-                        <EditableImage id="img_brand_logo_meaning" className="aspect-[4/3] w-full p-4 md:p-8 bg-slate-50 border border-slate-100 rounded-3xl" label="Hình khối Logo" />
+                        <EditableImage id="img_brand_logo_meaning" className="aspect-[4/3] w-full p-4 md:p-8 bg-slate-50/50 rounded-2xl" label="Hình khối Logo" />
                     </div>
                     <div className="w-full xl:w-7/12 space-y-5">
                         <h3 className="text-3xl font-bold text-slate-800 tracking-tight">
@@ -603,7 +599,7 @@ function LogoView({ brand }: { brand: any }) {
             <div key="structure" className="relative group/sort w-full text-slate-800">
                 {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'structure')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'structure')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
                 
-                <h2 className="text-3xl font-black text-slate-800 mb-6 tracking-tight uppercase text-center">Tiêu Chuẩn Lưới Cấu Trúc & Tỷ Lệ Vàng</h2>
+                <h2 className="text-3xl font-bold text-slate-800 mb-6 tracking-tight uppercase text-center">Tiêu Chuẩn Lưới Cấu Trúc & Tỷ Lệ Vàng</h2>
                 <p className="text-xl text-slate-500 font-medium text-center mb-10 max-w-3xl mx-auto">
                     <EditableText id="logo_structure_intro" multiline defaultText="Thiết kế logo LYHU dựa trên hệ thống lưới (Grid System) chuẩn mực, đảm bảo tỷ lệ vàng và tính cân bằng tuyệt đối trong khả năng nhận diện." />
                 </p>
@@ -611,13 +607,13 @@ function LogoView({ brand }: { brand: any }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                     <div className="flex flex-col">
                         <h3 className="text-xl font-bold text-slate-800 mb-4 tracking-tight uppercase border-b border-slate-100 pb-2">Logo Có Chữ Kèm Biểu Tượng</h3>
-                        <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6 flex-1 flex items-center justify-center relative">
+                        <div className="bg-slate-50/50 rounded-2xl p-6 flex-1 flex items-center justify-center relative">
                             <EditableImage id="img_logo_full" className="w-full aspect-[2/1] mix-blend-multiply opacity-90" label="Logo đầy đủ (Lockup)" />
                         </div>
                     </div>
                     <div className="flex flex-col">
                         <h3 className="text-xl font-bold text-slate-800 mb-4 tracking-tight uppercase border-b border-slate-100 pb-2">Bản Vẽ Lưới Sinh Tự Động</h3>
-                        <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden flex-1 relative shadow-inner min-h-[300px] md:min-h-[400px]">
+                        <div className="bg-white border border-slate-100 rounded-2xl overflow-hidden flex-1 relative shadow-inner min-h-[300px] md:min-h-[400px]">
                             {content.img_logo_full ? (
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     {/* Base Drafting Paper Grid */}
@@ -693,7 +689,7 @@ function LogoView({ brand }: { brand: any }) {
         num4: (
             <div key="num4" className="relative group/sort w-full text-slate-800">
                 {isEditMode && <div className="absolute top-4 right-4 z-50 flex gap-1 opacity-0 group-hover/sort:opacity-100"><button onClick={()=>move(-1,'num4')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↑ Lên</button><button onClick={()=>move(1,'num4')} className="bg-slate-800 text-white px-2 py-1 rounded text-xs">↓ Xuống</button></div>}
-                <h2 className="text-3xl font-black text-slate-800 mb-6 tracking-tight uppercase text-center">ADN LYHU – Sức mạnh của số 4</h2>
+                <h2 className="text-3xl font-bold text-slate-800 mb-6 tracking-tight uppercase text-center">ADN LYHU – Sức mạnh của số 4</h2>
                 <p className="text-xl text-slate-500 font-medium text-center mb-10 max-w-3xl mx-auto">
                     <EditableText id="logo_num4_intro" multiline defaultText="Với LYHU, số 4 không chỉ là một con số. Nó chính là linh hồn của văn hóa doanh nghiệp." />
                 </p>
@@ -704,7 +700,7 @@ function LogoView({ brand }: { brand: any }) {
                         { n: 3, title: '4 Nguyên tắc cốt lõi', desc: 'Văn hóa LYHU tôn vinh 4 nguyên tắc: Kỷ luật – Kiên trì – Kiên nhẫn – Chấp nhận quá trình.' },
                         { n: 4, title: 'Slogan có vần điệu', desc: 'Slogan của LYHU có 2 vế, mỗi vế chứa trọn 4 từ đắt giá: "Kết nối chân thành – Hợp tác bền vững".' },
                     ].map((item, idx) => (
-                        <div key={idx} className="bg-slate-50 border border-slate-100 p-6 rounded-2xl flex gap-6 hover:shadow-md transition-shadow group">
+                        <div key={idx} className="bg-slate-50/50 p-6 rounded-2xl flex gap-6 hover:shadow-sm transition-shadow group">
                             <div className="w-20 shrink-0">
                                 <EditableImage id={`img_logo_num4_${idx}`} className="w-full aspect-square bg-white rounded-xl shadow-sm border border-slate-100 p-2" label={`Icon ${idx+1}`} />
                             </div>
@@ -720,7 +716,7 @@ function LogoView({ brand }: { brand: any }) {
                     ))}
                 </div>
 
-                <div className="mt-12 text-white p-8 md:p-12 rounded-3xl relative overflow-hidden shadow-xl" style={{ backgroundColor: brand.teal }}>
+                <div className="mt-12 text-white p-8 md:p-12 rounded-2xl relative overflow-hidden shadow-sm" style={{ backgroundColor: brand.teal }}>
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-teal-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3"></div>
 
@@ -756,7 +752,7 @@ function CoreValuesView({ brand }: { brand: any }) {
             <div className="w-full text-slate-800">
                 <div className="flex flex-col md:flex-row gap-12 items-center">
                     <div className="flex-1 w-full">
-                        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Giá Trị Cốt Lõi 3K1C</h1>
+                        <h1 className="text-2xl font-semibold text-slate-900 tracking-tight uppercase">Giá Trị Cốt Lõi 3K1C</h1>
                         <div className="h-1 w-16 mt-4 mb-6" style={{ backgroundColor: brand.teal }}></div>
                         <div className="text-slate-600 text-xl leading-relaxed font-light">
                             <EditableText id="core_desc" multiline defaultText="3K1C không chỉ là nguyên tắc làm việc, mà còn là thái độ sống, giúp mỗi thành viên LYHU cùng nhau trưởng thành, gắn kết và kiến tạo giá trị lâu dài." />
@@ -775,10 +771,10 @@ function CoreValuesView({ brand }: { brand: any }) {
                     { title: "KIÊN NHẪN", sub: "KIÊN NHẪN LÀ THÁI ĐỘ", desc: "Là thái độ chấp nhận nhịp độ và thời gian cần thiết để thấy kết quả. Giúp chúng ta tránh nóng vội.", color: brand.teal },
                     { title: "CHẤP NHẬN", sub: "CHẤP NHẬN QUÁ TRÌNH LÀ TƯ DUY", desc: "Tư duy cao nhất: hiểu rằng kết quả đến từ hành trình. Giúp chúng ta gắn bó lâu dài đối mặt với thăng trầm.", color: brand.green }
                 ].map((item, idx) => (
-                    <div key={idx} className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm relative overflow-hidden group">
-                        <div className="absolute -top-6 -right-6 text-9xl font-black opacity-5 transition-transform group-hover:scale-110" style={{ color: item.color }}>{idx + 1}</div>
+                    <div key={idx} className="p-8 rounded-2xl bg-white border border-slate-100 shadow-sm relative overflow-hidden group">
+                        <div className="absolute -top-6 -right-6 text-9xl font-bold opacity-5 transition-transform group-hover:scale-110" style={{ color: item.color }}>{idx + 1}</div>
                         <div className="relative z-10">
-                            <h3 className="text-4xl font-black uppercase tracking-tight mb-2" style={{ color: item.color }}><EditableText id={`core_t_${idx}`} defaultText={item.title} /></h3>
+                            <h3 className="text-4xl font-bold uppercase tracking-tight mb-2" style={{ color: item.color }}><EditableText id={`core_t_${idx}`} defaultText={item.title} /></h3>
                             <h4 className="text-sm font-bold tracking-widest text-slate-400 uppercase mb-6"><EditableText id={`core_s_${idx}`} defaultText={item.sub} className="!w-full" /></h4>
                             <div className="text-slate-600 leading-relaxed text-lg"><EditableText id={`core_d_${idx}`} multiline defaultText={item.desc} /></div>
                         </div>
@@ -786,7 +782,7 @@ function CoreValuesView({ brand }: { brand: any }) {
                 ))}
             </div>
 
-            <div className="mt-8 relative bg-white p-10 rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="mt-8 relative bg-white p-10 rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <div className="absolute top-0 right-0 p-8 opacity-10"><Quote className="w-24 h-24" style={{ color: brand.teal }} /></div>
                 <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center">
                     <div className="w-full md:w-[300px] shrink-0">
@@ -810,7 +806,7 @@ function PhilosophyView({ brand }: { brand: any }) {
         <div className="animate-in fade-in duration-500 space-y-10">
             <div className="w-full text-slate-800">
                 <div className="text-center mb-12">
-                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Triết Lý Làm Việc Của Chúng Ta</h1>
+                    <h1 className="text-2xl font-semibold text-slate-900 tracking-tight uppercase">Triết Lý Làm Việc Của Chúng Ta</h1>
                     <div className="h-1 w-16 mx-auto mt-4" style={{ backgroundColor: brand.teal }}></div>
                 </div>
 
@@ -843,7 +839,7 @@ function PhilosophyView({ brand }: { brand: any }) {
                 </div>
             </div>
 
-            <div className="relative rounded-3xl overflow-hidden shadow-lg" style={{ backgroundColor: brand.teal }}>
+            <div className="relative rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: brand.teal }}>
                 <EditableImage id="img_phil_team" className="aspect-[21/9] !border-none w-full !rounded-none opacity-50 mix-blend-overlay" label="Ảnh team LYHU" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-12 text-center text-white z-10 pointer-events-none">
                     <div className="text-2xl md:text-3xl italic mb-6 leading-relaxed max-w-4xl inline-block pointer-events-auto">
@@ -862,7 +858,7 @@ function VisionView({ brand }: { brand: any }) {
         <div className="animate-in fade-in duration-500 space-y-10">
             <div className="w-full text-slate-800">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Chúng Ta Hướng Về Đâu?</h1>
+                    <h1 className="text-2xl font-semibold text-slate-900 tracking-tight uppercase">Chúng Ta Hướng Về Đâu?</h1>
                     <div className="h-1 w-16 mt-4 mb-10" style={{ backgroundColor: brand.teal }}></div>
                 </div>
 
@@ -872,7 +868,7 @@ function VisionView({ brand }: { brand: any }) {
                             <EditableImage id="img_vis1" className="aspect-video w-full" label="Bản đồ 7 khu vực" />
                         </div>
                         <div className="flex-1 w-full">
-                            <h3 className="text-2xl font-black text-slate-800 uppercase tracking-widest mb-4" style={{ color: brand.green }}><EditableText id="vis1_t" defaultText="HỆ THỐNG GT TOÀN QUỐC" /></h3>
+                            <h3 className="text-2xl font-bold text-slate-800 tracking-wide mb-4" style={{ color: brand.green }}><EditableText id="vis1_t" defaultText="HỆ THỐNG GT TOÀN QUỐC" /></h3>
                             <div className="text-slate-600 text-lg leading-relaxed mb-4"><EditableText id="vis1_d" multiline defaultText="Phủ sóng độ nhận diện và hoạt động xuyên suốt đất nước." /></div>
                             <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-slate-700 font-medium text-sm">
                                 <div>• Đồng bằng sông Hồng</div>
@@ -910,18 +906,18 @@ function VisionView({ brand }: { brand: any }) {
                 </div>
             </div>
 
-            <div className="relative rounded-3xl overflow-hidden shadow-lg" style={{ backgroundColor: brand.teal }}>
+            <div className="relative rounded-2xl overflow-hidden shadow-sm" style={{ backgroundColor: brand.teal }}>
                 <EditableImage id="img_vis_final" className="aspect-[21/9] !border-none !rounded-none w-full opacity-40 mix-blend-overlay" label="Ảnh leo núi" />
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-8 md:p-16 text-center text-white z-10 pointer-events-none">
                     <div className="text-xl md:text-4xl italic mb-8 max-w-4xl leading-relaxed inline-block pointer-events-auto font-light">
                         <EditableText id="quote3_txt" multiline defaultText="Tập hợp cùng nhau là điểm bắt đầu. Gắn bó cùng nhau là tiến triển. Làm việc cùng nhau là thành công." />
                     </div>
-                    <p className="text-xl font-bold uppercase tracking-widest text-slate-300 inline-block pointer-events-auto">— <EditableText id="quote3_author" defaultText="Henry Ford" /></p>
+                    <p className="text-xl font-bold tracking-wide text-slate-300 inline-block pointer-events-auto">— <EditableText id="quote3_author" defaultText="Henry Ford" /></p>
                 </div>
             </div>
 
             <div className="text-center pt-8 pb-12">
-                <h2 className="text-3xl font-black uppercase tracking-widest" style={{ color: brand.teal }}>WELCOME TO LYHU</h2>
+                <h2 className="text-3xl font-bold tracking-wide" style={{ color: brand.teal }}>WELCOME TO LYHU</h2>
                 <p className="mt-4 text-xl text-slate-500 font-light">Chúc bạn một ngày làm việc vui vẻ và hiệu quả!</p>
             </div>
         </div>
@@ -933,7 +929,7 @@ function BrandsView({ brand }: { brand: any }) {
         <div className="animate-in fade-in duration-500 space-y-10">
             <div className="w-full text-slate-800">
                 <div className="text-center mb-12">
-                    <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight uppercase">Danh Mục Nhãn Hàng & Sản Phẩm</h1>
+                    <h1 className="text-2xl font-semibold text-slate-900 tracking-tight uppercase">Danh Mục Nhãn Hàng & Sản Phẩm</h1>
                     <div className="h-1 w-16 mx-auto mt-4" style={{ backgroundColor: brand.teal }}></div>
                     <p className="mt-4 text-lg text-slate-600 max-w-2xl mx-auto font-light">
                         <EditableText id="brands_intro_desc" multiline defaultText="Hệ sinh thái sản phẩm phong phú và chất lượng, phục vụ cho nhiều nhu cầu khác nhau của thị trường." />
@@ -946,7 +942,7 @@ function BrandsView({ brand }: { brand: any }) {
                          <div className="w-8 h-8 rounded-full bg-teal-50 flex items-center justify-center shrink-0">
                              <div className="w-2.5 h-2.5 rounded-full bg-teal-500"></div>
                          </div>
-                         <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Lĩnh Vực Hoạt Động</h2>
+                         <h2 className="text-2xl font-bold text-slate-800 tracking-tight uppercase">Lĩnh Vực Hoạt Động</h2>
                          <div className="flex-1 h-px bg-slate-200"></div>
                     </div>
                     
@@ -957,13 +953,13 @@ function BrandsView({ brand }: { brand: any }) {
                             { name: "Bán lẻ", color: brand.green, icon: "M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" },
                             { name: "Thương mại", color: brand.teal, icon: "M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" }
                         ].map((item, idx) => (
-                            <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-teal-300 transition-all group flex flex-col items-start gap-4">
+                            <div key={idx} className="bg-white border border-slate-100 rounded-2xl p-6 shadow-sm hover:shadow-sm hover:border-teal-300 transition-all group flex flex-col items-start gap-4">
                                 <div className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm" style={{ backgroundColor: `${item.color}15`, color: item.color }}>
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6"><path d={item.icon} /></svg>
                                 </div>
                                 <div>
                                     <div className="text-xs font-bold text-slate-400 mb-1 tracking-widest uppercase">0{idx + 1}</div>
-                                    <div className="font-extrabold text-slate-800 uppercase tracking-widest text-lg group-hover:text-teal-700 transition-colors">
+                                    <div className="font-semibold text-slate-800 tracking-wide text-lg group-hover:text-teal-700 transition-colors">
                                         <EditableText id={`brand_lv_${idx}`} defaultText={item.name} />
                                     </div>
                                     <p className="text-sm text-slate-500 mt-2 line-clamp-2 leading-relaxed"><EditableText id={`brand_lv_desc_${idx}`} defaultText="Nền tảng vững chắc trong chuỗi cung ứng." /></p>
@@ -979,7 +975,7 @@ function BrandsView({ brand }: { brand: any }) {
                          <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
                              <div className="w-2.5 h-2.5 rounded-full bg-slate-400"></div>
                          </div>
-                         <h2 className="text-2xl font-black text-slate-800 tracking-tight uppercase">Hệ Thống Nhãn Hàng</h2>
+                         <h2 className="text-2xl font-bold text-slate-800 tracking-tight uppercase">Hệ Thống Nhãn Hàng</h2>
                          <div className="flex-1 h-px bg-slate-200"></div>
                      </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -989,14 +985,14 @@ function BrandsView({ brand }: { brand: any }) {
                              { name: "ABI SNACK", desc: "Phân phối độc quyền (Việt Nam)" },
                              { name: "UHi", desc: "Nhập khẩu (Hàn Quốc)" },
                          ].map((l, i) => (
-                             <div key={i} className="bg-white border border-slate-200 rounded-3xl overflow-hidden hover:shadow-xl hover:border-slate-300 transition-all duration-300 transform flex flex-col">
+                             <div key={i} className="bg-white border border-slate-100 rounded-2xl overflow-hidden hover:shadow-sm hover:border-slate-300 transition-all duration-300 transform flex flex-col">
                                  {/* Header Info */}
                                  <div className="p-8 flex flex-col md:flex-row gap-6 items-center md:items-start border-b border-slate-100">
                                      <div className="w-32 h-32 md:w-24 md:h-24 bg-slate-50 rounded-2xl border border-slate-100 shrink-0 flex items-center justify-center overflow-hidden p-2">
                                          <EditableImage id={`logo_brand_${i}`} className="w-full h-full object-contain !border-none !rounded-none !aspect-auto" label={`Logo ${l.name}`} />
                                      </div>
                                      <div className="text-center md:text-left flex-1">
-                                        <h3 className="font-extrabold text-2xl tracking-widest uppercase text-slate-900 mb-1"><EditableText id={`name_brand_${i}`} defaultText={l.name} /></h3>
+                                        <h3 className="font-semibold text-2xl tracking-widest uppercase text-slate-900 mb-1"><EditableText id={`name_brand_${i}`} defaultText={l.name} /></h3>
                                         <p className="font-semibold text-sm uppercase tracking-wider mb-3" style={{ color: brand.teal }}><EditableText id={`desc_brand_${i}`} defaultText={l.desc} /></p>
                                         <p className="text-slate-500 text-sm leading-relaxed"><EditableText id={`brand_intro_long_${i}`} multiline defaultText="Sản phẩm chất lượng cao, cung ứng trực tiếp đến người tiêu dùng nội địa." /></p>
                                      </div>
@@ -1006,14 +1002,14 @@ function BrandsView({ brand }: { brand: any }) {
                                  <div className="p-6 bg-slate-50 flex-1">
                                     <div className="flex items-center gap-2 mb-4 px-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-                                        <h4 className="font-bold text-xs text-slate-400 uppercase tracking-widest">Sản Phẩm Tiêu Biểu</h4>
+                                        <h4 className="font-bold text-xs text-slate-400 tracking-wide">Sản Phẩm Tiêu Biểu</h4>
                                     </div>
                                      <div className="grid grid-cols-2 gap-4">
                                          <div className="relative group/img">
-                                            <EditableImage id={`img_brand_prod_${i}_1`} className="aspect-square w-full rounded-2xl shadow-sm border border-slate-200 bg-white object-cover group-hover/img:shadow-md transition-shadow" label={`Sản phẩm ${l.name} 1`} />
+                                            <EditableImage id={`img_brand_prod_${i}_1`} className="aspect-square w-full rounded-2xl shadow-sm border border-slate-100 bg-white object-cover group-hover/img:shadow-sm transition-shadow" label={`Sản phẩm ${l.name} 1`} />
                                          </div>
                                          <div className="relative group/img">
-                                            <EditableImage id={`img_brand_prod_${i}_2`} className="aspect-square w-full rounded-2xl shadow-sm border border-slate-200 bg-white object-cover group-hover/img:shadow-md transition-shadow" label={`Sản phẩm ${l.name} 2`} />
+                                            <EditableImage id={`img_brand_prod_${i}_2`} className="aspect-square w-full rounded-2xl shadow-sm border border-slate-100 bg-white object-cover group-hover/img:shadow-sm transition-shadow" label={`Sản phẩm ${l.name} 2`} />
                                          </div>
                                      </div>
                                  </div>
