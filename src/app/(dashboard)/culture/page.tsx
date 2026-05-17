@@ -22,7 +22,11 @@ import {
     Eye,
     X,
     Menu,
-    ChevronDown
+    ChevronDown,
+    Globe,
+    Facebook,
+    Video,
+    ShoppingBag
 } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 import { useToast } from "@/components/ui/toast";
@@ -30,6 +34,34 @@ import { createPortal } from "react-dom";
 
 // --- CONTEXT CHO CMS ---
 const CultureContext = createContext<any>(null);
+
+function EditableLink({ id, icon: Icon, defaultUrl, label }: { id: string, icon: any, defaultUrl?: string, label: string }) {
+    const { content, isEditMode, updateContent } = useContext(CultureContext);
+    const val = content[id] !== undefined ? content[id] : defaultUrl;
+
+    if (!isEditMode) {
+        if (!val) return null;
+        return (
+            <a href={val} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-slate-500 hover:text-teal-600 transition-colors text-xs font-medium bg-slate-50 px-2.5 py-1.5 rounded-md border border-slate-100 hover:border-teal-200 w-fit">
+                <Icon className="w-3.5 h-3.5" />
+                {label}
+            </a>
+        );
+    }
+
+    return (
+        <div className="flex items-center gap-2 w-full text-xs">
+            <Icon className="w-4 h-4 text-slate-400 shrink-0" title={label} />
+            <input 
+                type="text" 
+                className="w-full p-1.5 border border-slate-200 bg-slate-50 rounded-lg focus:outline-none focus:border-teal-500 text-xs shadow-sm" 
+                value={val || ''} 
+                onChange={e => updateContent(id, e.target.value)} 
+                placeholder={`Link ${label}...`}
+            />
+        </div>
+    );
+}
 
 function EditableText({ id, defaultText, className = "", multiline = false }: { id: string, defaultText: string | React.ReactNode, className?: string, multiline?: boolean }) {
     const { content, isEditMode, updateContent } = useContext(CultureContext);
@@ -927,6 +959,7 @@ function VisionView({ brand }: { brand: any }) {
 }
 
 function BrandsView({ brand }: { brand: any }) {
+    const { isEditMode } = useContext(CultureContext);
     return (
         <div className="animate-in fade-in duration-500 space-y-10">
             <div className="w-full text-slate-800">
@@ -997,6 +1030,12 @@ function BrandsView({ brand }: { brand: any }) {
                                         <h3 className="font-semibold text-2xl tracking-widest uppercase text-slate-900 mb-1"><EditableText id={`name_brand_${i}`} defaultText={l.name} /></h3>
                                         <p className="font-semibold text-sm uppercase tracking-wider mb-3" style={{ color: brand.teal }}><EditableText id={`desc_brand_${i}`} defaultText={l.desc} /></p>
                                         <p className="text-slate-500 text-sm leading-relaxed"><EditableText id={`brand_intro_long_${i}`} multiline defaultText="Sản phẩm chất lượng cao, cung ứng trực tiếp đến người tiêu dùng nội địa." /></p>
+                                        <div className={`mt-4 ${isEditMode ? 'flex flex-col gap-2' : 'flex flex-wrap gap-2'}`}>
+                                            <EditableLink id={`brand_link_web_${i}`} icon={Globe} label="Website" />
+                                            <EditableLink id={`brand_link_fb_${i}`} icon={Facebook} label="Fanpage" />
+                                            <EditableLink id={`brand_link_tt_${i}`} icon={Video} label="TikTok" />
+                                            <EditableLink id={`brand_link_sp_${i}`} icon={ShoppingBag} label="Shopee" />
+                                        </div>
                                      </div>
                                  </div>
                                  
