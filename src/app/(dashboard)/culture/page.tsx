@@ -92,7 +92,7 @@ function EditableText({ id, defaultText, className = "", multiline = false }: { 
     />
 }
 
-function EditableImage({ id, label = "Ảnh", className = "aspect-video" }: { id: string, label?: string, className?: string }) {
+function EditableImage({ id, label = "Ảnh", className = "aspect-video", optional = false }: { id: string, label?: string, className?: string, optional?: boolean }) {
     const { content, isEditMode, updateContent, uploadImage, uploadingId } = useContext(CultureContext);
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const imageUrl = content[id];
@@ -119,11 +119,14 @@ function EditableImage({ id, label = "Ảnh", className = "aspect-video" }: { id
     const finalClasses = `${className} ${dynamicClasses}`.trim();
 
     if (!isEditMode) {
-        if (!imageUrl) return (
-            <div className={`w-full flex-col items-center justify-center text-slate-400 outline-none flex bg-slate-100 ${finalClasses}`}>
-                <ImageIcon className="w-8 h-8 opacity-50" />
-            </div>
-        );
+        if (!imageUrl) {
+            if (optional) return null;
+            return (
+                <div className={`w-full flex-col items-center justify-center text-slate-400 outline-none flex bg-slate-100 ${finalClasses}`}>
+                    <ImageIcon className="w-8 h-8 opacity-50" />
+                </div>
+            );
+        }
         return (
             <div className={`relative overflow-hidden flex items-center justify-center group/preview cursor-pointer ${finalClasses}`} onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(true); }}>
                 <img src={imageUrl} alt={label} className="absolute inset-0 w-full h-full object-cover outline-none" />
@@ -496,8 +499,16 @@ function IntroductionView({ brand }: { brand: any }) {
                     </div>
                 </div>
 
-                <div className="w-full lg:w-[400px] shrink-0">
-                    <EditableImage id="img_intro_banner" className="aspect-[3/4] w-full" label="Ảnh Lãnh đạo / Tòa nhà LYHU" />
+                <div className="w-full lg:w-[400px] shrink-0 flex flex-col gap-4">
+                    <EditableImage id="img_intro_banner" className="aspect-[3/4] w-full" label="Ảnh chính (Tòa nhà/Lãnh đạo)" />
+                    <div className="grid grid-cols-2 gap-4">
+                        <EditableImage id="img_intro_sub_1" className="aspect-square w-full" label="Ảnh phụ 1 (Tùy chọn)" optional />
+                        <EditableImage id="img_intro_sub_2" className="aspect-square w-full" label="Ảnh phụ 2 (Tùy chọn)" optional />
+                        <EditableImage id="img_intro_sub_3" className="aspect-square w-full" label="Ảnh phụ 3 (Tùy chọn)" optional />
+                        <EditableImage id="img_intro_sub_4" className="aspect-square w-full" label="Ảnh phụ 4 (Tùy chọn)" optional />
+                        <EditableImage id="img_intro_sub_5" className="aspect-square w-full" label="Ảnh phụ 5 (Tùy chọn)" optional />
+                        <EditableImage id="img_intro_sub_6" className="aspect-square w-full" label="Ảnh phụ 6 (Tùy chọn)" optional />
+                    </div>
                 </div>
             </div>
 
