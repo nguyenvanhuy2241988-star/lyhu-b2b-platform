@@ -462,10 +462,10 @@ function NextTabButton() {
     const nextTab = TABS[currentIndex + 1];
     
     return (
-        <div className="mt-16 flex justify-end">
-            <button onClick={goToNextTab} className="group flex items-center gap-3 bg-teal-50 hover:bg-teal-500 text-teal-700 hover:text-white px-8 py-4 rounded-2xl transition-all shadow-sm hover:shadow-sm">
-                <span className="font-semibold text-lg">Tiếp theo: {nextTab.label}</span>
-                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+        <div className="mt-20 pt-10 border-t border-slate-100 flex justify-center">
+            <button onClick={goToNextTab} className="group flex items-center gap-3 text-slate-500 hover:text-teal-600 transition-colors px-6 py-3 rounded-full hover:bg-slate-50">
+                <span className="font-medium tracking-wide uppercase text-sm">Chuyển sang: {nextTab.label}</span>
+                <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
             </button>
         </div>
     );
@@ -1014,7 +1014,7 @@ function BrandsView({ brand }: { brand: any }) {
                                     <div className="font-semibold text-slate-800 tracking-wide text-lg group-hover:text-teal-700 transition-colors">
                                         <EditableText id={`brand_lv_${idx}`} defaultText={item.name} />
                                     </div>
-                                    <p className="text-sm text-slate-500 mt-2 line-clamp-2 leading-relaxed"><EditableText id={`brand_lv_desc_${idx}`} defaultText="Nền tảng vững chắc trong chuỗi cung ứng." /></p>
+                                    <p className="text-sm text-slate-500 mt-2 leading-relaxed"><EditableText id={`brand_lv_desc_${idx}`} defaultText="Nền tảng vững chắc trong chuỗi cung ứng." /></p>
                                 </div>
                             </div>
                         ))}
