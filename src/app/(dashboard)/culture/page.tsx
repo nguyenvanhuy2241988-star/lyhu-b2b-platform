@@ -41,8 +41,14 @@ function EditableLink({ id, icon: Icon, defaultUrl, label }: { id: string, icon:
 
     if (!isEditMode) {
         if (!val) return null;
+        
+        let href = val;
+        if (href && !href.startsWith('http://') && !href.startsWith('https://')) {
+            href = 'https://' + href;
+        }
+
         return (
-            <a href={val} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-slate-500 hover:text-teal-600 transition-colors text-xs font-medium bg-slate-50 px-2.5 py-1.5 rounded-md border border-slate-100 hover:border-teal-200 w-fit">
+            <a href={href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-slate-500 hover:text-teal-600 transition-colors text-xs font-medium bg-slate-50 px-2.5 py-1.5 rounded-md border border-slate-100 hover:border-teal-200 w-fit">
                 <Icon className="w-3.5 h-3.5" />
                 {label}
             </a>
