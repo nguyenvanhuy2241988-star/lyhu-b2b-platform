@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { getDepartments, getHRProfiles, Department, HRProfile, updateHRProfile } from '@/lib/hrStore';
 import { Search, MapPin, Calendar, Briefcase, Mail, Phone, Filter, GraduationCap, Heart, Facebook, FileText, User as UserIcon, X } from 'lucide-react';
 import { format } from 'date-fns';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function HRDirectoryPage() {
     const [departments, setDepartments] = useState<Department[]>([]);
@@ -11,6 +12,7 @@ export default function HRDirectoryPage() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDept, setSelectedDept] = useState<string>('all');
+    const { role } = useAuth();
 
     // Modals
     const [editingProfile, setEditingProfile] = useState<HRProfile | null>(null);
@@ -118,15 +120,17 @@ export default function HRDirectoryPage() {
                                                 <p className="text-sm text-slate-500">{profile.position || 'Nhân viên'} &bull; {profile.department?.name || 'Chưa phân phòng'}</p>
                                             </div>
                                         </div>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setEditingProfile(profile);
-                                            }}
-                                            className="text-xs text-blue-600 hover:bg-blue-50 px-2 py-1 rounded"
-                                        >
-                                            Sửa
-                                        </button>
+                                        {(role === 'admin' || role === 'recruiter') && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditingProfile(profile);
+                                                }}
+                                                className="text-xs text-blue-600 hover:bg-blue-50 px-2 py-1 rounded"
+                                            >
+                                                Sửa
+                                            </button>
+                                        )}
                                     </div>
 
                                     <div className="mt-4 space-y-2 text-sm text-slate-600">
@@ -380,6 +384,15 @@ export default function HRDirectoryPage() {
                                     <UserIcon className="w-4 h-4" /> Thông tin cá nhân
                                 </h3>
                                 <div className="grid grid-cols-2 gap-3">
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-medium mb-1">Họ và tên</label>
+                                        <input
+                                            className="w-full border rounded px-2 py-1.5 text-sm outline-none"
+                                            value={editingProfile.full_name || ''}
+                                            onChange={e => setEditingProfile({ ...editingProfile, full_name: e.target.value })}
+                                            placeholder="VD: Nguyễn Văn A"
+                                        />
+                                    </div>
                                     <div>
                                         <label className="block text-xs font-medium mb-1">Ngày sinh</label>
                                         <input
