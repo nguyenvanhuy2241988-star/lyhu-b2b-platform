@@ -26,7 +26,10 @@ import {
     Globe,
     Facebook,
     Video,
-    ShoppingBag
+    ShoppingBag,
+    Youtube,
+    Instagram,
+    AtSign
 } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 import { useToast } from "@/components/ui/toast";
@@ -1056,6 +1059,9 @@ function BrandsView({ brand }: { brand: any }) {
                                             <EditableLink id={`brand_link_fb_${i}`} icon={Facebook} label="Fanpage" />
                                             <EditableLink id={`brand_link_tt_${i}`} icon={Video} label="TikTok" />
                                             <EditableLink id={`brand_link_sp_${i}`} icon={ShoppingBag} label="Shopee" />
+                                            <EditableLink id={`brand_link_yt_${i}`} icon={Youtube} label="Youtube" />
+                                            <EditableLink id={`brand_link_ig_${i}`} icon={Instagram} label="Instagram" />
+                                            <EditableLink id={`brand_link_th_${i}`} icon={AtSign} label="Threads" />
                                         </div>
                                      </div>
                                  </div>
