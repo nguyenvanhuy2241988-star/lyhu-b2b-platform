@@ -96,9 +96,9 @@ export default function OrdersPage() {
                     if (phone) {
                         // Clean phone number (remove spaces, +84 etc if needed, but usually just exact match)
                         const cleanPhone = phone.replace('+84', '0').replace(/\s+/g, '');
-                        query = query.or(`customer_id.eq.${authUser.id},receiver_phone.eq.${cleanPhone}`);
+                        query = query.or(`customer_id.eq.${authUser.id},telesales_user_id.eq.${authUser.id},receiver_phone.eq.${cleanPhone}`);
                     } else {
-                        query = query.eq('customer_id', authUser.id);
+                        query = query.or(`customer_id.eq.${authUser.id},telesales_user_id.eq.${authUser.id}`);
                     }
                     
                     const { data, error } = await query.order('created_at', { ascending: false });
