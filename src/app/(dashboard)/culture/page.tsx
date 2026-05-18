@@ -31,6 +31,7 @@ import {
 import { createClient } from "@/lib/supabaseClient";
 import { useToast } from "@/components/ui/toast";
 import { createPortal } from "react-dom";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 // --- CONTEXT CHO CMS ---
 const CultureContext = createContext<any>(null);
@@ -224,6 +225,7 @@ function EditableImage({ id, label = "Ảnh", className = "aspect-video", option
 
 // --- MAIN PAGE ---
 export default function CulturePage() {
+    const { role } = useAuth();
     const [activeTab, setActiveTab] = useState('intro');
     const [content, setContent] = useState<Record<string, any>>({});
     const [isEditMode, setIsEditMode] = useState(false);
@@ -353,11 +355,13 @@ export default function CulturePage() {
                                     </button>
                                 </>
                             ) : (
-                                <button onClick={() => setIsEditMode(true)} className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-100 rounded-full shadow-sm hover:bg-slate-50 hover:text-slate-900 transition-colors tooltip group" title="Bật lên để thay ảnh, gắn chữ">
-                                    <Edit3 className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
-                                    <span className="hidden sm:inline">Biên Tập Nội Dung</span>
-                                    <span className="sm:hidden">Biên Tập</span>
-                                </button>
+                                role === 'admin' && (
+                                    <button onClick={() => setIsEditMode(true)} className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-100 rounded-full shadow-sm hover:bg-slate-50 hover:text-slate-900 transition-colors tooltip group" title="Bật lên để thay ảnh, gắn chữ">
+                                        <Edit3 className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
+                                        <span className="hidden sm:inline">Biên Tập Nội Dung</span>
+                                        <span className="sm:hidden">Biên Tập</span>
+                                    </button>
+                                )
                             )}
                         </div>
                     </div>

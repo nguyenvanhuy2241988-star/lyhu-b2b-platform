@@ -79,8 +79,8 @@ export const ROLES = {
 
 export const NAV_ITEMS = {
     [ROLES.LIVESTREAM]: [
-        { label: "Tổng quan Live", href: "/livestream", icon: LayoutDashboard },
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
+        { label: "Tổng quan Live", href: "/livestream", icon: LayoutDashboard },
         { label: "Màn hình Chốt đơn", href: "/livestream/live", icon: Video },
         { label: "Đơn hàng Live", href: "/livestream/orders", icon: ShoppingCart },
         { label: "Sản phẩm Live", href: "/livestream/products", icon: Package },
@@ -90,8 +90,8 @@ export const NAV_ITEMS = {
         { label: "Tài liệu", href: "/documents", icon: Book },
     ],
     [ROLES.SALE_ADMIN]: [
-        { label: "Tổng quan Admin", href: "/sale-admin", icon: LayoutDashboard },
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
+        { label: "Tổng quan Admin", href: "/sale-admin", icon: LayoutDashboard },
         { label: "CRM", href: PATH_LEADS, icon: TrendingUp },
         { label: "Khách hàng", href: "/sale-admin/customers", icon: Users },
         { label: "Quản lý Đơn hàng", href: "/sale-admin/orders", icon: ClipboardCheck },
@@ -106,8 +106,8 @@ export const NAV_ITEMS = {
         { label: "Tài liệu", href: "/documents", icon: Book },
     ],
     [ROLES.ACCOUNTANT]: [
-        { label: "Tổng quan Kế toán", href: "/accountant", icon: LayoutDashboard },
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
+        { label: "Tổng quan Kế toán", href: "/accountant", icon: LayoutDashboard },
         { label: "Việc cần làm", href: "/accountant/tasks", icon: ListTodo },
         { label: "Quản lý Đơn hàng", href: "/accountant/orders", icon: FileText },
         { label: "Quản lý Doanh thu", href: "/accountant/revenue", icon: TrendingUp },
@@ -126,8 +126,8 @@ export const NAV_ITEMS = {
         { label: "Tài liệu", href: "/documents", icon: Book },
     ],
     [ROLES.SHIPPER]: [
-        { label: "Tổng quan Vận chuyển", href: "/shipper", icon: LayoutDashboard },
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
+        { label: "Tổng quan Vận chuyển", href: "/shipper", icon: LayoutDashboard },
         { label: "Đơn cần giao", href: "/shipper/deliveries", icon: Truck },
         { label: "Ví & COD", href: "/shipper/wallet", icon: Wallet },
         { label: "Lịch sử", href: "/shipper/history", icon: ClipboardList },
@@ -137,8 +137,8 @@ export const NAV_ITEMS = {
         { label: "Tài liệu", href: "/documents", icon: FileText },
     ],
     [ROLES.RND]: [
-        { label: "Tổng quan R&D", href: "/rnd", icon: LayoutDashboard },
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
+        { label: "Tổng quan R&D", href: "/rnd", icon: LayoutDashboard },
         { label: "Dự án nghiên cứu", href: "/rnd/projects", icon: FlaskConical },
         { label: "Quản lý mẫu", href: "/rnd/samples", icon: Package },
         { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
@@ -148,8 +148,8 @@ export const NAV_ITEMS = {
         { label: "Việc cần làm", href: "/tasks", icon: ListTodo },
     ],
     [ROLES.ECOMMERCE]: [
-        { label: "Tổng quan TMĐT", href: "/ecommerce", icon: LayoutDashboard },
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
+        { label: "Tổng quan TMĐT", href: "/ecommerce", icon: LayoutDashboard },
         { label: "Đơn hàng đa kênh", href: "/ecommerce/orders", icon: ShoppingCart },
         { label: "Chat đa kênh", href: "/ecommerce/chat", icon: MessageCircle },
         { label: "Đối soát tài chính", href: "/ecommerce/finance", icon: DollarSign },
@@ -162,8 +162,8 @@ export const NAV_ITEMS = {
         { label: "Việc cần làm", href: "/tasks", icon: ListTodo },
     ],
     [ROLES.ADMIN]: [
-        { label: "Tổng quan", href: "/admin", icon: LayoutDashboard },
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
+        { label: "Tổng quan", href: "/admin", icon: LayoutDashboard },
         { label: "Phân tích Truy cập", href: "/admin/analytics", icon: Globe },
         { label: "CRM", href: PATH_LEADS, icon: TrendingUp },
         { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
@@ -205,8 +205,8 @@ export const NAV_ITEMS = {
         { label: "Đổi Role (Debug)", href: "/debug-role", icon: ToggleLeft },
     ],
     [ROLES.CUSTOMER]: [
-        { label: "Trang chủ", href: "/customer", icon: LayoutDashboard },
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
+        { label: "Trang chủ", href: "/customer", icon: LayoutDashboard },
         { label: "Đặt hàng", href: "/customer/products", icon: Package },
         { label: "Đơn hàng", href: "/customer/orders", icon: ShoppingCart },
         { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
@@ -215,8 +215,8 @@ export const NAV_ITEMS = {
         { label: "Tài liệu", href: "/documents", icon: FileText },
     ],
     [ROLES.SALES]: [
-        { label: "Tổng quan Sales", href: "/sales", icon: LayoutDashboard },
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
+        { label: "Tổng quan Sales", href: "/sales", icon: LayoutDashboard },
         { label: "CRM", href: PATH_LEADS, icon: TrendingUp },
         { label: "Khách hàng", href: "/sales/customers", icon: Users },
         { label: "Đơn hàng", href: PATH_ORDERS_SALES, icon: ShoppingCart },
@@ -228,8 +228,8 @@ export const NAV_ITEMS = {
         { label: "Tài liệu", href: "/documents", icon: FileText },
     ],
     [ROLES.CTV]: [
-        { label: "Tổng quan CTV", href: "/ctv", icon: LayoutDashboard },
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
+        { label: "Tổng quan CTV", href: "/ctv", icon: LayoutDashboard },
         { label: "Tạo đơn hàng", href: "/ctv/create-order", icon: ShoppingCart },
         { label: "Đơn hàng của tôi", href: "/ctv/orders", icon: Package },
         { label: "Khách hàng của tôi", href: "/ctv/customers", icon: Users },
@@ -243,8 +243,8 @@ export const NAV_ITEMS = {
         { label: "Tài liệu", href: "/documents", icon: FileText },
     ],
     [ROLES.TELESALES]: [
-        { label: "Tổng quan", href: "/telesales", icon: LayoutDashboard },
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
+        { label: "Tổng quan", href: "/telesales", icon: LayoutDashboard },
         { label: "CRM", href: PATH_LEADS, icon: TrendingUp },
         { label: "Lịch làm việc", href: "/telesales/schedule", icon: Calendar },
         { label: "Việc cần làm", href: "/telesales/tasks", icon: ListTodo },
@@ -264,8 +264,8 @@ export const NAV_ITEMS = {
         { label: "Tài liệu", href: "/documents", icon: FileText },
     ],
     [ROLES.RECRUITER]: [
-        { label: "Tổng quan Tuyển dụng", href: "/recruitment", icon: LayoutDashboard },
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
+        { label: "Tổng quan Tuyển dụng", href: "/recruitment", icon: LayoutDashboard },
         { label: "Báo cáo ngày", href: "/recruitment/daily", icon: ClipboardList },
         { label: "Ứng viên (Kanban)", href: "/recruitment/candidates", icon: Users },
         { label: "Lịch phỏng vấn", href: "/recruitment/interviews", icon: Calendar },
@@ -286,8 +286,8 @@ export const NAV_ITEMS = {
         { label: "Tài liệu", href: "/documents", icon: FileText },
     ],
     [ROLES.WAREHOUSE]: [
-        { label: "Tổng quan Kho", href: "/warehouse", icon: LayoutDashboard },
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
+        { label: "Tổng quan Kho", href: "/warehouse", icon: LayoutDashboard },
         { label: "Quản lý Đơn hàng", href: "/warehouse/orders", icon: ClipboardCheck },
         { label: "Xử lý Đơn hàng", href: "/warehouse/fulfillment", icon: ClipboardCheck },
         { label: "Quản lý tồn kho", href: "/warehouse/inventory", icon: Archive },
@@ -302,8 +302,8 @@ export const NAV_ITEMS = {
         { label: "Việc cần làm", href: "/tasks", icon: ListTodo },
     ],
     [ROLES.MARKETING]: [
-        { label: "Tổng quan Marketing", href: "/marketing", icon: LayoutDashboard },
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
+        { label: "Tổng quan Marketing", href: "/marketing", icon: LayoutDashboard },
         { label: "Trung tâm BOT Tự động", href: "/marketing/bot-center", icon: Bot },
         { label: "Hộp thư (Inbox)", href: "/marketing/inbox", icon: MessageCircle },
         { label: "Chiến dịch", href: "/marketing/campaigns", icon: Megaphone },
@@ -328,8 +328,8 @@ export const NAV_ITEMS = {
         { label: "Việc cần làm", href: "/tasks", icon: ListTodo },
     ],
     [ROLES.SALES_GT]: [
-        { label: "Tổng quan GT", href: "/sales-gt", icon: LayoutDashboard },
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
+        { label: "Tổng quan GT", href: "/sales-gt", icon: LayoutDashboard },
         { label: "Điểm bán", href: "/sales-gt/outlets", icon: MapPin },
         { label: "Check-in", href: "/sales-gt/checkin", icon: MapPin },
         { label: "Tạo đơn hàng", href: "/sales-gt/create-order", icon: ShoppingCart },
@@ -349,8 +349,8 @@ export const NAV_ITEMS = {
         { label: "Tài liệu", href: "/documents", icon: Book },
     ],
     [ROLES.MEDIA_CREATOR]: [
-        { label: "Tổng quan", href: "/media", icon: LayoutDashboard },
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
+        { label: "Tổng quan", href: "/media", icon: LayoutDashboard },
         { label: "Brief / Yêu cầu", href: "/media/briefs", icon: FileInput },
         { label: "Kịch bản Media", href: "/media/scripts", icon: FileInput },
         { label: "Thư viện Media", href: "/media/library", icon: FolderOpen },
