@@ -38,7 +38,7 @@ export const PROTECTED_PREFIXES = [
 
 export function getHomePath(role?: string | null): string {
     if (!role) return "/";
-    const r = role as Role;
+    const r = role.toLowerCase() as Role;
     return ROLE_HOME[r] ?? "/";
 }
 
@@ -49,6 +49,8 @@ export function isRoleAllowedPath(role: Role, pathname: string): boolean {
     }
 
     // 2. Kiểm tra đúng khu vực bảo vệ theo role
-    const prefix = ROLE_HOME[role];
+    const normalizedRole = role.toLowerCase() as Role;
+    const prefix = ROLE_HOME[normalizedRole];
+    if (!prefix) return false;
     return pathname === prefix || pathname.startsWith(prefix + "/");
 }
