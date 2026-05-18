@@ -36,7 +36,7 @@ export default function InlineProductBox({ product }: { product: any }) {
                 </div>
                 
                 <Link 
-                    href="/wholesale" 
+                    href="/" 
                     className="inline-flex items-center justify-center gap-2 bg-primary-600 !text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:bg-primary-700 hover:!text-white transition-colors shadow-sm w-fit !no-underline"
                 >
                     <ShoppingCart className="w-4 h-4" />

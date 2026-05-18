@@ -100,7 +100,7 @@ export default async function BlogLayout({ children }: { children: React.ReactNo
                             <span>Hotline: 0969 069 798</span>
                         </div>
                         <div className="flex gap-4">
-                            <Link href="/wholesale" className="hover:text-white transition-colors font-bold">Vào trang Mua Sỉ</Link>
+                            <Link href="/" className="hover:text-white transition-colors font-bold">Vào trang Mua Sỉ</Link>
                         </div>
                     </div>
                 </div>

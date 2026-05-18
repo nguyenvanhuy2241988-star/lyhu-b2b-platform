@@ -7,7 +7,7 @@ export default function BlogProductGrid({ products }: { products: any[] }) {
         <div className="mt-12 pt-8 border-t border-gray-100">
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900">Sản phẩm chúng tôi đang cung cấp</h3>
-                <Link href="/wholesale" className="text-sm font-semibold text-primary-600 hover:text-primary-700 hover:underline">
+                <Link href="/" className="text-sm font-semibold text-primary-600 hover:text-primary-700 hover:underline">
                     Xem trên trang Wholesale &rarr;
                 </Link>
             </div>

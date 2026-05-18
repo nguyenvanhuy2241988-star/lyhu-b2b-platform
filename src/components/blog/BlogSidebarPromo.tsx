@@ -32,7 +32,7 @@ export default function BlogSidebarPromo({ promo }: { promo: any }) {
                 )}
                 
                 <Link 
-                    href="/wholesale"
+                    href="/"
                     className="block w-full bg-primary-600 !text-white text-center font-bold text-sm py-3 rounded-lg hover:bg-primary-700 transition-colors shadow-sm !no-underline"
                 >
                     ĐẶT HÀNG NGAY

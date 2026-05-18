@@ -326,7 +326,7 @@ export default async function BlogIndexPage({
             {/* Mega Banner Space (Dynamic or Placeholder) */}
             {megaBanner ? (
                 <div className="w-full relative overflow-hidden">
-                    <Link href={megaBanner.link_url || "/wholesale"} target={megaBanner.link_url?.startsWith('http') ? "_blank" : "_self"}>
+                    <Link href={megaBanner.link_url || "/"} target={megaBanner.link_url?.startsWith('http') ? "_blank" : "_self"}>
                         <img 
                             src={megaBanner.image_url} 
                             alt="Mega Banner" 
@@ -347,7 +347,7 @@ export default async function BlogIndexPage({
                         </h2>
                         <p className="text-primary-100 text-sm md:text-base font-medium mb-5 max-w-xl">Hệ thống phân phối hàng tiêu dùng B2B chiết khấu lên tới 45% dành riêng cho các điểm bán lẻ và siêu thị mini.</p>
                         <div>
-                            <Link href="/wholesale" className="inline-block px-6 py-2.5 bg-white text-primary-700 font-bold rounded-lg hover:bg-primary-50 hover:shadow-lg transition-all text-sm">
+                            <Link href="/" className="inline-block px-6 py-2.5 bg-white text-primary-700 font-bold rounded-lg hover:bg-primary-50 hover:shadow-lg transition-all text-sm">
                                 Đăng Ký Báo Giá
                             </Link>
                         </div>
@@ -591,7 +591,7 @@ export default async function BlogIndexPage({
                     {/* Side Top Banners */}
                     {sideTopBanners.map((banner, idx) => (
                         <div key={banner.id || idx} className="w-full relative overflow-hidden">
-                            <Link href={banner.link_url || "/wholesale"} target={banner.link_url?.startsWith('http') ? "_blank" : "_self"}>
+                            <Link href={banner.link_url || "/"} target={banner.link_url?.startsWith('http') ? "_blank" : "_self"}>
                                 <img src={banner.image_url} alt={`Side Top Banner ${idx + 1}`} className="w-full h-auto object-cover border border-gray-100" />
                             </Link>
                         </div>
@@ -603,7 +603,7 @@ export default async function BlogIndexPage({
                     {/* Side Bottom Banners */}
                     {sideBottomBanners.map((banner, idx) => (
                         <div key={banner.id || idx} className="w-full relative overflow-hidden">
-                            <Link href={banner.link_url || "/wholesale"} target={banner.link_url?.startsWith('http') ? "_blank" : "_self"}>
+                            <Link href={banner.link_url || "/"} target={banner.link_url?.startsWith('http') ? "_blank" : "_self"}>
                                 <img src={banner.image_url} alt={`Side Bottom Banner ${idx + 1}`} className="w-full h-auto object-cover border border-gray-100" />
                             </Link>
                         </div>
@@ -616,7 +616,7 @@ export default async function BlogIndexPage({
                             Tham gia hệ thống phân phối LYHU với mức chiết khấu lên tới 45%.
                         </p>
                         <Link 
-                            href="/wholesale" 
+                            href="/" 
                             className="block w-full bg-primary-600 text-white py-2.5 text-sm font-bold hover:bg-primary-700 transition-colors"
                         >
                             Đăng ký Báo Giá
