@@ -185,30 +185,32 @@ export default function ChatPage() {
     return (
         <div className="h-[calc(100vh-8rem)] flex flex-col">
             {/* Tab Switcher */}
-            <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-t-lg px-2 py-1.5 shrink-0">
-                <button
-                    onClick={() => setChatMode('internal')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        chatMode === 'internal'
-                            ? 'bg-blue-600 text-white shadow-sm'
-                            : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                >
-                    <MessageSquare className="w-4 h-4" />
-                    Chat nội bộ
-                </button>
-                <button
-                    onClick={() => setChatMode('b2b')}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                        chatMode === 'b2b'
-                            ? 'bg-teal-600 text-white shadow-sm'
-                            : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                >
-                    <ShoppingBag className="w-4 h-4" />
-                    Hỗ trợ B2B
-                </button>
-            </div>
+            {currentUser?.role !== 'customer' && (
+                <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-t-lg px-2 py-1.5 shrink-0">
+                    <button
+                        onClick={() => setChatMode('internal')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                            chatMode === 'internal'
+                                ? 'bg-blue-600 text-white shadow-sm'
+                                : 'text-slate-600 hover:bg-slate-100'
+                        }`}
+                    >
+                        <MessageSquare className="w-4 h-4" />
+                        Chat nội bộ
+                    </button>
+                    <button
+                        onClick={() => setChatMode('b2b')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                            chatMode === 'b2b'
+                                ? 'bg-teal-600 text-white shadow-sm'
+                                : 'text-slate-600 hover:bg-slate-100'
+                        }`}
+                    >
+                        <ShoppingBag className="w-4 h-4" />
+                        Hỗ trợ B2B
+                    </button>
+                </div>
+            )}
 
             {/* B2B Support Mode */}
             {chatMode === 'b2b' ? (

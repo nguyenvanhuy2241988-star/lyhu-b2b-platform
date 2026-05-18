@@ -303,7 +303,7 @@ export default function QuickChatWidget() {
                             <span className="text-white font-semibold text-sm">
                                 {!isExpanded && !showSidebar && activeConversation
                                     ? getConvDisplayName(activeConversation)
-                                    : 'Tin nhắn nội bộ'
+                                    : (user?.role === 'customer' ? 'Tin nhắn' : 'Tin nhắn nội bộ')
                                 }
                             </span>
                             {unreadCount > 0 && (
@@ -508,7 +508,7 @@ export default function QuickChatWidget() {
                         ? 'bg-slate-600 shadow-slate-600/30'
                         : 'bg-gradient-to-br from-teal-500 to-emerald-500 shadow-teal-500/30'
                         }`}
-                    title="Tin nhắn nội bộ"
+                    title={user?.role === 'customer' ? 'Tin nhắn' : 'Tin nhắn nội bộ'}
                 >
                     {isOpen ? (
                         <X className="w-6 h-6 text-white" />

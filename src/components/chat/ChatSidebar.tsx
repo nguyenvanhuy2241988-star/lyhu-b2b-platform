@@ -128,6 +128,9 @@ export function ChatSidebar({
     // Other Users Search
     const searchResults = users.filter(u => {
         if (u.id === currentUser?.id) return false;
+        if (currentUser?.role === 'customer') {
+            if (!['admin', 'sale_admin', 'telesales', 'sales'].includes(u.role)) return false;
+        }
         return (u.full_name || u.email || "").toLowerCase().includes(lowerTerm);
     });
 
@@ -163,13 +166,15 @@ export function ChatSidebar({
                     />
                     <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                 </div>
-                <button
-                    onClick={onShowCreateGroup}
-                    className="p-1.5 bg-white border border-slate-200 text-primary-600 rounded-full hover:bg-primary-50 transition-colors shadow-sm"
-                    title="Tạo nhóm chat"
-                >
-                    <Users className="w-4 h-4" />
-                </button>
+                {currentUser?.role !== 'customer' && (
+                    <button
+                        onClick={onShowCreateGroup}
+                        className="p-1.5 bg-white border border-slate-200 text-primary-600 rounded-full hover:bg-primary-50 transition-colors shadow-sm"
+                        title="Tạo nhóm chat"
+                    >
+                        <Users className="w-4 h-4" />
+                    </button>
+                )}
             </div>
 
             {/* Content List */}
@@ -257,7 +262,13 @@ export function ChatSidebar({
                         )
                     );
 
-                    const userList = (searchTerm ? searchResults : users.filter(u => u.id !== currentUser?.id))
+                    const userList = (searchTerm ? searchResults : users.filter(u => {
+                        if (u.id === currentUser?.id) return false;
+                        if (currentUser?.role === 'customer') {
+                            if (!['admin', 'sale_admin', 'telesales', 'sales'].includes(u.role)) return false;
+                        }
+                        return true;
+                    }))
                         .filter(u => !dmUserIds.has(u.id));
 
                     return userList.length > 0 ? (

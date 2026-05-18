@@ -205,14 +205,9 @@ export const NAV_ITEMS = {
         { label: "Đổi Role (Debug)", href: "/debug-role", icon: ToggleLeft },
     ],
     [ROLES.CUSTOMER]: [
-        { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
-        { label: "Trang chủ", href: "/customer", icon: LayoutDashboard },
-        { label: "Đặt hàng", href: "/customer/products", icon: Package },
-        { label: "Đơn hàng", href: "/customer/orders", icon: ShoppingCart },
-        { label: "Tin nhắn nội bộ", href: "/chat", icon: MessageCircle },
-        { label: "Thư viện Media", href: "/shared/media-library", icon: FolderOpen },
-        { label: "Sự kiện", href: "/events", icon: Calendar },
-        { label: "Tài liệu", href: "/documents", icon: FileText },
+        { label: "Trang ch?", href: "/customer", icon: LayoutDashboard },
+        { label: "�on h�ng", href: "/customer/orders", icon: ShoppingCart },
+        { label: "Tin nh?n", href: "/chat", icon: MessageCircle },
     ],
     [ROLES.SALES]: [
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },
