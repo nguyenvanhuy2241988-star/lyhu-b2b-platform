@@ -11,7 +11,7 @@ import { B2BSupportInbox } from "@/components/chat/B2BSupportInbox";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function ChatPage() {
-    const { user, session, isLoading: isAuthLoading } = useAuth();
+    const { user, session, role, isLoading: isAuthLoading } = useAuth();
 
     // Ensure we don't render until auth is ready or user is present
     // This prevents null crashes in child components
@@ -28,8 +28,8 @@ export default function ChatPage() {
         deleteConversation, leaveConversation
     } = useChatStore();
 
-    // Use user directly from context instead of duplicate state
-    const currentUser = user;
+    // Inject role into currentUser for easy checking down the tree
+    const currentUser = user ? { ...user, role } : null;
     const [users, setUsers] = useState<any[]>([]);
     const [mounted, setMounted] = useState(false);
 

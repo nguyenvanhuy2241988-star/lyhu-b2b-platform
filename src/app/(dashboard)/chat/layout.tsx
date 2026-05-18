@@ -38,7 +38,7 @@ export default function ChatLayout({
     const displayRole = (role || 'customer') as any;
 
     return (
-        <DashboardShell role={displayRole} title="Tin nhắn nội bộ">
+        <DashboardShell role={displayRole} title={displayRole === 'customer' ? 'Tin nhắn' : 'Tin nhắn nội bộ'}>
             {children}
         </DashboardShell>
     );

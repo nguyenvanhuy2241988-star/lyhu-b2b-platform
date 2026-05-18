@@ -8,7 +8,7 @@ import { User, Mail, Shield, Calendar, Phone, MapPin, Camera, Edit2, Users, Sear
 import { toast } from "sonner";
 
 export default function ProfilePage() {
-    const { user } = useAuth();
+    const { user, role } = useAuth();
     const [profile, setProfile] = useState<any>(null);
     const [colleagues, setColleagues] = useState<any[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
@@ -197,7 +197,7 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Right: Colleagues */}
-                {user?.role !== 'customer' && (
+                {role !== 'customer' && (
                     <div className="lg:col-span-2">
                         <div className="bg-white rounded-2xl p-5 border border-slate-200 h-full">
                             <div className="flex items-center justify-between mb-6">
