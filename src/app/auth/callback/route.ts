@@ -74,5 +74,6 @@ export async function GET(request: Request) {
     const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     const cleanRedirectTo = redirectTo.startsWith('/') ? redirectTo : `/${redirectTo}`;
 
-    return NextResponse.redirect(`${cleanBaseUrl}${cleanRedirectTo}`);
+    const separator = cleanRedirectTo.includes('?') ? '&' : '?';
+    return NextResponse.redirect(`${cleanBaseUrl}${cleanRedirectTo}${separator}from_callback=1`);
 }
