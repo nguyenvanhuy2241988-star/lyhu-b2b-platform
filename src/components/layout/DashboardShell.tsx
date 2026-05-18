@@ -9,6 +9,7 @@ import BottomNav from "./BottomNav";
 import { UserRole } from "@/lib/auth";
 import { WelcomeGreeting } from "@/components/common/WelcomeGreeting";
 import QuickChatWidget from "@/components/chat/QuickChatWidget";
+import B2BSupportChat from "@/components/wholesale/B2BSupportChat";
 
 interface DashboardShellProps {
     role?: UserRole;
@@ -51,7 +52,7 @@ export default function DashboardShell({ children, role, allowedRoles, title }: 
                     {children}
                 </main>
                 <WelcomeGreeting />
-                {sidebarRole !== 'customer' && <QuickChatWidget />}
+                {sidebarRole !== 'customer' ? <QuickChatWidget /> : <B2BSupportChat user={user} />}
                 
                 {/* Mobile Bottom Navigation */}
                 <BottomNav role={sidebarRole} />

@@ -129,6 +129,27 @@ export default function WholesaleStore({
 
     // V3 Vouchers & Real Data
     const [savedVouchers, setSavedVouchers] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const stored = localStorage.getItem('lyhu_saved_vouchers');
+            if (stored) {
+                try {
+                    setSavedVouchers(JSON.parse(stored));
+                } catch (e) {}
+            }
+        }
+    }, []);
+
+    const handleSaveVoucher = (vId: string) => {
+        setSavedVouchers(prev => {
+            const next = Array.from(new Set([...prev, vId]));
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('lyhu_saved_vouchers', JSON.stringify(next));
+            }
+            return next;
+        });
+    };
     const [countdown, setCountdown] = useState<string>('00:00:00');
     
     // Banner Carousel State
@@ -1087,7 +1108,7 @@ export default function WholesaleStore({
                                     <h4 className="text-sm font-bold text-gray-800">{v.name}</h4>
                                     <p className="text-[10px] text-gray-500 mb-2">{v.description}</p>
                                     <button 
-                                        onClick={() => setSavedVouchers(prev => Array.from(new Set([...prev, v.id])))}
+                                        onClick={() => handleSaveVoucher(v.id)}
                                         className={`self-start text-[11px] font-bold px-4 py-1 rounded-sm transition-colors ${savedVouchers.includes(v.id) ? 'bg-gray-200 text-gray-500 cursor-default' : 'bg-primary-600 text-white hover:bg-primary-700'}`}>
                                         {savedVouchers.includes(v.id) ? 'Đã Lưu Ví' : 'Lưu'}
                                     </button>
