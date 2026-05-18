@@ -1,15 +1,32 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabaseClient";
 import { getHomePath } from "@/lib/roles";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 function LoginPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const supabase = createClient();
+    const { user, role, isLoading } = useAuth();
+
+    // Auto-redirect if already logged in
+    useEffect(() => {
+        if (!isLoading && user && role) {
+            const nextParam = searchParams.get("next");
+            import("@/lib/roles").then(({ isRoleAllowedPath, getHomePath }) => {
+                const homePath = getHomePath(role);
+                if (nextParam && nextParam.startsWith("/") && isRoleAllowedPath(role as any, nextParam)) {
+                    router.replace(nextParam);
+                } else {
+                    router.replace(homePath);
+                }
+            });
+        }
+    }, [user, role, isLoading, searchParams, router]);
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -48,9 +65,9 @@ function LoginPageContent() {
                 const homePath = getHomePath(userRole);
 
                 if (nextParam && nextParam.startsWith("/") && isRoleAllowedPath(userRole as any, nextParam)) {
-                    router.push(nextParam);
+                    router.replace(nextParam);
                 } else {
-                    router.push(homePath);
+                    router.replace(homePath);
                 }
             }
         } catch (err: any) {
