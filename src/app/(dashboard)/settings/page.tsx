@@ -7,7 +7,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
-    const { session } = useAuth();
+    const { session, user } = useAuth();
     const [theme, setTheme] = useState("system");
     const [activeSection, setActiveSection] = useState<'account' | 'security' | 'notifications'>('account');
     const [notifications, setNotifications] = useState({ email: true, push: true });
@@ -264,7 +264,11 @@ export default function SettingsPage() {
                     <div className="mt-4 bg-primary-50/50 border border-primary-100 rounded-xl p-4 flex items-start gap-3">
                         <ShieldCheck className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                         <p className="text-xs text-primary-800 leading-relaxed">
-                            Cần trợ giúp? Liên hệ đội Kỹ thuật qua <strong>Tin nhắn nội bộ</strong>.
+                            {user?.role === 'customer' ? (
+                                <>Liên hệ với đội ngũ kỹ thuật LYHU qua tin nhắn hoặc hotline, Zalo <strong>0368 368 834</strong>.</>
+                            ) : (
+                                <>Cần trợ giúp? Liên hệ đội Kỹ thuật qua <strong>Tin nhắn nội bộ</strong>.</>
+                            )}
                         </p>
                     </div>
                 </div>

@@ -126,11 +126,13 @@ export function B2BSupportInbox({ currentUser }: B2BSupportInboxProps) {
     const sendMessageContent = async (content: string, attachmentUrl?: string, attachmentType?: string) => {
         if (!activeRoomId || isSending) return;
         setIsSending(true);
-        const senderName = currentUser?.full_name || currentUser?.email || 'Admin';
+        const isCustomer = currentUser?.role === 'customer';
+        const senderType = isCustomer ? 'customer' : 'admin';
+        const senderName = currentUser?.full_name || currentUser?.email || (isCustomer ? 'Khách hàng' : 'Admin');
 
         const tempId = crypto.randomUUID();
         setMessages(prev => [...prev, {
-            id: tempId, room_id: activeRoomId, sender_type: 'admin', sender_name: senderName,
+            id: tempId, room_id: activeRoomId, sender_type: senderType, sender_name: senderName,
             content, attachment_url: attachmentUrl, attachment_type: attachmentType, created_at: new Date().toISOString()
         }]);
         setInput('');
@@ -138,7 +140,7 @@ export function B2BSupportInbox({ currentUser }: B2BSupportInboxProps) {
         setShowEmoji(false);
 
         try {
-            const insertData: any = { room_id: activeRoomId, sender_type: 'admin', sender_name: senderName, content };
+            const insertData: any = { room_id: activeRoomId, sender_type: senderType, sender_name: senderName, content };
             if (attachmentUrl) { insertData.attachment_url = attachmentUrl; insertData.attachment_type = attachmentType; }
 
             const { error } = await supabase.from('b2b_support_messages').insert(insertData);
@@ -225,14 +227,16 @@ export function B2BSupportInbox({ currentUser }: B2BSupportInboxProps) {
                     <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                             <ShoppingBag className="w-5 h-5 text-teal-600" />
-                            <h3 className="font-bold text-slate-800 text-sm">Hỗ trợ B2B</h3>
+                            <h3 className="font-bold text-slate-800 text-sm">Hỗ trợ LYHU</h3>
                             {totalUnread > 0 && <span className="px-1.5 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full">{totalUnread}</span>}
                         </div>
                     </div>
-                    <div className="relative">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                        <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Tìm khách hàng..." className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-teal-500" />
-                    </div>
+                    {currentUser?.role !== 'customer' && (
+                        <div className="relative">
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                            <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Tìm khách hàng..." className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-teal-500" />
+                        </div>
+                    )}
                 </div>
                 <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
                     {isLoading ? (
@@ -290,7 +294,7 @@ export function B2BSupportInbox({ currentUser }: B2BSupportInboxProps) {
                                 </div>
                             </div>
                             <div className="flex items-center gap-1">
-                                {activeRoom?.status === 'open' && (
+                                {currentUser?.role !== 'customer' && activeRoom?.status === 'open' && (
                                     <button onClick={() => handleCloseRoom(activeRoomId)} className="px-2.5 py-1 text-[10px] border border-slate-200 rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors flex items-center gap-1" title="Đóng phòng chat">
                                         <CheckCircle className="w-3 h-3" />Đóng
                                     </button>
@@ -380,10 +384,12 @@ export function B2BSupportInbox({ currentUser }: B2BSupportInboxProps) {
                                 )}
                                 <div className="flex items-center gap-1.5">
                                     {/* Quick Responses */}
-                                    <button onClick={() => { setShowQuickResponses(!showQuickResponses); setShowEmoji(false); }}
-                                        className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors shrink-0 ${showQuickResponses ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'}`} title="Mẫu trả lời nhanh">
-                                        <Zap className="w-4 h-4" />
-                                    </button>
+                                    {currentUser?.role !== 'customer' && (
+                                        <button onClick={() => { setShowQuickResponses(!showQuickResponses); setShowEmoji(false); }}
+                                            className={`w-8 h-8 flex items-center justify-center rounded-lg transition-colors shrink-0 ${showQuickResponses ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'}`} title="Mẫu trả lời nhanh">
+                                            <Zap className="w-4 h-4" />
+                                        </button>
+                                    )}
                                     {/* Image Upload */}
                                     <button onClick={() => fileInputRef.current?.click()} disabled={isUploading}
                                         className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors shrink-0 disabled:opacity-40" title="Gửi hình ảnh">

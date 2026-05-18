@@ -205,9 +205,9 @@ export const NAV_ITEMS = {
         { label: "Đổi Role (Debug)", href: "/debug-role", icon: ToggleLeft },
     ],
     [ROLES.CUSTOMER]: [
-        { label: "Trang ch?", href: "/customer", icon: LayoutDashboard },
-        { label: "�on h�ng", href: "/customer/orders", icon: ShoppingCart },
-        { label: "Tin nh?n", href: "/chat", icon: MessageCircle },
+        { label: 'Trang chủ', href: '/customer', icon: LayoutDashboard },
+        { label: 'Đơn hàng', href: '/customer/orders', icon: ShoppingCart },
+        { label: 'Tin nhắn', href: '/chat', icon: MessageCircle },
     ],
     [ROLES.SALES]: [
         { label: "Văn hóa doanh nghiệp", href: "/culture", icon: Heart },

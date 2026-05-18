@@ -197,57 +197,59 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Right: Colleagues */}
-                <div className="lg:col-span-2">
-                    <div className="bg-white rounded-2xl p-5 border border-slate-200 h-full">
-                        <div className="flex items-center justify-between mb-6">
-                            <div>
-                                <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
-                                    <Users className="w-4 h-4 text-primary" />
-                                    Đội ngũ đồng nghiệp
-                                </h3>
-                                <p className="text-xs text-slate-500 mt-0.5">Kết nối và trò chuyện với mọi người trong hệ thống</p>
+                {user?.role !== 'customer' && (
+                    <div className="lg:col-span-2">
+                        <div className="bg-white rounded-2xl p-5 border border-slate-200 h-full">
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                        <Users className="w-4 h-4 text-primary" />
+                                        Đội ngũ đồng nghiệp
+                                    </h3>
+                                    <p className="text-xs text-slate-500 mt-0.5">Kết nối và trò chuyện với mọi người trong hệ thống</p>
+                                </div>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Tìm kiếm..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary w-44 outline-none transition-all"
+                                    />
+                                </div>
                             </div>
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Tìm kiếm..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary w-44 outline-none transition-all"
-                                />
-                            </div>
-                        </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {filteredColleagues.length > 0 ? filteredColleagues.map((col: any) => (
-                                <div key={col.id} className="group p-3 rounded-xl border border-slate-100 hover:border-primary-100 hover:bg-primary-50/30 transition-all flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
-                                        {col.avatar_url ? (
-                                            <Image src={col.avatar_url} alt={col.full_name} width={40} height={40} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <span className="text-slate-400 font-bold uppercase text-sm">{col.full_name?.charAt(0) || col.email?.charAt(0)}</span>
-                                        )}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {filteredColleagues.length > 0 ? filteredColleagues.map((col: any) => (
+                                    <div key={col.id} className="group p-3 rounded-xl border border-slate-100 hover:border-primary-100 hover:bg-primary-50/30 transition-all flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
+                                            {col.avatar_url ? (
+                                                <Image src={col.avatar_url} alt={col.full_name} width={40} height={40} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="text-slate-400 font-bold uppercase text-sm">{col.full_name?.charAt(0) || col.email?.charAt(0)}</span>
+                                            )}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-bold text-slate-800 truncate">{col.full_name || col.email}</p>
+                                            <p className="text-[11px] font-medium text-primary uppercase tracking-tight">{col.role || "Thành viên"}</p>
+                                        </div>
                                     </div>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-bold text-slate-800 truncate">{col.full_name || col.email}</p>
-                                        <p className="text-[11px] font-medium text-primary uppercase tracking-tight">{col.role || "Thành viên"}</p>
+                                )) : (
+                                    <div className="col-span-2 py-10 text-center text-slate-400 text-sm">
+                                        Không tìm thấy đồng nghiệp nào.
                                     </div>
-                                </div>
-                            )) : (
-                                <div className="col-span-2 py-10 text-center text-slate-400 text-sm">
-                                    Không tìm thấy đồng nghiệp nào.
-                                </div>
+                                )}
+                            </div>
+
+                            {colleagues.length > 0 && (
+                                <button className="w-full mt-5 py-2.5 text-sm font-medium text-slate-500 hover:text-primary hover:bg-primary-50 rounded-xl transition-all border border-dashed border-slate-200 hover:border-primary-200">
+                                    Xem tất cả thành viên
+                                </button>
                             )}
                         </div>
-
-                        {colleagues.length > 0 && (
-                            <button className="w-full mt-5 py-2.5 text-sm font-medium text-slate-500 hover:text-primary hover:bg-primary-50 rounded-xl transition-all border border-dashed border-slate-200 hover:border-primary-200">
-                                Xem tất cả thành viên
-                            </button>
-                        )}
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );

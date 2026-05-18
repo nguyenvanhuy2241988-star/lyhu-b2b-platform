@@ -84,10 +84,15 @@ export default function ChatPage() {
 
         fetchProfiles();
 
+        // Force B2B mode for customers
+        if (currentUser?.role === 'customer') {
+            setChatMode('b2b');
+        }
+
         return () => {
             unsubscribeFromNewConversations();
         };
-    }, [user, mounted, fetchConversations, subscribeToNewConversations, unsubscribeFromNewConversations, fetchProfiles]);
+    }, [user, mounted, fetchConversations, subscribeToNewConversations, unsubscribeFromNewConversations, fetchProfiles, currentUser]);
 
     // Polling and Realtime are handled internally by selectConversation in chatStore.ts
     // No need for redundant useEffect here to avoid duplicate intervals/channels.

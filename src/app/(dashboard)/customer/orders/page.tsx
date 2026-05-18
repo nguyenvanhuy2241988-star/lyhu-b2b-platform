@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { loadOrders, getOrdersByCustomer, type Order } from "@/lib/ordersStore";
+import { supabase } from "@/lib/supabaseClient";
+import { type Order } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Package, Clock, CheckCircle, XCircle, Filter, RotateCcw } from "lucide-react";
 
@@ -73,9 +74,45 @@ export default function OrdersPage() {
     useEffect(() => {
         if (authIsLoading) return;
         if (authUser) {
-            // Use helper function
-            const customerOrders = getOrdersByCustomer(authUser.id);
-            setOrders(customerOrders);
+            const fetchCustomerOrders = async () => {
+                try {
+                    const { data, error } = await supabase
+                        .from('orders')
+                        .select(`
+                            id, 
+                            status, 
+                            total_amount, 
+                            created_at,
+                            source,
+                            items:order_items(
+                                quantity, 
+                                price,
+                                product:products(name)
+                            )
+                        `)
+                        .eq('customer_id', authUser.id)
+                        .order('created_at', { ascending: false });
+                    
+                    if (data) {
+                        const formattedOrders = data.map((o: any) => ({
+                            id: o.id,
+                            status: o.status,
+                            totalAmount: o.total_amount,
+                            createdAt: o.created_at,
+                            source: o.source,
+                            items: o.items?.map((item: any) => ({
+                                name: item.product?.name || 'Sản phẩm',
+                                quantity: item.quantity,
+                                subtotal: item.quantity * item.price,
+                            })) || []
+                        }));
+                        setOrders(formattedOrders as any);
+                    }
+                } catch (e) {
+                    console.error('Error fetching orders:', e);
+                }
+            };
+            fetchCustomerOrders();
         }
     }, [authUser, authIsLoading]);
 
