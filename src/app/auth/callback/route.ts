@@ -70,5 +70,9 @@ export async function GET(request: Request) {
         }
     }
 
-    return NextResponse.redirect(`${baseUrl}${redirectTo}`);
+    // Xử lý dấu slash để tránh lỗi //admin
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const cleanRedirectTo = redirectTo.startsWith('/') ? redirectTo : `/${redirectTo}`;
+
+    return NextResponse.redirect(`${cleanBaseUrl}${cleanRedirectTo}`);
 }
