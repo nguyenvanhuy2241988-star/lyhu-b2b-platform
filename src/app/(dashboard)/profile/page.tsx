@@ -181,7 +181,7 @@ export default function ProfilePage() {
                         <div className="absolute top-0 left-0 w-1.5 h-full bg-primary rounded-l-2xl"></div>
                         <div className="relative z-10 pl-2">
                             <h3 className="font-bold text-sm text-slate-800 mb-1">Thẻ thành viên LYHU</h3>
-                            <p className="text-[11px] text-slate-500 mb-5">Mã nhân viên: LH-{user?.id?.slice(0, 8).toUpperCase()}</p>
+                            <p className="text-[11px] text-slate-500 mb-5">Mã {role === 'customer' ? 'khách hàng' : 'nhân viên'}: LH-{user?.id?.slice(0, 8).toUpperCase()}</p>
                             <div className="flex justify-between items-end">
                                 <div>
                                     <p className="text-[10px] uppercase font-bold tracking-widest text-primary">Tên hiển thị</p>
