@@ -67,6 +67,13 @@ export default function WholesaleFooter() {
                             <li><Link href="#" className="hover:text-primary-600">Chính sách vận chuyển & giao nhận</Link></li>
                             <li><Link href="#" className="hover:text-primary-600">Quy định đổi trả hàng hóa</Link></li>
                         </ul>
+                        
+                        <div className="mt-8">
+                            <h3 className="text-sm font-bold text-gray-800 uppercase mb-4">Dành cho Nhân sự</h3>
+                            <Link href="/portal" className="inline-flex items-center gap-2 text-sm font-bold text-primary-700 hover:text-primary-800 bg-primary-50 px-4 py-2 rounded-lg transition-colors">
+                                🔐 Cổng Thông Tin Nội Bộ
+                            </Link>
+                        </div>
                     </div>
                 </div>
 
