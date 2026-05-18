@@ -110,7 +110,7 @@ function LoginPageContent() {
 
                     <button
                         type="button"
-                        onClick={() => router.push("/")}
+                        onClick={() => router.push("/portal")}
                         className="text-sm text-slate-600 hover:text-slate-900"
                     >
                         ← Về trang chọn vai trò
