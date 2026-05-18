@@ -31,14 +31,10 @@ export async function GET(request: Request) {
     // Priority: 1. Keep localhost if currently on localhost. 2. NEXT_PUBLIC_SITE_URL. 3. Vercel URL.
     let baseUrl = url.origin;
 
-    // Only override if we are NOT on localhost
-    if (!baseUrl.includes("localhost") && !baseUrl.includes("127.0.0.1")) {
-        if (process.env.NEXT_PUBLIC_SITE_URL) {
-            baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
-        } else if (process.env.VERCEL_URL) {
-            baseUrl = `https://${process.env.VERCEL_URL}`;
-        }
-    }
+    // BỎ QUA VIỆC OVERRIDE baseUrl.
+    // Nếu callback rơi vào domain nào (vercel.app hay lyhu.com.vn) thì BẮT BUỘC phải redirect
+    // về đúng domain đó để trình duyệt giữ lại Cookie (tránh lỗi cross-domain login).
+    // let baseUrl = url.origin; (đã khai báo ở trên)
 
     if (!code) return NextResponse.redirect(`${baseUrl}/login?error=no_code`);
 
