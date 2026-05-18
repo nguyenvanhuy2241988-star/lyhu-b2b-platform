@@ -481,10 +481,11 @@ export default function WholesaleStore({
                 source: 'B2B_WEB'
             };
 
+            if (session?.user?.id) {
+                payload.customer_id = session.user.id;
+            }
             if (b2bCodeData && b2bCodeData.telesales_id) {
                 payload.telesales_user_id = b2bCodeData.telesales_id;
-            } else if (session?.user?.id) {
-                payload.telesales_user_id = session.user.id;
             }
 
             const items = cartAnalysis.items.map(item => ({
