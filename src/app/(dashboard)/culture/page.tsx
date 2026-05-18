@@ -479,6 +479,7 @@ function NextTabButton() {
 }
 
 function IntroductionView({ brand }: { brand: any }) {
+    const { isEditMode } = useContext(CultureContext);
     return (
         <div className="animate-in fade-in duration-500 space-y-16">
             <div>
@@ -503,6 +504,15 @@ function IntroductionView({ brand }: { brand: any }) {
                         <p className="font-semibold text-slate-800 text-xl tracking-wide mt-1" style={{ color: brand.teal }}>
                             <EditableText id="intro_sign" defaultText="Ban Lãnh đạo LYHU" />
                         </p>
+                        
+                        <div className={`mt-8 ${isEditMode ? 'flex flex-col gap-2' : 'flex flex-wrap gap-3'}`}>
+                            <EditableLink id="intro_link_web" icon={Globe} label="Website Công ty" />
+                            <EditableLink id="intro_link_fb" icon={Facebook} label="Fanpage Công ty" />
+                            <EditableLink id="intro_link_fb_hr" icon={Facebook} label="Fanpage Tuyển dụng" />
+                            <EditableLink id="intro_link_yt" icon={Youtube} label="Youtube Công ty" />
+                            <EditableLink id="intro_link_tt" icon={Video} label="Tiktok Công ty" />
+                            <EditableLink id="intro_link_tt_hr" icon={Video} label="Tiktok Tuyển dụng" />
+                        </div>
                     </div>
                 </div>
 
