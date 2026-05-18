@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useChatStore } from "@/lib/chatStore";
 import { supabase } from "@/lib/supabaseClient";
 import { X, Check, ShoppingBag, MessageSquare } from "lucide-react";
@@ -29,7 +29,7 @@ export default function ChatPage() {
     } = useChatStore();
 
     // Inject role into currentUser for easy checking down the tree
-    const currentUser = user ? { ...user, role } : null;
+    const currentUser = useMemo(() => user ? { ...user, role } : null, [user, role]);
     const [users, setUsers] = useState<any[]>([]);
     const [mounted, setMounted] = useState(false);
 
