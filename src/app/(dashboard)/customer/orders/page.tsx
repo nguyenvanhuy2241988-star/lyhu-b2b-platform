@@ -76,7 +76,9 @@ export default function OrdersPage() {
         if (authUser) {
             const fetchCustomerOrders = async () => {
                 try {
-                    const { data, error } = await supabase
+                    const phone = authUser.phone || authUser.user_metadata?.phone || (authUser as any).phone;
+                    
+                    let query = supabase
                         .from('orders')
                         .select(`
                             id, 
@@ -89,9 +91,21 @@ export default function OrdersPage() {
                                 price,
                                 product:products(name)
                             )
-                        `)
-                        .eq('customer_id', authUser.id)
-                        .order('created_at', { ascending: false });
+                        `);
+
+                    if (phone) {
+                        // Clean phone number (remove spaces, +84 etc if needed, but usually just exact match)
+                        const cleanPhone = phone.replace('+84', '0').replace(/\s+/g, '');
+                        query = query.or(`customer_id.eq.${authUser.id},receiver_phone.eq.${cleanPhone}`);
+                    } else {
+                        query = query.eq('customer_id', authUser.id);
+                    }
+                    
+                    const { data, error } = await query.order('created_at', { ascending: false });
+
+                    if (error) {
+                        console.error('Supabase query error:', error);
+                    }
                     
                     if (data) {
                         const formattedOrders = data.map((o: any) => ({
