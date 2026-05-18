@@ -82,11 +82,18 @@ function LoginPageContent() {
         setMsg(null);
         try {
             const origin = window.location.origin;
-            const next = searchParams.get("next") ?? "/";
+            const next = searchParams.get("next");
+            
+            // Build exact redirect URL to match Supabase allowlist
+            let redirectUrl = `${origin}/auth/callback`;
+            if (next && next !== "/") {
+                redirectUrl += `?next=${encodeURIComponent(next)}`;
+            }
+
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: "google",
                 options: {
-                    redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+                    redirectTo: redirectUrl,
                 },
             });
             if (error) setMsg(error.message);
