@@ -1,35 +1,9 @@
 "use client";
 
-import { ShoppingBag, ShoppingCart, FileText, Ticket } from "lucide-react";
+import { ShoppingBag, ShoppingCart, FileText } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
 
 export default function CustomerDashboard() {
-    const [savedVouchers, setSavedVouchers] = useState<any[]>([]);
-    
-    useEffect(() => {
-        const fetchSavedVouchers = async () => {
-            const stored = localStorage.getItem('lyhu_saved_vouchers');
-            if (stored) {
-                try {
-                    const parsedIds = JSON.parse(stored);
-                    if (Array.isArray(parsedIds) && parsedIds.length > 0) {
-                        const { data } = await supabase
-                            .from('wholesale_vouchers')
-                            .select('*')
-                            .in('id', parsedIds)
-                            .eq('is_active', true);
-                        if (data) {
-                            setSavedVouchers(data);
-                        }
-                    }
-                } catch (e) {}
-            }
-        };
-        fetchSavedVouchers();
-    }, []);
-
     return (
         <div className="space-y-6">
             <div>
@@ -68,33 +42,6 @@ export default function CustomerDashboard() {
                     </div>
                 </Link>
             </div>
-
-            {savedVouchers.length > 0 && (
-                <div className="mt-8">
-                    <h2 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                        <Ticket className="w-5 h-5 text-primary-500" />
-                        Ví Voucher của bạn
-                    </h2>
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {savedVouchers.map(v => (
-                            <div key={v.id} className="bg-white border rounded-xl shadow-sm flex overflow-hidden border-primary-200 hover:shadow-md transition-shadow">
-                                <div className={`w-[100px] flex flex-col items-center justify-center text-white p-3 border-r border-dashed border-white shrink-0 ${v.discount_type === 'freeship' ? 'bg-gradient-to-br from-primary-500 to-primary-600' : 'bg-gradient-to-br from-secondary-400 to-secondary-500'}`}>
-                                    <span className="font-bold text-lg leading-tight text-center">{v.discount_type === 'percent' ? `${v.discount_value}%` : v.discount_type === 'freeship' ? 'FREE\nSHIP' : `${v.discount_value / 1000}K`}</span>
-                                    <span className="text-[10px] uppercase mt-1 opacity-80">Giảm giá</span>
-                                </div>
-                                <div className="p-3 flex-1 flex flex-col justify-center">
-                                    <h4 className="text-sm font-bold text-gray-800 line-clamp-1">{v.name}</h4>
-                                    <p className="text-xs text-gray-500 mb-2 line-clamp-2">{v.description}</p>
-                                    <div className="flex items-center justify-between mt-auto">
-                                        <span className="text-[10px] px-2 py-1 bg-green-50 text-green-700 rounded-full font-medium">HSD: Không giới hạn</span>
-                                        <Link href="/" className="text-[11px] font-bold text-primary-600 hover:text-primary-700">Dùng ngay</Link>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
