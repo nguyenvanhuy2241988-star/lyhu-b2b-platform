@@ -39,6 +39,7 @@ export const PROTECTED_PREFIXES = [
 export function getHomePath(role?: string | null): string {
     if (!role) return "/";
     const r = role.toLowerCase() as Role;
+    if (r === 'customer') return '/';
     return ROLE_HOME[r] ?? "/";
 }
 

@@ -166,7 +166,7 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
                 )}
             >
                 <div className="flex h-28 items-center border-b border-slate-100 px-4 py-6 justify-center bg-white shrink-0">
-                    <Link href="/portal" className="flex items-center w-full justify-center">
+                    <Link href={role === 'customer' ? "/" : "/portal"} className="flex items-center w-full justify-center">
                         <NextImage
                             src="/logo-full.png"
                             alt="LYHU Logo"
