@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ShieldCheck, Users, TrendingUp, UserPlus, Headset, Briefcase, Archive, Megaphone, Globe, FlaskConical, Truck, Calculator, ClipboardCheck, Video, MapPin, Camera } from "lucide-react";
 
 const roles = [
@@ -147,6 +147,71 @@ const roles = [
 
 export default function Home() {
     const [logoError, setLogoError] = useState(false);
+    const [isChecking, setIsChecking] = useState(true);
+    const [isUnlocked, setIsUnlocked] = useState(false);
+    const [passcode, setPasscode] = useState("");
+    const [error, setError] = useState(false);
+
+    // Kiểm tra trạng thái mở khóa khi load trang
+    useEffect(() => {
+        const unlocked = localStorage.getItem('lyhu_portal_unlocked');
+        if (unlocked === 'true') {
+            setIsUnlocked(true);
+        }
+        setIsChecking(false);
+    }, []);
+
+    const handleUnlock = (e: React.FormEvent) => {
+        e.preventDefault();
+        // Mã bảo mật mặc định (có thể thay đổi sau)
+        if (passcode === "LYHU888") {
+            localStorage.setItem('lyhu_portal_unlocked', 'true');
+            setIsUnlocked(true);
+            setError(false);
+        } else {
+            setError(true);
+        }
+    };
+
+    if (isChecking) {
+        return <div className="min-h-screen bg-slate-50 flex items-center justify-center"></div>;
+    }
+
+    if (!isUnlocked) {
+        return (
+            <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+                <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 max-w-md w-full text-center">
+                    <div className="w-16 h-16 bg-primary-50 text-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <ShieldCheck className="w-8 h-8" />
+                    </div>
+                    <h2 className="text-xl font-bold text-slate-800 mb-2">Cổng Nội Bộ LYHU</h2>
+                    <p className="text-sm text-slate-500 mb-6">Vui lòng nhập mã bảo mật để truy cập danh sách phân quyền.</p>
+                    
+                    <form onSubmit={handleUnlock}>
+                        <input
+                            type="password"
+                            value={passcode}
+                            onChange={(e) => setPasscode(e.target.value)}
+                            placeholder="Nhập mã bảo mật..."
+                            className={`w-full px-4 py-3 rounded-xl border ${error ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 focus:ring-primary-500'} focus:outline-none focus:ring-2 mb-4 text-center tracking-widest font-mono text-lg`}
+                            autoFocus
+                        />
+                        {error && <p className="text-red-500 text-sm mb-4">Mã bảo mật không chính xác!</p>}
+                        <button
+                            type="submit"
+                            className="w-full bg-primary-600 text-white font-bold py-3 rounded-xl hover:bg-primary-700 transition-colors"
+                        >
+                            Xác Nhận
+                        </button>
+                    </form>
+                    <Link href="/" className="inline-block mt-6 text-sm text-slate-500 hover:text-slate-800">
+                        &larr; Quay lại trang chủ
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <main className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-8">
             <div className="max-w-6xl w-full">
