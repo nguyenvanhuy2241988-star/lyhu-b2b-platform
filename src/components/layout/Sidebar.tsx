@@ -25,7 +25,7 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
     const defaultItems = NAV_ITEMS[role] || [];
     const [showKpiBadge, setShowKpiBadge] = useState(false);
     const { getTotalUnreadCount } = useChatStore();
-    const chatUnread = getTotalUnreadCount();
+    const chatUnread = role === 'customer' ? 0 : getTotalUnreadCount();
     const { user } = useAuth();
 
     // ── Drag & Drop state ──

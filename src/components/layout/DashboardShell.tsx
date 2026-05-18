@@ -51,7 +51,7 @@ export default function DashboardShell({ children, role, allowedRoles, title }: 
                     {children}
                 </main>
                 <WelcomeGreeting />
-                <QuickChatWidget />
+                {sidebarRole !== 'customer' && <QuickChatWidget />}
                 
                 {/* Mobile Bottom Navigation */}
                 <BottomNav role={sidebarRole} />

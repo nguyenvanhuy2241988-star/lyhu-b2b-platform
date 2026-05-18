@@ -22,7 +22,7 @@ export default function BottomNav({ role }: BottomNavProps) {
     const [orderedItems, setOrderedItems] = useState(defaultItems);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const { getTotalUnreadCount } = useChatStore();
-    const chatUnread = getTotalUnreadCount();
+    const chatUnread = role === 'customer' ? 0 : getTotalUnreadCount();
 
     // Load saved order
     useEffect(() => {
