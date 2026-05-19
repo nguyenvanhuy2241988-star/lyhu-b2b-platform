@@ -1007,38 +1007,51 @@ export default function WholesaleStore({
                     </button>
                 </div>
 
-                {/* V5: Mobile Utility Bar (Login, Code, Notif) */}
-                <div className="md:hidden flex items-center justify-between text-[11px] text-white/90 pb-2 border-t border-white/10 pt-2 mt-1">
-                    <div className="flex items-center gap-3">
-                        {wholesaleUser ? (
-                            <button onClick={handleLogout} className="font-medium hover:text-white">Đăng Xuất</button>
-                        ) : (
-                            <>
-                                <button onClick={() => setIsLoginOpen(true)} className="font-medium hover:text-white">Đăng Nhập</button>
-                                <button onClick={() => setIsRegisterOpen(true)} className="font-medium hover:text-white">Đăng Ký</button>
-                            </>
-                        )}
-                        <button onClick={() => setIsNotifOpen(true)} className="relative flex items-center gap-1 hover:text-white">
-                            <Bell className="w-3.5 h-3.5" />
+                {/* V5: Mobile Utility Bar (Login, Code, Notif, Links) */}
+                <div className="md:hidden flex flex-col gap-2 text-[11px] text-white/90 pb-2 border-t border-white/10 pt-2 mt-1">
+                    {/* Row 1: Links and Notif */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <Link href="/customer" className="hover:text-white font-medium">Kênh người mua</Link>
+                            <span className="text-white/40">|</span>
+                            <Link href="/tin-tuc" className="hover:text-white font-medium text-secondary-300">Tin tức</Link>
+                        </div>
+                        <button onClick={() => setIsNotifOpen(true)} className="relative flex items-center gap-1 hover:text-white font-medium">
+                            <Bell className="w-3.5 h-3.5" /> Thông Báo
                             {notifications.filter(n => !n.read).length > 0 && (
-                                <span className="absolute -top-1 -right-1 bg-secondary-500 text-[8px] font-bold min-w-[12px] h-[12px] rounded-full flex items-center justify-center">{notifications.filter(n => !n.read).length}</span>
+                                <span className="absolute -top-1.5 -right-1.5 bg-secondary-500 text-[8px] font-bold min-w-[14px] h-[14px] rounded-full flex items-center justify-center">{notifications.filter(n => !n.read).length}</span>
                             )}
                         </button>
                     </div>
+                    
+                    {/* Row 2: Auth and B2B Code */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            {wholesaleUser ? (
+                                <button onClick={handleLogout} className="font-medium hover:text-white">Đăng Xuất</button>
+                            ) : (
+                                <>
+                                    <button onClick={() => setIsLoginOpen(true)} className="font-medium hover:text-white">Đăng Nhập</button>
+                                    <span className="text-white/40">|</span>
+                                    <button onClick={() => setIsRegisterOpen(true)} className="font-medium hover:text-white">Đăng Ký</button>
+                                </>
+                            )}
+                        </div>
 
-                    {!isWholesaleCustomer && (
-                        <div className="flex items-center gap-1.5">
-                            <input type="text" value={inputB2bCode} onChange={e=>setInputB2bCode(e.target.value)} placeholder="Nhập Mã Sỉ" className="px-2 py-1 text-black rounded-sm outline-none w-20 h-[24px]" />
-                            <button onClick={handleVerifyB2bCode} disabled={isVerifyingCode} className="bg-secondary-500 text-white px-2 py-1 rounded-sm font-bold h-[24px] leading-none flex items-center">
-                                {isVerifyingCode ? '...' : 'KÍCH HOẠT'}
-                            </button>
-                        </div>
-                    )}
-                    {b2bCodeData && (
-                        <div className="flex items-center gap-1 text-secondary-300 font-bold">
-                            <CheckCircle2 className="w-3 h-3" /> KH SỈ
-                        </div>
-                    )}
+                        {!isWholesaleCustomer && (
+                            <div className="flex items-center gap-1.5">
+                                <input type="text" value={inputB2bCode} onChange={e=>setInputB2bCode(e.target.value)} placeholder="Nhập Mã Sỉ" className="px-2 py-1 text-black rounded-sm outline-none w-20 h-[24px]" />
+                                <button onClick={handleVerifyB2bCode} disabled={isVerifyingCode} className="bg-secondary-500 text-white px-2 py-1 rounded-sm font-bold h-[24px] leading-none flex items-center">
+                                    {isVerifyingCode ? '...' : 'KÍCH HOẠT'}
+                                </button>
+                            </div>
+                        )}
+                        {b2bCodeData && (
+                            <div className="flex items-center gap-1 text-secondary-300 font-bold">
+                                <CheckCircle2 className="w-3 h-3" /> KH SỈ
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
