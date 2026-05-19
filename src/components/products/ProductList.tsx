@@ -846,7 +846,6 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Số SP / Thùng</label>
                                     <input type="number" min="0" className="w-full border rounded-lg px-3 py-2" value={formData.items_per_carton} onChange={e => setFormData({ ...formData, items_per_carton: Number(e.target.value) })} />
                                 </div>
-                            </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Video URL (YouTube/TikTok)</label>
                                     <input type="url" placeholder="https://" className="w-full border rounded-lg px-3 py-2" value={formData.video_url} onChange={e => setFormData({ ...formData, video_url: e.target.value })} />
