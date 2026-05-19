@@ -1289,44 +1289,71 @@ export default function WholesaleStore({
                         </button>
                         
                         <div className="w-full md:w-1/2 bg-gray-50 flex flex-col p-6 border-r border-gray-100 shrink-0 relative overflow-y-auto">
-                            {/* Product Main Image */}
-                            <div className="w-full aspect-square bg-white border border-gray-200 mb-2 relative flex items-center justify-center overflow-hidden">
-                                {(() => {
-                                    const allImages = [selectedProduct.image_url, ...(selectedProduct.extra_images || [])].filter(Boolean);
-                                    const currentImg = allImages[activeImageIdx] || selectedProduct.image_url;
-                                    if (currentImg) {
-                                        return <img src={currentImg} alt="" className="w-full h-full object-contain" />;
-                                    }
-                                    return <ShoppingCart className="w-24 h-24 text-gray-300" />;
-                                })()}
-                            </div>
-                            
-                            {/* Thumbnail Row */}
+                            {/* Product Main Image & Thumbnails */}
                             {(() => {
                                 const allImages = [selectedProduct.image_url, ...(selectedProduct.extra_images || [])].filter(Boolean);
-                                if (allImages.length > 0) {
-                                    return (
-                                        <div className="flex gap-2 w-full overflow-x-auto hide-scrollbar py-1">
-                                            {allImages.map((imgUrl, idx) => (
-                                                <div 
-                                                    key={idx} 
-                                                    onClick={() => setActiveImageIdx(idx)}
-                                                    className={`w-16 h-16 border-2 rounded-sm flex-shrink-0 cursor-pointer transition-all ${idx === activeImageIdx ? 'border-primary-500' : 'border-transparent hover:border-gray-300 opacity-70 hover:opacity-100'}`}
-                                                >
-                                                    <img src={imgUrl} className="w-full h-full object-cover" />
+                                const hasVideo = !!selectedProduct.video_url;
+                                const totalMedia = allImages.length + (hasVideo ? 1 : 0);
+                                const safeIdx = Math.max(0, Math.min(activeImageIdx, totalMedia - 1));
+                                
+                                const getEmbedUrl = (url: string) => {
+                                    if (!url) return '';
+                                    if (url.includes('youtube.com/shorts/')) return url.replace('youtube.com/shorts/', 'youtube.com/embed/');
+                                    if (url.includes('youtu.be/')) return url.replace('youtu.be/', 'youtube.com/embed/');
+                                    if (url.includes('watch?v=')) return url.replace('watch?v=', 'embed/');
+                                    return url;
+                                };
+
+                                return (
+                                    <>
+                                        <div className="w-full aspect-square bg-black border border-gray-200 mb-2 relative flex items-center justify-center overflow-hidden group">
+                                            {totalMedia === 0 ? (
+                                                <div className="w-full h-full bg-white flex items-center justify-center">
+                                                    <ShoppingCart className="w-24 h-24 text-gray-300" />
                                                 </div>
-                                            ))}
-                                            {selectedProduct.video_url && (
-                                                <a href={selectedProduct.video_url} target="_blank" rel="noreferrer" className="w-16 h-16 border border-gray-200 rounded-sm flex-shrink-0 cursor-pointer opacity-80 hover:opacity-100 bg-gray-900 flex items-center justify-center relative">
-                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-colors">
-                                                        <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center"><ChevronRight className="w-3 h-3 text-white ml-0.5" /></div>
-                                                    </div>
-                                                </a>
+                                            ) : safeIdx < allImages.length ? (
+                                                <img src={allImages[safeIdx]} alt="" className="w-full h-full object-contain bg-white" />
+                                            ) : (
+                                                <iframe src={getEmbedUrl(selectedProduct.video_url!)} className="w-full h-full bg-black" frameBorder="0" allowFullScreen></iframe>
+                                            )}
+                                            
+                                            {totalMedia > 1 && (
+                                                <>
+                                                    <button onClick={(e) => { e.stopPropagation(); setActiveImageIdx(safeIdx > 0 ? safeIdx - 1 : totalMedia - 1); }} className="absolute left-2 w-8 h-8 flex items-center justify-center bg-white/80 hover:bg-white rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                                        <ChevronRight className="w-5 h-5 text-gray-800 rotate-180" />
+                                                    </button>
+                                                    <button onClick={(e) => { e.stopPropagation(); setActiveImageIdx(safeIdx < totalMedia - 1 ? safeIdx + 1 : 0); }} className="absolute right-2 w-8 h-8 flex items-center justify-center bg-white/80 hover:bg-white rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                                        <ChevronRight className="w-5 h-5 text-gray-800" />
+                                                    </button>
+                                                </>
                                             )}
                                         </div>
-                                    );
-                                }
-                                return null;
+                                        
+                                        {totalMedia > 0 && (
+                                            <div className="flex gap-2 w-full overflow-x-auto hide-scrollbar py-1">
+                                                {allImages.map((imgUrl, idx) => (
+                                                    <div 
+                                                        key={idx} 
+                                                        onClick={() => setActiveImageIdx(idx)}
+                                                        className={`w-16 h-16 border-2 rounded-sm flex-shrink-0 cursor-pointer transition-all ${idx === safeIdx ? 'border-primary-500' : 'border-transparent hover:border-gray-300 opacity-70 hover:opacity-100'}`}
+                                                    >
+                                                        <img src={imgUrl} className="w-full h-full object-cover" />
+                                                    </div>
+                                                ))}
+                                                {hasVideo && (
+                                                    <div 
+                                                        onClick={() => setActiveImageIdx(allImages.length)}
+                                                        className={`w-16 h-16 border-2 rounded-sm flex-shrink-0 cursor-pointer transition-all relative ${safeIdx === allImages.length ? 'border-primary-500' : 'border-transparent hover:border-gray-300 opacity-70 hover:opacity-100'} bg-gray-900 flex items-center justify-center`}
+                                                    >
+                                                        <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center">
+                                                            <ChevronRight className="w-3 h-3 text-white ml-0.5" />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </>
+                                );
                             })()}
 
                             {/* Share to Chat */}
