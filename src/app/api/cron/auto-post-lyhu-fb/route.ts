@@ -80,12 +80,21 @@ export async function GET(req: Request) {
             console.error('Lỗi khi ép Facebook scrape URL:', e);
         }
 
-        // 6. Gọi Graph API đăng bài dạng Link Preview
-        const facebookApiUrl = `https://graph.facebook.com/v20.0/${page.page_id}/feed`;
+        // 6. Gọi Graph API đăng bài
+        let facebookApiUrl = `https://graph.facebook.com/v20.0/${page.page_id}/feed`;
         const formData = new URLSearchParams();
         
-        formData.append('message', caption);
-        formData.append('link', postUrl);
+        if (post.thumbnail_url) {
+            // Sử dụng Photo Post để đảm bảo 100% hiển thị hình ảnh
+            facebookApiUrl = `https://graph.facebook.com/v20.0/${page.page_id}/photos`;
+            formData.append('url', post.thumbnail_url);
+            formData.append('message', caption);
+        } else {
+            // Fallback nếu không có ảnh
+            formData.append('message', caption);
+            formData.append('link', postUrl);
+        }
+        
         formData.append('access_token', page.access_token);
 
         const fbResponse = await fetch(facebookApiUrl, {
