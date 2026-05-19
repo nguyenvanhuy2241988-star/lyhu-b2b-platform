@@ -15,7 +15,7 @@ export async function GET(req: Request) {
         const { data: pages, error: pageError } = await supabase
             .from('facebook_pages')
             .select('page_id, access_token, name')
-            .eq('name', 'https://www.facebook.com/lyhu.vn')
+            .eq('name', 'LYHU')
             .limit(1);
 
         if (pageError || !pages || pages.length === 0) {
