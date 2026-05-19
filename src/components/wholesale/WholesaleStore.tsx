@@ -87,8 +87,8 @@ const getMockSocialProof = (id: string) => {
     }
     const positiveHash = Math.abs(hash);
     const rating = 4.5 + (positiveHash % 6) / 10;
-    const sold = 50 + (positiveHash % 3450);
-    return { rating, sold };
+    const soldCount = 50 + (positiveHash % 3450);
+    return { rating, soldCount };
 };
 
 export default function WholesaleStore({ 
