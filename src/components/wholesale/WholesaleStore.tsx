@@ -1340,12 +1340,12 @@ export default function WholesaleStore({
             {/* Quick View Modal (Shopee style) */}
             {selectedProduct && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setSelectedProduct(null)}>
-                    <div className="bg-white rounded-md shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col md:flex-row relative" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white rounded-md shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row relative" onClick={e => e.stopPropagation()}>
                         <button className="absolute top-3 right-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full p-2 z-20 transition-colors" onClick={() => setSelectedProduct(null)}>
                             <X className="w-5 h-5" />
                         </button>
                         
-                        <div className="w-full md:w-1/2 bg-gray-50 flex flex-col p-6 border-r border-gray-100 shrink-0 relative overflow-y-auto">
+                        <div className="w-full md:w-1/2 bg-gray-50 flex flex-col p-6 border-r border-gray-100 shrink-0 relative h-auto md:h-full overflow-visible md:overflow-y-auto">
                             {/* Product Main Image & Thumbnails */}
                             {(() => {
                                 const allImages = [selectedProduct.image_url, ...(selectedProduct.extra_images || [])].filter(Boolean);
@@ -1445,7 +1445,7 @@ export default function WholesaleStore({
                             </div>
                         </div>
 
-                        <div className="w-full md:w-1/2 p-6 flex flex-col overflow-y-auto">
+                        <div className="w-full md:w-1/2 p-6 flex flex-col shrink-0 md:shrink h-auto md:h-full overflow-visible md:overflow-y-auto">
                             <span className="bg-primary-500 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-sm w-fit mb-2">{selectedProduct.brand}</span>
                             <h2 className="text-xl font-medium text-gray-800 leading-tight mb-2">{selectedProduct.name}</h2>
                             
