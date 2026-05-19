@@ -123,6 +123,7 @@ export default function WholesaleStore({
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [activeImageIdx, setActiveImageIdx] = useState(0);
     const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
+    const [imageViewerMode, setImageViewerMode] = useState<'product'|'certificate'>('product');
     const [addQty, setAddQty] = useState<number | string>(1);
 
     useEffect(() => {
@@ -1321,7 +1322,7 @@ export default function WholesaleStore({
                                                     <ShoppingCart className="w-24 h-24 text-gray-300" />
                                                 </div>
                                             ) : safeIdx < allImages.length ? (
-                                                <img onClick={() => setIsImageViewerOpen(true)} src={allImages[safeIdx]} alt="" className="w-full h-full object-contain bg-white cursor-pointer" />
+                                                <img onClick={() => { setImageViewerMode('product'); setIsImageViewerOpen(true); }} src={allImages[safeIdx]} alt="" className="w-full h-full object-contain bg-white cursor-pointer" />
                                             ) : (
                                                 <iframe src={getEmbedUrl(selectedProduct.video_url!)} className="w-full h-full bg-black" frameBorder="0" allowFullScreen></iframe>
                                             )}
@@ -1463,7 +1464,7 @@ export default function WholesaleStore({
                                     <div className="flex flex-wrap gap-2">
                                         {(selectedProduct as any).certificates?.length > 0 ? (
                                             (selectedProduct as any).certificates.map((certUrl: string, idx: number) => (
-                                                <div key={idx} onClick={() => window.open(certUrl, '_blank')} className="cursor-pointer border border-gray-200 rounded-sm overflow-hidden h-20 w-20 relative group hover:border-primary-500 transition-colors">
+                                                <div key={idx} onClick={() => { setActiveImageIdx(idx); setImageViewerMode('certificate'); setIsImageViewerOpen(true); }} className="cursor-pointer border border-gray-200 rounded-sm overflow-hidden h-20 w-20 relative group hover:border-primary-500 transition-colors">
                                                     {/* eslint-disable-next-line @next/next/no-img-element */}
                                                     <img src={certUrl} alt="Chứng nhận" className="w-full h-full object-cover" />
                                                     <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
@@ -1547,8 +1548,12 @@ export default function WholesaleStore({
                     </button>
                     
                     {(() => {
-                        const allImages = [selectedProduct.image_url, ...(selectedProduct.extra_images || [])].filter(Boolean);
-                        const hasVideo = !!selectedProduct.video_url;
+                        const isCertMode = imageViewerMode === 'certificate';
+                        const certs = (selectedProduct as any).certificates || [];
+                        const allImages = isCertMode 
+                            ? certs
+                            : [selectedProduct.image_url, ...(selectedProduct.extra_images || [])].filter(Boolean);
+                        const hasVideo = !isCertMode && !!selectedProduct.video_url;
                         const totalMedia = allImages.length + (hasVideo ? 1 : 0);
                         const safeIdx = Math.max(0, Math.min(activeImageIdx, totalMedia - 1));
                         
@@ -1591,7 +1596,7 @@ export default function WholesaleStore({
                                         <div className="text-gray-400 text-sm mb-4 hidden md:block">Ảnh {safeIdx + 1}/{totalMedia}</div>
                                         
                                         <div className="flex md:grid md:grid-cols-3 gap-3 w-full">
-                                            {allImages.map((imgUrl, idx) => (
+                                            {allImages.map((imgUrl: string, idx: number) => (
                                                 <div 
                                                     key={idx} 
                                                     onClick={() => setActiveImageIdx(idx)}
