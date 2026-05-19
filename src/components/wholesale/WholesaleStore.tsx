@@ -122,6 +122,7 @@ export default function WholesaleStore({
     const [sortBy, setSortBy] = useState<'popular' | 'latest' | 'topsale' | 'price_asc' | 'price_desc'>('popular');
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [activeImageIdx, setActiveImageIdx] = useState(0);
+    const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
 
     // V4 Features States
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -1312,7 +1313,7 @@ export default function WholesaleStore({
                                                     <ShoppingCart className="w-24 h-24 text-gray-300" />
                                                 </div>
                                             ) : safeIdx < allImages.length ? (
-                                                <img src={allImages[safeIdx]} alt="" className="w-full h-full object-contain bg-white" />
+                                                <img onClick={() => setIsImageViewerOpen(true)} src={allImages[safeIdx]} alt="" className="w-full h-full object-contain bg-white cursor-pointer" />
                                             ) : (
                                                 <iframe src={getEmbedUrl(selectedProduct.video_url!)} className="w-full h-full bg-black" frameBorder="0" allowFullScreen></iframe>
                                             )}
@@ -1493,6 +1494,86 @@ export default function WholesaleStore({
                             </div>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Shopee-like Image Viewer Modal */}
+            {isImageViewerOpen && selectedProduct && (
+                <div className="fixed inset-0 z-[60] bg-black/95 flex flex-col md:flex-row items-center justify-center p-4 md:p-8" onClick={() => setIsImageViewerOpen(false)}>
+                    <button className="absolute top-4 right-4 text-white hover:text-gray-300 z-10 p-2" onClick={() => setIsImageViewerOpen(false)}>
+                        <X className="w-8 h-8" />
+                    </button>
+                    
+                    {(() => {
+                        const allImages = [selectedProduct.image_url, ...(selectedProduct.extra_images || [])].filter(Boolean);
+                        const hasVideo = !!selectedProduct.video_url;
+                        const totalMedia = allImages.length + (hasVideo ? 1 : 0);
+                        const safeIdx = Math.max(0, Math.min(activeImageIdx, totalMedia - 1));
+                        
+                        const getEmbedUrl = (url: string) => {
+                            if (!url) return '';
+                            if (url.includes('youtube.com/shorts/')) return url.replace('youtube.com/shorts/', 'youtube.com/embed/');
+                            if (url.includes('youtu.be/')) return url.replace('youtu.be/', 'youtube.com/embed/');
+                            if (url.includes('watch?v=')) return url.replace('watch?v=', 'embed/');
+                            return url;
+                        };
+
+                        return (
+                            <div className="w-full h-full max-w-6xl flex flex-col md:flex-row gap-6 items-center justify-center" onClick={e => e.stopPropagation()}>
+                                {/* Main Viewer */}
+                                <div className="flex-1 w-full h-[60vh] md:h-[80vh] relative flex items-center justify-center group">
+                                    {totalMedia === 0 ? (
+                                        <ShoppingCart className="w-32 h-32 text-gray-500" />
+                                    ) : safeIdx < allImages.length ? (
+                                        <img src={allImages[safeIdx]} alt="" className="w-full h-full object-contain" />
+                                    ) : (
+                                        <iframe src={getEmbedUrl(selectedProduct.video_url!)} className="w-full max-w-2xl h-full aspect-video" frameBorder="0" allowFullScreen></iframe>
+                                    )}
+                                    
+                                    {totalMedia > 1 && (
+                                        <>
+                                            <button onClick={(e) => { e.stopPropagation(); setActiveImageIdx(safeIdx > 0 ? safeIdx - 1 : totalMedia - 1); }} className="absolute left-2 md:-left-12 w-12 h-12 flex items-center justify-center bg-black/50 text-white hover:bg-black/80 rounded-full transition-colors z-10">
+                                                <ChevronRight className="w-8 h-8 rotate-180" />
+                                            </button>
+                                            <button onClick={(e) => { e.stopPropagation(); setActiveImageIdx(safeIdx < totalMedia - 1 ? safeIdx + 1 : 0); }} className="absolute right-2 md:-right-12 w-12 h-12 flex items-center justify-center bg-black/50 text-white hover:bg-black/80 rounded-full transition-colors z-10">
+                                                <ChevronRight className="w-8 h-8" />
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                                
+                                {/* Right Sidebar Thumbnails */}
+                                {totalMedia > 0 && (
+                                    <div className="w-full md:w-80 h-auto md:h-[80vh] overflow-y-auto hide-scrollbar flex md:flex-col gap-2 p-2">
+                                        <div className="text-white text-lg font-bold mb-2 hidden md:block">{selectedProduct.name}</div>
+                                        <div className="text-gray-400 text-sm mb-4 hidden md:block">Ảnh {safeIdx + 1}/{totalMedia}</div>
+                                        
+                                        <div className="flex md:grid md:grid-cols-3 gap-3 w-full">
+                                            {allImages.map((imgUrl, idx) => (
+                                                <div 
+                                                    key={idx} 
+                                                    onClick={() => setActiveImageIdx(idx)}
+                                                    className={`w-20 md:w-full aspect-square border-2 flex-shrink-0 cursor-pointer transition-all ${idx === safeIdx ? 'border-primary-500' : 'border-transparent hover:border-gray-500 opacity-60 hover:opacity-100'}`}
+                                                >
+                                                    <img src={imgUrl} className="w-full h-full object-cover bg-white" />
+                                                </div>
+                                            ))}
+                                            {hasVideo && (
+                                                <div 
+                                                    onClick={() => setActiveImageIdx(allImages.length)}
+                                                    className={`w-20 md:w-full aspect-square border-2 flex-shrink-0 cursor-pointer transition-all relative ${safeIdx === allImages.length ? 'border-primary-500' : 'border-transparent hover:border-gray-500 opacity-60 hover:opacity-100'} bg-gray-900 flex items-center justify-center`}
+                                                >
+                                                    <div className="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center">
+                                                        <ChevronRight className="w-4 h-4 text-white ml-0.5" />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })()}
                 </div>
             )}
 
