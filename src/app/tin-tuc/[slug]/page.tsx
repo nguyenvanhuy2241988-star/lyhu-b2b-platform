@@ -122,7 +122,7 @@ export async function generateMetadata(
     const { post } = data;
     const title = post.meta_title || post.title;
     const description = post.meta_description || post.ai_summary || post.content.substring(0, 160).replace(/<[^>]*>?/gm, '');
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lyhu-b2b-platform.vercel.app';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lyhu.com.vn';
     const postUrl = `${siteUrl}/tin-tuc/${post.slug}`;
     const imageUrl = post.thumbnail_url 
         ? `${siteUrl}/api/og-image?url=${encodeURIComponent(post.thumbnail_url)}` 
