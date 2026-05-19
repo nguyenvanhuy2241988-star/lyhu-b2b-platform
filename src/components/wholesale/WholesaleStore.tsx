@@ -1016,12 +1016,33 @@ export default function WholesaleStore({
                             <span className="text-white/40">|</span>
                             <Link href="/tin-tuc" className="hover:text-white font-medium text-secondary-300">Tin tức</Link>
                         </div>
-                        <button onClick={() => setIsNotifOpen(true)} className="relative flex items-center gap-1 hover:text-white font-medium">
-                            <Bell className="w-3.5 h-3.5" /> Thông Báo
-                            {notifications.filter(n => !n.read).length > 0 && (
-                                <span className="absolute -top-1.5 -right-1.5 bg-secondary-500 text-[8px] font-bold min-w-[14px] h-[14px] rounded-full flex items-center justify-center">{notifications.filter(n => !n.read).length}</span>
+                        <div className="relative">
+                            <button onClick={() => setIsNotifOpen(!isNotifOpen)} className="flex items-center gap-1 hover:text-white font-medium">
+                                <Bell className="w-3.5 h-3.5" /> Thông Báo
+                                {notifications.filter(n => !n.read).length > 0 && (
+                                    <span className="absolute -top-1.5 -right-1 bg-secondary-500 text-[8px] font-bold min-w-[14px] h-[14px] rounded-full flex items-center justify-center">{notifications.filter(n => !n.read).length}</span>
+                                )}
+                            </button>
+                            {/* Notification Dropdown Mobile */}
+                            {isNotifOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setIsNotifOpen(false)}></div>
+                                    <div className="absolute right-0 top-full mt-2 w-[300px] bg-white shadow-xl border border-gray-200 rounded-sm z-50 animate-in fade-in slide-in-from-top-2 text-black">
+                                        <div className="p-3 border-b border-gray-100 flex items-center justify-between">
+                                            <h4 className="text-sm font-bold text-gray-800">Thông Báo Mới</h4>
+                                        </div>
+                                        <div className="max-h-[300px] overflow-y-auto">
+                                            {notifications.map(n => (
+                                                <div key={n.id} className={`p-3 border-b border-gray-50 hover:bg-primary-50/30 cursor-pointer text-left ${!n.read ? 'bg-primary-50/50' : ''}`}>
+                                                    <p className="text-sm text-gray-700 leading-relaxed">{n.text}</p>
+                                                    <p className="text-[11px] text-gray-400 mt-1">{n.time}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
                             )}
-                        </button>
+                        </div>
                     </div>
                     
                     {/* Row 2: Auth and B2B Code */}
@@ -1063,20 +1084,20 @@ export default function WholesaleStore({
                 {banners.length > 0 ? (
                     <div className="mb-4 flex flex-col md:flex-row gap-2 h-auto md:h-[300px]">
                         {/* Main Carousel (2/3 width) */}
-                        <div className="w-full md:w-2/3 h-[200px] md:h-full relative overflow-hidden rounded-sm bg-gray-100 group">
+                        <div className="w-full md:w-2/3 aspect-[2/1] md:aspect-auto md:h-full relative overflow-hidden rounded-sm bg-white group">
                             {mainSliders.length > 0 ? (
                                 <>
                                     <div className="w-full h-full flex transition-transform duration-500 ease-out" style={{ transform: `translateX(-${currentSlideIndex * 100}%)` }}>
                                         {mainSliders.map(slide => (
                                             <a key={slide.id} href={slide.link_url || '#'} className="min-w-full h-full relative cursor-pointer block">
-                                                <img src={slide.image_url} alt="Carousel Banner" className="w-full h-full object-cover" />
+                                                <img src={slide.image_url} alt="Carousel Banner" className="w-full h-full object-contain md:object-cover bg-white" />
                                             </a>
                                         ))}
                                     </div>
                                     {mainSliders.length > 1 && (
                                         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
                                             {mainSliders.map((_, idx) => (
-                                                <button key={idx} onClick={() => setCurrentSlideIndex(idx)} className={`w-2 h-2 rounded-full transition-all ${idx === currentSlideIndex ? 'bg-white w-4' : 'bg-white/50 hover:bg-white/80'}`} />
+                                                <button key={idx} onClick={() => setCurrentSlideIndex(idx)} className={`w-2 h-2 rounded-full transition-all ${idx === currentSlideIndex ? 'bg-primary-500 w-4' : 'bg-gray-300/80 hover:bg-primary-400'}`} />
                                             ))}
                                         </div>
                                     )}
