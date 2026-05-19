@@ -1006,6 +1006,40 @@ export default function WholesaleStore({
                         )}
                     </button>
                 </div>
+
+                {/* V5: Mobile Utility Bar (Login, Code, Notif) */}
+                <div className="md:hidden flex items-center justify-between text-[11px] text-white/90 pb-2 border-t border-white/10 pt-2 mt-1">
+                    <div className="flex items-center gap-3">
+                        {wholesaleUser ? (
+                            <button onClick={handleLogout} className="font-medium hover:text-white">Đăng Xuất</button>
+                        ) : (
+                            <>
+                                <button onClick={() => setIsLoginOpen(true)} className="font-medium hover:text-white">Đăng Nhập</button>
+                                <button onClick={() => setIsRegisterOpen(true)} className="font-medium hover:text-white">Đăng Ký</button>
+                            </>
+                        )}
+                        <button onClick={() => setIsNotifOpen(true)} className="relative flex items-center gap-1 hover:text-white">
+                            <Bell className="w-3.5 h-3.5" />
+                            {notifications.filter(n => !n.read).length > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-secondary-500 text-[8px] font-bold min-w-[12px] h-[12px] rounded-full flex items-center justify-center">{notifications.filter(n => !n.read).length}</span>
+                            )}
+                        </button>
+                    </div>
+
+                    {!isWholesaleCustomer && (
+                        <div className="flex items-center gap-1.5">
+                            <input type="text" value={inputB2bCode} onChange={e=>setInputB2bCode(e.target.value)} placeholder="Nhập Mã Sỉ" className="px-2 py-1 text-black rounded-sm outline-none w-20 h-[24px]" />
+                            <button onClick={handleVerifyB2bCode} disabled={isVerifyingCode} className="bg-secondary-500 text-white px-2 py-1 rounded-sm font-bold h-[24px] leading-none flex items-center">
+                                {isVerifyingCode ? '...' : 'KÍCH HOẠT'}
+                            </button>
+                        </div>
+                    )}
+                    {b2bCodeData && (
+                        <div className="flex items-center gap-1 text-secondary-300 font-bold">
+                            <CheckCircle2 className="w-3 h-3" /> KH SỈ
+                        </div>
+                    )}
+                </div>
             </div>
 
 
