@@ -1322,7 +1322,12 @@ export default function WholesaleStore({
                                                     <ShoppingCart className="w-24 h-24 text-gray-300" />
                                                 </div>
                                             ) : safeIdx < allImages.length ? (
-                                                <img onClick={() => { setImageViewerMode('product'); setIsImageViewerOpen(true); }} src={allImages[safeIdx]} alt="" className="w-full h-full object-contain bg-white cursor-pointer" />
+                                                <div className="relative w-full h-full flex items-center justify-center cursor-pointer" onClick={() => { setImageViewerMode('product'); setIsImageViewerOpen(true); }} onContextMenu={e => e.preventDefault()}>
+                                                    <img src={allImages[safeIdx]} alt="" className="w-full h-full object-contain bg-white" />
+                                                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+                                                        <span className="text-black/10 font-black text-6xl -rotate-12 tracking-[0.5em] select-none">LYHU</span>
+                                                    </div>
+                                                </div>
                                             ) : (
                                                 <iframe src={getEmbedUrl(selectedProduct.video_url!)} className="w-full h-full bg-black" frameBorder="0" allowFullScreen></iframe>
                                             )}
