@@ -1445,6 +1445,7 @@ export default function WholesaleStore({
                                     <p className="flex"><span className="w-24 text-gray-400 shrink-0">Mã SKU</span> <span className="font-medium text-gray-800 break-words">{selectedProduct.sku}</span></p>
                                     <p className="flex"><span className="w-24 text-gray-400 shrink-0">Kho hàng</span> <span className="font-medium text-gray-800">Sẵn sàng giao</span></p>
                                     <p className="flex"><span className="w-24 text-gray-400 shrink-0">Thương hiệu</span> <span className="text-primary-600">{selectedProduct.brand}</span></p>
+                                    {(selectedProduct as any).origin && <p className="flex"><span className="w-24 text-gray-400 shrink-0">Xuất xứ</span> <span className="font-medium text-gray-800">{(selectedProduct as any).origin}</span></p>}
                                     <p className="flex"><span className="w-24 text-gray-400 shrink-0">Đóng gói</span> <span className="font-medium text-gray-800">{selectedProduct.packaging_spec || selectedProduct.unit}</span></p>
                                     {selectedProduct.weight && <p className="flex"><span className="w-24 text-gray-400 shrink-0">Trọng lượng</span> <span className="font-medium text-gray-800">{selectedProduct.weight}</span></p>}
                                     {((selectedProduct.items_per_carton || 0) > 0) && <p className="flex"><span className="w-24 text-gray-400 shrink-0">Quy cách</span> <span className="font-medium text-gray-800">{selectedProduct.items_per_carton} sản phẩm / thùng</span></p>}
@@ -1460,15 +1461,27 @@ export default function WholesaleStore({
                                 <div className="mt-4 pt-4 border-t border-gray-100">
                                     <h4 className="font-bold text-gray-800 text-sm mb-2 uppercase">Giấy tờ & Chứng nhận</h4>
                                     <div className="flex flex-wrap gap-2">
-                                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded text-xs font-medium border border-emerald-100 cursor-default">
-                                            <CheckCircle2 className="w-3.5 h-3.5" /> Chứng nhận ATVSTP
-                                        </div>
-                                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded text-xs font-medium border border-emerald-100 cursor-default">
-                                            <CheckCircle2 className="w-3.5 h-3.5" /> Hồ sơ công bố chất lượng
-                                        </div>
-                                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded text-xs font-medium border border-emerald-100 cursor-default">
-                                            <CheckCircle2 className="w-3.5 h-3.5" /> Hóa đơn VAT
-                                        </div>
+                                        {(selectedProduct as any).certificates?.length > 0 ? (
+                                            (selectedProduct as any).certificates.map((certUrl: string, idx: number) => (
+                                                <div key={idx} onClick={() => window.open(certUrl, '_blank')} className="cursor-pointer border border-gray-200 rounded-sm overflow-hidden h-20 w-20 relative group hover:border-primary-500 transition-colors">
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img src={certUrl} alt="Chứng nhận" className="w-full h-full object-cover" />
+                                                    <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors"></div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <>
+                                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded text-xs font-medium border border-emerald-100 cursor-default">
+                                                    <CheckCircle2 className="w-3.5 h-3.5" /> Chứng nhận ATVSTP
+                                                </div>
+                                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded text-xs font-medium border border-emerald-100 cursor-default">
+                                                    <CheckCircle2 className="w-3.5 h-3.5" /> Hồ sơ công bố chất lượng
+                                                </div>
+                                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded text-xs font-medium border border-emerald-100 cursor-default">
+                                                    <CheckCircle2 className="w-3.5 h-3.5" /> Hóa đơn VAT
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>

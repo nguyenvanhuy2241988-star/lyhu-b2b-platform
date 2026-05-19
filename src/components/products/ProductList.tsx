@@ -24,6 +24,8 @@ export interface AppProduct extends Product {
     description?: string;
     video_url?: string;
     extra_images?: string[];
+    origin?: string;
+    certificates?: string[];
 }
 
 interface ProductListProps {
@@ -65,7 +67,9 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
         items_per_carton: 0,
         description: "",
         video_url: "",
-        extra_images: [] as string[]
+        extra_images: [] as string[],
+        origin: "",
+        certificates: [] as string[]
     });
 
     // Bulk Edit State — multi-field
@@ -123,6 +127,31 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
 
             setFormData(prev => ({ ...prev, extra_images: [...(prev.extra_images || []), data.publicUrl] }));
             toast.success("Tải ảnh bổ sung thành công");
+        } catch (error: any) {
+            toast.error('Lỗi upload ảnh: ' + error.message);
+        } finally {
+            setIsUploadingImage(false);
+        }
+    };
+
+    const uploadCertificateImage = async (file: File) => {
+        try {
+            setIsUploadingImage(true);
+            const fileExt = file.name?.split('.').pop() || 'png';
+            const fileName = `product_cert_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+            
+            const { error: uploadError } = await supabase.storage
+                .from('report-images')
+                .upload(fileName, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data } = supabase.storage
+                .from('report-images')
+                .getPublicUrl(fileName);
+
+            setFormData(prev => ({ ...prev, certificates: [...(prev.certificates || []), data.publicUrl] }));
+            toast.success("Tải ảnh giấy tờ thành công");
         } catch (error: any) {
             toast.error('Lỗi upload ảnh: ' + error.message);
         } finally {
@@ -252,7 +281,8 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
         setEditingProduct(null);
         setFormData({ 
             sku: "", name: "", brand: "LYHU", unit: "Gói", price: 0, stock: 100, image_url: "",
-            weight: "", packaging_spec: "", items_per_carton: 0, description: "", video_url: "", extra_images: []
+            weight: "", packaging_spec: "", items_per_carton: 0, description: "", video_url: "", extra_images: [],
+            origin: "", certificates: []
         });
         setIsModalOpen(true);
     };
@@ -273,7 +303,9 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
             items_per_carton: product.items_per_carton || 0,
             description: product.description || "",
             video_url: product.video_url || "",
-            extra_images: product.extra_images || []
+            extra_images: product.extra_images || [],
+            origin: product.origin || "",
+            certificates: product.certificates || []
         });
         setIsModalOpen(true);
     };
@@ -803,15 +835,18 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
                                     <input className="w-full border rounded-lg px-3 py-2" value={formData.weight} onChange={e => setFormData({ ...formData, weight: e.target.value })} />
                                 </div>
                                 <div>
+                                    <label className="block text-sm font-medium text-slate-700 mb-1">Xuất xứ (ví dụ: Việt Nam)</label>
+                                    <input className="w-full border rounded-lg px-3 py-2" value={formData.origin || ''} onChange={e => setFormData({ ...formData, origin: e.target.value })} />
+                                </div>
+                                <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Quy cách (ví dụ: Thùng carton)</label>
                                     <input className="w-full border rounded-lg px-3 py-2" value={formData.packaging_spec} onChange={e => setFormData({ ...formData, packaging_spec: e.target.value })} />
                                 </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Số SP / Thùng</label>
                                     <input type="number" min="0" className="w-full border rounded-lg px-3 py-2" value={formData.items_per_carton} onChange={e => setFormData({ ...formData, items_per_carton: Number(e.target.value) })} />
                                 </div>
+                            </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-700 mb-1">Video URL (YouTube/TikTok)</label>
                                     <input type="url" placeholder="https://" className="w-full border rounded-lg px-3 py-2" value={formData.video_url} onChange={e => setFormData({ ...formData, video_url: e.target.value })} />
@@ -850,6 +885,43 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
                                                     onClick={(e) => { 
                                                         e.stopPropagation(); 
                                                         setFormData(prev => ({ ...prev, extra_images: prev.extra_images.filter((_, index) => index !== idx) })); 
+                                                    }}
+                                                >
+                                                    <Trash2 className="w-4 h-4 text-red-200" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Certificates Images */}
+                            <div className="pt-4 border-t border-slate-100">
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Ảnh Giấy tờ & Chứng nhận (Chứng nhận ATVSTP, Hóa đơn VAT...)</label>
+                                <div className="mt-2 flex items-center justify-start gap-3">
+                                    <label className={`cursor-pointer ${isUploadingImage ? 'bg-slate-100 text-slate-400 pointer-events-none' : 'bg-slate-100 hover:bg-emerald-50 text-emerald-700 border-emerald-200'} px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 font-medium border shadow-sm text-sm`}>
+                                        {isUploadingImage ? <Loader2 className="w-4 h-4 animate-spin text-emerald-500"/> : <UploadCloud className="w-4 h-4 text-emerald-600" />}
+                                        Tải ảnh giấy tờ lên
+                                        <input type="file" multiple className="hidden" accept="image/*" onChange={(e) => {
+                                            if (e.target.files) {
+                                                Array.from(e.target.files).forEach(file => uploadCertificateImage(file));
+                                            }
+                                        }} />
+                                    </label>
+                                </div>
+                                {formData.certificates && formData.certificates.length > 0 && (
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {formData.certificates.map((url, idx) => (
+                                            <div key={idx} className="h-20 w-20 border border-slate-200 rounded-lg overflow-hidden relative group/img cursor-pointer">
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                <img src={url} alt="" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} onClick={() => window.open(url, '_blank')} />
+                                                <button
+                                                    type="button"
+                                                    title="Xoá ảnh này"
+                                                    className="absolute inset-0 bg-black/50 hidden group-hover/img:flex items-center justify-center text-white transition-opacity"
+                                                    onClick={(e) => { 
+                                                        e.stopPropagation(); 
+                                                        setFormData(prev => ({ ...prev, certificates: prev.certificates.filter((_, index) => index !== idx) })); 
                                                     }}
                                                 >
                                                     <Trash2 className="w-4 h-4 text-red-200" />
