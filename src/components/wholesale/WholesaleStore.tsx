@@ -123,6 +123,14 @@ export default function WholesaleStore({
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [activeImageIdx, setActiveImageIdx] = useState(0);
     const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
+    const [addQty, setAddQty] = useState<number | string>(1);
+
+    useEffect(() => {
+        if (selectedProduct) {
+            setAddQty(1);
+            setActiveImageIdx(0);
+        }
+    }, [selectedProduct]);
 
     // V4 Features States
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -1448,17 +1456,38 @@ export default function WholesaleStore({
                                         </p>
                                     </div>
                                 </div>
+                                
+                                <div className="mt-4 pt-4 border-t border-gray-100">
+                                    <h4 className="font-bold text-gray-800 text-sm mb-2 uppercase">Giấy tờ & Chứng nhận</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded text-xs font-medium border border-emerald-100 cursor-default">
+                                            <CheckCircle2 className="w-3.5 h-3.5" /> Chứng nhận ATVSTP
+                                        </div>
+                                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded text-xs font-medium border border-emerald-100 cursor-default">
+                                            <CheckCircle2 className="w-3.5 h-3.5" /> Hồ sơ công bố chất lượng
+                                        </div>
+                                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded text-xs font-medium border border-emerald-100 cursor-default">
+                                            <CheckCircle2 className="w-3.5 h-3.5" /> Hóa đơn VAT
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="mt-auto pt-4 border-t border-gray-100 flex gap-3 bg-white sticky bottom-0">
+                            <div className="mt-auto pt-4 border-t border-gray-100 flex flex-wrap gap-3 bg-white sticky bottom-0">
                                 {(() => {
                                     const qty = cart[selectedProduct.id]?.quantity || 0;
                                     const fsProd = flashSaleProducts.find(f => f.id === selectedProduct.id);
                                     const cartonSize = selectedProduct.items_per_carton || 0;
+                                    
                                     return qty === 0 ? (
                                         <>
+                                            <div className="flex items-center border border-gray-300 rounded-sm h-12 w-32 bg-white shrink-0 overflow-hidden">
+                                                <button onClick={() => setAddQty(Math.max(1, (typeof addQty === 'number' ? addQty : 1) - 1))} className="w-10 h-full flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-600"><Minus className="w-5 h-5" /></button>
+                                                <input type="number" value={addQty} onChange={e => setAddQty(parseInt(e.target.value) || '')} onBlur={() => typeof addQty !== 'number' || addQty < 1 ? setAddQty(1) : null} className="font-bold text-lg text-gray-800 border-x border-gray-200 flex-1 w-full text-center h-full focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                                                <button onClick={() => setAddQty((typeof addQty === 'number' ? addQty : 1) + 1)} className="w-10 h-full flex items-center justify-center hover:bg-gray-100 transition-colors text-gray-600"><Plus className="w-5 h-5" /></button>
+                                            </div>
                                             <button 
-                                                onClick={() => updateQuantity(selectedProduct, 1, fsProd?.flashSalePrice)} 
+                                                onClick={() => updateQuantity(selectedProduct, typeof addQty === 'number' ? addQty : 1, fsProd?.flashSalePrice)} 
                                                 className="h-12 flex-1 bg-primary-50 text-primary-600 border border-primary-500 rounded-sm font-medium hover:bg-primary-100 flex gap-2 items-center justify-center transition-colors"
                                             >
                                                 <ShoppingCart className="w-5 h-5" />
@@ -1467,7 +1496,7 @@ export default function WholesaleStore({
                                             {cartonSize > 0 && (
                                                 <button 
                                                     onClick={() => updateQuantity(selectedProduct, cartonSize, fsProd?.flashSalePrice)} 
-                                                    className="h-12 flex-1 bg-primary-600 text-white rounded-sm font-medium hover:bg-primary-700 flex gap-2 items-center justify-center transition-colors shadow-sm"
+                                                    className="h-12 w-full lg:flex-1 bg-primary-600 text-white rounded-sm font-medium hover:bg-primary-700 flex gap-2 items-center justify-center transition-colors shadow-sm"
                                                 >
                                                     + Mua 1 Thùng
                                                 </button>
@@ -1475,9 +1504,9 @@ export default function WholesaleStore({
                                         </>
                                     ) : (
                                         <>
-                                            <div className="flex items-center border border-primary-500 rounded-sm h-12 w-32 text-primary-600 bg-white shrink-0">
+                                            <div className="flex items-center border border-primary-500 rounded-sm h-12 w-32 text-primary-600 bg-white shrink-0 overflow-hidden">
                                                 <button onClick={() => updateQuantity(selectedProduct, -1)} className="w-10 h-full flex items-center justify-center hover:bg-primary-50 active:bg-primary-100 transition-colors"><Minus className="w-5 h-5" /></button>
-                                                <span className="font-bold text-lg text-gray-800 border-x border-gray-200 flex-1 text-center h-full flex items-center justify-center bg-gray-50">{qty}</span>
+                                                <input type="number" value={qty} onChange={e => { const val = parseInt(e.target.value); if (!isNaN(val) && val >= 0) { updateQuantity(selectedProduct, val - qty); } }} className="font-bold text-lg text-gray-800 border-x border-gray-200 flex-1 w-full text-center h-full bg-gray-50 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
                                                 <button onClick={() => updateQuantity(selectedProduct, 1)} className="w-10 h-full flex items-center justify-center hover:bg-primary-50 active:bg-primary-100 transition-colors"><Plus className="w-5 h-5" /></button>
                                             </div>
                                             {cartonSize > 0 && (
