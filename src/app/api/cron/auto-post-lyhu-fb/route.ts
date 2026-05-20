@@ -53,7 +53,7 @@ export async function GET(req: Request) {
         const post: any = posts[0];
 
         // 4. Chuẩn bị nội dung Caption theo format chung
-        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lyhu.com.vn';
+        const baseUrl = 'https://lyhu.com.vn';
         const postUrl = `${baseUrl}/tin-tuc/${post.slug}`;
         
         // Format chung: [Tiêu đề] + [Tóm tắt] + 👉 Xem chính sách sỉ: lyhu.com.vn + #Hashtags

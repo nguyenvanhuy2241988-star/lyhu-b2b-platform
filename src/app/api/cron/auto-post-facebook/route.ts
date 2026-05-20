@@ -60,7 +60,7 @@ export async function GET(req: Request) {
         const isNews = newsCategories.includes(categorySlug);
 
         // 4. Chuẩn bị nội dung Caption
-        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lyhu-b2b-platform.vercel.app';
+        const baseUrl = 'https://lyhu.com.vn';
         const postUrl = `${baseUrl}/tin-tuc/${post.slug}`;
         
         // Tạo Hashtags từ keywords
