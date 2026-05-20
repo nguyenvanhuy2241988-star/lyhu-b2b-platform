@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lyhu.com.vn';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.includes('lyhu.com.vn') ? process.env.NEXT_PUBLIC_SITE_URL : 'https://lyhu.com.vn';
     
     return {
         rules: {

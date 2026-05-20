@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { createClient } from '@supabase/supabase-js';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lyhu.com.vn';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.includes('lyhu.com.vn') ? process.env.NEXT_PUBLIC_SITE_URL : 'https://lyhu.com.vn';
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
     
