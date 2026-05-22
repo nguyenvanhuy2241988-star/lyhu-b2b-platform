@@ -85,7 +85,7 @@ export default function DeliverySlip({ order, paperSize = 'A4', onClose }: Deliv
                         <div className="flex items-start justify-between mb-6 pb-4 border-b-2 border-slate-800">
                             <div>
                                 <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">LYHU</h1>
-                                <p className="text-xs text-slate-500 mt-0.5">Green Solutions for Life</p>
+                                <p className="text-xs text-slate-500 mt-0.5">Kết nối chân thành - Hợp tác bền vững</p>
                             </div>
                             <div className="text-right">
                                 <h2 className="text-lg font-bold text-slate-800">PHIẾU GIAO HÀNG</h2>
@@ -208,7 +208,7 @@ export default function DeliverySlip({ order, paperSize = 'A4', onClose }: Deliv
 
                         {/* Footer */}
                         <div className="text-center mt-8 text-[10px] text-slate-400">
-                            <p>LYHU — Green Solutions for Life</p>
+                            <p>LYHU - Kết nối chân thành - Hợp tác bền vững</p>
                             <p>Phiếu được tạo tự động từ hệ thống LYHU CRM</p>
                         </div>
                     </div>

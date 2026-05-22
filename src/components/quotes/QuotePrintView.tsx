@@ -439,7 +439,7 @@ export default function QuotePrintView({ quote, onClose, products }: QuotePrintV
                                 <div className="flex items-center justify-between text-white">
                                     <div>
                                         <p className="text-xs font-bold">CÔNG TY TNHH LYHU</p>
-                                        <p className="text-[10px] opacity-80">Green Solutions for Life</p>
+                                        <p className="text-[10px] opacity-80">Kết nối chân thành - Hợp tác bền vững</p>
                                     </div>
                                     <div className="text-right text-[10px] opacity-80">
                                         <p>Hotline: {COMPANY_INFO.hotline}</p>
