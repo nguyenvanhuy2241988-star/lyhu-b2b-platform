@@ -58,36 +58,80 @@ export default function QuotePrintView({ quote, onClose, products }: QuotePrintV
             // Header information
             const validDate = quote.valid_until ? fmtDate(quote.valid_until) : '';
             const headerData = [
-                [COMPANY_INFO.name],
-                [`BÁO GIÁ SẢN PHẨM (Số: BG-${quote.readable_id})`],
-                [`Ngày: ${fmtDate(quote.created_at)}`, validDate ? `Hiệu lực đến: ${validDate}` : ''],
+                [`CÔNG TY TNHH LYHU - Kết nối chân thành - Hợp tác bền vững`],
+                [`MST: 0110940697 | Địa chỉ: ${COMPANY_INFO.address}`],
+                [`Hotline: ${quote.sales_phone || COMPANY_INFO.hotline} | Email: ${COMPANY_INFO.email}`],
                 [],
-                ['THÔNG TIN KHÁCH HÀNG'],
-                ['Khách hàng:', quote.customer_name],
-                ['SĐT:', quote.customer_phone || ''],
-                ['Địa chỉ:', quote.customer_address || ''],
-                ['NV Kinh Doanh:', quote.creator_name || ''],
-                []
+                [`BÁO GIÁ SẢN PHẨM`],
+                [`Số: BG-${quote.readable_id} | Ngày: ${fmtDate(quote.created_at)} ${validDate ? '| Hiệu lực đến: ' + validDate : ''}`],
+                [],
             ];
+            
+            const isPriceList = quote.quote_type === 'price_list';
+            if (!isPriceList || quote.customer_name !== 'Kính gửi Quý khách hàng') {
+                headerData.push(['THÔNG TIN KHÁCH HÀNG']);
+                headerData.push(['Khách hàng:', quote.customer_name]);
+                if (quote.customer_phone) headerData.push(['SĐT:', quote.customer_phone]);
+                if (quote.customer_address) headerData.push(['Địa chỉ:', quote.customer_address]);
+                headerData.push(['NV Kinh Doanh:', quote.creator_name || '-']);
+                headerData.push([]);
+            }
+
+            if (isPriceList) {
+                headerData.push(['Kính gửi: Quý khách hàng!']);
+                headerData.push(['Công ty TNHH LYHU là đơn vị sản xuất, phân phối các mặt hàng tiêu dùng nhanh.']);
+                headerData.push(['Cảm ơn quý khách hàng đã quan tâm đến các sản phẩm của Công ty LYHU. Chúng tôi xin trân trọng giới thiệu bảng báo giá các sản phẩm như sau:']);
+                headerData.push([]);
+            }
 
             let rowData: any[] = [];
-            const isPriceList = quote.quote_type === 'price_list';
             const items = quote.items || [];
             
             if (isPriceList) {
                 rowData.push(['STT', 'Mã Sản Phẩm', 'Tên Sản Phẩm', 'Đơn Vị', 'Trọng Lượng', 'HSD', 'Quy Cách (Thùng)', 'Giá Lẻ', 'Giá Sỉ']);
-                items.forEach((item, idx) => {
-                    rowData.push([
-                        idx + 1,
-                        item.sku || '',
-                        item.name,
-                        item.unit || '',
-                        item.weight || '',
-                        item.expiry || '',
-                        item.packSize || '',
-                        item.retailPrice || 0,
-                        item.wholesalePrice || 0
-                    ]);
+                
+                const groups: { category: string, items: QuoteItem[] }[] = [];
+                items.forEach(item => {
+                    let finalCategory = item.category;
+                    if (products && item.productId) {
+                        const p = products.find((p: any) => p.id === item.productId);
+                        if (p && p.brand) {
+                            finalCategory = p.brand;
+                        }
+                    }
+                    const cat = (finalCategory || 'SẢN PHẨM KHÁC').trim().toUpperCase();
+                    let group = groups.find(g => g.category === cat);
+                    if (!group) {
+                        group = { category: cat, items: [] };
+                        groups.push(group);
+                    }
+                    group.items.push(item);
+                });
+                
+                groups.sort((a, b) => {
+                    if (a.category === 'SẢN PHẨM KHÁC') return 1;
+                    if (b.category === 'SẢN PHẨM KHÁC') return -1;
+                    return a.category.localeCompare(b.category);
+                });
+
+                let globalIdx = 1;
+                groups.forEach(group => {
+                    if (groups.length > 1 || group.category !== 'SẢN PHẨM KHÁC') {
+                        rowData.push([group.category]);
+                    }
+                    group.items.forEach((item) => {
+                        rowData.push([
+                            globalIdx++,
+                            item.sku || '',
+                            item.name,
+                            item.unit || '',
+                            item.weight || '',
+                            item.expiry || '',
+                            item.packSize || '',
+                            item.retailPrice || 0,
+                            item.wholesalePrice || 0
+                        ]);
+                    });
                 });
             } else {
                 rowData.push(['STT', 'Mã Sản Phẩm', 'Tên Sản Phẩm', 'Đơn vị', 'Số lượng', 'Đơn giá', 'Thành tiền']);
@@ -111,7 +155,54 @@ export default function QuotePrintView({ quote, onClose, products }: QuotePrintV
                 rowData.push(['', '', '', '', '', 'Tổng cộng:', quote.total]);
             }
 
+            rowData.push([]);
+            rowData.push(['GHI CHÚ']);
+            if (quote.notes) {
+                rowData.push([quote.notes]);
+            }
+            rowData.push([]);
+            rowData.push(['ĐIỀU KHOẢN & ĐIỀU KIỆN']);
+            if (quote.terms) {
+                quote.terms.split('\n').forEach(t => {
+                    if (t.trim()) rowData.push([t]);
+                });
+            } else {
+                rowData.push(['Giá trên chưa bao gồm phí vận chuyển (nếu có).']);
+                rowData.push([`Báo giá có hiệu lực ${validDate ? 'đến ' + validDate : '30 ngày'} kể từ ngày phát hành.`]);
+                rowData.push(['Thanh toán: Chuyển khoản trước khi giao hàng hoặc COD.']);
+                rowData.push(['Hàng hóa được đổi trả trong vòng 7 ngày nếu có lỗi từ nhà sản xuất.']);
+            }
+            rowData.push([]);
+            rowData.push([]);
+            rowData.push(['', '', '', 'Đại diện CÔNG TY TNHH LYHU']);
+            rowData.push(['', '', '', '(Ký, đóng dấu và ghi rõ họ tên)']);
+
             const worksheet = XLSX.utils.aoa_to_sheet([...headerData, ...rowData]);
+            
+            if (isPriceList) {
+                worksheet['!cols'] = [
+                    { wch: 5 },  // STT
+                    { wch: 15 }, // SKU
+                    { wch: 40 }, // Name
+                    { wch: 10 }, // Unit
+                    { wch: 12 }, // Weight
+                    { wch: 12 }, // Expiry
+                    { wch: 15 }, // PackSize
+                    { wch: 15 }, // RetailPrice
+                    { wch: 15 }  // WholesalePrice
+                ];
+            } else {
+                worksheet['!cols'] = [
+                    { wch: 5 },  // STT
+                    { wch: 15 }, // SKU
+                    { wch: 40 }, // Name
+                    { wch: 10 }, // Unit
+                    { wch: 10 }, // Quantity
+                    { wch: 15 }, // UnitPrice
+                    { wch: 15 }  // Total
+                ];
+            }
+
             XLSX.utils.book_append_sheet(workbook, worksheet, 'Bao_Gia');
             XLSX.writeFile(workbook, `Bao_Gia_${quote.readable_id}.xlsx`);
         } catch (error) {
