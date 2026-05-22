@@ -3,7 +3,9 @@
 import React, { useRef, useState } from 'react';
 import type { Quote, QuoteItem } from '@/lib/quotesStore';
 import { COMPANY_INFO } from '@/lib/companyConfig';
-import { Printer, Download, X, FileText } from 'lucide-react';
+import { Printer, Download, X, FileText, Image as ImageIcon, FileSpreadsheet } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import * as XLSX from 'xlsx';
 
 const fmtPrice = (n: number) => new Intl.NumberFormat('vi-VN').format(n);
 const fmtDate = (s: string) => new Date(s).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -19,12 +21,104 @@ interface QuotePrintViewProps {
 export default function QuotePrintView({ quote, onClose, products }: QuotePrintViewProps) {
     const printRef = useRef<HTMLDivElement>(null);
     const [paperSize, setPaperSize] = useState<'A4' | 'A5'>('A4');
+    const [isExporting, setIsExporting] = useState(false);
 
     const handlePrint = () => window.print();
 
     const handleExportPDF = () => {
         // Browser print dialog with "Save as PDF" option
         window.print();
+    };
+
+    const handleExportImage = async () => {
+        if (!printRef.current) return;
+        setIsExporting(true);
+        try {
+            const canvas = await html2canvas(printRef.current, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+            const link = document.createElement('a');
+            link.download = `Bao_Gia_${quote.readable_id}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        } catch (error) {
+            console.error('Error exporting image:', error);
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
+    const handleExportExcel = () => {
+        setIsExporting(true);
+        try {
+            const workbook = XLSX.utils.book_new();
+            
+            // Header information
+            const validDate = quote.valid_until ? fmtDate(quote.valid_until) : '';
+            const headerData = [
+                [COMPANY_INFO.name],
+                [`BÁO GIÁ SẢN PHẨM (Số: BG-${quote.readable_id})`],
+                [`Ngày: ${fmtDate(quote.created_at)}`, validDate ? `Hiệu lực đến: ${validDate}` : ''],
+                [],
+                ['THÔNG TIN KHÁCH HÀNG'],
+                ['Khách hàng:', quote.customer_name],
+                ['SĐT:', quote.customer_phone || ''],
+                ['Địa chỉ:', quote.customer_address || ''],
+                ['NV Kinh Doanh:', quote.creator_name || ''],
+                []
+            ];
+
+            let rowData: any[] = [];
+            const isPriceList = quote.quote_type === 'price_list';
+            const items = quote.items || [];
+            
+            if (isPriceList) {
+                rowData.push(['STT', 'Mã Sản Phẩm', 'Tên Sản Phẩm', 'Đơn Vị', 'Trọng Lượng', 'HSD', 'Quy Cách (Thùng)', 'Giá Lẻ', 'Giá Sỉ']);
+                items.forEach((item, idx) => {
+                    rowData.push([
+                        idx + 1,
+                        item.sku || '',
+                        item.name,
+                        item.unit || '',
+                        item.weight || '',
+                        item.expiry || '',
+                        item.packSize || '',
+                        item.retailPrice || 0,
+                        item.wholesalePrice || 0
+                    ]);
+                });
+            } else {
+                rowData.push(['STT', 'Mã Sản Phẩm', 'Tên Sản Phẩm', 'Đơn vị', 'Số lượng', 'Đơn giá', 'Thành tiền']);
+                items.forEach((item, idx) => {
+                    const lineTotal = item.subtotal || (item.unitPrice || 0) * (item.quantity || 0);
+                    rowData.push([
+                        idx + 1,
+                        item.sku || '',
+                        item.name,
+                        item.isGift ? 'KM' : 'Cái',
+                        item.quantity,
+                        item.isGift ? 0 : (item.unitPrice || 0),
+                        item.isGift ? 0 : lineTotal
+                    ]);
+                });
+                rowData.push([]);
+                rowData.push(['', '', '', '', '', 'Tạm tính:', quote.subtotal]);
+                if (quote.discount_amount > 0) rowData.push(['', '', '', '', '', 'Chiết khấu:', -quote.discount_amount]);
+                if (quote.vat_percent > 0) rowData.push(['', '', '', '', '', `VAT (${quote.vat_percent}%):`, Math.round(quote.subtotal * quote.vat_percent / 100)]);
+                if (quote.shipping_fee > 0) rowData.push(['', '', '', '', '', 'Phí vận chuyển:', quote.shipping_fee]);
+                rowData.push(['', '', '', '', '', 'Tổng cộng:', quote.total]);
+            }
+
+            const worksheet = XLSX.utils.aoa_to_sheet([...headerData, ...rowData]);
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Bao_Gia');
+            XLSX.writeFile(workbook, `Bao_Gia_${quote.readable_id}.xlsx`);
+        } catch (error) {
+            console.error('Error exporting excel:', error);
+        } finally {
+            setIsExporting(false);
+        }
     };
 
     const items = quote.items || [];
@@ -84,13 +178,21 @@ export default function QuotePrintView({ quote, onClose, products }: QuotePrintV
                         </select>
                     </div>
                     <div className="flex items-center gap-2">
-                        <button onClick={handlePrint}
-                            className="flex items-center gap-2 px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition-colors">
+                        <button onClick={handleExportImage} disabled={isExporting}
+                            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50">
+                            <ImageIcon className="w-4 h-4" /> {isExporting ? '...' : 'Ảnh'}
+                        </button>
+                        <button onClick={handleExportExcel} disabled={isExporting}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50">
+                            <FileSpreadsheet className="w-4 h-4" /> Excel
+                        </button>
+                        <button onClick={handlePrint} disabled={isExporting}
+                            className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50">
                             <Printer className="w-4 h-4" /> In
                         </button>
-                        <button onClick={handleExportPDF}
-                            className="flex items-center gap-2 px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold rounded-xl transition-colors">
-                            <Download className="w-4 h-4" /> Xuất PDF
+                        <button onClick={handleExportPDF} disabled={isExporting}
+                            className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50">
+                            <Download className="w-4 h-4" /> PDF
                         </button>
                         <button onClick={onClose}
                             className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
