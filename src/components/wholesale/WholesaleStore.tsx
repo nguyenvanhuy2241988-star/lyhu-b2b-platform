@@ -1281,7 +1281,7 @@ export default function WholesaleStore({
                         </div>
                         
                         <div className="flex gap-4 overflow-x-auto p-4 hide-scrollbar">
-                            {flashSaleProducts.map(product => {
+                            {flashSaleProducts.map((product, idx) => {
                                 const qtyInCart = cart[product.id]?.quantity || 0;
                                 return (
                                     <div key={product.id} className="min-w-[150px] md:min-w-[180px] group flex flex-col cursor-pointer" onClick={() => setSelectedProduct(product)}>
@@ -1292,7 +1292,7 @@ export default function WholesaleStore({
                                                 <span>{Math.round(100 - (product.flashSalePrice/(product.basePricePerUnit||1))*100)}%</span>
                                             </div>
                                             {product.image_url ? (
-                                                <img src={product.image_url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                                <img src={product.image_url} alt="" loading={idx > 4 ? "lazy" : undefined} decoding={idx > 4 ? "async" : "sync"} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                                             ) : (
                                                 <ShoppingCart className="w-8 h-8 text-gray-300" />
                                             )}
@@ -1358,7 +1358,7 @@ export default function WholesaleStore({
 
                 {/* Product Grid */}
                 <div id="product-grid" className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-3">
-                    {filteredProducts.map(product => {
+                    {filteredProducts.map((product, idx) => {
                         const qty = cart[product.id]?.quantity || 0;
                         const fsProd = flashSaleProducts.find(f => f.id === product.id);
                         const isFlashSaleActive = !!fsProd;
@@ -1384,7 +1384,7 @@ export default function WholesaleStore({
                                     onClick={() => setSelectedProduct(product)}
                                 >
                                     {product.image_url ? (
-                                        <img src={product.image_url} alt={product.name} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                        <img src={product.image_url} alt={product.name} loading={idx > 9 ? "lazy" : undefined} decoding={idx > 9 ? "async" : "sync"} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                                     ) : (
                                         <ShoppingCart className="w-10 h-10 text-primary-200" />
                                     )}
