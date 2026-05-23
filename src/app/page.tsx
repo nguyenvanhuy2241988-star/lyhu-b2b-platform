@@ -58,23 +58,14 @@ export default async function WholesalePage() {
     }
 
     // Lấy danh sách sản phẩm
-    // Giả định bảng products có trường brand_id hoặc brand_name và is_active
-    const { data: rawProductsData, error: productError } = await supabase
+    const productsPromise = supabase
         .from('products')
-        .select('*')
+        .select('id, name, sku, brand, price, basePrice, basePricePerUnit, retailPrice, image_url, weight, packaging_spec, items_per_carton, description, unit')
         .eq('is_active', true)
         .order('name', { ascending: true });
 
-    const productsData = (rawProductsData || []).map((p: any) => ({
-        ...p,
-        basePricePerUnit: p.basePricePerUnit ?? p.price ?? 0,
-        basePrice: p.basePrice ?? p.price ?? 0,
-        retailPrice: p.retailPrice ?? (p.price ? p.price * 1.2 : 0),
-        brand: p.brand ?? 'LYHU'
-    }));
-
     // Lấy các chương trình khuyến mãi đang active
-    const { data: promotionsData } = await supabase
+    const promotionsPromise = supabase
         .from('wholesale_promotions')
         .select(`
             *,
@@ -85,7 +76,7 @@ export default async function WholesalePage() {
         .order('priority', { ascending: false });
 
     // Lấy chiến dịch Flash Sale đang active
-    const { data: flashSalesData } = await supabase
+    const flashSalesPromise = supabase
         .from('wholesale_flash_sales')
         .select(`
             *,
@@ -98,18 +89,40 @@ export default async function WholesalePage() {
         .single();
 
     // Lấy danh sách Banners
-    const { data: bannersData } = await supabase
+    const bannersPromise = supabase
         .from('wholesale_banners')
         .select('*')
         .eq('is_active', true)
         .order('sort_order', { ascending: true });
 
     // Lấy danh sách Vouchers
-    const { data: vouchersData } = await supabase
+    const vouchersPromise = supabase
         .from('wholesale_vouchers')
         .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false });
+
+    const [
+        { data: rawProductsData },
+        { data: promotionsData },
+        { data: flashSalesData },
+        { data: bannersData },
+        { data: vouchersData }
+    ] = await Promise.all([
+        productsPromise,
+        promotionsPromise,
+        flashSalesPromise,
+        bannersPromise,
+        vouchersPromise
+    ]);
+
+    const productsData = (rawProductsData || []).map((p: any) => ({
+        ...p,
+        basePricePerUnit: p.basePricePerUnit ?? p.price ?? 0,
+        basePrice: p.basePrice ?? p.price ?? 0,
+        retailPrice: p.retailPrice ?? (p.price ? p.price * 1.2 : 0),
+        brand: p.brand ?? 'LYHU'
+    }));
 
     return (
         <div className="min-h-screen bg-gray-50">

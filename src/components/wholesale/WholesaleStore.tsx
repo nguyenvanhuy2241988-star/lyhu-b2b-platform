@@ -1049,7 +1049,7 @@ export default function WholesaleStore({
                                                 return (
                                                     <div key={item.product.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-50 last:border-b-0">
                                                         <div className="w-10 h-10 border border-gray-200 bg-white">
-                                                            {item.product.image_url && <img src={item.product.image_url} alt="" className="w-full h-full object-cover" />}
+                                                            {item.product.image_url && <img src={item.product.image_url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />}
                                                         </div>
                                                         <div className="flex-1 min-w-0">
                                                             <p className="text-sm text-gray-800 truncate">{item.product.name}</p>
@@ -1292,7 +1292,7 @@ export default function WholesaleStore({
                                                 <span>{Math.round(100 - (product.flashSalePrice/(product.basePricePerUnit||1))*100)}%</span>
                                             </div>
                                             {product.image_url ? (
-                                                <img src={product.image_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                                                <img src={product.image_url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                                             ) : (
                                                 <ShoppingCart className="w-8 h-8 text-gray-300" />
                                             )}
@@ -1384,7 +1384,7 @@ export default function WholesaleStore({
                                     onClick={() => setSelectedProduct(product)}
                                 >
                                     {product.image_url ? (
-                                        <img src={product.image_url} alt={product.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                                        <img src={product.image_url} alt={product.name} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                                     ) : (
                                         <ShoppingCart className="w-10 h-10 text-primary-200" />
                                     )}
@@ -1481,7 +1481,7 @@ export default function WholesaleStore({
                                                 </div>
                                             ) : safeIdx < allImages.length ? (
                                                 <div className="relative w-full h-full flex items-center justify-center cursor-pointer" onClick={() => { setImageViewerMode('product'); setIsImageViewerOpen(true); }} onContextMenu={e => e.preventDefault()}>
-                                                    <img src={allImages[safeIdx]} alt="" className="w-full h-full object-contain bg-white" />
+                                                    <img src={allImages[safeIdx]} alt="" loading="lazy" decoding="async" className="w-full h-full object-contain bg-white" />
                                                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
                                                         <span className="text-black/10 font-black text-6xl -rotate-12 tracking-[0.5em] select-none">LYHU</span>
                                                     </div>
@@ -1510,7 +1510,7 @@ export default function WholesaleStore({
                                                         onClick={() => setActiveImageIdx(idx)}
                                                         className={`w-16 h-16 border-2 rounded-sm flex-shrink-0 cursor-pointer transition-all ${idx === safeIdx ? 'border-primary-500' : 'border-transparent hover:border-gray-300 opacity-70 hover:opacity-100'}`}
                                                     >
-                                                        <img src={imgUrl} className="w-full h-full object-cover" />
+                                                        <img src={imgUrl} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                                                     </div>
                                                 ))}
                                                 {hasVideo && (
@@ -1735,7 +1735,7 @@ export default function WholesaleStore({
                                     {totalMedia === 0 ? (
                                         <ShoppingCart className="w-32 h-32 text-gray-500" />
                                     ) : safeIdx < allImages.length ? (
-                                        <img src={allImages[safeIdx]} alt="" className="w-full h-full object-contain" />
+                                        <img src={allImages[safeIdx]} alt="" loading="lazy" decoding="async" className="w-full h-full object-contain" />
                                     ) : (
                                         <iframe src={getEmbedUrl(selectedProduct.video_url!)} className="w-full max-w-2xl h-full aspect-video" frameBorder="0" allowFullScreen></iframe>
                                     )}
@@ -1765,7 +1765,7 @@ export default function WholesaleStore({
                                                     onClick={() => setActiveImageIdx(idx)}
                                                     className={`w-20 md:w-full aspect-square border-2 flex-shrink-0 cursor-pointer transition-all ${idx === safeIdx ? 'border-primary-500' : 'border-transparent hover:border-gray-500 opacity-60 hover:opacity-100'}`}
                                                 >
-                                                    <img src={imgUrl} className="w-full h-full object-cover bg-white" />
+                                                    <img src={imgUrl} loading="lazy" decoding="async" className="w-full h-full object-cover bg-white" />
                                                 </div>
                                             ))}
                                             {hasVideo && (
@@ -1872,7 +1872,7 @@ export default function WholesaleStore({
                                                 >
                                                     <X className="w-4 h-4"/>
                                                 </button>
-                                                <img src={item.product.image_url || ''} className="w-16 h-16 border border-gray-200 object-cover rounded-sm bg-gray-50 flex-shrink-0" />
+                                                <img src={item.product.image_url || ''} loading="lazy" decoding="async" className="w-16 h-16 border border-gray-200 object-cover rounded-sm bg-gray-50 flex-shrink-0" />
                                                 <div className="flex-1 min-w-0 pr-6">
                                                     <p className="text-sm text-gray-800 break-words mb-1" title={item.product.name}>{item.product.name}</p>
                                                     <p className="text-xs text-gray-500 font-mono mb-2">SKU: {item.product.sku}</p>
