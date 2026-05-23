@@ -384,7 +384,7 @@ export default function WholesaleStore({
         let originalTotalForDisplay = 0; // The non-discounted value for crossing out
 
         items.forEach(item => {
-            const normalPrice = item.product.retailPrice || ((item.product.basePricePerUnit || item.product.basePrice || 0) * 1.5) || 0;
+            const normalPrice = item.product.retailPrice || item.product.retail_price || ((item.product.basePricePerUnit || item.product.base_price_per_unit || item.product.basePrice || item.product.base_price || item.product.price || 0) * 1.2) || 0;
             const activePrice = item.flashSalePrice ?? normalPrice;
             originalTotalForDisplay += normalPrice * item.quantity;
             baseTotal += activePrice * item.quantity;
@@ -508,7 +508,7 @@ export default function WholesaleStore({
             const items = cartAnalysis.items.map(item => ({
                 product_id: item.product.id,
                 quantity: item.quantity,
-                price: item.flashSalePrice ?? item.product.basePricePerUnit ?? item.product.basePrice ?? 0,
+                price: item.flashSalePrice ?? item.product.basePricePerUnit ?? item.product.base_price_per_unit ?? item.product.basePrice ?? item.product.base_price ?? item.product.price ?? 0,
                 discount: 0
             }));
 
@@ -1789,7 +1789,7 @@ export default function WholesaleStore({
                                 <h3 className="font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2">Danh sách sản phẩm</h3>
                                 <div className="flex flex-col gap-4">
                                     {cartAnalysis.items.map(item => {
-                                        const price = item.flashSalePrice ?? item.product.basePricePerUnit ?? 0;
+                                        const price = item.flashSalePrice ?? item.product.price ?? item.product.basePricePerUnit ?? item.product.base_price_per_unit ?? item.product.basePrice ?? item.product.base_price ?? 0;
                                         return (
                                             <div key={item.product.id} className="flex gap-3 relative border-b border-gray-50 pb-4 last:border-0 last:pb-0">
                                                 <button 
