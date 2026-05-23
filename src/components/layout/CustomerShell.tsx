@@ -15,7 +15,6 @@ export default function CustomerShell({ children, title }: { children: React.Rea
     const navItems: any[] = [
         { name: "Tổng quan", href: "/customer", icon: User },
         { name: "Đơn hàng của tôi", href: "/customer/orders", icon: FileText },
-        { name: "Sản phẩm của tôi", href: "/customer/catalogue", icon: Settings },
     ];
 
     return (
