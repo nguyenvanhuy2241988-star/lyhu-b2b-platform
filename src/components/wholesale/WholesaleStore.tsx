@@ -153,15 +153,42 @@ export default function WholesaleStore({
     const [loginEmail, setLoginEmail] = useState('');
     const [loginPassword, setLoginPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    const [isLoggingIn, setIsLoggingIn] = useState(false);
-    const [loginError, setLoginError] = useState('');
-    
-    // Register State
+
     const [isRegisterOpen, setIsRegisterOpen] = useState(false);
     const [registerEmail, setRegisterEmail] = useState('');
     const [registerPassword, setRegisterPassword] = useState('');
-    const [isRegistering, setIsRegistering] = useState(false);
     const [registerError, setRegisterError] = useState('');
+    const [loginError, setLoginError] = useState('');
+    const [isLoggingIn, setIsLoggingIn] = useState(false);
+    const [isRegistering, setIsRegistering] = useState(false);
+
+    const openAuthModal = (type: 'login' | 'register') => {
+        if (!isLoginOpen && !isRegisterOpen) {
+            window.history.pushState({ authModal: true }, '', '');
+        }
+        if (type === 'login') {
+            setIsLoginOpen(true);
+            setIsRegisterOpen(false);
+        } else {
+            setIsRegisterOpen(true);
+            setIsLoginOpen(false);
+        }
+    };
+
+    const closeAuthModal = () => {
+        if (isLoginOpen || isRegisterOpen) {
+            window.history.back();
+        }
+    };
+
+    useEffect(() => {
+        const handlePopState = () => {
+            setIsLoginOpen(false);
+            setIsRegisterOpen(false);
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, []);
 
     // Popup Banner State
     const [isPopupVisible, setIsPopupVisible] = useState(false);
@@ -569,7 +596,7 @@ export default function WholesaleStore({
         try {
             const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPassword });
             if (error) throw error;
-            setIsLoginOpen(false);
+            closeAuthModal();
             window.location.reload();
         } catch (err: any) {
             setLoginError(err.message || 'Đăng nhập thất bại. Vui lòng thử lại.');
@@ -607,7 +634,7 @@ export default function WholesaleStore({
                 password: registerPassword,
             });
             if (error) throw error;
-            setIsRegisterOpen(false);
+            closeAuthModal();
             window.location.reload();
         } catch (err: any) {
             setRegisterError(err.message || 'Đăng ký thất bại. Vui lòng thử lại.');
@@ -619,7 +646,7 @@ export default function WholesaleStore({
     const handleCustomerPortalClick = (e: React.MouseEvent) => {
         if (!wholesaleUser) {
             e.preventDefault();
-            setIsLoginOpen(true);
+            openAuthModal('login');
         }
     };
 
@@ -634,7 +661,7 @@ export default function WholesaleStore({
                                 src="/logo-full.png" 
                                 alt="LYHU" 
                                 className="w-[160px] md:w-[190px] h-auto object-contain cursor-pointer" 
-                                onClick={() => { setIsLoginOpen(false); setIsRegisterOpen(false); }}
+                                onClick={closeAuthModal}
                             />
                             <div className="text-xl md:text-2xl font-medium text-gray-800 pt-1">
                                 {isLoginOpen ? 'Đăng nhập' : 'Đăng ký'}
@@ -762,9 +789,9 @@ export default function WholesaleStore({
                             {/* Toggle Sign Up / Login */}
                             <div className="text-center mt-8 text-sm text-gray-400">
                                 {isLoginOpen ? (
-                                    <>Bạn mới biết đến LYHU Sỉ? <span onClick={() => { setIsLoginOpen(false); setIsRegisterOpen(true); }} className="text-primary-600 font-medium cursor-pointer hover:underline">Đăng ký</span></>
+                                    <>Bạn mới biết đến LYHU Sỉ? <span onClick={() => openAuthModal('register')} className="text-primary-600 font-medium cursor-pointer hover:underline">Đăng ký</span></>
                                 ) : (
-                                    <>Bạn đã có tài khoản? <span onClick={() => { setIsRegisterOpen(false); setIsLoginOpen(true); }} className="text-primary-600 font-medium cursor-pointer hover:underline">Đăng nhập</span></>
+                                    <>Bạn đã có tài khoản? <span onClick={() => openAuthModal('login')} className="text-primary-600 font-medium cursor-pointer hover:underline">Đăng nhập</span></>
                                 )}
                             </div>
                         </div>
@@ -851,9 +878,9 @@ export default function WholesaleStore({
                             <button onClick={handleLogout} className="hover:text-white cursor-pointer">Đăng Xuất</button>
                         ) : (
                             <>
-                                <button onClick={() => setIsLoginOpen(true)} className="hover:text-white cursor-pointer">Đăng Nhập</button>
+                                <button onClick={() => openAuthModal('login')} className="hover:text-white cursor-pointer">Đăng Nhập</button>
                                 <span className="text-white/40">|</span>
-                                <button onClick={() => setIsRegisterOpen(true)} className="hover:text-white cursor-pointer">Đăng Ký</button>
+                                <button onClick={() => openAuthModal('register')} className="hover:text-white cursor-pointer">Đăng Ký</button>
                             </>
                         )}
                         {!isWholesaleCustomer && (
@@ -1073,9 +1100,9 @@ export default function WholesaleStore({
                                 <button onClick={handleLogout} className="font-medium hover:text-white">Đăng Xuất</button>
                             ) : (
                                 <>
-                                    <button onClick={() => setIsLoginOpen(true)} className="font-medium hover:text-white">Đăng Nhập</button>
+                                    <button onClick={() => openAuthModal('login')} className="font-medium hover:text-white">Đăng Nhập</button>
                                     <span className="text-white/40">|</span>
-                                    <button onClick={() => setIsRegisterOpen(true)} className="font-medium hover:text-white">Đăng Ký</button>
+                                    <button onClick={() => openAuthModal('register')} className="font-medium hover:text-white">Đăng Ký</button>
                                 </>
                             )}
                         </div>
