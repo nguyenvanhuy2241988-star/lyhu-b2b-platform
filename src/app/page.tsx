@@ -60,7 +60,7 @@ export default async function WholesalePage() {
     // Lấy danh sách sản phẩm
     const productsPromise = supabase
         .from('products')
-        .select('id, name, sku, brand, price, basePrice, basePricePerUnit, retailPrice, image_url, weight, packaging_spec, items_per_carton, description, unit')
+        .select('id, name, sku, brand, price, image_url, weight, packaging_spec, items_per_carton, description, unit')
         .eq('is_active', true)
         .order('name', { ascending: true });
 
