@@ -76,8 +76,8 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
     query = query.range(from, to);
 
     // 4. Fetch Featured Blocks for Magazine Layout (Only on homepage)
-    let b1Promise = Promise.resolve({ data: null });
-    let b2Promise = Promise.resolve({ data: null });
+    let b1Promise: Promise<any> = Promise.resolve({ data: null });
+    let b2Promise: Promise<any> = Promise.resolve({ data: null });
 
     if (categorySlug === 'all' && page === 1 && !searchQuery) {
         // Block 1: Tạp hóa & Phân phối (tap-hoa-gt, nha-phan-phoi-diem-ban)
