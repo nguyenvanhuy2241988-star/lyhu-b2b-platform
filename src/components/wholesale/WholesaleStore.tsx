@@ -197,9 +197,9 @@ export default function WholesaleStore({
 
     useEffect(() => {
         if (wholesaleUser) {
-            setCustomerName(wholesaleUser.full_name || wholesaleUser.customerName || '');
-            setCustomerPhone(wholesaleUser.phone || wholesaleUser.customerPhone || '');
-            setAddress(wholesaleUser.address || '');
+            setCustomerName(wholesaleUser.user_metadata?.full_name || wholesaleUser.user_metadata?.customerName || '');
+            setCustomerPhone(wholesaleUser.phone || wholesaleUser.user_metadata?.phone || wholesaleUser.user_metadata?.customerPhone || '');
+            setAddress(wholesaleUser.user_metadata?.address || '');
         }
     }, [wholesaleUser]);
     const [shippingMethod, setShippingMethod] = useState<'lyhu_ship'|'self'>('lyhu_ship');
