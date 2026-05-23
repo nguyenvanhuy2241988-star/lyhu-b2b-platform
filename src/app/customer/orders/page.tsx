@@ -160,8 +160,15 @@ export default function OrdersPage() {
             const newCart: Record<string, { product: any; quantity: number }> = {};
             order.items.forEach((item: any) => {
                 if (item.product && item.product.id) {
+                    const p = item.product;
+                    const mappedProduct = {
+                        ...p,
+                        retailPrice: p.retailPrice ?? p.retail_price,
+                        basePricePerUnit: p.basePricePerUnit ?? p.base_price_per_unit ?? p.basePrice ?? p.base_price ?? p.price ?? 0,
+                        basePrice: p.basePrice ?? p.base_price ?? p.price ?? 0,
+                    };
                     newCart[item.product.id] = {
-                        product: item.product,
+                        product: mappedProduct,
                         quantity: item.quantity
                     };
                 }
