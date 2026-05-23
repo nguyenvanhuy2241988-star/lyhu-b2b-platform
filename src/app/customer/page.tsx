@@ -16,10 +16,11 @@ export default function CustomerDashboard() {
     const [saveMessage, setSaveMessage] = useState({ text: "", type: "" });
 
     useEffect(() => {
-        if (authUser?.user_metadata) {
-            setName(authUser.user_metadata.full_name || authUser.user_metadata.customerName || "");
-            setPhone(authUser.phone || authUser.user_metadata.phone || authUser.user_metadata.customerPhone || "");
-            setAddress(authUser.user_metadata.address || "");
+        if (authUser) {
+            // Note: AuthProvider spreads user_metadata directly into authUser
+            setName(authUser.full_name || authUser.customerName || "");
+            setPhone(authUser.phone || authUser.customerPhone || "");
+            setAddress(authUser.address || "");
         }
     }, [authUser]);
 
