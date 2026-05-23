@@ -392,8 +392,8 @@ export default function WholesaleStore({
 
         let finalTotal = baseTotal;
         let discountAmount = 0;
-        let appliedPromoName = null;
-        let pendingUpsellMsg = null;
+        let appliedPromoName: string | null = null;
+        let pendingUpsellMsg: string | null = null;
 
         if (isWholesaleCustomer && promotions && promotions.length > 0) {
             for (const promo of promotions) {
