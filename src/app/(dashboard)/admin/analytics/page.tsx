@@ -6,7 +6,7 @@ import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
     BarChart, Bar, PieChart, Pie, Cell
 } from "recharts";
-import { Users, Eye, MousePointerClick, Activity, Monitor, Smartphone, Globe, Calendar as CalendarIcon, ArrowUpRight, MapPin } from "lucide-react";
+import { Users, Eye, MousePointerClick, Activity, Monitor, Smartphone, Globe, Calendar as CalendarIcon, ArrowUpRight, MapPin, Search, Trophy, Target, Award } from "lucide-react";
 import dayjs from "dayjs";
 
 export default function AnalyticsDashboard() {
@@ -215,6 +215,106 @@ export default function AnalyticsDashboard() {
                     </div>
                     <div className={`mt-2 text-xs ${data?.avgLoadTime && data.avgLoadTime > 3000 ? 'text-red-600' : 'text-emerald-600'}`}>
                         {data?.avgLoadTime && data.avgLoadTime > 3000 ? 'Chậm! Cần tối ưu' : 'Rất nhanh'}
+                    </div>
+                </div>
+            </div>
+
+            </div>
+
+            {/* SEO & Website Ranking Section */}
+            <div className="bg-gradient-to-br from-indigo-900 to-slate-900 p-6 md:p-8 rounded-3xl border border-indigo-800/50 shadow-xl relative overflow-hidden">
+                {/* Decorative background elements */}
+                <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-indigo-500/10 blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl"></div>
+                
+                <div className="relative z-10">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                        <div>
+                            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                <Trophy className="w-6 h-6 text-yellow-400" />
+                                Phân tích Thứ hạng & SEO
+                            </h3>
+                            <p className="text-indigo-200 text-sm mt-1">
+                                Dữ liệu mô phỏng. Để có số liệu thực tế, vui lòng kết nối Google Search Console hoặc Ahrefs API.
+                            </p>
+                        </div>
+                        <button className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-medium transition-colors border border-white/10 backdrop-blur-sm flex items-center gap-2">
+                            <Search className="w-4 h-4" />
+                            Kết nối Search Console
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {/* SEO Score */}
+                        <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="p-2 bg-emerald-500/20 rounded-lg">
+                                    <Target className="w-5 h-5 text-emerald-400" />
+                                </div>
+                                <span className="flex items-center gap-1 text-emerald-400 text-xs font-bold bg-emerald-500/10 px-2 py-1 rounded-md">
+                                    +5 đ <ArrowUpRight className="w-3 h-3" />
+                                </span>
+                            </div>
+                            <div className="text-3xl font-black text-white mb-1">92<span className="text-lg text-indigo-300 font-medium">/100</span></div>
+                            <div className="text-sm text-indigo-200 font-medium">Điểm chuẩn SEO</div>
+                            <div className="w-full bg-white/10 h-1.5 rounded-full mt-3 overflow-hidden">
+                                <div className="bg-gradient-to-r from-emerald-400 to-emerald-300 h-full w-[92%] rounded-full"></div>
+                            </div>
+                        </div>
+
+                        {/* Global Rank */}
+                        <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="p-2 bg-blue-500/20 rounded-lg">
+                                    <Globe className="w-5 h-5 text-blue-400" />
+                                </div>
+                                <span className="flex items-center gap-1 text-emerald-400 text-xs font-bold bg-emerald-500/10 px-2 py-1 rounded-md">
+                                    ↑ 12K
+                                </span>
+                            </div>
+                            <div className="text-3xl font-black text-white mb-1">1.2M</div>
+                            <div className="text-sm text-indigo-200 font-medium">Xếp hạng Toàn cầu</div>
+                            <div className="text-xs text-indigo-300/70 mt-3 flex items-center gap-1">
+                                <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                                Top 5% website thế giới
+                            </div>
+                        </div>
+
+                        {/* Vietnam Rank */}
+                        <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="p-2 bg-rose-500/20 rounded-lg">
+                                    <MapPin className="w-5 h-5 text-rose-400" />
+                                </div>
+                                <span className="flex items-center gap-1 text-emerald-400 text-xs font-bold bg-emerald-500/10 px-2 py-1 rounded-md">
+                                    ↑ 840
+                                </span>
+                            </div>
+                            <div className="text-3xl font-black text-white mb-1">45.2K</div>
+                            <div className="text-sm text-indigo-200 font-medium">Xếp hạng Việt Nam</div>
+                            <div className="text-xs text-indigo-300/70 mt-3 flex items-center gap-1">
+                                <span className="w-2 h-2 rounded-full bg-rose-400"></span>
+                                Ngành TMĐT Bán buôn
+                            </div>
+                        </div>
+
+                        {/* Domain Authority */}
+                        <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="p-2 bg-amber-500/20 rounded-lg">
+                                    <Award className="w-5 h-5 text-amber-400" />
+                                </div>
+                                <span className="flex items-center gap-1 text-slate-300 text-xs font-bold bg-white/5 px-2 py-1 rounded-md">
+                                    -
+                                </span>
+                            </div>
+                            <div className="text-3xl font-black text-white mb-1">24<span className="text-lg text-indigo-300 font-medium">/100</span></div>
+                            <div className="text-sm text-indigo-200 font-medium">Độ uy tín Tên miền (DA)</div>
+                            <div className="text-xs text-indigo-300/70 mt-3 flex items-center gap-1">
+                                <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                                142 Backlinks trỏ về
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
