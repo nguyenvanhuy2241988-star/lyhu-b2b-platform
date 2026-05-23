@@ -219,8 +219,6 @@ export default function AnalyticsDashboard() {
                 </div>
             </div>
 
-            </div>
-
             {/* SEO & Website Ranking Section */}
             <div className="bg-gradient-to-br from-indigo-900 to-slate-900 p-6 md:p-8 rounded-3xl border border-indigo-800/50 shadow-xl relative overflow-hidden">
                 {/* Decorative background elements */}
