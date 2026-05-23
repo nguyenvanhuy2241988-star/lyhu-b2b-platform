@@ -132,13 +132,15 @@ function LoginPageContent() {
                         </div>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={() => router.push("/portal")}
-                        className="text-sm text-slate-600 hover:text-slate-900"
-                    >
-                        ← Về trang chọn vai trò
-                    </button>
+                    {searchParams.get("next") !== "/customer" && (
+                        <button
+                            type="button"
+                            onClick={() => router.push("/portal")}
+                            className="text-sm text-slate-600 hover:text-slate-900"
+                        >
+                            ← Về trang chọn vai trò
+                        </button>
+                    )}
                 </div>
             </header>
 

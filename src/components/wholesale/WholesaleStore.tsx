@@ -602,6 +602,13 @@ export default function WholesaleStore({
         }
     };
 
+    const handleCustomerPortalClick = (e: React.MouseEvent) => {
+        if (!wholesaleUser) {
+            e.preventDefault();
+            setIsLoginOpen(true);
+        }
+    };
+
     if (isLoginOpen || isRegisterOpen) {
         return (
             <div className="min-h-screen flex flex-col font-sans bg-white md:bg-gray-50">
@@ -787,7 +794,7 @@ export default function WholesaleStore({
             <div className="bg-primary-700 text-white/80 text-xs hidden md:block">
                 <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-8">
                     <div className="flex items-center gap-4">
-                        <Link href="/customer" className="hover:text-white cursor-pointer">Kênh người mua</Link>
+                        <Link href="/customer" onClick={handleCustomerPortalClick} className="hover:text-white cursor-pointer">Kênh người mua</Link>
                         <Link href="/tin-tuc" className="hover:text-white transition-colors font-medium text-secondary-300">Tin tức Thị trường</Link>
                         <span className="hover:text-white cursor-pointer">Tải ứng dụng</span>
                         <span>Kết nối</span>
@@ -1012,7 +1019,7 @@ export default function WholesaleStore({
                     {/* Row 1: Links and Notif */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <Link href="/customer" className="hover:text-white font-medium">Kênh người mua</Link>
+                            <Link href="/customer" onClick={handleCustomerPortalClick} className="hover:text-white font-medium">Kênh người mua</Link>
                             <span className="text-white/40">|</span>
                             <Link href="/tin-tuc" className="hover:text-white font-medium text-secondary-300">Tin tức</Link>
                         </div>
