@@ -173,8 +173,35 @@ export default function OrdersPage() {
             // Redirect to home page
             router.push('/');
         } catch (err) {
-            console.error("Lỗi khi đặt lại đơn:", err);
-            alert("Có lỗi xảy ra khi cố gắng đặt lại đơn hàng này.");
+            console.error('Lỗi khi mua lại đơn:', err);
+        }
+    };
+
+    const cancelOrderInternal = async (orderId: string) => {
+        const { error } = await supabase.from('orders').update({ status: 'cancelled' }).eq('id', orderId);
+        if (error) throw error;
+        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: 'cancelled' } : o));
+    };
+
+    const handleCancelOrder = async (orderId: string) => {
+        if (!confirm('Bạn có chắc chắn muốn hủy đơn hàng này không?')) return;
+        try {
+            await cancelOrderInternal(orderId);
+            alert('Đã hủy đơn hàng thành công');
+        } catch (error) {
+            console.error('Lỗi khi hủy đơn:', error);
+            alert('Có lỗi xảy ra khi hủy đơn hàng');
+        }
+    };
+
+    const handleEditOrder = async (order: any) => {
+        if (!confirm('Hệ thống sẽ hủy đơn hàng hiện tại và chuyển các sản phẩm vào giỏ hàng để bạn sửa lại. Bạn có đồng ý không?')) return;
+        try {
+            await cancelOrderInternal(order.id);
+            handleReorder(order);
+        } catch (error) {
+            console.error('Lỗi khi sửa đơn:', error);
+            alert('Có lỗi xảy ra, vui lòng thử lại sau');
         }
     };
 
@@ -244,9 +271,32 @@ export default function OrdersPage() {
                         voucherName = order.note.split("KM: ")[1].trim();
                     }
 
-                    const baseTotal = items.reduce((sum: number, item: any) => sum + (item.subtotal || (item.price * item.quantity) || 0), 0);
+                    let parsedDiscounts: { label: string, amountStr: string, value: number }[] = [];
+                    if (voucherName) {
+                        if (voucherName.toLowerCase().includes('miễn phí vận chuyển') || voucherName.toLowerCase().includes('freeship')) {
+                            parsedDiscounts.push({ label: 'Voucher vận chuyển', amountStr: 'Miễn phí', value: 0 });
+                        }
+                        const match = voucherName.match(/giảm\s*(\d+)k/i);
+                        if (match) {
+                            const amount = parseInt(match[1]) * 1000;
+                            parsedDiscounts.push({ label: 'Voucher giảm giá', amountStr: `-${formatPrice(amount)}`, value: amount });
+                        }
+                    }
+
+                    const knownDiscountsValue = parsedDiscounts.reduce((sum, d) => sum + d.value, 0);
+                    // Base total calculated from items. If it's vastly off due to wholesale bugs in DB, we reverse it:
+                    let baseTotal = items.reduce((sum: number, item: any) => sum + (item.subtotal || (item.price * item.quantity) || 0), 0);
                     const shippingFee = order.shippingFee || 0;
-                    const discount = Math.max(0, baseTotal + shippingFee - order.totalAmount);
+                    
+                    // Fallback to parsed discounts if DB `totalAmount` doesn't match `baseTotal` well
+                    if (parsedDiscounts.length > 0) {
+                        baseTotal = order.totalAmount + knownDiscountsValue - shippingFee;
+                    }
+
+                    let unparsedDiscount = 0;
+                    if (parsedDiscounts.length === 0) {
+                        unparsedDiscount = Math.max(0, baseTotal + shippingFee - order.totalAmount);
+                    }
 
                     return (
                         <div
@@ -295,27 +345,49 @@ export default function OrdersPage() {
                             <div className="pt-4 border-t border-slate-200">
                                 <div className="space-y-2 text-sm text-right mb-4">
                                     <div className="flex justify-end gap-4 text-slate-600">
-                                        <span className="w-40">Tổng tiền hàng:</span>
+                                        <span className="w-48">Tổng tiền hàng:</span>
                                         <span className="w-28">{formatPrice(baseTotal)}</span>
                                     </div>
                                     {shippingFee > 0 && (
                                         <div className="flex justify-end gap-4 text-slate-600">
-                                            <span className="w-40">Phí vận chuyển:</span>
+                                            <span className="w-48">Phí vận chuyển:</span>
                                             <span className="w-28">{formatPrice(shippingFee)}</span>
                                         </div>
                                     )}
-                                    {discount > 0 && (
+                                    {parsedDiscounts.map((d, i) => (
+                                        <div key={i} className="flex justify-end gap-4 text-slate-600">
+                                            <span className="w-48">{d.label}:</span>
+                                            <span className="w-28 text-red-500">{d.amountStr}</span>
+                                        </div>
+                                    ))}
+                                    {parsedDiscounts.length === 0 && unparsedDiscount > 0 && (
                                         <div className="flex justify-end gap-4 text-slate-600">
-                                            <span className="w-40">Giảm giá / Voucher:</span>
-                                            <span className="w-28 text-red-500">- {formatPrice(discount)}</span>
+                                            <span className="w-48">Giảm giá / Voucher:</span>
+                                            <span className="w-28 text-red-500">- {formatPrice(unparsedDiscount)}</span>
                                         </div>
                                     )}
                                 </div>
                                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-slate-100">
-                                    <div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {order.status === 'pending' && (
+                                            <>
+                                                <button
+                                                    onClick={() => handleCancelOrder(order.id)}
+                                                    className="px-4 py-2 border border-red-200 text-red-600 hover:bg-red-50 font-medium text-sm rounded-lg transition-colors"
+                                                >
+                                                    Hủy đơn
+                                                </button>
+                                                <button
+                                                    onClick={() => handleEditOrder(order)}
+                                                    className="px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 font-medium text-sm rounded-lg transition-colors"
+                                                >
+                                                    Sửa đơn
+                                                </button>
+                                            </>
+                                        )}
                                         <button
                                             onClick={() => handleReorder(order)}
-                                            className="flex items-center gap-2 px-4 py-2 bg-primary-50 text-primary-700 hover:bg-primary-100 font-medium text-sm rounded-lg transition-colors w-full sm:w-auto justify-center"
+                                            className="flex items-center gap-2 px-4 py-2 bg-primary-50 text-primary-700 hover:bg-primary-100 font-medium text-sm rounded-lg transition-colors justify-center"
                                         >
                                             <ShoppingBag className="w-4 h-4" />
                                             Mua lại đơn này
