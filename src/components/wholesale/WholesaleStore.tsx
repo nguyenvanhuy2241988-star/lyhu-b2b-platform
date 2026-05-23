@@ -194,6 +194,14 @@ export default function WholesaleStore({
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
     const [address, setAddress] = useState('');
+
+    useEffect(() => {
+        if (wholesaleUser) {
+            setCustomerName(wholesaleUser.user_metadata?.full_name || wholesaleUser.user_metadata?.customerName || '');
+            setCustomerPhone(wholesaleUser.phone || wholesaleUser.user_metadata?.phone || wholesaleUser.user_metadata?.customerPhone || '');
+            setAddress(wholesaleUser.user_metadata?.address || '');
+        }
+    }, [wholesaleUser]);
     const [shippingMethod, setShippingMethod] = useState<'lyhu_ship'|'self'>('lyhu_ship');
 
     // V4: Load from local storage

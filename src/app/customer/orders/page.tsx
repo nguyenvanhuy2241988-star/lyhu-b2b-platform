@@ -4,7 +4,8 @@ import { useState, useMemo, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { type Order } from "@/lib/ordersStore";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { Package, Clock, CheckCircle, XCircle, Filter, RotateCcw } from "lucide-react";
+import { Package, Clock, CheckCircle, XCircle, Filter, RotateCcw, ShoppingBag, Gift } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const formatPrice = (price: number) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -68,8 +69,9 @@ const ORDER_STATUS_OPTIONS = [
 
 export default function OrdersPage() {
     const { user: authUser, isLoading: authIsLoading } = useAuth();
+    const router = useRouter();
     const [selectedStatus, setSelectedStatus] = useState("ALL");
-    const [orders, setOrders] = useState<Order[]>([]);
+    const [orders, setOrders] = useState<any[]>([]);
 
     useEffect(() => {
         if (authIsLoading) return;
@@ -86,10 +88,11 @@ export default function OrdersPage() {
                             total_amount, 
                             created_at,
                             source,
+                            note,
                             items:order_items(
                                 quantity, 
                                 price,
-                                product:products(name)
+                                product:products(*)
                             )
                         `);
 
@@ -114,7 +117,9 @@ export default function OrdersPage() {
                             totalAmount: o.total_amount,
                             createdAt: o.created_at,
                             source: o.source,
+                            note: o.note,
                             items: o.items?.map((item: any) => ({
+                                product: item.product,
                                 name: item.product?.name || 'Sản phẩm',
                                 quantity: item.quantity,
                                 subtotal: item.quantity * item.price,
@@ -145,6 +150,32 @@ export default function OrdersPage() {
         pending: orders.filter((o) => o.status === "pending").length,
         processing: orders.filter((o) => o.status === "processing").length,
         delivered: orders.filter((o) => o.status === "delivered").length,
+    };
+
+    const handleReorder = (order: any) => {
+        if (!order.items || order.items.length === 0) return;
+        
+        try {
+            // Reconstruct cart state
+            const newCart: Record<string, { product: any; quantity: number }> = {};
+            order.items.forEach((item: any) => {
+                if (item.product && item.product.id) {
+                    newCart[item.product.id] = {
+                        product: item.product,
+                        quantity: item.quantity
+                    };
+                }
+            });
+            
+            // Save to localStorage so WholesaleStore can load it
+            localStorage.setItem('lyhu_b2b_cart', JSON.stringify(newCart));
+            
+            // Redirect to home page
+            router.push('/');
+        } catch (err) {
+            console.error("Lỗi khi đặt lại đơn:", err);
+            alert("Có lỗi xảy ra khi cố gắng đặt lại đơn hàng này.");
+        }
     };
 
     return (
@@ -203,9 +234,15 @@ export default function OrdersPage() {
             <div className="space-y-4">
                 {filteredOrders.map((order) => {
                     const status = order.status;
-                    const statusConfig = STATUS_CONFIG[status];
+                    const statusConfig = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
                     const StatusIcon = statusConfig?.icon || Package;
                     const items = order.items || [];
+                    
+                    // Parse voucher from note: "[B2B Web] ... KM: Voucher ABC"
+                    let voucherName = null;
+                    if (order.note && order.note.includes("KM: ")) {
+                        voucherName = order.note.split("KM: ")[1].trim();
+                    }
 
                     return (
                         <div
@@ -240,10 +277,26 @@ export default function OrdersPage() {
                                 ))}
                             </div>
 
+                            {/* Voucher Info */}
+                            {voucherName && (
+                                <div className="mb-4 bg-orange-50/80 border border-orange-100 rounded-lg px-4 py-2.5 flex items-center gap-2">
+                                    <Gift className="w-4 h-4 text-orange-500 shrink-0" />
+                                    <p className="text-sm font-medium text-orange-700">
+                                        Voucher áp dụng: <span className="font-bold">{voucherName}</span>
+                                    </p>
+                                </div>
+                            )}
+
                             {/* Order Footer */}
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-slate-200">
                                 <div>
-                                    {/* Delivery date can be added to Order type later if needed */}
+                                    <button
+                                        onClick={() => handleReorder(order)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-primary-50 text-primary-700 hover:bg-primary-100 font-medium text-sm rounded-lg transition-colors w-full sm:w-auto justify-center"
+                                    >
+                                        <ShoppingBag className="w-4 h-4" />
+                                        Mua lại đơn này
+                                    </button>
                                 </div>
                                 <div className="flex items-center justify-between sm:justify-end gap-4">
                                     <p className="text-sm text-slate-600">Tổng tiền:</p>
