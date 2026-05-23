@@ -17,6 +17,9 @@ interface CompanyInfo {
     hotline: string;
     email: string;
     website: string;
+    facebook?: string;
+    tiktok?: string;
+    youtube?: string;
 }
 
 export default function AdminSettingsPage() {
@@ -28,7 +31,10 @@ export default function AdminSettingsPage() {
         address: "",
         hotline: "",
         email: "",
-        website: ""
+        website: "",
+        facebook: "",
+        tiktok: "",
+        youtube: ""
     });
 
     const [bankInfo, setBankInfo] = useState<BankAccount[]>([]);
@@ -154,6 +160,35 @@ export default function AdminSettingsPage() {
                                 onChange={(e) => setCompanyInfo({ ...companyInfo, website: e.target.value })}
                                 className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
                             />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Link Facebook</label>
+                                <input
+                                    value={companyInfo.facebook || ""}
+                                    onChange={(e) => setCompanyInfo({ ...companyInfo, facebook: e.target.value })}
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    placeholder="https://facebook.com/..."
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Link TikTok</label>
+                                <input
+                                    value={companyInfo.tiktok || ""}
+                                    onChange={(e) => setCompanyInfo({ ...companyInfo, tiktok: e.target.value })}
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    placeholder="https://tiktok.com/@..."
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Link Youtube</label>
+                                <input
+                                    value={companyInfo.youtube || ""}
+                                    onChange={(e) => setCompanyInfo({ ...companyInfo, youtube: e.target.value })}
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    placeholder="https://youtube.com/..."
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

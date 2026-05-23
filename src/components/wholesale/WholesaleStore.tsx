@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, ShoppingCart, Info, CheckCircle2, ChevronRight, Minus, Plus, Star, X, Clock, Flame, Ticket, Loader2, History, Bell, User, LogIn, Eye, EyeOff, Package, MessageCircle } from 'lucide-react';
+import { Search, ShoppingCart, Info, CheckCircle2, ChevronRight, Minus, Plus, Star, X, Clock, Flame, Ticket, Loader2, History, Bell, User, LogIn, Eye, EyeOff, Package, MessageCircle, Facebook, Youtube, Instagram } from 'lucide-react';
 import { getSupabase } from '@/lib/supabaseClient';
 import B2BSupportChat from '@/components/wholesale/B2BSupportChat';
 import Link from 'next/link';
@@ -266,6 +266,25 @@ export default function WholesaleStore({
     };
 
     // V4: Fetch history
+    const [systemSettings, setSystemSettings] = useState<any>(null);
+
+    useEffect(() => {
+        const fetchSystemSettings = async () => {
+            try {
+                const res = await fetch('/api/settings');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data?.company_info) {
+                        setSystemSettings(data.company_info);
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch settings:", error);
+            }
+        };
+        fetchSystemSettings();
+    }, []);
+
     useEffect(() => {
         const fetchHistory = async () => {
             const { data: { session } } = await supabase.auth.getSession();
@@ -838,7 +857,24 @@ export default function WholesaleStore({
                         <Link href="/customer" onClick={handleCustomerPortalClick} className="hover:text-white cursor-pointer">Kênh người mua</Link>
                         <Link href="/tin-tuc" className="hover:text-white transition-colors font-medium text-secondary-300">Tin tức Thị trường</Link>
                         <span className="hover:text-white cursor-pointer">Tải ứng dụng</span>
-                        <span>Kết nối</span>
+                        <div className="flex items-center gap-1.5">
+                            <span>Kết nối</span>
+                            {systemSettings?.facebook && (
+                                <a href={systemSettings.facebook} target="_blank" rel="noopener noreferrer" className="hover:text-white text-white/80 transition-colors">
+                                    <Facebook className="w-3.5 h-3.5" />
+                                </a>
+                            )}
+                            {systemSettings?.tiktok && (
+                                <a href={systemSettings.tiktok} target="_blank" rel="noopener noreferrer" className="hover:text-white text-white/80 transition-colors">
+                                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+                                </a>
+                            )}
+                            {systemSettings?.youtube && (
+                                <a href={systemSettings.youtube} target="_blank" rel="noopener noreferrer" className="hover:text-white text-white/80 transition-colors">
+                                    <Youtube className="w-3.5 h-3.5" />
+                                </a>
+                            )}
+                        </div>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="relative">
