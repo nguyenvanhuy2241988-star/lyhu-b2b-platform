@@ -138,7 +138,7 @@ export default function WholesaleStore({
     const [pastOrders, setPastOrders] = useState<any[]>([]);
 
     // V3 Vouchers & Real Data
-    const [selectedVoucherId, setSelectedVoucherId] = useState<string | null>(null);
+    const [selectedVoucherIds, setSelectedVoucherIds] = useState<string[]>([]);
     const [countdown, setCountdown] = useState<string>('00:00:00');
     
     // Banner Carousel State
@@ -428,19 +428,21 @@ export default function WholesaleStore({
         }
         
         // Real Voucher System
-        if (selectedVoucherId && vouchers && vouchers.length > 0) {
-            const voucher = vouchers.find(v => v.id === selectedVoucherId);
-            if (voucher && baseTotal >= voucher.min_order_value) {
-                if (voucher.discount_type === 'fixed_amount') {
-                    discountAmount += voucher.discount_value;
-                } else if (voucher.discount_type === 'percent') {
-                    discountAmount += (baseTotal * voucher.discount_value) / 100;
-                } else if (voucher.discount_type === 'freeship') {
-                    // We will just discount the total by at most shipping cost (mock it as 100k limit)
-                    discountAmount += Math.min(voucher.discount_value, 100000); 
+        if (selectedVoucherIds.length > 0 && vouchers && vouchers.length > 0) {
+            selectedVoucherIds.forEach(vid => {
+                const voucher = vouchers.find(v => v.id === vid);
+                if (voucher && baseTotal >= voucher.min_order_value) {
+                    if (voucher.discount_type === 'fixed_amount') {
+                        discountAmount += voucher.discount_value;
+                    } else if (voucher.discount_type === 'percent') {
+                        discountAmount += (baseTotal * voucher.discount_value) / 100;
+                    } else if (voucher.discount_type === 'freeship') {
+                        // We will just discount the total by at most shipping cost (mock it as 100k limit)
+                        discountAmount += Math.min(voucher.discount_value, 100000); 
+                    }
+                    appliedPromoName = appliedPromoName ? `${appliedPromoName} + ${voucher.name}` : voucher.name;
                 }
-                appliedPromoName = appliedPromoName ? `${appliedPromoName} + ${voucher.name}` : voucher.name;
-            }
+            });
         }
 
         finalTotal = Math.max(0, baseTotal - discountAmount);
@@ -455,7 +457,7 @@ export default function WholesaleStore({
             pendingUpsellMsg,
             items
         };
-    }, [cart, promotions, isWholesaleCustomer, selectedVoucherId, vouchers]);
+    }, [cart, promotions, isWholesaleCustomer, selectedVoucherIds, vouchers]);
 
     // Handle B2B Code Verification
     const handleVerifyB2bCode = async () => {
@@ -1877,16 +1879,28 @@ export default function WholesaleStore({
                                     {vouchers && vouchers.length > 0 && (
                                         <div className="mt-2 border-t border-gray-100 pt-3">
                                             <label className="text-xs font-semibold text-gray-500 mb-1 block">Chọn Mã giảm giá</label>
-                                            <select 
-                                                value={selectedVoucherId || ''} 
-                                                onChange={e => setSelectedVoucherId(e.target.value || null)}
-                                                className="w-full border border-gray-200 rounded-sm p-2.5 text-sm focus:outline-primary-500 bg-gray-50 cursor-pointer"
-                                            >
-                                                <option value="">-- Không sử dụng voucher --</option>
+                                            <div className="space-y-2 max-h-40 overflow-y-auto">
                                                 {vouchers.filter(v => cartAnalysis.baseTotal >= v.min_order_value).map(v => (
-                                                    <option key={v.id} value={v.id}>{v.name} - {v.description}</option>
+                                                    <label key={v.id} className="flex items-start gap-2 p-2 border border-gray-200 rounded-sm cursor-pointer hover:bg-gray-50">
+                                                        <input 
+                                                            type="checkbox" 
+                                                            className="mt-0.5"
+                                                            checked={selectedVoucherIds.includes(v.id)}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setSelectedVoucherIds([...selectedVoucherIds, v.id]);
+                                                                } else {
+                                                                    setSelectedVoucherIds(selectedVoucherIds.filter(id => id !== v.id));
+                                                                }
+                                                            }}
+                                                        />
+                                                        <div>
+                                                            <div className="text-sm font-medium text-gray-800">{v.name}</div>
+                                                            <div className="text-xs text-gray-500">{v.description}</div>
+                                                        </div>
+                                                    </label>
                                                 ))}
-                                            </select>
+                                            </div>
                                             {vouchers.some(v => cartAnalysis.baseTotal < v.min_order_value) && (
                                                 <p className="text-[10px] text-gray-400 mt-1.5 italic">Một số voucher chưa đủ điều kiện áp dụng.</p>
                                             )}
@@ -1909,7 +1923,7 @@ export default function WholesaleStore({
                                     </div>
                                     <div className="flex justify-between">
                                         <span>Phí vận chuyển</span>
-                                        <span>{shippingMethod === 'lyhu_ship' ? (vouchers?.find(v => v.id === selectedVoucherId)?.discount_type === 'freeship' ? 'Miễn phí' : 'Thoả thuận') : '₫0'}</span>
+                                        <span>{shippingMethod === 'lyhu_ship' ? (vouchers?.some(v => selectedVoucherIds.includes(v.id) && v.discount_type === 'freeship') ? 'Miễn phí (hoặc giảm)' : 'Thoả thuận') : '₫0'}</span>
                                     </div>
                                     <div className="flex justify-between items-center border-t border-gray-100 mt-2 pt-2">
                                         <span className="font-bold text-gray-800">Tổng thanh toán</span>
