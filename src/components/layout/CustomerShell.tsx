@@ -14,7 +14,6 @@ export default function CustomerShell({ children, title }: { children: React.Rea
 
     const navItems: any[] = [
         { name: "Tổng quan", href: "/customer", icon: User },
-        { name: "Giỏ hàng (Báo giá)", href: "/customer/cart", icon: ShoppingBag },
         { name: "Đơn hàng của tôi", href: "/customer/orders", icon: FileText },
         { name: "Sản phẩm của tôi", href: "/customer/catalogue", icon: Settings },
     ];
@@ -81,7 +80,6 @@ export default function CustomerShell({ children, title }: { children: React.Rea
                 {/* Main Content */}
                 <div className="flex-1">
                     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[500px]">
-                        <h1 className="text-2xl font-bold text-gray-800 mb-6">{title}</h1>
                         {children}
                     </div>
                 </div>
