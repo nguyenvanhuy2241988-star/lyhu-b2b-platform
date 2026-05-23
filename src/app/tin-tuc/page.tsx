@@ -26,11 +26,18 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
         global: { fetch: (url, options) => fetch(url, { ...options, cache: 'no-store' }) }
     });
 
-    // 1. Fetch Categories
-    const { data: categories } = await supabase
-        .from('blog_categories')
-        .select('*')
-        .order('sort_order', { ascending: true });
+    // 1. Parallel Fetch: Categories, Trending, Banners
+    const [categoriesRes, trendingRes, megaBannerRes, sideBannersRes] = await Promise.all([
+        supabase.from('blog_categories').select('*').order('sort_order', { ascending: true }),
+        supabase.from('blog_posts').select('id, title, slug, published_at, created_at').eq('status', 'published').order('created_at', { ascending: false }).limit(5),
+        supabase.from('wholesale_banners').select('*').eq('position', 'news_mega').eq('is_active', true).order('sort_order', { ascending: true }).limit(1).maybeSingle(),
+        supabase.from('wholesale_banners').select('*').in('position', ['side_top', 'side_bottom']).eq('is_active', true).order('sort_order', { ascending: true })
+    ]);
+
+    const categories = categoriesRes.data;
+    const trending = trendingRes.data;
+    const megaBanner = megaBannerRes.data;
+    const sideBanners = sideBannersRes.data;
 
     // 2. Build Posts Query
     let query = supabase
@@ -68,64 +75,45 @@ async function getBlogData(page: number, categorySlug: string, groupKey: string,
     const to = from + POSTS_PER_PAGE - 1;
     query = query.range(from, to);
 
-    const { data: posts, count } = await query;
-
-    // 3. Fetch Trending (Placeholder for right sidebar)
-    // In a real app, this would be based on views. For now, get 5 random/latest
-    const { data: trending } = await supabase
-        .from('blog_posts')
-        .select('id, title, slug, published_at, created_at')
-        .eq('status', 'published')
-        .order('created_at', { ascending: false })
-        .limit(5);
-
     // 4. Fetch Featured Blocks for Magazine Layout (Only on homepage)
-    let featuredBlocks = { block1: [] as BlogPost[], block2: [] as BlogPost[] };
+    let b1Promise = Promise.resolve({ data: null });
+    let b2Promise = Promise.resolve({ data: null });
+
     if (categorySlug === 'all' && page === 1 && !searchQuery) {
         // Block 1: Tạp hóa & Phân phối (tap-hoa-gt, nha-phan-phoi-diem-ban)
         const block1CatIds = (categories || []).filter(c => ['tap-hoa-gt', 'nha-phan-phoi-diem-ban'].includes(c.slug)).map(c => c.id);
         if (block1CatIds.length > 0) {
-            const { data: b1 } = await supabase
+            b1Promise = supabase
                 .from('blog_posts')
                 .select('*, category:blog_categories(id, name, slug)')
                 .eq('status', 'published')
                 .in('category_id', block1CatIds)
                 .order('created_at', { ascending: false })
                 .limit(4);
-            featuredBlocks.block1 = (b1 || []) as BlogPost[];
         }
 
         // Block 2: Xu hướng & TMĐT (tmdt-tiktok-shop, xu-huong-tieu-dung)
         const block2CatIds = (categories || []).filter(c => ['tmdt-tiktok-shop', 'xu-huong-tieu-dung'].includes(c.slug)).map(c => c.id);
         if (block2CatIds.length > 0) {
-            const { data: b2 } = await supabase
+            b2Promise = supabase
                 .from('blog_posts')
                 .select('*, category:blog_categories(id, name, slug)')
                 .eq('status', 'published')
                 .in('category_id', block2CatIds)
                 .order('created_at', { ascending: false })
                 .limit(4);
-            featuredBlocks.block2 = (b2 || []) as BlogPost[];
         }
     }
 
-    // 5. Fetch Mega Banner
-    const { data: megaBanner } = await supabase
-        .from('wholesale_banners')
-        .select('*')
-        .eq('position', 'news_mega')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true })
-        .limit(1)
-        .maybeSingle();
+    // Parallel Fetch 2: Posts & Featured Blocks
+    const [postsRes, b1Res, b2Res] = await Promise.all([query, b1Promise, b2Promise]);
 
-    // 6. Fetch Side Banners
-    const { data: sideBanners } = await supabase
-        .from('wholesale_banners')
-        .select('*')
-        .in('position', ['side_top', 'side_bottom'])
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
+    const posts = postsRes.data;
+    const count = postsRes.count;
+
+    let featuredBlocks = { block1: [] as BlogPost[], block2: [] as BlogPost[] };
+    if (b1Res.data) featuredBlocks.block1 = b1Res.data as BlogPost[];
+    if (b2Res.data) featuredBlocks.block2 = b2Res.data as BlogPost[];
 
     // Hàm trộn mảng ngẫu nhiên (Giả lập AI phân phối ngẫu nhiên)
     const shuffleArray = (array: any[]) => {
@@ -404,6 +392,7 @@ export default async function BlogIndexPage({
                                                         <img 
                                                             src={posts[0].thumbnail_url} 
                                                             alt={posts[0].title}
+                                                            loading="lazy" decoding="async"
                                                             className="w-full h-full object-cover"
                                                         />
                                                     ) : (
@@ -439,6 +428,7 @@ export default async function BlogIndexPage({
                                                             <img 
                                                                 src={post.thumbnail_url} 
                                                                 alt={post.title}
+                                                                loading="lazy" decoding="async"
                                                                 className="w-full h-full object-cover"
                                                             />
                                                         ) : (
@@ -474,7 +464,7 @@ export default async function BlogIndexPage({
                                                 <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex gap-4 bg-gray-50 p-4 hover:bg-primary-50 transition-colors border border-gray-100">
                                                     <div className="w-28 h-28 shrink-0 bg-white overflow-hidden relative">
                                                         {post.thumbnail_url ? (
-                                                            <img src={post.thumbnail_url} alt={post.title} className="w-full h-full object-cover" />
+                                                            <img src={post.thumbnail_url} alt={post.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center text-primary-200 font-bold text-xs">LYHU</div>
                                                         )}
@@ -511,7 +501,7 @@ export default async function BlogIndexPage({
                                                 <Link key={post.id} href={`/tin-tuc/${post.slug}`} className="group flex flex-col">
                                                     <div className="w-full aspect-[4/3] bg-gray-100 overflow-hidden relative mb-3">
                                                         {post.thumbnail_url ? (
-                                                            <img src={post.thumbnail_url} alt={post.title} className="w-full h-full object-cover" />
+                                                            <img src={post.thumbnail_url} alt={post.title} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center text-primary-200 font-bold">LYHU</div>
                                                         )}
@@ -547,6 +537,7 @@ export default async function BlogIndexPage({
                                                     <img 
                                                         src={post.thumbnail_url} 
                                                         alt={post.title}
+                                                        loading="lazy" decoding="async"
                                                         className="w-full h-full object-cover"
                                                     />
                                                 ) : (
@@ -592,7 +583,7 @@ export default async function BlogIndexPage({
                     {sideTopBanners.map((banner, idx) => (
                         <div key={banner.id || idx} className="w-full relative overflow-hidden">
                             <Link href={banner.link_url || "/"} target={banner.link_url?.startsWith('http') ? "_blank" : "_self"}>
-                                <img src={banner.image_url} alt={`Side Top Banner ${idx + 1}`} className="w-full h-auto object-cover border border-gray-100" />
+                                <img src={banner.image_url} alt={`Side Top Banner ${idx + 1}`} loading="lazy" decoding="async" className="w-full h-auto object-cover border border-gray-100" />
                             </Link>
                         </div>
                     ))}
@@ -604,7 +595,7 @@ export default async function BlogIndexPage({
                     {sideBottomBanners.map((banner, idx) => (
                         <div key={banner.id || idx} className="w-full relative overflow-hidden">
                             <Link href={banner.link_url || "/"} target={banner.link_url?.startsWith('http') ? "_blank" : "_self"}>
-                                <img src={banner.image_url} alt={`Side Bottom Banner ${idx + 1}`} className="w-full h-auto object-cover border border-gray-100" />
+                                <img src={banner.image_url} alt={`Side Bottom Banner ${idx + 1}`} loading="lazy" decoding="async" className="w-full h-auto object-cover border border-gray-100" />
                             </Link>
                         </div>
                     ))}
