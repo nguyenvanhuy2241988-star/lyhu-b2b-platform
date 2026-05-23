@@ -244,6 +244,10 @@ export default function OrdersPage() {
                         voucherName = order.note.split("KM: ")[1].trim();
                     }
 
+                    const baseTotal = items.reduce((sum: number, item: any) => sum + (item.subtotal || (item.price * item.quantity) || 0), 0);
+                    const shippingFee = order.shippingFee || 0;
+                    const discount = Math.max(0, baseTotal + shippingFee - order.totalAmount);
+
                     return (
                         <div
                             key={order.id}
@@ -287,20 +291,40 @@ export default function OrdersPage() {
                                 </div>
                             )}
 
-                            {/* Order Footer */}
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-slate-200">
-                                <div>
-                                    <button
-                                        onClick={() => handleReorder(order)}
-                                        className="flex items-center gap-2 px-4 py-2 bg-primary-50 text-primary-700 hover:bg-primary-100 font-medium text-sm rounded-lg transition-colors w-full sm:w-auto justify-center"
-                                    >
-                                        <ShoppingBag className="w-4 h-4" />
-                                        Mua lại đơn này
-                                    </button>
+                            {/* Order Footer Breakdown */}
+                            <div className="pt-4 border-t border-slate-200">
+                                <div className="space-y-2 text-sm text-right mb-4">
+                                    <div className="flex justify-end gap-4 text-slate-600">
+                                        <span className="w-40">Tổng tiền hàng:</span>
+                                        <span className="w-28">{formatPrice(baseTotal)}</span>
+                                    </div>
+                                    {shippingFee > 0 && (
+                                        <div className="flex justify-end gap-4 text-slate-600">
+                                            <span className="w-40">Phí vận chuyển:</span>
+                                            <span className="w-28">{formatPrice(shippingFee)}</span>
+                                        </div>
+                                    )}
+                                    {discount > 0 && (
+                                        <div className="flex justify-end gap-4 text-slate-600">
+                                            <span className="w-40">Giảm giá / Voucher:</span>
+                                            <span className="w-28 text-red-500">- {formatPrice(discount)}</span>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="flex items-center justify-between sm:justify-end gap-4">
-                                    <p className="text-sm text-slate-600">Tổng tiền:</p>
-                                    <p className="text-xl font-bold text-primary-600">{formatPrice(order.totalAmount)}</p>
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-slate-100">
+                                    <div>
+                                        <button
+                                            onClick={() => handleReorder(order)}
+                                            className="flex items-center gap-2 px-4 py-2 bg-primary-50 text-primary-700 hover:bg-primary-100 font-medium text-sm rounded-lg transition-colors w-full sm:w-auto justify-center"
+                                        >
+                                            <ShoppingBag className="w-4 h-4" />
+                                            Mua lại đơn này
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center justify-between sm:justify-end gap-4">
+                                        <p className="text-sm font-medium text-slate-700">Thành tiền:</p>
+                                        <p className="text-2xl font-bold text-primary-600">{formatPrice(order.totalAmount)}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
