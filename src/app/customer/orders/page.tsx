@@ -215,7 +215,7 @@ export default function OrdersPage() {
                             {/* Order Header */}
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-4 border-b border-slate-200">
                                 <div>
-                                    <h3 className="font-semibold text-slate-900 mb-1">{order.id}</h3>
+                                    <h3 className="font-semibold text-slate-900 mb-1">Đơn hàng #{order.id.split('-')[0].toUpperCase()}</h3>
                                     <p className="text-sm text-slate-600">
                                         Ngày đặt: {formatDate(order.createdAt)}
                                     </p>
@@ -292,7 +292,7 @@ export default function OrdersPage() {
 
                                 return (
                                     <tr key={order.id} className="hover:bg-slate-50 transition-colors">
-                                        <td className="px-6 py-4 font-medium text-slate-900">{order.id}</td>
+                                        <td className="px-6 py-4 font-medium text-slate-900">#{order.id.split('-')[0].toUpperCase()}</td>
                                         <td className="px-6 py-4 text-slate-600">{formatDate(order.createdAt)}</td>
                                         <td className="px-6 py-4 text-slate-600">{order.items?.length ?? 0} sản phẩm</td>
                                         <td className="px-6 py-4">

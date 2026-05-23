@@ -25,8 +25,8 @@ export default function CustomerShell({ children, title }: { children: React.Rea
             <header className="bg-primary-600 text-white sticky top-0 z-50 shadow-md">
                 <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-6">
-                        <Link href="/" className="bg-white p-1 rounded-sm flex items-center justify-center">
-                            <Image src="/logo-full.png" alt="LYHU Logo" width={80} height={32} className="object-contain h-8 w-auto" />
+                        <Link href="/" className="shrink-0 flex items-center cursor-pointer overflow-hidden">
+                            <img src="/logo-full.png" alt="LYHU Logo" className="h-[40px] w-auto object-contain brightness-0 invert drop-shadow-sm" />
                         </Link>
                         <div className="hidden md:flex gap-6 text-sm font-medium">
                             <Link href="/" className="hover:text-primary-100 transition-colors">Về Trang chủ Mua sỉ</Link>
