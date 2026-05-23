@@ -113,9 +113,38 @@ export async function POST(req: NextRequest) {
         else if (lowerUA.includes("zalo")) { is_bot = true; bot_name = "Zalo Bot"; }
         else if (lowerUA.includes("chatgpt") || lowerUA.includes("gptbot")) { is_bot = true; bot_name = "ChatGPT"; }
         else if (lowerUA.includes("claude")) { is_bot = true; bot_name = "Claude AI"; }
-        else if (lowerUA.includes("bot") || lowerUA.includes("crawler") || lowerUA.includes("spider")) { 
+        else if (
+            lowerUA.includes("bot") || lowerUA.includes("crawler") || lowerUA.includes("spider") ||
+            lowerUA.includes("vercel") || lowerUA.includes("lighthouse") || lowerUA.includes("headless") ||
+            lowerUA.includes("postman") || lowerUA.includes("curl") || lowerUA.includes("python") ||
+            lowerUA.includes("node-fetch") || lowerUA.includes("undici") || lowerUA.includes("axios") ||
+            lowerUA.includes("healthcheck") || lowerUA.includes("uptime")
+        ) { 
             is_bot = true; 
-            bot_name = "Generic Bot"; 
+            bot_name = "Generic Bot / Tool"; 
+        }
+
+        // Clean referrer (Filter out internal domains and auth providers)
+        let cleanReferrer = referrer || null;
+        if (cleanReferrer) {
+            try {
+                const refUrl = new URL(cleanReferrer);
+                const host = refUrl.hostname.toLowerCase();
+                
+                if (
+                    host.includes('lyhu.com.vn') || 
+                    host.includes('lyhu-b2b-platform.vercel.app') || 
+                    host.includes('localhost') ||
+                    host.includes('accounts.google.com')
+                ) {
+                    cleanReferrer = null; // Mark as Direct
+                } else {
+                    // Only keep origin to avoid long messy referrers
+                    cleanReferrer = refUrl.origin;
+                }
+            } catch (e) {
+                cleanReferrer = null;
+            }
         }
 
         // Get visitor IP and lookup geolocation
@@ -136,7 +165,7 @@ export async function POST(req: NextRequest) {
                 visitor_id,
                 url,
                 pathname,
-                referrer: referrer || null,
+                referrer: cleanReferrer,
                 device_type,
                 browser,
                 os,
