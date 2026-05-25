@@ -27,8 +27,8 @@ export async function GET(request: Request) {
             auth: auth,
         });
 
-        // Tên thuộc tính chính xác trên tài khoản của user là "sc-domain:lyhu.com.vn"
-        const siteUrl = "sc-domain:lyhu.com.vn";
+        // Đổi sang URL prefix thay vì Domain property để vượt lỗi GSC
+        const siteUrl = "https://lyhu.com.vn/";
 
         const endDate = dayjs().subtract(1, 'day').format('YYYY-MM-DD'); 
         const startDate = dayjs().subtract(31, 'days').format('YYYY-MM-DD');
