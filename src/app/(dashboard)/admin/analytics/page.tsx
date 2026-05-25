@@ -18,6 +18,30 @@ export default function AnalyticsDashboard() {
     const [data, setData] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
 
+    const [seoData, setSeoData] = useState<any>(null);
+    const [seoLoading, setSeoLoading] = useState(false);
+    const [seoError, setSeoError] = useState<string | null>(null);
+
+    useEffect(() => {
+        fetchSeoData();
+    }, []);
+
+    const fetchSeoData = async () => {
+        setSeoLoading(true);
+        setSeoError(null);
+        try {
+            const res = await fetch('/api/admin/seo');
+            const result = await res.json();
+            if (!res.ok) throw new Error(result.error || 'Failed to fetch SEO data');
+            setSeoData(result);
+        } catch (err: any) {
+            setSeoError(err.message);
+        } finally {
+            setSeoLoading(false);
+        }
+    };
+
+
     useEffect(() => {
         if (dateRange !== 'custom' || (customStart && customEnd)) {
             fetchAnalytics();
@@ -229,91 +253,100 @@ export default function AnalyticsDashboard() {
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                         <div>
                             <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                                <Trophy className="w-6 h-6 text-yellow-400" />
-                                Phân tích Thứ hạng & SEO
+                                <Search className="w-6 h-6 text-emerald-400" />
+                                Google Search Console (30 ngày qua)
                             </h3>
                             <p className="text-indigo-200 text-sm mt-1">
-                                Dữ liệu mô phỏng. Để có số liệu thực tế, vui lòng kết nối Google Search Console hoặc Ahrefs API.
+                                Dữ liệu thực tế được đồng bộ trực tiếp từ Google.
                             </p>
                         </div>
-                        <button className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-medium transition-colors border border-white/10 backdrop-blur-sm flex items-center gap-2">
-                            <Search className="w-4 h-4" />
-                            Kết nối Search Console
+                        <button 
+                            onClick={fetchSeoData} 
+                            disabled={seoLoading}
+                            className="px-5 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-sm font-medium transition-colors border border-white/10 backdrop-blur-sm flex items-center gap-2 disabled:opacity-50"
+                        >
+                            {seoLoading ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            ) : (
+                                <Activity className="w-4 h-4" />
+                            )}
+                            Làm mới dữ liệu
                         </button>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {/* SEO Score */}
-                        <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
-                            <div className="flex justify-between items-start mb-4">
-                                <div className="p-2 bg-emerald-500/20 rounded-lg">
-                                    <Target className="w-5 h-5 text-emerald-400" />
-                                </div>
-                                <span className="flex items-center gap-1 text-emerald-400 text-xs font-bold bg-emerald-500/10 px-2 py-1 rounded-md">
-                                    +5 đ <ArrowUpRight className="w-3 h-3" />
-                                </span>
-                            </div>
-                            <div className="text-3xl font-black text-white mb-1">92<span className="text-lg text-indigo-300 font-medium">/100</span></div>
-                            <div className="text-sm text-indigo-200 font-medium">Điểm chuẩn SEO</div>
-                            <div className="w-full bg-white/10 h-1.5 rounded-full mt-3 overflow-hidden">
-                                <div className="bg-gradient-to-r from-emerald-400 to-emerald-300 h-full w-[92%] rounded-full"></div>
-                            </div>
+                    {seoError ? (
+                        <div className="bg-red-500/20 border border-red-500/50 p-4 rounded-xl text-red-200 text-sm">
+                            <span className="font-bold">Lỗi:</span> {seoError}
                         </div>
+                    ) : seoLoading && !seoData ? (
+                        <div className="flex items-center justify-center py-12">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-300"></div>
+                        </div>
+                    ) : !seoData?.hasData ? (
+                        <div className="bg-white/5 border border-white/10 p-6 rounded-xl text-indigo-200 text-sm text-center">
+                            Google đang xử lý dữ liệu cho website của bạn. Vui lòng quay lại sau 1-3 ngày.
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {/* Clicks */}
+                            <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="p-2 bg-emerald-500/20 rounded-lg">
+                                        <MousePointerClick className="w-5 h-5 text-emerald-400" />
+                                    </div>
+                                </div>
+                                <div className="text-3xl font-black text-white mb-1">{seoData?.clicks?.toLocaleString() || 0}</div>
+                                <div className="text-sm text-indigo-200 font-medium">Lượt nhấp (Clicks)</div>
+                                <div className="text-xs text-indigo-300/70 mt-3 flex items-center gap-1">
+                                    Từ kết quả tìm kiếm Google
+                                </div>
+                            </div>
 
-                        {/* Global Rank */}
-                        <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
-                            <div className="flex justify-between items-start mb-4">
-                                <div className="p-2 bg-blue-500/20 rounded-lg">
-                                    <Globe className="w-5 h-5 text-blue-400" />
+                            {/* Impressions */}
+                            <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="p-2 bg-blue-500/20 rounded-lg">
+                                        <Eye className="w-5 h-5 text-blue-400" />
+                                    </div>
                                 </div>
-                                <span className="flex items-center gap-1 text-emerald-400 text-xs font-bold bg-emerald-500/10 px-2 py-1 rounded-md">
-                                    ↑ 12K
-                                </span>
+                                <div className="text-3xl font-black text-white mb-1">{seoData?.impressions?.toLocaleString() || 0}</div>
+                                <div className="text-sm text-indigo-200 font-medium">Lượt hiển thị</div>
+                                <div className="text-xs text-indigo-300/70 mt-3 flex items-center gap-1">
+                                    Số lần xuất hiện trên Google
+                                </div>
                             </div>
-                            <div className="text-3xl font-black text-white mb-1">1.2M</div>
-                            <div className="text-sm text-indigo-200 font-medium">Xếp hạng Toàn cầu</div>
-                            <div className="text-xs text-indigo-300/70 mt-3 flex items-center gap-1">
-                                <span className="w-2 h-2 rounded-full bg-blue-400"></span>
-                                Top 5% website thế giới
-                            </div>
-                        </div>
 
-                        {/* Vietnam Rank */}
-                        <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
-                            <div className="flex justify-between items-start mb-4">
-                                <div className="p-2 bg-rose-500/20 rounded-lg">
-                                    <MapPin className="w-5 h-5 text-rose-400" />
+                            {/* CTR */}
+                            <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="p-2 bg-amber-500/20 rounded-lg">
+                                        <Target className="w-5 h-5 text-amber-400" />
+                                    </div>
                                 </div>
-                                <span className="flex items-center gap-1 text-emerald-400 text-xs font-bold bg-emerald-500/10 px-2 py-1 rounded-md">
-                                    ↑ 840
-                                </span>
+                                <div className="text-3xl font-black text-white mb-1">
+                                    {seoData?.ctr?.toFixed(2)}<span className="text-lg text-indigo-300 font-medium">%</span>
+                                </div>
+                                <div className="text-sm text-indigo-200 font-medium">Tỷ lệ nhấp (CTR)</div>
+                                <div className="text-xs text-indigo-300/70 mt-3 flex items-center gap-1">
+                                    Lượt nhấp / Lượt hiển thị
+                                </div>
                             </div>
-                            <div className="text-3xl font-black text-white mb-1">45.2K</div>
-                            <div className="text-sm text-indigo-200 font-medium">Xếp hạng Việt Nam</div>
-                            <div className="text-xs text-indigo-300/70 mt-3 flex items-center gap-1">
-                                <span className="w-2 h-2 rounded-full bg-rose-400"></span>
-                                Ngành TMĐT Bán buôn
-                            </div>
-                        </div>
 
-                        {/* Domain Authority */}
-                        <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
-                            <div className="flex justify-between items-start mb-4">
-                                <div className="p-2 bg-amber-500/20 rounded-lg">
-                                    <Award className="w-5 h-5 text-amber-400" />
+                            {/* Average Position */}
+                            <div className="bg-white/5 backdrop-blur-md border border-white/10 p-5 rounded-2xl">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="p-2 bg-rose-500/20 rounded-lg">
+                                        <Trophy className="w-5 h-5 text-rose-400" />
+                                    </div>
                                 </div>
-                                <span className="flex items-center gap-1 text-slate-300 text-xs font-bold bg-white/5 px-2 py-1 rounded-md">
-                                    -
-                                </span>
-                            </div>
-                            <div className="text-3xl font-black text-white mb-1">24<span className="text-lg text-indigo-300 font-medium">/100</span></div>
-                            <div className="text-sm text-indigo-200 font-medium">Độ uy tín Tên miền (DA)</div>
-                            <div className="text-xs text-indigo-300/70 mt-3 flex items-center gap-1">
-                                <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-                                142 Backlinks trỏ về
+                                <div className="text-3xl font-black text-white mb-1">{seoData?.position?.toFixed(1) || '-'}</div>
+                                <div className="text-sm text-indigo-200 font-medium">Vị trí trung bình</div>
+                                <div className="text-xs text-indigo-300/70 mt-3 flex items-center gap-1">
+                                    Thứ hạng trên Google
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
 
