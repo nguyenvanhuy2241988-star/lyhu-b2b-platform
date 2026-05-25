@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { google } from "googleapis";
 import dayjs from "dayjs";
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 export async function GET(request: Request) {
     try {
         const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
