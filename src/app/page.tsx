@@ -33,9 +33,66 @@ function getSupabase() {
 export default async function WholesalePage() {
     const supabase = getSupabase();
 
-    // Fetch user profile to check if they are logged in and their role
-    const { data: { session } } = await supabase.auth.getSession();
-    
+    // Start all non-dependent promises immediately to avoid waterfall
+    const productsPromise = supabase
+        .from('products')
+        .select('id, name, sku, brand, price, image_url, weight, packaging_spec, items_per_carton, description, unit, origin, video_url, extra_images, certificates')
+        .eq('is_active', true)
+        .order('name', { ascending: true });
+
+    const promotionsPromise = supabase
+        .from('wholesale_promotions')
+        .select(`
+            *,
+            conditions:wholesale_promotion_conditions(*),
+            actions:wholesale_promotion_actions(*)
+        `)
+        .eq('is_active', true)
+        .order('priority', { ascending: false });
+
+    const flashSalesPromise = supabase
+        .from('wholesale_flash_sales')
+        .select(`
+            *,
+            items:wholesale_flash_sale_items(*)
+        `)
+        .eq('is_active', true)
+        .gte('end_time', new Date().toISOString())
+        .lte('start_time', new Date().toISOString())
+        .limit(1)
+        .single();
+
+    const bannersPromise = supabase
+        .from('wholesale_banners')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true });
+
+    const vouchersPromise = supabase
+        .from('wholesale_vouchers')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false });
+
+    const sessionPromise = supabase.auth.getSession();
+
+    // Await all independent requests in parallel
+    const [
+        { data: rawProductsData },
+        { data: promotionsData },
+        { data: flashSalesData },
+        { data: bannersData },
+        { data: vouchersData },
+        { data: { session } }
+    ] = await Promise.all([
+        productsPromise,
+        promotionsPromise,
+        flashSalesPromise,
+        bannersPromise,
+        vouchersPromise,
+        sessionPromise
+    ]);
+
     let isWholesaleCustomer = false;
     let customerCode = null;
     let b2bCodeData = null;
@@ -56,65 +113,6 @@ export default async function WholesalePage() {
         
         customerCode = session.user.id;
     }
-
-    // Lấy danh sách sản phẩm
-    const productsPromise = supabase
-        .from('products')
-        .select('id, name, sku, brand, price, image_url, weight, packaging_spec, items_per_carton, description, unit')
-        .eq('is_active', true)
-        .order('name', { ascending: true });
-
-    // Lấy các chương trình khuyến mãi đang active
-    const promotionsPromise = supabase
-        .from('wholesale_promotions')
-        .select(`
-            *,
-            conditions:wholesale_promotion_conditions(*),
-            actions:wholesale_promotion_actions(*)
-        `)
-        .eq('is_active', true)
-        .order('priority', { ascending: false });
-
-    // Lấy chiến dịch Flash Sale đang active
-    const flashSalesPromise = supabase
-        .from('wholesale_flash_sales')
-        .select(`
-            *,
-            items:wholesale_flash_sale_items(*)
-        `)
-        .eq('is_active', true)
-        .gte('end_time', new Date().toISOString())
-        .lte('start_time', new Date().toISOString())
-        .limit(1)
-        .single();
-
-    // Lấy danh sách Banners
-    const bannersPromise = supabase
-        .from('wholesale_banners')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order', { ascending: true });
-
-    // Lấy danh sách Vouchers
-    const vouchersPromise = supabase
-        .from('wholesale_vouchers')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-
-    const [
-        { data: rawProductsData },
-        { data: promotionsData },
-        { data: flashSalesData },
-        { data: bannersData },
-        { data: vouchersData }
-    ] = await Promise.all([
-        productsPromise,
-        promotionsPromise,
-        flashSalesPromise,
-        bannersPromise,
-        vouchersPromise
-    ]);
 
     const productsData = (rawProductsData || []).map((p: any) => ({
         ...p,
