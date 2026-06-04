@@ -30,7 +30,7 @@
         },
         {
             "path": "/api/cron/auto-post-lyhu-fb",
-            "schedule": "0 1,10 * * *"
+            "schedule": "0 10 * * *"
         }
     ]
 }
