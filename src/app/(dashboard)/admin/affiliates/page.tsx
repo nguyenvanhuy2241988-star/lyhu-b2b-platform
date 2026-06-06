@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { Copy, Plus, Trash, CheckCircle, XCircle, Users, Settings, Package } from "lucide-react";
+import { Copy, Plus, Trash, CheckCircle, XCircle, Users, Settings, Package, UserPlus } from "lucide-react";
 import { AffiliateProductsTab } from "@/components/admin/AffiliateProductsTab";
+import { AffiliateSystemUsersTab } from "@/components/admin/AffiliateSystemUsersTab";
 
 export default function AdminAffiliatesPage() {
     const [profiles, setProfiles] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'partners' | 'rules'>('partners');
+    const [activeTab, setActiveTab] = useState<'partners' | 'rules' | 'users'>('partners');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newIdentifier, setNewIdentifier] = useState("");
@@ -123,6 +124,12 @@ export default function AdminAffiliatesPage() {
                         <Users size={18} /> Đối tác CTV/KOL
                     </button>
                     <button 
+                        onClick={() => setActiveTab('users')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'users' ? 'bg-white shadow-sm text-primary-600' : 'text-slate-600 hover:text-slate-900'}`}
+                    >
+                        <UserPlus size={18} /> Người dùng hệ thống
+                    </button>
+                    <button 
                         onClick={() => setActiveTab('rules')}
                         className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'rules' ? 'bg-white shadow-sm text-primary-600' : 'text-slate-600 hover:text-slate-900'}`}
                     >
@@ -133,6 +140,8 @@ export default function AdminAffiliatesPage() {
 
             {activeTab === 'rules' ? (
                 <AffiliateProductsTab />
+            ) : activeTab === 'users' ? (
+                <AffiliateSystemUsersTab />
             ) : (
                 <>
                     <div className="flex justify-end mb-4">
