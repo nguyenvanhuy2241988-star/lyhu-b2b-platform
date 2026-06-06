@@ -5,7 +5,7 @@ import { getAllWithdrawals, updateWithdrawalStatus, AffiliateWithdrawal } from "
 import { useAuth } from "@/components/auth/AuthProvider";
 import { DollarSign, Clock, CheckCircle, XCircle, Search, Loader2 } from "lucide-react";
 
-export default function AdminWithdrawalsPage() {
+export function AffiliateWithdrawalsTab() {
     const { session } = useAuth();
     const token = session?.access_token;
     const [withdrawals, setWithdrawals] = useState<AffiliateWithdrawal[]>([]);
@@ -59,13 +59,13 @@ export default function AdminWithdrawalsPage() {
     const pendingCount = withdrawals.filter(w => w.status === 'pending').length;
 
     return (
-        <div className="p-6 max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div className="w-full">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <DollarSign className="w-8 h-8 text-emerald-600 p-1.5 bg-emerald-100 rounded-lg" />
+                    <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <DollarSign className="w-6 h-6 text-emerald-600 p-1 bg-emerald-100 rounded-lg" />
                         Quản lý Yêu cầu Rút tiền
-                    </h1>
+                    </h2>
                     <p className="text-slate-500 text-sm mt-1">Duyệt và quản lý các lệnh rút hoa hồng của Cộng tác viên</p>
                 </div>
                 

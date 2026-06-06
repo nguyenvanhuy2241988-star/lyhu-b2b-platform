@@ -5,11 +5,14 @@ import { supabase } from "@/lib/supabaseClient";
 import { Copy, Plus, Trash, CheckCircle, XCircle, Users, Settings, Package, UserPlus } from "lucide-react";
 import { AffiliateProductsTab } from "@/components/admin/AffiliateProductsTab";
 import { AffiliateSystemUsersTab } from "@/components/admin/AffiliateSystemUsersTab";
+import { AffiliateReportsTab } from "@/components/admin/AffiliateReportsTab";
+import { AffiliateWithdrawalsTab } from "@/components/admin/AffiliateWithdrawalsTab";
+import { DollarSign, BarChart3 } from "lucide-react";
 
 export default function AdminAffiliatesPage() {
     const [profiles, setProfiles] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'partners' | 'rules' | 'users'>('partners');
+    const [activeTab, setActiveTab] = useState<'overview' | 'partners' | 'withdrawals' | 'rules' | 'users'>('overview');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newIdentifier, setNewIdentifier] = useState("");
@@ -117,29 +120,45 @@ export default function AdminAffiliatesPage() {
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
                 <h1 className="text-2xl font-bold">Quản lý Affiliate</h1>
                 
-                <div className="flex bg-slate-100 p-1 rounded-lg">
+                <div className="flex bg-slate-100 p-1 rounded-lg overflow-x-auto whitespace-nowrap scrollbar-hide">
+                    <button 
+                        onClick={() => setActiveTab('overview')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'overview' ? 'bg-white shadow-sm text-primary-600' : 'text-slate-600 hover:text-slate-900'}`}
+                    >
+                        <BarChart3 size={18} /> Tổng quan
+                    </button>
                     <button 
                         onClick={() => setActiveTab('partners')}
                         className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'partners' ? 'bg-white shadow-sm text-primary-600' : 'text-slate-600 hover:text-slate-900'}`}
                     >
-                        <Users size={18} /> Đối tác CTV/KOL
+                        <Users size={18} /> Quản lý Đối tác
                     </button>
                     <button 
-                        onClick={() => setActiveTab('users')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'users' ? 'bg-white shadow-sm text-primary-600' : 'text-slate-600 hover:text-slate-900'}`}
+                        onClick={() => setActiveTab('withdrawals')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'withdrawals' ? 'bg-white shadow-sm text-primary-600' : 'text-slate-600 hover:text-slate-900'}`}
                     >
-                        <UserPlus size={18} /> Người dùng hệ thống
+                        <DollarSign size={18} /> Yêu cầu Rút tiền
                     </button>
                     <button 
                         onClick={() => setActiveTab('rules')}
                         className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'rules' ? 'bg-white shadow-sm text-primary-600' : 'text-slate-600 hover:text-slate-900'}`}
                     >
-                        <Package size={18} /> Cấu hình Hoa hồng Sản phẩm
+                        <Package size={18} /> Cấu hình Hoa hồng
+                    </button>
+                    <button 
+                        onClick={() => setActiveTab('users')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'users' ? 'bg-white shadow-sm text-primary-600' : 'text-slate-600 hover:text-slate-900'}`}
+                    >
+                        <UserPlus size={18} /> Quyền Quản trị
                     </button>
                 </div>
             </div>
 
-            {activeTab === 'rules' ? (
+            {activeTab === 'overview' ? (
+                <AffiliateReportsTab />
+            ) : activeTab === 'withdrawals' ? (
+                <AffiliateWithdrawalsTab />
+            ) : activeTab === 'rules' ? (
                 <AffiliateProductsTab />
             ) : activeTab === 'users' ? (
                 <AffiliateSystemUsersTab />
