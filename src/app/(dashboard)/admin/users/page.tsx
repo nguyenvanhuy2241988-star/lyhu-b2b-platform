@@ -68,6 +68,8 @@ export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [selectedRole, setSelectedRole] = useState("all");
+    const [selectedStatus, setSelectedStatus] = useState("all");
     const [debouncedSearchTerm] = useDebounce(searchTerm, 300);
 
     // Pagination
@@ -240,7 +242,7 @@ export default function UsersPage() {
     // Reset page on search
     useEffect(() => {
         setCurrentPage(1);
-    }, [debouncedSearchTerm]);
+    }, [debouncedSearchTerm, selectedRole, selectedStatus]);
 
     // Fetch history when dragging range
     useEffect(() => {
@@ -377,10 +379,22 @@ export default function UsersPage() {
     };
 
     // Filter logic needs to be client-side since RPC returns all
-    const filteredUsers = (users || []).filter(user =>
-        (user.full_name || "").toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        (user.email || "").toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-    );
+    const filteredUsers = (users || []).filter(user => {
+        const term = debouncedSearchTerm.toLowerCase();
+        const matchesSearch = 
+            (user.full_name || "").toLowerCase().includes(term) ||
+            (user.email || "").toLowerCase().includes(term) ||
+            (user.zalo_phone || "").toLowerCase().includes(term) ||
+            (user.misa_employee_code || "").toLowerCase().includes(term);
+            
+        const matchesRole = selectedRole === "all" || user.role === selectedRole;
+        
+        let matchesStatus = true;
+        if (selectedStatus === "online") matchesStatus = user.is_online === true;
+        if (selectedStatus === "offline") matchesStatus = user.is_online === false;
+        
+        return matchesSearch && matchesRole && matchesStatus;
+    });
 
     // Client-side pagination
     const paginatedUsers = filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -430,15 +444,36 @@ export default function UsersPage() {
             </div>
 
             {/* Filter section */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-4 justify-between items-center">
-                <input
-                    placeholder="Tìm kiếm theo tên hoặc email..."
-                    className="border border-slate-300 rounded-lg px-4 py-2 w-full sm:w-80 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                />
-                <div className="text-sm text-slate-500">
-                    Tổng: <b>{filteredUsers.length}</b> • Hiển thị: <b>{paginatedUsers.length}</b>
+            <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row gap-4 items-center w-full">
+                    <input
+                        placeholder="Tìm kiếm theo tên, email, SĐT, mã MISA..."
+                        className="border border-slate-300 rounded-lg px-4 py-2 w-full sm:flex-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                    />
+                    <select
+                        className="border border-slate-300 rounded-lg px-4 py-2 w-full sm:w-48 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                        value={selectedRole}
+                        onChange={e => setSelectedRole(e.target.value)}
+                    >
+                        <option value="all">Tất cả vai trò</option>
+                        {Object.entries(ROLE_LABELS).map(([value, label]) => (
+                            <option key={value} value={value}>{label}</option>
+                        ))}
+                    </select>
+                    <select
+                        className="border border-slate-300 rounded-lg px-4 py-2 w-full sm:w-48 focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                        value={selectedStatus}
+                        onChange={e => setSelectedStatus(e.target.value)}
+                    >
+                        <option value="all">Tất cả trạng thái</option>
+                        <option value="online">Đang Online</option>
+                        <option value="offline">Offline</option>
+                    </select>
+                </div>
+                <div className="text-sm text-slate-500 flex justify-end">
+                    Tổng: <b className="ml-1">{filteredUsers.length}</b> <span className="mx-2">•</span> Hiển thị: <b className="ml-1">{paginatedUsers.length}</b>
                 </div>
             </div>
 
