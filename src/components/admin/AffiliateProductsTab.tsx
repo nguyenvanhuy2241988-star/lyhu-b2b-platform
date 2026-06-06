@@ -34,6 +34,7 @@ export function AffiliateProductsTab() {
             const { data, error } = await supabase
                 .from('products')
                 .select('id, name, sku, brand, price, is_active, affiliate_commission_rate, image_url')
+                .eq('is_active', true)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
