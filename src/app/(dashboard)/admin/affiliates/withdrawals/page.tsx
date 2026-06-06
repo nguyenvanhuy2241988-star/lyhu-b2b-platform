@@ -52,7 +52,7 @@ export default function AdminWithdrawalsPage() {
 
     const filteredData = withdrawals.filter(w => {
         const profile = w.affiliate_profiles as any;
-        const searchStr = `${profile?.users?.name} ${profile?.users?.phone} ${profile?.affiliate_code} ${w.bank_info?.bank_account_name}`.toLowerCase();
+        const searchStr = `${profile?.profiles?.full_name} ${profile?.profiles?.phone} ${profile?.affiliate_code} ${w.bank_info?.bank_account_name}`.toLowerCase();
         return searchStr.includes(searchTerm.toLowerCase());
     });
 
@@ -127,8 +127,8 @@ export default function AdminWithdrawalsPage() {
                                             <div className="text-slate-600 text-xs">{new Date(w.created_at).toLocaleString('vi-VN')}</div>
                                         </td>
                                         <td className="p-4">
-                                            <div className="font-medium text-slate-800">{w.affiliate_profiles?.users?.name}</div>
-                                            <div className="text-xs text-slate-500 mt-0.5">{w.affiliate_profiles?.users?.phone}</div>
+                                            <div className="font-medium text-slate-800">{w.affiliate_profiles?.profiles?.full_name}</div>
+                                            <div className="text-xs text-slate-500 mt-0.5">{w.affiliate_profiles?.profiles?.phone}</div>
                                             <div className="text-[10px] font-mono bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded inline-block mt-1">
                                                 {w.affiliate_profiles?.affiliate_code}
                                             </div>

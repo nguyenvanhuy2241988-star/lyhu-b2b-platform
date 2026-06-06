@@ -89,7 +89,7 @@ export async function getAllWithdrawals(token?: string) {
             *,
             affiliate_profiles (
                 affiliate_code,
-                users ( name, email, phone )
+                profiles:user_id ( full_name, email, phone )
             )
         `)
         .order('created_at', { ascending: false });
