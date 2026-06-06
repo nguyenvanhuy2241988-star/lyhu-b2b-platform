@@ -126,6 +126,16 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
         }
     };
 
+    const copyProductLink = (productId: string) => {
+        if (!profile?.affiliate_code) return;
+        const baseUrl = window.location.origin;
+        const url = new URL(baseUrl);
+        url.searchParams.set('ref', profile.affiliate_code);
+        url.searchParams.set('p', productId);
+        navigator.clipboard.writeText(url.toString());
+        alert("Đã copy link sản phẩm thành công!");
+    };
+
     if (loading) {
         return <div className="py-8 text-center text-slate-500">Đang tải dữ liệu Affiliate...</div>;
     }
@@ -206,8 +216,9 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                             <table className="w-full text-left">
                                 <thead className="bg-slate-50 border-b border-slate-200 sticky top-0">
                                     <tr>
-                                        <th className="p-3 text-xs font-medium text-slate-500 w-2/3">Sản phẩm</th>
-                                        <th className="p-3 text-xs font-medium text-slate-500 w-1/3 text-right">Mức Hoa hồng</th>
+                                        <th className="p-3 text-xs font-medium text-slate-500 w-[50%]">Sản phẩm</th>
+                                        <th className="p-3 text-xs font-medium text-slate-500 w-[30%] text-right">Mức Hoa hồng</th>
+                                        <th className="p-3 text-xs font-medium text-slate-500 w-[20%] text-right">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
@@ -222,6 +233,15 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                                                     {p.isProductGlobal && <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">Mức riêng</span>}
                                                     <span className="font-bold text-green-600">{p.effective_rate}%</span>
                                                 </div>
+                                            </td>
+                                            <td className="p-3 text-right">
+                                                <button 
+                                                    onClick={() => copyProductLink(p.id)}
+                                                    className="inline-flex items-center gap-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-2 py-1.5 rounded-md text-xs font-medium transition-colors"
+                                                >
+                                                    <LinkIcon size={12} />
+                                                    Lấy Link
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
