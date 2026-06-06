@@ -33,7 +33,7 @@ export function AffiliateSystemUsersTab() {
             const affiliateUserIds = new Set(affiliates?.map((a: any) => a.user_id));
 
             // Lọc ra những người chưa là affiliate
-            const potentialUsers = profiles?.filter(p => !affiliateUserIds.has(p.id)) || [];
+            const potentialUsers = profiles?.filter((p: any) => !affiliateUserIds.has(p.id)) || [];
             
             setUsers(potentialUsers);
         } catch (error) {
@@ -70,7 +70,7 @@ export function AffiliateSystemUsersTab() {
 
             alert(`Đã nâng cấp thành công! Mã Affiliate: ${autoCode}`);
             // Xóa người này khỏi danh sách
-            setUsers(users.filter(u => u.id !== userId));
+            setUsers(users.filter((u: any) => u.id !== userId));
         } catch (error) {
             console.error("Lỗi cấp mã:", error);
         } finally {
@@ -78,7 +78,7 @@ export function AffiliateSystemUsersTab() {
         }
     };
 
-    const filteredUsers = users.filter(u => 
+    const filteredUsers = users.filter((u: any) => 
         (u.full_name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (u.email?.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (u.phone?.includes(searchQuery))

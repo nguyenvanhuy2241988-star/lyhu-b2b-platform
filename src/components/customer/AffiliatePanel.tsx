@@ -49,8 +49,8 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                     .order('created_at', { ascending: false });
 
                 const oData = ordersData || [];
-                const revenue = oData.reduce((acc, o) => acc + Number(o.total_amount), 0);
-                const commission = oData.reduce((acc, o) => acc + Number(o.commission_amount), 0);
+                const revenue = oData.reduce((acc: number, o: any) => acc + Number(o.total_amount), 0);
+                const commission = oData.reduce((acc: number, o: any) => acc + Number(o.commission_amount), 0);
 
                 setStats({
                     clicks: clicks || 0,
@@ -142,7 +142,7 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                             placeholder="Dán link sản phẩm bạn muốn bán vào đây..." 
                             className="flex-1 text-sm border border-slate-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
                             value={targetUrl}
-                            onChange={e => setTargetUrl(e.target.value)}
+                            onChange={(e: any) => setTargetUrl(e.target.value)}
                         />
                         <button onClick={handleGenerate} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap">
                             Tạo Link
@@ -177,7 +177,7 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                    {orders.map((o) => (
+                                    {orders.map((o: any) => (
                                         <tr key={o.id} className="hover:bg-slate-50 text-sm">
                                             <td className="p-3 font-mono text-xs">...{o.id.substring(o.id.length - 6)}</td>
                                             <td className="p-3 text-slate-600">{new Date(o.created_at).toLocaleDateString('vi-VN')}</td>
