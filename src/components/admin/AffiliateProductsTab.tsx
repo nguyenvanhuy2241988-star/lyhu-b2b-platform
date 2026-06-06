@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
 import { Search, Filter, Save, CheckSquare, Square } from "lucide-react";
 import NextImage from "next/image";
+import { supabase } from "@/lib/supabaseClient";
 
 export function AffiliateProductsTab() {
     const [products, setProducts] = useState<any[]>([]);
@@ -19,10 +19,6 @@ export function AffiliateProductsTab() {
 
     // Individual edit state tracking
     const [editedRates, setEditedRates] = useState<Record<string, number>>({});
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-    const supabase = createClient(supabaseUrl, supabaseAnon);
 
     useEffect(() => {
         fetchProducts();
@@ -72,8 +68,9 @@ export function AffiliateProductsTab() {
             // Update local state
             setProducts(products.map(p => p.id === id ? { ...p, affiliate_commission_rate: rate } : p));
             alert("Đã lưu mức hoa hồng mới cho sản phẩm!");
-        } catch (error) {
-            alert("Lỗi khi lưu!");
+        } catch (error: any) {
+            console.error("Lưu lỗi:", error);
+            alert("Lỗi khi lưu: " + (error.message || "Hãy đảm bảo bạn đã chạy mã SQL cập nhật CSDL."));
         }
     };
 
@@ -116,8 +113,9 @@ export function AffiliateProductsTab() {
             // Update local state
             setProducts(products.map(p => idsArray.includes(p.id) ? { ...p, affiliate_commission_rate: bulkRate } : p));
             setSelectedProductIds(new Set());
-        } catch (error) {
-            alert("Lỗi cập nhật hàng loạt!");
+        } catch (error: any) {
+            console.error("Cập nhật hàng loạt lỗi:", error);
+            alert("Lỗi cập nhật hàng loạt: " + (error.message || "Hãy đảm bảo bạn đã chạy mã SQL."));
         } finally {
             setIsSaving(false);
         }
