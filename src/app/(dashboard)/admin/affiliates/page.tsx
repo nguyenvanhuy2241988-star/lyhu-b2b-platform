@@ -11,7 +11,7 @@ export default function AdminAffiliatesPage() {
     const [activeTab, setActiveTab] = useState<'partners' | 'rules'>('partners');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [newEmail, setNewEmail] = useState("");
+    const [newIdentifier, setNewIdentifier] = useState("");
     const [newCode, setNewCode] = useState("");
     const [newRate, setNewRate] = useState(10);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,15 +62,17 @@ export default function AdminAffiliatesPage() {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            // 1. Tìm user theo email
-            const { data: userProfile, error: userError } = await supabase
+            // 1. Tìm user theo email hoặc SĐT
+            const { data: users, error: userError } = await supabase
                 .from('profiles')
                 .select('id, full_name')
-                .eq('email', newEmail)
-                .single();
+                .or(`email.eq.${newIdentifier},phone.eq.${newIdentifier}`)
+                .limit(1);
+
+            const userProfile = users?.[0];
 
             if (userError || !userProfile) {
-                alert("Không tìm thấy người dùng với email này trong hệ thống.");
+                alert("Không tìm thấy người dùng với Email hoặc Số điện thoại này trong hệ thống.");
                 setIsSubmitting(false);
                 return;
             }
@@ -97,7 +99,7 @@ export default function AdminAffiliatesPage() {
 
             alert("Đã thêm đối tác thành công!");
             setIsModalOpen(false);
-            setNewEmail("");
+            setNewIdentifier("");
             setNewCode("");
             setNewRate(10);
             fetchProfiles();
@@ -215,14 +217,14 @@ export default function AdminAffiliatesPage() {
                         </div>
                         <form onSubmit={handleAddAffiliate} className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Email của người dùng</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Email hoặc Số điện thoại</label>
                                 <input 
-                                    type="email" 
+                                    type="text" 
                                     required 
                                     className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary-500"
-                                    placeholder="Ví dụ: nguyenvanhuy@gmail.com"
-                                    value={newEmail}
-                                    onChange={e => setNewEmail(e.target.value)}
+                                    placeholder="Ví dụ: nguyenvanhuy@gmail.com hoặc 0987654321"
+                                    value={newIdentifier}
+                                    onChange={e => setNewIdentifier(e.target.value.trim())}
                                 />
                                 <p className="text-xs text-slate-500 mt-1">Người dùng phải có tài khoản trên LYHU trước.</p>
                             </div>
