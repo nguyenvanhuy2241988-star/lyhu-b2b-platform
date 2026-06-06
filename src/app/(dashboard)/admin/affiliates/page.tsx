@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabaseClient";
 import { Copy, Plus, Trash, CheckCircle, XCircle, Users, Settings, Package, UserPlus } from "lucide-react";
 import { AffiliateProductsTab } from "@/components/admin/AffiliateProductsTab";
 import { AffiliateSystemUsersTab } from "@/components/admin/AffiliateSystemUsersTab";
@@ -17,13 +17,11 @@ export default function AdminAffiliatesPage() {
     const [newRate, setNewRate] = useState(10);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-    const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
-    const supabase = createClient(supabaseUrl, supabaseAnon);
-
     useEffect(() => {
-        fetchProfiles();
-    }, []);
+        if (activeTab === 'partners') {
+            fetchProfiles();
+        }
+    }, [activeTab]);
 
     const fetchProfiles = async () => {
         setLoading(true);
