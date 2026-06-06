@@ -39,7 +39,7 @@ export function AffiliateProductsTab() {
             setProducts(prodData);
 
             // Extract unique brands
-            const uniqueBrands = Array.from(new Set(prodData.map(p => p.brand).filter(Boolean)));
+            const uniqueBrands = Array.from(new Set(prodData.map((p: any) => p.brand).filter(Boolean)));
             setBrands(uniqueBrands as string[]);
         } catch (error) {
             console.error("Error fetching products", error);
