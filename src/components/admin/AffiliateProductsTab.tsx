@@ -49,7 +49,7 @@ export function AffiliateProductsTab({ affiliateId }: AffiliateProductsTabProps)
                     .select('product_id, commission_rate')
                     .eq('affiliate_id', affiliateId);
 
-                const customRatesMap = new Map(customRatesData?.map(c => [c.product_id, c.commission_rate]) || []);
+                const customRatesMap = new Map(customRatesData?.map((c: any) => [c.product_id, c.commission_rate]) || []);
                 
                 processedData = prodData.map((p: any) => ({
                     ...p,

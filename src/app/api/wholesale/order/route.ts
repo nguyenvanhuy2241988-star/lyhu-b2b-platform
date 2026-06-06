@@ -54,8 +54,8 @@ export async function POST(request: Request) {
 
                     // Tính hoa hồng cho từng món hàng
                     for (const item of items) {
-                        const product = products?.find(p => p.id === item.product_id);
-                        const customRate = customRates?.find(c => c.product_id === item.product_id);
+                        const product = products?.find((p: any) => p.id === item.product_id);
+                        const customRate = customRates?.find((c: any) => c.product_id === item.product_id);
                         
                         // Lớp 3: Mặc định lấy theo hồ sơ KOL
                         let itemRate = affiliate.commission_rate || 0; 
