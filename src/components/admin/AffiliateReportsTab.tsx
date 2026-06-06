@@ -88,7 +88,7 @@ export function AffiliateReportsTab() {
                 
                 const affiliateStatsMap = new Map();
                 
-                profiles.forEach(p => {
+                profiles.forEach((p: any) => {
                     affiliateStatsMap.set(p.id, {
                         ...p,
                         total_revenue: 0,
