@@ -153,7 +153,15 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                     <h2 className="font-bold text-slate-800">Chương trình Tiếp thị Liên kết (Affiliate)</h2>
                 </div>
                 <div className="flex gap-4 items-center">
-                    <div className="text-sm text-slate-600 font-medium">Hoa hồng cơ bản: <span className="text-green-600 font-bold">{profile.commission_rate}%</span></div>
+                    {stats.revenue > 0 ? (
+                        <div className="text-sm text-slate-600 font-medium">
+                            Thực nhận trung bình: <span className="text-green-600 font-bold">{((stats.commission / stats.revenue) * 100).toFixed(1)}%</span>
+                        </div>
+                    ) : (
+                        <div className="text-sm text-slate-600 font-medium">
+                            Hoa hồng mặc định: <span className="text-green-600 font-bold">{profile.commission_rate}%</span>
+                        </div>
+                    )}
                     <div className="h-4 w-px bg-slate-300"></div>
                     <div className="text-sm text-indigo-700 font-medium">Mã: <span className="font-mono bg-indigo-100 px-2 py-0.5 rounded">{profile.affiliate_code}</span></div>
                 </div>
