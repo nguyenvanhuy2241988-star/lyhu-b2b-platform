@@ -30,7 +30,7 @@ export function AffiliateSystemUsersTab() {
 
             if (affiliatesError) throw affiliatesError;
 
-            const affiliateUserIds = new Set(affiliates?.map(a => a.user_id));
+            const affiliateUserIds = new Set(affiliates?.map((a: any) => a.user_id));
 
             // Lọc ra những người chưa là affiliate
             const potentialUsers = profiles?.filter(p => !affiliateUserIds.has(p.id)) || [];
