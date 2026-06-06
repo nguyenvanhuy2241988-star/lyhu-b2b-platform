@@ -13,6 +13,7 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
     const [targetUrl, setTargetUrl] = useState("");
     const [generatedUrl, setGeneratedUrl] = useState("");
     const [orders, setOrders] = useState<any[]>([]);
+    const [productsRates, setProductsRates] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -60,6 +61,38 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                 });
                 
                 setOrders(oData.slice(0, 10)); // Lấy 10 đơn gần nhất
+
+                // Lấy bảng hoa hồng chi tiết
+                const { data: productsData } = await supabase
+                    .from('products')
+                    .select('id, name, affiliate_commission_rate, image_url')
+                    .eq('is_active', true);
+
+                const { data: customRatesData } = await supabase
+                    .from('affiliate_custom_rates')
+                    .select('product_id, commission_rate')
+                    .eq('affiliate_id', pData.id);
+
+                const customRatesMap = new Map(customRatesData?.map((c: any) => [c.product_id, c.commission_rate]) || []);
+
+                const mappedProducts = (productsData || []).map((p: any) => {
+                    let rate = pData.commission_rate; // Mức cơ bản
+                    let isCustom = false;
+                    let isProductGlobal = false;
+
+                    if (customRatesMap.has(p.id)) {
+                        rate = customRatesMap.get(p.id);
+                        isCustom = true;
+                    } else if (p.affiliate_commission_rate > 0) {
+                        rate = p.affiliate_commission_rate;
+                        isProductGlobal = true;
+                    }
+                    return { ...p, effective_rate: rate, isCustom, isProductGlobal };
+                });
+                
+                // Sắp xếp sản phẩm có hoa hồng cao lên trước
+                mappedProducts.sort((a: any, b: any) => b.effective_rate - a.effective_rate);
+                setProductsRates(mappedProducts);
             }
 
         } catch (error) {
@@ -109,7 +142,11 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                     <TrendingUp className="w-5 h-5 text-indigo-600" />
                     <h2 className="font-bold text-slate-800">Chương trình Tiếp thị Liên kết (Affiliate)</h2>
                 </div>
-                <div className="text-sm text-indigo-700 font-medium">Mã của bạn: <span className="font-mono bg-indigo-100 px-2 py-0.5 rounded">{profile.affiliate_code}</span></div>
+                <div className="flex gap-4 items-center">
+                    <div className="text-sm text-slate-600 font-medium">Hoa hồng cơ bản: <span className="text-green-600 font-bold">{profile.commission_rate}%</span></div>
+                    <div className="h-4 w-px bg-slate-300"></div>
+                    <div className="text-sm text-indigo-700 font-medium">Mã: <span className="font-mono bg-indigo-100 px-2 py-0.5 rounded">{profile.affiliate_code}</span></div>
+                </div>
             </div>
             
             <div className="p-6 space-y-6">
@@ -160,6 +197,39 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                         </div>
                     )}
                 </div>
+
+                {/* Bảng hoa hồng chi tiết */}
+                {productsRates.length > 0 && (
+                    <div>
+                        <h3 className="text-sm font-bold mb-3 text-slate-700">Mức Hoa hồng theo Sản phẩm</h3>
+                        <div className="max-h-64 overflow-y-auto border border-slate-200 rounded-lg">
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-50 border-b border-slate-200 sticky top-0">
+                                    <tr>
+                                        <th className="p-3 text-xs font-medium text-slate-500 w-2/3">Sản phẩm</th>
+                                        <th className="p-3 text-xs font-medium text-slate-500 w-1/3 text-right">Mức Hoa hồng</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                    {productsRates.map((p: any) => (
+                                        <tr key={p.id} className="hover:bg-slate-50 text-sm">
+                                            <td className="p-3">
+                                                <div className="font-medium text-slate-800 line-clamp-1">{p.name}</div>
+                                            </td>
+                                            <td className="p-3 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    {p.isCustom && <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">Mức ưu đãi</span>}
+                                                    {p.isProductGlobal && <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-medium">Mức riêng</span>}
+                                                    <span className="font-bold text-green-600">{p.effective_rate}%</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
 
                 {/* Lịch sử */}
                 {orders.length > 0 && (
