@@ -563,7 +563,7 @@ export default function WholesaleStore({
                 return {
                     product_id: item.product.id,
                     quantity: item.quantity,
-                    price: item.flashSalePrice ?? p.basePricePerUnit ?? p.base_price_per_unit ?? p.basePrice ?? p.base_price ?? p.price ?? 0,
+                    price: item.flashSalePrice ?? (p.price || p.basePricePerUnit || p.basePrice || p.base_price_per_unit || p.base_price || 0),
                     discount: 0
                 };
             });
