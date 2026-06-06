@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getAllWithdrawals, updateWithdrawalStatus, AffiliateWithdrawal } from "@/lib/affiliateStore";
-import { useAuth } from "@/lib/auth";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { DollarSign, Clock, CheckCircle, XCircle, Search, Loader2 } from "lucide-react";
 
 export default function AdminWithdrawalsPage() {
