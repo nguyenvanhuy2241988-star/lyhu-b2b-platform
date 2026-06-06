@@ -43,7 +43,7 @@ CREATE POLICY "Admins can view all withdrawals"
 ON affiliate_withdrawals FOR SELECT 
 USING (
     EXISTS (
-        SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role IN ('admin', 'manager', 'sale_admin')
+        SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'manager', 'sale_admin')
     )
 );
 
@@ -52,7 +52,7 @@ CREATE POLICY "Admins can update all withdrawals"
 ON affiliate_withdrawals FOR UPDATE 
 USING (
     EXISTS (
-        SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role IN ('admin', 'manager', 'sale_admin')
+        SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'manager', 'sale_admin')
     )
 );
 
