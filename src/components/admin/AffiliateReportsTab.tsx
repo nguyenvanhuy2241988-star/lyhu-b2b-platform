@@ -50,7 +50,7 @@ export function AffiliateReportsTab() {
 
             if (orders) {
                 totalOrders = orders.length;
-                orders.forEach(o => {
+                orders.forEach((o: any) => {
                     if (o.affiliate_status !== 'cancelled') {
                         totalRevenue += Number(o.total_amount);
                     }
@@ -98,7 +98,7 @@ export function AffiliateReportsTab() {
                 });
 
                 if (affOrders) {
-                    affOrders.forEach(o => {
+                    affOrders.forEach((o: any) => {
                         if (affiliateStatsMap.has(o.affiliate_id) && o.affiliate_status !== 'cancelled') {
                             const stat = affiliateStatsMap.get(o.affiliate_id);
                             stat.orders_count += 1;
