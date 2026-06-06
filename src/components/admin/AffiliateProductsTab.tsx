@@ -3,7 +3,11 @@ import { Search, Filter, Save, CheckSquare, Square } from "lucide-react";
 import NextImage from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 
-export function AffiliateProductsTab() {
+interface AffiliateProductsTabProps {
+    affiliateId?: string; // Tùy chọn: Nếu có, sẽ cấu hình hoa hồng riêng cho CTV này
+}
+
+export function AffiliateProductsTab({ affiliateId }: AffiliateProductsTabProps) {
     const [products, setProducts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     
@@ -36,7 +40,24 @@ export function AffiliateProductsTab() {
             if (error) throw error;
             
             const prodData = data || [];
-            setProducts(prodData);
+            let processedData = prodData;
+
+            // Nếu có affiliateId, lấy thêm cấu hình riêng của họ
+            if (affiliateId) {
+                const { data: customRatesData } = await supabase
+                    .from('affiliate_custom_rates')
+                    .select('product_id, commission_rate')
+                    .eq('affiliate_id', affiliateId);
+
+                const customRatesMap = new Map(customRatesData?.map(c => [c.product_id, c.commission_rate]) || []);
+                
+                processedData = prodData.map((p: any) => ({
+                    ...p,
+                    custom_rate: customRatesMap.has(p.id) ? customRatesMap.get(p.id) : null
+                }));
+            }
+
+            setProducts(processedData);
 
             // Extract unique brands
             const uniqueBrands = Array.from(new Set(prodData.map((p: any) => p.brand).filter(Boolean)));
@@ -58,12 +79,27 @@ export function AffiliateProductsTab() {
         if (rate === undefined) return;
 
         try {
-            const { error } = await supabase
-                .from('products')
-                .update({ affiliate_commission_rate: rate })
-                .eq('id', id);
+            if (affiliateId) {
+                // Upsert vào bảng affiliate_custom_rates
+                const { error } = await supabase
+                    .from('affiliate_custom_rates')
+                    .upsert({ 
+                        affiliate_id: affiliateId,
+                        product_id: id,
+                        commission_rate: rate 
+                    }, { onConflict: 'affiliate_id,product_id' });
 
-            if (error) throw error;
+                if (error) throw error;
+                setProducts(products.map(p => p.id === id ? { ...p, custom_rate: rate } : p));
+            } else {
+                const { error } = await supabase
+                    .from('products')
+                    .update({ affiliate_commission_rate: rate })
+                    .eq('id', id);
+
+                if (error) throw error;
+                setProducts(products.map(p => p.id === id ? { ...p, affiliate_commission_rate: rate } : p));
+            }
             
             // Update local state
             setProducts(products.map(p => p.id === id ? { ...p, affiliate_commission_rate: rate } : p));
@@ -101,17 +137,35 @@ export function AffiliateProductsTab() {
         setIsSaving(true);
         try {
             const idsArray = Array.from(selectedProductIds);
-            const { error } = await supabase
-                .from('products')
-                .update({ affiliate_commission_rate: bulkRate })
-                .in('id', idsArray);
-
-            if (error) throw error;
+            
+            if (affiliateId) {
+                // Bulk upsert cho affiliate_custom_rates
+                const upsertData = idsArray.map(id => ({
+                    affiliate_id: affiliateId,
+                    product_id: id,
+                    commission_rate: bulkRate
+                }));
+                const { error } = await supabase
+                    .from('affiliate_custom_rates')
+                    .upsert(upsertData, { onConflict: 'affiliate_id,product_id' });
+                if (error) throw error;
+                setProducts(products.map(p => idsArray.includes(p.id) ? { ...p, custom_rate: bulkRate } : p));
+            } else {
+                const { error } = await supabase
+                    .from('products')
+                    .update({ affiliate_commission_rate: bulkRate })
+                    .in('id', idsArray);
+                if (error) throw error;
+                setProducts(products.map(p => idsArray.includes(p.id) ? { ...p, affiliate_commission_rate: bulkRate } : p));
+            }
 
             alert(`Đã cập nhật mức ${bulkRate}% cho ${idsArray.length} sản phẩm thành công!`);
             
-            // Update local state
-            setProducts(products.map(p => idsArray.includes(p.id) ? { ...p, affiliate_commission_rate: bulkRate } : p));
+            // Xóa state editedRates cho những id đã bulk
+            const newEditedRates = { ...editedRates };
+            idsArray.forEach(id => delete newEditedRates[id]);
+            setEditedRates(newEditedRates);
+            
             setSelectedProductIds(new Set());
         } catch (error: any) {
             console.error("Cập nhật hàng loạt lỗi:", error);
@@ -247,24 +301,35 @@ export function AffiliateProductsTab() {
                                             <input 
                                                 type="number"
                                                 min="0" max="100" step="0.5"
-                                                className="w-20 px-2 py-1.5 text-sm border border-slate-300 rounded-md outline-none focus:ring-2 focus:ring-primary-500"
-                                                value={editedRates[p.id] !== undefined ? editedRates[p.id] : (p.affiliate_commission_rate || 0)}
+                                                placeholder={affiliateId ? (p.affiliate_commission_rate > 0 ? `Chung: ${p.affiliate_commission_rate}%` : 'Mặc định') : 'Mặc định'}
+                                                className={`w-24 px-2 py-1.5 text-sm border rounded-md outline-none focus:ring-2 focus:ring-primary-500 ${affiliateId && p.custom_rate !== null ? 'border-amber-400 bg-amber-50 text-amber-700 font-bold' : 'border-slate-300'}`}
+                                                value={editedRates[p.id] !== undefined ? editedRates[p.id] : (affiliateId ? (p.custom_rate ?? '') : (p.affiliate_commission_rate || ''))}
                                                 onChange={(e) => handleRateChange(p.id, e.target.value)}
                                             />
                                             <span className="text-slate-500">%</span>
                                             
-                                            {editedRates[p.id] !== undefined && editedRates[p.id] !== (p.affiliate_commission_rate || 0) && (
+                                            {editedRates[p.id] !== undefined && editedRates[p.id] !== (affiliateId ? p.custom_rate : p.affiliate_commission_rate) && (
                                                 <button 
                                                     onClick={() => saveIndividualRate(p.id)}
                                                     className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                                                    title="Lưu"
+                                                    title="Lưu mức hoa hồng"
                                                 >
                                                     <Save size={16} />
                                                 </button>
                                             )}
                                         </div>
-                                        {!(p.affiliate_commission_rate > 0) && (
-                                            <div className="text-xs text-slate-400 mt-1">Sẽ dùng % mặc định của KOL</div>
+                                        {affiliateId ? (
+                                            p.custom_rate !== null ? (
+                                                <div className="text-xs text-amber-600 mt-1 font-medium">Áp dụng mức riêng này</div>
+                                            ) : p.affiliate_commission_rate > 0 ? (
+                                                <div className="text-xs text-slate-500 mt-1">Sẽ dùng chung: {p.affiliate_commission_rate}%</div>
+                                            ) : (
+                                                <div className="text-xs text-slate-400 mt-1">Sẽ dùng mặc định của KOL</div>
+                                            )
+                                        ) : (
+                                            !(p.affiliate_commission_rate > 0) && (
+                                                <div className="text-xs text-slate-400 mt-1">Sẽ dùng % mặc định của KOL</div>
+                                            )
                                         )}
                                     </td>
                                 </tr>

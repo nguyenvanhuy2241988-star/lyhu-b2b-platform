@@ -45,15 +45,26 @@ export async function POST(request: Request) {
                         .select('id, affiliate_commission_rate')
                         .in('id', productIds);
 
+                    // Lấy cấu hình % riêng của CTV này cho các sản phẩm
+                    const { data: customRates } = await supabaseAdmin
+                        .from('affiliate_custom_rates')
+                        .select('product_id, commission_rate')
+                        .eq('affiliate_id', affiliate.id)
+                        .in('product_id', productIds);
+
                     // Tính hoa hồng cho từng món hàng
                     for (const item of items) {
                         const product = products?.find(p => p.id === item.product_id);
+                        const customRate = customRates?.find(c => c.product_id === item.product_id);
                         
-                        // Mặc định lấy theo hồ sơ KOL
+                        // Lớp 3: Mặc định lấy theo hồ sơ KOL
                         let itemRate = affiliate.commission_rate || 0; 
 
-                        // Nếu sản phẩm có cài đặt mức rate riêng (>0) thì dùng mức đó
-                        if (product && product.affiliate_commission_rate && product.affiliate_commission_rate > 0) {
+                        if (customRate && customRate.commission_rate !== null && customRate.commission_rate !== undefined) {
+                            // Lớp 1: Lấy cấu hình riêng
+                            itemRate = customRate.commission_rate;
+                        } else if (product && product.affiliate_commission_rate && product.affiliate_commission_rate > 0) {
+                            // Lớp 2: Lấy cấu hình chung của sản phẩm
                             itemRate = product.affiliate_commission_rate;
                         }
 

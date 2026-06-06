@@ -16,6 +16,9 @@ export default function AdminAffiliatesPage() {
     const [newCode, setNewCode] = useState("");
     const [newRate, setNewRate] = useState(10);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // Custom Rates Modal
+    const [selectedAffiliateForConfig, setSelectedAffiliateForConfig] = useState<any>(null);
 
     useEffect(() => {
         if (activeTab === 'partners') {
@@ -194,6 +197,13 @@ export default function AdminAffiliatesPage() {
                                         {p.status === 'suspended' && <span className="bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs">Bị khóa</span>}
                                     </td>
                                     <td className="p-4 flex gap-2">
+                                        <button 
+                                            onClick={() => setSelectedAffiliateForConfig(p)} 
+                                            className="p-2 text-slate-600 hover:bg-slate-100 rounded-lg" 
+                                            title="Cài đặt Hoa hồng riêng"
+                                        >
+                                            <Settings size={18} />
+                                        </button>
                                         {p.status !== 'active' && (
                                             <button onClick={() => updateStatus(p.id, 'active')} className="p-2 text-green-600 hover:bg-green-50 rounded-lg" title="Duyệt / Kích hoạt">
                                                 <CheckCircle size={18} />
@@ -270,12 +280,35 @@ export default function AdminAffiliatesPage() {
                                 <button 
                                     type="submit" 
                                     disabled={isSubmitting}
-                                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium disabled:opacity-50"
+                                    className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 rounded-lg transition-colors disabled:bg-slate-300"
                                 >
-                                    {isSubmitting ? "Đang xử lý..." : "Xác nhận thêm"}
+                                    {isSubmitting ? 'Đang thêm...' : 'Lưu Đối Tác'}
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Cài đặt riêng cho CTV */}
+            {selectedAffiliateForConfig && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-slate-50 rounded-xl shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
+                        <div className="flex justify-between items-center p-6 bg-white border-b border-slate-200">
+                            <div>
+                                <h2 className="text-xl font-bold flex items-center gap-2">
+                                    <Settings className="text-primary-600" />
+                                    Cấu hình Hoa hồng riêng: <span className="text-primary-700">{selectedAffiliateForConfig.profiles?.full_name || selectedAffiliateForConfig.affiliate_code}</span>
+                                </h2>
+                                <p className="text-sm text-slate-500 mt-1">Các mức % ở đây sẽ Ghi Đè lên mức % chung của sản phẩm và mức % mặc định của KOL này.</p>
+                            </div>
+                            <button onClick={() => setSelectedAffiliateForConfig(null)} className="text-slate-400 hover:text-slate-600 bg-slate-100 p-2 rounded-full">
+                                <XCircle size={24} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6">
+                            <AffiliateProductsTab affiliateId={selectedAffiliateForConfig.id} />
+                        </div>
                     </div>
                 </div>
             )}
