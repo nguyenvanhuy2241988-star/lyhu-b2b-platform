@@ -8,6 +8,12 @@ export default function AdminAffiliatesPage() {
     const [profiles, setProfiles] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [newEmail, setNewEmail] = useState("");
+    const [newCode, setNewCode] = useState("");
+    const [newRate, setNewRate] = useState(10);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
     const supabase = createClient(supabaseUrl, supabaseAnon);
@@ -50,9 +56,67 @@ export default function AdminAffiliatesPage() {
         }
     };
 
+    const handleAddAffiliate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            // 1. Tìm user theo email
+            const { data: userProfile, error: userError } = await supabase
+                .from('profiles')
+                .select('id, full_name')
+                .eq('email', newEmail)
+                .single();
+
+            if (userError || !userProfile) {
+                alert("Không tìm thấy người dùng với email này trong hệ thống.");
+                setIsSubmitting(false);
+                return;
+            }
+
+            // 2. Tạo affiliate profile
+            const { error: insertError } = await supabase
+                .from('affiliate_profiles')
+                .insert({
+                    user_id: userProfile.id,
+                    affiliate_code: newCode,
+                    commission_rate: newRate,
+                    status: 'active'
+                });
+
+            if (insertError) {
+                if (insertError.code === '23505') { // Unique violation
+                    alert("Người dùng này đã là Affiliate hoặc Mã Affiliate đã bị trùng.");
+                } else {
+                    alert("Lỗi thêm đối tác: " + insertError.message);
+                }
+                setIsSubmitting(false);
+                return;
+            }
+
+            alert("Đã thêm đối tác thành công!");
+            setIsModalOpen(false);
+            setNewEmail("");
+            setNewCode("");
+            setNewRate(10);
+            fetchProfiles();
+        } catch (error) {
+            alert("Đã xảy ra lỗi không xác định.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     return (
         <div className="p-6">
-            <h1 className="text-2xl font-bold mb-6">Quản lý Đối tác Affiliate</h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-2xl font-bold">Quản lý Đối tác Affiliate</h1>
+                <button 
+                    onClick={() => setIsModalOpen(true)}
+                    className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium"
+                >
+                    <Plus size={20} /> Thêm Đối Tác
+                </button>
+            </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="overflow-x-auto">
@@ -114,6 +178,74 @@ export default function AdminAffiliatesPage() {
                     </table>
                 </div>
             </div>
+
+            {/* Modal Thêm Đối Tác */}
+            {isModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold">Thêm Đối Tác Affiliate</h2>
+                            <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                <XCircle size={24} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleAddAffiliate} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Email của người dùng</label>
+                                <input 
+                                    type="email" 
+                                    required 
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary-500"
+                                    placeholder="Ví dụ: nguyenvanhuy@gmail.com"
+                                    value={newEmail}
+                                    onChange={e => setNewEmail(e.target.value)}
+                                />
+                                <p className="text-xs text-slate-500 mt-1">Người dùng phải có tài khoản trên LYHU trước.</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Mã Affiliate (Tự chọn)</label>
+                                <input 
+                                    type="text" 
+                                    required 
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary-500"
+                                    placeholder="Ví dụ: HUY_KOL_99"
+                                    value={newCode}
+                                    onChange={e => setNewCode(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Tỷ lệ hoa hồng (%)</label>
+                                <input 
+                                    type="number" 
+                                    required 
+                                    min="0"
+                                    max="100"
+                                    step="0.5"
+                                    className="w-full border border-slate-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary-500"
+                                    value={newRate}
+                                    onChange={e => setNewRate(Number(e.target.value))}
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg font-medium"
+                                >
+                                    Hủy
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    disabled={isSubmitting}
+                                    className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium disabled:opacity-50"
+                                >
+                                    {isSubmitting ? "Đang xử lý..." : "Xác nhận thêm"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
