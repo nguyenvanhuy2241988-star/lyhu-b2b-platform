@@ -437,7 +437,7 @@ export default function WholesaleStore({
 
         items.forEach(item => {
             const p: any = item.product;
-            const normalPrice = p.retailPrice || p.retail_price || ((p.basePricePerUnit || p.base_price_per_unit || p.basePrice || p.base_price || p.price || 0) * 1.2) || 0;
+            const normalPrice = p.retailPrice || p.retail_price || p.price || p.basePricePerUnit || p.base_price_per_unit || p.basePrice || p.base_price || 0;
             const activePrice = item.flashSalePrice ?? normalPrice;
             originalTotalForDisplay += normalPrice * item.quantity;
             baseTotal += activePrice * item.quantity;
@@ -560,7 +560,7 @@ export default function WholesaleStore({
 
             const items = cartAnalysis.items.map(item => {
                 const p: any = item.product;
-                const normalPrice = p.retailPrice || p.retail_price || ((p.basePricePerUnit || p.base_price_per_unit || p.basePrice || p.base_price || p.price || 0) * 1.2) || 0;
+                const normalPrice = p.retailPrice || p.retail_price || p.price || p.basePricePerUnit || p.base_price_per_unit || p.basePrice || p.base_price || 0;
                 const activePrice = item.flashSalePrice ?? normalPrice;
                 return {
                     product_id: item.product.id,
