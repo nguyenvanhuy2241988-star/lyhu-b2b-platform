@@ -268,6 +268,25 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
         if (failed > 0) alert(`⚠️ ${failed}/${selectedIds.size} đơn không cập nhật được.`);
     };
 
+    const handleBatchDelete = async () => {
+        if (readOnly || selectedIds.size === 0) return;
+        const confirmed = window.confirm(
+            `⚠️ Bạn có chắc chắn muốn XÓA vĩnh viễn ${selectedIds.size} đơn hàng đã chọn?\n\nHành động này KHÔNG THỂ hoàn tác.`
+        );
+        if (!confirmed) return;
+
+        setBatchLoading(true);
+        const { deleteOrder } = await import("@/lib/ordersStore");
+        const results = await Promise.allSettled(
+            Array.from(selectedIds).map(id => deleteOrder(id))
+        );
+        const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value)).length;
+        setBatchLoading(false);
+        setSelectedIds(new Set());
+        loadData(true);
+        if (failed > 0) alert(`⚠️ ${failed}/${selectedIds.size} đơn không xóa được.`);
+    };
+
     const filteredOrders = orders.filter(order => {
         const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
 
@@ -923,6 +942,16 @@ export default function OrderList({ readOnly = false, maskSensitiveData = false,
                         {batchLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <XCircle className="w-3.5 h-3.5" />}
                         Hủy
                     </button>
+                    {role !== 'warehouse' && (
+                        <button
+                            onClick={handleBatchDelete}
+                            disabled={batchLoading}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-slate-700 hover:bg-red-600 rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
+                        >
+                            {batchLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                            Xóa
+                        </button>
+                    )}
                     <button
                         onClick={() => setSelectedIds(new Set())}
                         className="ml-2 px-3 py-2 text-xs font-medium text-slate-400 hover:text-white transition-colors"
