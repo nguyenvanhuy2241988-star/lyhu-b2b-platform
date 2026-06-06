@@ -43,19 +43,19 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                     .eq('affiliate_id', pData.id);
 
                 // Fetch orders
-                const { data: ordersData } = await supabase
+                const { data: oData } = await supabase
                     .from('orders')
-                    .select('id, total_amount, commission_amount, affiliate_status, created_at')
+                    .select('id, total_amount, commission_amount, affiliate_status, created_at, order_items(quantity, products(name))')
                     .eq('affiliate_id', pData.id)
                     .order('created_at', { ascending: false });
 
-                const oData = ordersData || [];
-                const revenue = oData.reduce((acc: number, o: any) => acc + Number(o.total_amount), 0);
-                const commission = oData.reduce((acc: number, o: any) => acc + Number(o.commission_amount), 0);
+                const safeData = oData || [];
+                const revenue = safeData.reduce((acc: number, o: any) => acc + Number(o.total_amount), 0);
+                const commission = safeData.reduce((acc: number, o: any) => acc + Number(o.commission_amount), 0);
 
                 setStats({
                     clicks: clicks || 0,
-                    orders: oData.length,
+                    orders: safeData.length,
                     revenue,
                     commission
                 });
@@ -269,6 +269,7 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                                     <tr>
                                         <th className="p-3 text-xs font-medium text-slate-500">Mã đơn</th>
                                         <th className="p-3 text-xs font-medium text-slate-500">Ngày đặt</th>
+                                        <th className="p-3 text-xs font-medium text-slate-500 w-[30%]">Sản phẩm</th>
                                         <th className="p-3 text-xs font-medium text-slate-500">Giá trị</th>
                                         <th className="p-3 text-xs font-medium text-slate-500">Hoa hồng</th>
                                         <th className="p-3 text-xs font-medium text-slate-500">Trạng thái HH</th>
@@ -276,12 +277,26 @@ export function AffiliatePanel({ userId }: AffiliatePanelProps) {
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {orders.map((o: any) => (
-                                        <tr key={o.id} className="hover:bg-slate-50 text-sm">
-                                            <td className="p-3 font-mono text-xs">...{o.id.substring(o.id.length - 6)}</td>
-                                            <td className="p-3 text-slate-600">{new Date(o.created_at).toLocaleDateString('vi-VN')}</td>
-                                            <td className="p-3 font-medium">{Number(o.total_amount).toLocaleString()}đ</td>
-                                            <td className="p-3 font-medium text-amber-600">{Number(o.commission_amount).toLocaleString()}đ</td>
+                                        <tr key={o.id} className="hover:bg-slate-50 text-sm align-top">
+                                            <td className="p-3 font-mono text-xs pt-4">...{o.id.substring(o.id.length - 6)}</td>
+                                            <td className="p-3 text-slate-600 pt-4">{new Date(o.created_at).toLocaleDateString('vi-VN')}</td>
                                             <td className="p-3">
+                                                <div className="flex flex-col gap-1">
+                                                    {o.order_items?.slice(0, 3).map((item: any, idx: number) => (
+                                                        <div key={idx} className="text-xs text-slate-600 line-clamp-1" title={item.products?.name}>
+                                                            <span className="font-medium text-slate-700">{item.quantity}x</span> {item.products?.name || 'Sản phẩm đã xóa'}
+                                                        </div>
+                                                    ))}
+                                                    {o.order_items?.length > 3 && (
+                                                        <div className="text-[10px] text-slate-400 italic">
+                                                            + {o.order_items.length - 3} sản phẩm khác...
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="p-3 font-medium pt-4">{Number(o.total_amount).toLocaleString()}đ</td>
+                                            <td className="p-3 font-medium text-amber-600 pt-4">{Number(o.commission_amount).toLocaleString()}đ</td>
+                                            <td className="p-3 pt-4">
                                                 {o.affiliate_status === 'pending' && <span className="text-[10px] bg-slate-100 text-slate-600 px-2 py-1 rounded font-medium">Chờ xử lý</span>}
                                                 {o.affiliate_status === 'approved' && <span className="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded font-medium">Có thể rút</span>}
                                                 {o.affiliate_status === 'paid' && <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded font-medium">Đã thanh toán</span>}
