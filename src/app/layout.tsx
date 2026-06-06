@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 const inter = Inter({ subsets: ["latin", "vietnamese"] });
 
 import WebTracker from "@/components/analytics/WebTracker";
+import AffiliateTracker from "@/components/analytics/AffiliateTracker";
 import CookieConsent from "@/components/common/CookieConsent";
 
 export default function RootLayout({
@@ -28,6 +29,7 @@ export default function RootLayout({
                     <ToastProvider>
                         <Suspense fallback={null}>
                             <WebTracker />
+                            <AffiliateTracker />
                         </Suspense>
                         {children}
                         <CookieConsent />

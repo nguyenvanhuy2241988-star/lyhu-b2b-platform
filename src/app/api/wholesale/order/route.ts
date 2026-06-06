@@ -1,6 +1,7 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
     try {
@@ -16,6 +17,30 @@ export async function POST(request: Request) {
         }
 
         const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+        // --- Bắt đầu xử lý Affiliate Tracking ---
+        const cookieStore = cookies();
+        const affiliateRef = cookieStore.get('lyhu_affiliate_ref')?.value;
+
+        if (affiliateRef) {
+            // Tìm kiếm Affiliate ID từ mã Code
+            const { data: affiliate } = await supabaseAdmin
+                .from('affiliate_profiles')
+                .select('id, commission_rate')
+                .eq('affiliate_code', affiliateRef)
+                .eq('status', 'active')
+                .single();
+
+            if (affiliate) {
+                payload.affiliate_id = affiliate.id;
+                
+                // Tính hoa hồng (commission_rate là phần trăm, vd: 10)
+                const totalAmount = payload.total_amount || 0;
+                payload.commission_amount = (totalAmount * affiliate.commission_rate) / 100;
+                payload.affiliate_status = 'pending';
+            }
+        }
+        // --- Kết thúc xử lý Affiliate Tracking ---
 
         // 1. Insert Order
         const { data: orderData, error: orderError } = await supabaseAdmin

@@ -9,6 +9,17 @@ export async function middleware(request: NextRequest) {
   // Chuẩn bị response
   let response = NextResponse.next({ request });
 
+  // 1. Affiliate Tracking Cookie
+  const refCode = request.nextUrl.searchParams.get('ref');
+  if (refCode) {
+    response.cookies.set('lyhu_affiliate_ref', refCode, {
+      path: '/',
+      maxAge: 30 * 24 * 60 * 60, // 30 ngày (tính bằng giây)
+      httpOnly: false, // Để client có thể đọc nếu cần thiết
+      sameSite: 'lax',
+    });
+  }
+
   // Safe Env Vars
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
   const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key";
