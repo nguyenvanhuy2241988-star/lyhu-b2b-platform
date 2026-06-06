@@ -216,9 +216,25 @@ export const updateOrderStatus = async (
                 if (newStatus === 'delivered' && oldStatus !== 'delivered') {
                     await shipOrderInventory(orderId, userId, token);
                     await updateTransactionStatus(orderId, 'finalized', token);
+                    
+                    // Update affiliate status to approved if it was pending
+                    const headers = getHeaders(token);
+                    await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}`, {
+                        method: 'PATCH',
+                        headers: { ...headers, 'Prefer': 'return=minimal' },
+                        body: JSON.stringify({ affiliate_status: 'approved' })
+                    });
                 } else if (newStatus === 'cancelled' && oldStatus !== 'cancelled') {
                     await releaseOrderInventory(orderId, userId, token);
                     await deleteFinancialTransactions(orderId, token);
+                    
+                    // Update affiliate status to cancelled
+                    const headers = getHeaders(token);
+                    await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}`, {
+                        method: 'PATCH',
+                        headers: { ...headers, 'Prefer': 'return=minimal' },
+                        body: JSON.stringify({ affiliate_status: 'cancelled' })
+                    });
                 }
             } catch (invErr) {
                 // Inventory module may not be set up yet — silently skip

@@ -177,6 +177,7 @@ export const NAV_ITEMS = {
         { label: "Sales Kit & Catalog", href: "/admin/sales-kits", icon: FileText },
         { label: "Báo cáo Telesales", href: "/admin/telesales/earnings", icon: Phone },
         { label: "Quản lý Affiliate (CTV/KOL)", href: "/admin/affiliates", icon: UserCheck },
+        { label: "Yêu cầu Rút tiền CTV", href: "/admin/affiliates/withdrawals", icon: DollarSign },
         { label: "Hiệu suất CTV Cũ", href: "/admin/ctv", icon: TrendingUp },
         { label: "Báo cáo Sales GT", href: "/admin/gt-reports", icon: MapPin },
         { label: "Báo cáo Media", href: "/admin/media-reports", icon: Camera },
