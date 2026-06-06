@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { Copy, Plus, Trash, CheckCircle, XCircle, Users, Settings } from "lucide-react";
-import { AffiliateRulesTab } from "@/components/admin/AffiliateRulesTab";
+import { Copy, Plus, Trash, CheckCircle, XCircle, Users, Settings, Package } from "lucide-react";
+import { AffiliateProductsTab } from "@/components/admin/AffiliateProductsTab";
 
 export default function AdminAffiliatesPage() {
     const [profiles, setProfiles] = useState<any[]>([]);
@@ -124,13 +124,13 @@ export default function AdminAffiliatesPage() {
                         onClick={() => setActiveTab('rules')}
                         className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'rules' ? 'bg-white shadow-sm text-primary-600' : 'text-slate-600 hover:text-slate-900'}`}
                     >
-                        <Settings size={18} /> Quy tắc Hoa hồng
+                        <Package size={18} /> Cấu hình Hoa hồng Sản phẩm
                     </button>
                 </div>
             </div>
 
             {activeTab === 'rules' ? (
-                <AffiliateRulesTab />
+                <AffiliateProductsTab />
             ) : (
                 <>
                     <div className="flex justify-end mb-4">
