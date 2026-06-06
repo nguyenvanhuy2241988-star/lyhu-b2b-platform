@@ -6,7 +6,8 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { DollarSign, Clock, CheckCircle, XCircle, Search, Loader2 } from "lucide-react";
 
 export default function AdminWithdrawalsPage() {
-    const { token } = useAuth();
+    const { session } = useAuth();
+    const token = session?.access_token;
     const [withdrawals, setWithdrawals] = useState<AffiliateWithdrawal[]>([]);
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
