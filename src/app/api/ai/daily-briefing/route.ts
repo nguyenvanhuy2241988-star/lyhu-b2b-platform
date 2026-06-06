@@ -8,11 +8,13 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = "gemini-2.5-flash-lite";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
-);
+function getSupabaseAdmin() {
+    return createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+        process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+        { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+}
 
 interface BriefingData {
     userName: string;
@@ -58,6 +60,7 @@ async function gatherData(userId: string): Promise<BriefingData> {
     const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
     const daysRemaining = daysInMonth - now.getDate();
 
+    const supabaseAdmin = getSupabaseAdmin();
     // Get user name
     const { data: profile } = await supabaseAdmin
         .from("profiles")
@@ -266,6 +269,7 @@ export async function POST(req: NextRequest) {
         const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
         // Check cache first (unless force refresh)
+        const supabaseAdmin = getSupabaseAdmin();
         if (!forceRefresh) {
             const { data: cached } = await supabaseAdmin
                 .from("ai_daily_briefings")

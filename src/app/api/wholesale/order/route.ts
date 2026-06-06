@@ -34,9 +34,58 @@ export async function POST(request: Request) {
             if (affiliate) {
                 payload.affiliate_id = affiliate.id;
                 
-                // Tính hoa hồng (commission_rate là phần trăm, vd: 10)
-                const totalAmount = payload.total_amount || 0;
-                payload.commission_amount = (totalAmount * affiliate.commission_rate) / 100;
+                // --- Tính hoa hồng theo Rules Engine ---
+                let totalCommission = 0;
+
+                try {
+                    // 1. Lấy thông tin chi tiết sản phẩm (brand, category)
+                    const productIds = items.map((i: any) => i.product_id);
+                    const { data: products } = await supabaseAdmin
+                        .from('products')
+                        .select('id, brand') // Assuming 'category' might not exist yet, we select 'brand' at least
+                        .in('id', productIds);
+
+                    // 2. Lấy các quy tắc hoa hồng (Rules) áp dụng
+                    const { data: rules } = await supabaseAdmin
+                        .from('affiliate_commission_rules')
+                        .select('*')
+                        .eq('is_active', true)
+                        .or(`affiliate_id.eq.${affiliate.id},affiliate_id.is.null`)
+                        .order('priority', { ascending: false });
+
+                    const activeRules = rules || [];
+
+                    // 3. Tính hoa hồng cho từng món hàng
+                    for (const item of items) {
+                        const product = products?.find(p => p.id === item.product_id);
+                        let itemRate = affiliate.commission_rate; // Mặc định từ profile
+
+                        // Duyệt qua các rules để tìm rule phù hợp nhất (do đã sort theo priority giảm dần)
+                        const matchedRule = activeRules.find(rule => {
+                            if (rule.product_id && rule.product_id !== item.product_id) return false;
+                            if (rule.brand && product?.brand !== rule.brand) return false;
+                            // if (rule.category && product?.category !== rule.category) return false;
+                            
+                            // Phải có ít nhất 1 điều kiện được set để gọi là rule cụ thể, 
+                            // nếu không nó thành rule global (vẫn match)
+                            return true;
+                        });
+
+                        if (matchedRule) {
+                            itemRate = matchedRule.commission_rate;
+                        }
+
+                        const itemTotal = (item.price || 0) * (item.quantity || 0);
+                        totalCommission += (itemTotal * itemRate) / 100;
+                    }
+                } catch (calcError) {
+                    console.error("Lỗi khi tính hoa hồng Affiliate đa tầng:", calcError);
+                    // Fallback to basic rate
+                    const totalAmount = payload.total_amount || 0;
+                    totalCommission = (totalAmount * affiliate.commission_rate) / 100;
+                }
+
+                payload.commission_amount = totalCommission;
                 payload.affiliate_status = 'pending';
             }
         }
