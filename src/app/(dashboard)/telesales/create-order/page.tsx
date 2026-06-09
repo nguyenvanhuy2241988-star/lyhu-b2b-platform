@@ -471,7 +471,8 @@ function TelesalesCreateOrderContent() {
                 vat_rate: vatRate,
                 order_discount_percent: orderDiscountPercent,
                 notes: orderNote,
-                paymentMethod: paymentMethod
+                paymentMethod: paymentMethod,
+                receiverAddress: selectedCustomer.old_address || selectedCustomer.address
             }, session?.access_token);
 
             if (res?.success) {
@@ -506,7 +507,8 @@ function TelesalesCreateOrderContent() {
                 vat: totalVAT,
                 vat_rate: vatRate,
                 order_discount_percent: orderDiscountPercent,
-                paymentMethod: paymentMethod
+                paymentMethod: paymentMethod,
+                receiverAddress: selectedCustomer.old_address || selectedCustomer.address
             }, session?.access_token);
 
             if (res?.success && res.data) {

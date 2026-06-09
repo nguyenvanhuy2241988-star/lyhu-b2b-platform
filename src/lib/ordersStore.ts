@@ -391,7 +391,7 @@ export const fetchOrders = async (token?: string, filters?: { userId?: string, s
             vat_rate: o.vat_rate || 0,
             order_discount_percent: o.order_discount_percent || 0,
             receiverPhone: o.receiver_phone || o.customer?.phone,
-            receiverAddress: o.receiver_address || o.customer?.address,
+            receiverAddress: o.receiver_address || o.customer?.old_address || o.customer?.address,
             creatorName: o.creator_name,
             // Shipping & Packing
             shippingCarrier: o.shipping_carrier,
@@ -460,7 +460,8 @@ export const addOrderSupabase = async (orderData: any, token?: string) => {
             vat_rate: orderData.vat_rate || 0,
             note: orderData.notes || orderData.note || null,
             payment_method: orderData.paymentMethod || 'COD',
-            order_discount_percent: orderData.order_discount_percent || 0
+            order_discount_percent: orderData.order_discount_percent || 0,
+            receiver_address: orderData.receiverAddress || null
         };
 
         // Prepare Items
@@ -636,7 +637,8 @@ export const updateOrderSupabase = async (orderId: string, updateData: any, toke
             customer_name: updateData.customerName,
             customer_id: updateData.customer_id || updateData.customerId,
             order_discount_percent: updateData.order_discount_percent || 0,
-            status: 'pending'
+            status: 'pending',
+            receiver_address: updateData.receiverAddress || null
         };
 
         const itemsToInsert = (updateData.items || []).map((item: any) => ({
