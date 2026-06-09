@@ -38,6 +38,10 @@
       {
         "from": "../.env.local",
         "to": ".env.local"
+      },
+      {
+        "from": ".cache",
+        "to": ".cache"
       }
     ]
   }

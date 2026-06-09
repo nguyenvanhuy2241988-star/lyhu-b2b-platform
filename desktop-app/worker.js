@@ -19,9 +19,16 @@ function customLog(msg) {
 
 function startBotWorker(token, onLog) {
     if (pollInterval) clearInterval(pollInterval);
-    currentToken = token;
+    currentToken = token ? token.trim() : null;
     logCallback = onLog;
     isWorking = false;
+
+    // UUID basic validation check
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!currentToken || !uuidRegex.test(currentToken)) {
+        customLog(`❌ Lỗi: Mã Kích Hoạt (Token) không hợp lệ. Hãy kiểm tra lại!`);
+        return;
+    }
 
     // Use token directly as the API key (Anon Key) - Assumes RLS is configured or token is service role for testing
     // For production, we should authenticate the user with Supabase Auth using this token.
@@ -54,7 +61,7 @@ function startBotWorker(token, onLog) {
                 .limit(1);
 
             if (error) {
-                customLog("❌ Lỗi mạng khi quét dữ liệu...");
+                customLog(`❌ Lỗi mạng khi quét dữ liệu: ${error.message || 'Unknown'}`);
                 return;
             }
 
