@@ -223,10 +223,10 @@ export default function AddCustomerModal({ isOpen, onClose, onSuccess, initialDa
             const fullAddress = addressParts.join(", ");
 
             let finalOldAddress = formData.old_address;
-            if (legacyP && legacyW) {
-                const pName = legacyProvinces.find(x => x.code === legacyP)?.label || "";
-                const dName = legacyDistricts.find(x => x.code === legacyD)?.label || "";
-                const wName = legacyWards.find(x => x.code === legacyW)?.label || "";
+            if (legacyP || legacyD || legacyW) {
+                const pName = legacyProvinces.find(x => String(x.code) === String(legacyP))?.label || "";
+                const dName = legacyDistricts.find(x => String(x.code) === String(legacyD))?.label || "";
+                const wName = legacyWards.find(x => String(x.code) === String(legacyW))?.label || "";
                 finalOldAddress = [formData.address, wName, dName, pName].filter(Boolean).join(", ");
             }
 
