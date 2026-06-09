@@ -44,22 +44,61 @@ async function launchBrowser() {
 
     clearSessions();
 
-    const browser = await puppeteer.launch({
-        channel: 'chrome', // Use system Chrome to save space
-        headless: false, // Run visible for testing/visual verification
-        userDataDir: USER_DATA_DIR, // Explicitly set user data dir
-        protocolTimeout: 0, // Disable CDP timeout completely
-        timeout: 0, // Disable launch timeout completely
+    const commonPaths = [
+        "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+        "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+        "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
+        process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, "CocCoc\\Browser\\Application\\browser.exe") : "",
+        "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
+        "C:\\Program Files (x86)\\BraveSoftware\\Brave-Browser\\Application\\brave.exe"
+    ];
+
+    let executablePath = null;
+    for (const p of commonPaths) {
+        if (p && fs.existsSync(p)) {
+            executablePath = p;
+            console.log(`[Setup] Found browser executable at: ${p}`);
+            break;
+        }
+    }
+
+    const launchArgs = {
+        headless: false,
+        userDataDir: USER_DATA_DIR,
         args: [
-            `--window-size=${SCREEN_WIDTH},${SCREEN_HEIGHT}`,
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-infobars',
-            '--disable-blink-features=AutomationControlled', // Critical for stealth
+            '--no-sandbox', 
+            '--disable-setuid-sandbox', 
+            '--disable-notifications',
+            '--disable-blink-features=AutomationControlled',
+            '--start-maximized'
         ],
-        defaultViewport: null,
-        ignoreDefaultArgs: ['--enable-automation'] // Hide "Chrome is being controlled by automated software"
-    });
+        defaultViewport: null
+    };
+
+    if (executablePath) {
+        launchArgs.executablePath = executablePath;
+    } else {
+        launchArgs.channel = 'chrome'; 
+    }
+
+    let browser;
+    try {
+        browser = await puppeteer.launch(launchArgs);
+    } catch (e) {
+        console.warn(`[Setup] Failed to launch with primary strategy: ${e.message}`);
+        if (launchArgs.channel === 'chrome') {
+            console.log(`[Setup] Fallback to msedge channel...`);
+            launchArgs.channel = 'msedge';
+            try {
+                browser = await puppeteer.launch(launchArgs);
+            } catch (e2) {
+                throw new Error(`Không tìm thấy trình duyệt Chromium (Chrome/Edge/CocCoc/Brave) trên máy tính! Vui lòng cài đặt Google Chrome. (Lỗi: ${e.message})`);
+            }
+        } else {
+            throw new Error(`Lỗi khởi động trình duyệt: ${e.message}`);
+        }
+    }
 
     console.log('[Setup] Browser Launched Successfully.');
     return browser;
