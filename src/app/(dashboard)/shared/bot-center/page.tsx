@@ -23,7 +23,8 @@ export default function BotCenterPage() {
     const [isCopied, setIsCopied] = useState(false);
 
     const handleCopyToken = () => {
-        navigator.clipboard.writeText("LYHU-B2B-AUTO-TOKEN-8888");
+        if (!user?.id) return;
+        navigator.clipboard.writeText(user.id);
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
     };
@@ -88,7 +89,7 @@ export default function BotCenterPage() {
                         
                         <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-xl px-4 py-2">
                             <span className="text-sm font-medium text-blue-100">Mã Kích Hoạt:</span>
-                            <code className="text-white font-mono bg-black/20 px-2 py-1 rounded">LYHU-B2B-AUTO-TOKEN-8888</code>
+                            <code className="text-white font-mono bg-black/20 px-2 py-1 rounded">{user?.id || 'Đang tải...'}</code>
                             <button onClick={handleCopyToken} className="ml-2 p-1.5 hover:bg-white/20 rounded-lg transition-colors" title="Copy mã">
                                 {isCopied ? <CheckCircle2 className="w-4 h-4 text-green-300" /> : <Copy className="w-4 h-4 text-blue-100" />}
                             </button>
