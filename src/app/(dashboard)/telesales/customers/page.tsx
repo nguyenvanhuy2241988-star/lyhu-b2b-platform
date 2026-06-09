@@ -624,8 +624,8 @@ export default function TelesalesCustomersPage() {
                                     <td className="px-6 py-4">
                                         <div className="flex items-start gap-2 text-slate-600">
                                             <MapPin className="w-3.5 h-3.5 mt-0.5" />
-                                            <span className="max-w-[200px] truncate" title={customer.address || customer.old_address}>
-                                                {customer.address || customer.old_address || "-"}
+                                            <span className="max-w-[200px] truncate" title={customer.old_address || customer.address}>
+                                                {customer.old_address || customer.address || "-"}
                                             </span>
                                         </div>
                                     </td>
