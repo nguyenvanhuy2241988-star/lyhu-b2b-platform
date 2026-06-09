@@ -201,8 +201,8 @@ export default function SaleAdminCustomersPage() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-slate-600">
-                                            <div className="max-w-[200px] truncate" title={customer.address}>
-                                                {customer.address || "-"}
+                                            <div className="max-w-[200px] truncate" title={customer.address || customer.old_address}>
+                                                {customer.address || customer.old_address || "-"}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -267,7 +267,7 @@ export default function SaleAdminCustomersPage() {
                                 <div className="bg-slate-50 p-3 rounded-lg space-y-2 mb-3">
                                     <div className="flex items-start gap-2 text-xs text-slate-600">
                                         <MapPin className="w-3.5 h-3.5 text-slate-400 mt-0.5 flex-shrink-0" />
-                                        <span className="line-clamp-2">{customer.address || "Chưa có địa chỉ"}</span>
+                                        <span className="line-clamp-2">{customer.address || customer.old_address || "Chưa có địa chỉ"}</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-xs text-slate-700 font-medium">
                                         <Phone className="w-3.5 h-3.5 text-slate-400" />
