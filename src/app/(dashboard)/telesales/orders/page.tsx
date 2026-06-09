@@ -237,6 +237,9 @@ export default function TelesalesOrdersPage() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="font-medium text-slate-900">{order.customerName}</div>
+                                                {order.receiverAddress && (
+                                                    <div className="text-xs text-slate-500 mt-1">{order.receiverAddress}</div>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 text-right font-medium text-slate-900">
                                                 {formatPrice(order.totalAmount)}
