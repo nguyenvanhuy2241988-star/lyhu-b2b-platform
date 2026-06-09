@@ -33,6 +33,7 @@ async function launchBrowser() {
     const browser = await puppeteer.launch({
         headless: false, // Run visible for testing/visual verification
         userDataDir: USER_DATA_DIR, // Explicitly set user data dir
+        protocolTimeout: 60000, // Increase CDP timeout to 60 seconds
         args: [
             `--window-size=${SCREEN_WIDTH},${SCREEN_HEIGHT}`,
             '--no-sandbox',
