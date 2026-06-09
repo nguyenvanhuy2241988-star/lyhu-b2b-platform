@@ -44,13 +44,12 @@ function startBotWorker(token, onLog) {
         if (isWorking) return;
 
         try {
-            // Lấy lệnh dành cho User này (tạm thời lọc theo profile_id hoặc chờ kịch bản Web đẩy)
-            // Hiện tại web đẩy vào marketing_bot_commands. Chúng ta lấy lệnh pending cũ nhất.
+            // Lấy lệnh dành cho User này
             const { data, error } = await supabase
                 .from('marketing_bot_commands')
                 .select('*, bot_profiles(folder_name)')
                 .eq('status', 'pending')
-                // Trong thực tế sẽ lọc thêm: .eq('user_id', currentToken)
+                .eq('created_by', currentToken) // Filter by user token
                 .order('created_at', { ascending: true })
                 .limit(1);
 
@@ -80,6 +79,9 @@ function startBotWorker(token, onLog) {
                 const args = [];
                 if (command.args) args.push(command.args);
                 args.push(`--profile=${profileFolder}`);
+                if (command.created_by) {
+                    args.push(`--user_id=${command.created_by}`);
+                }
 
                 const botProcess = fork(scriptPath, args, {
                     env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
