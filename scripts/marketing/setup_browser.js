@@ -44,22 +44,39 @@ async function launchBrowser() {
 
     clearSessions();
 
-    const commonPaths = [
-        "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-        "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
-        "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
-        "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
-        process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, "CocCoc\\Browser\\Application\\browser.exe") : "",
-        "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
-        "C:\\Program Files (x86)\\BraveSoftware\\Brave-Browser\\Application\\brave.exe"
-    ];
-
     let executablePath = null;
-    for (const p of commonPaths) {
-        if (p && fs.existsSync(p)) {
-            executablePath = p;
-            console.log(`[Setup] Found browser executable at: ${p}`);
-            break;
+    try {
+        const { Launcher } = require('chrome-launcher');
+        const installations = Launcher.getInstallations();
+        if (installations && installations.length > 0) {
+            executablePath = installations[0];
+            console.log(`[Setup] Found browser executable using chrome-launcher at: ${executablePath}`);
+        }
+    } catch (e) {
+        console.warn('[Setup] chrome-launcher error: ', e.message);
+    }
+
+    // Fallback if chrome-launcher doesn't find it or errors
+    if (!executablePath) {
+        const commonPaths = [
+            "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+            "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+            process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, "Google\\Chrome\\Application\\chrome.exe") : "",
+            "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+            "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
+            process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, "Microsoft\\Edge\\Application\\msedge.exe") : "",
+            process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, "CocCoc\\Browser\\Application\\browser.exe") : "",
+            "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
+            "C:\\Program Files (x86)\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
+            process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, "BraveSoftware\\Brave-Browser\\Application\\brave.exe") : ""
+        ];
+
+        for (const p of commonPaths) {
+            if (p && fs.existsSync(p)) {
+                executablePath = p;
+                console.log(`[Setup] Found browser executable at common path: ${p}`);
+                break;
+            }
         }
     }
 
@@ -78,12 +95,14 @@ async function launchBrowser() {
 
     if (executablePath) {
         launchArgs.executablePath = executablePath;
-    } else {
-        launchArgs.channel = 'chrome'; 
     }
 
     let browser;
     try {
+        if (!executablePath) {
+            // Try relying on Puppeteer's built-in resolution as a last resort
+            launchArgs.channel = 'chrome';
+        }
         browser = await puppeteer.launch(launchArgs);
     } catch (e) {
         console.warn(`[Setup] Failed to launch with primary strategy: ${e.message}`);
@@ -93,7 +112,7 @@ async function launchBrowser() {
             try {
                 browser = await puppeteer.launch(launchArgs);
             } catch (e2) {
-                throw new Error(`Không tìm thấy trình duyệt Chromium (Chrome/Edge/CocCoc/Brave) trên máy tính! Vui lòng cài đặt Google Chrome. (Lỗi: ${e.message})`);
+                throw new Error(`Không tìm thấy trình duyệt (Chrome/Edge/Cốc Cốc) trên máy tính! Vui lòng tải Google Chrome. (Lỗi: Không tìm thấy thư mục cài đặt trình duyệt)`);
             }
         } else {
             throw new Error(`Lỗi khởi động trình duyệt: ${e.message}`);
