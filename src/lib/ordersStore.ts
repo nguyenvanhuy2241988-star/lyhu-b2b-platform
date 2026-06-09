@@ -501,6 +501,19 @@ export const addOrderSupabase = async (orderData: any, token?: string) => {
             return { success: false, error: "Failed to parse created order" };
         }
 
+        // Ensure receiver_address is saved explicitly
+        if (orderPayload.receiver_address && order.id) {
+            try {
+                await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${order.id}`, {
+                    method: 'PATCH',
+                    headers,
+                    body: JSON.stringify({ receiver_address: orderPayload.receiver_address })
+                });
+            } catch (err) {
+                console.error("[addOrderSupabase] Failed to explicitly patch receiver_address:", err);
+            }
+        }
+
         // 2. Reserve Inventory (Async)
         // Note: RPC already inserted items, we just need to reserve stock now.
         if (orderData.items && orderData.items.length > 0) {
