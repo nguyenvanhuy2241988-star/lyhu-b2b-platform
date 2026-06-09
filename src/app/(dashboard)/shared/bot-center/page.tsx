@@ -76,10 +76,17 @@ export default function BotCenterPage() {
                     </p>
                     
                     <div className="mt-4 flex flex-col sm:flex-row gap-3">
-                        <button className="flex items-center gap-2 bg-white text-blue-600 px-5 py-2.5 rounded-xl font-bold hover:bg-blue-50 transition-colors shadow-sm">
+                        <a 
+                            href="#" 
+                            onClick={(e) => {
+                                e.preventDefault();
+                                toast.info("Vui lòng tải bộ cài lên Google Drive rồi dán link vào đây, vì file cài đặt quá lớn (gần 400MB) không thể đẩy trực tiếp lên Vercel.", { duration: 8000 });
+                            }}
+                            className="flex items-center gap-2 bg-white text-blue-600 px-5 py-2.5 rounded-xl font-bold hover:bg-blue-50 transition-colors shadow-sm"
+                        >
                             <Download className="w-5 h-5" />
                             Tải LyhuBot cho Windows (.exe)
-                        </button>
+                        </a>
                         
                         <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-xl px-4 py-2">
                             <span className="text-sm font-medium text-blue-100">Mã Kích Hoạt:</span>
@@ -124,14 +131,15 @@ export default function BotCenterPage() {
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 min-h-[500px]">
                 {activeTab === 'commands' && (
                     <TabCommands 
-                        onRunScript={(script) => setActiveScript(script)} 
+                        onRunScript={(script) => setActiveScript(script)}
+                        userId={user?.id}
                     />
                 )}
-                {activeTab === 'profiles' && <TabProfiles />}
-                { activeTab === 'queue' && <TabQueue /> }
-                { activeTab === 'campaigns' && <TabCampaigns /> }
+                {activeTab === 'profiles' && <TabProfiles userId={user?.id} />}
+                { activeTab === 'queue' && <TabQueue userId={user?.id} /> }
+                { activeTab === 'campaigns' && <TabCampaigns userId={user?.id} /> }
                 { activeTab === 'contents' && <TabContentLibrary /> }
-                { activeTab === 'competitors' && <TabCompetitors onRunScript={(script) => setActiveScript(script)} /> }
+                { activeTab === 'competitors' && <TabCompetitors onRunScript={(script) => setActiveScript(script)} userId={user?.id} /> }
             </div>
 
             {/* CONFIG MODAL */}
@@ -141,6 +149,7 @@ export default function BotCenterPage() {
                     onClose={() => setActiveScript(null)}
                     scriptName={activeScript.name}
                     title={activeScript.title}
+                    userId={user?.id}
                 />
             )}
         </div>
@@ -151,7 +160,7 @@ export default function BotCenterPage() {
 // TABS COMPONENTS
 // ---------------------------------------------------------
 
-function TabCommands({ onRunScript }: { onRunScript: (s: any) => void }) {
+function TabCommands({ onRunScript, userId }: { onRunScript: (s: any) => void, userId?: string }) {
     return (
         <div className="p-6 grid grid-cols-1 xl:grid-cols-3 gap-6">
             {/* LEFT: CONTROLS */}
@@ -237,13 +246,13 @@ function TabCommands({ onRunScript }: { onRunScript: (s: any) => void }) {
 
             {/* RIGHT: LIVE LOGS */}
             <div className="xl:col-span-1 rounded-xl bg-slate-900 overflow-hidden shadow-inner border border-slate-700 min-h-[400px]">
-                <BotActivityLog />
+                <BotActivityLog userId={userId} />
             </div>
         </div>
     );
 }
 
-function TabProfiles() {
+function TabProfiles({ userId }: { userId?: string }) {
     const [profiles, setProfiles] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
@@ -255,7 +264,11 @@ function TabProfiles() {
 
     const fetchProfiles = async () => {
         setIsLoading(true);
-        const { data, error } = await supabase.from('bot_profiles').select('*').order('created_at', { ascending: true });
+        let query = supabase.from('bot_profiles').select('*').order('created_at', { ascending: true });
+        if (userId) {
+            query = query.eq('user_id', userId);
+        }
+        const { data, error } = await query;
         if (!error && data) {
             setProfiles(data);
         }
@@ -273,6 +286,7 @@ function TabProfiles() {
             profile_name: name,
             folder_name: folder,
             proxy_url: proxy || null,
+            user_id: userId || null
         });
 
         if (error) {
@@ -413,14 +427,14 @@ function TabProfiles() {
     )
 }
 
-function TabQueue() {
+function TabQueue({ userId }: { userId?: string }) {
     const [commands, setCommands] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const fetchQueue = async () => {
         setIsLoading(true);
         // Fetch commands joining with bot_profiles to get the profile name
-        const { data, error } = await supabase
+        let query = supabase
             .from('marketing_bot_commands')
             .select(`
                 *,
@@ -430,6 +444,12 @@ function TabQueue() {
             `)
             .order('created_at', { ascending: false })
             .limit(50); // Get latest 50
+            
+        if (userId) {
+            query = query.eq('created_by', userId);
+        }
+            
+        const { data, error } = await query;
             
         if (!error && data) {
             setCommands(data);
@@ -454,7 +474,8 @@ function TabQueue() {
             script_name: cmd.script_name,
             args: cmd.args,
             profile_id: cmd.profile_id,
-            status: 'pending'
+            status: 'pending',
+            created_by: userId || null
         });
         if (!error) {
             toast.success("Đã đưa lệnh vào cuối hàng đợi.");
@@ -608,7 +629,7 @@ function TabQueue() {
     )
 }
 
-function TabCampaigns() {
+function TabCampaigns({ userId }: { userId?: string }) {
     const [campaigns, setCampaigns] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     
@@ -621,10 +642,16 @@ function TabCampaigns() {
 
     const fetchCampaigns = async () => {
         setIsLoading(true);
-        const { data, error } = await supabase
+        let query = supabase
             .from('bot_campaigns')
             .select('*')
             .order('created_at', { ascending: false });
+            
+        if (userId) {
+            query = query.eq('user_id', userId);
+        }
+            
+        const { data, error } = await query;
             
         if (!error && data) {
             setCampaigns(data);
@@ -762,7 +789,7 @@ function CommandCard({ title, desc, icon, color, onClick }: { title: string, des
     );
 }
 
-function TabCompetitors({ onRunScript }: { onRunScript: (s: any) => void }) {
+function TabCompetitors({ onRunScript, userId }: { onRunScript: (s: any) => void, userId?: string }) {
     const [competitors, setCompetitors] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isAdding, setIsAdding] = useState(false);
@@ -773,7 +800,11 @@ function TabCompetitors({ onRunScript }: { onRunScript: (s: any) => void }) {
 
     const fetchCompetitors = async () => {
         setIsLoading(true);
-        const { data, error } = await supabase.from('marketing_competitors').select('*').order('created_at', { ascending: false });
+        let query = supabase.from('marketing_competitors').select('*').order('created_at', { ascending: false });
+        if (userId) {
+            query = query.eq('user_id', userId);
+        }
+        const { data, error } = await query;
         if (!error && data) {
             setCompetitors(data);
         }
@@ -791,6 +822,7 @@ function TabCompetitors({ onRunScript }: { onRunScript: (s: any) => void }) {
             name: name,
             profile_url: url,
             notes: notes || null,
+            user_id: userId || null
         });
 
         if (error) {

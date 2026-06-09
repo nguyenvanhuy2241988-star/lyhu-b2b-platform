@@ -1,10 +1,10 @@
-﻿export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
 export async function POST(req: Request) {
     try {
-        const { scriptName, args, profileId } = await req.json();
+        const { scriptName, args, profileId, userId } = await req.json();
 
         // Whitelist allowed scripts for security
         const ALLOWED_SCRIPTS = [
@@ -43,7 +43,7 @@ export async function POST(req: Request) {
                 script_name: scriptName,
                 args: args || '',
                 status: 'pending',
-                created_by: null,
+                created_by: userId || null,
                 profile_id: profileId || null
             });
 

@@ -19,7 +19,7 @@ type LogEntry = {
     };
 };
 
-export default function BotActivityLog() {
+export default function BotActivityLog({ userId }: { userId?: string }) {
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const bottomRef = useRef<HTMLDivElement>(null);
     const supabase = createClient();

@@ -11,9 +11,10 @@ interface BotConfigModalProps {
     scriptName: string;
     title: string;
     defaultArg?: string;
+    userId?: string;
 }
 
-export default function BotConfigModal({ isOpen, onClose, scriptName, title, defaultArg = "" }: BotConfigModalProps) {
+export default function BotConfigModal({ isOpen, onClose, scriptName, title, defaultArg = "", userId }: BotConfigModalProps) {
     const [arg, setArg] = useState(defaultArg);
     const [strategy, setStrategy] = useState<'name' | 'post' | 'commander' | 'suggestion' | 'rival'>('commander'); // Default to NLP Commander
     const [isLoading, setIsLoading] = useState(false);
@@ -137,7 +138,8 @@ export default function BotConfigModal({ isOpen, onClose, scriptName, title, def
                 body: JSON.stringify({
                     scriptName: finalScriptName,
                     args: finalArg,
-                    profileId: selectedProfileId || null // Pass selected profile to API
+                    profileId: selectedProfileId || null, // Pass selected profile to API
+                    userId: userId // Pass userId to assign command correctly
                 })
             });
 
