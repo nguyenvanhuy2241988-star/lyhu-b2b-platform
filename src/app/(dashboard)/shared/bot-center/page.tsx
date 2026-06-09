@@ -10,8 +10,14 @@ import CampaignRunModal from "@/components/marketing/CampaignRunModal";
 import TabContentLibrary from "@/components/marketing/TabContentLibrary";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from 'sonner';
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useRouter } from "next/navigation";
+import { ROLES } from "@/lib/constants";
 
 export default function BotCenterPage() {
+    const { user, role, isLoading } = useAuth();
+    const router = useRouter();
+
     const [activeTab, setActiveTab] = useState<'commands' | 'profiles' | 'queue' | 'campaigns' | 'contents' | 'competitors'>('commands');
     const [activeScript, setActiveScript] = useState<{ name: string, title: string } | null>(null);
     const [isCopied, setIsCopied] = useState(false);
@@ -21,6 +27,22 @@ export default function BotCenterPage() {
         setIsCopied(true);
         setTimeout(() => setIsCopied(false), 2000);
     };
+
+    useEffect(() => {
+        if (isLoading) return;
+        if (!user) {
+            router.push('/login');
+            return;
+        }
+        if (role !== ROLES.ADMIN && !user.can_use_bot_center) {
+            toast.error("Bạn chưa được cấp quyền sử dụng Trung tâm BOT.");
+            router.push('/'); // Redirect home
+        }
+    }, [user, role, isLoading, router]);
+
+    if (isLoading || (!user?.can_use_bot_center && role !== ROLES.ADMIN)) {
+        return <div className="p-10 text-center text-slate-500">Đang kiểm tra quyền truy cập...</div>;
+    }
 
     const tabs = [
         { id: 'commands', label: 'Trạm Lệnh', icon: Zap },

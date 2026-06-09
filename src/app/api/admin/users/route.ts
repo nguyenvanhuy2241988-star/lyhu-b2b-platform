@@ -82,7 +82,7 @@ export async function POST(request: Request) {
 
         // 2. Parse Request Body
         const body = await request.json();
-        const { email, password, fullName, role, misa_employee_code, misa_branch_code, zalo_phone, zalo_password, zalo_backup_password } = body;
+        const { email, password, fullName, role, misa_employee_code, misa_branch_code, zalo_phone, zalo_password, zalo_backup_password, can_use_bot_center } = body;
 
         if (!email || !password || !fullName || !role) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -117,6 +117,7 @@ export async function POST(request: Request) {
                 zalo_phone: zalo_phone,
                 zalo_password: zalo_password,
                 zalo_backup_password: zalo_backup_password,
+                can_use_bot_center: can_use_bot_center || false,
                 login_password: password, // Lưu mật khẩu gốc để Admin xem
                 updated_at: new Date().toISOString()
             });
@@ -178,7 +179,7 @@ export async function PUT(request: Request) {
 
         // 2. Parse Request Body
         const body = await request.json();
-        const { id, email, password, fullName, role, status, misa_employee_code, misa_branch_code, zalo_phone, zalo_password, zalo_backup_password } = body;
+        const { id, email, password, fullName, role, status, misa_employee_code, misa_branch_code, zalo_phone, zalo_password, zalo_backup_password, can_use_bot_center } = body;
 
         console.log(`[Admin Update] Starting for ID: ${id}`, { fullName, role, status, misa_employee_code, misa_branch_code });
 
@@ -211,6 +212,7 @@ export async function PUT(request: Request) {
                 zalo_phone: zalo_phone,
                 zalo_password: zalo_password,
                 zalo_backup_password: zalo_backup_password,
+                can_use_bot_center: can_use_bot_center,
                 updated_at: new Date().toISOString()
         };
         // Nếu admin đổi mật khẩu, lưu mật khẩu gốc vào profiles

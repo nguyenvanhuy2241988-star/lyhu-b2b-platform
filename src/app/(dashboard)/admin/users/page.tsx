@@ -59,6 +59,7 @@ interface User {
     is_online: boolean;
     last_path: string | null;
     device_info: string | null;
+    can_use_bot_center?: boolean;
 }
 
 type TimeRange = '7d' | '30d' | '1y' | '3y' | '5y';
@@ -124,7 +125,8 @@ export default function UsersPage() {
         misa_branch_code: "NB", // Default to NB
         zalo_phone: "",
         zalo_password: "",
-        zalo_backup_password: ""
+        zalo_backup_password: "",
+        can_use_bot_center: false
     });
 
     const { session } = useAuth();
@@ -257,7 +259,7 @@ export default function UsersPage() {
 
     const handleOpenCreate = () => {
         setEditingUser(null);
-        setFormData({ email: "", password: "", fullName: "", role: "telesales", status: "active", misa_employee_code: "", misa_branch_code: "NB", zalo_phone: "", zalo_password: "", zalo_backup_password: "" });
+        setFormData({ email: "", password: "", fullName: "", role: "telesales", status: "active", misa_employee_code: "", misa_branch_code: "NB", zalo_phone: "", zalo_password: "", zalo_backup_password: "", can_use_bot_center: false });
         setIsModalOpen(true);
     };
 
@@ -273,7 +275,8 @@ export default function UsersPage() {
             misa_branch_code: user.misa_branch_code || "NB",
             zalo_phone: user.zalo_phone || "",
             zalo_password: user.zalo_password || "",
-            zalo_backup_password: user.zalo_backup_password || ""
+            zalo_backup_password: user.zalo_backup_password || "",
+            can_use_bot_center: user.can_use_bot_center || false
         });
         setIsModalOpen(true);
     };
@@ -1045,6 +1048,29 @@ export default function UsersPage() {
                                                     onChange={e => setFormData({ ...formData, zalo_backup_password: e.target.value })}
                                                 />
                                             </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Quyền Bot Center */}
+                                    <div className="bg-amber-50 p-4 rounded-lg border border-amber-100">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <label className="text-sm font-bold text-amber-900 block mb-1">
+                                                    Trung tâm Bot Tự động (Bot Center)
+                                                </label>
+                                                <p className="text-xs text-amber-700/80">
+                                                    Cấp quyền cho nhân sự sử dụng tính năng Marketing tự động
+                                                </p>
+                                            </div>
+                                            <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                                                <input
+                                                    type="checkbox"
+                                                    className="sr-only peer"
+                                                    checked={formData.can_use_bot_center}
+                                                    onChange={e => setFormData({ ...formData, can_use_bot_center: e.target.checked })}
+                                                />
+                                                <div className="w-11 h-6 bg-amber-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-amber-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                                            </label>
                                         </div>
                                     </div>
                                 </div>

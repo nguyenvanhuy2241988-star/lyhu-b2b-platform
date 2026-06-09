@@ -187,6 +187,11 @@ export default function Sidebar({ role, isOpen, onClose }: SidebarProps) {
                         const isDragOver = dragOverIndex === index && dragIndex !== index;
                         const isSeparator = item.label.startsWith("---");
 
+                        // Hide Bot Center if user doesn't have permission (Admin always sees it)
+                        if (item.href === '/shared/bot-center' && role !== 'admin' && !user?.can_use_bot_center) {
+                            return null;
+                        }
+
                         if (isSeparator) {
                             return (
                                 <div

@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 try {
                     const { data: profile } = await supabase
                         .from("profiles")
-                        .select("role")
+                        .select("role, can_use_bot_center")
                         .eq("id", currentSession.user.id)
                         .maybeSingle();
 
@@ -110,7 +110,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
                     // FIXED: Update localStorage with the fetched role so next time we can restore it from cache
                     if (typeof window !== "undefined") {
-                        const updatedUser = { ...userObj, role: fetchedRole };
+                        const updatedUser = { ...userObj, role: fetchedRole, can_use_bot_center: profile?.can_use_bot_center ?? false };
+                        setUser(updatedUser);
                         localStorage.setItem("lyhu_user", JSON.stringify(updatedUser));
                     }
                 } catch (roleErr) {
@@ -173,7 +174,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 try {
                     // Start Raw Fetch
                     const fetchPromise = fetch(
-                        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/profiles?id=eq.${session.user.id}&select=role`,
+                        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/profiles?id=eq.${session.user.id}&select=role,can_use_bot_center`,
                         {
                             headers: {
                                 "apikey": process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -191,6 +192,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     if (response.ok) {
                         const data = await response.json();
                         fetchedRole = (data?.[0]?.role ?? null)?.toLowerCase() ?? null;
+                        const canUseBot = data?.[0]?.can_use_bot_center ?? false;
+                        setUser((prev: any) => ({ ...prev, can_use_bot_center: canUseBot }));
                     } else {
                         console.error("Profile fetch failed:", response.status, response.statusText);
                     }
@@ -202,8 +205,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
                 // 2. Save to Cache IMMEDIATELY (Before starting Realtime which might hang)
                 if (typeof window !== "undefined") {
-                    const updatedUser = { ...userObj, role: fetchedRole };
-                    localStorage.setItem("lyhu_user", JSON.stringify(updatedUser));
+                    setUser((prev: any) => {
+                        const updatedUser = { ...prev, role: fetchedRole };
+                        localStorage.setItem("lyhu_user", JSON.stringify(updatedUser));
+                        return updatedUser;
+                    });
                     if (session.access_token) {
                         localStorage.setItem("lyhu_access_token", session.access_token);
                     }
@@ -246,11 +252,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     },
                     (payload: any) => {
                         const newSyncRole = payload.new.role?.toLowerCase();
+                        const newBotCenter = payload.new.can_use_bot_center;
                         setRole(prev => {
                             if (newSyncRole && newSyncRole !== prev) {
-                                const updatedUser = { ...user, role: newSyncRole };
+                                const updatedUser = { ...user, role: newSyncRole, can_use_bot_center: newBotCenter };
+                                setUser(updatedUser);
                                 localStorage.setItem("lyhu_user", JSON.stringify(updatedUser));
                                 return newSyncRole;
+                            }
+                            return prev;
+                        });
+                        setUser((prev: any) => {
+                            if (prev.can_use_bot_center !== newBotCenter) {
+                                const updated = { ...prev, can_use_bot_center: newBotCenter };
+                                localStorage.setItem("lyhu_user", JSON.stringify(updated));
+                                return updated;
                             }
                             return prev;
                         });
