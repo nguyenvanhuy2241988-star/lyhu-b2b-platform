@@ -78,7 +78,7 @@ export default function BotCenterPage() {
                     
                     <div className="mt-4 flex flex-col sm:flex-row gap-3">
                         <a 
-                            href="https://drive.google.com/file/d/18A6lrZ2NGc2DXoKo99pk7_HJUy7_ITgK/view?usp=drive_link" 
+                            href="https://drive.google.com/file/d/121-MNH481HA1Eq4nhm7yYTWEUYIML9UO/view?usp=drive_link" 
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 bg-white text-blue-600 px-5 py-2.5 rounded-xl font-bold hover:bg-blue-50 transition-colors shadow-sm"
