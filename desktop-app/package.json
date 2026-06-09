@@ -25,6 +25,7 @@
   "build": {
     "appId": "com.lyhu.bot",
     "productName": "LyhuBot",
+    "compression": "maximum",
     "directories": {
       "output": "dist"
     },
@@ -33,11 +34,6 @@
       "icon": "assets/icon.png"
     },
     "extraResources": [
-      {
-        "from": ".cache/puppeteer",
-        "to": ".cache/puppeteer",
-        "filter": ["**/*"]
-      },
       {
         "from": "../.env.local",
         "to": ".env.local"

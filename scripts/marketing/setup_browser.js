@@ -45,6 +45,7 @@ async function launchBrowser() {
     clearSessions();
 
     const browser = await puppeteer.launch({
+        channel: 'chrome', // Use system Chrome to save space
         headless: false, // Run visible for testing/visual verification
         userDataDir: USER_DATA_DIR, // Explicitly set user data dir
         protocolTimeout: 0, // Disable CDP timeout completely
