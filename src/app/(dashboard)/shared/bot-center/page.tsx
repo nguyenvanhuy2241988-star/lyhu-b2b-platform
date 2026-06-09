@@ -77,11 +77,8 @@ export default function BotCenterPage() {
                     
                     <div className="mt-4 flex flex-col sm:flex-row gap-3">
                         <a 
-                            href="#" 
-                            onClick={(e) => {
-                                e.preventDefault();
-                                toast.info("Vui lòng tải bộ cài lên Google Drive rồi dán link vào đây, vì file cài đặt quá lớn (gần 400MB) không thể đẩy trực tiếp lên Vercel.", { duration: 8000 });
-                            }}
+                            href="/downloads/LyhuBot_Setup.exe" 
+                            download
                             className="flex items-center gap-2 bg-white text-blue-600 px-5 py-2.5 rounded-xl font-bold hover:bg-blue-50 transition-colors shadow-sm"
                         >
                             <Download className="w-5 h-5" />
