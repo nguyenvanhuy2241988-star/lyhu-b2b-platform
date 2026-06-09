@@ -276,7 +276,7 @@ export const CreateDealModal = ({
         }
 
         let finalOldAddress = customerOldAddress;
-        if (activeTab === 'new' && legacyP && legacyW) {
+        if (activeTab === 'new' && (legacyP || legacyD || legacyW)) {
             const pName = legacyProvinces.find(x => x.code === legacyP)?.label || "";
             const dName = legacyDistricts.find(x => x.code === legacyD)?.label || "";
             const wName = legacyWards.find(x => x.code === legacyW)?.label || "";

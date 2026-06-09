@@ -665,6 +665,19 @@ export const updateOrderSupabase = async (orderId: string, updateData: any, toke
             console.error("RPC update_order_v2 failed:", err);
             return { success: false, error: "Failed to update order details: " + err };
         }
+        
+        // Ensure receiver_address is saved explicitly
+        if (updatePayload.receiver_address) {
+            try {
+                await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${orderId}`, {
+                    method: 'PATCH',
+                    headers,
+                    body: JSON.stringify({ receiver_address: updatePayload.receiver_address })
+                });
+            } catch (err) {
+                console.error("[updateOrderSupabase] Failed to explicitly patch receiver_address:", err);
+            }
+        }
 
         // 4. Reserve New Inventory
         if (warehouseId && currentOrder.telesales_user_id) {
