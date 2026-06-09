@@ -74,9 +74,9 @@ echo --- DEBUG INFO ---
 echo Script: "${scriptPath}"
 echo Args: ${safeArgs}
 echo Profile: "${profileFolder}"
-echo CMD Line: node "${scriptPath}" ${safeArgs} --profile="${profileFolder}"
+echo CMD Line: node "${scriptPath}" ${safeArgs} --profile="${profileFolder}" --user_id="${command.created_by}"
 echo --- END DEBUG ---
-node "${scriptPath}" ${safeArgs} --profile="${profileFolder}"
+node "${scriptPath}" ${safeArgs} --profile="${profileFolder}" --user_id="${command.created_by}"
 echo.
 echo HOAN THANH - CUA SO SE TU DONG TONG SAU 30 GIAY
 timeout /t 30 >nul

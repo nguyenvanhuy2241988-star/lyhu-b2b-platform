@@ -37,6 +37,14 @@ async function logAction(actionType, status, message, details = {}) {
             created_at: new Date().toISOString()
         };
 
+        const userIdArg = process.argv.find(arg => arg.startsWith('--user_id='));
+        if (userIdArg) {
+            const userId = userIdArg.split('=')[1];
+            if (userId && userId !== 'null' && userId !== 'undefined') {
+                payload.user_id = userId;
+            }
+        }
+
         const { error } = await supabase
             .from('marketing_action_logs')
             .insert(payload);
@@ -66,6 +74,14 @@ async function saveLead(leadData) {
             profile_vector: leadData.profile_vector || {},
             created_at: new Date().toISOString()
         };
+
+        const userIdArg = process.argv.find(arg => arg.startsWith('--user_id='));
+        if (userIdArg) {
+            const userId = userIdArg.split('=')[1];
+            if (userId && userId !== 'null' && userId !== 'undefined') {
+                payload.user_id = userId;
+            }
+        }
 
         // Anti-Duplicate Check on CRM Database Layer
         const { data: existing } = await supabase

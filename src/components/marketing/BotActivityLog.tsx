@@ -28,11 +28,17 @@ export default function BotActivityLog({ userId }: { userId?: string }) {
     useEffect(() => {
         // Initial fetch (last 20 logs)
         const fetchRecent = async () => {
-            const { data } = await supabase
+            let query = supabase
                 .from('marketing_action_logs')
                 .select('*')
                 .order('created_at', { ascending: false })
                 .limit(20);
+
+            if (userId) {
+                query = query.eq('user_id', userId);
+            }
+
+            const { data } = await query;
 
             if (data) setLogs(data.reverse());
         };
