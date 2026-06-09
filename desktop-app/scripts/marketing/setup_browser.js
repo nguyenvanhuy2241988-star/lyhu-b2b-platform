@@ -44,13 +44,15 @@ async function launchBrowser() {
     clearSessions();
 
     // Determine executablePath for packaged Electron app
-    let executablePath = puppeteerCore.executablePath();
+    let executablePath = puppeteer.executablePath();
+    const isPackaged = __dirname.includes('app.asar');
     if (isPackaged) {
         // In production, .cache is copied to resources folder
-        const resourcesPath = process.resourcesPath || path.join(path.dirname(process.execPath), 'resources');
+        const asarIndex = __dirname.indexOf('app.asar');
+        const resourcesDir = __dirname.substring(0, asarIndex);
         const relativeChromePath = executablePath.split('.cache')[1];
         if (relativeChromePath) {
-            executablePath = path.join(resourcesPath, '.cache', relativeChromePath);
+            executablePath = path.join(resourcesDir, '.cache', relativeChromePath);
             console.log(`[Setup] Bundled browser path: ${executablePath}`);
         }
     }
