@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Users, UserPlus, Shield, Bot, Key, Power, Play, StopCircle, RefreshCw, FolderOpen, History, Plus, Zap, Trash2, PlayCircle } from 'lucide-react';
+import { Search, Users, UserPlus, Shield, Bot, Key, Power, Play, StopCircle, RefreshCw, FolderOpen, History, Plus, Zap, Trash2, PlayCircle, Download, Copy, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import BotActivityLog from "@/components/marketing/BotActivityLog";
 import BotConfigModal from "@/components/marketing/BotConfigModal";
@@ -14,6 +14,13 @@ import { toast } from 'sonner';
 export default function BotCenterPage() {
     const [activeTab, setActiveTab] = useState<'commands' | 'profiles' | 'queue' | 'campaigns' | 'contents' | 'competitors'>('commands');
     const [activeScript, setActiveScript] = useState<{ name: string, title: string } | null>(null);
+    const [isCopied, setIsCopied] = useState(false);
+
+    const handleCopyToken = () => {
+        navigator.clipboard.writeText("LYHU-B2B-AUTO-TOKEN-8888");
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+    };
 
     const tabs = [
         { id: 'commands', label: 'Trạm Lệnh', icon: Zap },
@@ -32,6 +39,42 @@ export default function BotCenterPage() {
                     Trung Tâm Điều Khiển BOT Tự Động
                 </h1>
                 <p className="text-slate-500 mt-1">Quản lý kịch bản, hàng đợi và các trình duyệt giả lập ẩn danh.</p>
+            </div>
+
+            {/* DOWNLOAD APP BANNER */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg shadow-blue-600/20 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex-1">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 rounded-full text-xs font-semibold mb-3">
+                        <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                        Hệ Thống Trạm Phát (Mới)
+                    </div>
+                    <h2 className="text-xl font-bold mb-2">Trạm kết nối LyhuBot Desktop</h2>
+                    <p className="text-blue-100 text-sm max-w-2xl">
+                        Để tránh việc treo trình duyệt web và chống Facebook quét, bạn cần tải phần mềm **LyhuBot** về máy tính. Phần mềm sẽ tự động nhận lệnh từ trang web này và chạy ngầm (bao gồm cả trình duyệt tàng hình chống khóa).
+                    </p>
+                    
+                    <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                        <button className="flex items-center gap-2 bg-white text-blue-600 px-5 py-2.5 rounded-xl font-bold hover:bg-blue-50 transition-colors shadow-sm">
+                            <Download className="w-5 h-5" />
+                            Tải LyhuBot cho Windows (.exe)
+                        </button>
+                        
+                        <div className="flex items-center gap-2 bg-white/10 border border-white/20 rounded-xl px-4 py-2">
+                            <span className="text-sm font-medium text-blue-100">Mã Kích Hoạt:</span>
+                            <code className="text-white font-mono bg-black/20 px-2 py-1 rounded">LYHU-B2B-AUTO-TOKEN-8888</code>
+                            <button onClick={handleCopyToken} className="ml-2 p-1.5 hover:bg-white/20 rounded-lg transition-colors" title="Copy mã">
+                                {isCopied ? <CheckCircle2 className="w-4 h-4 text-green-300" /> : <Copy className="w-4 h-4 text-blue-100" />}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div className="hidden lg:block w-48 shrink-0">
+                    <div className="w-full aspect-square bg-white/10 rounded-2xl border border-white/20 flex items-center justify-center relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-transparent"></div>
+                        <Bot className="w-24 h-24 text-white opacity-80" />
+                    </div>
+                </div>
             </div>
 
             {/* TABS NAVIGATION */}

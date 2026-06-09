@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>LYHU Bot Worker</title>
+    <!-- Use Tailwind CSS via CDN for quick styling in Electron -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        .log-container {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #1e1e1e;
+            color: #00ff00;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen p-6">
+    <div class="max-w-xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-12 h-12 bg-blue-600 text-white flex items-center justify-center rounded-xl font-bold text-xl">
+                L
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-slate-800">LYHU Bot Worker</h1>
+                <p class="text-sm text-slate-500">Trạm kết nối Tự động hóa LYHU B2B</p>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <label class="block text-sm font-medium text-slate-700 mb-2">Mã Kích Hoạt (Token)</label>
+            <input type="password" id="tokenInput" class="w-full px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none" placeholder="Dán mã Token từ Website vào đây...">
+            <p class="text-xs text-slate-500 mt-2">Đăng nhập vào hệ thống LYHU > Trung tâm BOT để lấy mã kích hoạt.</p>
+        </div>
+
+        <div class="flex gap-3 mb-8">
+            <button id="btnStart" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors shadow-md shadow-blue-200">
+                ▶ KẾT NỐI VÀ CHẠY NGẦM
+            </button>
+            <button id="btnStop" class="px-6 bg-red-50 hover:bg-red-100 text-red-600 font-medium py-3 rounded-lg transition-colors hidden">
+                ⏹ DỪNG BOT
+            </button>
+        </div>
+
+        <div class="mb-8 border-t border-slate-100 pt-6">
+            <h3 class="text-sm font-semibold text-slate-800 mb-2">Cấu hình Profile Facebook</h3>
+            <p class="text-xs text-slate-500 mb-3">Trước khi chạy Bot lần đầu, bạn cần đăng nhập sẵn Facebook vào Trình duyệt Tàng hình để Bot ghi nhớ Cookie.</p>
+            <button id="btnLoginFacebook" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 text-sm border border-slate-200">
+                <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                Mở Trình Duyệt Để Đăng Nhập Facebook
+            </button>
+        </div>
+
+        <div>
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-semibold text-slate-700">Trạng Thái Kết Nối (Log)</span>
+                <span id="statusBadge" class="px-2 py-1 bg-slate-100 text-slate-500 rounded text-xs font-medium">OFFLINE</span>
+            </div>
+            <div id="logArea" class="log-container w-full h-64 rounded-lg p-3 text-xs overflow-y-auto shadow-inner leading-relaxed">
+                <div class="text-slate-400 italic">Chưa kết nối. Vui lòng nhập mã và bấm Kết Nối...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./renderer.js"></script>
+</body>
+</html>

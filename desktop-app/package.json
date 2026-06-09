@@ -1,0 +1,47 @@
+{
+  "name": "desktop-app",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.108.1",
+    "dotenv": "^17.4.2",
+    "puppeteer": "^24.43.1",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
+  "devDependencies": {
+    "electron": "^41.7.1",
+    "electron-builder": "^26.15.2"
+  },
+  "build": {
+    "appId": "com.lyhu.bot",
+    "productName": "LyhuBot",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.png"
+    },
+    "extraResources": [
+      {
+        "from": ".cache/puppeteer",
+        "to": ".cache/puppeteer",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../.env.local",
+        "to": ".env.local"
+      }
+    ]
+  }
+}
