@@ -5,6 +5,7 @@ import { Search, ShoppingCart, Info, CheckCircle2, ChevronRight, Minus, Plus, St
 import { getSupabase } from '@/lib/supabaseClient';
 import B2BSupportChat from '@/components/wholesale/B2BSupportChat';
 import Link from 'next/link';
+import ShortVideosList from './ShortVideosList';
 
 interface Product {
     id: string;
@@ -1260,6 +1261,9 @@ export default function WholesaleStore({
                         ))}
                     </div>
                 )}
+
+                {/* Short Videos Section */}
+                <ShortVideosList />
 
                 {/* V3: Flash Sale Area */}
                 {flashSaleProducts.length > 0 && (

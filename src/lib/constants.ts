@@ -182,6 +182,7 @@ export const NAV_ITEMS = {
         { label: "Báo cáo Media", href: "/admin/media-reports", icon: Camera },
         { label: "Lịch quay & Brief", href: "/admin/media-briefs", icon: FileInput },
         { label: "Trung tâm BOT Tự động", href: "/shared/bot-center", icon: Bot },
+        { label: "Video Ngắn 9:16", href: "/admin/short-videos", icon: Video },
         { label: "Kịch bản Media", href: "/media/scripts", icon: FileInput },
         { label: "Tin tức & Blog", href: "/marketing/blog", icon: BookOpen },
         { label: "Chủ đề AI", href: "/marketing/ai-topics", icon: Sparkles },
