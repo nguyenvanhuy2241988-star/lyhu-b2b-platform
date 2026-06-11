@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, X, Volume2, VolumeX, Pause } from 'lucide-react';
+import { Play, X, Volume2, VolumeX, Pause, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getSupabase } from '@/lib/supabaseClient';
 
 const supabase = getSupabase();
@@ -20,6 +20,19 @@ export default function ShortVideosList() {
     const [isPlaying, setIsPlaying] = useState(true);
     const [isMuted, setIsMuted] = useState(false);
     const videoRef = useRef<HTMLVideoElement>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+    const scrollLeft = () => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+        }
+    };
+
+    const scrollRight = () => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+        }
+    };
 
     useEffect(() => {
         const fetchVideos = async () => {
@@ -65,29 +78,51 @@ export default function ShortVideosList() {
                 Video Nổi Bật
             </h3>
             
-            {/* Horizontal Scroll List */}
-            <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-4 snap-x">
-                {videos.map((video) => (
-                    <div 
-                        key={video.id} 
-                        onClick={() => setSelectedVideo(video)}
-                        className="snap-start shrink-0 w-[180px] aspect-[9/16] bg-gray-100 rounded-xl relative overflow-hidden cursor-pointer group shadow-md border border-gray-200 transition-all hover:shadow-lg"
-                    >
-                        <video 
-                            src={video.video_url} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            muted
-                            loop
-                            playsInline
-                            // Optional: can play on hover
-                            onMouseEnter={(e) => e.currentTarget.play()}
-                            onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
-                        />
-                        <div className="absolute top-2 right-2 bg-black/40 backdrop-blur-sm rounded-full p-1">
-                            <Play className="w-3 h-3 text-white fill-white" />
+            {/* Horizontal Scroll List with Navigation */}
+            <div className="relative group/list">
+                {/* Left Arrow */}
+                <button 
+                    onClick={scrollLeft}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 -ml-4 z-10 w-10 h-10 bg-white shadow-md border border-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:text-primary-600 hover:scale-110 transition-all opacity-0 group-hover/list:opacity-100 disabled:opacity-0"
+                >
+                    <ChevronLeft className="w-6 h-6" />
+                </button>
+
+                <div 
+                    ref={scrollContainerRef}
+                    className="flex gap-4 overflow-x-auto hide-scrollbar pb-4 snap-x scroll-smooth"
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                    {videos.map((video) => (
+                        <div 
+                            key={video.id} 
+                            onClick={() => setSelectedVideo(video)}
+                            className="snap-start shrink-0 w-[180px] aspect-[9/16] bg-gray-100 rounded-xl relative overflow-hidden cursor-pointer group shadow-md border border-gray-200 transition-all hover:shadow-lg"
+                        >
+                            <video 
+                                src={video.video_url} 
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                muted
+                                loop
+                                playsInline
+                                // Optional: can play on hover
+                                onMouseEnter={(e) => e.currentTarget.play()}
+                                onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
+                            />
+                            <div className="absolute top-2 right-2 bg-black/40 backdrop-blur-sm rounded-full p-1">
+                                <Play className="w-3 h-3 text-white fill-white" />
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
+
+                {/* Right Arrow */}
+                <button 
+                    onClick={scrollRight}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 -mr-4 z-10 w-10 h-10 bg-white shadow-md border border-gray-100 rounded-full flex items-center justify-center text-gray-600 hover:text-primary-600 hover:scale-110 transition-all opacity-0 group-hover/list:opacity-100"
+                >
+                    <ChevronRight className="w-6 h-6" />
+                </button>
             </div>
 
             {/* Video Modal */}
