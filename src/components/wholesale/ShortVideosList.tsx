@@ -83,10 +83,6 @@ export default function ShortVideosList() {
                             onMouseEnter={(e) => e.currentTarget.play()}
                             onMouseLeave={(e) => { e.currentTarget.pause(); e.currentTarget.currentTime = 0; }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
-                        <div className="absolute bottom-2 left-2 right-2 text-white text-xs font-medium line-clamp-2 leading-tight">
-                            {video.title}
-                        </div>
                         <div className="absolute top-2 right-2 bg-black/40 backdrop-blur-sm rounded-full p-1">
                             <Play className="w-3 h-3 text-white fill-white" />
                         </div>
@@ -116,11 +112,6 @@ export default function ShortVideosList() {
                             muted={isMuted}
                             onClick={togglePlay}
                         />
-
-                        {/* Overlays */}
-                        <div className="absolute bottom-0 inset-x-0 p-6 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none">
-                            <h2 className="text-white text-lg font-bold mb-2 drop-shadow-md">{selectedVideo.title}</h2>
-                        </div>
 
                         {/* Controls Overlay */}
                         <div className="absolute right-4 bottom-20 flex flex-col gap-4">
