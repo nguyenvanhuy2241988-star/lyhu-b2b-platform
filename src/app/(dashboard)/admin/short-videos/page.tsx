@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { Upload, Trash2, Edit, Plus, Video, CheckCircle, XCircle } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 // Safe Env Vars
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
