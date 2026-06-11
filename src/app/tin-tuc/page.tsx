@@ -160,7 +160,7 @@ export default async function BlogIndexPage({
     const totalPages = Math.ceil(totalCount / POSTS_PER_PAGE);
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 overflow-hidden">
             
             {/* Top Toolbar: Categories */}
             <div className="bg-white border-y border-gray-200 relative z-40" style={{ overflow: 'visible' }}>
@@ -344,10 +344,10 @@ export default async function BlogIndexPage({
             )}
 
             {/* Content Area */}
-            <div className="flex flex-col lg:flex-row gap-10">
+            <div className="flex flex-col lg:flex-row gap-10 overflow-hidden">
                 
                 {/* Left: Article Grid */}
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                     
                     {/* Header info (Total results) */}
                     <div className="mb-6 flex items-center justify-between text-sm text-gray-500 border-b border-gray-200 pb-2">
