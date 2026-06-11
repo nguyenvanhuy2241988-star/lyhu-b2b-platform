@@ -66,16 +66,16 @@ export default function ShortVideosList() {
             </h3>
             
             {/* Horizontal Scroll List */}
-            <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2 snap-x">
+            <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-4 snap-x">
                 {videos.map((video) => (
                     <div 
                         key={video.id} 
                         onClick={() => setSelectedVideo(video)}
-                        className="snap-start shrink-0 w-[120px] aspect-[9/16] bg-gray-100 rounded-xl relative overflow-hidden cursor-pointer group shadow-sm border border-gray-200"
+                        className="snap-start shrink-0 w-[180px] aspect-[9/16] bg-gray-100 rounded-xl relative overflow-hidden cursor-pointer group shadow-md border border-gray-200 transition-all hover:shadow-lg"
                     >
                         <video 
                             src={video.video_url} 
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             muted
                             loop
                             playsInline
