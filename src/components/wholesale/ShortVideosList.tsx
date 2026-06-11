@@ -2,12 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Play, X, Volume2, VolumeX, Pause } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabase } from '@/lib/supabaseClient';
 
-// Safe Env Vars
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseAnon);
+const supabase = getSupabase();
 
 interface ShortVideo {
     id: string;

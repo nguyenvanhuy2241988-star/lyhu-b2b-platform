@@ -1,14 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import { Upload, Trash2, Edit, Plus, Video, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { getSupabase } from '@/lib/supabaseClient';
 
-// Safe Env Vars
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseAnon);
+const supabase = getSupabase();
 
 interface ShortVideo {
     id: string;
