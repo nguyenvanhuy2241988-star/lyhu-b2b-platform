@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Product } from "@/mocks/data";
-import { Package, Search, Loader2, Plus, Pencil, Trash2, X, Check, Settings2, Filter, ArrowUpDown, ImageIcon, UploadCloud } from "lucide-react";
+import { Package, Search, Loader2, Plus, Pencil, Trash2, X, Check, Settings2, Filter, ArrowUpDown, ImageIcon, UploadCloud, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { supabase } from "@/lib/supabaseClient";
@@ -877,17 +877,53 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
                                             <div key={idx} className="h-20 w-20 border border-slate-200 rounded-lg overflow-hidden relative group/img cursor-pointer">
                                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                                 <img src={url} alt="" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} onClick={() => window.open(url, '_blank')} />
-                                                <button
-                                                    type="button"
-                                                    title="Xoá ảnh này"
-                                                    className="absolute inset-0 bg-black/50 hidden group-hover/img:flex items-center justify-center text-white transition-opacity"
-                                                    onClick={(e) => { 
-                                                        e.stopPropagation(); 
-                                                        setFormData(prev => ({ ...prev, extra_images: prev.extra_images.filter((_, index) => index !== idx) })); 
-                                                    }}
-                                                >
-                                                    <Trash2 className="w-4 h-4 text-red-200" />
-                                                </button>
+                                                <div className="absolute inset-0 bg-black/60 hidden group-hover/img:flex flex-col justify-between p-1 transition-opacity">
+                                                    <div className="flex w-full justify-end">
+                                                        <button
+                                                            type="button"
+                                                            title="Xoá ảnh này"
+                                                            className="p-1 hover:bg-white/20 rounded"
+                                                            onClick={(e) => { 
+                                                                e.stopPropagation(); 
+                                                                setFormData(prev => ({ ...prev, extra_images: prev.extra_images.filter((_, index) => index !== idx) })); 
+                                                            }}
+                                                        >
+                                                            <Trash2 className="w-4 h-4 text-red-400 hover:text-red-300" />
+                                                        </button>
+                                                    </div>
+                                                    <div className="flex w-full justify-between items-center mb-1 px-1">
+                                                        <button 
+                                                            type="button" 
+                                                            disabled={idx === 0}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setFormData(prev => {
+                                                                    const newArr = [...prev.extra_images];
+                                                                    [newArr[idx - 1], newArr[idx]] = [newArr[idx], newArr[idx - 1]];
+                                                                    return { ...prev, extra_images: newArr };
+                                                                });
+                                                            }}
+                                                            className="p-1 hover:bg-white/20 rounded disabled:opacity-20"
+                                                        >
+                                                            <ChevronLeft className="w-4 h-4 text-white" />
+                                                        </button>
+                                                        <button 
+                                                            type="button" 
+                                                            disabled={idx === formData.extra_images.length - 1}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setFormData(prev => {
+                                                                    const newArr = [...prev.extra_images];
+                                                                    [newArr[idx + 1], newArr[idx]] = [newArr[idx], newArr[idx + 1]];
+                                                                    return { ...prev, extra_images: newArr };
+                                                                });
+                                                            }}
+                                                            className="p-1 hover:bg-white/20 rounded disabled:opacity-20"
+                                                        >
+                                                            <ChevronRight className="w-4 h-4 text-white" />
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
@@ -914,17 +950,53 @@ export default function ProductList({ readOnly = false }: ProductListProps) {
                                             <div key={idx} className="h-20 w-20 border border-slate-200 rounded-lg overflow-hidden relative group/img cursor-pointer">
                                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                                 <img src={url} alt="" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} onClick={() => window.open(url, '_blank')} />
-                                                <button
-                                                    type="button"
-                                                    title="Xoá ảnh này"
-                                                    className="absolute inset-0 bg-black/50 hidden group-hover/img:flex items-center justify-center text-white transition-opacity"
-                                                    onClick={(e) => { 
-                                                        e.stopPropagation(); 
-                                                        setFormData(prev => ({ ...prev, certificates: prev.certificates.filter((_, index) => index !== idx) })); 
-                                                    }}
-                                                >
-                                                    <Trash2 className="w-4 h-4 text-red-200" />
-                                                </button>
+                                                <div className="absolute inset-0 bg-black/60 hidden group-hover/img:flex flex-col justify-between p-1 transition-opacity">
+                                                    <div className="flex w-full justify-end">
+                                                        <button
+                                                            type="button"
+                                                            title="Xoá giấy tờ này"
+                                                            className="p-1 hover:bg-white/20 rounded"
+                                                            onClick={(e) => { 
+                                                                e.stopPropagation(); 
+                                                                setFormData(prev => ({ ...prev, certificates: prev.certificates.filter((_, index) => index !== idx) })); 
+                                                            }}
+                                                        >
+                                                            <Trash2 className="w-4 h-4 text-red-400 hover:text-red-300" />
+                                                        </button>
+                                                    </div>
+                                                    <div className="flex w-full justify-between items-center mb-1 px-1">
+                                                        <button 
+                                                            type="button" 
+                                                            disabled={idx === 0}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setFormData(prev => {
+                                                                    const newArr = [...prev.certificates];
+                                                                    [newArr[idx - 1], newArr[idx]] = [newArr[idx], newArr[idx - 1]];
+                                                                    return { ...prev, certificates: newArr };
+                                                                });
+                                                            }}
+                                                            className="p-1 hover:bg-white/20 rounded disabled:opacity-20"
+                                                        >
+                                                            <ChevronLeft className="w-4 h-4 text-white" />
+                                                        </button>
+                                                        <button 
+                                                            type="button" 
+                                                            disabled={idx === formData.certificates.length - 1}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setFormData(prev => {
+                                                                    const newArr = [...prev.certificates];
+                                                                    [newArr[idx + 1], newArr[idx]] = [newArr[idx], newArr[idx + 1]];
+                                                                    return { ...prev, certificates: newArr };
+                                                                });
+                                                            }}
+                                                            className="p-1 hover:bg-white/20 rounded disabled:opacity-20"
+                                                        >
+                                                            <ChevronRight className="w-4 h-4 text-white" />
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
