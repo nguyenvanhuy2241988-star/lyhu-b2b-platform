@@ -88,6 +88,26 @@ export default function AnalyticsDashboard() {
                 }));
             }
 
+            // Fetch Recent Visitors Details
+            let visitorsQuery = supabase
+                .from('website_page_views')
+                .select('id, visitor_id, session_id, pathname, referrer, device_type, os, browser, city, region, country, created_at, load_time_ms, is_bot')
+                .gte('created_at', startDate)
+                .lte('created_at', endDate)
+                .order('created_at', { ascending: false })
+                .limit(50);
+
+            if (excludeInternal) {
+                visitorsQuery = visitorsQuery.eq('is_bot', false);
+                // Exclude common internal paths if needed, here we just trust is_bot
+            }
+
+            const { data: recentVisitors } = await visitorsQuery;
+
+            if (result) {
+                result.recentVisitors = recentVisitors || [];
+            }
+
             setData(result);
         } catch (err: any) {
             console.error("Error fetching analytics:", err);
@@ -618,6 +638,58 @@ export default function AnalyticsDashboard() {
                             </div>
                         )}
                     </div>
+                </div>
+            </div>
+
+            {/* Recent Visitors Table */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mt-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center gap-2">
+                    <Users className="w-5 h-5 text-indigo-500" />
+                    Chi tiết khách truy cập gần đây
+                </h3>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                        <thead>
+                            <tr className="border-b border-slate-200 text-sm text-slate-500">
+                                <th className="pb-3 font-medium whitespace-nowrap">Thời gian</th>
+                                <th className="pb-3 font-medium">Trang truy cập</th>
+                                <th className="pb-3 font-medium">Nguồn (Referrer)</th>
+                                <th className="pb-3 font-medium">Thiết bị</th>
+                                <th className="pb-3 font-medium">Vị trí</th>
+                                <th className="pb-3 font-medium text-right whitespace-nowrap">Tốc độ tải</th>
+                            </tr>
+                        </thead>
+                        <tbody className="text-sm text-slate-700">
+                            {data?.recentVisitors?.map((v: any, idx: number) => (
+                                <tr key={idx} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                    <td className="py-3 whitespace-nowrap">{dayjs(v.created_at).format('DD/MM/YYYY HH:mm:ss')}</td>
+                                    <td className="py-3 font-medium text-slate-900 max-w-[200px] truncate" title={v.pathname}>{v.pathname}</td>
+                                    <td className="py-3 max-w-[150px] truncate text-slate-500" title={v.referrer || 'Trực tiếp'}>{v.referrer || 'Trực tiếp'}</td>
+                                    <td className="py-3 whitespace-nowrap">
+                                        <div className="flex items-center gap-1.5">
+                                            {v.device_type === 'mobile' ? <Smartphone className="w-4 h-4 text-emerald-500" /> : <Monitor className="w-4 h-4 text-blue-500" />}
+                                            <span className="text-xs text-slate-500">{v.browser} / {v.os}</span>
+                                        </div>
+                                    </td>
+                                    <td className="py-3 text-slate-500">
+                                        {v.city ? `${v.city}${v.country ? `, ${v.country}` : ''}` : 'Không xác định'}
+                                    </td>
+                                    <td className="py-3 text-right">
+                                        {v.load_time_ms ? (
+                                            <span className={v.load_time_ms > 3000 ? 'text-red-500 font-medium' : 'text-emerald-500 font-medium'}>
+                                                {(v.load_time_ms / 1000).toFixed(2)}s
+                                            </span>
+                                        ) : '-'}
+                                    </td>
+                                </tr>
+                            ))}
+                            {(!data?.recentVisitors || data.recentVisitors.length === 0) && (
+                                <tr>
+                                    <td colSpan={6} className="py-8 text-center text-slate-400">Không có dữ liệu truy cập</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
