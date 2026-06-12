@@ -1472,7 +1472,9 @@ export default function WholesaleStore({
                                 if (hasVideo) {
                                     mediaList.push({ type: 'video', url: selectedProduct.video_url! });
                                 }
-                                allImages.forEach(img => mediaList.push({ type: 'image', url: img }));
+                                allImages.forEach(img => {
+                                    if (img) mediaList.push({ type: 'image', url: img as string });
+                                });
 
                                 const totalMedia = mediaList.length;
                                 const safeIdx = Math.max(0, Math.min(activeImageIdx, Math.max(0, totalMedia - 1)));
